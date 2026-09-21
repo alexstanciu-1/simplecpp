@@ -1,0 +1,22 @@
+[
+  {
+    "case": "frontend-counter-layout",
+    "trials": 1,
+    "native_wall_seconds": 181.19396219900227,
+    "including_assumed_frontend_seconds": 182.69396219900227,
+    "objects": 372,
+    "pch_count": 1,
+    "peak_compiler_jobs": 12,
+    "exit_code": 0
+  },
+  {
+    "case": "model-table-helper",
+    "trials": 1,
+    "native_wall_seconds": 141.7437613279908,
+    "including_assumed_frontend_seconds": 143.2437613279908,
+    "objects": 311,
+    "pch_count": 1,
+    "peak_compiler_jobs": 12,
+    "exit_code": 0
+  }
+]

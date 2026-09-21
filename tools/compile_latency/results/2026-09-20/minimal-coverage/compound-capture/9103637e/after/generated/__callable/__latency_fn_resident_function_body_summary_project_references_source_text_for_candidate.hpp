@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentFunctionBodyLogicalFrontendReferenceCandidateRow;
+class SourceUnitTable;
+string_t __latency_fn_resident_function_body_summary_project_references_source_text_for_candidate(shared_p<SourceUnitTable> currentSourceUnits, shared_p<SourceUnitTable> previousSourceUnits, ResidentFunctionBodyLogicalFrontendReferenceCandidateRow candidate);
+}

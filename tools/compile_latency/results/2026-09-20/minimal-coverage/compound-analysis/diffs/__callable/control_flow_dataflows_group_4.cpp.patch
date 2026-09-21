@@ -1,0 +1,22 @@
+--- before/__callable/control_flow_dataflows_group_4.cpp
++++ after/__callable/control_flow_dataflows_group_4.cpp
+@@ -34,7 +34,18 @@
+ 			if (static_cast<bool>(((nameIndex >= static_cast<int_t<> >(0)) && (nameIndex < php::count(artifact->local_names))))) {
+ 				name = artifact->local_names[nameIndex];
+ 			}
+-			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->row_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->owner_symbol_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->source_unit_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->row_kind_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->branch_kind_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->diagnostic_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->statement_node_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->local_name_id)) + string_t("\t") + cast<string_t>(__latency_fn_pure_tdd_stage_artifacts_clean_tsv_value(name)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->local_source_row_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(row->type_ref_id)) + string_t("\n"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->row_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->owner_symbol_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->source_unit_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->row_kind_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->branch_kind_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->diagnostic_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->statement_node_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->local_name_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(__latency_fn_pure_tdd_stage_artifacts_clean_tsv_value(name)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->local_source_row_id)) + string_t("\t"));
++			text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->type_ref_id)) + string_t("\n"));
+ 		}
+ 	}
+ 	return text;

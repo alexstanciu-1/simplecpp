@@ -1,0 +1,66 @@
+commit 6764cad0b10303b57c1bdeca870a83328fe693c2
+Author: Alex Stanciu <ealexs@gmail.com>
+Date:   Wed Jul 29 10:07:26 2026 +0300
+
+    Add int16 local return capability probe
+
+diff --git a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+index 23fdc27e..35cf697d 100644
+--- a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+@@ -442,6 +442,9 @@ final class llvm_text_from_plan {
+ 		if ((int)$typeRefId === (int)type_refs::bool_id()) {
+ 			return 1;
+ 		}
++		if ((int)$typeRefId === (int)type_refs::int16_id()) {
++			return 2;
++		}
+ 		if ((int)$typeRefId === (int)type_refs::int32_id()) {
+ 			return 4;
+ 		}
+@@ -453,6 +456,10 @@ final class llvm_text_from_plan {
+ 			return "  %exit_value = zext i1 %run_value to i32\n"
+ 				. "  ret i32 %exit_value\n";
+ 		}
++		if ($returnType === "i16") {
++			return "  %exit_value = sext i16 %run_value to i32\n"
++				. "  ret i32 %exit_value\n";
++		}
+ 		if ($returnType === "i32") {
+ 			return "  ret i32 %run_value\n";
+ 		}
+@@ -975,6 +982,9 @@ final class llvm_text_from_plan {
+ 		if ((int)$typeRefId === (int)type_refs::bool_id()) {
+ 			return "i1";
+ 		}
++		if ((int)$typeRefId === (int)type_refs::int16_id()) {
++			return "i16";
++		}
+ 		if ((int)$typeRefId === (int)type_refs::int32_id()) {
+ 			return "i32";
+ 		}
+diff --git a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+index 2b5d9f2c..ebd89e40 100644
+--- a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
++++ b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+@@ -53,6 +53,10 @@ final class frontend_model_builder {
+ 		return structure_row_ids::uint32_from_int(3);
+ 	}
+ 
++	public static function primitive_int16_type_ref_id(): uint32 {
++		return structure_row_ids::uint32_from_int(5);
++	}
++
+ 	public static function primitive_int32_type_ref_id(): uint32 {
+ 		return structure_row_ids::uint32_from_int(6);
+ 	}
+@@ -92,6 +96,9 @@ final class frontend_model_builder {
+ 		if ($typeName === "int64") {
+ 			return frontend_model_builder::primitive_int64_type_ref_id();
+ 		}
++		if ($typeName === "int16") {
++			return frontend_model_builder::primitive_int16_type_ref_id();
++		}
+ 		if ($typeName === "int32") {
+ 			return frontend_model_builder::primitive_int32_type_ref_id();
+ 		}

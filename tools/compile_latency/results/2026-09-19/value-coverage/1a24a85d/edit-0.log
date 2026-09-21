@@ -1,0 +1,7 @@
+[1/7] CXX expanded/__callable/compiler_project_runner_locations.o
+[2/7] CXX expanded/__callable/compiler_export_artifacts_locations.o
+[3/7] CXX expanded/__callable/pure_tdd_stage_artifacts_locations.o
+[4/7] CALLABLE_PART expanded_parts/__callable/pure_tdd_stage_artifacts_group_1.o
+[5/7] CALLABLE_PART expanded_parts/__callable/compiler_export_artifacts_group_0.o
+[6/7] CALLABLE_PART expanded_parts/__callable/compiler_project_runner_group_1.o
+[7/7] LINK main

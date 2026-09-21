@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs.hpp
++++ after/__callable/__latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ class SourceUnitFrontendWorkerPayloadInput;
+ class SourceUnitTable;
+-vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs(const shared_p<SourceUnitTable>& sourceUnits);
++vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs(shared_p<SourceUnitTable> sourceUnits);
+ }

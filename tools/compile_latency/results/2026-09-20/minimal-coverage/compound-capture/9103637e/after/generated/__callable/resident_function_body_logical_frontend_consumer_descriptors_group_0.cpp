@@ -1,0 +1,187 @@
+#include <scpp/lang/php.hpp>
+#include "__types/resident_function_body_logical_frontend_consumer_descriptors.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_uint32_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_descriptor_kind_replacement_only_id.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_views_view_kind_replacement_only_id.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_descriptor_kind_mixed_reuse_and_replacement_id.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_views_view_kind_mixed_reuse_and_replacement_id.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_descriptor_kind_blocked_id.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_views_view_kind_blocked_id.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_body_span_kind_retained_previous_body_list_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_body_span_kind_replacement_body_list_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_body_span_kind_build_new_body_list_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_status_ready_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_status_blocked_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_none_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_none_kind_id.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_logical_view_not_ready_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_no_body_spans_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_body_span_blocked_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_missing_current_snapshot_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_missing_publish_result_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+#include "__callable/__latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_missing_retained_body_list_id.hpp"
+#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+bool_t resident_function_body_logical_frontend_consumer_descriptors::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == resident_function_body_logical_frontend_consumer_descriptors::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint32_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_uint32_from_int(int_t<> value) {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::uint32_from_int", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[0]);
+	return cast<int_t<std::uint32_t>>(value);
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_descriptor_kind_replacement_only_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::descriptor_kind_replacement_only_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[1]);
+	return __latency_fn_resident_function_body_logical_frontend_views_view_kind_replacement_only_id();
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_descriptor_kind_mixed_reuse_and_replacement_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::descriptor_kind_mixed_reuse_and_replacement_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[2]);
+	return __latency_fn_resident_function_body_logical_frontend_views_view_kind_mixed_reuse_and_replacement_id();
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_descriptor_kind_blocked_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::descriptor_kind_blocked_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[3]);
+	return __latency_fn_resident_function_body_logical_frontend_views_view_kind_blocked_id();
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_body_span_kind_retained_previous_body_list_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::body_span_kind_retained_previous_body_list_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[4]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(1));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_body_span_kind_replacement_body_list_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::body_span_kind_replacement_body_list_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[5]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(2));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_body_span_kind_build_new_body_list_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::body_span_kind_build_new_body_list_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[6]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(3));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_status_ready_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::status_ready_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[7]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(1));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_status_blocked_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::status_blocked_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[8]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(2));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_none_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::blocked_reason_none_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[9]);
+	return __latency_fn_structure_row_ids_none_kind_id();
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_logical_view_not_ready_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::blocked_reason_logical_view_not_ready_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[10]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(1));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_no_body_spans_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::blocked_reason_no_body_spans_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[11]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(2));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_body_span_blocked_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::blocked_reason_body_span_blocked_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[12]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(3));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_missing_current_snapshot_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::blocked_reason_missing_current_snapshot_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[13]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(4));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_missing_publish_result_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::blocked_reason_missing_publish_result_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[14]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(5));
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[]; }
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_reason_missing_retained_body_list_id() {
+	SCPP_CALL_DEPTH_GUARD("resident_function_body_logical_frontend_consumer_descriptors::blocked_reason_missing_retained_body_list_id", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs", __latency_lines_resident_function_body_logical_frontend_consumer_descriptors[15]);
+	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(6));
+}
+
+}

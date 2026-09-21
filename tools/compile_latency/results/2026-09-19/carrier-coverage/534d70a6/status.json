@@ -1,0 +1,28 @@
+{
+  "commit": "534d70a6",
+  "sources": [
+    "compile/pipeline/pipeline_config_helpers.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "isolate_shared_carriers": true,
+  "before_hunk_setup_seconds": 2.141356870008167,
+  "forced_new_objects": [],
+  "changed_generated_inputs": [
+    "__callable/pipeline_config_helpers_group_0.cpp",
+    "__callable/pipeline_config_helpers_project_run_execution_dir_from_env.cpp",
+    "__callable/pipeline_config_helpers_run_labels_text_from_env.cpp",
+    "__callable/pipeline_config_helpers_project_root_from_env.cpp",
+    "__callable/pipeline_config_helpers_project_run_rows_tsv_from_env.cpp",
+    "__callable/pipeline_config_helpers_project_run_artifact_path_from_env.cpp",
+    "__callable/pipeline_config_helpers_project_dir_from_env.cpp",
+    "__callable/pipeline_config_helpers_run_label_from_env.cpp",
+    "__callable/pipeline_config_helpers_locations.cpp"
+  ],
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

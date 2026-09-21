@@ -1,0 +1,6 @@
+--- before/__callable/compiler_entry_backend_locations.cpp
++++ after/__callable/compiler_entry_backend_locations.cpp
+@@ -1,2 +1,2 @@
+ #include <scpp/lang/php.hpp>
+-namespace scpp { extern const int __latency_lines_compiler_entry_backend[] = {4,10,31,35,155,753}; }
++namespace scpp { extern const int __latency_lines_compiler_entry_backend[] = {4,10,31,35,155,751}; }

@@ -1,0 +1,19 @@
+{
+  "callable_surface.py": "6306f6eded4d7ade3906fc8542c10fb489e4417d6ff2f0a4beae8d109b2a745b",
+  "callable_groups.py": "a2c066e909d36e0f0e00b10de133cf07be8899dcdf3db4bf273671491a208893",
+  "expanded_layout.py": "54e9e2bb0691a7ceb52b552f74b83dd99d61f28e0013cb62160a5cdfe6598aa6",
+  "partitioned_callables.py": "aee8f9f4c26e6866dc339bff857a62577177e18299b506c4afc2d7406bb99919",
+  "layout_isolation.py": "e3cf00e95684760bb6339c803dea840634a29931b683be77001897ed5f9b75de",
+  "counter_boundary.py": "d78b4bfa9ae2f1b287e17c5360a3da00308683b7d88969a614e5fdf14599b3f1",
+  "stable_locals.py": "b16add6ed9af10d6feac96ae6f296dafe9b0841c94eea36b93e3992c86f69eee",
+  "run_coverage_replay.py": "43b8dbbf0c292aba7633b866ff54547813257009b58da9ab2623cf9cf4db5473",
+  "experiment.py": "7bb36748be7a005e2293d30c2e6c2e675ae51d0fed3ce20f0eeb5eb7bcf07ba5",
+  "adapter_surface.py": "3d346ac6b2235cdd86cf557767b0fce4b86f8a13f9dd5d9d4e4e06220fa53b0a",
+  "adapter_catalog.py": "62b17a64a538a81f375bbbb0e5594ea6889041319f244ae97c0333655b7d3da7",
+  "verify_adapter_semantics.py": "06ba33b9a43eb340dff6a61fdada655b25ce8cca8e0d98b86323003cdb5b5a66",
+  "audit_callable_ownership.py": "620888d3f7853caaf24aabdfcf9edfa28b4e42cfa14b0cde3c1d1433d3c4483c",
+  "private_composition_type.py": "c220d60ab78172a6b4e20c029973d1bf2a2a71ff2de9d0c4a8c5dbd711bdc0b2",
+  "verify_composition_type.py": "4bd6d9a1b30ae470cf1413a63fe648c074938f1d2ef86c550c0ae418982d6a36",
+  "run_corpus.py": "185b44417fb2c0d8de021a0e0d421dac686d149093868e00e82b31c3a29fbfd3",
+  "prove_type_publication_stability.py": "feb7d52ff11019c152b0226dd1379d1781b00be25b2452fb200db8db1d7339d2"
+}

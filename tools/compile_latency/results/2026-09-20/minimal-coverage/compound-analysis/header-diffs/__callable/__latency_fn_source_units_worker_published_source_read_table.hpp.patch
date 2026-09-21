@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_source_units_worker_published_source_read_table.hpp
++++ after/__callable/__latency_fn_source_units_worker_published_source_read_table.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ class CompilerProjectRunReport;
+ class SourceReadTable;
+-shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& coordinatorSourceReads, int_t<> workerCount);
++shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> coordinatorSourceReads, int_t<> workerCount);
+ }

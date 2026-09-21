@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentSourceUnitFrontendPayloadTableRow;
+struct ResidentSourceUnitFrontendTaskPayloadSegmentAdoptionPublicationRow;
+void __latency_fn_resident_source_unit_frontend_payload_tables_record_worker_payload_install_preflight_metrics(shared_p<CompilerProjectRunReport>& report, vector_t<ResidentSourceUnitFrontendPayloadTableRow>& descriptorRows, vector_t<ResidentSourceUnitFrontendTaskPayloadSegmentAdoptionPublicationRow>& adoptionPublicationRows);
+}

@@ -1,0 +1,705 @@
+{
+  "callable_owners": {
+    "prepare_outputs": "compile/01_prepare_outputs",
+    "analysis_context": "compile/artifacts/analysis_context",
+    "analysis_context_identity": "compile/artifacts/analysis_context_identity",
+    "llvm_abi_call_lowering": "compile/backend/abi_bridge/llvm_abi_call_lowering",
+    "llvm_abi_declarations": "compile/backend/abi_bridge/llvm_abi_declarations",
+    "runtime_abi_bridge": "compile/backend/abi_bridge/runtime_abi_bridge",
+    "runtime_helper_effects": "compile/backend/abi_bridge/runtime_helper_effects",
+    "string_runtime_abi": "compile/backend/abi_bridge/string_runtime_abi",
+    "backend_emission_adapter_routes": "compile/backend/backend_emission_adapter_routes",
+    "backend_emission_decisions": "compile/backend/backend_emission_decisions",
+    "backend_loop_text_emission": "compile/backend/backend_loop_text_emission",
+    "backend_module_composition": "compile/backend/backend_module_composition",
+    "backend_native_execution_adapter": "compile/backend/backend_native_execution_adapter",
+    "backend_object_link_cache": "compile/backend/backend_object_link_cache",
+    "backend_partition_readiness": "compile/backend/backend_partition_readiness",
+    "backend_preflight_requests": "compile/backend/backend_preflight_requests",
+    "compiler_entry_backend": "compile/backend/compiler_entry_backend",
+    "llvm_api_sink_preflight": "compile/backend/llvm_api_sink_preflight",
+    "llvm_api_toolchain_probe": "compile/backend/llvm_api_toolchain_probe",
+    "llvm_text_from_plan": "compile/backend/llvm_text_from_plan",
+    "local_body_lowering": "compile/backend/local_body_lowering",
+    "local_body_lowering_routes": "compile/backend/local_body_lowering_routes",
+    "lowering_plan": "compile/backend/lowering_plan",
+    "primitive_abi_adapter_matrix": "compile/backend/primitive_abi_adapter_matrix",
+    "scalar_body_backend_collection": "compile/backend/scalar_body_backend_collection",
+    "scalar_body_statement_collection": "compile/backend/scalar_body_statement_collection",
+    "scalar_loop_backend_requests": "compile/backend/scalar_loop_backend_requests",
+    "capability_consumer_plans": "compile/capabilities/capability_consumer_plans",
+    "runtime_helper_contract_readiness": "compile/capabilities/runtime_helper_contract_readiness",
+    "storage_lifetime_readiness": "compile/capabilities/storage_lifetime_readiness",
+    "type_capability_readiness": "compile/capabilities/type_capability_readiness",
+    "type_traits": "compile/capabilities/type_traits",
+    "control_flow_dataflows": "compile/control_flow/control_flow_dataflows",
+    "control_flow_graphs": "compile/control_flow/control_flow_graphs",
+    "control_flow_transfers": "compile/control_flow/control_flow_transfers",
+    "frontend_model_builder": "compile/frontend_adapter/phs/frontend_model_builder",
+    "parser_cursor": "compile/frontend_adapter/phs/parser_cursor",
+    "parser_diagnostics": "compile/frontend_adapter/phs/parser_diagnostics",
+    "parser_state": "compile/frontend_adapter/phs/parser_state",
+    "phs_tokenizer": "compile/frontend_adapter/phs/phs_tokenizer",
+    "token_kinds": "compile/frontend_adapter/phs/token_kinds",
+    "deterministic_work_ordering": "compile/incremental/deterministic_work_ordering",
+    "mt_stage_evaluation": "compile/incremental/mt_stage_evaluation",
+    "partition_merge_reductions": "compile/incremental/partition_merge_reductions",
+    "partition_readiness": "compile/incremental/partition_readiness",
+    "resident_body_dependencies": "compile/incremental/resident_body_dependencies",
+    "resident_change_events": "compile/incremental/resident_change_events",
+    "resident_daemon_file_ipc": "compile/incremental/resident_daemon_file_ipc",
+    "resident_daemon_incremental_proof": "compile/incremental/resident_daemon_incremental_proof",
+    "resident_definition_granularity": "compile/incremental/resident_definition_granularity",
+    "resident_dependency_edges": "compile/incremental/resident_dependency_edges",
+    "resident_dirty_propagation": "compile/incremental/resident_dirty_propagation",
+    "resident_frontend_node_lists": "compile/incremental/resident_frontend_node_lists",
+    "resident_function_body_incremental_acceptance": "compile/incremental/resident_function_body_incremental_acceptance",
+    "resident_function_body_local_parse_proofs": "compile/incremental/resident_function_body_local_parse_proofs",
+    "resident_function_body_logical_frontend_consumer_descriptors": "compile/incremental/resident_function_body_logical_frontend_consumer_descriptors",
+    "resident_function_body_logical_frontend_reference_candidates": "compile/incremental/resident_function_body_logical_frontend_reference_candidates",
+    "resident_function_body_logical_frontend_views": "compile/incremental/resident_function_body_logical_frontend_views",
+    "resident_function_body_mixed_frontend_assembly_proofs": "compile/incremental/resident_function_body_mixed_frontend_assembly_proofs",
+    "resident_function_body_ownership": "compile/incremental/resident_function_body_ownership",
+    "resident_function_body_parse_slices": "compile/incremental/resident_function_body_parse_slices",
+    "resident_function_body_publish_repoint_preflights": "compile/incremental/resident_function_body_publish_repoint_preflights",
+    "resident_function_body_row_list_publish_plans": "compile/incremental/resident_function_body_row_list_publish_plans",
+    "resident_function_body_row_list_publish_results": "compile/incremental/resident_function_body_row_list_publish_results",
+    "resident_function_body_source_unit_repoint_proofs": "compile/incremental/resident_function_body_source_unit_repoint_proofs",
+    "resident_function_body_stable_node_remap_proofs": "compile/incremental/resident_function_body_stable_node_remap_proofs",
+    "resident_function_body_summary_project_references": "compile/incremental/resident_function_body_summary_project_references",
+    "resident_function_body_work_decisions": "compile/incremental/resident_function_body_work_decisions",
+    "resident_project_symbol_name_lookups": "compile/incremental/resident_project_symbol_name_lookups",
+    "resident_public_surface_incremental_acceptance": "compile/incremental/resident_public_surface_incremental_acceptance",
+    "resident_recompute_targets": "compile/incremental/resident_recompute_targets",
+    "resident_reverse_dependencies": "compile/incremental/resident_reverse_dependencies",
+    "resident_reverse_dependency_indexes": "compile/incremental/resident_reverse_dependency_indexes",
+    "resident_source_unit_frontend_payload_tables": "compile/incremental/resident_source_unit_frontend_payload_tables",
+    "resident_source_unit_frontend_states": "compile/incremental/resident_source_unit_frontend_states",
+    "resident_source_unit_symbol_states": "compile/incremental/resident_source_unit_symbol_states",
+    "resident_token_lists": "compile/incremental/resident_token_lists",
+    "resident_transactions": "compile/incremental/resident_transactions",
+    "scheduler_api": "compile/incremental/scheduler_api",
+    "source_unit_early_skip": "compile/incremental/source_unit_early_skip",
+    "source_unit_frontend_scheduler": "compile/incremental/source_unit_frontend_scheduler",
+    "source_unit_frontend_work_decisions": "compile/incremental/source_unit_frontend_work_decisions",
+    "callable_contract_identity": "compile/model/callable_contract_identity",
+    "dependency_graph_identity": "compile/model/dependency_graph_identity",
+    "frontend_body_summaries": "compile/model/frontend_body_summaries",
+    "project_callable_contracts": "compile/model/project_callable_contracts",
+    "project_dependency_graph": "compile/model/project_dependency_graph",
+    "project_reference_resolution": "compile/model/project_reference_resolution",
+    "project_symbol_identity": "compile/model/project_symbol_identity",
+    "project_symbol_index": "compile/model/project_symbol_index",
+    "reference_identity": "compile/model/reference_identity",
+    "source_buffers": "compile/model/source_buffers",
+    "source_identity": "compile/model/source_identity",
+    "source_units": "compile/model/source_units",
+    "type_ref_identity": "compile/model/type_ref_identity",
+    "type_refs": "compile/model/type_refs",
+    "operation_readiness": "compile/operations/operation_readiness",
+    "compiler_pipeline_runner": "compile/pipeline/compiler_pipeline_runner",
+    "compiler_project_runner": "compile/pipeline/compiler_project_runner",
+    "pipeline_config_helpers": "compile/pipeline/pipeline_config_helpers",
+    "project_manifest": "compile/pipeline/project_manifest",
+    "semantic_body_capability_consumers": "compile/semantic/semantic_body_capability_consumers",
+    "artifact_writes": "compile/support/artifact_writes",
+    "compiler_execution_artifacts": "compile/support/compiler_execution_artifacts",
+    "compiler_export_artifacts": "compile/support/compiler_export_artifacts",
+    "compiler_profile_events": "compile/support/compiler_profile_events",
+    "compiler_project_run_row_artifacts": "compile/support/compiler_project_run_row_artifacts",
+    "debug_profile_gate_results": "compile/support/debug_profile_gate_results",
+    "mt_publication_metrics": "compile/support/mt_publication_metrics",
+    "output_paths": "compile/support/output_paths",
+    "performance_memory_estimates": "compile/support/performance_memory_estimates",
+    "production_mt_heartbeat": "compile/support/production_mt_heartbeat",
+    "proof_metrics": "compile/support/proof_metrics",
+    "pure_tdd_stage_artifacts": "compile/support/pure_tdd_stage_artifacts",
+    "resident_snapshots": "compile/support/resident_snapshots",
+    "source_files": "compile/support/source_files",
+    "gate_result_debug_helpers": "debug/gate_result_debug_helpers",
+    "semantic_callable_candidates": "generated/semantic_callable_candidates",
+    "semantic_conversion_lookup": "generated/semantic_conversion_lookup",
+    "semantic_lookup_manifest_generated": "generated/semantic_lookup_manifest_generated",
+    "semantic_module_api_lookup": "generated/semantic_module_api_lookup",
+    "semantic_operator_lookup": "generated/semantic_operator_lookup",
+    "semantic_runtime_abi_bridge": "generated/semantic_runtime_abi_bridge",
+    "semantic_runtime_abi_declarations": "generated/semantic_runtime_abi_declarations",
+    "semantic_type_ref_providers": "generated/semantic_type_ref_providers",
+    "gate_result_inspection_helpers": "inspection/gate_result_inspection_helpers",
+    "gate_profile_helpers": "profile/gate_profile_helpers",
+    "backend_request_row_lists": "structure_kernel/backend_request_row_lists",
+    "frontend_model_tables": "structure_kernel/frontend_model_tables",
+    "frontend_node_lists": "structure_kernel/frontend_node_lists",
+    "structure_row_ids": "structure_kernel/row_ids",
+    "row_segment_policy": "structure_kernel/row_segment_policy",
+    "token_row_lists": "structure_kernel/token_row_lists",
+    "token_tables": "structure_kernel/token_tables"
+  },
+  "partition_owners": [
+    "compile/model/source_units",
+    "compile/incremental/resident_source_unit_frontend_payload_tables",
+    "compile/backend/llvm_text_from_plan",
+    "compile/backend/backend_object_link_cache",
+    "compile/backend/lowering_plan",
+    "compile/capabilities/storage_lifetime_readiness",
+    "compile/capabilities/type_capability_readiness",
+    "compile/model/project_reference_resolution"
+  ],
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "rejected_class_surfaces": [
+    {
+      "owner": "BackendLoopTextEmissionState",
+      "source": "compile/backend/backend_loop_text_emission.hpp",
+      "reason": "Data or unsupported members: BackendLoopTextEmissionState"
+    },
+    {
+      "owner": "NativeExecutionArtifact",
+      "source": "compile/backend/backend_native_execution_adapter.hpp",
+      "reason": "Data or unsupported members: NativeExecutionArtifact"
+    },
+    {
+      "owner": "ObjectOutputWorkerInput",
+      "source": "compile/backend/backend_object_link_cache.hpp",
+      "reason": "Data or unsupported members: ObjectOutputWorkerInput"
+    },
+    {
+      "owner": "ObjectOutputWorkerResult",
+      "source": "compile/backend/backend_object_link_cache.hpp",
+      "reason": "Data or unsupported members: ObjectOutputWorkerResult"
+    },
+    {
+      "owner": "EmissionLLVMWorkerInput",
+      "source": "compile/backend/llvm_text_from_plan.hpp",
+      "reason": "Data or unsupported members: EmissionLLVMWorkerInput"
+    },
+    {
+      "owner": "BackendModuleCompositionInput",
+      "source": "compile/backend/llvm_text_from_plan.hpp",
+      "reason": "Data or unsupported members: BackendModuleCompositionInput"
+    },
+    {
+      "owner": "BackendFunctionCompositionInput",
+      "source": "compile/backend/llvm_text_from_plan.hpp",
+      "reason": "Data or unsupported members: BackendFunctionCompositionInput"
+    },
+    {
+      "owner": "EmissionLLVMWorkerResult",
+      "source": "compile/backend/llvm_text_from_plan.hpp",
+      "reason": "Data or unsupported members: EmissionLLVMWorkerResult"
+    },
+    {
+      "owner": "EmissionLLVMModuleCompositionSnapshot",
+      "source": "compile/backend/llvm_text_from_plan.hpp",
+      "reason": "Data or unsupported members: EmissionLLVMModuleCompositionSnapshot"
+    },
+    {
+      "owner": "BackendLoweringWorkerInput",
+      "source": "compile/backend/lowering_plan.hpp",
+      "reason": "Data or unsupported members: BackendLoweringWorkerInput"
+    },
+    {
+      "owner": "BackendLoweringWorkerResult",
+      "source": "compile/backend/lowering_plan.hpp",
+      "reason": "Data or unsupported members: BackendLoweringWorkerResult"
+    },
+    {
+      "owner": "ScalarBodyBackendCollection",
+      "source": "compile/backend/scalar_body_backend_collection.hpp",
+      "reason": "Data or unsupported members: ScalarBodyBackendCollection"
+    },
+    {
+      "owner": "ScalarLoopBodyStatementSequence",
+      "source": "compile/backend/scalar_body_statement_collection.hpp",
+      "reason": "Data or unsupported members: ScalarLoopBodyStatementSequence"
+    },
+    {
+      "owner": "ScalarIfBranchOutcome",
+      "source": "compile/backend/scalar_body_statement_collection.hpp",
+      "reason": "Data or unsupported members: ScalarIfBranchOutcome"
+    },
+    {
+      "owner": "ScalarConditionOperand",
+      "source": "compile/backend/scalar_body_statement_collection.hpp",
+      "reason": "Data or unsupported members: ScalarConditionOperand"
+    },
+    {
+      "owner": "StorageLifetimeWorkerInput",
+      "source": "compile/capabilities/storage_lifetime_readiness.hpp",
+      "reason": "Data or unsupported members: StorageLifetimeWorkerInput"
+    },
+    {
+      "owner": "StorageLifetimeWorkerResult",
+      "source": "compile/capabilities/storage_lifetime_readiness.hpp",
+      "reason": "Data or unsupported members: StorageLifetimeWorkerResult"
+    },
+    {
+      "owner": "CapabilityReadinessWorkerInput",
+      "source": "compile/capabilities/type_capability_readiness.hpp",
+      "reason": "Data or unsupported members: CapabilityReadinessWorkerInput"
+    },
+    {
+      "owner": "CapabilityReadinessWorkerResult",
+      "source": "compile/capabilities/type_capability_readiness.hpp",
+      "reason": "Data or unsupported members: CapabilityReadinessWorkerResult"
+    },
+    {
+      "owner": "ControlFlowLocalWriteSet",
+      "source": "compile/control_flow/control_flow_dataflows.hpp",
+      "reason": "Data or unsupported members: ControlFlowLocalWriteSet"
+    },
+    {
+      "owner": "ControlTransferTargetDecision",
+      "source": "compile/control_flow/control_flow_transfers.hpp",
+      "reason": "Data or unsupported members: ControlTransferTargetDecision"
+    },
+    {
+      "owner": "SourceUnitFrontendWorkerPayloadInput",
+      "source": "compile/incremental/resident_source_unit_frontend_payload_tables.hpp",
+      "reason": "Data or unsupported members: SourceUnitFrontendWorkerPayloadInput"
+    },
+    {
+      "owner": "SourceUnitFrontendWorkerFrontendPayloadCarrier",
+      "source": "compile/incremental/resident_source_unit_frontend_payload_tables.hpp",
+      "reason": "Data or unsupported members: SourceUnitFrontendWorkerFrontendPayloadCarrier"
+    },
+    {
+      "owner": "SourceUnitFrontendWorkerBuildResult",
+      "source": "compile/incremental/resident_source_unit_frontend_payload_tables.hpp",
+      "reason": "Data or unsupported members: SourceUnitFrontendWorkerBuildResult"
+    },
+    {
+      "owner": "SourceUnitFrontendWorkerLockedPublicationStats",
+      "source": "compile/incremental/resident_source_unit_frontend_payload_tables.hpp",
+      "reason": "Data or unsupported members: SourceUnitFrontendWorkerLockedPublicationStats"
+    },
+    {
+      "owner": "ReferenceContractWorkerInput",
+      "source": "compile/model/project_reference_resolution.hpp",
+      "reason": "Data or unsupported members: ReferenceContractWorkerInput"
+    },
+    {
+      "owner": "SourceReadWorkerProbeInput",
+      "source": "compile/model/source_units.hpp",
+      "reason": "Data or unsupported members: SourceReadWorkerProbeInput"
+    },
+    {
+      "owner": "SourceReadWorkerResult",
+      "source": "compile/model/source_units.hpp",
+      "reason": "Data or unsupported members: SourceReadWorkerResult"
+    },
+    {
+      "owner": "SourceReadWorkerPublicationStats",
+      "source": "compile/model/source_units.hpp",
+      "reason": "Data or unsupported members: SourceReadWorkerPublicationStats"
+    },
+    {
+      "owner": "SemanticCallableCandidateRow",
+      "source": "generated/semantic_callable_candidates.hpp",
+      "reason": "Data or unsupported members: SemanticCallableCandidateRow"
+    },
+    {
+      "owner": "SemanticConversionLookupRow",
+      "source": "generated/semantic_conversion_lookup.hpp",
+      "reason": "Data or unsupported members: SemanticConversionLookupRow"
+    },
+    {
+      "owner": "SemanticModuleApiLookupRow",
+      "source": "generated/semantic_module_api_lookup.hpp",
+      "reason": "Data or unsupported members: SemanticModuleApiLookupRow"
+    },
+    {
+      "owner": "SemanticOperatorLookupRow",
+      "source": "generated/semantic_operator_lookup.hpp",
+      "reason": "Data or unsupported members: SemanticOperatorLookupRow"
+    },
+    {
+      "owner": "SemanticRuntimeAbiBridgeDescriptorRow",
+      "source": "generated/semantic_runtime_abi_bridge.hpp",
+      "reason": "Data or unsupported members: SemanticRuntimeAbiBridgeDescriptorRow"
+    },
+    {
+      "owner": "SemanticRuntimeAbiBridgeFamilyRow",
+      "source": "generated/semantic_runtime_abi_bridge.hpp",
+      "reason": "Data or unsupported members: SemanticRuntimeAbiBridgeFamilyRow"
+    },
+    {
+      "owner": "SemanticRuntimeAbiHelperDeclarationRow",
+      "source": "generated/semantic_runtime_abi_declarations.hpp",
+      "reason": "Data or unsupported members: SemanticRuntimeAbiHelperDeclarationRow"
+    },
+    {
+      "owner": "FrontendModelKernelCounters",
+      "source": "structure_kernel/frontend_model_kernel_counters.hpp",
+      "reason": "Data or unsupported members: FrontendModelKernelCounters"
+    },
+    {
+      "owner": "AnalysisContext",
+      "source": "structures/artifacts/analysis_context.hpp",
+      "reason": "Data or unsupported members: AnalysisContext"
+    },
+    {
+      "owner": "ProofMetricRow",
+      "source": "structures/artifacts/proof_metric_row.hpp",
+      "reason": "Data or unsupported members: ProofMetricRow"
+    },
+    {
+      "owner": "BackendEmissionAdapterDescriptorArtifact",
+      "source": "structures/backend/backend_emission_adapter_descriptor_artifact.hpp",
+      "reason": "Data or unsupported members: BackendEmissionAdapterDescriptorArtifact"
+    },
+    {
+      "owner": "BackendEmissionAdapterDescriptorRow",
+      "source": "structures/backend/backend_emission_adapter_descriptor_row.hpp",
+      "reason": "Data or unsupported members: BackendEmissionAdapterDescriptorRow"
+    },
+    {
+      "owner": "BackendLocalImmediateTextOperandRow",
+      "source": "structures/backend/backend_local_immediate_text_operand_row.hpp",
+      "reason": "Data or unsupported members: BackendLocalImmediateTextOperandRow"
+    },
+    {
+      "owner": "BackendLocalSlot",
+      "source": "structures/backend/backend_local_slot.hpp",
+      "reason": "Data or unsupported members: BackendLocalSlot"
+    },
+    {
+      "owner": "BackendLocalSlots",
+      "source": "structures/backend/backend_local_slots.hpp",
+      "reason": "Data or unsupported members: BackendLocalSlots"
+    },
+    {
+      "owner": "BackendObjectLinkCacheArtifact",
+      "source": "structures/backend/backend_object_link_cache_artifact.hpp",
+      "reason": "Data or unsupported members: BackendObjectLinkCacheArtifact"
+    },
+    {
+      "owner": "BackendPartitionExecutionArtifact",
+      "source": "structures/backend/backend_partition_execution_artifact.hpp",
+      "reason": "Data or unsupported members: BackendPartitionExecutionArtifact"
+    },
+    {
+      "owner": "BackendRequestAuthorizationArtifact",
+      "source": "structures/backend/backend_request_authorization_artifact.hpp",
+      "reason": "Data or unsupported members: BackendRequestAuthorizationArtifact"
+    },
+    {
+      "owner": "BackendRequestRowList",
+      "source": "structures/backend/backend_request_row_list.hpp",
+      "reason": "Data or unsupported members: BackendRequestRowList"
+    },
+    {
+      "owner": "BackendStackValue",
+      "source": "structures/backend/backend_stack_value.hpp",
+      "reason": "Data or unsupported members: BackendStackValue"
+    },
+    {
+      "owner": "BackendStringLiteralOperandRow",
+      "source": "structures/backend/backend_string_literal_operand_row.hpp",
+      "reason": "Data or unsupported members: BackendStringLiteralOperandRow"
+    },
+    {
+      "owner": "BackendValueStack",
+      "source": "structures/backend/backend_value_stack.hpp",
+      "reason": "Data or unsupported members: BackendValueStack"
+    },
+    {
+      "owner": "LlvmPrimitiveAbiDescriptorRow",
+      "source": "structures/backend/llvm_primitive_abi_descriptor_row.hpp",
+      "reason": "Data or unsupported members: LlvmPrimitiveAbiDescriptorRow"
+    },
+    {
+      "owner": "LocalBodyLoweringRouteDescriptorArtifact",
+      "source": "structures/backend/local_body_lowering_route_descriptor_artifact.hpp",
+      "reason": "Data or unsupported members: LocalBodyLoweringRouteDescriptorArtifact"
+    },
+    {
+      "owner": "LocalBodyLoweringRouteDescriptorRow",
+      "source": "structures/backend/local_body_lowering_route_descriptor_row.hpp",
+      "reason": "Data or unsupported members: LocalBodyLoweringRouteDescriptorRow"
+    },
+    {
+      "owner": "LoweringPlan",
+      "source": "structures/backend/lowering_plan.hpp",
+      "reason": "Data or unsupported members: LoweringPlan"
+    },
+    {
+      "owner": "PerSymbolLoweringPlanArtifact",
+      "source": "structures/backend/per_symbol_lowering_plan_artifact.hpp",
+      "reason": "Data or unsupported members: PerSymbolLoweringPlanArtifact"
+    },
+    {
+      "owner": "PrimitiveAbiAdapterMatrixArtifact",
+      "source": "structures/backend/primitive_abi_adapter_matrix_artifact.hpp",
+      "reason": "Data or unsupported members: PrimitiveAbiAdapterMatrixArtifact"
+    },
+    {
+      "owner": "PrimitiveAbiAdapterRow",
+      "source": "structures/backend/primitive_abi_adapter_row.hpp",
+      "reason": "Data or unsupported members: PrimitiveAbiAdapterRow"
+    },
+    {
+      "owner": "ProjectSymbolBodyLookupArtifact",
+      "source": "structures/backend/project_symbol_body_lookup_artifact.hpp",
+      "reason": "Data or unsupported members: ProjectSymbolBodyLookupArtifact"
+    },
+    {
+      "owner": "RuntimeAbiBridgeArtifact",
+      "source": "structures/backend/runtime_abi_bridge_artifact.hpp",
+      "reason": "Data or unsupported members: RuntimeAbiBridgeArtifact"
+    },
+    {
+      "owner": "CapabilityConsumerPlan",
+      "source": "structures/capabilities/capability_consumer_plan.hpp",
+      "reason": "Data or unsupported members: CapabilityConsumerPlan"
+    },
+    {
+      "owner": "CapabilityCoverageArtifact",
+      "source": "structures/capabilities/capability_coverage_artifact.hpp",
+      "reason": "Data or unsupported members: CapabilityCoverageArtifact"
+    },
+    {
+      "owner": "ConditionTruthinessPolicyArtifact",
+      "source": "structures/capabilities/condition_truthiness_policy_artifact.hpp",
+      "reason": "Data or unsupported members: ConditionTruthinessPolicyArtifact"
+    },
+    {
+      "owner": "ContractCoverageArtifact",
+      "source": "structures/capabilities/contract_coverage_artifact.hpp",
+      "reason": "Data or unsupported members: ContractCoverageArtifact"
+    },
+    {
+      "owner": "RuntimeHelperContractReadinessArtifact",
+      "source": "structures/capabilities/runtime_helper_contract_readiness_artifact.hpp",
+      "reason": "Data or unsupported members: RuntimeHelperContractReadinessArtifact"
+    },
+    {
+      "owner": "RuntimeHelperContractReadinessRow",
+      "source": "structures/capabilities/runtime_helper_contract_readiness_row.hpp",
+      "reason": "Data or unsupported members: RuntimeHelperContractReadinessRow"
+    },
+    {
+      "owner": "ControlFlowDataflowArtifact",
+      "source": "structures/control_flow/control_flow_dataflow_artifact.hpp",
+      "reason": "Data or unsupported members: ControlFlowDataflowArtifact"
+    },
+    {
+      "owner": "ControlFlowGraphArtifact",
+      "source": "structures/control_flow/control_flow_graph_artifact.hpp",
+      "reason": "Data or unsupported members: ControlFlowGraphArtifact"
+    },
+    {
+      "owner": "FrontendBodySummaryArtifact",
+      "source": "structures/frontend/frontend_body_summary_artifact.hpp",
+      "reason": "Data or unsupported members: FrontendBodySummaryArtifact"
+    },
+    {
+      "owner": "FrontendModel",
+      "source": "structures/frontend/frontend_model.hpp",
+      "reason": "Data or unsupported members: FrontendModel"
+    },
+    {
+      "owner": "FrontendNodeList",
+      "source": "structures/frontend/frontend_node_list.hpp",
+      "reason": "Data or unsupported members: FrontendNodeList"
+    },
+    {
+      "owner": "FrontendNodeListOwner",
+      "source": "structures/frontend/frontend_node_list_owner.hpp",
+      "reason": "Data or unsupported members: FrontendNodeListOwner"
+    },
+    {
+      "owner": "FrontendNodeSegment",
+      "source": "structures/frontend/frontend_node_segment.hpp",
+      "reason": "Data or unsupported members: FrontendNodeSegment"
+    },
+    {
+      "owner": "ParserDiagnosticTable",
+      "source": "structures/frontend/parser_diagnostic_table.hpp",
+      "reason": "Data or unsupported members: ParserDiagnosticTable"
+    },
+    {
+      "owner": "PhsParserState",
+      "source": "structures/frontend/phs_parser_state.hpp",
+      "reason": "Data or unsupported members: PhsParserState"
+    },
+    {
+      "owner": "TokenRowList",
+      "source": "structures/frontend/token_row_list.hpp",
+      "reason": "Data or unsupported members: TokenRowList"
+    },
+    {
+      "owner": "TokenRowSegment",
+      "source": "structures/frontend/token_row_segment.hpp",
+      "reason": "Data or unsupported members: TokenRowSegment"
+    },
+    {
+      "owner": "TokenStream",
+      "source": "structures/frontend/token_stream.hpp",
+      "reason": "Data or unsupported members: TokenStream"
+    },
+    {
+      "owner": "DeterministicWorkOrderArtifact",
+      "source": "structures/incremental/deterministic_work_order_artifact.hpp",
+      "reason": "Data or unsupported members: DeterministicWorkOrderArtifact"
+    },
+    {
+      "owner": "MtStageEvaluationArtifact",
+      "source": "structures/incremental/mt_stage_evaluation_artifact.hpp",
+      "reason": "Data or unsupported members: MtStageEvaluationArtifact"
+    },
+    {
+      "owner": "PartitionMergeReductionArtifact",
+      "source": "structures/incremental/partition_merge_reduction_artifact.hpp",
+      "reason": "Data or unsupported members: PartitionMergeReductionArtifact"
+    },
+    {
+      "owner": "PartitionReadinessArtifact",
+      "source": "structures/incremental/partition_readiness_artifact.hpp",
+      "reason": "Data or unsupported members: PartitionReadinessArtifact"
+    },
+    {
+      "owner": "ProjectIncrementalSnapshotDiffArtifact",
+      "source": "structures/incremental/project_incremental_snapshot_diff_artifact.hpp",
+      "reason": "Data or unsupported members: ProjectIncrementalSnapshotDiffArtifact"
+    },
+    {
+      "owner": "ResidentDaemonIpcArtifact",
+      "source": "structures/incremental/resident_daemon_ipc_artifact.hpp",
+      "reason": "Data or unsupported members: ResidentDaemonIpcArtifact"
+    },
+    {
+      "owner": "SchedulerApiArtifact",
+      "source": "structures/incremental/scheduler_api_artifact.hpp",
+      "reason": "Data or unsupported members: SchedulerApiArtifact"
+    },
+    {
+      "owner": "PrimitiveTypeRefSpellingDescriptorRow",
+      "source": "structures/model/primitive_type_ref_spelling_descriptor_row.hpp",
+      "reason": "Data or unsupported members: PrimitiveTypeRefSpellingDescriptorRow"
+    },
+    {
+      "owner": "CompilerProjectRunReport",
+      "source": "structures/pipeline/compiler_project_run_report.hpp",
+      "reason": "Data or unsupported members: CompilerProjectRunReport"
+    },
+    {
+      "owner": "PipelineBatchConfig",
+      "source": "structures/pipeline/pipeline_batch_config.hpp",
+      "reason": "Data or unsupported members: PipelineBatchConfig"
+    },
+    {
+      "owner": "PipelineConfig",
+      "source": "structures/pipeline/pipeline_config.hpp",
+      "reason": "Data or unsupported members: PipelineConfig"
+    },
+    {
+      "owner": "ProjectManifest",
+      "source": "structures/pipeline/project_manifest.hpp",
+      "reason": "Data or unsupported members: ProjectManifest"
+    },
+    {
+      "owner": "ProjectCallableContractArtifact",
+      "source": "structures/project/project_callable_contract_artifact.hpp",
+      "reason": "Data or unsupported members: ProjectCallableContractArtifact"
+    },
+    {
+      "owner": "ProjectFrontendModel",
+      "source": "structures/project/project_frontend_model.hpp",
+      "reason": "Data or unsupported members: ProjectFrontendModel"
+    },
+    {
+      "owner": "ProjectReferenceResolution",
+      "source": "structures/project/project_reference_resolution.hpp",
+      "reason": "Data or unsupported members: ProjectReferenceResolution"
+    },
+    {
+      "owner": "ProjectSymbolIndex",
+      "source": "structures/project/project_symbol_index.hpp",
+      "reason": "Data or unsupported members: ProjectSymbolIndex"
+    },
+    {
+      "owner": "SourceReadTable",
+      "source": "structures/project/source_read_table.hpp",
+      "reason": "Data or unsupported members: SourceReadTable"
+    },
+    {
+      "owner": "SourceUnitTable",
+      "source": "structures/project/source_unit_table.hpp",
+      "reason": "Data or unsupported members: SourceUnitTable"
+    },
+    {
+      "owner": "ArtifactWriteReportRecord",
+      "source": "structures/support/artifact_write_report_record.hpp",
+      "reason": "Data or unsupported members: ArtifactWriteReportRecord"
+    }
+  ],
+  "counter_boundary": true,
+  "composition_type_publication": {
+    "type": "BackendFunctionCompositionInput",
+    "present": true,
+    "header": "__private_types/BackendFunctionCompositionInput.hpp",
+    "callable_forward_declarations": [
+      "__callable/__latency_fn_llvm_text_from_plan_function_composition_input_from_call_arguments_text.hpp",
+      "__callable/__latency_fn_llvm_text_from_plan_function_composition_input_from_local_reference_argument.hpp",
+      "__callable/__latency_fn_llvm_text_from_plan_function_text_from_call_composition.hpp"
+    ],
+    "cpp_consumers": [
+      "__callable/backend_module_composition_group_0.cpp",
+      "__callable/llvm_text_from_plan_group_18.cpp",
+      "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp"
+    ],
+    "representation": "original class bytes; shared_p interfaces unchanged"
+  },
+  "shared_carrier_publication": [
+    {
+      "type": "EmissionLLVMWorkerInput",
+      "present": true,
+      "header": "__private_types/EmissionLLVMWorkerInput.hpp",
+      "callable_forward_declarations": [
+        "__callable/__latency_fn_llvm_text_from_plan_emission_llvm_worker_input_from_rows.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_lowering_plan_from_worker_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_record_emission_llvm_worker_handoff_metrics.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_request_artifact_from_worker_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_snapshot_entry_plan_into_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_snapshot_entry_requests_into_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_snapshot_target_plan_into_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_snapshot_target_requests_into_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_target_lowering_plan_from_worker_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_target_request_artifact_from_worker_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_worker_result_for_input.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_worker_results.hpp"
+      ],
+      "cpp_consumers": [
+        "__callable/llvm_text_from_plan_group_20.cpp",
+        "__callable/llvm_text_from_plan_group_21.cpp",
+        "__callable/llvm_text_from_plan_group_22.cpp",
+        "__callable/llvm_text_from_plan_group_23.cpp",
+        "__callable/llvm_text_from_plan_group_24.cpp",
+        "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp"
+      ],
+      "representation": "original class bytes; shared_p interfaces unchanged"
+    },
+    {
+      "type": "EmissionLLVMModuleCompositionSnapshot",
+      "present": true,
+      "header": "__private_types/EmissionLLVMModuleCompositionSnapshot.hpp",
+      "callable_forward_declarations": [
+        "__callable/__latency_fn_llvm_text_from_plan_direct_call_module_composition_snapshot.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_emission_llvm_worker_input_from_rows.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_empty_module_composition_snapshot.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_fixed_arg_parameter_add_module_composition_snapshot.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_record_emission_llvm_publication_metrics.hpp",
+        "__callable/__latency_fn_llvm_text_from_plan_record_emission_llvm_publication_metrics__exec.hpp"
+      ],
+      "cpp_consumers": [
+        "__callable/llvm_text_from_plan_group_14.cpp",
+        "__callable/llvm_text_from_plan_group_22.cpp",
+        "__callable/llvm_text_from_plan_group_24.cpp",
+        "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp"
+      ],
+      "representation": "original class bytes; shared_p interfaces unchanged"
+    }
+  ],
+  "native_class_definitions": "identical between partition-consumer modes; added callable owners change declarations and require dependency-driven rebuild"
+}

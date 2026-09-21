@@ -1,0 +1,28 @@
+{
+  "reports": {
+    "previous-policy": [
+      {
+        "run_id": "1",
+        "run_label": "int64_local_minus_return",
+        "status": "blocked_current_layers",
+        "active_layer": "backend_text",
+        "blocked_reason_id": "5",
+        "completed_layer_id": "0",
+        "blocked_layer_id": "4"
+      }
+    ],
+    "candidate-restored": [
+      {
+        "run_id": "1",
+        "run_label": "int64_local_minus_return",
+        "status": "blocked_current_layers",
+        "active_layer": "backend_text",
+        "blocked_reason_id": "5",
+        "completed_layer_id": "0",
+        "blocked_layer_id": "4"
+      }
+    ]
+  },
+  "equal": true,
+  "scope": "existing blocked-layer/reason export from two retained compiler executables; no instrumentation"
+}

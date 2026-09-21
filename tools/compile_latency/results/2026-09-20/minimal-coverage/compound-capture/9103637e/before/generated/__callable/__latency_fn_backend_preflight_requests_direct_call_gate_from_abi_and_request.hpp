@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct BackendRequestAuthorizationRow;
+struct CallableAbiReadinessRow;
+struct DirectCallAuthorizationGateRow;
+DirectCallAuthorizationGateRow __latency_fn_backend_preflight_requests_direct_call_gate_from_abi_and_request(CallableAbiReadinessRow abi, BackendRequestAuthorizationRow request);
+}

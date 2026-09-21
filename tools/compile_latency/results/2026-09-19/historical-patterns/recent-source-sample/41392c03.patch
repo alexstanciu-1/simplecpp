@@ -1,0 +1,164 @@
+commit 41392c03bd2c5149a20fe5503135aef58e23cbf9
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:14:03 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:14:03 2026 +0300
+
+    Route LLVM module composition through input rows
+
+diff --git a/compiler/src/compile/backend/backend_module_composition.phs b/compiler/src/compile/backend/backend_module_composition.phs
+index 8af2d422..83b17159 100644
+--- a/compiler/src/compile/backend/backend_module_composition.phs
++++ b/compiler/src/compile/backend/backend_module_composition.phs
+@@ -117,12 +117,15 @@ final class backend_module_composition {
+ 		$targetFunctionText string = backend_module_composition::function_text_for_symbol($symbols, $targetSymbol, $model, $sourceText, 0);
+ 		if ($targetFunctionText !== "") {
+ 			$targetName string = llvm_text_from_plan::llvm_function_name_for_symbol($symbols, $targetSymbol->symbol_id);
+-			return llvm_text_from_plan::module_text_from_entry_call_with_target_text($entryEmission, $entryRequests, $targetFunctionText, $targetName);
++			$composition BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_text($targetFunctionText, $targetName);
++			return llvm_text_from_plan::module_text_from_target_text_composition($entryEmission, $entryRequests, $composition);
+ 		}
+ 		$targetRequests BackendRequestAuthorizationArtifact = new BackendRequestAuthorizationArtifact();
+ 		$targetPlan LoweringPlan = new LoweringPlan();
+ 		$targetCoverage CapabilityCoverageArtifact = new CapabilityCoverageArtifact();
+ 		$targetEmission BackendEmissionDecisionArtifact = compiler_entry_backend::backend_emission_for_entry($symbols, $targetSymbol, $model, $sourceText, $targetRequests, $targetPlan, $targetCoverage);
+-		return llvm_text_from_plan::module_text_from_entry_and_target_emissions($entryEmission, $entryRequests, $targetEmission, $targetRequests, $symbols);
++		$targetName string = llvm_text_from_plan::llvm_function_name_for_symbol($symbols, $targetSymbol->symbol_id);
++		$composition BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_emission($targetName);
++		return llvm_text_from_plan::module_text_from_target_emission_composition($entryEmission, $entryRequests, $targetEmission, $targetRequests, $composition);
+ 	}
+ }
+diff --git a/compiler/src/compile/backend/llvm_text_from_plan.phs b/compiler/src/compile/backend/llvm_text_from_plan.phs
+index 33fcf915..6b8ed0e8 100644
+--- a/compiler/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/src/compile/backend/llvm_text_from_plan.phs
+@@ -161,6 +161,12 @@ final class EmissionLLVMWorkerInput {
+ 	public int $target_plan_control_flow_operand_count = 0;
+ }
+ 
++final class BackendModuleCompositionInput {
++	public uint16 $composition_kind_id = 0;
++	public string $target_function_text = "";
++	public string $target_function_name = "";
++}
++
+ final class EmissionLLVMWorkerResult {
+ 	public int $source_unit_id = 0;
+ 	public int $symbol_id = 0;
+@@ -2469,9 +2475,38 @@ final class llvm_text_from_plan {
+ 		return $text;
+ 	}
+ 
++	public static function module_composition_kind_target_text_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function module_composition_kind_target_emission_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function module_composition_input_from_target_text(string $targetFunctionText, string $targetName): BackendModuleCompositionInput {
++		$input BackendModuleCompositionInput = new BackendModuleCompositionInput();
++		$input->composition_kind_id = llvm_text_from_plan::module_composition_kind_target_text_id();
++		$input->target_function_text = $targetFunctionText;
++		$input->target_function_name = $targetName;
++		return $input;
++	}
++
++	public static function module_composition_input_from_target_emission(string $targetName): BackendModuleCompositionInput {
++		$input BackendModuleCompositionInput = new BackendModuleCompositionInput();
++		$input->composition_kind_id = llvm_text_from_plan::module_composition_kind_target_emission_id();
++		$input->target_function_name = $targetName;
++		return $input;
++	}
++
+ 	public static function module_text_from_entry_call_with_target_text(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, string $targetFunctionText, string $targetName): string {
++		$input BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_text($targetFunctionText, $targetName);
++		return llvm_text_from_plan::module_text_from_target_text_composition($entryEmission, $entryRequests, $input);
++	}
++
++	public static function module_text_from_target_text_composition(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendModuleCompositionInput $input): string {
+ 		if ((int)llvm_text_from_plan::sink_status_from_emission($entryEmission) !== (int)llvm_text_from_plan::status_ready_id()
+-			|| $targetFunctionText === "") {
++			|| (int)$input->composition_kind_id !== (int)llvm_text_from_plan::module_composition_kind_target_text_id()
++			|| $input->target_function_text === "") {
+ 			return "";
+ 		}
+ 		$callValue BackendEmissionValueRow = backend_emission_decisions::value_by_id_and_backend_requests($entryEmission, $entryRequests, structure_row_ids::uint32_from_int(1));
+@@ -2487,10 +2522,10 @@ final class llvm_text_from_plan {
+ 		$text = $text . "source_filename = \"compiler/reset-runner-direct-call\"\n";
+ 		$text = $text . "target triple = \"x86_64-pc-linux-gnu\"\n";
+ 		$text = $text . "\n";
+-		$text = $text . $targetFunctionText;
++		$text = $text . $input->target_function_text;
+ 		$text = $text . "define " . $returnType . " @scpp_run() {\n";
+ 		$text = $text . "entry:\n";
+-		$text = $text . "  %direct_call_result_1 = call " . $returnType . " " . $targetName . "(" . $argumentListText . ")\n";
++		$text = $text . "  %direct_call_result_1 = call " . $returnType . " " . $input->target_function_name . "(" . $argumentListText . ")\n";
+ 		$text = $text . "  ret " . $returnType . " %direct_call_result_1\n";
+ 		$text = $text . "}\n";
+ 		$text = $text . "\n";
+@@ -2542,8 +2577,14 @@ final class llvm_text_from_plan {
+ 	}
+ 
+ 	public static function module_text_from_entry_and_target_emissions_with_target_name(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendEmissionDecisionArtifact &$targetEmission, BackendRequestAuthorizationArtifact &$targetRequests, string $targetName): string {
++		$input BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_emission($targetName);
++		return llvm_text_from_plan::module_text_from_target_emission_composition($entryEmission, $entryRequests, $targetEmission, $targetRequests, $input);
++	}
++
++	public static function module_text_from_target_emission_composition(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendEmissionDecisionArtifact &$targetEmission, BackendRequestAuthorizationArtifact &$targetRequests, BackendModuleCompositionInput $input): string {
+ 		if ((int)llvm_text_from_plan::sink_status_from_emission($entryEmission) !== (int)llvm_text_from_plan::status_ready_id()
+-			|| (int)llvm_text_from_plan::sink_status_from_emission($targetEmission) !== (int)llvm_text_from_plan::status_ready_id()) {
++			|| (int)llvm_text_from_plan::sink_status_from_emission($targetEmission) !== (int)llvm_text_from_plan::status_ready_id()
++			|| (int)$input->composition_kind_id !== (int)llvm_text_from_plan::module_composition_kind_target_emission_id()) {
+ 			return "";
+ 		}
+ 		$callValue BackendEmissionValueRow = backend_emission_decisions::value_by_id_and_backend_requests($entryEmission, $entryRequests, structure_row_ids::uint32_from_int(1));
+@@ -2560,12 +2601,12 @@ final class llvm_text_from_plan {
+ 				. "source_filename = \"compiler/reset-runner-direct-call\"\n"
+ 				. "target triple = \"x86_64-pc-linux-gnu\"\n"
+ 				. "\n");
+-			if (!llvm_text_from_plan::append_local_function_text_from_emission_and_backend_requests($lines, $targetName, $targetEmission, $targetRequests)) {
++			if (!llvm_text_from_plan::append_local_function_text_from_emission_and_backend_requests($lines, $input->target_function_name, $targetEmission, $targetRequests)) {
+ 				return "";
+ 			}
+ 			text_builder_append_string($lines, "define " . $returnType . " @scpp_run() {\n");
+ 			text_builder_append_string($lines, "entry:\n");
+-			text_builder_append_string($lines, "  %direct_call_result_1 = call " . $returnType . " " . $targetName . "()\n");
++			text_builder_append_string($lines, "  %direct_call_result_1 = call " . $returnType . " " . $input->target_function_name . "()\n");
+ 			text_builder_append_string($lines, "  ret " . $returnType . " %direct_call_result_1\n");
+ 			text_builder_append_string($lines, "}\n");
+ 			text_builder_append_string($lines, "\n");
+@@ -2576,7 +2617,7 @@ final class llvm_text_from_plan {
+ 			text_builder_append_string($lines, "}\n");
+ 			return text_builder_take_string($lines);
+ 		}
+-		$targetFunctionText string = llvm_text_from_plan::literal_function_text_from_emission_and_backend_requests($targetName, $targetEmission, $targetRequests);
++		$targetFunctionText string = llvm_text_from_plan::literal_function_text_from_emission_and_backend_requests($input->target_function_name, $targetEmission, $targetRequests);
+ 		if ($targetFunctionText === "") {
+ 			return "";
+ 		}
+@@ -2589,7 +2630,7 @@ final class llvm_text_from_plan {
+ 		$text = $text . $targetFunctionText;
+ 		$text = $text . "define " . $returnType . " @scpp_run() {\n";
+ 		$text = $text . "entry:\n";
+-		$text = $text . "  %direct_call_result_1 = call " . $returnType . " " . $targetName . "()\n";
++		$text = $text . "  %direct_call_result_1 = call " . $returnType . " " . $input->target_function_name . "()\n";
+ 		$text = $text . "  ret " . $returnType . " %direct_call_result_1\n";
+ 		$text = $text . "}\n";
+ 		$text = $text . "\n";
+@@ -3298,10 +3339,12 @@ final class llvm_text_from_plan {
+ 			$targetRequests BackendRequestAuthorizationArtifact = llvm_text_from_plan::target_request_artifact_from_worker_input($input);
+ 			$targetPlan LoweringPlan = llvm_text_from_plan::target_lowering_plan_from_worker_input($input);
+ 			$targetEmission BackendEmissionDecisionArtifact = backend_emission_decisions::from_lowering_plan_and_backend_requests($targetPlan, $targetRequests);
+-			$moduleText = llvm_text_from_plan::module_text_from_entry_and_target_emissions_with_target_name($emission, $requests, $targetEmission, $targetRequests, $input->target_llvm_function_name);
++			$composition BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_emission($input->target_llvm_function_name);
++			$moduleText = llvm_text_from_plan::module_text_from_target_emission_composition($emission, $requests, $targetEmission, $targetRequests, $composition);
+ 		} else if ($input->composite_text_mode_id === llvm_text_from_plan::composite_text_mode_fixed_arg_parameter_add_id()) {
+ 			$targetFunctionText string = llvm_text_from_plan::parameter_add_function_text_from_value($input->target_llvm_function_name, $input->target_fixed_arg_right_literal_value);
+-			$moduleText = llvm_text_from_plan::module_text_from_entry_call_with_target_text($emission, $requests, $targetFunctionText, $input->target_llvm_function_name);
++			$composition BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_text($targetFunctionText, $input->target_llvm_function_name);
++			$moduleText = llvm_text_from_plan::module_text_from_target_text_composition($emission, $requests, $composition);
+ 		}
+ 		$result EmissionLLVMWorkerResult = new EmissionLLVMWorkerResult();
+ 		$result->source_unit_id = $input->source_unit_id;

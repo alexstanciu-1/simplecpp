@@ -1,0 +1,25 @@
+{
+  "trials": 3,
+  "native_seconds": [
+    4.319358709995868,
+    4.2681347700126935,
+    4.201986639993265
+  ],
+  "median_native_seconds": 4.2681347700126935,
+  "single_screening_seconds": null,
+  "objects": [
+    1,
+    1,
+    1
+  ],
+  "pch_counts": [
+    0,
+    0,
+    0
+  ],
+  "restored_smoke_passed": true,
+  "restored_ninja_no_op": true,
+  "external_source_hash_differences": [],
+  "scratch_non_entrypoint_phs_differences": [],
+  "extra_scratch_phs_files": []
+}

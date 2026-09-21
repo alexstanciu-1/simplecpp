@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentDependencyEdgeSnapshotRow;
+struct ResidentReverseDependencyLookupRow;
+struct ResidentSymbolDefinitionChangeRow;
+ResidentReverseDependencyLookupRow __latency_fn_resident_reverse_dependencies_lookup_row_from_edge(ResidentDependencyEdgeSnapshotRow edge, ResidentSymbolDefinitionChangeRow change);
+}

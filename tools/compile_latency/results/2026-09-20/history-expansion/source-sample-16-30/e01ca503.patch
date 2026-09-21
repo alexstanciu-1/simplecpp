@@ -1,0 +1,94 @@
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index b601354a..db17b3c8 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -3,7 +3,7 @@ final class compiler_entry_backend {
+ 
+ 	public static function symbol_rows_form_single_return_literal(ProjectSymbolIndexRow $symbol, FrontendModel $model): bool {
+ 		if ((int)$symbol->parameter_count !== 0
+-			|| !project_symbol_index::symbol_has_return_literal_summary($symbol)
++			|| !project_symbol_index::symbol_has_return_literal_fields($symbol)
+ 			|| (int)$symbol->return_literal_type_ref_id !== (int)$symbol->return_type_ref_id
+ 			|| (int)$symbol->body_first_node_id === 0) {
+ 			return false;
+@@ -20,7 +20,7 @@ final class compiler_entry_backend {
+ 		return (int)$statement->value_node_id === (int)$symbol->return_literal_node_id;
+ 	}
+ 
+-	public static function literal_return_emission_for_symbol_summary(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
++	public static function literal_return_emission_for_symbol_fields(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
+ 		if (!compiler_entry_backend::symbol_rows_form_single_return_literal($symbol, $model)) {
+ 			$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 			return backend_emission_decisions::from_lowering_plan($plan);
+@@ -32,8 +32,8 @@ final class compiler_entry_backend {
+ 		$analysis AnalysisContext = analysis_context::new_context(1);
+ 		$entry AnalysisEntryContextRow = analysis_context::append_entry($analysis, $symbol, $references, $contracts, $graph);
+ 		$typeRefs TypeRefTable = type_refs::table_from_project_symbols($symbols);
+-		$literalNode FrontendNodeRow = project_symbol_index::return_literal_node_from_symbol_summary($symbol);
+-		$literal FrontendLiteralPayloadRow = project_symbol_index::return_literal_payload_from_symbol_summary($symbol);
++		$literalNode FrontendNodeRow = project_symbol_index::return_literal_node_from_symbol_fields($symbol);
++		$literal FrontendLiteralPayloadRow = project_symbol_index::return_literal_payload_from_symbol_fields($symbol);
+ 		$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_literal($typeRefs, $literalNode->node_id, $literal->type_ref_id);
+ 		$backendRequests = backend_preflight_requests::new_backend_request_artifact_with_sidecar_capacity(1, 0, 0, 0, 0);
+ 		local_body_lowering::append_literal_scalar_backend_request($backendRequests, $capabilityCoverage, $literalNode, $literal, $symbol);
+@@ -812,7 +812,7 @@ final class compiler_entry_backend {
+ 		if ((int)backend_emission_decisions::status_from_plan($plan) === (int)backend_emission_decisions::status_ready_id()) {
+ 			return $localEmission;
+ 		}
+-		return compiler_entry_backend::literal_return_emission_for_symbol_summary($symbols, $symbol, $model, $backendRequests, $plan, $capabilityCoverage);
++		return compiler_entry_backend::literal_return_emission_for_symbol_fields($symbols, $symbol, $model, $backendRequests, $plan, $capabilityCoverage);
+ 	}
+ 
+ }
+diff --git a/compiler/src/compile/model/project_symbol_index.phs b/compiler/src/compile/model/project_symbol_index.phs
+index 5d2d1452..59b12687 100644
+--- a/compiler/src/compile/model/project_symbol_index.phs
++++ b/compiler/src/compile/model/project_symbol_index.phs
+@@ -608,7 +608,7 @@ final class project_symbol_index {
+ 		return $empty;
+ 	}
+ 
+-	public static function fill_return_literal_summary(ProjectSymbolIndexRow &$row, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
++	public static function fill_return_literal_fields(ProjectSymbolIndexRow &$row, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+ 		$literalNode FrontendNodeRow = project_symbol_index::return_literal_node_from_declaration($model, $declaration);
+ 		if ((int)$literalNode->node_id === 0) {
+ 			return;
+@@ -627,15 +627,15 @@ final class project_symbol_index {
+ 		$row->return_literal_status_id = $literal->literal_status_id;
+ 	}
+ 
+-	public static function symbol_has_return_literal_summary(ProjectSymbolIndexRow $row): bool {
++	public static function symbol_has_return_literal_fields(ProjectSymbolIndexRow $row): bool {
+ 		return (int)$row->return_literal_node_id > 0
+ 			&& (int)$row->return_literal_payload_id > 0
+ 			&& (int)$row->return_literal_type_ref_id > 0
+ 			&& project_symbol_index::literal_status_ready($row->return_literal_status_id);
+ 	}
+ 
+-	public static function return_literal_node_from_symbol_summary(ProjectSymbolIndexRow $row): FrontendNodeRow {
+-		if (!project_symbol_index::symbol_has_return_literal_summary($row)) {
++	public static function return_literal_node_from_symbol_fields(ProjectSymbolIndexRow $row): FrontendNodeRow {
++		if (!project_symbol_index::symbol_has_return_literal_fields($row)) {
+ 			$empty FrontendNodeRow = [];
+ 			return $empty;
+ 		}
+@@ -649,8 +649,8 @@ final class project_symbol_index {
+ 		return $node;
+ 	}
+ 
+-	public static function return_literal_payload_from_symbol_summary(ProjectSymbolIndexRow $row): FrontendLiteralPayloadRow {
+-		if (!project_symbol_index::symbol_has_return_literal_summary($row)) {
++	public static function return_literal_payload_from_symbol_fields(ProjectSymbolIndexRow $row): FrontendLiteralPayloadRow {
++		if (!project_symbol_index::symbol_has_return_literal_fields($row)) {
+ 			$empty FrontendLiteralPayloadRow = [];
+ 			return $empty;
+ 		}
+@@ -958,7 +958,7 @@ final class project_symbol_index {
+ 		$row->body_hash = source_buffers::content_hash32(project_symbol_identity::body_shape_key_from_body_shape($bodyShape));
+ 		project_symbol_index::append_parameter_rows_from_declaration($index, $row, $model, $declaration);
+ 		project_symbol_index::fill_direct_call_candidate_fields($index, $row, $sourceText, $model, $declaration);
+-		project_symbol_index::fill_return_literal_summary($row, $model, $declaration);
++		project_symbol_index::fill_return_literal_fields($row, $model, $declaration);
+ 		return $row;
+ 	}
+ 

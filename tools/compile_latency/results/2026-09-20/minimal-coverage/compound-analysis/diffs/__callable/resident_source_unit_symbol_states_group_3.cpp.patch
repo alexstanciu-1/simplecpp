@@ -1,0 +1,20 @@
+--- before/__callable/resident_source_unit_symbol_states_group_3.cpp
++++ after/__callable/resident_source_unit_symbol_states_group_3.cpp
+@@ -139,7 +139,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_symbol_states[]; }
+ namespace scpp {
+-void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount) {
++void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_symbol_states::record_symbol_fact_live_worker_publication_metrics", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_symbol_states.phs", __latency_lines_resident_source_unit_symbol_states[35]);
+ 	shared_p<PartitionReadinessArtifact> publication = __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact(sourceUnits, cast<int_t<std::uint32_t>>(ownerRunId), firstSymbolIds, symbolCounts, bool_t(static_cast<bool_t>(false)));
+ 	int_t<std::uint32_t> publishedRows = required_cast<int_t<std::uint32_t>>(__latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_published_row_total(publication));
+@@ -161,7 +161,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_symbol_states[]; }
+ namespace scpp {
+-void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_publication_metrics__exec(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount, bool_t frontendPayloadSourceWorkerReady, bool_t& symbolFactWorkerCandidateReady) {
++void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_publication_metrics__exec(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount, bool_t frontendPayloadSourceWorkerReady, bool_t& symbolFactWorkerCandidateReady) {
+ 	symbolFactWorkerCandidateReady = bool_t(static_cast<bool_t>(false));
+ 	shared_p<PartitionReadinessArtifact> publication = __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact(sourceUnits, cast<int_t<std::uint32_t>>(ownerRunId), firstSymbolIds, symbolCounts, bool_t(static_cast<bool_t>(false)));
+ 	shared_p<PartitionReadinessArtifact> simulatedPublication = __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact(sourceUnits, cast<int_t<std::uint32_t>>(ownerRunId), firstSymbolIds, symbolCounts, bool_t(static_cast<bool_t>(true)));

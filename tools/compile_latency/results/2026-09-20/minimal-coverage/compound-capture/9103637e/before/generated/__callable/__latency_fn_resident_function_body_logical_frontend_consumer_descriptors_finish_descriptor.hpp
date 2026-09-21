@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyLogicalFrontendConsumerDescriptorRow;
+void __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_finish_descriptor(shared_p<CompilerProjectRunReport>& report, ResidentFunctionBodyLogicalFrontendConsumerDescriptorRow row);
+}

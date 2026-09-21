@@ -1,0 +1,6 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentSourceUnitFrontendTaskPayloadSegmentHandleReservationRow;
+int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_task_payload_segment_handle_reservation_kind_total(vector_t<ResidentSourceUnitFrontendTaskPayloadSegmentHandleReservationRow>& rows, int_t<std::uint16_t> segmentKindId);
+}

@@ -1,0 +1,216 @@
+{
+  "scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature",
+  "counts": {
+    "context_limit": 12,
+    "measured": 3
+  },
+  "timed_code_cases": 3,
+  "timed_code_cases_within_target": 3,
+  "comment_only_cases": 0,
+  "cases": [
+    {
+      "commit": "2ad7c2b2",
+      "subject": "Name scalar if branch outcomes",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "3f85c6d4",
+      "subject": "Use for update row id as readiness fact",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "844998ba",
+      "subject": "Pass loop body sequences to backend requests",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "b1f1fd46",
+      "subject": "Use reference rows for direct call entry checks",
+      "sources": [
+        "compile/backend/backend_module_composition.phs",
+        "compile/backend/compiler_entry_backend.phs",
+        "compile/model/project_reference_resolution.phs"
+      ],
+      "textual_replay_eligible": true,
+      "status": "measured",
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.883216552028898,
+      "native_trials": [
+        2.735384539992083,
+        2.59297468198929,
+        2.6403644150123
+      ],
+      "native_summary_seconds": 2.6403644150123,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 4.1403644150123,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        5,
+        5,
+        5
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "ec9409a9",
+      "subject": "Route literal returns through body summaries",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "a83d68a7",
+      "subject": "Use body summaries for parameter function text",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/llvm_text_from_plan.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "48cb9cd7",
+      "subject": "Use body summaries for reference argument literals",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/model/frontend_body_summaries.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "4a4e0803",
+      "subject": "Clean reference call expression labels",
+      "sources": [
+        "compile/model/project_reference_resolution.phs",
+        "structures/project/project_reference_resolution.phs"
+      ],
+      "textual_replay_eligible": true,
+      "status": "measured",
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.2868698179954663,
+      "native_trials": [
+        2.2773315659724176,
+        2.158374298014678,
+        2.13682090700604
+      ],
+      "native_summary_seconds": 2.158374298014678,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 3.658374298014678,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        2,
+        2,
+        2
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "cff6f97f",
+      "subject": "Rename reference call expression surface",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/model/project_reference_resolution.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "74713f49",
+      "subject": "Remove symbol return literal bridge",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "5dc75599",
+      "subject": "Normalize direct call module text helpers",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/backend_module_composition.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "147a11f8",
+      "subject": "Remove symbol direct call candidate bridge",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/backend_module_composition.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "ea9d053c",
+      "subject": "Remove stale capability sequence helpers",
+      "sources": [
+        "compile/capabilities/type_capability_readiness.phs"
+      ],
+      "textual_replay_eligible": true,
+      "status": "measured",
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.2073592970264144,
+      "native_trials": [
+        1.6167207839898765,
+        1.6203779650386423,
+        1.6109409240307286
+      ],
+      "native_summary_seconds": 1.6167207839898765,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 3.1167207839898765,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        1,
+        1,
+        1
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "e01ca503",
+      "subject": "Rename return literal symbol bridge",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs",
+      "status": "context_limit",
+      "comment_only": false
+    },
+    {
+      "commit": "f8217e46",
+      "subject": "Remove stale symbol body summaries",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/model/project_symbol_index.phs",
+      "status": "context_limit",
+      "comment_only": false
+    }
+  ]
+}

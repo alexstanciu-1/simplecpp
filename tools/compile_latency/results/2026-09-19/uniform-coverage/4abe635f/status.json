@@ -1,0 +1,13 @@
+{
+  "commit": "4abe635f",
+  "sources": [
+    "compile/backend/compiler_entry_backend.phs",
+    "compile/semantic/semantic_body_capability_consumers.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "baseline",
+  "result": "replay_incompatible",
+  "uniform_helpers": true,
+  "error": "[1/5] CXX expanded/__callable/semantic_body_capability_consumers_locations.o\n[2/5] CALLABLE_PART expanded_parts/__callable/semantic_body_capability_consumers_group_0.o\n[3/5] CALLABLE_PART expanded_parts/__callable/semantic_body_capability_consumers_group_1.o\n[4/5] CXX expanded/compile/backend/compiler_entry_backend.o\nFAILED: expanded/compile/backend/compiler_entry_backend.o \nclang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../expanded/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include expanded_runtime_pch.hpp -include ../expanded/generated/__project_units/scoped-8b7a21c73f31486d.hpp -MMD -MF expanded/compile/backend/compiler_entry_backend.o.d -MT expanded/compile/backend/compiler_entry_backend.o -c ../expanded/generated/compile/backend/compiler_entry_backend.cpp -o expanded/compile/backend/compiler_entry_backend.o\n../expanded/generated/compile/backend/compiler_entry_backend.cpp:110:38: error: no member named 'append_literal_return' in 'scpp::semantic_body_capability_consumers'\n  110 |         semantic_body_capability_consumers::append_literal_return(consumerPlan, literalNode->node_id, literal->type_ref_id);\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n1 error generated.\nninja: build stopped: subcommand failed.\n",
+  "restored": true
+}

@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_source_units_table_row.hpp
++++ after/__callable/__latency_fn_source_units_table_row.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ struct ProjectManifestSourceRow;
+ struct SourceUnitTableRow;
+-SourceUnitTableRow __latency_fn_source_units_table_row(const ProjectManifestSourceRow& source, const string_t& sourceText);
++SourceUnitTableRow __latency_fn_source_units_table_row(ProjectManifestSourceRow source, const string_t& sourceText);
+ }

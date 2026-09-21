@@ -1,0 +1,22 @@
+{
+  "body_or_other_cpp": {
+    "objects": 41,
+    "compiler_job_wall_seconds": 184.509
+  },
+  "function_signatures_only": {
+    "objects": 15,
+    "compiler_job_wall_seconds": 76.131
+  },
+  "location_metadata": {
+    "objects": 14,
+    "compiler_job_wall_seconds": 46.346
+  },
+  "new_cpp": {
+    "objects": 1,
+    "compiler_job_wall_seconds": 2.844
+  },
+  "unchanged_cpp_dependency": {
+    "objects": 7,
+    "compiler_job_wall_seconds": 40.229
+  }
+}

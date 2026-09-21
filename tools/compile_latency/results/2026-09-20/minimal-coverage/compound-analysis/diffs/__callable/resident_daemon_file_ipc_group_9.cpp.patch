@@ -1,0 +1,66 @@
+--- before/__callable/resident_daemon_file_ipc_group_9.cpp
++++ after/__callable/resident_daemon_file_ipc_group_9.cpp
+@@ -129,7 +129,10 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(row->session_id), static_cast<int_t<> >(0)))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("resident_daemon_session:") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_session_status_name(row->status_id)) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_path_by_id(artifact, row->project_root_path_id)));
++	string_t text = required_cast<string_t>(string_t("resident_daemon_session:"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_resident_daemon_file_ipc_session_status_name(row->status_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_path_by_id(artifact, row->project_root_path_id)));
++	return text;
+ }
+ 
+ }
+@@ -141,7 +144,10 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(row->request_id), static_cast<int_t<> >(0)))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("resident_daemon_request:") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_request_status_name(row->status_id)) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_path_by_id(artifact, row->request_path_id)));
++	string_t text = required_cast<string_t>(string_t("resident_daemon_request:"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_resident_daemon_file_ipc_request_status_name(row->status_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_path_by_id(artifact, row->request_path_id)));
++	return text;
+ }
+ 
+ }
+@@ -153,7 +159,10 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(row->response_id), static_cast<int_t<> >(0)))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("resident_daemon_response:") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_response_status_name(row->status_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->exit_code)));
++	string_t text = required_cast<string_t>(string_t("resident_daemon_response:"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_resident_daemon_file_ipc_response_status_name(row->status_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(cast<int_t<>>(row->exit_code)));
++	return text;
+ }
+ 
+ }
+@@ -167,7 +176,10 @@
+ 	}
+ 	int_t<std::uint16_t> kindId = required_cast<int_t<std::uint16_t>>(__latency_fn_resident_daemon_file_ipc_source_slot_event_kind_id(row->packed_event));
+ 	int_t<std::uint32_t> slotId = required_cast<int_t<std::uint32_t>>(__latency_fn_resident_daemon_file_ipc_source_slot_event_slot_id(row->packed_event));
+-	return (string_t("resident_daemon_event:") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_source_slot_event_kind_name(cast<int_t<std::uint16_t>>(kindId))) + string_t(":") + cast<string_t>(cast<int_t<>>(slotId)));
++	string_t text = required_cast<string_t>(string_t("resident_daemon_event:"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_resident_daemon_file_ipc_source_slot_event_kind_name(cast<int_t<std::uint16_t>>(kindId))));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(cast<int_t<>>(slotId)));
++	return text;
+ }
+ 
+ }
+@@ -179,7 +191,11 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(row->stat_id), static_cast<int_t<> >(0)))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("resident_daemon_source_slot_stat:") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_source_slot_scan_status_name(row->scan_status_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_id)) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_path_by_id(artifact, row->path_id)));
+-}
+-
+-}
++	string_t text = required_cast<string_t>(string_t("resident_daemon_source_slot_stat:"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_resident_daemon_file_ipc_source_slot_scan_status_name(row->scan_status_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_path_by_id(artifact, row->path_id)));
++	return text;
++}
++
++}

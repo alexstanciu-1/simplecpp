@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct SourceUnitFrontendWorkerPayloadCarrierContractRow;
+struct SourceUnitFrontendWorkerPayloadCarrierInstallRow;
+SourceUnitFrontendWorkerPayloadCarrierContractRow __latency_fn_resident_source_unit_frontend_payload_tables_payload_carrier_contract_row_from_carrier_install_row(SourceUnitFrontendWorkerPayloadCarrierInstallRow carrierRow, int_t<> carrierContractRowId, int_t<std::uint32_t> publishedRowFirstId);
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "source": "compile/backend/backend_preflight_requests.phs",
+    "result": "Current hunk context differs or is ambiguous: compile/backend/backend_preflight_requests.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/backend/llvm_text_from_plan.phs",
+    "result": "Current hunk context differs or is ambiguous: compile/backend/llvm_text_from_plan.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/backend/local_body_lowering.phs",
+    "result": "Current hunk context differs or is ambiguous: compile/backend/local_body_lowering.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/backend/lowering_plan.phs",
+    "result": "Current hunk context differs or is ambiguous: compile/backend/lowering_plan.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/capabilities/type_capability_readiness.phs",
+    "result": "Current hunk context differs or is ambiguous: compile/capabilities/type_capability_readiness.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/capabilities/type_traits.phs",
+    "result": "File ownership change requires separate replay planning: compile/capabilities/type_traits.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+    "result": "Current hunk context differs or is ambiguous: compile/frontend_adapter/phs/frontend_model_builder.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/operations/operation_readiness.phs",
+    "result": "Current hunk context differs or is ambiguous: compile/operations/operation_readiness.phs",
+    "current_exists": true
+  },
+  {
+    "source": "compile/pipeline/fixture_runner.phs",
+    "result": "Retired current source: compile/pipeline/fixture_runner.phs",
+    "current_exists": false
+  },
+  {
+    "source": "structures/capabilities/provider_trait_descriptor_row.phs",
+    "result": "exact hunks applicable",
+    "current_exists": true
+  },
+  {
+    "source": "structures/capabilities/type_trait_row.phs",
+    "result": "exact hunks applicable",
+    "current_exists": true
+  },
+  {
+    "source": "structures/capabilities/type_trait_table.phs",
+    "result": "Current hunk context differs or is ambiguous: structures/capabilities/type_trait_table.phs",
+    "current_exists": true
+  }
+]

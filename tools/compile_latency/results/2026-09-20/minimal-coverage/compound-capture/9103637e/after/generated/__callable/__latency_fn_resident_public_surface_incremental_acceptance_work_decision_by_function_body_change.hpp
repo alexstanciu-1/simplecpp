@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyChangeRow;
+struct ResidentFunctionBodyWorkDecisionRow;
+ResidentFunctionBodyWorkDecisionRow __latency_fn_resident_public_surface_incremental_acceptance_work_decision_by_function_body_change(shared_p<CompilerProjectRunReport> report, ResidentFunctionBodyChangeRow change);
+}

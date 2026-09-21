@@ -1,0 +1,23 @@
+commit db047e109b317be2eabf13bae12acf8e4ea834f4
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 17:58:20 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 17:58:20 2026 +0300
+
+    Retarget semantic gate to project runner
+
+diff --git a/compiler/src/compile/support/structure_kernel_smoke_runner.phs b/compiler/src/compile/support/structure_kernel_smoke_runner.phs
+index ceb6bbe6..3f2ad387 100644
+--- a/compiler/src/compile/support/structure_kernel_smoke_runner.phs
++++ b/compiler/src/compile/support/structure_kernel_smoke_runner.phs
+@@ -6,6 +6,10 @@ function structure_kernel_run_smoke(): bool {
+ 	if ($outputRoot === "") {
+ 		$outputRoot = ".prism/v2_structure_kernel_reset_outputs";
+ 	}
++	$outputRootParent string = fs_dirname($outputRoot);
++	if (!output_paths::ensure_parent_and_dir($outputRootParent, $outputRoot)) {
++		return false;
++	}
+ 
+ 	$batch PipelineBatchConfig = new PipelineBatchConfig();
+ 	$batch->project_root = "../fixtures";

@@ -1,0 +1,5 @@
+{
+  "exit_code": 42,
+  "expected": 42,
+  "llvm": "/tmp/scpp-edit-latency-20260919/numeric-pipeline-results/numeric-pipeline-r2-fixture-build/phs_alias_native/compiler.ll"
+}

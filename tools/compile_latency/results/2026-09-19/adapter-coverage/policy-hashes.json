@@ -1,0 +1,15 @@
+{
+  "callable_surface.py": "6306f6eded4d7ade3906fc8542c10fb489e4417d6ff2f0a4beae8d109b2a745b",
+  "callable_groups.py": "a2c066e909d36e0f0e00b10de133cf07be8899dcdf3db4bf273671491a208893",
+  "expanded_layout.py": "0f883eacf16a9dca9d4f4eb03f7c4bd46ebd4e8a7336c932aeffc23827938015",
+  "partitioned_callables.py": "aee8f9f4c26e6866dc339bff857a62577177e18299b506c4afc2d7406bb99919",
+  "layout_isolation.py": "e3cf00e95684760bb6339c803dea840634a29931b683be77001897ed5f9b75de",
+  "counter_boundary.py": "d78b4bfa9ae2f1b287e17c5360a3da00308683b7d88969a614e5fdf14599b3f1",
+  "stable_locals.py": "b16add6ed9af10d6feac96ae6f296dafe9b0841c94eea36b93e3992c86f69eee",
+  "run_coverage_replay.py": "c09ef1b9287b1da5302bda747389da569ac1d3eedbdd90255b8796c97460d794",
+  "experiment.py": "7bb36748be7a005e2293d30c2e6c2e675ae51d0fed3ce20f0eeb5eb7bcf07ba5",
+  "adapter_surface.py": "3d346ac6b2235cdd86cf557767b0fce4b86f8a13f9dd5d9d4e4e06220fa53b0a",
+  "adapter_catalog.py": "62b17a64a538a81f375bbbb0e5594ea6889041319f244ae97c0333655b7d3da7",
+  "verify_adapter_semantics.py": "06ba33b9a43eb340dff6a61fdada655b25ce8cca8e0d98b86323003cdb5b5a66",
+  "audit_callable_ownership.py": "620888d3f7853caaf24aabdfcf9edfa28b4e42cfa14b0cde3c1d1433d3c4483c"
+}

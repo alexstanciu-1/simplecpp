@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyLocalParseProofRow;
+struct ResidentFunctionBodyWorkDecisionRow;
+ResidentFunctionBodyLocalParseProofRow __latency_fn_resident_function_body_incremental_acceptance_local_parse_by_decision(shared_p<CompilerProjectRunReport> report, ResidentFunctionBodyWorkDecisionRow decision);
+}

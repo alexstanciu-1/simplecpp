@@ -1,0 +1,20 @@
+--- before/__callable/source_units_group_4.cpp
++++ after/__callable/source_units_group_4.cpp
+@@ -111,7 +111,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_worker_results(const shared_p<SourceReadTable>& descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& workerResults) {
++shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_worker_results(shared_p<SourceReadTable> descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& workerResults) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_table_from_worker_results", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[43]);
+ 	shared_p<SourceReadTable> table = create<SourceReadTable>();
+ 	__latency_fn_source_units_reserve_source_read_table(table, cast<int_t<>>(descriptorSourceReads->descriptor_count));
+@@ -158,7 +158,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-void __latency_fn_source_units_append_source_read_worker_result(shared_p<SourceReadTable>& table, const shared_p<SourceReadTable>& descriptorSourceReads, shared_p<SourceReadWorkerResult> workerResult) {
++void __latency_fn_source_units_append_source_read_worker_result(shared_p<SourceReadTable>& table, shared_p<SourceReadTable> descriptorSourceReads, shared_p<SourceReadWorkerResult> workerResult) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::append_source_read_worker_result", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[44]);
+ 	int_t<> index = required_cast<int_t<>>((cast<int_t<>>(workerResult->manifest_order_id) - static_cast<int_t<> >(1)));
+ 	if (static_cast<bool>(((index < static_cast<int_t<> >(0)) || (index >= cast<int_t<>>(descriptorSourceReads->descriptor_count))))) {

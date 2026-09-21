@@ -1,0 +1,5 @@
+[1/5] CXX callables/__callable/token_kinds_locations.o
+[2/5] CXX callables/__callable/token_kinds_name.o
+[3/5] CXX callables/__callable/token_kinds_latency_added_0.o
+[4/5] CXX callables/main.o
+[5/5] LINK main

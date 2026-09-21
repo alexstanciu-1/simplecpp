@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input.hpp
++++ after/__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ class SourceUnitFrontendWorkerPayloadInput;
+ struct SourceUnitTableRow;
+-SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input);
++SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input);
+ }

@@ -1,0 +1,287 @@
+{
+  "7d58f273": [
+    {
+      "path": "compiler/v2/src/compile/backend/backend_preflight_requests.phs",
+      "added_lines": 11,
+      "removed_lines": 0,
+      "added_method_declarations": [
+        "lowering_step_kind_int_sub_id",
+        "local_operation_loaded_sub_immediate_id"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/compile/backend/llvm_text_from_plan.phs",
+      "added_lines": 44,
+      "removed_lines": 9,
+      "added_method_declarations": [
+        "append_binary_sub_name",
+        "append_binary_result_name",
+        "local_operation_is_loaded_binary_immediate",
+        "binary_instruction_for_local_operation",
+        "append_local_binary_immediate_text",
+        "append_return_binary_result_text"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/compile/backend/local_body_lowering.phs",
+      "added_lines": 18,
+      "removed_lines": 2,
+      "added_method_declarations": [
+        "feature_id_for_binary_operator_id",
+        "local_operation_id_for_binary_operator_id"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/compile/backend/lowering_plan.phs",
+      "added_lines": 3,
+      "removed_lines": 0,
+      "added_method_declarations": [],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/compile/capabilities/type_capability_readiness.phs",
+      "added_lines": 105,
+      "removed_lines": 6,
+      "added_method_declarations": [
+        "feature_binary_operator_minus_id",
+        "blocked_reason_unsupported_numeric_operator_id",
+        "blocked_reason_unknown_type_trait_id",
+        "blocked_reason_non_numeric_type_id",
+        "blocked_reason_numeric_operator_not_in_trait_mask_id",
+        "binary_operator_minus_consumer",
+        "binary_operator_consumer",
+        "numeric_feature_supported_by_trait",
+        "numeric_feature_blocked_reason_from_trait",
+        "coverage_from_type_refs_and_binary_operator",
+        "coverage_from_type_refs_and_scalar_assignment_feature",
+        "coverage_from_type_refs_and_local_declarations_binary_return_feature"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/compile/capabilities/type_traits.phs",
+      "added_lines": 419,
+      "removed_lines": 0,
+      "added_method_declarations": [
+        "artifact_kind_type_trait_id",
+        "lookup_model_provider_trait_descriptor_id",
+        "lookup_policy_scan_ok_id",
+        "lookup_policy_index_recommended_id",
+        "lookup_index_threshold_traits",
+        "family_primitive_scalar_id",
+        "abi_shape_primitive_i64_id",
+        "abi_shape_primitive_i1_id",
+        "storage_policy_inline_scalar_id",
+        "copy_policy_trivial_id",
+        "cleanup_policy_none_id",
+        "truthiness_numeric_zero_false_id",
+        "truthiness_bool_value_id",
+        "comparability_scalar_value_id",
+        "hashability_scalar_value_id",
+        "defaultability_zero_value_id",
+        "numeric_kind_none_id",
+        "numeric_kind_signed_integer_id",
+        "integer_width_policy_none_id",
+        "integer_width_policy_fixed_width_explicit_id",
+        "integer_width_policy_language_int_alias_i64_id",
+        "alias_policy_none_id",
+        "alias_policy_canonical_self_id",
+        "alias_policy_language_int_to_int64_id",
+        "numeric_operator_mask_none_id",
+        "numeric_operator_plus_bit_id",
+        "numeric_operator_minus_bit_id",
+        "numeric_operator_mask_plus_minus_id",
+        "status_ready_id",
+        "status_unknown_id",
+        "status_blocked_id",
+        "numeric_blocked_reason_none_id",
+        "numeric_blocked_reason_not_numeric_type_id",
+        "numeric_blocked_reason_unknown_type_trait_id",
+        "provider_id_for_type_ref_id",
+        "descriptor_from_type_ref_id",
+        "row_from_descriptor",
+        "row_from_type_ref_id",
+        "table_from_type_refs",
+        "lookup_policy_for_trait_count",
+        "row_by_type_ref_id",
+        "lookup_policy_name",
+        "status_name",
+        "numeric_kind_name",
+        "integer_width_policy_name",
+        "alias_policy_name",
+        "numeric_operator_mask_name",
+        "numeric_blocked_reason_name",
+        "row_debug_string",
+        "table_debug_string",
+        "numeric_operator_mask_has_bit",
+        "supports_integer_operator",
+        "supports_integer_plus_minus"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": true
+    },
+    {
+      "path": "compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "added_lines": 20,
+      "removed_lines": 2,
+      "added_method_declarations": [
+        "operator_minus_id",
+        "append_binary_minus_expression_from_left_with_type",
+        "append_binary_expression_from_left_with_type"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/compile/operations/operation_readiness.phs",
+      "added_lines": 112,
+      "removed_lines": 5,
+      "added_method_declarations": [
+        "operation_kind_binary_operator_minus_id",
+        "contract_binary_minus_int_int_to_int_id",
+        "lowering_adapter_primitive_i64_sub_id",
+        "blocked_reason_unsupported_numeric_operator_id",
+        "blocked_reason_unknown_type_trait_id",
+        "blocked_reason_non_numeric_type_id",
+        "blocked_reason_numeric_operator_not_in_trait_mask_id",
+        "is_numeric_binary_feature",
+        "operation_kind_for_numeric_binary_feature",
+        "contract_id_for_numeric_binary_feature",
+        "lowering_adapter_for_numeric_binary_feature",
+        "blocked_reason_from_capability_blocked_reason"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/compile/pipeline/fixture_runner.phs",
+      "added_lines": 5,
+      "removed_lines": 3,
+      "added_method_declarations": [],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs",
+      "added_lines": 8,
+      "removed_lines": 0,
+      "added_method_declarations": [],
+      "removed_method_declarations": [],
+      "added_field_declarations": [
+        "public uint16 $numeric_kind_id = 0;",
+        "public uint16 $integer_width_bits = 0;",
+        "public uint16 $integer_width_policy_id = 0;",
+        "public uint16 $alias_policy_id = 0;",
+        "public uint32 $canonical_numeric_type_ref_id = 0;",
+        "public uint16 $numeric_operator_mask = 0;",
+        "public uint16 $numeric_status_id = 0;",
+        "public uint16 $numeric_blocked_reason_id = 0;"
+      ],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/structures/capabilities/type_trait_row.phs",
+      "added_lines": 8,
+      "removed_lines": 0,
+      "added_method_declarations": [],
+      "removed_method_declarations": [],
+      "added_field_declarations": [
+        "public uint16 $numeric_kind_id = 0;",
+        "public uint16 $integer_width_bits = 0;",
+        "public uint16 $integer_width_policy_id = 0;",
+        "public uint16 $alias_policy_id = 0;",
+        "public uint32 $canonical_numeric_type_ref_id = 0;",
+        "public uint16 $numeric_operator_mask = 0;",
+        "public uint16 $numeric_status_id = 0;",
+        "public uint16 $numeric_blocked_reason_id = 0;"
+      ],
+      "new_file": false
+    },
+    {
+      "path": "compiler/v2/src/structures/capabilities/type_trait_table.phs",
+      "added_lines": 4,
+      "removed_lines": 0,
+      "added_method_declarations": [],
+      "removed_method_declarations": [],
+      "added_field_declarations": [
+        "public uint16 $lookup_policy_status_id = 1;",
+        "public uint32 $lookup_index_threshold = 0;",
+        "public uint32 $numeric_ready_count = 0;",
+        "public uint32 $numeric_blocked_count = 0;"
+      ],
+      "new_file": false
+    }
+  ],
+  "93a00a4c": [
+    {
+      "path": "compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs",
+      "added_lines": 82,
+      "removed_lines": 0,
+      "added_method_declarations": [
+        "blocked_reason_none_id",
+        "blocked_reason_missing_cleanup_obligation_id",
+        "blocked_reason_path_coverage_blocked_id",
+        "blocked_layer_cleanup_preflight_id",
+        "has_branch",
+        "has_loop",
+        "source_contains_type_spelling",
+        "type_ref_requires_cleanup",
+        "has_cleanup_bearing_source_value",
+        "blocked_reason_for_source",
+        "blocked_reason_for_fixture"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": true
+    },
+    {
+      "path": "compiler/src/compile/pipeline/fixture_runner.phs",
+      "added_lines": 20,
+      "removed_lines": 10,
+      "added_method_declarations": [
+        "blocked_row",
+        "append_blocked",
+        "append_config_result"
+      ],
+      "removed_method_declarations": [
+        "blocked_row",
+        "append_blocked"
+      ],
+      "added_field_declarations": [],
+      "new_file": false
+    }
+  ],
+  "d48ebcf5": [
+    {
+      "path": "compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs",
+      "added_lines": 34,
+      "removed_lines": 0,
+      "added_method_declarations": [
+        "blocked_reason_callable_argument_count_mismatch_id",
+        "blocked_reason_callable_argument_type_readiness_required_id",
+        "fixture_key_uses_fn02_multi_parameter_preflight",
+        "fn02_multi_parameter_blocked_reason_for_source"
+      ],
+      "removed_method_declarations": [],
+      "added_field_declarations": [],
+      "new_file": false
+    }
+  ]
+}

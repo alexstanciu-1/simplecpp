@@ -1,0 +1,129 @@
+{
+  "note": "inclusive durations, nested events overlap; these are leads, not additive cost attribution",
+  "traces": {
+    "0.json": [
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 147.38,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 146.707,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<char>, char, std::basic_format_context<std::__format::_Sink_iter<char>, char>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 111.509,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<wchar_t>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 111.162,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<wchar_t>, wchar_t, std::basic_format_context<std::__format::_Sink_iter<wchar_t>, wchar_t>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 79.209,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::set"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 78.217,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::insert_or_assign_key<const scpp::string_t &>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 43.006,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::add_to_index"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 35.583,
+        "detail": "scpp::result<scpp::shared_p<scpp::ui::app>>::result"
+      },
+      {
+        "kind": "InstantiateClass",
+        "milliseconds": 31.756,
+        "detail": "std::__format::_Formatting_scanner<std::__format::_Sink_iter<char>, char>"
+      },
+      {
+        "kind": "InstantiateClass",
+        "milliseconds": 31.056,
+        "detail": "std::is_nothrow_default_constructible<std::allocator<scpp::CompilerProjectRunRow>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 30.126,
+        "detail": "std::formatter<bool>::format<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 29.789,
+        "detail": "std::__format::__formatter_int<char>::format<std::__format::_Sink_iter<char>>"
+      }
+    ],
+    "1.json": [
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 141.484,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 140.823,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<char>, char, std::basic_format_context<std::__format::_Sink_iter<char>, char>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 100.838,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<wchar_t>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 100.482,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<wchar_t>, wchar_t, std::basic_format_context<std::__format::_Sink_iter<wchar_t>, wchar_t>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 85.49,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::set"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 84.725,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::insert_or_assign_key<const scpp::string_t &>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 49.494,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::add_to_index"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 33.719,
+        "detail": "scpp::result<scpp::shared_p<scpp::ui::app>>::result"
+      },
+      {
+        "kind": "InstantiateClass",
+        "milliseconds": 29.536,
+        "detail": "std::__format::_Formatting_scanner<std::__format::_Sink_iter<char>, char>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 27.944,
+        "detail": "std::formatter<bool>::format<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 27.619,
+        "detail": "std::__format::__formatter_int<char>::format<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "kind": "InstantiateFunction",
+        "milliseconds": 27.58,
+        "detail": "std::__detail::__variant::_Variant_storage<false, scpp::shared_p<scpp::ui::app>, scpp::error_t, std::monostate>::~_Variant_storage"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyRowListPublishPlanRow;
+struct ResidentFunctionBodyRowListPublishResultRow;
+class SourceUnitTable;
+ResidentFunctionBodyRowListPublishResultRow __latency_fn_resident_function_body_row_list_publish_results_row_from_plan(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, ResidentFunctionBodyRowListPublishPlanRow plan);
+}

@@ -1,0 +1,16 @@
+{
+  "outputs": [
+    "expanded/compile/support/mt_publication_metrics.o",
+    "expanded_parts/compile/backend/backend_object_link_cache/part_2.o",
+    "expanded_parts/compile/backend/backend_object_link_cache/part_3.o",
+    "expanded_parts/compile/backend/llvm_text_from_plan/part_16.o",
+    "expanded_parts/compile/backend/lowering_plan/part_4.o",
+    "expanded_parts/compile/capabilities/storage_lifetime_readiness/part_3.o",
+    "expanded_parts/compile/capabilities/type_capability_readiness/part_11.o",
+    "expanded_parts/compile/incremental/resident_source_unit_symbol_states/part_1.o",
+    "expanded_parts/compile/model/project_reference_resolution/part_5.o",
+    "expanded_parts/latency_publication_gate.o",
+    "expanded_parts/main.o",
+    "main"
+  ]
+}

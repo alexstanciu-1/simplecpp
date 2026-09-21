@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentFunctionBodyLogicalFrontendBodySpanDescriptorRow;
+struct ResidentFunctionBodyWorkDecisionRow;
+ResidentFunctionBodyLogicalFrontendBodySpanDescriptorRow __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_blocked_body_span_from_decision(int_t<std::uint32_t> descriptorId, ResidentFunctionBodyWorkDecisionRow decision, int_t<std::uint16_t> blockedReasonId);
+}

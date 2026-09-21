@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentSourceUnitFrontendTaskPayloadSegmentMaterializationRow;
+void __latency_fn_resident_source_unit_frontend_payload_tables_record_worker_task_payload_segment_adoption_publication_metrics(shared_p<CompilerProjectRunReport>& report, vector_t<ResidentSourceUnitFrontendTaskPayloadSegmentMaterializationRow>& materializationRows);
+}

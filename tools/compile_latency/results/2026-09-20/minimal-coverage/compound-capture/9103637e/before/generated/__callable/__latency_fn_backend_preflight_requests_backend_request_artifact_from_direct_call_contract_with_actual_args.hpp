@@ -1,0 +1,9 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class BackendRequestAuthorizationArtifact;
+struct ProjectCallableContractRow;
+struct ProjectReferenceActualArgumentRow;
+class ProjectSymbolIndex;
+shared_p<BackendRequestAuthorizationArtifact> __latency_fn_backend_preflight_requests_backend_request_artifact_from_direct_call_contract_with_actual_args(ProjectCallableContractRow contract, shared_p<ProjectSymbolIndex> symbols, const vector_t<ProjectReferenceActualArgumentRow>& actualArguments);
+}

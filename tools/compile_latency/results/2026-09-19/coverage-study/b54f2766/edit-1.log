@@ -1,0 +1,7 @@
+[1/7] CXX expanded/__callable/frontend_model_builder_locations.o
+[2/7] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_at_call_expression_with_argument_list.o
+[3/7] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_at_call_expression_statement.o
+[4/7] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_at_qualified_call_expression.o
+[5/7] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_at_call_argument_list_after_open_offset.o
+[6/7] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_return_expression.o
+[7/7] LINK main

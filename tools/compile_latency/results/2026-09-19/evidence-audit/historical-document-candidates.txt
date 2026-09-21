@@ -1,0 +1,9 @@
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_debt_register_2026_07_20.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/core/compiler_core_roadmap_backlog.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/capability_catalog_multithreading_milestone_plan_2026_07_20.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/definition_driven_drift_correction_plan_2026_08_11.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_current_state_summary.md
+/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md

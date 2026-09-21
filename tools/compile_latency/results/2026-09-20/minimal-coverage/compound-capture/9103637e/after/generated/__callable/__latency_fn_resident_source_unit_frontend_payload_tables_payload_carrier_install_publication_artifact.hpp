@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class PartitionReadinessArtifact;
+struct SourceUnitFrontendWorkerPayloadCarrierInstallRow;
+shared_p<PartitionReadinessArtifact> __latency_fn_resident_source_unit_frontend_payload_tables_payload_carrier_install_publication_artifact(vector_t<SourceUnitFrontendWorkerPayloadCarrierInstallRow>& carrierRows, bool_t simulatedOrder);
+}

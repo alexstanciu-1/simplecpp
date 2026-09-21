@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentSourceUnitFrontendPayloadTableRow;
+struct ResidentSourceUnitFrontendPayloadTransferContractRow;
+ResidentSourceUnitFrontendPayloadTransferContractRow __latency_fn_resident_source_unit_frontend_payload_tables_transfer_contract_row_from_descriptor_install_row(ResidentSourceUnitFrontendPayloadTableRow payloadTable, int_t<> transferRowId);
+}

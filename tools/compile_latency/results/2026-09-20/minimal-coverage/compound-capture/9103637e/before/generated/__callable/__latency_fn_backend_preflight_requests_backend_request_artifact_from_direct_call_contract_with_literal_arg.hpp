@@ -1,0 +1,9 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class BackendRequestAuthorizationArtifact;
+struct FrontendLiteralPayloadRow;
+struct FrontendNodeRow;
+struct ProjectCallableContractRow;
+shared_p<BackendRequestAuthorizationArtifact> __latency_fn_backend_preflight_requests_backend_request_artifact_from_direct_call_contract_with_literal_arg(ProjectCallableContractRow contract, FrontendNodeRow argumentNode, FrontendLiteralPayloadRow argumentLiteral);
+}

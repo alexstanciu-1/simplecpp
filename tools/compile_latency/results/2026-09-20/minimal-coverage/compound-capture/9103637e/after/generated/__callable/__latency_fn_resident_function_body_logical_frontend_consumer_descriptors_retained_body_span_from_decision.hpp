@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyLogicalFrontendBodySpanDescriptorRow;
+struct ResidentFunctionBodyWorkDecisionRow;
+ResidentFunctionBodyLogicalFrontendBodySpanDescriptorRow __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_retained_body_span_from_decision(shared_p<CompilerProjectRunReport> report, shared_p<CompilerProjectRunReport> previous, int_t<std::uint32_t> descriptorId, ResidentFunctionBodyWorkDecisionRow decision);
+}

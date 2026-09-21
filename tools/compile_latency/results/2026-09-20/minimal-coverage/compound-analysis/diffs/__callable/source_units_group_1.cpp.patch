@@ -1,0 +1,20 @@
+--- before/__callable/source_units_group_1.cpp
++++ after/__callable/source_units_group_1.cpp
+@@ -29,7 +29,7 @@
+ #include "__callable/__latency_fn_structure_row_ids_uint32_from_int.hpp"
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-int_t<> __latency_fn_source_units_source_read_worker_count_for_manifest(const shared_p<ProjectManifest>& manifest) {
++int_t<> __latency_fn_source_units_source_read_worker_count_for_manifest(shared_p<ProjectManifest> manifest) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_worker_count_for_manifest", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[14]);
+ 	if (static_cast<bool>((cast<int_t<>>(manifest->source_count) <= static_cast<int_t<> >(1)))) {
+ 		return static_cast<int_t<> >(1);
+@@ -169,7 +169,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-SourceUnitTableRow __latency_fn_source_units_table_row(const ProjectManifestSourceRow& source, const string_t& sourceText) {
++SourceUnitTableRow __latency_fn_source_units_table_row(ProjectManifestSourceRow source, const string_t& sourceText) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::table_row", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[24]);
+ 	SourceUnitTableRow row = SourceUnitTableRow{};
+ 	row->source_unit_id = source->source_id;

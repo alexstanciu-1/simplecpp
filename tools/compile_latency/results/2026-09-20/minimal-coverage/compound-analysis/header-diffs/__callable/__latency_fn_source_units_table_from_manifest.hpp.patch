@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_source_units_table_from_manifest.hpp
++++ after/__callable/__latency_fn_source_units_table_from_manifest.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ class ProjectManifest;
+ class SourceUnitTable;
+-shared_p<SourceUnitTable> __latency_fn_source_units_table_from_manifest(const shared_p<ProjectManifest>& manifest);
++shared_p<SourceUnitTable> __latency_fn_source_units_table_from_manifest(shared_p<ProjectManifest> manifest);
+ }

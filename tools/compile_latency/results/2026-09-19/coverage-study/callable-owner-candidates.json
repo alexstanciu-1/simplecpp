@@ -1,0 +1,520 @@
+{
+  "scope": "structural candidate inventory only, not proof all owners supported by bounded emitter or resolved semantics",
+  "owners": [
+    {
+      "owner": "token_row_lists",
+      "source": "structure_kernel/token_row_lists.phs",
+      "static_declarations": 33
+    },
+    {
+      "owner": "structure_row_ids",
+      "source": "structure_kernel/row_ids.phs",
+      "static_declarations": 19
+    },
+    {
+      "owner": "backend_request_row_lists",
+      "source": "structure_kernel/backend_request_row_lists.phs",
+      "static_declarations": 26
+    },
+    {
+      "owner": "frontend_node_lists",
+      "source": "structure_kernel/frontend_node_lists.phs",
+      "static_declarations": 43
+    },
+    {
+      "owner": "frontend_model_tables",
+      "source": "structure_kernel/frontend_model_tables.phs",
+      "static_declarations": 119
+    },
+    {
+      "owner": "token_tables",
+      "source": "structure_kernel/token_tables.phs",
+      "static_declarations": 46
+    },
+    {
+      "owner": "row_segment_policy",
+      "source": "structure_kernel/row_segment_policy.phs",
+      "static_declarations": 18
+    },
+    {
+      "owner": "prepare_outputs",
+      "source": "compile/01_prepare_outputs.phs",
+      "static_declarations": 2
+    },
+    {
+      "owner": "semantic_type_ref_providers",
+      "source": "generated/semantic_type_ref_providers.phs",
+      "static_declarations": 41
+    },
+    {
+      "owner": "semantic_lookup_manifest_generated",
+      "source": "generated/semantic_lookup_manifest_generated.phs",
+      "static_declarations": 25
+    },
+    {
+      "owner": "gate_result_debug_helpers",
+      "source": "debug/gate_result_debug_helpers.phs",
+      "static_declarations": 5
+    },
+    {
+      "owner": "gate_result_inspection_helpers",
+      "source": "inspection/gate_result_inspection_helpers.phs",
+      "static_declarations": 5
+    },
+    {
+      "owner": "gate_profile_helpers",
+      "source": "profile/gate_profile_helpers.phs",
+      "static_declarations": 4
+    },
+    {
+      "owner": "frontend_body_summaries",
+      "source": "compile/model/frontend_body_summaries.phs",
+      "static_declarations": 41
+    },
+    {
+      "owner": "source_buffers",
+      "source": "compile/model/source_buffers.phs",
+      "static_declarations": 7
+    },
+    {
+      "owner": "type_refs",
+      "source": "compile/model/type_refs.phs",
+      "static_declarations": 95
+    },
+    {
+      "owner": "type_ref_identity",
+      "source": "compile/model/type_ref_identity.phs",
+      "static_declarations": 7
+    },
+    {
+      "owner": "project_callable_contracts",
+      "source": "compile/model/project_callable_contracts.phs",
+      "static_declarations": 37
+    },
+    {
+      "owner": "callable_contract_identity",
+      "source": "compile/model/callable_contract_identity.phs",
+      "static_declarations": 5
+    },
+    {
+      "owner": "reference_identity",
+      "source": "compile/model/reference_identity.phs",
+      "static_declarations": 7
+    },
+    {
+      "owner": "source_identity",
+      "source": "compile/model/source_identity.phs",
+      "static_declarations": 21
+    },
+    {
+      "owner": "project_dependency_graph",
+      "source": "compile/model/project_dependency_graph.phs",
+      "static_declarations": 62
+    },
+    {
+      "owner": "project_symbol_identity",
+      "source": "compile/model/project_symbol_identity.phs",
+      "static_declarations": 10
+    },
+    {
+      "owner": "dependency_graph_identity",
+      "source": "compile/model/dependency_graph_identity.phs",
+      "static_declarations": 11
+    },
+    {
+      "owner": "local_body_lowering",
+      "source": "compile/backend/local_body_lowering.phs",
+      "static_declarations": 24
+    },
+    {
+      "owner": "backend_partition_readiness",
+      "source": "compile/backend/backend_partition_readiness.phs",
+      "static_declarations": 32
+    },
+    {
+      "owner": "backend_emission_adapter_routes",
+      "source": "compile/backend/backend_emission_adapter_routes.phs",
+      "static_declarations": 30
+    },
+    {
+      "owner": "backend_module_composition",
+      "source": "compile/backend/backend_module_composition.phs",
+      "static_declarations": 4
+    },
+    {
+      "owner": "llvm_api_toolchain_probe",
+      "source": "compile/backend/llvm_api_toolchain_probe.phs",
+      "static_declarations": 26
+    },
+    {
+      "owner": "llvm_api_sink_preflight",
+      "source": "compile/backend/llvm_api_sink_preflight.phs",
+      "static_declarations": 35
+    },
+    {
+      "owner": "local_body_lowering_routes",
+      "source": "compile/backend/local_body_lowering_routes.phs",
+      "static_declarations": 20
+    },
+    {
+      "owner": "backend_preflight_requests",
+      "source": "compile/backend/backend_preflight_requests.phs",
+      "static_declarations": 225
+    },
+    {
+      "owner": "backend_emission_decisions",
+      "source": "compile/backend/backend_emission_decisions.phs",
+      "static_declarations": 63
+    },
+    {
+      "owner": "primitive_abi_adapter_matrix",
+      "source": "compile/backend/primitive_abi_adapter_matrix.phs",
+      "static_declarations": 52
+    },
+    {
+      "owner": "analysis_context_identity",
+      "source": "compile/artifacts/analysis_context_identity.phs",
+      "static_declarations": 4
+    },
+    {
+      "owner": "analysis_context",
+      "source": "compile/artifacts/analysis_context.phs",
+      "static_declarations": 23
+    },
+    {
+      "owner": "semantic_body_capability_consumers",
+      "source": "compile/semantic/semantic_body_capability_consumers.phs",
+      "static_declarations": 9
+    },
+    {
+      "owner": "compiler_pipeline_runner",
+      "source": "compile/pipeline/compiler_pipeline_runner.phs",
+      "static_declarations": 4
+    },
+    {
+      "owner": "compiler_project_runner",
+      "source": "compile/pipeline/compiler_project_runner.phs",
+      "static_declarations": 25
+    },
+    {
+      "owner": "pipeline_config_helpers",
+      "source": "compile/pipeline/pipeline_config_helpers.phs",
+      "static_declarations": 16
+    },
+    {
+      "owner": "project_manifest",
+      "source": "compile/pipeline/project_manifest.phs",
+      "static_declarations": 13
+    },
+    {
+      "owner": "operation_readiness",
+      "source": "compile/operations/operation_readiness.phs",
+      "static_declarations": 130
+    },
+    {
+      "owner": "mt_publication_metrics",
+      "source": "compile/support/mt_publication_metrics.phs",
+      "static_declarations": 9
+    },
+    {
+      "owner": "compiler_project_run_row_artifacts",
+      "source": "compile/support/compiler_project_run_row_artifacts.phs",
+      "static_declarations": 7
+    },
+    {
+      "owner": "compiler_profile_events",
+      "source": "compile/support/compiler_profile_events.phs",
+      "static_declarations": 37
+    },
+    {
+      "owner": "proof_metrics",
+      "source": "compile/support/proof_metrics.phs",
+      "static_declarations": 824
+    },
+    {
+      "owner": "artifact_writes",
+      "source": "compile/support/artifact_writes.phs",
+      "static_declarations": 33
+    },
+    {
+      "owner": "compiler_execution_artifacts",
+      "source": "compile/support/compiler_execution_artifacts.phs",
+      "static_declarations": 11
+    },
+    {
+      "owner": "resident_snapshots",
+      "source": "compile/support/resident_snapshots.phs",
+      "static_declarations": 19
+    },
+    {
+      "owner": "debug_profile_gate_results",
+      "source": "compile/support/debug_profile_gate_results.phs",
+      "static_declarations": 17
+    },
+    {
+      "owner": "output_paths",
+      "source": "compile/support/output_paths.phs",
+      "static_declarations": 3
+    },
+    {
+      "owner": "performance_memory_estimates",
+      "source": "compile/support/performance_memory_estimates.phs",
+      "static_declarations": 57
+    },
+    {
+      "owner": "production_mt_heartbeat",
+      "source": "compile/support/production_mt_heartbeat.phs",
+      "static_declarations": 28
+    },
+    {
+      "owner": "resident_recompute_targets",
+      "source": "compile/incremental/resident_recompute_targets.phs",
+      "static_declarations": 28
+    },
+    {
+      "owner": "resident_token_lists",
+      "source": "compile/incremental/resident_token_lists.phs",
+      "static_declarations": 17
+    },
+    {
+      "owner": "resident_function_body_summary_project_references",
+      "source": "compile/incremental/resident_function_body_summary_project_references.phs",
+      "static_declarations": 19
+    },
+    {
+      "owner": "resident_function_body_publish_repoint_preflights",
+      "source": "compile/incremental/resident_function_body_publish_repoint_preflights.phs",
+      "static_declarations": 18
+    },
+    {
+      "owner": "partition_readiness",
+      "source": "compile/incremental/partition_readiness.phs",
+      "static_declarations": 54
+    },
+    {
+      "owner": "resident_source_unit_frontend_states",
+      "source": "compile/incremental/resident_source_unit_frontend_states.phs",
+      "static_declarations": 34
+    },
+    {
+      "owner": "resident_function_body_incremental_acceptance",
+      "source": "compile/incremental/resident_function_body_incremental_acceptance.phs",
+      "static_declarations": 33
+    },
+    {
+      "owner": "resident_function_body_local_parse_proofs",
+      "source": "compile/incremental/resident_function_body_local_parse_proofs.phs",
+      "static_declarations": 18
+    },
+    {
+      "owner": "resident_function_body_logical_frontend_views",
+      "source": "compile/incremental/resident_function_body_logical_frontend_views.phs",
+      "static_declarations": 22
+    },
+    {
+      "owner": "resident_function_body_row_list_publish_plans",
+      "source": "compile/incremental/resident_function_body_row_list_publish_plans.phs",
+      "static_declarations": 27
+    },
+    {
+      "owner": "resident_function_body_source_unit_repoint_proofs",
+      "source": "compile/incremental/resident_function_body_source_unit_repoint_proofs.phs",
+      "static_declarations": 18
+    },
+    {
+      "owner": "resident_definition_granularity",
+      "source": "compile/incremental/resident_definition_granularity.phs",
+      "static_declarations": 66
+    },
+    {
+      "owner": "source_unit_early_skip",
+      "source": "compile/incremental/source_unit_early_skip.phs",
+      "static_declarations": 35
+    },
+    {
+      "owner": "resident_reverse_dependency_indexes",
+      "source": "compile/incremental/resident_reverse_dependency_indexes.phs",
+      "static_declarations": 15
+    },
+    {
+      "owner": "resident_public_surface_incremental_acceptance",
+      "source": "compile/incremental/resident_public_surface_incremental_acceptance.phs",
+      "static_declarations": 33
+    },
+    {
+      "owner": "resident_function_body_row_list_publish_results",
+      "source": "compile/incremental/resident_function_body_row_list_publish_results.phs",
+      "static_declarations": 22
+    },
+    {
+      "owner": "resident_function_body_stable_node_remap_proofs",
+      "source": "compile/incremental/resident_function_body_stable_node_remap_proofs.phs",
+      "static_declarations": 21
+    },
+    {
+      "owner": "source_unit_frontend_scheduler",
+      "source": "compile/incremental/source_unit_frontend_scheduler.phs",
+      "static_declarations": 30
+    },
+    {
+      "owner": "resident_function_body_work_decisions",
+      "source": "compile/incremental/resident_function_body_work_decisions.phs",
+      "static_declarations": 35
+    },
+    {
+      "owner": "resident_function_body_logical_frontend_consumer_descriptors",
+      "source": "compile/incremental/resident_function_body_logical_frontend_consumer_descriptors.phs",
+      "static_declarations": 38
+    },
+    {
+      "owner": "resident_transactions",
+      "source": "compile/incremental/resident_transactions.phs",
+      "static_declarations": 29
+    },
+    {
+      "owner": "resident_function_body_ownership",
+      "source": "compile/incremental/resident_function_body_ownership.phs",
+      "static_declarations": 34
+    },
+    {
+      "owner": "resident_function_body_parse_slices",
+      "source": "compile/incremental/resident_function_body_parse_slices.phs",
+      "static_declarations": 19
+    },
+    {
+      "owner": "resident_project_symbol_name_lookups",
+      "source": "compile/incremental/resident_project_symbol_name_lookups.phs",
+      "static_declarations": 16
+    },
+    {
+      "owner": "resident_dirty_propagation",
+      "source": "compile/incremental/resident_dirty_propagation.phs",
+      "static_declarations": 70
+    },
+    {
+      "owner": "resident_change_events",
+      "source": "compile/incremental/resident_change_events.phs",
+      "static_declarations": 31
+    },
+    {
+      "owner": "resident_frontend_node_lists",
+      "source": "compile/incremental/resident_frontend_node_lists.phs",
+      "static_declarations": 18
+    },
+    {
+      "owner": "resident_dependency_edges",
+      "source": "compile/incremental/resident_dependency_edges.phs",
+      "static_declarations": 3
+    },
+    {
+      "owner": "resident_daemon_file_ipc",
+      "source": "compile/incremental/resident_daemon_file_ipc.phs",
+      "static_declarations": 117
+    },
+    {
+      "owner": "resident_daemon_incremental_proof",
+      "source": "compile/incremental/resident_daemon_incremental_proof.phs",
+      "static_declarations": 9
+    },
+    {
+      "owner": "resident_function_body_logical_frontend_reference_candidates",
+      "source": "compile/incremental/resident_function_body_logical_frontend_reference_candidates.phs",
+      "static_declarations": 16
+    },
+    {
+      "owner": "resident_function_body_mixed_frontend_assembly_proofs",
+      "source": "compile/incremental/resident_function_body_mixed_frontend_assembly_proofs.phs",
+      "static_declarations": 20
+    },
+    {
+      "owner": "source_unit_frontend_work_decisions",
+      "source": "compile/incremental/source_unit_frontend_work_decisions.phs",
+      "static_declarations": 30
+    },
+    {
+      "owner": "resident_reverse_dependencies",
+      "source": "compile/incremental/resident_reverse_dependencies.phs",
+      "static_declarations": 13
+    },
+    {
+      "owner": "resident_body_dependencies",
+      "source": "compile/incremental/resident_body_dependencies.phs",
+      "static_declarations": 9
+    },
+    {
+      "owner": "capability_consumer_plans",
+      "source": "compile/capabilities/capability_consumer_plans.phs",
+      "static_declarations": 12
+    },
+    {
+      "owner": "runtime_helper_contract_readiness",
+      "source": "compile/capabilities/runtime_helper_contract_readiness.phs",
+      "static_declarations": 26
+    },
+    {
+      "owner": "type_traits",
+      "source": "compile/capabilities/type_traits.phs",
+      "static_declarations": 88
+    },
+    {
+      "owner": "control_flow_graphs",
+      "source": "compile/control_flow/control_flow_graphs.phs",
+      "static_declarations": 39
+    },
+    {
+      "owner": "string_runtime_abi",
+      "source": "compile/backend/abi_bridge/string_runtime_abi.phs",
+      "static_declarations": 20
+    },
+    {
+      "owner": "runtime_helper_effects",
+      "source": "compile/backend/abi_bridge/runtime_helper_effects.phs",
+      "static_declarations": 8
+    },
+    {
+      "owner": "llvm_abi_declarations",
+      "source": "compile/backend/abi_bridge/llvm_abi_declarations.phs",
+      "static_declarations": 5
+    },
+    {
+      "owner": "llvm_abi_call_lowering",
+      "source": "compile/backend/abi_bridge/llvm_abi_call_lowering.phs",
+      "static_declarations": 2
+    },
+    {
+      "owner": "runtime_abi_bridge",
+      "source": "compile/backend/abi_bridge/runtime_abi_bridge.phs",
+      "static_declarations": 17
+    },
+    {
+      "owner": "frontend_model_builder",
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "static_declarations": 158
+    },
+    {
+      "owner": "token_kinds",
+      "source": "compile/frontend_adapter/phs/token_kinds.phs",
+      "static_declarations": 11
+    },
+    {
+      "owner": "parser_state",
+      "source": "compile/frontend_adapter/phs/parser_state.phs",
+      "static_declarations": 15
+    },
+    {
+      "owner": "parser_diagnostics",
+      "source": "compile/frontend_adapter/phs/parser_diagnostics.phs",
+      "static_declarations": 17
+    },
+    {
+      "owner": "phs_tokenizer",
+      "source": "compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "static_declarations": 19
+    },
+    {
+      "owner": "parser_cursor",
+      "source": "compile/frontend_adapter/phs/parser_cursor.phs",
+      "static_declarations": 7
+    }
+  ]
+}

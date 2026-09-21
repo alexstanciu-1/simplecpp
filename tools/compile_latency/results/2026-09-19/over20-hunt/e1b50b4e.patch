@@ -1,0 +1,354 @@
+commit e1b50b4e1da0e6ce918b6799f80ddb70bbc1e076
+Author: Alex Stanciu <ealexs@gmail.com>
+Date:   Mon Jul 20 09:57:39 2026 +0300
+
+    v2: prove int64 binary plus path
+
+diff --git a/compiler/v2/docs/core/compiler_core_roadmap_backlog.md b/compiler/v2/docs/core/compiler_core_roadmap_backlog.md
+index 29382fd9..e2ea4788 100644
+--- a/compiler/v2/docs/core/compiler_core_roadmap_backlog.md
++++ b/compiler/v2/docs/core/compiler_core_roadmap_backlog.md
+@@ -296,3 +296,27 @@ Goal: reduce repeated validation work before broad feature-catalog execution.
+ | Optimization deferred | v2 artifact/string generation is not hot on the focused 2 KB baseline, so string-buffer rewrites, JSON-codec changes, and broader row aggregation changes remain deferred until a larger fixture or build-report timing row points there. |
+ | O3 | Not run by design. |
+ | Next-cycle note | If no-change build latency remains painful, instrument the Simple C++ build command around unaccounted orchestration/report-writing time and consider a compact/no-source-explanation mode for no-change builds before optimizing v2 artifact writers. |
++
++### Pre-Phase-9 Int64 Provider Binary-Plus Proof Report
++
++| Item | Result |
++|---|---|
++| Batch | F1 follow-up: narrow `int64` provider + binary-plus vertical proof |
++| Feature | Binary `+` over the existing `int64` primitive provider. |
++| Consumer row | `feature_binary_operator_plus_id()` through `CapabilityConsumerRow`; the fixture does not add a separate int64 feature path. |
++| Required contracts | Known TypeRef provider for `int64`, operation contract `binary_plus:int64_int64_to_int64`, inline scalar storage, trivial lifetime/copy/cleanup, and `primitive_i64_add` lowering adapter. |
++| Accepted minimal slice | Permanent fixture `compiler/v2/fixtures/int64_local_return` with `$x int64 = 40; return $x + 2;`. |
++| Implementation | The PHS frontend now threads the declared return TypeRef into return expression rows and retags typed local variable/initializer rows from local declaration syntax. The focused runner now asserts that `int64_local_return` emits nonzero lowering and LLVM text and that the generated LLVM contains `alloca i64`, `store i64 40`, `add i64`, and `ret i64`. |
++| Tokenizer coverage | Covered by the existing tokenizer path. Focused run saw 21 tokens and zero parser errors; no tokenizer change was needed. |
++| Parser coverage | Covered by `frontend_model_builder.phs`: `int64` remains parsed through generic identifier type syntax, now preserved on local and return expression TypeRefs. |
++| Lowering coverage | Covered by focused compiled fixture run: 3 backend requests and 3 lowering steps for the int64 local-store/load-plus-return path. |
++| LLVM/text sink coverage | Covered by focused compiled fixture run: 549 LLVM text bytes, with i64 local storage, load, `add i64`, and i64 return. |
++| Permanent tests | `int64_local_return` remains in the permanent bootstrap full fixture set; `run_fixture_focus.sh` now has fixture-specific int64 assertions for cheap edit-time proof. |
++| Benchmark protocol | Standard protocol is `SCPP_V2_FOCUS_FIXTURE_KEYS=int64_local_return SCPP_SKIP_COMPILER_BUILD=1 bash compiler/v2/run_fixture_focus.sh`; broader smoke/incremental/full gate stays `SCPP_SKIP_COMPILER_BUILD=1 bash compiler/v2/run_readiness_gate.sh` after one compiler build. Scaling, benchmark, and O3 are opt-in only. |
++| Performance measurement | Focused int64 run reported 1 ms compiler-side elapsed, with tokenizer/parser/frontend/symbol/backend profile rows present. The compiler rebuild after PHS edits remains the real cost: one failed build exposed a stale incremental helper call after 113.7 s; the corrected resumed debug build took 548.5 s. |
++| Incremental added/changed/removed coverage | Covered at the batch-gate level by `run_incremental_proof.sh`. Int64-specific added/changed/removed source variants remain debt until resident local body parse slices carry the owning symbol return TypeRef instead of the current neutral/default expected return TypeRef. |
++| Multithreading coverage | Debt. No worker execution exists yet. The touched rows remain per-source/per-function owned and deterministic; no shared mutable global state or cross-partition ordering dependency was added. |
++| Implementation performance review | No speculative string/buffer rewrite was added. The hot cost observed here is still compiler rebuild fanout, not int64 fixture execution or LLVM text materialization. The implementation adds one compact expression-payload update helper and passes TypeRef ids through existing rows. |
++| Concrete type branches | Adapter-local only: `int64` selects the existing primitive i64 LLVM add path through provider/consumer/contract rows. No duplicated binary-plus feature implementation was added. |
++| Validation | `bash -n compiler/v2/run_fixture_focus.sh`; `git diff --check`; fresh debug compiler rebuild after fixing one stale helper call; focused `int64_local_return`; `SCPP_SKIP_COMPILER_BUILD=1 bash compiler/v2/run_readiness_gate.sh` in 8.3 s. |
++| O3 | Not run by design; this was a debug-path provider proof, not an O3 performance claim. |
+diff --git a/compiler/v2/run_fixture_focus.sh b/compiler/v2/run_fixture_focus.sh
+index e15d9b46..0a45b853 100755
+--- a/compiler/v2/run_fixture_focus.sh
++++ b/compiler/v2/run_fixture_focus.sh
+@@ -12,6 +12,10 @@ BUILD_ROOT="${SCPP_V2_FOCUS_BUILD_ROOT:-../build/focused_fixture}"
+ BUILD_OUT="$ROOT/compiler/v2/build/focused_fixture_build.out"
+ RUN_OUT="$ROOT/compiler/v2/build/focused_fixture_run.out"
+ TMPDIR="$ROOT/compiler/v2/build/tmp"
++BUILD_ROOT_ABS="$BUILD_ROOT"
++if [[ "$BUILD_ROOT_ABS" != /* ]]; then
++	BUILD_ROOT_ABS="$PROJECT/$BUILD_ROOT"
++fi
+ 
+ mkdir -p "$TMPDIR"
+ export TMPDIR
+@@ -26,6 +30,21 @@ assert_output_contains() {
+ 	exit 1
+ }
+ 
++assert_file_contains() {
++	local file="$1"
++	local pattern="$2"
++	local message="$3"
++	if [[ ! -f "$file" ]]; then
++		echo "$message" >&2
++		exit 1
++	fi
++	if grep -q "$pattern" "$file"; then
++		return
++	fi
++	echo "$message" >&2
++	exit 1
++}
++
+ count_fixture_keys() {
+ 	local text="$1"
+ 	local count=0
+@@ -86,5 +105,18 @@ if [[ "$FOCUS_KEYS" == "batch5_2kb_baseline" ]]; then
+ 	assert_output_contains '^fixture_runner_profile_stage=backend_lowering_writes:rows=[1-9][0-9]*:elapsed_ms=[0-9][0-9]*:status=completed$' "v2 focused backend lowering/write timing row missing"
+ fi
+ 
++if [[ "$FOCUS_KEYS" == "int64_local_return" ]]; then
++	INT64_LL="$BUILD_ROOT_ABS/phs_int64_local_return_native/compiler.ll"
++	assert_output_contains '^fixture_runner_completed=1$' "v2 focused int64 provider proof should complete"
++	assert_output_contains '^fixture_runner_blocked=0$' "v2 focused int64 provider proof should not block"
++	assert_output_contains '^fixture_runner_backend_requests=[1-9][0-9]*$' "v2 focused int64 provider proof should authorize backend requests"
++	assert_output_contains '^fixture_runner_lowering_steps=[1-9][0-9]*$' "v2 focused int64 provider proof should emit lowering steps"
++	assert_output_contains '^fixture_runner_llvm_text_bytes=[1-9][0-9]*$' "v2 focused int64 provider proof should materialize LLVM text"
++	assert_file_contains "$INT64_LL" 'alloca i64, align 8' "v2 focused int64 provider proof missing i64 local storage"
++	assert_file_contains "$INT64_LL" 'store i64 40' "v2 focused int64 provider proof missing i64 initializer store"
++	assert_file_contains "$INT64_LL" 'add i64' "v2 focused int64 provider proof missing i64 binary plus"
++	assert_file_contains "$INT64_LL" 'ret i64' "v2 focused int64 provider proof missing i64 return"
++fi
++
+ grep -E '^(fixture_runner_rows|fixture_runner_completed|fixture_runner_blocked|fixture_runner_elapsed_ms|fixture_runner_source_bytes|fixture_runner_tokens|fixture_runner_frontend_nodes|fixture_runner_backend_requests|fixture_runner_lowering_steps|fixture_runner_llvm_text_bytes|fixture_runner_artifact_writes|fixture_runner_reused_writes|fixture_runner_profile_stage=)' "$RUN_OUT"
+ echo "v2 focused fixture passed: $FOCUS_KEYS"
+diff --git a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+index 4dda43e9..998deb29 100644
+--- a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
++++ b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+@@ -118,7 +118,18 @@ final class frontend_model_builder {
+ 		return frontend_model_builder::append_name($model, $nameRangeId, frontend_model_builder::name_role_variable_id(), $counters);
+ 	}
+ 
++	public static function expression_type_ref_or_int(uint32 $typeRefId): uint32 {
++		if ((int)$typeRefId > 0) {
++			return $typeRefId;
++		}
++		return frontend_model_builder::primitive_int_type_ref_id();
++	}
++
+ 	public static function append_variable_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {
++		return frontend_model_builder::append_variable_expression_with_type($state, $source, $model, $parentNodeId, frontend_model_builder::primitive_int_type_ref_id(), $counters);
++	}
++
++	public static function append_variable_expression_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+ 		$dollarToken TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), "$");
+ 		$nameToken TokenRow = parser_state::expect($state, $source, token_kinds::identifier(), "");
+ 		$nameRangeId uint32 = frontend_model_builder::source_range_from_token($model, $nameToken, $counters);
+@@ -139,7 +150,7 @@ final class frontend_model_builder {
+ 			"right_node_id" => structure_row_ids::none_id(),
+ 			"first_argument_node_id" => structure_row_ids::none_id(),
+ 			"argument_count" => structure_row_ids::none_kind_id(),
+-			"inferred_type_ref_id" => frontend_model_builder::primitive_int_type_ref_id(),
++			"inferred_type_ref_id" => frontend_model_builder::expression_type_ref_or_int($inferredTypeRefId),
+ 			"source_range_id" => $variableRangeId,
+ 			"flags" => structure_row_ids::none_kind_id(),
+ 		];
+@@ -160,9 +171,13 @@ final class frontend_model_builder {
+ 	}
+ 
+ 	public static function append_literal_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {
++		return frontend_model_builder::append_literal_expression_with_numeric_type($state, $source, $model, $parentNodeId, frontend_model_builder::primitive_int_type_ref_id(), $counters);
++	}
++
++	public static function append_literal_expression_with_numeric_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $numericTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+ 		$literalToken TokenRow = [];
+ 		$literalKindId uint16 = frontend_model_builder::literal_kind_integer_id();
+-		$typeRefId uint32 = frontend_model_builder::primitive_int_type_ref_id();
++		$typeRefId uint32 = frontend_model_builder::expression_type_ref_or_int($numericTypeRefId);
+ 		$numericPayload int32 = structure_row_ids::int32_from_int(0);
+ 		$literalStatusId uint16 = frontend_model_builder::literal_status_ready_id();
+ 		if (parser_state::at_bool_literal($state, $source)) {
+@@ -265,8 +280,12 @@ final class frontend_model_builder {
+ 	}
+ 
+ 	public static function append_binary_plus_expression_from_left(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, FrontendModelKernelCounters $counters): uint32 {
++		return frontend_model_builder::append_binary_plus_expression_from_left_with_type($state, $source, $model, $parentNodeId, $leftNodeId, frontend_model_builder::primitive_int_type_ref_id(), $counters);
++	}
++
++	public static function append_binary_plus_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+ 		parser_state::expect($state, $source, token_kinds::symbol(), "+");
+-		$rightNodeId uint32 = frontend_model_builder::append_literal_expression($state, $source, $model, structure_row_ids::none_id(), $counters);
++		$rightNodeId uint32 = frontend_model_builder::append_literal_expression_with_numeric_type($state, $source, $model, structure_row_ids::none_id(), frontend_model_builder::expression_type_ref_or_int($inferredTypeRefId), $counters);
+ 		$leftNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $leftNodeId, $counters);
+ 		$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $rightNodeId, $counters);
+ 		$leftRange SourceRangeRow = frontend_model_tables::source_range_by_id($model, $leftNode->source_range_id, $counters);
+@@ -287,7 +306,7 @@ final class frontend_model_builder {
+ 			"right_node_id" => $rightNodeId,
+ 			"first_argument_node_id" => structure_row_ids::none_id(),
+ 			"argument_count" => structure_row_ids::none_kind_id(),
+-			"inferred_type_ref_id" => frontend_model_builder::primitive_int_type_ref_id(),
++			"inferred_type_ref_id" => frontend_model_builder::expression_type_ref_or_int($inferredTypeRefId),
+ 			"source_range_id" => $binaryRangeId,
+ 			"flags" => structure_row_ids::none_kind_id(),
+ 		];
+@@ -323,6 +342,22 @@ final class frontend_model_builder {
+ 			&& parser_cursor::peek_at($source, $state->tokens, $state->cursor, 2, token_kinds::symbol(), "=");
+ 	}
+ 
++	public static function retag_expression_node_type(FrontendModel $model, uint32 $nodeId, uint32 $typeRefId, FrontendModelKernelCounters $counters): void {
++		if ((int)$typeRefId === 0) {
++			return;
++		}
++		$node FrontendNodeRow = frontend_model_tables::node_by_id($model, $nodeId, $counters);
++		if ((int)$node->row_family_id !== (int)frontend_model_tables::row_family_expression_id()) {
++			return;
++		}
++		$expression FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $node->payload_row_id, $counters);
++		if ((int)$expression->payload_id === 0) {
++			return;
++		}
++		$expression->inferred_type_ref_id = $typeRefId;
++		frontend_model_tables::update_expression_payload($model, $expression, $counters);
++	}
++
+ 	public static function parse_local_declaration_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {
+ 		$startToken TokenRow = parser_cursor::peek($state->tokens, $state->cursor, 0);
+ 		$targetNodeId uint32 = frontend_model_builder::append_variable_expression($state, $source, $model, structure_row_ids::none_id(), $counters);
+@@ -332,7 +367,8 @@ final class frontend_model_builder {
+ 		if ((int)$typeRefId === 0) {
+ 			parser_state::diagnostic($state);
+ 		}
+-		$valueNodeId uint32 = frontend_model_builder::append_literal_expression($state, $source, $model, structure_row_ids::none_id(), $counters);
++		frontend_model_builder::retag_expression_node_type($model, $targetNodeId, $typeRefId, $counters);
++		$valueNodeId uint32 = frontend_model_builder::append_literal_expression_with_numeric_type($state, $source, $model, structure_row_ids::none_id(), frontend_model_builder::expression_type_ref_or_int($typeRefId), $counters);
+ 		$semicolonToken TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), ";");
+ 		$statementRangeId uint32 = frontend_model_builder::source_range_from_offsets(
+ 			$model,
+@@ -453,7 +489,7 @@ final class frontend_model_builder {
+ 		return $statementNodeId;
+ 	}
+ 
+-	public static function parse_if_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_if_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+ 		$ifToken TokenRow = parser_state::expect($state, $source, token_kinds::keyword(), "if");
+ 		parser_state::expect($state, $source, token_kinds::symbol(), "(");
+ 		$conditionNodeId uint32 = frontend_model_builder::append_literal_expression($state, $source, $model, structure_row_ids::none_id(), $counters);
+@@ -485,7 +521,7 @@ final class frontend_model_builder {
+ 		];
+ 		$statementNodeId uint32 = frontend_model_tables::append_node($model, $statementNode, $counters);
+ 
+-		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, false, $counters);
++		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, false, $expectedReturnTypeRefId, $counters);
+ 		$closeBrace TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), "}");
+ 		$statementRangeId uint32 = frontend_model_builder::source_range_from_offsets(
+ 			$model,
+@@ -506,19 +542,20 @@ final class frontend_model_builder {
+ 		return $statementNodeId;
+ 	}
+ 
+-	public static function parse_return_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $returnNodeId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_return_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $returnNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++		$expressionTypeRefId uint32 = frontend_model_builder::expression_type_ref_or_int($expectedReturnTypeRefId);
+ 		if (parser_state::at($state, $source, token_kinds::number(), "") || parser_state::at_bool_literal($state, $source)) {
+ 			$canParseBinary bool = parser_state::at($state, $source, token_kinds::number(), "");
+-			$leftNodeId uint32 = frontend_model_builder::append_literal_expression($state, $source, $model, $returnNodeId, $counters);
++			$leftNodeId uint32 = frontend_model_builder::append_literal_expression_with_numeric_type($state, $source, $model, $returnNodeId, $expressionTypeRefId, $counters);
+ 			if ($canParseBinary && parser_state::at($state, $source, token_kinds::symbol(), "+")) {
+-				return frontend_model_builder::append_binary_plus_expression_from_left($state, $source, $model, $returnNodeId, $leftNodeId, $counters);
++				return frontend_model_builder::append_binary_plus_expression_from_left_with_type($state, $source, $model, $returnNodeId, $leftNodeId, $expressionTypeRefId, $counters);
+ 			}
+ 			return $leftNodeId;
+ 		}
+ 		if (parser_state::at($state, $source, token_kinds::symbol(), "$")) {
+-			$leftNodeId uint32 = frontend_model_builder::append_variable_expression($state, $source, $model, $returnNodeId, $counters);
++			$leftNodeId uint32 = frontend_model_builder::append_variable_expression_with_type($state, $source, $model, $returnNodeId, $expressionTypeRefId, $counters);
+ 			if (parser_state::at($state, $source, token_kinds::symbol(), "+")) {
+-				return frontend_model_builder::append_binary_plus_expression_from_left($state, $source, $model, $returnNodeId, $leftNodeId, $counters);
++				return frontend_model_builder::append_binary_plus_expression_from_left_with_type($state, $source, $model, $returnNodeId, $leftNodeId, $expressionTypeRefId, $counters);
+ 			}
+ 			return $leftNodeId;
+ 		}
+@@ -529,7 +566,7 @@ final class frontend_model_builder {
+ 		return structure_row_ids::none_id();
+ 	}
+ 
+-	public static function parse_return_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_return_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+ 		$returnToken TokenRow = parser_state::expect($state, $source, token_kinds::keyword(), "return");
+ 		$returnPayload FrontendStatementPayloadRow = [
+ 			"payload_id" => structure_row_ids::none_id(),
+@@ -555,7 +592,7 @@ final class frontend_model_builder {
+ 			"flags" => structure_row_ids::none_kind_id(),
+ 		];
+ 		$returnNodeId uint32 = frontend_model_tables::append_node($model, $returnNode, $counters);
+-		$valueNodeId uint32 = frontend_model_builder::parse_return_expression($state, $source, $model, $returnNodeId, $counters);
++		$valueNodeId uint32 = frontend_model_builder::parse_return_expression($state, $source, $model, $returnNodeId, $expectedReturnTypeRefId, $counters);
+ 		$semicolonToken TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), ";");
+ 		$returnRangeId uint32 = frontend_model_builder::source_range_from_offsets(
+ 			$model,
+@@ -574,7 +611,7 @@ final class frontend_model_builder {
+ 		return $returnNodeId;
+ 	}
+ 
+-	public static function parse_body_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_body_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+ 		if (frontend_model_builder::at_local_declaration($state, $source)) {
+ 			return frontend_model_builder::parse_local_declaration_statement($state, $source, $model, $parentNodeId, $counters);
+ 		}
+@@ -585,20 +622,20 @@ final class frontend_model_builder {
+ 			return frontend_model_builder::parse_echo_statement($state, $source, $model, $parentNodeId, $counters);
+ 		}
+ 		if ($allowNestedIf && parser_state::at($state, $source, token_kinds::keyword(), "if")) {
+-			return frontend_model_builder::parse_if_statement($state, $source, $model, $parentNodeId, $counters);
++			return frontend_model_builder::parse_if_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters);
+ 		}
+ 		if (parser_state::at($state, $source, token_kinds::keyword(), "return")) {
+-			return frontend_model_builder::parse_return_statement($state, $source, $model, $parentNodeId, $counters);
++			return frontend_model_builder::parse_return_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters);
+ 		}
+ 		parser_state::diagnostic($state);
+ 		return structure_row_ids::none_id();
+ 	}
+ 
+-	public static function parse_statement_list_until_close(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_statement_list_until_close(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+ 		$firstStatementNodeId uint32 = structure_row_ids::none_id();
+ 		$previousStatementNodeId uint32 = structure_row_ids::none_id();
+ 		while (!parser_state::at($state, $source, token_kinds::symbol(), "}")) {
+-			$statementNodeId uint32 = frontend_model_builder::parse_body_statement($state, $source, $model, $parentNodeId, $allowNestedIf, $counters);
++			$statementNodeId uint32 = frontend_model_builder::parse_body_statement($state, $source, $model, $parentNodeId, $allowNestedIf, $expectedReturnTypeRefId, $counters);
+ 			if ((int)$statementNodeId > 0) {
+ 				if ((int)$firstStatementNodeId === 0) {
+ 					$firstStatementNodeId = $statementNodeId;
+@@ -615,8 +652,8 @@ final class frontend_model_builder {
+ 		return $firstStatementNodeId;
+ 	}
+ 
+-	public static function parse_function_body(PhsParserState $state, string $source, FrontendModel $model, uint32 $declarationNodeId, FrontendModelKernelCounters $counters): uint32 {
+-		$firstStatementNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $declarationNodeId, true, $counters);
++	public static function parse_function_body(PhsParserState $state, string $source, FrontendModel $model, uint32 $declarationNodeId, uint32 $returnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++		$firstStatementNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $declarationNodeId, true, $returnTypeRefId, $counters);
+ 		parser_state::expect($state, $source, token_kinds::symbol(), "}");
+ 		return $firstStatementNodeId;
+ 	}
+@@ -634,6 +671,7 @@ final class frontend_model_builder {
+ 			if ((int)$parameterTypeRefId === 0) {
+ 				parser_state::diagnostic($state);
+ 			}
++			frontend_model_builder::retag_expression_node_type($model, $parameterNodeId, $parameterTypeRefId, $counters);
+ 		}
+ 		parser_state::expect($state, $source, token_kinds::symbol(), ")");
+ 		parser_state::expect($state, $source, token_kinds::symbol(), ":");
+@@ -714,7 +752,7 @@ final class frontend_model_builder {
+ 			frontend_model_tables::patch_node_links($model, $parameterNodeId, $declarationNodeId, structure_row_ids::none_id(), $typeNodeId, $counters);
+ 		}
+ 
+-		$bodyNodeId uint32 = frontend_model_builder::parse_function_body($state, $source, $model, $declarationNodeId, $counters);
++		$bodyNodeId uint32 = frontend_model_builder::parse_function_body($state, $source, $model, $declarationNodeId, $typeRefId, $counters);
+ 		if ((int)$bodyNodeId > 0) {
+ 			$declarationPayload = frontend_model_tables::declaration_by_id($model, $declarationPayloadId, $counters);
+ 			$declarationPayload->body_node_id = $bodyNodeId;
+diff --git a/compiler/v2/src/compile/incremental/resident_function_body_local_parse_proofs.phs b/compiler/v2/src/compile/incremental/resident_function_body_local_parse_proofs.phs
+index cb331877..eff47e09 100644
+--- a/compiler/v2/src/compile/incremental/resident_function_body_local_parse_proofs.phs
++++ b/compiler/v2/src/compile/incremental/resident_function_body_local_parse_proofs.phs
+@@ -99,7 +99,7 @@ final class resident_function_body_local_parse_proofs {
+ 		$model->source_buffer_id = structure_row_ids::uint32_from_int(1);
+ 		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+ 		resident_function_body_local_parse_proofs::reserve_local_model($model, $slice, $counters);
+-		frontend_model_builder::parse_statement_list_until_close($state, $sourceText, $model, structure_row_ids::none_id(), true, $counters);
++		frontend_model_builder::parse_statement_list_until_close($state, $sourceText, $model, structure_row_ids::none_id(), true, frontend_model_builder::primitive_int_type_ref_id(), $counters);
+ 		$actualTokenAfterBodyIndex = $state->cursor->index;
+ 		$parserDiagnosticCount = $state->diagnostic_count;
+ 		return true;
+diff --git a/compiler/v2/src/structure_kernel/frontend_model_tables.phs b/compiler/v2/src/structure_kernel/frontend_model_tables.phs
+index 02a8ce7e..bf85c015 100644
+--- a/compiler/v2/src/structure_kernel/frontend_model_tables.phs
++++ b/compiler/v2/src/structure_kernel/frontend_model_tables.phs
+@@ -405,6 +405,15 @@ final class frontend_model_tables {
+ 		return true;
+ 	}
+ 
++	public static function update_expression_payload(FrontendModel $model, FrontendExpressionPayloadRow $row, FrontendModelKernelCounters $counters): bool {
++		if (!structure_row_ids::has_dense_id($row->payload_id, count($model->expressions))) {
++			return false;
++		}
++		$model->expressions[structure_row_ids::dense_index($row->payload_id)] = $row;
++		$counters->update_call_count = $counters->update_call_count + 1;
++		return true;
++	}
++
+ 	public static function patch_node_links(FrontendModel $model, uint32 $nodeId, uint32 $parentNodeId, uint32 $firstChildNodeId, uint32 $nextSiblingNodeId, FrontendModelKernelCounters $counters): bool {
+ 		$row FrontendNodeRow = frontend_model_tables::node_by_id($model, $nodeId, $counters);
+ 		if ((int)$row->node_id === 0) {

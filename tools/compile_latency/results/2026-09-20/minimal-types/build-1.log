@@ -1,0 +1,36 @@
+[1/1054] PCH expanded_runtime_pch.hpp.gch
+[2/1054] CXX minimal/generated/semantic_module_api_lookup.o
+[3/1054] CXX minimal/generated/semantic_operator_lookup.o
+[4/1054] CXX minimal/compile/backend/backend_native_execution_adapter.o
+[5/1054] CXX minimal/compile/backend/scalar_body_statement_collection.o
+[6/1054] CXX minimal/compile/backend/backend_loop_text_emission.o
+[7/1054] CXX minimal/compile/control_flow/control_flow_transfers.o
+[8/1054] CXX minimal/generated/semantic_callable_candidates.o
+[9/1054] CXX minimal/generated/semantic_conversion_lookup.o
+[10/1054] CXX minimal/compile/backend/scalar_body_backend_collection.o
+[11/1054] CXX minimal/compile/control_flow/control_flow_dataflows.o
+[12/1054] CXX minimal/compile/support/compiler_project_env_or_smoke_echo.o
+FAILED: minimal/compile/support/compiler_project_env_or_smoke_echo.o 
+clang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../minimal/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include expanded_runtime_pch.hpp  -MMD -MF minimal/compile/support/compiler_project_env_or_smoke_echo.o.d -MT minimal/compile/support/compiler_project_env_or_smoke_echo.o -c ../minimal/generated/compile/support/compiler_project_env_or_smoke_echo.cpp -o minimal/compile/support/compiler_project_env_or_smoke_echo.o
+../minimal/generated/compile/support/compiler_project_env_or_smoke_echo.cpp:56:4: error: use of undeclared identifier 'structure_kernel_run_smoke'
+   56 |                         structure_kernel_run_smoke();
+      |                         ^
+1 error generated.
+[13/1054] CXX minimal/compile/support/structure_kernel_smoke_runner.o
+[14/1054] CALLABLE_PART minimal_parts/main.o
+FAILED: minimal_parts/main.o 
+clang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../minimal/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include expanded_runtime_pch.hpp -MMD -MF minimal_parts/main.o.d -MT minimal_parts/main.o -c ../minimal/generated/main.cpp -o minimal_parts/main.o
+../minimal/generated/main.cpp:31:2: error: use of undeclared identifier 'structure_kernel_run_compiler_project_env_or_smoke'
+   31 |         structure_kernel_run_compiler_project_env_or_smoke();
+      |         ^
+1 error generated.
+[15/1054] CXX minimal/generated/semantic_runtime_abi_declarations.o
+[16/1054] CXX minimal/structure_kernel/frontend_model_kernel_counters.o
+[17/1054] CXX minimal/structures/artifacts/analysis_entry_context_row.o
+[18/1054] CXX minimal/structures/artifacts/analysis_context.o
+[19/1054] CXX minimal/generated/semantic_runtime_abi_bridge.o
+[20/1054] CXX minimal/structures/artifacts/artifact_cache_key_row.o
+[21/1054] CXX minimal/structures/artifacts/artifact_writer_descriptor_row.o
+[22/1054] CXX minimal/structures/artifacts/artifact_writer_descriptor_artifact.o
+[23/1054] CXX minimal/structures/artifacts/backend_sink_boundary_row.o
+ninja: build stopped: subcommand failed.

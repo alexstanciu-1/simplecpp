@@ -1,0 +1,33 @@
+{
+  "scope": "lexical direct mentions in active translation units, not a complete semantic dependency analysis",
+  "types": {
+    "EmissionLLVMWorkerInput": {
+      "direct_active_cpp_mentions": 6,
+      "sources": [
+        "__callable/llvm_text_from_plan_group_20.cpp",
+        "__callable/llvm_text_from_plan_group_21.cpp",
+        "__callable/llvm_text_from_plan_group_22.cpp",
+        "__callable/llvm_text_from_plan_group_23.cpp",
+        "__callable/llvm_text_from_plan_group_24.cpp",
+        "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp"
+      ]
+    },
+    "EmissionLLVMModuleCompositionSnapshot": {
+      "direct_active_cpp_mentions": 4,
+      "sources": [
+        "__callable/llvm_text_from_plan_group_14.cpp",
+        "__callable/llvm_text_from_plan_group_22.cpp",
+        "__callable/llvm_text_from_plan_group_24.cpp",
+        "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp"
+      ]
+    },
+    "BackendFunctionCompositionInput": {
+      "direct_active_cpp_mentions": 3,
+      "sources": [
+        "__callable/backend_module_composition_group_0.cpp",
+        "__callable/llvm_text_from_plan_group_18.cpp",
+        "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp"
+      ]
+    }
+  }
+}

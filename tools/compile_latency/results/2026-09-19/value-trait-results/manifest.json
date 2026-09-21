@@ -1,0 +1,10 @@
+{
+  "sources": [
+    "structures/capabilities/type_trait_row.phs",
+    "compile/capabilities/type_traits.phs",
+    "main.phs"
+  ],
+  "scope": "single screening of one by-value record field plus real writer/copy/vector readers; narrower than historical 7d58f273 three-record layout change",
+  "expected_witness": "value_trait=32:99:32",
+  "representation": "original by-value struct and vector; no shared-pointer conversion or accessor boundary"
+}

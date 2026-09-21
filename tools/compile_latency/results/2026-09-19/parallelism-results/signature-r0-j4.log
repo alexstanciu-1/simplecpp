@@ -1,0 +1,12 @@
+[1/12] CXX layout/__callable/compiler_profile_events_locations.o
+[2/12] CALLABLE_PART layout_parts/__callable/compiler_profile_events_append_elapsed.o
+[3/12] CALLABLE_PART layout_parts/__callable/compiler_profile_events_elapsed_us_since.o
+[4/12] CALLABLE_PART layout_parts/main.o
+[5/12] CALLABLE_PART layout_parts/compile/model/project_symbol_index/part_3.o
+[6/12] CALLABLE_PART layout_parts/compile/model/source_units/part_4.o
+[7/12] CALLABLE_PART layout_parts/compile/model/source_units/part_3.o
+[8/12] CALLABLE_PART layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.o
+[9/12] CALLABLE_PART layout_parts/profile/gate_profile_helpers/part_0.o
+[10/12] CALLABLE_PART layout_parts/compile/support/production_mt_heartbeat/part_0.o
+[11/12] CALLABLE_PART layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_19.o
+[12/12] LINK main

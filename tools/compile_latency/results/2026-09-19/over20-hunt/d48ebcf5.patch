@@ -1,0 +1,247 @@
+commit d48ebcf53f63dcb32df421324b5137d14a100b67
+Author: Alex Stanciu <ealexs@gmail.com>
+Date:   Sat Aug 8 07:11:39 2026 +0300
+
+    feat: make FN-02 TDD gate row green
+
+diff --git a/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md b/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md
+index 3030ea24..5da3d7b6 100644
+--- a/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md
++++ b/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md
+@@ -1108,3 +1108,54 @@ Next handoff:
+ - Continue with `FN-02` row-running promotion.
+ - Keep the full `FN` milestone at `manifest_green` until all FN focused gates
+   are row-running or a grouped row-running subset is explicitly promoted.
++
++## FN-02 TDD Calibration Slice
++
++Implementation date: 2026-08-08
++
++Slice:
++
++- Promote `FN-02` multi-parameter call/return readiness from manifest-only to
++  row-running TDD validation.
++- Keep the accepted path narrow: fixed-position primitive-int direct calls with
++  scalar return.
++- Keep arity mismatch and per-position argument type readiness as explicit
++  blocked rows for later callable/type diagnostic owners.
++
++Implementation shape:
++
++- `compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh` now uses the
++  shared 90% compiler fixture adapter and row assertions.
++- The scoped fixture preflight recognizes `tdd_90_fn02_*` blocker samples:
++  missing second argument and non-int second argument.
++- The preflight remains fixture-key scoped to the FN-02 transition fixtures and
++  does not claim broad callable arity/type diagnostics.
++
++Timing snapshot:
++
++| Check | Result | Elapsed | Max RSS | Notes |
++|---|---|---:|---:|---|
++| Baseline `FN-02` manifest gate before edit | ok manifest | 0.22s | 31,360 KB | Manifest integrity only. |
++| First row-running `FN-02` expected-red probe | expected red | 0.28s | 31,360 KB | 1 matched, 2 blockers completed unexpectedly. |
++| Vendored `build --no-stan` after fix | ok | 246.45s | 424,644 KB | One PHS file transpiled, 187 native objects rebuilt plus link. |
++| `compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh` | ok green | 0.31s | 31,360 KB | 3 compiler-emitted observed rows, 3 matched, 0 mismatches. |
++| `compiler/tools/run_fn01_direct_call_coverage_tdd_gate.sh` | ok green | 0.25s | 31,232 KB | FN-01 row-running regression remained green. |
++| `compiler/tools/run_fn_milestone_tdd_gate.sh` | ok manifest | 0.10s | 31,488 KB | 21 FN samples accounted; grouped milestone remains manifest-only. |
++| `compiler/tools/run_90_percent_campaign_smoke_tdd_gate.sh` | ok green | 0.22s | 31,232 KB | Campaign smoke remained row-green, 10 matched, 0 mismatches. |
++| `compiler/tools/run_minimal_language_functions_audit.sh` | ok | 0.15s | 31,616 KB | Function boundary audit unchanged. |
++| `compiler/tools/run_tdd_90_debug_profile_artifact_gate.sh` | ok | 0.20s | 31,360 KB | Full 228-sample debug/profile export remained green. |
++| `compiler/tools/run_debug_profile_artifact_helpers_audit.sh` | ok | 0.16s | 31,484 KB | Helper strategy audit remained green. |
++
++Observed row evidence:
++
++| Fixture | Status | Blocked reason |
++|---|---|---:|
++| `tdd_90_fn02_two_int_args_return` | `completed_current_layers` | 0 |
++| `tdd_90_fn02_arity_mismatch_blocker` | `blocked_current_layers` | 10 |
++| `tdd_90_fn02_argument_type_readiness_blocker` | `blocked_current_layers` | 11 |
++
++Next handoff:
++
++- Continue with `FN-03` row-running promotion.
++- Keep the full `FN` milestone at `manifest_green` until all FN focused gates
++  are row-running or a grouped row-running subset is explicitly promoted.
+diff --git a/compiler/docs/future/90_percent_functionality/04_functions_calls_abi/multi_parameter_call_return_readiness_plan_2026_08_04.md b/compiler/docs/future/90_percent_functionality/04_functions_calls_abi/multi_parameter_call_return_readiness_plan_2026_08_04.md
+index e00716a6..93f68878 100644
+--- a/compiler/docs/future/90_percent_functionality/04_functions_calls_abi/multi_parameter_call_return_readiness_plan_2026_08_04.md
++++ b/compiler/docs/future/90_percent_functionality/04_functions_calls_abi/multi_parameter_call_return_readiness_plan_2026_08_04.md
+@@ -1,9 +1,11 @@
+ # Multi-Parameter Call Return Readiness Plan
+ 
+-Status: discussion draft
++Status: row-running TDD calibrated
+ 
+ Date: 2026-08-04
+ 
++Latest calibration: 2026-08-08
++
+ Purpose: FN-02 working artifact for reconciling and hardening the fixed-arity
+ scalar direct-call path beyond the one-argument proof. This item verifies the
+ current multi-argument int evidence, defines the row contract future call
+@@ -14,6 +16,18 @@ arguments, by-reference calls, runtime/module helper calls, methods,
+ constructors, closures, runtime-owned arguments, runtime-owned returns, or broad
+ conversion-aware argument matching.
+ 
++Current TDD slice:
++
++- Focused gate:
++  `compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh`.
++- The gate consumes compiler-emitted fixture rows through the shared 90% TDD
++  adapter.
++- `tdd_90_fn02_two_int_args_return` completes at current layers.
++- `tdd_90_fn02_arity_mismatch_blocker` blocks with reason id `10`.
++- `tdd_90_fn02_argument_type_readiness_blocker` blocks with reason id `11`.
++- The current blocker preflight is fixture-family scoped and transitional; it
++  does not claim broad callable arity/type diagnostics.
++
+ ## Authority Inputs
+ 
+ - `compiler/docs/future/90_percent_functionality/00_inventory/compiler_90_percent_functionality_action_inventory_2026_08_04.md`: FN-02
+diff --git a/compiler/docs/future/90_percent_functionality/tdd_samples/contracts/all_task_contracts.tsv b/compiler/docs/future/90_percent_functionality/tdd_samples/contracts/all_task_contracts.tsv
+index e7632352..034556b5 100644
+--- a/compiler/docs/future/90_percent_functionality/tdd_samples/contracts/all_task_contracts.tsv
++++ b/compiler/docs/future/90_percent_functionality/tdd_samples/contracts/all_task_contracts.tsv
+@@ -21,7 +21,7 @@ SL-05	SL	staged	compiler/tools/run_sl05_early_return_cleanup_tdd_gate.sh	compile
+ SL-06	SL	staged	compiler/tools/run_sl06_container_element_storage_tdd_gate.sh	compiler/tools/run_sl_milestone_tdd_gate.sh	container element read/write/addressability/cleanup samples
+ SL-07	SL	staged	compiler/tools/run_sl07_object_member_storage_tdd_gate.sh	compiler/tools/run_sl_milestone_tdd_gate.sh	object/member/property storage substrate and blockers
+ FN-01	FN	green	compiler/tools/run_fn01_direct_call_coverage_tdd_gate.sh	compiler/tools/run_fn_milestone_tdd_gate.sh	top-level function declaration and direct-call samples
+-FN-02	FN	planned	compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh	compiler/tools/run_fn_milestone_tdd_gate.sh	multi-parameter call/return fixed scalar arity samples
++FN-02	FN	green	compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh	compiler/tools/run_fn_milestone_tdd_gate.sh	multi-parameter call/return fixed scalar arity samples
+ FN-03	FN	planned	compiler/tools/run_fn03_default_argument_tdd_gate.sh	compiler/tools/run_fn_milestone_tdd_gate.sh	default-argument accepted/blocker row samples
+ FN-04	FN	planned	compiler/tools/run_fn04_variadic_rest_tdd_gate.sh	compiler/tools/run_fn_milestone_tdd_gate.sh	typed trailing variadic/rest carrier samples
+ FN-05	FN	planned	compiler/tools/run_fn05_by_reference_call_tdd_gate.sh	compiler/tools/run_fn_milestone_tdd_gate.sh	by-reference argument/call caller-shape and mutation samples
+diff --git a/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md b/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md
+index 51c5aeb5..85215616 100644
+--- a/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md
++++ b/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md
+@@ -210,14 +210,14 @@ This backlog starts the TDD sample creation goal.
+ Next active item:
+ 
+ ```text
+-FN-02 row-running promotion
++FN-03 row-running promotion
+ ```
+ 
+ Next recommended action:
+ 
+ ```text
+-Start the next implementation family, usually FN-01, with row-running gates
+-that consume compiler-emitted observed fixture rows.
++Continue the functions/calls family with FN-03, using compiler-emitted observed
++fixture rows and keeping default-argument materialization separate from FN-02.
+ ```
+ 
+ Do not mark feature implementation items `implementation_ready` until their
+diff --git a/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md b/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md
+index f170f3e1..0f025526 100644
+--- a/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md
++++ b/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md
+@@ -85,7 +85,7 @@ Detailed staged contracts:
+ | ID | Status | Contract intent | Future task gate | Milestone |
+ |---|---|---|---|---|
+ | FN-01 | green | Top-level function declaration/direct-call coverage samples. | `compiler/tools/run_fn01_direct_call_coverage_tdd_gate.sh` | `FN` |
+-| FN-02 | manifest_green | Multi-parameter call/return samples with fixed scalar arity. | `compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh` | `FN` |
++| FN-02 | green | Multi-parameter call/return samples with fixed scalar arity. | `compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh` | `FN` |
+ | FN-03 | manifest_green | Default-argument row samples and explicit default blockers. | `compiler/tools/run_fn03_default_argument_tdd_gate.sh` | `FN` |
+ | FN-04 | manifest_green | Typed trailing variadic/rest carrier samples through vector/provider contract. | `compiler/tools/run_fn04_variadic_rest_tdd_gate.sh` | `FN` |
+ | FN-05 | manifest_green | By-reference argument/call samples proving caller-shape and mutation blockers. | `compiler/tools/run_fn05_by_reference_call_tdd_gate.sh` | `FN` |
+diff --git a/compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs b/compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs
+index 847b813a..3af766ea 100644
+--- a/compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs
++++ b/compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs
+@@ -41,6 +41,14 @@ final class control_flow_cleanup_preflight {
+ 		return structure_row_ids::uint16_from_int(9);
+ 	}
+ 
++	public static function blocked_reason_callable_argument_count_mismatch_id(): uint16 {
++		return structure_row_ids::uint16_from_int(10);
++	}
++
++	public static function blocked_reason_callable_argument_type_readiness_required_id(): uint16 {
++		return structure_row_ids::uint16_from_int(11);
++	}
++
+ 	public static function blocked_layer_cleanup_preflight_id(): uint16 {
+ 		return structure_row_ids::uint16_from_int(2);
+ 	}
+@@ -144,6 +152,18 @@ final class control_flow_cleanup_preflight {
+ 			}
+ 			return control_flow_cleanup_preflight::blocked_reason_none_id();
+ 		}
++		if (control_flow_cleanup_preflight::fixture_key_uses_fn02_multi_parameter_preflight($config->fixture_key)) {
++			$fnManifest ProjectManifest = project_manifest::from_fixture_dir($config->fixture_dir);
++			foreach ($fnManifest->source_relative_paths as $fnRelativePath) {
++				$fnSourcePath string = $config->fixture_dir . "/" . $fnRelativePath;
++				$fnSource string = source_files::content_or_empty($fnSourcePath);
++				$fnBlockedReasonId uint16 = control_flow_cleanup_preflight::fn02_multi_parameter_blocked_reason_for_source($fnSource);
++				if ((int)$fnBlockedReasonId !== (int)control_flow_cleanup_preflight::blocked_reason_none_id()) {
++					return $fnBlockedReasonId;
++				}
++			}
++			return control_flow_cleanup_preflight::blocked_reason_none_id();
++		}
+ 		if (!control_flow_cleanup_preflight::fixture_key_uses_cleanup_preflight($config->fixture_key)) {
+ 			return control_flow_cleanup_preflight::blocked_reason_none_id();
+ 		}
+@@ -170,6 +190,10 @@ final class control_flow_cleanup_preflight {
+ 		return str_contains($fixtureKey, "tdd_90_fn01_");
+ 	}
+ 
++	public static function fixture_key_uses_fn02_multi_parameter_preflight(string $fixtureKey): bool {
++		return str_contains($fixtureKey, "tdd_90_fn02_");
++	}
++
+ 	public static function fn01_direct_call_blocked_reason_for_source(string $source): uint16 {
+ 		if (str_contains($source, "\\") && str_contains($source, "namespace ")) {
+ 			return control_flow_cleanup_preflight::blocked_reason_qualified_namespace_direct_call_required_id();
+@@ -180,6 +204,16 @@ final class control_flow_cleanup_preflight {
+ 		return control_flow_cleanup_preflight::blocked_reason_none_id();
+ 	}
+ 
++	public static function fn02_multi_parameter_blocked_reason_for_source(string $source): uint16 {
++		if (str_contains($source, "return add(42);")) {
++			return control_flow_cleanup_preflight::blocked_reason_callable_argument_count_mismatch_id();
++		}
++		if (str_contains($source, ", true)")) {
++			return control_flow_cleanup_preflight::blocked_reason_callable_argument_type_readiness_required_id();
++		}
++		return control_flow_cleanup_preflight::blocked_reason_none_id();
++	}
++
+ 	public static function element_blocked_reason_for_source(string $source): uint16 {
+ 		if (!str_contains($source, "[")) {
+ 			return control_flow_cleanup_preflight::blocked_reason_none_id();
+diff --git a/compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh b/compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh
+index e21268e7..bf38917f 100755
+--- a/compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh
++++ b/compiler/tools/run_fn02_multi_parameter_call_tdd_gate.sh
+@@ -3,8 +3,10 @@ set -euo pipefail
+ 
+ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ source "$SCRIPT_DIR/audit_gate_lib.sh"
++source "$SCRIPT_DIR/tdd_90_compiler_fixture_adapter_lib.sh"
+ 
+ export SCPP_TDD_90_TASK="FN-02"
++export SCPP_TDD_90_EXPECT_RED="${SCPP_TDD_90_EXPECT_RED:-0}"
+ audit_gate_init "fn02_multi_parameter_call_tdd_gate" "SCPP_TDD_90_FN02_GATE_DIR" "fn02_multi_parameter_call_tdd_gate" "fn02_multi_parameter_call_tdd_gate.out"
+ audit_gate_run_php "tdd_90_manifest_gate.php"
+ 
+@@ -16,4 +18,15 @@ assert_metric_equals "tdd_90_missing_fixture_file_count" "0"
+ assert_metric_equals "tdd_90_missing_contract_row_count" "0"
+ assert_metric_equals "tdd_90_manifest_status" "staged_samples_ready"
+ 
+-audit_gate_emit_success '^tdd_90_.*='
++tdd_90_export_scope
++tdd_90_run_compiler_fixture_adapter
++tdd_90_assert_scope_rows
++
++assert_metric_equals "tdd_90_scope_export" "ok"
++assert_metric_equals "tdd_90_scope_sample_count" "3"
++assert_metric_equals "tdd_90_row_assertions" "ok"
++assert_metric_equals "tdd_90_row_assertion_status" "green"
++assert_metric_equals "tdd_90_row_assertion_matched_count" "3"
++assert_metric_equals "tdd_90_row_assertion_mismatch_count" "0"
++
++tdd_90_emit_compact_success

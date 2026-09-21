@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentFunctionBodyLogicalFrontendReferenceCandidateRow;
+struct ResidentFunctionBodySummaryProjectReferenceRow;
+ResidentFunctionBodySummaryProjectReferenceRow __latency_fn_resident_function_body_summary_project_references_blocked_row_from_candidate(ResidentFunctionBodyLogicalFrontendReferenceCandidateRow candidate, int_t<std::uint16_t> blockedReasonId);
+}

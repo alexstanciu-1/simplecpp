@@ -1,0 +1,19 @@
+#pragma once
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+namespace scpp {
+struct ResidentDaemonSourceSlotScanRow {
+	ResidentDaemonSourceSlotScanRow* operator->() { return this; }
+	const ResidentDaemonSourceSlotScanRow* operator->() const { return this; }
+	int_t<std::uint32_t> scan_id = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(0));
+	int_t<std::uint32_t> request_id = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(0));
+	int_t<std::uint32_t> source_slot_stat_first_id = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(0));
+	int_t<std::uint32_t> source_slot_stat_count = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(0));
+	int_t<std::uint32_t> candidate_event_count = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(0));
+	int_t<std::uint32_t> event_first_id = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(0));
+	int_t<std::uint32_t> event_count = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(0));
+	int_t<std::uint16_t> status_id = cast<int_t<std::uint16_t>>(static_cast<int_t<> >(0));
+};
+}

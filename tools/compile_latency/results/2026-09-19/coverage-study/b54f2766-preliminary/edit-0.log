@@ -1,0 +1,5 @@
+[1/5] CXX expanded/__callable/frontend_model_builder_locations.o
+[2/5] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_at_call_expression_statement.o
+[3/5] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_at_call_expression_with_argument_list.o
+[4/5] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_return_expression.o
+[5/5] LINK main

@@ -1,0 +1,22 @@
+{
+  "callable_owners": {
+    "compiler_profile_events": "compile/support/compiler_profile_events",
+    "token_kinds": "compile/frontend_adapter/phs/token_kinds",
+    "frontend_model_builder": "compile/frontend_adapter/phs/frontend_model_builder"
+  },
+  "partition_owners": [
+    "compile/model/source_units",
+    "compile/model/project_symbol_index",
+    "compile/incremental/resident_source_unit_frontend_payload_tables",
+    "compile/support/production_mt_heartbeat",
+    "profile/gate_profile_helpers",
+    "compile/backend/llvm_text_from_plan",
+    "compile/backend/backend_object_link_cache",
+    "compile/backend/lowering_plan",
+    "compile/capabilities/storage_lifetime_readiness",
+    "compile/capabilities/type_capability_readiness",
+    "compile/incremental/resident_source_unit_symbol_states",
+    "compile/model/project_reference_resolution"
+  ],
+  "native_class_definitions": "identical between partition-consumer modes; existing objects/PCH reusable"
+}

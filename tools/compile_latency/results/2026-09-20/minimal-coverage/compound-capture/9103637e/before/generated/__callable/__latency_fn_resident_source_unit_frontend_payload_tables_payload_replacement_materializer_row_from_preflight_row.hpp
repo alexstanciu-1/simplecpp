@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentSourceUnitFrontendPayloadTableRow;
+struct SourceUnitFrontendWorkerPayloadInstallPreflightRow;
+struct SourceUnitFrontendWorkerPayloadReplacementMaterializerRow;
+SourceUnitFrontendWorkerPayloadReplacementMaterializerRow __latency_fn_resident_source_unit_frontend_payload_tables_payload_replacement_materializer_row_from_preflight_row(SourceUnitFrontendWorkerPayloadInstallPreflightRow preflightRow, vector_t<ResidentSourceUnitFrontendPayloadTableRow>& coordinatorPayloadTables, vector_t<ResidentSourceUnitFrontendPayloadTableRow>& workerPayloadTables, int_t<> materializerRowId);
+}

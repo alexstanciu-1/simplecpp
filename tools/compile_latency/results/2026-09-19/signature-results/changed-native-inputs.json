@@ -1,0 +1,19 @@
+[
+  "main.cpp",
+  "profile/gate_profile_helpers.cpp",
+  "__callable/compiler_profile_events_elapsed_us_since.cpp",
+  "__callable/__latency_fn_compiler_profile_events_elapsed_us_since.hpp",
+  "__callable/compiler_profile_events_append_elapsed.cpp",
+  "__callable/compiler_profile_events_locations.cpp",
+  "compile/model/source_units.cpp",
+  "compile/model/project_symbol_index.cpp",
+  "compile/support/production_mt_heartbeat.cpp",
+  "compile/incremental/resident_source_unit_frontend_payload_tables.cpp",
+  "__partitions/compile/model/project_symbol_index/part_3.cpp",
+  "__partitions/compile/model/source_units/part_3.cpp",
+  "__partitions/compile/model/source_units/part_4.cpp",
+  "__partitions/compile/support/production_mt_heartbeat/part_0.cpp",
+  "__partitions/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.cpp",
+  "__partitions/compile/incremental/resident_source_unit_frontend_payload_tables/part_19.cpp",
+  "__partitions/profile/gate_profile_helpers/part_0.cpp"
+]

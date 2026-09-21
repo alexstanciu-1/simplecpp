@@ -1,0 +1,55 @@
+commit 60011d4c7d01c622124deaa7c0b3cdd932d0174f
+Author: Alex Stanciu <ealexs@gmail.com>
+Date:   Wed Jul 29 09:04:28 2026 +0300
+
+    Add int32 local return capability proof
+
+diff --git a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+index 2359f499..23fdc27e 100644
+--- a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+@@ -442,6 +442,9 @@ final class llvm_text_from_plan {
+ 		if ((int)$typeRefId === (int)type_refs::bool_id()) {
+ 			return 1;
+ 		}
++		if ((int)$typeRefId === (int)type_refs::int32_id()) {
++			return 4;
++		}
+ 		return 8;
+ 	}
+ 
+@@ -972,6 +975,9 @@ final class llvm_text_from_plan {
+ 		if ((int)$typeRefId === (int)type_refs::bool_id()) {
+ 			return "i1";
+ 		}
++		if ((int)$typeRefId === (int)type_refs::int32_id()) {
++			return "i32";
++		}
+ 		return "i64";
+ 	}
+ 
+diff --git a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+index bf3a4381..2b5d9f2c 100644
+--- a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
++++ b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+@@ -53,6 +53,10 @@ final class frontend_model_builder {
+ 		return structure_row_ids::uint32_from_int(3);
+ 	}
+ 
++	public static function primitive_int32_type_ref_id(): uint32 {
++		return structure_row_ids::uint32_from_int(6);
++	}
++
+ 	public static function token_end_offset(TokenRow $token): int {
+ 		return (int)$token->start_offset + (int)$token->length;
+ 	}
+@@ -88,6 +92,9 @@ final class frontend_model_builder {
+ 		if ($typeName === "int64") {
+ 			return frontend_model_builder::primitive_int64_type_ref_id();
+ 		}
++		if ($typeName === "int32") {
++			return frontend_model_builder::primitive_int32_type_ref_id();
++		}
+ 		if ($typeName === "bool") {
+ 			return frontend_model_builder::primitive_bool_type_ref_id();
+ 		}

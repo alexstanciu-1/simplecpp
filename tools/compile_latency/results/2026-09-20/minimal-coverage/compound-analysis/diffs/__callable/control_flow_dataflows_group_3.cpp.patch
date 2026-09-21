@@ -1,0 +1,169 @@
+--- before/__callable/control_flow_dataflows_group_3.cpp
++++ after/__callable/control_flow_dataflows_group_3.cpp
+@@ -1,5 +1,6 @@
+ #include <scpp/lang/php.hpp>
+ #include "__types/ControlFlowDataflowArtifact.hpp"
++#include "__types/ControlFlowLocalWriteSet.hpp"
+ #include "__types/FrontendModel.hpp"
+ #include "__types/FrontendModelKernelCounters.hpp"
+ #include "__types/FrontendNodeRow.hpp"
+@@ -15,6 +16,7 @@
+ #include "__callable/__latency_fn_control_flow_dataflows_branch_kind_loop_condition_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_branch_kind_loop_exit_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_diagnostic_none_id.hpp"
++#include "__callable/__latency_fn_control_flow_dataflows_empty_local_write_set.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_row_kind_loop_carried_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_row_kind_loop_read_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_row_kind_loop_write_id.hpp"
+@@ -33,6 +35,7 @@
+ #include "__callable/__latency_fn_control_flow_dataflows_branch_kind_loop_init_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_branch_kind_loop_update_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_diagnostic_none_id.hpp"
++#include "__callable/__latency_fn_control_flow_dataflows_empty_local_write_set.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_row_kind_loop_carried_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_row_kind_loop_read_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_row_kind_loop_write_id.hpp"
+@@ -47,6 +50,7 @@
+ #include "__callable/__latency_fn_control_flow_dataflows_append_post_branch_read.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_branch_kind_else_id.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_branch_kind_then_id.hpp"
++#include "__callable/__latency_fn_control_flow_dataflows_empty_local_write_set.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_row_kind_branch_write_id.hpp"
+ #include "__callable/__latency_fn_frontend_model_tables_node_by_id.hpp"
+ #include "__callable/__latency_fn_frontend_model_tables_row_kind_statement_local_declaration_id.hpp"
+@@ -66,22 +70,20 @@
+ void __latency_fn_control_flow_dataflows_append_while_statement(shared_p<ControlFlowDataflowArtifact>& artifact, shared_p<FrontendModel> model, const string_t& sourceText, FrontendNodeRow whileNode, FrontendStatementPayloadRow whileStatement, shared_p<FrontendModelKernelCounters> counters) {
+ 	SCPP_CALL_DEPTH_GUARD("control_flow_dataflows::append_while_statement", "/tmp/scpp-edit-latency-20260919/app/compile/control_flow/control_flow_dataflows.phs", __latency_lines_control_flow_dataflows[37]);
+ 	__latency_fn_control_flow_dataflows_append_expression_local_reads(artifact, model, sourceText, whileStatement->condition_node_id, whileNode->node_id, __latency_fn_control_flow_dataflows_row_kind_loop_read_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_condition_id(), counters);
+-	vector_t<int_t<std::uint32_t>> bodyNameIds = {};
+-	vector_t<int_t<std::uint32_t>> bodySourceRowIds = {};
+-	vector_t<int_t<std::uint32_t>> bodyTypeRefIds = {};
++	shared_p<ControlFlowLocalWriteSet> bodyWrites = __latency_fn_control_flow_dataflows_empty_local_write_set();
+ 	int_t<std::uint32_t> bodyNodeId = required_cast<int_t<std::uint32_t>>(whileStatement->body_first_node_id);
+ 	while (static_cast<bool>((cast<int_t<>>(bodyNodeId) > static_cast<int_t<> >(0)))) {
+ 		FrontendNodeRow bodyNode = __latency_fn_frontend_model_tables_node_by_id(model, bodyNodeId, counters);
+ 		if (static_cast<bool>(php::identical(cast<int_t<>>(bodyNode->node_id), static_cast<int_t<> >(0)))) {
+ 			break;
+ 		}
+-		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, bodyNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_body_id(), bodyNameIds, bodySourceRowIds, bodyTypeRefIds, counters);
++		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, bodyNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_body_id(), bodyWrites, counters);
+ 		bodyNodeId = bodyNode->next_sibling_node_id;
+ 	}
+ 	int_t<> index = required_cast<int_t<>>(static_cast<int_t<> >(0));
+-	while (static_cast<bool>((index < php::count(bodyNameIds)))) {
+-		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_carried_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_back_edge_id(), __latency_fn_control_flow_dataflows_status_loop_carried_assigned_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), whileNode->node_id, cast<int_t<std::uint32_t>>(bodyNameIds.at(index)), cast<int_t<std::uint32_t>>(bodySourceRowIds.at(index)), cast<int_t<std::uint32_t>>(bodyTypeRefIds.at(index)));
+-		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_zero_iteration_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_exit_id(), __latency_fn_control_flow_dataflows_status_zero_iteration_preserved_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), whileNode->node_id, cast<int_t<std::uint32_t>>(bodyNameIds.at(index)), cast<int_t<std::uint32_t>>(bodySourceRowIds.at(index)), cast<int_t<std::uint32_t>>(bodyTypeRefIds.at(index)));
++	while (static_cast<bool>((index < php::count(bodyWrites->name_ids)))) {
++		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_carried_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_back_edge_id(), __latency_fn_control_flow_dataflows_status_loop_carried_assigned_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), whileNode->node_id, cast<int_t<std::uint32_t>>(bodyWrites->name_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->source_row_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->type_ref_ids.at(index)));
++		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_zero_iteration_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_exit_id(), __latency_fn_control_flow_dataflows_status_zero_iteration_preserved_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), whileNode->node_id, cast<int_t<std::uint32_t>>(bodyWrites->name_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->source_row_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->type_ref_ids.at(index)));
+ 		index = (index + static_cast<int_t<> >(1));
+ 	}
+ }
+@@ -92,46 +94,40 @@
+ namespace scpp {
+ void __latency_fn_control_flow_dataflows_append_for_statement(shared_p<ControlFlowDataflowArtifact>& artifact, shared_p<FrontendModel> model, const string_t& sourceText, FrontendNodeRow forNode, FrontendStatementPayloadRow forStatement, shared_p<FrontendModelKernelCounters> counters) {
+ 	SCPP_CALL_DEPTH_GUARD("control_flow_dataflows::append_for_statement", "/tmp/scpp-edit-latency-20260919/app/compile/control_flow/control_flow_dataflows.phs", __latency_lines_control_flow_dataflows[38]);
+-	vector_t<int_t<std::uint32_t>> initNameIds = {};
+-	vector_t<int_t<std::uint32_t>> initSourceRowIds = {};
+-	vector_t<int_t<std::uint32_t>> initTypeRefIds = {};
++	shared_p<ControlFlowLocalWriteSet> initWrites = __latency_fn_control_flow_dataflows_empty_local_write_set();
+ 	FrontendNodeRow initNode = __latency_fn_frontend_model_tables_node_by_id(model, forStatement->target_node_id, counters);
+ 	if (static_cast<bool>((cast<int_t<>>(initNode->node_id) > static_cast<int_t<> >(0)))) {
+-		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, initNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_init_id(), initNameIds, initSourceRowIds, initTypeRefIds, counters);
++		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, initNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_init_id(), initWrites, counters);
+ 	}
+ 	__latency_fn_control_flow_dataflows_append_expression_local_reads(artifact, model, sourceText, forStatement->condition_node_id, forNode->node_id, __latency_fn_control_flow_dataflows_row_kind_loop_read_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_condition_id(), counters);
+-	vector_t<int_t<std::uint32_t>> bodyNameIds = {};
+-	vector_t<int_t<std::uint32_t>> bodySourceRowIds = {};
+-	vector_t<int_t<std::uint32_t>> bodyTypeRefIds = {};
++	shared_p<ControlFlowLocalWriteSet> bodyWrites = __latency_fn_control_flow_dataflows_empty_local_write_set();
+ 	int_t<std::uint32_t> bodyNodeId = required_cast<int_t<std::uint32_t>>(forStatement->body_first_node_id);
+ 	while (static_cast<bool>((cast<int_t<>>(bodyNodeId) > static_cast<int_t<> >(0)))) {
+ 		FrontendNodeRow bodyNode = __latency_fn_frontend_model_tables_node_by_id(model, bodyNodeId, counters);
+ 		if (static_cast<bool>(php::identical(cast<int_t<>>(bodyNode->node_id), static_cast<int_t<> >(0)))) {
+ 			break;
+ 		}
+-		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, bodyNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_body_id(), bodyNameIds, bodySourceRowIds, bodyTypeRefIds, counters);
++		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, bodyNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_body_id(), bodyWrites, counters);
+ 		FrontendStatementPayloadRow bodyStatement = __latency_fn_frontend_model_tables_statement_by_id(model, bodyNode->payload_row_id, counters);
+ 		__latency_fn_control_flow_dataflows_append_expression_local_reads(artifact, model, sourceText, bodyStatement->value_node_id, bodyNode->node_id, __latency_fn_control_flow_dataflows_row_kind_loop_read_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_body_id(), counters);
+ 		bodyNodeId = bodyNode->next_sibling_node_id;
+ 	}
+-	vector_t<int_t<std::uint32_t>> updateNameIds = {};
+-	vector_t<int_t<std::uint32_t>> updateSourceRowIds = {};
+-	vector_t<int_t<std::uint32_t>> updateTypeRefIds = {};
++	shared_p<ControlFlowLocalWriteSet> updateWrites = __latency_fn_control_flow_dataflows_empty_local_write_set();
+ 	FrontendNodeRow updateNode = __latency_fn_frontend_model_tables_node_by_id(model, forStatement->value_node_id, counters);
+ 	if (static_cast<bool>((cast<int_t<>>(updateNode->node_id) > static_cast<int_t<> >(0)))) {
+-		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, updateNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_update_id(), updateNameIds, updateSourceRowIds, updateTypeRefIds, counters);
++		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, updateNode, __latency_fn_control_flow_dataflows_row_kind_loop_write_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_update_id(), updateWrites, counters);
+ 		FrontendStatementPayloadRow updateStatement = __latency_fn_frontend_model_tables_statement_by_id(model, updateNode->payload_row_id, counters);
+ 		__latency_fn_control_flow_dataflows_append_expression_local_reads(artifact, model, sourceText, updateStatement->value_node_id, updateNode->node_id, __latency_fn_control_flow_dataflows_row_kind_loop_read_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_update_id(), counters);
+ 	}
+ 	int_t<> index = required_cast<int_t<>>(static_cast<int_t<> >(0));
+-	while (static_cast<bool>((index < php::count(bodyNameIds)))) {
+-		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_carried_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_back_edge_id(), __latency_fn_control_flow_dataflows_status_loop_carried_assigned_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), forNode->node_id, cast<int_t<std::uint32_t>>(bodyNameIds.at(index)), cast<int_t<std::uint32_t>>(bodySourceRowIds.at(index)), cast<int_t<std::uint32_t>>(bodyTypeRefIds.at(index)));
+-		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_zero_iteration_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_exit_id(), __latency_fn_control_flow_dataflows_status_zero_iteration_preserved_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), forNode->node_id, cast<int_t<std::uint32_t>>(bodyNameIds.at(index)), cast<int_t<std::uint32_t>>(bodySourceRowIds.at(index)), cast<int_t<std::uint32_t>>(bodyTypeRefIds.at(index)));
++	while (static_cast<bool>((index < php::count(bodyWrites->name_ids)))) {
++		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_carried_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_back_edge_id(), __latency_fn_control_flow_dataflows_status_loop_carried_assigned_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), forNode->node_id, cast<int_t<std::uint32_t>>(bodyWrites->name_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->source_row_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->type_ref_ids.at(index)));
++		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_zero_iteration_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_exit_id(), __latency_fn_control_flow_dataflows_status_zero_iteration_preserved_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), forNode->node_id, cast<int_t<std::uint32_t>>(bodyWrites->name_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->source_row_ids.at(index)), cast<int_t<std::uint32_t>>(bodyWrites->type_ref_ids.at(index)));
+ 		index = (index + static_cast<int_t<> >(1));
+ 	}
+ 	int_t<> updateIndex = required_cast<int_t<>>(static_cast<int_t<> >(0));
+-	while (static_cast<bool>((updateIndex < php::count(updateNameIds)))) {
+-		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_carried_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_back_edge_id(), __latency_fn_control_flow_dataflows_status_loop_carried_assigned_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), forNode->node_id, cast<int_t<std::uint32_t>>(updateNameIds.at(updateIndex)), cast<int_t<std::uint32_t>>(updateSourceRowIds.at(updateIndex)), cast<int_t<std::uint32_t>>(updateTypeRefIds.at(updateIndex)));
++	while (static_cast<bool>((updateIndex < php::count(updateWrites->name_ids)))) {
++		__latency_fn_control_flow_dataflows_append_row(artifact, __latency_fn_control_flow_dataflows_row_kind_loop_carried_id(), __latency_fn_control_flow_dataflows_branch_kind_loop_back_edge_id(), __latency_fn_control_flow_dataflows_status_loop_carried_assigned_id(), __latency_fn_control_flow_dataflows_diagnostic_none_id(), forNode->node_id, cast<int_t<std::uint32_t>>(updateWrites->name_ids.at(updateIndex)), cast<int_t<std::uint32_t>>(updateWrites->source_row_ids.at(updateIndex)), cast<int_t<std::uint32_t>>(updateWrites->type_ref_ids.at(updateIndex)));
+ 		updateIndex = (updateIndex + static_cast<int_t<> >(1));
+ 	}
+ }
+@@ -142,12 +138,8 @@
+ namespace scpp {
+ void __latency_fn_control_flow_dataflows_append_if_statement(shared_p<ControlFlowDataflowArtifact>& artifact, shared_p<FrontendModel> model, const string_t& sourceText, FrontendNodeRow ifNode, FrontendStatementPayloadRow ifStatement, shared_p<FrontendModelKernelCounters> counters) {
+ 	SCPP_CALL_DEPTH_GUARD("control_flow_dataflows::append_if_statement", "/tmp/scpp-edit-latency-20260919/app/compile/control_flow/control_flow_dataflows.phs", __latency_lines_control_flow_dataflows[39]);
+-	vector_t<int_t<std::uint32_t>> thenNameIds = {};
+-	vector_t<int_t<std::uint32_t>> thenSourceRowIds = {};
+-	vector_t<int_t<std::uint32_t>> thenTypeRefIds = {};
+-	vector_t<int_t<std::uint32_t>> elseNameIds = {};
+-	vector_t<int_t<std::uint32_t>> elseSourceRowIds = {};
+-	vector_t<int_t<std::uint32_t>> elseTypeRefIds = {};
++	shared_p<ControlFlowLocalWriteSet> thenWrites = __latency_fn_control_flow_dataflows_empty_local_write_set();
++	shared_p<ControlFlowLocalWriteSet> elseWrites = __latency_fn_control_flow_dataflows_empty_local_write_set();
+ 	vector_t<int_t<std::uint32_t>> branchLocalNameIds = {};
+ 	int_t<std::uint32_t> thenNodeId = required_cast<int_t<std::uint32_t>>(ifStatement->body_first_node_id);
+ 	while (static_cast<bool>((cast<int_t<>>(thenNodeId) > static_cast<int_t<> >(0)))) {
+@@ -155,10 +147,10 @@
+ 		if (static_cast<bool>(php::identical(cast<int_t<>>(thenNode->node_id), static_cast<int_t<> >(0)))) {
+ 			break;
+ 		}
+-		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, thenNode, __latency_fn_control_flow_dataflows_row_kind_branch_write_id(), __latency_fn_control_flow_dataflows_branch_kind_then_id(), thenNameIds, thenSourceRowIds, thenTypeRefIds, counters);
+-		if (static_cast<bool>((php::identical(cast<int_t<>>(thenNode->row_kind_id), cast<int_t<>>(__latency_fn_frontend_model_tables_row_kind_statement_local_declaration_id())) && (php::count(thenNameIds) > static_cast<int_t<> >(0))))) {
++		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, thenNode, __latency_fn_control_flow_dataflows_row_kind_branch_write_id(), __latency_fn_control_flow_dataflows_branch_kind_then_id(), thenWrites, counters);
++		if (static_cast<bool>((php::identical(cast<int_t<>>(thenNode->row_kind_id), cast<int_t<>>(__latency_fn_frontend_model_tables_row_kind_statement_local_declaration_id())) && (php::count(thenWrites->name_ids) > static_cast<int_t<> >(0))))) {
+ 			{
+-			auto __latency_local_0 = thenNameIds.at((php::count(thenNameIds) - static_cast<int_t<> >(1)));
++			auto __latency_local_0 = thenWrites->name_ids.at((php::count(thenWrites->name_ids) - static_cast<int_t<> >(1)));
+ 			(void) branchLocalNameIds.push_back(__latency_local_0);
+ 			}
+ 		}
+@@ -170,16 +162,16 @@
+ 		if (static_cast<bool>(php::identical(cast<int_t<>>(elseNode->node_id), static_cast<int_t<> >(0)))) {
+ 			break;
+ 		}
+-		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, elseNode, __latency_fn_control_flow_dataflows_row_kind_branch_write_id(), __latency_fn_control_flow_dataflows_branch_kind_else_id(), elseNameIds, elseSourceRowIds, elseTypeRefIds, counters);
+-		if (static_cast<bool>((php::identical(cast<int_t<>>(elseNode->row_kind_id), cast<int_t<>>(__latency_fn_frontend_model_tables_row_kind_statement_local_declaration_id())) && (php::count(elseNameIds) > static_cast<int_t<> >(0))))) {
++		__latency_fn_control_flow_dataflows_append_local_write_statement(artifact, model, sourceText, elseNode, __latency_fn_control_flow_dataflows_row_kind_branch_write_id(), __latency_fn_control_flow_dataflows_branch_kind_else_id(), elseWrites, counters);
++		if (static_cast<bool>((php::identical(cast<int_t<>>(elseNode->row_kind_id), cast<int_t<>>(__latency_fn_frontend_model_tables_row_kind_statement_local_declaration_id())) && (php::count(elseWrites->name_ids) > static_cast<int_t<> >(0))))) {
+ 			{
+-			auto __latency_local_1 = elseNameIds.at((php::count(elseNameIds) - static_cast<int_t<> >(1)));
++			auto __latency_local_1 = elseWrites->name_ids.at((php::count(elseWrites->name_ids) - static_cast<int_t<> >(1)));
+ 			(void) branchLocalNameIds.push_back(__latency_local_1);
+ 			}
+ 		}
+ 		elseNodeId = elseNode->next_sibling_node_id;
+ 	}
+-	__latency_fn_control_flow_dataflows_append_merge_for_if(artifact, ifNode->node_id, thenNameIds, thenSourceRowIds, thenTypeRefIds, elseNameIds, elseSourceRowIds, elseTypeRefIds);
++	__latency_fn_control_flow_dataflows_append_merge_for_if(artifact, ifNode->node_id, thenWrites, elseWrites);
+ 	int_t<std::uint32_t> nextNodeId = required_cast<int_t<std::uint32_t>>(ifNode->next_sibling_node_id);
+ 	while (static_cast<bool>((cast<int_t<>>(nextNodeId) > static_cast<int_t<> >(0)))) {
+ 		FrontendNodeRow nextNode = __latency_fn_frontend_model_tables_node_by_id(model, nextNodeId, counters);

@@ -1,0 +1,13 @@
+{
+  "outputs": [
+    "expanded/__callable/compiler_profile_events_locations.o",
+    "expanded/compile/support/performance_memory_estimates.o",
+    "expanded/structures/artifacts/compiler_profile_event_row.o",
+    "expanded/structures/pipeline/compiler_project_run_report.o",
+    "expanded_parts/__callable/compiler_profile_events_append_event.o",
+    "expanded_parts/__callable/compiler_profile_events_debug_string.o",
+    "expanded_parts/main.o",
+    "expanded_parts/profile/gate_profile_helpers/part_0.o",
+    "main"
+  ]
+}

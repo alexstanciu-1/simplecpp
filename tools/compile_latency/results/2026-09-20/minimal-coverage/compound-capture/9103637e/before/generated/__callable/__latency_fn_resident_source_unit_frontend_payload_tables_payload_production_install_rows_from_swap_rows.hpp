@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct SourceUnitFrontendWorkerPayloadProductionInstallRow;
+struct SourceUnitFrontendWorkerPayloadProductionSwapRow;
+vector_t<SourceUnitFrontendWorkerPayloadProductionInstallRow> __latency_fn_resident_source_unit_frontend_payload_tables_payload_production_install_rows_from_swap_rows(vector_t<SourceUnitFrontendWorkerPayloadProductionSwapRow>& swapRows);
+}

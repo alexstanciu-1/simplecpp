@@ -1,0 +1,102 @@
+{
+  "scope": "two frozen chronological samples; exact-context runnable cases only, not probability of an arbitrary save; coherent replays remain separate",
+  "code_cases": 12,
+  "code_trials": 36,
+  "all_code_trials_within_target": true,
+  "native_median_range": [
+    1.5929584039840847,
+    4.815306011994835
+  ],
+  "maximum_native_trial": 5.151289196975995,
+  "pch_rebuilds": 0,
+  "comment_only_cases": 1,
+  "comment_native_median": 0.0818927189684473,
+  "context_limits": 16,
+  "incompatible_before_states": 1,
+  "comparison": [
+    {
+      "commit": "1a24a85d",
+      "subject": "Export backend call argument rows for FN proof",
+      "prior_policy_native_median": 3.208422399999108,
+      "minimal_native_median": 4.815306011994835,
+      "assumed_total": 6.315306011994835
+    },
+    {
+      "commit": "1610af1a",
+      "subject": "Route literal return coverage through consumer plan",
+      "prior_policy_native_median": 2.3166707800119184,
+      "minimal_native_median": 3.933231313014403,
+      "assumed_total": 5.433231313014403
+    },
+    {
+      "commit": "f1d3a846",
+      "subject": "Retarget structure smoke away from fixtures",
+      "prior_policy_native_median": 2.879312590986956,
+      "minimal_native_median": 3.698860611009877,
+      "assumed_total": 5.198860611009877
+    },
+    {
+      "commit": "b54f2766",
+      "subject": "Generalize call expression lookahead",
+      "prior_policy_native_median": 2.160571919986978,
+      "minimal_native_median": 2.163712811016012,
+      "assumed_total": 3.663712811016012
+    },
+    {
+      "commit": "534d70a6",
+      "subject": "Remove legacy case env fallbacks",
+      "prior_policy_native_median": 2.1940617020009086,
+      "minimal_native_median": 2.1266251989873126,
+      "assumed_total": 3.6266251989873126
+    },
+    {
+      "commit": "e8e8a063",
+      "subject": "Remove dead fixed argument LLVM materializer",
+      "prior_policy_native_median": 3.3691634220303968,
+      "minimal_native_median": 4.1085853959666565,
+      "assumed_total": 5.6085853959666565
+    },
+    {
+      "commit": "5ce42535",
+      "subject": "Rename backend LLVM source filename label",
+      "prior_policy_native_median": 2.5287779490463436,
+      "minimal_native_median": 3.7951281960122287,
+      "assumed_total": 5.295128196012229
+    },
+    {
+      "commit": "43a83246",
+      "subject": "Route caller function text through composition input",
+      "prior_policy_native_median": 2.6686223369906656,
+      "minimal_native_median": 4.220939956023358,
+      "assumed_total": 5.720939956023358
+    },
+    {
+      "commit": "cf3c2d08",
+      "subject": "Remove obsolete LLVM module composition delegates",
+      "prior_policy_native_median": 1.6761047479812987,
+      "minimal_native_median": 1.870748324028682,
+      "assumed_total": 3.370748324028682
+    },
+    {
+      "commit": "b1f1fd46",
+      "subject": "Use reference rows for direct call entry checks",
+      "prior_policy_native_median": 2.6403644150123,
+      "minimal_native_median": 3.357966356968973,
+      "assumed_total": 4.857966356968973
+    },
+    {
+      "commit": "4a4e0803",
+      "subject": "Clean reference call expression labels",
+      "prior_policy_native_median": 2.158374298014678,
+      "minimal_native_median": 2.3136335049639456,
+      "assumed_total": 3.8136335049639456
+    },
+    {
+      "commit": "ea9d053c",
+      "subject": "Remove stale capability sequence helpers",
+      "prior_policy_native_median": 1.6167207839898765,
+      "minimal_native_median": 1.5929584039840847,
+      "assumed_total": 3.0929584039840847
+    }
+  ]
+}

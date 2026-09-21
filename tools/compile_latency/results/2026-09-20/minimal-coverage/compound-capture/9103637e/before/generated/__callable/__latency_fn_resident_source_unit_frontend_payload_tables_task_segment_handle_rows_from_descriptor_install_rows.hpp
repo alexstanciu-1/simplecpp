@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentSourceUnitFrontendPayloadTableRow;
+struct ResidentSourceUnitFrontendTaskSegmentHandleRow;
+vector_t<ResidentSourceUnitFrontendTaskSegmentHandleRow> __latency_fn_resident_source_unit_frontend_payload_tables_task_segment_handle_rows_from_descriptor_install_rows(vector_t<ResidentSourceUnitFrontendPayloadTableRow>& descriptorRows);
+}

@@ -1,0 +1,70 @@
+{
+  "scope": "O0 debug artificial tight loop, same shared object and alias; not whole-application overhead",
+  "runs": [
+    {
+      "trial": 1,
+      "mode": "direct",
+      "seconds": 0.0797806,
+      "updates": 5000000
+    },
+    {
+      "trial": 1,
+      "mode": "boundary",
+      "seconds": 0.0920496,
+      "updates": 5000000
+    },
+    {
+      "trial": 2,
+      "mode": "boundary",
+      "seconds": 0.0911948,
+      "updates": 5000000
+    },
+    {
+      "trial": 2,
+      "mode": "direct",
+      "seconds": 0.0792431,
+      "updates": 5000000
+    },
+    {
+      "trial": 3,
+      "mode": "direct",
+      "seconds": 0.0797585,
+      "updates": 5000000
+    },
+    {
+      "trial": 3,
+      "mode": "boundary",
+      "seconds": 0.0949536,
+      "updates": 5000000
+    },
+    {
+      "trial": 4,
+      "mode": "boundary",
+      "seconds": 0.0990854,
+      "updates": 5000000
+    },
+    {
+      "trial": 4,
+      "mode": "direct",
+      "seconds": 0.0801175,
+      "updates": 5000000
+    },
+    {
+      "trial": 5,
+      "mode": "direct",
+      "seconds": 0.0790153,
+      "updates": 5000000
+    },
+    {
+      "trial": 5,
+      "mode": "boundary",
+      "seconds": 0.0918803,
+      "updates": 5000000
+    }
+  ],
+  "medians_seconds": {
+    "direct": 0.0797585,
+    "boundary": 0.0920496
+  },
+  "relative_overhead_percent": 15.41039513029958
+}

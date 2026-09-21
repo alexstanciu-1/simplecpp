@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyRowListPublishPlanRow;
+struct ResidentFunctionBodyStableNodeRemapProofRow;
+ResidentFunctionBodyRowListPublishPlanRow __latency_fn_resident_function_body_row_list_publish_plans_row_from_stable_remap_proof(shared_p<CompilerProjectRunReport> report, shared_p<CompilerProjectRunReport> previous, ResidentFunctionBodyStableNodeRemapProofRow remap);
+}

@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentFunctionBodyLogicalFrontendReferenceCandidateRow;
+struct ResidentFunctionBodySummaryProjectReferenceRow;
+struct ResidentProjectSymbolNameLookupRow;
+ResidentFunctionBodySummaryProjectReferenceRow __latency_fn_resident_function_body_summary_project_references_row_from_lookup(ResidentFunctionBodyLogicalFrontendReferenceCandidateRow candidate, ResidentProjectSymbolNameLookupRow lookup, int_t<std::uint32_t> projectReferenceId);
+}

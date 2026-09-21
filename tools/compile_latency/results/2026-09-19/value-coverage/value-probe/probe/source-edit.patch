@@ -1,0 +1,36 @@
+--- before/structures/capabilities/type_trait_row.phs
++++ after/structures/capabilities/type_trait_row.phs
+@@ -1,5 +1,6 @@
+ // Role: Stores the resolved compact capability trait ids for one type reference.
+ struct TypeTraitRow {
++	public uint32 $latency_integer_width = 0;
+ 	public uint32 $type_ref_id = 0;
+ 	public uint32 $provider_id = 0;
+ 	public uint32 $family_id = 0;
+--- before/compile/capabilities/type_traits.phs
++++ after/compile/capabilities/type_traits.phs
+@@ -288,6 +288,7 @@
+ 		$row->status_id = $descriptor->status_id;
+ 		$row->numeric_kind_id = $descriptor->numeric_kind_id;
+ 		$row->integer_width_bits = $descriptor->integer_width_bits;
++		$row->latency_integer_width = structure_row_ids::uint32_from_int((int)$descriptor->integer_width_bits);
+ 		$row->integer_width_policy_id = $descriptor->integer_width_policy_id;
+ 		$row->alias_policy_id = $descriptor->alias_policy_id;
+ 		$row->canonical_numeric_type_ref_id = $descriptor->canonical_numeric_type_ref_id;
+--- before/main.phs
++++ after/main.phs
+@@ -19,3 +19,14 @@
+ echo "latency_body_17=", (int)analysis_context::artifact_kind_analysis_context_id(), "\n";
+ echo "latency_body_18=", (int)local_body_lowering_routes::artifact_kind_local_body_lowering_routes_id(), "\n";
+ echo "latency_body_19=", (int)resident_function_body_logical_frontend_reference_candidates::access_path_body_span_summary_id(), "\n";
++
++$latency_trait TypeTraitRow = type_traits::row_from_type_ref_id(type_refs::int32_id());
++$latency_copy TypeTraitRow = $latency_trait;
++$latency_copy->latency_integer_width = structure_row_ids::uint32_from_int(99);
++$latency_table TypeTraitTable = [];
++$latency_table->traits[] = $latency_trait;
++$latency_stored TypeTraitRow = $latency_table->traits[0];
++$latency_table_copy TypeTraitTable = $latency_table;
++$latency_table_copy->traits[] = $latency_copy;
++echo "value_table=", count($latency_table->traits), ":", count($latency_table_copy->traits), "\n";
++echo "value_trait=", (int)$latency_trait->latency_integer_width, ":", (int)$latency_copy->latency_integer_width, ":", (int)$latency_stored->latency_integer_width, "\n";

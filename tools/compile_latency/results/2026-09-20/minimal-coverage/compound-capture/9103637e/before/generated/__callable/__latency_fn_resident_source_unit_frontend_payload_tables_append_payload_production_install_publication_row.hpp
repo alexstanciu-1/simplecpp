@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class PartitionReadinessArtifact;
+struct SourceUnitFrontendWorkerPayloadProductionInstallRow;
+void __latency_fn_resident_source_unit_frontend_payload_tables_append_payload_production_install_publication_row(shared_p<PartitionReadinessArtifact>& artifact, SourceUnitFrontendWorkerPayloadProductionInstallRow installRow);
+}

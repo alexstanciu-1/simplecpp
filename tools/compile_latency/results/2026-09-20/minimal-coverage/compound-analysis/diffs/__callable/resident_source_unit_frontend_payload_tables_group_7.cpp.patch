@@ -1,0 +1,29 @@
+--- before/__callable/resident_source_unit_frontend_payload_tables_group_7.cpp
++++ after/__callable/resident_source_unit_frontend_payload_tables_group_7.cpp
+@@ -74,7 +74,7 @@
+ #include "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_tokenizer_elapsed_us_total.hpp"
+ namespace scpp { extern const int __latency_lines_resident_source_unit_frontend_payload_tables[]; }
+ namespace scpp {
+-int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_total(const shared_p<SourceUnitTable>& sourceUnits) {
++int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_total(shared_p<SourceUnitTable> sourceUnits) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_frontend_payload_tables::source_unit_source_byte_total", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_frontend_payload_tables.phs", __latency_lines_resident_source_unit_frontend_payload_tables[85]);
+ 	int_t<> total = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	auto __latency_local_0 = sourceUnits->rows;
+@@ -89,7 +89,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_frontend_payload_tables[]; }
+ namespace scpp {
+-int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_max(const shared_p<SourceUnitTable>& sourceUnits) {
++int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_max(shared_p<SourceUnitTable> sourceUnits) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_frontend_payload_tables::source_unit_source_byte_max", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_frontend_payload_tables.phs", __latency_lines_resident_source_unit_frontend_payload_tables[86]);
+ 	int_t<> max = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	auto __latency_local_0 = sourceUnits->rows;
+@@ -171,7 +171,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_frontend_payload_tables[]; }
+ namespace scpp {
+-void __latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> taskRunElapsedUs, int_t<std::uint32_t> frontendPublishElapsedUs, int_t<std::uint32_t> symbolPublishElapsedUs, int_t<std::uint32_t> publicationElapsedUs, int_t<std::uint32_t> totalElapsedUs) {
++void __latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> taskRunElapsedUs, int_t<std::uint32_t> frontendPublishElapsedUs, int_t<std::uint32_t> symbolPublishElapsedUs, int_t<std::uint32_t> publicationElapsedUs, int_t<std::uint32_t> totalElapsedUs) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_frontend_payload_tables::record_real_worker_publication_metrics", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_frontend_payload_tables.phs", __latency_lines_resident_source_unit_frontend_payload_tables[90]);
+ 	int_t<std::uint32_t> resultPayloadCopyBytes = required_cast<int_t<std::uint32_t>>(__latency_fn_resident_source_unit_frontend_payload_tables_uint32_from_int(__latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_payload_copy_byte_total(results)));
+ 	int_t<std::uint32_t> inputCopyBytes = required_cast<int_t<std::uint32_t>>(__latency_fn_resident_source_unit_frontend_payload_tables_uint32_from_int(__latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_input_payload_copy_byte_total(inputs)));

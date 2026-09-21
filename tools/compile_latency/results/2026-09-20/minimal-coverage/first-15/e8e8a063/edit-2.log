@@ -1,0 +1,9 @@
+[1/9] CXX minimal/__callable/llvm_text_from_plan_locations.o
+[2/9] CALLABLE_PART minimal_parts/compile/backend/llvm_text_from_plan/part_0.o
+[3/9] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_21.o
+[4/9] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_22.o
+[5/9] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_14.o
+[6/9] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_20.o
+[7/9] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_24.o
+[8/9] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_23.o
+[9/9] LINK minimal-main

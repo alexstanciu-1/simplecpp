@@ -1,0 +1,110 @@
+diff --git a/compiler/docs/future/90_percent_functionality/definition_driven_drift_correction_plan_2026_08_11.md b/compiler/docs/future/90_percent_functionality/definition_driven_drift_correction_plan_2026_08_11.md
+index 5549bdb5..b31ec507 100644
+--- a/compiler/docs/future/90_percent_functionality/definition_driven_drift_correction_plan_2026_08_11.md
++++ b/compiler/docs/future/90_percent_functionality/definition_driven_drift_correction_plan_2026_08_11.md
+@@ -220,6 +220,105 @@ Runner infrastructure note: `run_90_pure_tdd.php` now honors
+ known `scpp build` wrapper-hang path and enforces the intended fast cycle:
+ build once, then run focused pure TDD scopes serially.
+ 
++2026-08-11 condition operand follow-up: replaced the remaining
++`ifConditionIsLocal` / `ifConditionIsLocalImmediate` boolean pair in
++`compiler_entry_backend` with a `ScalarConditionOperand` row owned by
++`scalar_body_statement_collection`. The current scalar `if` bridge now carries
++condition operand kind/type/source facts as one row instead of parallel local
++mode booleans. This does not add a new accepted condition shape.
++
++Focused verification passed:
++
++- `timeout 45s scpp compile/backend/compiler_entry_backend.phs`
++- `timeout 30s scpp compile/backend/local_body_lowering.phs`
++- `timeout 30s scpp compile/backend/scalar_body_statement_collection.phs`
++
++Cold-build tooling cleanup performed during this slice: after `scpp clean`, the
++project build exposed several old Simple C++ parser/performance choke points in
++large JSON/debug/hash/text materializers. The following focused transpile
++blockers were converted from long chained string expressions to incremental
++builders and now pass focused transpilation:
++
++- `compile/backend/abi_bridge/runtime_abi_bridge.phs`: 0.5s
++- `compile/artifacts/analysis_context_identity.phs`: 0.4s
++- `compile/backend/backend_emission_decisions.phs`: 0.6s
++- `compile/backend/backend_preflight_requests.phs`: 0.9s
++- `compile/backend/llvm_api_sink_preflight.phs`: 0.5s
++- `compile/backend/llvm_text_from_plan.phs`: 5.3s
++- `compile/backend/lowering_plan.phs`: 1.2s
++- `compile/capabilities/runtime_helper_contract_readiness.phs`: 0.5s
++
++2026-08-11 dataflow owner follow-up: the
++`compile/control_flow/control_flow_dataflows.phs` timeout was traced to two
++separate problems. First, long chained TSV string materialization in
++`project_tsv` hit the current Simple C++ materializer badly; it was replaced by
++incremental row-field appends. Second, branch/loop dataflow still carried
++parallel name/source/type vectors in several functions. Those vectors are now
++owned by `ControlFlowLocalWriteSet`, so merge, loop-carried, and zero-iteration
++rows consume one local-write concept instead of several parallel arrays.
++
++Cold-build syntax compatibility cleanup performed during this same pass:
++current Simple C++ still rejects `const T &$arg` in some cold project paths, so
++active compiler `const T &$` signatures were mechanically changed to value
++parameters where needed to let the current toolchain parse the project. This is
++not a language-design endorsement; future supported const-reference syntax can
++be reintroduced on audited hot local boundaries.
++
++Focused verification passed:
++
++- Sequential focused transpile over 28 touched active files passed in 19 s.
++  Slowest files were `compile/backend/llvm_text_from_plan.phs` at 4 s,
++  `compile/frontend_adapter/phs/frontend_model_builder.phs` at 2 s, and
++  `compile/incremental/resident_source_unit_frontend_payload_tables.phs` at 2 s.
++- Active compiler source scan found no `ifConditionIsLocal`,
++  `ifConditionIsLocalImmediate`, `conditionIsLocal`, `first_scalar_slice`,
++  `assignments_then`, `control_flow_flag_`, `fixture_key`, `FixtureRun`, or
++  `fixture_runner` under `compiler/src/compile`.
++- `php compiler/tools/run_90_pure_tdd_purity_guard.php` passed.
++- `php compiler/tools/recent_scalar_capability_purity_audit.php` passed:
++  33 changed files, 1653 added code lines, 0 violations, 0 warnings.
++- `php compiler/tools/hardcoded_functionality_audit.php` passed with active
++  gate clean.
++
++Tooling correction: the installed `scpp` shim points to
++`/home/alexv/__AI/simple_cpp/stable` at version 0.1.73, while this repository's
++vendored Simple C++ checkout is version 0.1.74. The installed stable shim
++entered the build wrapper before creating `.prism/last_run.json`, produced no
++stdout/stderr, and showed no new generated/build artifact movement; the
++explicit-entry probe timed out after 120 s with an empty log. Closing stdin with
++`</dev/null` did not change the installed-shim behavior. `strace` is not
++installed in this environment.
++
++Using the vendored CLI directly fixed the build boundary:
++
++- `/usr/bin/php8.5 vendor/simple_cpp/bin/scpp.php clean` removed `.prism`.
++- `/usr/bin/php8.5 vendor/simple_cpp/bin/scpp.php build --entry=main.phs --no-stan --timings`
++  first failed with a clear missing reusable runtime artifact diagnostic.
++- `/usr/bin/php8.5 vendor/simple_cpp/bin/scpp.php runtime-build --debug` built
++  the vendored debug runtime in about 11 s.
++- `SCPP_NINJA_JOBS=16 /usr/bin/php8.5 vendor/simple_cpp/bin/scpp.php build --entry=main.phs --no-stan --timings`
++  passed and produced `.prism/build/main`; timing summary showed
++  `ninja_subprocess_ms=194544`, `write_last_run_report_ms=298`, and total
++  source/planning work under 3 s after the clean generation.
++
++Pure TDD verification against the newly built compiler passed:
++
++- `SCPP_SKIP_COMPILER_BUILD=1 php compiler/tools/run_90_pure_tdd.php --lane valid --case tdd_90_cf01_if_else_return_both_branches`:
++  1 test, 9 checked cells, 0 mismatches, run 172 ms.
++- `SCPP_SKIP_COMPILER_BUILD=1 php compiler/tools/run_90_pure_tdd.php --lane valid --group CF`:
++  11 tests, 105 checked cells, 0 mismatches, run 2193 ms.
++- `SCPP_SKIP_COMPILER_BUILD=1 php compiler/tools/run_90_pure_tdd.php --lane invalid --group CF`:
++  6 tests, 45 checked cells, 0 mismatches, run 53 ms.
++- `SCPP_SKIP_COMPILER_BUILD=1 php compiler/tools/run_90_pure_tdd.php --lane valid --group BASE`:
++  9 tests, 64 checked cells, 0 mismatches, run 1150 ms.
++- `SCPP_SKIP_COMPILER_BUILD=1 php compiler/tools/run_90_pure_tdd.php --lane invalid --group BASE`:
++  4 tests, 29 checked cells, 0 mismatches, run 58 ms.
++
++Runner discipline note: an accidental parallel launch of multiple
++`run_90_pure_tdd.php` scopes failed fast with
++`pure_tdd_error=compiler_build_lock_active`, proving the simple no-parallel
++shared-build lock is working.
++
+ ### DD-03: Generic Capability Consumers
+ 
+ Priority: P1

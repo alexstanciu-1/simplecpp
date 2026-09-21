@@ -1,0 +1,15 @@
+{
+  "external_source_hash_differences": [],
+  "scratch_non_entrypoint_phs_differences": [],
+  "extra_scratch_phs_files": [],
+  "restored_ninja_no_op": true,
+  "all_six_restored_smokes_passed": true,
+  "table_source_diagnostics_passed": true,
+  "linked_objects": 864,
+  "counter_complete_header_active_consumers": [
+    "expanded/structure_kernel/frontend_model_kernel_counters.o",
+    "expanded/__counter/boundary.o"
+  ],
+  "active_layout": "latency-expanded.ninja with tables and counters isolated",
+  "entrypoint": "intentional twenty-witness harness"
+}

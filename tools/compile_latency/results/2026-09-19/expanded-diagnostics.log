@@ -1,0 +1,7 @@
+[1/2] CALLABLE_PART callable-diagnostic.o
+[2/2] LINK callable-diagnostic
+function=frontend_model_builder::declaration_kind_function_id
+max_call_depth=4096
+source_file=/tmp/scpp-edit-latency-20260919/app/compile/frontend_adapter/phs/frontend_model_builder.phs
+source_line=8
+

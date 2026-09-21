@@ -1,0 +1,111 @@
+diff --git a/compiler/src/compile/backend/backend_module_composition.phs b/compiler/src/compile/backend/backend_module_composition.phs
+index 3803a20d..8af2d422 100644
+--- a/compiler/src/compile/backend/backend_module_composition.phs
++++ b/compiler/src/compile/backend/backend_module_composition.phs
+@@ -10,9 +10,9 @@ final class backend_module_composition {
+ 		if ($parameterText !== "") {
+ 			return $parameterText;
+ 		}
+-		if (project_reference_resolution::symbol_has_direct_call_expression($model, $symbol)) {
+-			$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
+-			$reference ProjectReferenceResolutionRow = compiler_entry_backend::direct_call_reference_from_frontend($references, $symbols, $model, $sourceText, $symbol);
++		$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
++		$reference ProjectReferenceResolutionRow = compiler_entry_backend::direct_call_reference_from_frontend($references, $symbols, $model, $sourceText, $symbol);
++		if ((int)$reference->resolution_kind_id !== (int)project_reference_resolution::resolution_kind_no_call_expression_id()) {
+ 			if ((int)$reference->status_id !== (int)project_reference_resolution::status_resolved_id()) {
+ 				return "";
+ 			}
+@@ -102,11 +102,11 @@ final class backend_module_composition {
+ 	}
+ 
+ 	public static function module_text_for_entry(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $entrySymbol, FrontendModel $model, string $sourceText, BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests): string {
+-		if (!project_reference_resolution::symbol_has_direct_call_expression($model, $entrySymbol)) {
+-			return llvm_text_from_plan::module_text_from_emission_and_backend_requests($entryEmission, $entryRequests);
+-		}
+ 		$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
+ 		$reference ProjectReferenceResolutionRow = compiler_entry_backend::direct_call_reference_from_frontend($references, $symbols, $model, $sourceText, $entrySymbol);
++		if ((int)$reference->resolution_kind_id === (int)project_reference_resolution::resolution_kind_no_call_expression_id()) {
++			return llvm_text_from_plan::module_text_from_emission_and_backend_requests($entryEmission, $entryRequests);
++		}
+ 		if ((int)$reference->status_id !== (int)project_reference_resolution::status_resolved_id()) {
+ 			return "";
+ 		}
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index 373ed364..19538af6 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -33,13 +33,14 @@ final class compiler_entry_backend {
+ 	}
+ 
+ 	public static function direct_call_emission_from_frontend(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
+-		if (!project_reference_resolution::symbol_has_direct_call_expression($model, $symbol)) {
+-			$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+-			return backend_emission_decisions::from_lowering_plan($plan);
+-		}
+ 		$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
+ 		$contracts ProjectCallableContractArtifact = project_callable_contracts::new_artifact(1);
+ 		$reference ProjectReferenceResolutionRow = compiler_entry_backend::direct_call_reference_from_frontend($references, $symbols, $model, $sourceText, $symbol);
++		if ((int)$reference->resolution_kind_id === (int)project_reference_resolution::resolution_kind_no_call_expression_id()) {
++			$backendRequests = backend_preflight_requests::new_backend_request_artifact(0);
++			$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
++			return backend_emission_decisions::from_lowering_plan($plan);
++		}
+ 		if ((int)$reference->status_id === (int)project_reference_resolution::status_resolved_id()) {
+ 			project_callable_contracts::append_from_reference($contracts, $reference, $references, $symbols);
+ 		}
+@@ -779,8 +780,11 @@ final class compiler_entry_backend {
+ 	}
+ 
+ 	public static function backend_emission_for_entry(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
+-		if (project_reference_resolution::symbol_has_direct_call_expression($model, $symbol)) {
+-			return compiler_entry_backend::direct_call_emission_from_frontend($symbols, $symbol, $model, $sourceText, $backendRequests, $plan, $capabilityCoverage);
++		$directCallEmission BackendEmissionDecisionArtifact = compiler_entry_backend::direct_call_emission_from_frontend($symbols, $symbol, $model, $sourceText, $backendRequests, $plan, $capabilityCoverage);
++		if ((int)backend_emission_decisions::status_from_plan($plan) === (int)backend_emission_decisions::status_ready_id()
++			|| (int)$backendRequests->ready_count > 0
++			|| (int)$backendRequests->blocked_count > 0) {
++			return $directCallEmission;
+ 		}
+ 		$localEmission BackendEmissionDecisionArtifact = compiler_entry_backend::scalar_local_body_emission($symbols, $symbol, $model, $sourceText, $backendRequests, $plan, $capabilityCoverage);
+ 		if ((int)backend_emission_decisions::status_from_plan($plan) === (int)backend_emission_decisions::status_ready_id()) {
+diff --git a/compiler/src/compile/model/project_reference_resolution.phs b/compiler/src/compile/model/project_reference_resolution.phs
+index 962596aa..affadff0 100644
+--- a/compiler/src/compile/model/project_reference_resolution.phs
++++ b/compiler/src/compile/model/project_reference_resolution.phs
+@@ -296,11 +296,6 @@ final class project_reference_resolution {
+ 		return $empty;
+ 	}
+ 
+-	public static function symbol_has_direct_call_expression(FrontendModel $model, ProjectSymbolIndexRow $fromSymbol): bool {
+-		$callNode FrontendNodeRow = project_reference_resolution::call_expression_node_from_symbol($model, $fromSymbol);
+-		return (int)$callNode->node_id > 0;
+-	}
+-
+ 	public static function call_expression_node_from_statement_value(FrontendModel $model, FrontendNodeRow $statementNode, FrontendModelKernelCounters $counters): FrontendNodeRow {
+ 		if ((int)$statementNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()) {
+ 			$empty FrontendNodeRow = [];
+@@ -322,25 +317,6 @@ final class project_reference_resolution {
+ 		return $empty;
+ 	}
+ 
+-	public static function return_statement_node_from_body_model(FrontendModel $model): FrontendNodeRow {
+-		if ((int)$model->parser_error_count > 0) {
+-			$empty FrontendNodeRow = [];
+-			return $empty;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$nodeId int = 1;
+-		while ($nodeId <= (int)$model->node_count) {
+-			$node FrontendNodeRow = frontend_model_tables::node_by_id($model, structure_row_ids::uint32_from_int($nodeId), $counters);
+-			if ((int)$node->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$node->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()) {
+-				return $node;
+-			}
+-			$nodeId = $nodeId + 1;
+-		}
+-		$empty FrontendNodeRow = [];
+-		return $empty;
+-	}
+-
+ 	public static function call_expression_node_from_body_model(FrontendModel $model): FrontendNodeRow {
+ 		if ((int)$model->parser_error_count > 0) {
+ 			$empty FrontendNodeRow = [];

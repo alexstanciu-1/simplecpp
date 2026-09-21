@@ -1,0 +1,217 @@
+{
+  "type": "FrontendModelKernelCounters",
+  "fields": {
+    "reserve_call_count": "int_t<>",
+    "append_call_count": "int_t<>",
+    "lookup_call_count": "int_t<>",
+    "update_call_count": "int_t<>",
+    "materializer_call_count": "int_t<>"
+  },
+  "implementation_uses": {
+    "structure_kernel/frontend_model_tables.cpp": [
+      "append_call_count",
+      "lookup_call_count",
+      "materializer_call_count",
+      "reserve_call_count",
+      "update_call_count"
+    ],
+    "__callable/frontend_model_tables_source_buffer_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_append_statement_payload.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_source_range_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_line_start_by_index.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_expression_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_append_declaration_payload.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_update_expression_payload.cpp": [
+      "update_call_count"
+    ],
+    "__callable/frontend_model_tables_type_syntax_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_append_type_syntax_payload.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_statement_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_type_syntax_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_update_declaration_payload.cpp": [
+      "update_call_count"
+    ],
+    "__callable/frontend_model_tables_node_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_declaration_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_reserve_model.cpp": [
+      "reserve_call_count"
+    ],
+    "__callable/frontend_model_tables_name_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_literal_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_append_source_range_ext.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_node_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_source_range_ext_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_source_range_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_update_node.cpp": [
+      "update_call_count"
+    ],
+    "__callable/frontend_model_tables_name_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_counters_debug_string.cpp": [
+      "append_call_count",
+      "lookup_call_count",
+      "materializer_call_count",
+      "reserve_call_count",
+      "update_call_count"
+    ],
+    "__callable/frontend_model_tables_append_literal_payload.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_append_expression_payload.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_source_range_ext_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_update_statement_payload.cpp": [
+      "update_call_count"
+    ],
+    "__callable/frontend_model_tables_append_source_range.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_append_line_start.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_source_buffer_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_literal_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_append_source_buffer.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_append_node.cpp": [
+      "append_call_count"
+    ],
+    "__callable/frontend_model_tables_declaration_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_statement_by_id.cpp": [
+      "lookup_call_count"
+    ],
+    "__callable/frontend_model_tables_expression_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_line_start_debug_string.cpp": [
+      "materializer_call_count"
+    ],
+    "__callable/frontend_model_tables_append_name_payload.cpp": [
+      "append_call_count"
+    ],
+    "compile/model/project_reference_resolution.cpp": [
+      "create"
+    ],
+    "compile/model/project_symbol_index.cpp": [
+      "create"
+    ],
+    "compile/model/frontend_body_summaries.cpp": [
+      "create"
+    ],
+    "compile/backend/llvm_text_from_plan.cpp": [
+      "create"
+    ],
+    "compile/backend/backend_module_composition.cpp": [
+      "create"
+    ],
+    "compile/backend/compiler_entry_backend.cpp": [
+      "create"
+    ],
+    "compile/backend/local_body_lowering.cpp": [
+      "create"
+    ],
+    "compile/pipeline/compiler_project_runner.cpp": [
+      "create"
+    ],
+    "compile/incremental/resident_function_body_local_parse_proofs.cpp": [
+      "create"
+    ],
+    "compile/incremental/resident_source_unit_frontend_payload_tables.cpp": [
+      "create"
+    ],
+    "compile/incremental/resident_function_body_ownership.cpp": [
+      "create"
+    ],
+    "compile/incremental/resident_source_unit_symbol_states.cpp": [
+      "create"
+    ],
+    "compile/control_flow/control_flow_dataflows.cpp": [
+      "create"
+    ],
+    "compile/control_flow/control_flow_graphs.cpp": [
+      "create"
+    ],
+    "compile/control_flow/control_flow_transfers.cpp": [
+      "create"
+    ],
+    "__partitions/compile/model/project_symbol_index/part_3.cpp": [
+      "create"
+    ],
+    "__partitions/compile/model/project_symbol_index/part_2.cpp": [
+      "create"
+    ],
+    "__partitions/compile/model/project_symbol_index/part_4.cpp": [
+      "create"
+    ],
+    "__partitions/compile/model/project_reference_resolution/part_2.cpp": [
+      "create"
+    ],
+    "__partitions/compile/model/project_reference_resolution/part_5.cpp": [
+      "create"
+    ],
+    "__partitions/compile/model/project_reference_resolution/part_1.cpp": [
+      "create"
+    ],
+    "__partitions/compile/backend/llvm_text_from_plan/part_10.cpp": [
+      "create"
+    ],
+    "__partitions/compile/backend/llvm_text_from_plan/part_11.cpp": [
+      "create"
+    ],
+    "__partitions/compile/incremental/resident_source_unit_symbol_states/part_1.cpp": [
+      "create"
+    ],
+    "__partitions/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.cpp": [
+      "create"
+    ]
+  },
+  "representation": "existing shared_p; same allocation, same actual fields; reference-returning accessors",
+  "limits": "known single non-inherited type; resolved variable names approximated from generated declarations; C++ compilation validates all uses"
+}

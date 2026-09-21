@@ -1,0 +1,64 @@
+--- before/__callable/llvm_text_from_plan_group_10.cpp
++++ after/__callable/llvm_text_from_plan_group_10.cpp
+@@ -55,7 +55,27 @@
+ 	SCPP_CALL_DEPTH_GUARD("llvm_text_from_plan::module_text_from_local_emission", "/tmp/scpp-edit-latency-20260919/app/compile/backend/llvm_text_from_plan.phs", __latency_lines_llvm_text_from_plan[94]);
+ 	BackendEmissionValueRow lastValue = __latency_fn_backend_emission_decisions_value_by_id(emission, emission->value_count);
+ 	string_t returnType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_llvm_type_for_type_ref(lastValue->type_ref_id));
+-	return (string_t("; v2 PHS backend-emission LLVM text sink\n; backend_value_stack_status=ok\n; backend_local_slot_status=ok\nsource_filename = \"compiler/reset-runner-entry\"\ntarget triple = \"x86_64-pc-linux-gnu\"\n\n") + cast<string_t>(php::ternary_eval([&]() -> decltype(auto) { return __latency_fn_llvm_text_from_plan_emission_has_echo_scalar(emission); }, [&]() -> decltype(auto) { return string_t("@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\ndeclare i32 @printf(ptr, ...)\n\n"); }, [&]() -> decltype(auto) { return string_t(""); })) + string_t("define ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n") + string_t("entry:\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_function_body_text_from_local_emission(emission, returnType)) + string_t("}\n") + string_t("\n") + string_t("define i32 @main() {\n") + string_t("entry:\n") + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)) + string_t("}\n"));
++	string_t text = required_cast<string_t>(string_t("; v2 PHS backend-emission LLVM text sink\n"));
++	text = (cast<string_t>(text) + string_t("; backend_value_stack_status=ok\n"));
++	text = (cast<string_t>(text) + string_t("; backend_local_slot_status=ok\n"));
++	text = (cast<string_t>(text) + string_t("source_filename = \"compiler/reset-runner-entry\"\n"));
++	text = (cast<string_t>(text) + string_t("target triple = \"x86_64-pc-linux-gnu\"\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	if (static_cast<bool>(php::condition_truthy(__latency_fn_llvm_text_from_plan_emission_has_echo_scalar(emission)))) {
++		text = (cast<string_t>(text) + string_t("@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\n"));
++		text = (cast<string_t>(text) + string_t("declare i32 @printf(ptr, ...)\n\n"));
++	}
++	text = (cast<string_t>(text) + string_t("define ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_function_body_text_from_local_emission(emission, returnType)));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("define i32 @main() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	return text;
+ }
+ 
+ }
+@@ -74,7 +94,31 @@
+ 		__latency_fn_llvm_text_from_plan_append_all_string_literal_globals_from_backend_requests(globals, requests);
+ 		runtimeStringPrefix = (cast<string_t>(str::text_builder_take_string(globals)) + cast<string_t>(__latency_fn_llvm_abi_declarations_module_declarations(__latency_fn_runtime_abi_bridge_build())) + string_t("\n"));
+ 	}
+-	return (string_t("; v2 PHS backend-emission LLVM text sink\n; backend_value_stack_status=ok\n; backend_local_slot_status=ok\n") + cast<string_t>(php::ternary_eval([&]() -> decltype(auto) { return usesRuntimeStringAbi; }, [&]() -> decltype(auto) { return string_t("; runtime_string_abi_status=local_owner_borrow_release_ready\n"); }, [&]() -> decltype(auto) { return string_t(""); })) + string_t("source_filename = \"compiler/reset-runner-entry\"\n") + string_t("target triple = \"x86_64-pc-linux-gnu\"\n") + string_t("\n") + cast<string_t>(runtimeStringPrefix) + cast<string_t>(php::ternary_eval([&]() -> decltype(auto) { return __latency_fn_llvm_text_from_plan_emission_has_echo_scalar_and_backend_requests(emission, requests); }, [&]() -> decltype(auto) { return string_t("@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\ndeclare i32 @printf(ptr, ...)\n\n"); }, [&]() -> decltype(auto) { return string_t(""); })) + string_t("define ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n") + string_t("entry:\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_function_body_text_from_local_emission_and_backend_requests(emission, requests, returnType)) + string_t("}\n") + string_t("\n") + string_t("define i32 @main() {\n") + string_t("entry:\n") + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)) + string_t("}\n"));
++	string_t text = required_cast<string_t>(string_t("; v2 PHS backend-emission LLVM text sink\n"));
++	text = (cast<string_t>(text) + string_t("; backend_value_stack_status=ok\n"));
++	text = (cast<string_t>(text) + string_t("; backend_local_slot_status=ok\n"));
++	if (static_cast<bool>(php::condition_truthy(usesRuntimeStringAbi))) {
++		text = (cast<string_t>(text) + string_t("; runtime_string_abi_status=local_owner_borrow_release_ready\n"));
++	}
++	text = (cast<string_t>(text) + string_t("source_filename = \"compiler/reset-runner-entry\"\n"));
++	text = (cast<string_t>(text) + string_t("target triple = \"x86_64-pc-linux-gnu\"\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + cast<string_t>(runtimeStringPrefix));
++	if (static_cast<bool>(php::condition_truthy(__latency_fn_llvm_text_from_plan_emission_has_echo_scalar_and_backend_requests(emission, requests)))) {
++		text = (cast<string_t>(text) + string_t("@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\n"));
++		text = (cast<string_t>(text) + string_t("declare i32 @printf(ptr, ...)\n\n"));
++	}
++	text = (cast<string_t>(text) + string_t("define ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_function_body_text_from_local_emission_and_backend_requests(emission, requests, returnType)));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("define i32 @main() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	return text;
+ }
+ 
+ }

@@ -1,0 +1,590 @@
+commit 4840c64f39baced4e01d45c27aefc9659e33da08
+Author: Alex Stanciu <ealexs@gmail.com>
+Date:   Wed Jul 22 07:56:42 2026 +0300
+
+    v2 reduce MT publication metric churn
+
+diff --git a/compiler/v2/src/compile/backend/backend_object_link_cache.phs b/compiler/v2/src/compile/backend/backend_object_link_cache.phs
+index f1dd6539..f042451c 100644
+--- a/compiler/v2/src/compile/backend/backend_object_link_cache.phs
++++ b/compiler/v2/src/compile/backend/backend_object_link_cache.phs
+@@ -366,33 +366,21 @@ final class backend_object_link_cache {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_output_matches(), structure_row_ids::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_output_mismatches(), structure_row_ids::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_coordinator_selected(), structure_row_ids::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_worker_selected(), structure_row_ids::uint32_from_int(0));
+-		if ($hasWorkerCandidate && !$upstreamEmissionLLVMWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($hasWorkerCandidate && $upstreamEmissionLLVMWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_upstream_emission_llvm_worker_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_upstream_emission_llvm_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		} else if ($hasWorkerCandidate) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_upstream_emission_llvm_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_upstream_emission_llvm_coordinator_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_upstream_emission_llvm_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_upstream_emission_llvm_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($workerCandidateReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_object_output_publication_payload_copy_bytes(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "object_output_publication");
++		mt_publication_metrics::record_worker_gate(
++			$report,
++			"object_output_publication",
++			"worker_blocked_by_upstream_payload_source",
++			"upstream_emission_llvm_worker_ready",
++			"upstream_emission_llvm_coordinator_blocked",
++			"worker_candidate_ready",
++			"o3_measurement_required",
++			"speedup_claim_blocked",
++			"payload_copy_bytes",
++			$hasWorkerCandidate,
++			$upstreamEmissionLLVMWorkerReady,
++			$workerCandidateReady
++		);
+ 	}
+ 
+ 	public static function link_coordinator_publication_row(uint32 $ownerRunId, BackendLinkCacheDecisionRow $linkRow): PartitionReadinessRow {
+@@ -492,10 +480,9 @@ final class backend_object_link_cache {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_link_coordinator_publication_output_matches(), structure_row_ids::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_link_coordinator_publication_output_mismatches(), structure_row_ids::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_link_coordinator_publication_coordinator_selected(), structure_row_ids::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_link_coordinator_publication_worker_selected(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "link_coordinator_publication");
+ 		proof_metrics::add_report_counter($report, proof_metrics::key_link_coordinator_publication_worker_blocked_by_coordinator_ownership(), $workerBlockedRows);
+-		proof_metrics::add_report_counter($report, proof_metrics::key_link_coordinator_publication_payload_copy_bytes(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::add_int($report, mt_publication_metrics::key("link_coordinator_publication", "payload_copy_bytes"), 0);
+ 	}
+ 
+ 	public static function object_debug_string(BackendObjectCacheDecisionRow $row): string {
+diff --git a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+index cf734a08..676d09b8 100644
+--- a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+@@ -1237,32 +1237,20 @@ final class llvm_text_from_plan {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_output_matches(), structure_row_ids::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_output_mismatches(), structure_row_ids::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_coordinator_selected(), structure_row_ids::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_worker_selected(), structure_row_ids::uint32_from_int(0));
+-		if ($hasWorkerCandidate && !$upstreamBackendLoweringWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($hasWorkerCandidate && $upstreamBackendLoweringWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_upstream_backend_lowering_worker_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_upstream_backend_lowering_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		} else if ($hasWorkerCandidate) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_upstream_backend_lowering_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_upstream_backend_lowering_coordinator_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_upstream_backend_lowering_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_upstream_backend_lowering_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($workerCandidateReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_emission_llvm_publication_payload_copy_bytes(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "emission_llvm_publication");
++		mt_publication_metrics::record_worker_gate(
++			$report,
++			"emission_llvm_publication",
++			"worker_blocked_by_upstream_payload_source",
++			"upstream_backend_lowering_worker_ready",
++			"upstream_backend_lowering_coordinator_blocked",
++			"worker_candidate_ready",
++			"o3_measurement_required",
++			"speedup_claim_blocked",
++			"payload_copy_bytes",
++			$hasWorkerCandidate,
++			$upstreamBackendLoweringWorkerReady,
++			$workerCandidateReady
++		);
+ 	}
+ }
+diff --git a/compiler/v2/src/compile/backend/lowering_plan.phs b/compiler/v2/src/compile/backend/lowering_plan.phs
+index 2303fe67..d3f1e6da 100644
+--- a/compiler/v2/src/compile/backend/lowering_plan.phs
++++ b/compiler/v2/src/compile/backend/lowering_plan.phs
+@@ -645,32 +645,20 @@ final class lowering_plan {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_output_matches(), structure_row_ids::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_output_mismatches(), structure_row_ids::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_coordinator_selected(), structure_row_ids::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_worker_selected(), structure_row_ids::uint32_from_int(0));
+-		if ($hasWorkerCandidate && !$upstreamStorageLifetimeWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($hasWorkerCandidate && $upstreamStorageLifetimeWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_upstream_storage_lifetime_worker_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_upstream_storage_lifetime_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		} else if ($hasWorkerCandidate) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_upstream_storage_lifetime_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_upstream_storage_lifetime_coordinator_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_upstream_storage_lifetime_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_upstream_storage_lifetime_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($workerCandidateReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_backend_lowering_publication_payload_copy_bytes(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "backend_lowering_publication");
++		mt_publication_metrics::record_worker_gate(
++			$report,
++			"backend_lowering_publication",
++			"worker_blocked_by_upstream_payload_source",
++			"upstream_storage_lifetime_worker_ready",
++			"upstream_storage_lifetime_coordinator_blocked",
++			"worker_candidate_ready",
++			"o3_measurement_required",
++			"speedup_claim_blocked",
++			"payload_copy_bytes",
++			$hasWorkerCandidate,
++			$upstreamStorageLifetimeWorkerReady,
++			$workerCandidateReady
++		);
+ 	}
+ }
+diff --git a/compiler/v2/src/compile/capabilities/storage_lifetime_readiness.phs b/compiler/v2/src/compile/capabilities/storage_lifetime_readiness.phs
+index d94b8d58..171c7d9f 100644
+--- a/compiler/v2/src/compile/capabilities/storage_lifetime_readiness.phs
++++ b/compiler/v2/src/compile/capabilities/storage_lifetime_readiness.phs
+@@ -280,32 +280,20 @@ final class storage_lifetime_readiness {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_output_matches(), structure_row_ids::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_output_mismatches(), structure_row_ids::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_coordinator_selected(), structure_row_ids::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_worker_selected(), structure_row_ids::uint32_from_int(0));
+-		if ($hasWorkerCandidate && !$upstreamCapabilityReadinessWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($hasWorkerCandidate && $upstreamCapabilityReadinessWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_upstream_capability_readiness_worker_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_upstream_capability_readiness_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		} else if ($hasWorkerCandidate) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_upstream_capability_readiness_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_upstream_capability_readiness_coordinator_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_upstream_capability_readiness_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_upstream_capability_readiness_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($workerCandidateReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_storage_lifetime_publication_payload_copy_bytes(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "storage_lifetime_publication");
++		mt_publication_metrics::record_worker_gate(
++			$report,
++			"storage_lifetime_publication",
++			"worker_blocked_by_upstream_payload_source",
++			"upstream_capability_readiness_worker_ready",
++			"upstream_capability_readiness_coordinator_blocked",
++			"worker_candidate_ready",
++			"o3_measurement_required",
++			"speedup_claim_blocked",
++			"payload_copy_bytes",
++			$hasWorkerCandidate,
++			$upstreamCapabilityReadinessWorkerReady,
++			$workerCandidateReady
++		);
+ 	}
+ }
+diff --git a/compiler/v2/src/compile/capabilities/type_capability_readiness.phs b/compiler/v2/src/compile/capabilities/type_capability_readiness.phs
+index cbd726c0..4087a53a 100644
+--- a/compiler/v2/src/compile/capabilities/type_capability_readiness.phs
++++ b/compiler/v2/src/compile/capabilities/type_capability_readiness.phs
+@@ -718,33 +718,21 @@ final class type_capability_readiness {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_output_matches(), structure_row_ids::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_output_mismatches(), structure_row_ids::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_coordinator_selected(), structure_row_ids::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_worker_selected(), structure_row_ids::uint32_from_int(0));
+-		if ($hasWorkerCandidate && !$upstreamReferenceContractWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($hasWorkerCandidate && $upstreamReferenceContractWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_upstream_reference_contract_worker_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_upstream_reference_contract_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		} else if ($hasWorkerCandidate) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_upstream_reference_contract_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_upstream_reference_contract_coordinator_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_upstream_reference_contract_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_upstream_reference_contract_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($workerCandidateReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_capability_readiness_publication_payload_copy_bytes(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "capability_readiness_publication");
++		mt_publication_metrics::record_worker_gate(
++			$report,
++			"capability_readiness_publication",
++			"worker_blocked_by_upstream_payload_source",
++			"upstream_reference_contract_worker_ready",
++			"upstream_reference_contract_coordinator_blocked",
++			"worker_candidate_ready",
++			"o3_measurement_required",
++			"speedup_claim_blocked",
++			"payload_copy_bytes",
++			$hasWorkerCandidate,
++			$upstreamReferenceContractWorkerReady,
++			$workerCandidateReady
++		);
+ 	}
+ 
+ 	public static function synthetic_provider(uint32 $typeRefId): CapabilityProviderRow {
+diff --git a/compiler/v2/src/compile/incremental/resident_source_unit_symbol_states.phs b/compiler/v2/src/compile/incremental/resident_source_unit_symbol_states.phs
+index a9d4518c..d8b40429 100644
+--- a/compiler/v2/src/compile/incremental/resident_source_unit_symbol_states.phs
++++ b/compiler/v2/src/compile/incremental/resident_source_unit_symbol_states.phs
+@@ -253,33 +253,21 @@ final class resident_source_unit_symbol_states {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_output_matches(), resident_source_unit_symbol_states::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_output_mismatches(), resident_source_unit_symbol_states::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_coordinator_selected(), resident_source_unit_symbol_states::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_worker_selected(), resident_source_unit_symbol_states::uint32_from_int(0));
+-		if ($hasWorkerCandidate && !$frontendPayloadSourceWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_worker_blocked_by_frontend_payload_source(), resident_source_unit_symbol_states::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_worker_blocked_by_frontend_payload_source(), resident_source_unit_symbol_states::uint32_from_int(0));
+-		}
+-		if ($hasWorkerCandidate && $frontendPayloadSourceWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_frontend_payload_source_worker_ready(), resident_source_unit_symbol_states::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_frontend_payload_source_coordinator_blocked(), resident_source_unit_symbol_states::uint32_from_int(0));
+-		} else if ($hasWorkerCandidate) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_frontend_payload_source_worker_ready(), resident_source_unit_symbol_states::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_frontend_payload_source_coordinator_blocked(), resident_source_unit_symbol_states::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_frontend_payload_source_worker_ready(), resident_source_unit_symbol_states::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_frontend_payload_source_coordinator_blocked(), resident_source_unit_symbol_states::uint32_from_int(0));
+-		}
+-		if ($workerCandidateReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_worker_candidate_ready(), resident_source_unit_symbol_states::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_o3_measurement_required(), resident_source_unit_symbol_states::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_speedup_claim_blocked(), resident_source_unit_symbol_states::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_worker_candidate_ready(), resident_source_unit_symbol_states::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_o3_measurement_required(), resident_source_unit_symbol_states::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_speedup_claim_blocked(), resident_source_unit_symbol_states::uint32_from_int(0));
+-		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_source_unit_symbol_fact_publication_payload_copy_bytes(), resident_source_unit_symbol_states::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "source_unit_symbol_fact_publication");
++		mt_publication_metrics::record_worker_gate(
++			$report,
++			"source_unit_symbol_fact_publication",
++			"worker_blocked_by_frontend_payload_source",
++			"frontend_payload_source_worker_ready",
++			"frontend_payload_source_coordinator_blocked",
++			"worker_candidate_ready",
++			"o3_measurement_required",
++			"speedup_claim_blocked",
++			"payload_copy_bytes",
++			$hasWorkerCandidate,
++			$frontendPayloadSourceWorkerReady,
++			$workerCandidateReady
++		);
+ 	}
+ 
+ 	public static function append_states_from_scratch(FixtureRunReport &$report, SourceUnitTable $sourceUnits, uint32 $ownerRunId, uint32 $projectSymbolIndexSidecarId, vector<uint32> &$kindIds, vector<uint32> &$firstSymbolIds, vector<uint32> &$symbolCounts, vector<uint32> &$previousStateIds): void {
+diff --git a/compiler/v2/src/compile/model/project_reference_resolution.phs b/compiler/v2/src/compile/model/project_reference_resolution.phs
+index d5204b1a..e532c4af 100644
+--- a/compiler/v2/src/compile/model/project_reference_resolution.phs
++++ b/compiler/v2/src/compile/model/project_reference_resolution.phs
+@@ -509,33 +509,21 @@ final class project_reference_resolution {
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_output_matches(), structure_row_ids::uint32_from_int(0));
+ 			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_output_mismatches(), structure_row_ids::uint32_from_int(1));
+ 		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_coordinator_selected(), structure_row_ids::uint32_from_int(1));
+-		proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_worker_selected(), structure_row_ids::uint32_from_int(0));
+-		if ($hasWorkerCandidate && !$upstreamSymbolFactWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_worker_blocked_by_upstream_payload_source(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($hasWorkerCandidate && $upstreamSymbolFactWorkerReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_upstream_symbol_fact_worker_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_upstream_symbol_fact_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		} else if ($hasWorkerCandidate) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_upstream_symbol_fact_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_upstream_symbol_fact_coordinator_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_upstream_symbol_fact_worker_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_upstream_symbol_fact_coordinator_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		if ($workerCandidateReady) {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(1));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(1));
+-		} else {
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_worker_candidate_ready(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_o3_measurement_required(), structure_row_ids::uint32_from_int(0));
+-			proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_speedup_claim_blocked(), structure_row_ids::uint32_from_int(0));
+-		}
+-		proof_metrics::add_report_counter($report, proof_metrics::key_reference_contract_publication_payload_copy_bytes(), structure_row_ids::uint32_from_int(0));
++		mt_publication_metrics::record_coordinator_selection($report, "reference_contract_publication");
++		mt_publication_metrics::record_worker_gate(
++			$report,
++			"reference_contract_publication",
++			"worker_blocked_by_upstream_payload_source",
++			"upstream_symbol_fact_worker_ready",
++			"upstream_symbol_fact_coordinator_blocked",
++			"worker_candidate_ready",
++			"o3_measurement_required",
++			"speedup_claim_blocked",
++			"payload_copy_bytes",
++			$hasWorkerCandidate,
++			$upstreamSymbolFactWorkerReady,
++			$workerCandidateReady
++		);
+ 	}
+ 
+ 	public static function append_direct_call_from_frontend(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, FrontendModel $model, string $sourceText, ProjectSymbolIndexRow $fromSymbol): ProjectReferenceResolutionRow {
+diff --git a/compiler/v2/src/compile/pipeline/fixture_runner.phs b/compiler/v2/src/compile/pipeline/fixture_runner.phs
+index ac52ed71..3d61807c 100644
+--- a/compiler/v2/src/compile/pipeline/fixture_runner.phs
++++ b/compiler/v2/src/compile/pipeline/fixture_runner.phs
+@@ -1487,7 +1487,7 @@ final class fixture_runner {
+ 		$directCallPreflight = llvm_text_from_plan::preflight_by_id($directCallPreflightArtifact, structure_row_ids::uint32_from_int(1));
+ 	}
+ 
+-	public static function entry_model_and_symbols(ProjectManifest $manifest, SourceUnitTable $sourceUnits, ProjectFrontendModel $projectFrontend, ProjectSymbolIndex $symbols, FixtureRunReport &$report, FixtureRunReport $previous, uint32 $ownerRunId, ResidentSourceUnitEarlySkipArtifact $earlySkip, bool $useWarmFrontendReuse, string &$entryText, FrontendModel &$entryModel, uint32 &$parserErrorCount, uint32 &$tokenCount, uint32 &$frontendNodeCount, uint32 &$frontendDeclarationCount, bool &$symbolFactWorkerCandidateReady): void {
++	public static function entry_model_and_symbols(ProjectManifest $manifest, SourceUnitTable $sourceUnits, ProjectFrontendModel $projectFrontend, ProjectSymbolIndex $symbols, FixtureRunReport &$report, FixtureRunReport $previous, uint32 $ownerRunId, ResidentSourceUnitEarlySkipArtifact $earlySkip, bool $useWarmFrontendReuse, int $publicationWorkerCount, string &$entryText, FrontendModel &$entryModel, uint32 &$parserErrorCount, uint32 &$tokenCount, uint32 &$frontendNodeCount, uint32 &$frontendDeclarationCount, bool &$symbolFactWorkerCandidateReady): void {
+ 		$symbolFactWorkerCandidateReady = false;
+ 		$entrySource ProjectManifestSourceRow = project_manifest::entry_source($manifest);
+ 		$previousStateIds vector<uint32> = [];
+@@ -1590,16 +1590,21 @@ final class fixture_runner {
+ 		}
+ 		resident_source_unit_frontend_payload_tables::record_publication_metrics($report, $builtPayloadTables);
+ 		$frontendPayloadSourceWorkerReady bool = false;
+-		resident_source_unit_frontend_payload_tables::record_worker_payload_handoff_metrics($report, $sourceUnits, $builtPayloadTables, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $frontendPayloadSourceWorkerReady);
++		resident_source_unit_frontend_payload_tables::record_worker_payload_handoff_metrics($report, $sourceUnits, $builtPayloadTables, $publicationWorkerCount, $frontendPayloadSourceWorkerReady);
+ 		$projectSymbolIndexSidecarId uint32 = resident_source_unit_symbol_states::append_project_symbol_index_sidecar($report, $symbols);
+ 		resident_source_unit_symbol_states::append_states_from_scratch($report, $sourceUnits, $ownerRunId, $projectSymbolIndexSidecarId, $sourceSymbolStateKindIds, $sourceSymbolFirstSymbolIds, $sourceSymbolCounts, $sourceSymbolPreviousStateIds);
+-		resident_source_unit_symbol_states::record_symbol_fact_publication_metrics($report, $sourceUnits, $ownerRunId, $sourceSymbolFirstSymbolIds, $sourceSymbolCounts, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $frontendPayloadSourceWorkerReady, $symbolFactWorkerCandidateReady);
++		resident_source_unit_symbol_states::record_symbol_fact_publication_metrics($report, $sourceUnits, $ownerRunId, $sourceSymbolFirstSymbolIds, $sourceSymbolCounts, $publicationWorkerCount, $frontendPayloadSourceWorkerReady, $symbolFactWorkerCandidateReady);
+ 		compiler_profile_events::append_event($report, $ownerRunId, compiler_profile_events::stage_tokenizer_id(), structure_row_ids::uint32_from_int($tokenizerProfileRowCount), structure_row_ids::uint32_from_int((int)($tokenizerElapsedSeconds * 1000.0)), compiler_profile_events::status_completed_id());
+ 		compiler_profile_events::append_event($report, $ownerRunId, compiler_profile_events::stage_parser_frontend_model_id(), structure_row_ids::uint32_from_int($parserProfileRowCount), structure_row_ids::uint32_from_int((int)($parserElapsedSeconds * 1000.0)), compiler_profile_events::status_completed_id());
+ 		compiler_profile_events::append_event($report, $ownerRunId, compiler_profile_events::stage_frontend_source_units_id(), structure_row_ids::uint32_from_int((int)$sourceUnits->source_unit_count), structure_row_ids::uint32_from_int((int)($frontendSourceUnitElapsedSeconds * 1000.0)), compiler_profile_events::status_completed_id());
+ 		compiler_profile_events::append_event($report, $ownerRunId, compiler_profile_events::stage_project_symbol_index_id(), $symbols->symbol_count, structure_row_ids::uint32_from_int((int)($projectSymbolElapsedSeconds * 1000.0)), compiler_profile_events::status_completed_id());
+ 	}
+ 
++	public static function record_object_output_and_link_publication_metrics(FixtureRunReport &$report, uint32 $ownerRunId, BackendPartitionExecutionArtifact $partitions, int $publicationWorkerCount, bool $emissionLLVMWorkerCandidateReady, bool &$objectOutputWorkerCandidateReady): void {
++		backend_object_link_cache::record_object_output_publication_metrics($report, $ownerRunId, $partitions, $publicationWorkerCount, $emissionLLVMWorkerCandidateReady, $objectOutputWorkerCandidateReady);
++		backend_object_link_cache::record_link_coordinator_publication_metrics($report, $ownerRunId, $partitions, $publicationWorkerCount);
++	}
++
+ 	public static function run_config(PipelineConfig $config, FixtureRunReport &$report, uint32 $ownerRunId): FixtureRunRow {
+ 		$previous FixtureRunReport = fixture_runner::new_report(0);
+ 		$earlySkip ResidentSourceUnitEarlySkipArtifact = source_unit_early_skip::new_artifact(0);
+@@ -1639,6 +1644,7 @@ final class fixture_runner {
+ 		compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_source_units_id(), structure_row_ids::uint32_from_int((int)$sourceUnits->source_unit_count), $stageStarted, compiler_profile_events::status_completed_id());
+ 		resident_definition_granularity::append_source_unit_snapshots($report, $sourceUnits, $ownerRunId);
+ 		source_unit_frontend_scheduler::record_report($report, $sourceUnits, $ownerRunId);
++		$publicationWorkerCount int = source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits);
+ 
+ 		$projectSymbols ProjectSymbolIndex = project_symbol_index::new_index((int)$sourceUnits->source_unit_count);
+ 		$projectFrontend ProjectFrontendModel = fixture_runner::new_project_frontend_model($sourceUnits);
+@@ -1650,7 +1656,7 @@ final class fixture_runner {
+ 		$frontendDeclarationCount uint32 = structure_row_ids::none_id();
+ 		$symbolFactWorkerCandidateReady bool = false;
+ 		$stageStarted = compiler_profile_events::now_seconds();
+-		fixture_runner::entry_model_and_symbols($manifest, $sourceUnits, $projectFrontend, $projectSymbols, $report, $previous, $ownerRunId, $earlySkip, $useWarmFrontendReuse, $entryText, $entryModel, $parserErrorCount, $tokenCount, $frontendNodeCount, $frontendDeclarationCount, $symbolFactWorkerCandidateReady);
++		fixture_runner::entry_model_and_symbols($manifest, $sourceUnits, $projectFrontend, $projectSymbols, $report, $previous, $ownerRunId, $earlySkip, $useWarmFrontendReuse, $publicationWorkerCount, $entryText, $entryModel, $parserErrorCount, $tokenCount, $frontendNodeCount, $frontendDeclarationCount, $symbolFactWorkerCandidateReady);
+ 		resident_token_lists::append_snapshots_from_project_frontend($report, $projectFrontend, $ownerRunId);
+ 		resident_frontend_node_lists::append_snapshots_from_project_frontend($report, $projectFrontend, $ownerRunId);
+ 		if ($useWarmFrontendReuse) {
+@@ -1770,7 +1776,7 @@ final class fixture_runner {
+ 		$contract ProjectCallableContractRow = [];
+ 		fixture_runner::resolve_entry_reference_contract($projectSymbols, $entryModel, $entryText, $entrySymbol, $references, $reference, $contracts, $contract);
+ 		$referenceContractWorkerCandidateReady bool = false;
+-		project_reference_resolution::record_reference_contract_publication_metrics($report, $ownerRunId, $entrySymbol, $references, $contracts, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $symbolFactWorkerCandidateReady, $referenceContractWorkerCandidateReady);
++		project_reference_resolution::record_reference_contract_publication_metrics($report, $ownerRunId, $entrySymbol, $references, $contracts, $publicationWorkerCount, $symbolFactWorkerCandidateReady, $referenceContractWorkerCandidateReady);
+ 		if ((int)$reference->status_id !== (int)project_reference_resolution::status_resolved_id()) {
+ 			compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_references_contracts_id(), $references->reference_count, $stageStarted, compiler_profile_events::status_blocked_id());
+ 			$referenceBlockedRow FixtureRunRow = fixture_runner::blocked_row(fixture_runner::layer_project_symbols_id(), fixture_runner::layer_references_id(), structure_row_ids::uint32_from_int((int)$sourceUnits->source_unit_count), $projectSymbols->symbol_count, $references->reference_count, structure_row_ids::none_id());
+@@ -1797,9 +1803,9 @@ final class fixture_runner {
+ 		$storageBlocked StorageLifetimeRequestRow = [];
+ 		fixture_runner::resolve_entry_analysis_capability_storage($projectSymbols, $references, $contracts, $entrySymbol, $graph, $entry, $typeRefTable, $capabilityCoverage, $operationReady, $operationBlocked, $storageReady, $storageBlocked);
+ 		$capabilityReadinessWorkerCandidateReady bool = false;
+-		type_capability_readiness::record_capability_readiness_publication_metrics($report, $ownerRunId, $entrySymbol, $capabilityCoverage, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $referenceContractWorkerCandidateReady, $capabilityReadinessWorkerCandidateReady);
++		type_capability_readiness::record_capability_readiness_publication_metrics($report, $ownerRunId, $entrySymbol, $capabilityCoverage, $publicationWorkerCount, $referenceContractWorkerCandidateReady, $capabilityReadinessWorkerCandidateReady);
+ 		$storageLifetimeWorkerCandidateReady bool = false;
+-		storage_lifetime_readiness::record_storage_lifetime_publication_metrics($report, $ownerRunId, $entrySymbol, $storageReady, $storageBlocked, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $capabilityReadinessWorkerCandidateReady, $storageLifetimeWorkerCandidateReady);
++		storage_lifetime_readiness::record_storage_lifetime_publication_metrics($report, $ownerRunId, $entrySymbol, $storageReady, $storageBlocked, $publicationWorkerCount, $capabilityReadinessWorkerCandidateReady, $storageLifetimeWorkerCandidateReady);
+ 		resident_dependency_edges::append_from_graph($report, $graph, $ownerRunId);
+ 		compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_analysis_capability_id(), $capabilityCoverage->readiness_count, $stageStarted, compiler_profile_events::status_completed_id());
+ 
+@@ -1809,7 +1815,7 @@ final class fixture_runner {
+ 		fixture_runner::resolve_entry_backend_direct_call_preflight($contract, $operationBlocked, $storageReady, $storageBlocked, $backendRequests);
+ 		$backendPreflightPlan LoweringPlan = lowering_plan::from_entry_and_backend_requests($entry, $backendRequests);
+ 		$backendLoweringWorkerCandidateReady bool = false;
+-		lowering_plan::record_backend_lowering_publication_metrics($report, $ownerRunId, $entrySymbol, $backendRequests, $backendPreflightPlan, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $storageLifetimeWorkerCandidateReady, $backendLoweringWorkerCandidateReady);
++		lowering_plan::record_backend_lowering_publication_metrics($report, $ownerRunId, $entrySymbol, $backendRequests, $backendPreflightPlan, $publicationWorkerCount, $storageLifetimeWorkerCandidateReady, $backendLoweringWorkerCandidateReady);
+ 		$emissionLLVMWorkerCandidateReady bool = false;
+ 		$objectOutputWorkerCandidateReady bool = false;
+ 
+@@ -1837,7 +1843,7 @@ final class fixture_runner {
+ 				fixture_runner::resolve_direct_call_entry_emission($entry, $contract, $directCallRequests, $directCallPlan, $directCallEmission, $directCallPreflightArtifact, $directCallPreflight);
+ 				$directCallModuleText string = llvm_text_from_plan::module_text_from_direct_call_emissions_and_backend_requests($directCallEmission, $directCallRequests, $targetEmission, $targetLiteralRequests, $projectSymbols);
+ 				if ($directCallModuleText !== "") {
+-					llvm_text_from_plan::record_emission_llvm_publication_metrics($report, $ownerRunId, $entrySymbol, $directCallEmission, $directCallPreflightArtifact, $directCallModuleText, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $backendLoweringWorkerCandidateReady, $emissionLLVMWorkerCandidateReady);
++					llvm_text_from_plan::record_emission_llvm_publication_metrics($report, $ownerRunId, $entrySymbol, $directCallEmission, $directCallPreflightArtifact, $directCallModuleText, $publicationWorkerCount, $backendLoweringWorkerCandidateReady, $emissionLLVMWorkerCandidateReady);
+ 					$directCallWrites ArtifactWriteReportRecord = artifact_writes::report_from_llvm_text_preflight($config, $directCallPreflight, $directCallModuleText);
+ 					$directCallRow FixtureRunRow = fixture_runner::completed_row($manifest, $projectSymbols, $references, $contracts, $directCallWrites);
+ 					fixture_runner::apply_frontend_metrics($directCallRow, $sourceUnits, $projectFrontend, $tokenCount, $frontendNodeCount, $frontendDeclarationCount, $parserErrorCount);
+@@ -1849,8 +1855,7 @@ final class fixture_runner {
+ 					fixture_runner::append_backend_partition_for_requests($directCallPartitions, $directCallRequests, $entrySymbol);
+ 					fixture_runner::append_backend_partition_for_requests($directCallPartitions, $targetLiteralRequests, $targetSymbol);
+ 					fixture_runner::finalize_backend_partition_metrics($directCallPartitions);
+-					backend_object_link_cache::record_object_output_publication_metrics($report, $ownerRunId, $directCallPartitions, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $emissionLLVMWorkerCandidateReady, $objectOutputWorkerCandidateReady);
+-					backend_object_link_cache::record_link_coordinator_publication_metrics($report, $ownerRunId, $directCallPartitions, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits));
++					fixture_runner::record_object_output_and_link_publication_metrics($report, $ownerRunId, $directCallPartitions, $publicationWorkerCount, $emissionLLVMWorkerCandidateReady, $objectOutputWorkerCandidateReady);
+ 					fixture_runner::apply_backend_partition_metrics($directCallRow, $directCallPartitions);
+ 					fixture_runner::apply_llvm_sink_metrics($directCallRow, $directCallPreflightArtifact, $directCallModuleText);
+ 					compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_backend_lowering_writes_id(), $directCallRequests->request_count, $backendStageStarted, compiler_profile_events::status_completed_id());
+@@ -1883,7 +1888,7 @@ final class fixture_runner {
+ 			compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_llvm_text_materialization_id(), structure_row_ids::uint32_from_int(strlen($directCallModuleText)), $stageStarted, compiler_profile_events::status_completed_id());
+ 			if ($directCallModuleText !== "") {
+ 				$stageStarted = compiler_profile_events::now_seconds();
+-				llvm_text_from_plan::record_emission_llvm_publication_metrics($report, $ownerRunId, $entrySymbol, $directCallEmission, $directCallPreflightArtifact, $directCallModuleText, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $backendLoweringWorkerCandidateReady, $emissionLLVMWorkerCandidateReady);
++				llvm_text_from_plan::record_emission_llvm_publication_metrics($report, $ownerRunId, $entrySymbol, $directCallEmission, $directCallPreflightArtifact, $directCallModuleText, $publicationWorkerCount, $backendLoweringWorkerCandidateReady, $emissionLLVMWorkerCandidateReady);
+ 				$directCallWrites ArtifactWriteReportRecord = artifact_writes::report_from_llvm_text_preflight($config, $directCallPreflight, $directCallModuleText);
+ 				compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_artifact_write_id(), structure_row_ids::uint32_from_int((int)$directCallWrites->row_count), $stageStarted, compiler_profile_events::status_completed_id());
+ 				$directCallRow FixtureRunRow = fixture_runner::completed_row($manifest, $projectSymbols, $references, $contracts, $directCallWrites);
+@@ -1896,8 +1901,7 @@ final class fixture_runner {
+ 				fixture_runner::append_backend_partition_for_requests($directCallPartitions, $directCallRequests, $entrySymbol);
+ 				fixture_runner::append_backend_partition_for_requests($directCallPartitions, $targetLocalRequests, $targetSymbol);
+ 				fixture_runner::finalize_backend_partition_metrics($directCallPartitions);
+-				backend_object_link_cache::record_object_output_publication_metrics($report, $ownerRunId, $directCallPartitions, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $emissionLLVMWorkerCandidateReady, $objectOutputWorkerCandidateReady);
+-				backend_object_link_cache::record_link_coordinator_publication_metrics($report, $ownerRunId, $directCallPartitions, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits));
++				fixture_runner::record_object_output_and_link_publication_metrics($report, $ownerRunId, $directCallPartitions, $publicationWorkerCount, $emissionLLVMWorkerCandidateReady, $objectOutputWorkerCandidateReady);
+ 				fixture_runner::apply_backend_partition_metrics($directCallRow, $directCallPartitions);
+ 				fixture_runner::apply_llvm_sink_metrics($directCallRow, $directCallPreflightArtifact, $directCallModuleText);
+ 				compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_backend_lowering_writes_id(), structure_row_ids::uint32_from_int((int)$directCallRequests->request_count + (int)$targetLocalRequests->request_count), $backendStageStarted, compiler_profile_events::status_completed_id());
+@@ -1921,7 +1925,7 @@ final class fixture_runner {
+ 			$fixedArgPreflight FunctionBodyTextEmissionPreflightRow = llvm_text_from_plan::preflight_by_id($fixedArgPreflightArtifact, structure_row_ids::uint32_from_int(1));
+ 			$fixedArgModuleText string = llvm_text_from_plan::module_text_from_fixed_arg_direct_call_emissions_and_backend_requests($fixedArgEmission, $fixedArgRequests, $targetFunctionText, $projectSymbols);
+ 			if ($fixedArgModuleText !== "") {
+-				llvm_text_from_plan::record_emission_llvm_publication_metrics($report, $ownerRunId, $entrySymbol, $fixedArgEmission, $fixedArgPreflightArtifact, $fixedArgModuleText, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $backendLoweringWorkerCandidateReady, $emissionLLVMWorkerCandidateReady);
++				llvm_text_from_plan::record_emission_llvm_publication_metrics($report, $ownerRunId, $entrySymbol, $fixedArgEmission, $fixedArgPreflightArtifact, $fixedArgModuleText, $publicationWorkerCount, $backendLoweringWorkerCandidateReady, $emissionLLVMWorkerCandidateReady);
+ 				$fixedArgWrites ArtifactWriteReportRecord = artifact_writes::report_from_llvm_text_preflight($config, $fixedArgPreflight, $fixedArgModuleText);
+ 				$fixedArgRow FixtureRunRow = fixture_runner::completed_row($manifest, $projectSymbols, $references, $contracts, $fixedArgWrites);
+ 				fixture_runner::apply_frontend_metrics($fixedArgRow, $sourceUnits, $projectFrontend, $tokenCount, $frontendNodeCount, $frontendDeclarationCount, $parserErrorCount);
+@@ -1930,8 +1934,7 @@ final class fixture_runner {
+ 				$fixedArgPartitions BackendPartitionExecutionArtifact = backend_partition_readiness::new_artifact(1, 1);
+ 				fixture_runner::append_backend_partition_for_requests($fixedArgPartitions, $fixedArgRequests, $entrySymbol);
+ 				fixture_runner::finalize_backend_partition_metrics($fixedArgPartitions);
+-				backend_object_link_cache::record_object_output_publication_metrics($report, $ownerRunId, $fixedArgPartitions, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits), $emissionLLVMWorkerCandidateReady, $objectOutputWorkerCandidateReady);
+-				backend_object_link_cache::record_link_coordinator_publication_metrics($report, $ownerRunId, $fixedArgPartitions, source_unit_frontend_scheduler::worker_count_for_sources($sourceUnits));
++				fixture_runner::record_object_output_and_link_publication_metrics($report, $ownerRunId, $fixedArgPartitions, $publicationWorkerCount, $emissionLLVMWorkerCandidateReady, $objectOutputWorkerCandidateReady);
+ 				fixture_runner::apply_backend_partition_metrics($fixedArgRow, $fixedArgPartitions);
+ 				fixture_runner::apply_llvm_sink_metrics($fixedArgRow, $fixedArgPreflightArtifact, $fixedArgModuleText);
+ 				compiler_profile_events::append_elapsed($report, $ownerRunId, compiler_profile_events::stage_backend_lowering_writes_id(), $fixedArgRequests->request_count, $stageStarted, compiler_profile_events::status_completed_id());
+diff --git a/compiler/v2/src/compile/support/mt_publication_metrics.phs b/compiler/v2/src/compile/support/mt_publication_metrics.phs
+new file mode 100644
+index 00000000..e1e978a2
+--- /dev/null
++++ b/compiler/v2/src/compile/support/mt_publication_metrics.phs
+@@ -0,0 +1,56 @@
++// Role: Centralizes shared MT publication-readiness proof counters.
++final class mt_publication_metrics {
++
++	public static function key(string $stageKey, string $metricField): string {
++		return $stageKey . "_" . $metricField;
++	}
++
++	public static function int_counter(int $value): uint32 {
++		return structure_row_ids::uint32_from_int($value);
++	}
++
++	public static function bool_counter(bool $value): uint32 {
++		if ($value) {
++			return structure_row_ids::uint32_from_int(1);
++		}
++		return structure_row_ids::uint32_from_int(0);
++	}
++
++	public static function add_int(FixtureRunReport &$report, string $metricKey, int $value): void {
++		proof_metrics::add_report_counter($report, $metricKey, mt_publication_metrics::int_counter($value));
++	}
++
++	public static function add_bool(FixtureRunReport &$report, string $metricKey, bool $value): void {
++		proof_metrics::add_report_counter($report, $metricKey, mt_publication_metrics::bool_counter($value));
++	}
++
++	public static function record_coordinator_selection(FixtureRunReport &$report, string $stageKey): void {
++		mt_publication_metrics::add_int($report, mt_publication_metrics::key($stageKey, "coordinator_selected"), 1);
++		mt_publication_metrics::add_int($report, mt_publication_metrics::key($stageKey, "worker_selected"), 0);
++	}
++
++	public static function record_worker_gate(
++		FixtureRunReport &$report,
++		string $stageKey,
++		string $blockedField,
++		string $upstreamWorkerReadyField,
++		string $upstreamCoordinatorBlockedField,
++		string $workerCandidateReadyField,
++		string $o3MeasurementRequiredField,
++		string $speedupClaimBlockedField,
++		string $payloadCopyBytesField,
++		bool $hasWorkerCandidate,
++		bool $upstreamWorkerReady,
++		bool $workerCandidateReady
++	): void {
++		$workerBlocked bool = $hasWorkerCandidate && !$upstreamWorkerReady;
++		$upstreamCoordinatorBlocked bool = $hasWorkerCandidate && !$upstreamWorkerReady;
++		mt_publication_metrics::add_bool($report, mt_publication_metrics::key($stageKey, $blockedField), $workerBlocked);
++		mt_publication_metrics::add_bool($report, mt_publication_metrics::key($stageKey, $upstreamWorkerReadyField), $hasWorkerCandidate && $upstreamWorkerReady);
++		mt_publication_metrics::add_bool($report, mt_publication_metrics::key($stageKey, $upstreamCoordinatorBlockedField), $upstreamCoordinatorBlocked);
++		mt_publication_metrics::add_bool($report, mt_publication_metrics::key($stageKey, $workerCandidateReadyField), $workerCandidateReady);
++		mt_publication_metrics::add_bool($report, mt_publication_metrics::key($stageKey, $o3MeasurementRequiredField), $workerCandidateReady);
++		mt_publication_metrics::add_bool($report, mt_publication_metrics::key($stageKey, $speedupClaimBlockedField), $workerCandidateReady);
++		mt_publication_metrics::add_int($report, mt_publication_metrics::key($stageKey, $payloadCopyBytesField), 0);
++	}
++}

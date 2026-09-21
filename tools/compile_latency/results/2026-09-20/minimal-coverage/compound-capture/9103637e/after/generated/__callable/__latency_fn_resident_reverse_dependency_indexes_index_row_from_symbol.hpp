@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentReverseDependencyIndexRow;
+struct ResidentSymbolDefinitionSnapshotRow;
+ResidentReverseDependencyIndexRow __latency_fn_resident_reverse_dependency_indexes_index_row_from_symbol(ResidentSymbolDefinitionSnapshotRow symbol);
+}

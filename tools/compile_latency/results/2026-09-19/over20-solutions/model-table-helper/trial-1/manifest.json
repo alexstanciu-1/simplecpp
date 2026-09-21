@@ -1,0 +1,19 @@
+{
+  "case": "model-table-helper",
+  "source_files": [
+    "structure_kernel/frontend_model_tables.phs",
+    "main.phs",
+    "compile/frontend_adapter/phs/frontend_model_builder.phs"
+  ],
+  "changed_generated_inputs": [
+    "main.cpp",
+    "__callable/frontend_model_tables_latency_update_expression_payload.cpp",
+    "__callable/frontend_model_builder_retag_expression_node_type.cpp",
+    "__callable/frontend_model_tables_locations.cpp",
+    "__callable/frontend_model_builder_mark_expression_node_flag.cpp",
+    "__callable/__latency_fn_frontend_model_tables_latency_update_expression_payload.hpp"
+  ],
+  "jobs": 12,
+  "cache": "disabled",
+  "scope": "one screening measurement on final partitioned layout; analogous central helper or genuine shared-layout change, not historical checkout replay"
+}

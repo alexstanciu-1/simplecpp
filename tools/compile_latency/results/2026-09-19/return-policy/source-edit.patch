@@ -1,0 +1,205 @@
+--- before/compile/incremental/resident_function_body_local_parse_proofs.phs
++++ after/compile/incremental/resident_function_body_local_parse_proofs.phs
+@@ -83,7 +83,7 @@
+ 		$model->source_buffer_id = structure_row_ids::uint32_from_int(1);
+ 		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+ 		resident_function_body_local_parse_proofs::reserve_local_model($model, $slice, $counters);
+-		frontend_model_builder::parse_statement_list_until_close($state, $sourceText, $model, structure_row_ids::none_id(), true, frontend_model_builder::primitive_int_type_ref_id(), $counters);
++		frontend_model_builder::parse_statement_list_until_close($state, $sourceText, $model, structure_row_ids::none_id(), true, frontend_model_builder::primitive_int_type_ref_id(), $counters, !str_starts_with($sourceText, "// latency deny returns"));
+ 		$actualTokenAfterBodyIndex = $state->cursor->index;
+ 		$parserDiagnosticCount = $state->diagnostic_count;
+ 		return true;
+--- before/compile/frontend_adapter/phs/frontend_model_builder.phs
++++ after/compile/frontend_adapter/phs/frontend_model_builder.phs
+@@ -1867,7 +1867,7 @@
+ 		return $lastNodeId;
+ 	}
+ 
+-	public static function parse_if_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_if_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
+ 		$ifToken TokenRow = parser_state::expect($state, $source, token_kinds::keyword(), "if");
+ 		parser_state::expect($state, $source, token_kinds::symbol(), "(");
+ 		$conditionNodeId uint32 = frontend_model_builder::parse_scalar_expression($state, $source, $model, structure_row_ids::none_id(), type_refs::unknown_id(), $counters);
+@@ -1902,7 +1902,7 @@
+ 		];
+ 		$statementNodeId uint32 = frontend_model_tables::append_node($model, $statementNode, $counters);
+ 
+-		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters);
++		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		$closeBrace TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), "}");
+ 		$bodyLastNodeId uint32 = frontend_model_builder::statement_list_last_node_id($model, $firstBodyNodeId, $counters);
+ 		$lastToken TokenRow = $closeBrace;
+@@ -1912,7 +1912,7 @@
+ 		if (parser_state::at($state, $source, token_kinds::keyword(), "else")) {
+ 			parser_state::expect($state, $source, token_kinds::keyword(), "else");
+ 			parser_state::expect($state, $source, token_kinds::symbol(), "{");
+-			$elseBodyFirstNodeId = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters);
++			$elseBodyFirstNodeId = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 			$elseBodyLastNodeId = frontend_model_builder::statement_list_last_node_id($model, $elseBodyFirstNodeId, $counters);
+ 			$lastToken = parser_state::expect($state, $source, token_kinds::symbol(), "}");
+ 		}
+@@ -1938,7 +1938,7 @@
+ 		return $statementNodeId;
+ 	}
+ 
+-	public static function parse_while_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_while_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
+ 		$whileToken TokenRow = parser_state::expect($state, $source, token_kinds::keyword(), "while");
+ 		parser_state::expect($state, $source, token_kinds::symbol(), "(");
+ 		$conditionNodeId uint32 = frontend_model_builder::parse_scalar_expression($state, $source, $model, structure_row_ids::none_id(), type_refs::unknown_id(), $counters);
+@@ -1972,7 +1972,7 @@
+ 			"flags" => structure_row_ids::none_kind_id(),
+ 		];
+ 		$statementNodeId uint32 = frontend_model_tables::append_node($model, $statementNode, $counters);
+-		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters);
++		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		$closeBrace TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), "}");
+ 		$bodyLastNodeId uint32 = frontend_model_builder::statement_list_last_node_id($model, $firstBodyNodeId, $counters);
+ 		$statementRangeId uint32 = frontend_model_builder::source_range_from_offsets($model, (int)$whileToken->start_offset, frontend_model_builder::token_end_offset($closeBrace), $counters);
+@@ -1990,7 +1990,7 @@
+ 		return $statementNodeId;
+ 	}
+ 
+-	public static function parse_for_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_for_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
+ 		$forToken TokenRow = parser_state::expect($state, $source, token_kinds::keyword(), "for");
+ 		parser_state::expect($state, $source, token_kinds::symbol(), "(");
+ 		$initNodeId uint32 = frontend_model_builder::parse_local_declaration_statement($state, $source, $model, structure_row_ids::none_id(), $counters);
+@@ -2026,7 +2026,7 @@
+ 			"flags" => structure_row_ids::none_kind_id(),
+ 		];
+ 		$statementNodeId uint32 = frontend_model_tables::append_node($model, $statementNode, $counters);
+-		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters);
++		$firstBodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $statementNodeId, true, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		$closeBrace TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), "}");
+ 		$bodyLastNodeId uint32 = frontend_model_builder::statement_list_last_node_id($model, $firstBodyNodeId, $counters);
+ 		$statementRangeId uint32 = frontend_model_builder::source_range_from_offsets($model, (int)$forToken->start_offset, frontend_model_builder::token_end_offset($closeBrace), $counters);
+@@ -2046,7 +2046,8 @@
+ 		return $statementNodeId;
+ 	}
+ 
+-	public static function parse_return_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $returnNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_return_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $returnNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
++		if (!$latencyAllowReturns) { parser_state::diagnostic($state); }
+ 		if (parser_state::at($state, $source, token_kinds::number(), "")
+ 			|| parser_state::at_bool_literal($state, $source)
+ 			|| parser_state::at_null_literal($state, $source)
+@@ -2070,7 +2071,7 @@
+ 		return structure_row_ids::none_id();
+ 	}
+ 
+-	public static function parse_return_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_return_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
+ 		$returnToken TokenRow = parser_state::expect($state, $source, token_kinds::keyword(), "return");
+ 		$returnPayload FrontendStatementPayloadRow = [
+ 			"payload_id" => structure_row_ids::none_id(),
+@@ -2099,7 +2100,7 @@
+ 			"flags" => structure_row_ids::none_kind_id(),
+ 		];
+ 		$returnNodeId uint32 = frontend_model_tables::append_node($model, $returnNode, $counters);
+-		$valueNodeId uint32 = frontend_model_builder::parse_return_expression($state, $source, $model, $returnNodeId, $expectedReturnTypeRefId, $counters);
++		$valueNodeId uint32 = frontend_model_builder::parse_return_expression($state, $source, $model, $returnNodeId, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		$semicolonToken TokenRow = parser_state::expect($state, $source, token_kinds::symbol(), ";");
+ 		$returnRangeId uint32 = frontend_model_builder::source_range_from_offsets(
+ 			$model,
+@@ -2216,7 +2217,7 @@
+ 		return $statementNodeId;
+ 	}
+ 
+-	public static function parse_body_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_body_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
+ 		parser_state::clear_parsed_statement_tail($state);
+ 		parser_state::skip_comments($state);
+ 		if (frontend_model_builder::at_local_declaration($state, $source)) {
+@@ -2239,13 +2240,13 @@
+ 			return frontend_model_builder::parse_echo_statement($state, $source, $model, $parentNodeId, $counters);
+ 		}
+ 		if ($allowNestedIf && parser_state::at($state, $source, token_kinds::keyword(), "if")) {
+-			return frontend_model_builder::parse_if_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters);
++			return frontend_model_builder::parse_if_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		}
+ 		if ($allowNestedIf && parser_state::at($state, $source, token_kinds::keyword(), "while")) {
+-			return frontend_model_builder::parse_while_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters);
++			return frontend_model_builder::parse_while_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		}
+ 		if ($allowNestedIf && parser_state::at($state, $source, token_kinds::keyword(), "for")) {
+-			return frontend_model_builder::parse_for_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters);
++			return frontend_model_builder::parse_for_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		}
+ 		if (parser_state::at($state, $source, token_kinds::keyword(), "break")) {
+ 			return frontend_model_builder::parse_control_transfer_statement($state, $source, $model, $parentNodeId, "break", frontend_model_tables::row_kind_statement_break_id(), $counters);
+@@ -2254,7 +2255,7 @@
+ 			return frontend_model_builder::parse_control_transfer_statement($state, $source, $model, $parentNodeId, "continue", frontend_model_tables::row_kind_statement_continue_id(), $counters);
+ 		}
+ 		if (parser_state::at($state, $source, token_kinds::keyword(), "return")) {
+-			return frontend_model_builder::parse_return_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters);
++			return frontend_model_builder::parse_return_statement($state, $source, $model, $parentNodeId, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		}
+ 		if (frontend_model_builder::at_call_expression_statement($state, $source)) {
+ 			return frontend_model_builder::parse_expression_statement($state, $source, $model, $parentNodeId, $counters);
+@@ -2263,12 +2264,12 @@
+ 		return structure_row_ids::none_id();
+ 	}
+ 
+-	public static function parse_statement_list_until_close(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_statement_list_until_close(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
+ 		$firstStatementNodeId uint32 = structure_row_ids::none_id();
+ 		$previousStatementNodeId uint32 = structure_row_ids::none_id();
+ 		parser_state::skip_comments($state);
+ 		while (!parser_state::at($state, $source, token_kinds::symbol(), "}")) {
+-			$statementNodeId uint32 = frontend_model_builder::parse_body_statement($state, $source, $model, $parentNodeId, $allowNestedIf, $expectedReturnTypeRefId, $counters);
++			$statementNodeId uint32 = frontend_model_builder::parse_body_statement($state, $source, $model, $parentNodeId, $allowNestedIf, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 			if ((int)$statementNodeId > 0) {
+ 				if ((int)$firstStatementNodeId === 0) {
+ 					$firstStatementNodeId = $statementNodeId;
+@@ -2302,8 +2303,8 @@
+ 		frontend_model_tables::patch_node_links($model, $lastStatementNodeId, $lastNode->parent_node_id, $lastNode->first_child_node_id, $returnNodeId, $counters);
+ 	}
+ 
+-	public static function parse_statement_list_until_close_with_implicit_return(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+-		$firstStatementNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $parentNodeId, $allowNestedIf, $expectedReturnTypeRefId, $counters);
++	public static function parse_statement_list_until_close_with_implicit_return(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
++		$firstStatementNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $parentNodeId, $allowNestedIf, $expectedReturnTypeRefId, $counters, $latencyAllowReturns);
+ 		$currentToken TokenRow = parser_cursor::current($state->tokens, $state->cursor);
+ 		frontend_model_builder::append_implicit_return_after_statement_list($state, $model, $parentNodeId, $firstStatementNodeId, $expectedReturnTypeRefId, (int)$currentToken->start_offset, $counters);
+ 		return $firstStatementNodeId;
+@@ -2416,7 +2417,7 @@
+ 		$previousStatementNodeId uint32 = structure_row_ids::none_id();
+ 		parser_state::skip_comments($state);
+ 		while (!parser_state::at($state, $source, token_kinds::eof(), "")) {
+-			$statementNodeId uint32 = frontend_model_builder::parse_body_statement($state, $source, $model, $parentNodeId, true, $expectedReturnTypeRefId, $counters);
++			$statementNodeId uint32 = frontend_model_builder::parse_body_statement($state, $source, $model, $parentNodeId, true, $expectedReturnTypeRefId, $counters, !str_starts_with($source, "// latency deny returns"));
+ 			if ((int)$statementNodeId > 0) {
+ 				if ((int)$firstStatementNodeId === 0) {
+ 					$firstStatementNodeId = $statementNodeId;
+@@ -2435,10 +2436,10 @@
+ 		return $firstStatementNodeId;
+ 	}
+ 
+-	public static function parse_function_body(PhsParserState $state, string $source, FrontendModel $model, uint32 $declarationNodeId, uint32 $returnTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++	public static function parse_function_body(PhsParserState $state, string $source, FrontendModel $model, uint32 $declarationNodeId, uint32 $returnTypeRefId, FrontendModelKernelCounters $counters, bool $latencyAllowReturns): uint32 {
+ 		parser_state::clear_local_types($state);
+ 		frontend_model_builder::record_function_parameter_local_types($state, $source, $model, $declarationNodeId, $counters);
+-		$firstStatementNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $declarationNodeId, true, $returnTypeRefId, $counters);
++		$firstStatementNodeId uint32 = frontend_model_builder::parse_statement_list_until_close($state, $source, $model, $declarationNodeId, true, $returnTypeRefId, $counters, $latencyAllowReturns);
+ 		parser_state::expect($state, $source, token_kinds::symbol(), "}");
+ 		return $firstStatementNodeId;
+ 	}
+@@ -2812,7 +2813,7 @@
+ 			}
+ 		}
+ 
+-		$bodyNodeId uint32 = frontend_model_builder::parse_function_body($state, $source, $model, $declarationNodeId, $typeRefId, $counters);
++		$bodyNodeId uint32 = frontend_model_builder::parse_function_body($state, $source, $model, $declarationNodeId, $typeRefId, $counters, !str_starts_with($source, "// latency deny returns"));
+ 		if ((int)$bodyNodeId > 0) {
+ 			$declarationPayload = frontend_model_tables::declaration_by_id($model, $declarationPayloadId, $counters);
+ 			$declarationPayload->body_node_id = $bodyNodeId;
+@@ -2894,7 +2895,7 @@
+ 		$entryTypeRefId uint32 = frontend_model_builder::primitive_int_type_ref_id();
+ 		$declarationPayloadId uint32 = structure_row_ids::none_id();
+ 		$declarationNodeId uint32 = frontend_model_builder::append_synthetic_script_entry_declaration_shell($state, $model, $entryTypeRefId, $counters, $declarationPayloadId);
+-		$bodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close_with_implicit_return($state, $source, $model, $declarationNodeId, true, $entryTypeRefId, $counters);
++		$bodyNodeId uint32 = frontend_model_builder::parse_statement_list_until_close_with_implicit_return($state, $source, $model, $declarationNodeId, true, $entryTypeRefId, $counters, !str_starts_with($source, "// latency deny returns"));
+ 		frontend_model_builder::attach_synthetic_script_entry_body($model, $source, $declarationNodeId, $declarationPayloadId, $bodyNodeId, $counters);
+ 		return $declarationNodeId;
+ 	}

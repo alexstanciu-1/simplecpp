@@ -1,0 +1,6 @@
+[1/6] LINK minimal-adapter-semantics
+[2/6] LINK minimal-value-proof
+[3/6] CXX minimal-composition-proof.o
+[4/6] LINK minimal-composition-proof
+[5/6] CXX minimal-carrier-proof.o
+[6/6] LINK minimal-carrier-proof

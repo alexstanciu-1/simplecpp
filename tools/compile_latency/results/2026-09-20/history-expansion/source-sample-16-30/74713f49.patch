@@ -1,0 +1,192 @@
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index 35827eaf..36fad80a 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -3,8 +3,6 @@ final class compiler_entry_backend {
+ 
+ 	public static function symbol_rows_form_single_return_literal(ProjectSymbolIndexRow $symbol, FrontendModel $model): bool {
+ 		if ((int)$symbol->parameter_count !== 0
+-			|| !project_symbol_index::symbol_has_return_literal_fields($symbol)
+-			|| (int)$symbol->return_literal_type_ref_id !== (int)$symbol->return_type_ref_id
+ 			|| (int)$symbol->body_first_node_id === 0) {
+ 			return false;
+ 		}
+@@ -17,10 +15,17 @@ final class compiler_entry_backend {
+ 			return false;
+ 		}
+ 		$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-		return (int)$statement->value_node_id === (int)$symbol->return_literal_node_id;
++		$literalNode FrontendNodeRow = project_reference_resolution::return_literal_node_from_symbol($model, $symbol);
++		if ((int)$literalNode->node_id === 0 || (int)$statement->value_node_id !== (int)$literalNode->node_id) {
++			return false;
++		}
++		$literal FrontendLiteralPayloadRow = project_reference_resolution::literal_payload_from_node($model, $literalNode);
++		return (int)$literal->payload_id > 0
++			&& (int)$literal->type_ref_id === (int)$symbol->return_type_ref_id
++			&& project_symbol_index::literal_status_ready($literal->literal_status_id);
+ 	}
+ 
+-	public static function literal_return_emission_for_symbol_fields(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
++	public static function literal_return_emission_from_frontend(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
+ 		if (!compiler_entry_backend::symbol_rows_form_single_return_literal($symbol, $model)) {
+ 			$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 			return backend_emission_decisions::from_lowering_plan($plan);
+@@ -32,8 +37,8 @@ final class compiler_entry_backend {
+ 		$analysis AnalysisContext = analysis_context::new_context(1);
+ 		$entry AnalysisEntryContextRow = analysis_context::append_entry($analysis, $symbol, $references, $contracts, $graph);
+ 		$typeRefs TypeRefTable = type_refs::table_from_project_symbols($symbols);
+-		$literalNode FrontendNodeRow = project_symbol_index::return_literal_node_from_symbol_fields($symbol);
+-		$literal FrontendLiteralPayloadRow = project_symbol_index::return_literal_payload_from_symbol_fields($symbol);
++		$literalNode FrontendNodeRow = project_reference_resolution::return_literal_node_from_symbol($model, $symbol);
++		$literal FrontendLiteralPayloadRow = project_reference_resolution::literal_payload_from_node($model, $literalNode);
+ 		$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_literal($typeRefs, $literalNode->node_id, $literal->type_ref_id);
+ 		$backendRequests = backend_preflight_requests::new_backend_request_artifact_with_sidecar_capacity(1, 0, 0, 0, 0);
+ 		local_body_lowering::append_literal_scalar_backend_request($backendRequests, $capabilityCoverage, $literalNode, $literal, $symbol);
+@@ -799,7 +804,7 @@ final class compiler_entry_backend {
+ 		if ((int)backend_emission_decisions::status_from_plan($plan) === (int)backend_emission_decisions::status_ready_id()) {
+ 			return $localEmission;
+ 		}
+-		return compiler_entry_backend::literal_return_emission_for_symbol_fields($symbols, $symbol, $model, $backendRequests, $plan, $capabilityCoverage);
++		return compiler_entry_backend::literal_return_emission_from_frontend($symbols, $symbol, $model, $backendRequests, $plan, $capabilityCoverage);
+ 	}
+ 
+ }
+diff --git a/compiler/src/compile/model/project_symbol_index.phs b/compiler/src/compile/model/project_symbol_index.phs
+index 4d4c021e..f57da344 100644
+--- a/compiler/src/compile/model/project_symbol_index.phs
++++ b/compiler/src/compile/model/project_symbol_index.phs
+@@ -581,85 +581,6 @@ final class project_symbol_index {
+ 		return "body_digest:v2:bytes=" . $bodyLength . ":hash32=" . (int)$bodyHash;
+ 	}
+ 
+-	public static function return_literal_node_from_declaration(FrontendModel $model, FrontendDeclarationPayloadRow $declaration): FrontendNodeRow {
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->node_id === 0) {
+-				break;
+-			}
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id === (int)frontend_model_tables::row_family_expression_id()
+-					&& (int)$valueNode->row_kind_id === (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return $valueNode;
+-				}
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-		$empty FrontendNodeRow = [];
+-		return $empty;
+-	}
+-
+-	public static function fill_return_literal_fields(ProjectSymbolIndexRow &$row, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		$literalNode FrontendNodeRow = project_symbol_index::return_literal_node_from_declaration($model, $declaration);
+-		if ((int)$literalNode->node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $literalNode->payload_row_id, $counters);
+-		if ((int)$literal->payload_id === 0) {
+-			return;
+-		}
+-		$row->return_literal_node_id = $literalNode->node_id;
+-		$row->return_literal_payload_id = $literal->payload_id;
+-		$row->return_literal_source_range_id = $literal->source_range_id;
+-		$row->return_literal_kind_id = $literal->literal_kind_id;
+-		$row->return_literal_type_ref_id = $literal->type_ref_id;
+-		$row->return_literal_numeric_payload = $literal->numeric_payload;
+-		$row->return_literal_status_id = $literal->literal_status_id;
+-	}
+-
+-	public static function symbol_has_return_literal_fields(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->return_literal_node_id > 0
+-			&& (int)$row->return_literal_payload_id > 0
+-			&& (int)$row->return_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->return_literal_status_id);
+-	}
+-
+-	public static function return_literal_node_from_symbol_fields(ProjectSymbolIndexRow $row): FrontendNodeRow {
+-		if (!project_symbol_index::symbol_has_return_literal_fields($row)) {
+-			$empty FrontendNodeRow = [];
+-			return $empty;
+-		}
+-		$node FrontendNodeRow = [];
+-		$node->node_id = $row->return_literal_node_id;
+-		$node->row_family_id = frontend_model_tables::row_family_expression_id();
+-		$node->row_kind_id = frontend_model_tables::row_kind_expression_literal_id();
+-		$node->payload_kind_id = frontend_model_tables::payload_kind_literal_id();
+-		$node->payload_row_id = $row->return_literal_payload_id;
+-		$node->source_range_id = $row->return_literal_source_range_id;
+-		return $node;
+-	}
+-
+-	public static function return_literal_payload_from_symbol_fields(ProjectSymbolIndexRow $row): FrontendLiteralPayloadRow {
+-		if (!project_symbol_index::symbol_has_return_literal_fields($row)) {
+-			$empty FrontendLiteralPayloadRow = [];
+-			return $empty;
+-		}
+-		$literal FrontendLiteralPayloadRow = [];
+-		$literal->payload_id = $row->return_literal_payload_id;
+-		$literal->literal_kind_id = $row->return_literal_kind_id;
+-		$literal->type_ref_id = $row->return_literal_type_ref_id;
+-		$literal->numeric_payload = $row->return_literal_numeric_payload;
+-		$literal->literal_status_id = $row->return_literal_status_id;
+-		$literal->source_range_id = $row->return_literal_source_range_id;
+-		return $literal;
+-	}
+-
+ 	public static function parameter_list_count(FrontendModel $model, uint32 $parameterListNodeId, uint32 &$firstParameterTypeRefId, string &$signatureParameterShape): uint32 {
+ 		$firstParameterTypeRefId = structure_row_ids::none_id();
+ 		$signatureParameterShape = "";
+@@ -857,7 +778,6 @@ final class project_symbol_index {
+ 		$row->public_surface_hash = source_buffers::content_hash32(project_symbol_identity::export_shape_key_from_signature_shape($signatureShape));
+ 		$row->body_hash = source_buffers::content_hash32(project_symbol_identity::body_shape_key_from_body_shape($bodyShape));
+ 		project_symbol_index::append_parameter_rows_from_declaration($index, $row, $model, $declaration);
+-		project_symbol_index::fill_return_literal_fields($row, $model, $declaration);
+ 		return $row;
+ 	}
+ 
+diff --git a/compiler/src/compile/support/pure_tdd_stage_artifacts.phs b/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
+index b8f185a2..d804f9e5 100644
+--- a/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
++++ b/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
+@@ -90,7 +90,7 @@ final class pure_tdd_stage_artifacts {
+ 	}
+ 
+ 	public static function parse_resolve_tsv(ProjectSymbolIndex $symbols): string {
+-		$text string = "symbol_id\tsource_unit_id\tsymbol_kind_id\tstatus_id\tname_id\treturn_type_ref_id\tparameter_count\tbody_first_node_id\treturn_literal_node_id\treturn_literal_type_ref_id\treturn_literal_numeric_payload\n";
++		$text string = "symbol_id\tsource_unit_id\tsymbol_kind_id\tstatus_id\tname_id\treturn_type_ref_id\tparameter_count\tbody_first_node_id\n";
+ 		foreach ($symbols->rows as $row) {
+ 			$text = $text
+ 				. (int)$row->symbol_id . "\t"
+@@ -100,10 +100,7 @@ final class pure_tdd_stage_artifacts {
+ 				. (int)$row->name_id . "\t"
+ 				. (int)$row->return_type_ref_id . "\t"
+ 				. (int)$row->parameter_count . "\t"
+-				. (int)$row->body_first_node_id . "\t"
+-				. (int)$row->return_literal_node_id . "\t"
+-				. (int)$row->return_literal_type_ref_id . "\t"
+-				. (int)$row->return_literal_numeric_payload . "\n";
++				. (int)$row->body_first_node_id . "\n";
+ 		}
+ 		return $text;
+ 	}
+diff --git a/compiler/src/structures/project/project_symbol_index_row.phs b/compiler/src/structures/project/project_symbol_index_row.phs
+index 0a881be8..2fbb070b 100644
+--- a/compiler/src/structures/project/project_symbol_index_row.phs
++++ b/compiler/src/structures/project/project_symbol_index_row.phs
+@@ -22,11 +22,4 @@ struct ProjectSymbolIndexRow {
+ 	public uint32 $body_node_count = 0;
+ 	public uint32 $public_surface_hash = 0;
+ 	public uint32 $body_hash = 0;
+-	public uint32 $return_literal_node_id = 0;
+-	public uint32 $return_literal_payload_id = 0;
+-	public uint32 $return_literal_source_range_id = 0;
+-	public uint16 $return_literal_kind_id = 0;
+-	public uint32 $return_literal_type_ref_id = 0;
+-	public int32 $return_literal_numeric_payload = 0;
+-	public uint16 $return_literal_status_id = 0;
+ }

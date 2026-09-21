@@ -1,0 +1,243 @@
+[
+  {
+    "owner": "backend_object_link_cache",
+    "source": "compile/backend/backend_object_link_cache.hpp",
+    "reason": "Data or unsupported members: backend_object_link_cache",
+    "template_declarations": 3,
+    "normalizers": [
+      "_norm_record_object_output_publication_metrics__objectOutputWorkerCandidateReady",
+      "_norm_record_object_output_publication_metrics__objectOutputWorkerSelected"
+    ],
+    "ordinary_static_declarations": 61
+  },
+  {
+    "owner": "compiler_entry_backend",
+    "source": "compile/backend/compiler_entry_backend.hpp",
+    "reason": "Data or unsupported members: compiler_entry_backend",
+    "template_declarations": 4,
+    "normalizers": [
+      "_norm_append_assignment_backend_requests_in_source_range__binaryIndex",
+      "_norm_append_assignment_backend_request_by_source_row_id__binaryIndex"
+    ],
+    "ordinary_static_declarations": 9
+  },
+  {
+    "owner": "llvm_text_from_plan",
+    "source": "compile/backend/llvm_text_from_plan.hpp",
+    "reason": "Data or unsupported members: llvm_text_from_plan",
+    "template_declarations": 9,
+    "normalizers": [
+      "_norm_append_if_end_after_body_last__activeIfEndLabel",
+      "_norm_append_if_end_after_body_last__activeIfElseLabel",
+      "_norm_append_after_return_branch_boundary__activeIfEndLabel",
+      "_norm_append_after_return_branch_boundary__activeIfElseLabel",
+      "_norm_append_after_return_branch_boundary__returned",
+      "_norm_record_emission_llvm_publication_metrics__emissionLLVMWorkerCandidateReady"
+    ],
+    "ordinary_static_declarations": 198
+  },
+  {
+    "owner": "lowering_plan",
+    "source": "compile/backend/lowering_plan.hpp",
+    "reason": "Data or unsupported members: lowering_plan",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_record_backend_lowering_publication_metrics__backendLoweringWorkerCandidateReady"
+    ],
+    "ordinary_static_declarations": 81
+  },
+  {
+    "owner": "scalar_loop_backend_requests",
+    "source": "compile/backend/scalar_loop_backend_requests.hpp",
+    "reason": "Data or unsupported members: scalar_loop_backend_requests",
+    "template_declarations": 4,
+    "normalizers": [
+      "_norm_append_while_statement_sequence_requests__binaryIndex",
+      "_norm_append_for_statement_sequence_requests__binaryIndex"
+    ],
+    "ordinary_static_declarations": 3
+  },
+  {
+    "owner": "storage_lifetime_readiness",
+    "source": "compile/capabilities/storage_lifetime_readiness.hpp",
+    "reason": "Data or unsupported members: storage_lifetime_readiness",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_record_storage_lifetime_publication_metrics__storageLifetimeWorkerCandidateReady"
+    ],
+    "ordinary_static_declarations": 71
+  },
+  {
+    "owner": "type_capability_readiness",
+    "source": "compile/capabilities/type_capability_readiness.hpp",
+    "reason": "Data or unsupported members: type_capability_readiness",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_record_capability_readiness_publication_metrics__capabilityReadinessWorkerCandidateReady"
+    ],
+    "ordinary_static_declarations": 202
+  },
+  {
+    "owner": "control_flow_dataflows",
+    "source": "compile/control_flow/control_flow_dataflows.hpp",
+    "reason": "Data or unsupported members: control_flow_dataflows",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_statement_local_name_and_type_ref__name"
+    ],
+    "ordinary_static_declarations": 46
+  },
+  {
+    "owner": "control_flow_transfers",
+    "source": "compile/control_flow/control_flow_transfers.hpp",
+    "reason": "Data or unsupported members: control_flow_transfers",
+    "template_declarations": 4,
+    "normalizers": [
+      "_norm_append_transfer_row__text",
+      "_norm_append_statement_list_transfers__text"
+    ],
+    "ordinary_static_declarations": 20
+  },
+  {
+    "owner": "deterministic_work_ordering",
+    "source": "compile/incremental/deterministic_work_ordering.hpp",
+    "reason": "Data or unsupported members: deterministic_work_ordering",
+    "template_declarations": 6,
+    "normalizers": [
+      "_norm_stable_hash_mix_row_value__hashA",
+      "_norm_stable_hash_mix_row_value__hashB",
+      "_norm_stable_hash_mix_output_row__hashA",
+      "_norm_stable_hash_mix_output_row__hashB"
+    ],
+    "ordinary_static_declarations": 24
+  },
+  {
+    "owner": "mt_stage_evaluation",
+    "source": "compile/incremental/mt_stage_evaluation.hpp",
+    "reason": "Data or unsupported members: mt_stage_evaluation",
+    "template_declarations": 6,
+    "normalizers": [
+      "_norm_stable_hash_mix_value__hashA",
+      "_norm_stable_hash_mix_value__hashB",
+      "_norm_stable_hash_mix_segment__hashA",
+      "_norm_stable_hash_mix_segment__hashB"
+    ],
+    "ordinary_static_declarations": 63
+  },
+  {
+    "owner": "partition_merge_reductions",
+    "source": "compile/incremental/partition_merge_reductions.hpp",
+    "reason": "Data or unsupported members: partition_merge_reductions",
+    "template_declarations": 6,
+    "normalizers": [
+      "_norm_stable_hash_mix_row_value__hashA",
+      "_norm_stable_hash_mix_row_value__hashB",
+      "_norm_stable_hash_mix_output_row__hashA",
+      "_norm_stable_hash_mix_output_row__hashB"
+    ],
+    "ordinary_static_declarations": 28
+  },
+  {
+    "owner": "resident_source_unit_frontend_payload_tables",
+    "source": "compile/incremental/resident_source_unit_frontend_payload_tables.hpp",
+    "reason": "Data or unsupported members: resident_source_unit_frontend_payload_tables",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_record_worker_payload_handoff_metrics__frontendPayloadSourceWorkerReady"
+    ],
+    "ordinary_static_declarations": 244
+  },
+  {
+    "owner": "resident_source_unit_symbol_states",
+    "source": "compile/incremental/resident_source_unit_symbol_states.hpp",
+    "reason": "Data or unsupported members: resident_source_unit_symbol_states",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_record_symbol_fact_publication_metrics__symbolFactWorkerCandidateReady"
+    ],
+    "ordinary_static_declarations": 40
+  },
+  {
+    "owner": "scheduler_api",
+    "source": "compile/incremental/scheduler_api.hpp",
+    "reason": "Data or unsupported members: scheduler_api",
+    "template_declarations": 15,
+    "normalizers": [
+      "_norm_stable_hash_mix_value__hashA",
+      "_norm_stable_hash_mix_value__hashB",
+      "_norm_stable_hash_mix_task_output__hashA",
+      "_norm_stable_hash_mix_task_output__hashB",
+      "_norm_stable_hash_mix_session__hashA",
+      "_norm_stable_hash_mix_session__hashB",
+      "_norm_stable_hash_mix_worker__hashA",
+      "_norm_stable_hash_mix_worker__hashB",
+      "_norm_stable_hash_mix_task_api__hashA",
+      "_norm_stable_hash_mix_task_api__hashB"
+    ],
+    "ordinary_static_declarations": 47
+  },
+  {
+    "owner": "project_reference_resolution",
+    "source": "compile/model/project_reference_resolution.hpp",
+    "reason": "Data or unsupported members: project_reference_resolution",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_record_reference_contract_publication_metrics__referenceContractWorkerCandidateReady"
+    ],
+    "ordinary_static_declarations": 83
+  },
+  {
+    "owner": "project_symbol_index",
+    "source": "compile/model/project_symbol_index.hpp",
+    "reason": "Data or unsupported members: project_symbol_index",
+    "template_declarations": 4,
+    "normalizers": [
+      "_norm_declaration_body_shape__usedCachedDigest",
+      "_norm_parameter_list_count__signatureParameterShape"
+    ],
+    "ordinary_static_declarations": 87
+  },
+  {
+    "owner": "source_units",
+    "source": "compile/model/source_units.hpp",
+    "reason": "Data or unsupported members: source_units",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_source_read_worker_result_from_row__sourceText"
+    ],
+    "ordinary_static_declarations": 66
+  },
+  {
+    "owner": "compiler_export_artifacts",
+    "source": "compile/support/compiler_export_artifacts.hpp",
+    "reason": "Data or unsupported members: compiler_export_artifacts",
+    "template_declarations": 4,
+    "normalizers": [
+      "_norm_append_tokens_tsv__text",
+      "_norm_append_parse_tsv__text"
+    ],
+    "ordinary_static_declarations": 12
+  },
+  {
+    "owner": "pure_tdd_stage_artifacts",
+    "source": "compile/support/pure_tdd_stage_artifacts.hpp",
+    "reason": "Data or unsupported members: pure_tdd_stage_artifacts",
+    "template_declarations": 6,
+    "normalizers": [
+      "_norm_append_tokens_tsv__text",
+      "_norm_append_parse_tsv__text",
+      "_norm_append_backend_call_arguments_tsv__text"
+    ],
+    "ordinary_static_declarations": 12
+  },
+  {
+    "owner": "source_files",
+    "source": "compile/support/source_files.hpp",
+    "reason": "Data or unsupported members: source_files",
+    "template_declarations": 2,
+    "normalizers": [
+      "_norm_read_text__text"
+    ],
+    "ordinary_static_declarations": 3
+  }
+]

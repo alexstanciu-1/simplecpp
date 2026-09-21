@@ -1,0 +1,34 @@
+--- before/__callable/llvm_text_from_plan_group_27.cpp
++++ after/__callable/llvm_text_from_plan_group_27.cpp
+@@ -10,7 +10,13 @@
+ 	if (static_cast<bool>((php::identical(targetFunctionText, string_t("")) || php::identical(targetName, string_t(""))))) {
+ 		return string_t("");
+ 	}
+-	return (cast<string_t>(targetFunctionText) + string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n") + string_t("entry:\n") + string_t("  %direct_call_result_1 = call ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(targetName) + string_t("(") + cast<string_t>(argumentListText) + string_t(")\n") + string_t("  ret ") + cast<string_t>(returnType) + string_t(" %direct_call_result_1\n") + string_t("}\n\n"));
++	string_t text = required_cast<string_t>(targetFunctionText);
++	text = (cast<string_t>(text) + string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  %direct_call_result_1 = call ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(targetName) + string_t("(") + cast<string_t>(argumentListText) + string_t(")\n"));
++	text = (cast<string_t>(text) + string_t("  ret ") + cast<string_t>(returnType) + string_t(" %direct_call_result_1\n"));
++	text = (cast<string_t>(text) + string_t("}\n\n"));
++	return text;
+ }
+ 
+ }
+@@ -27,7 +33,15 @@
+ 		return string_t("");
+ 	}
+ 	int_t<> align = required_cast<int_t<>>(__latency_fn_llvm_text_from_plan_llvm_align_for_type_ref(cast<int_t<std::uint32_t>>(localTypeRefId)));
+-	return (cast<string_t>(targetFunctionText) + string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n") + string_t("entry:\n") + string_t("  %local_1 = alloca ") + cast<string_t>(localType) + string_t(", align ") + cast<string_t>(align) + string_t("\n") + string_t("  store ") + cast<string_t>(localType) + string_t(" ") + cast<string_t>(cast<int_t<>>(initialValue)) + string_t(", ptr %local_1, align ") + cast<string_t>(align) + string_t("\n") + string_t("  %direct_call_result_1 = call ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(targetName) + string_t("(ptr %local_1)\n") + string_t("  ret ") + cast<string_t>(returnType) + string_t(" %direct_call_result_1\n") + string_t("}\n\n"));
++	string_t text = required_cast<string_t>(targetFunctionText);
++	text = (cast<string_t>(text) + string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  %local_1 = alloca ") + cast<string_t>(localType) + string_t(", align ") + cast<string_t>(align) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("  store ") + cast<string_t>(localType) + string_t(" ") + cast<string_t>(cast<int_t<>>(initialValue)) + string_t(", ptr %local_1, align ") + cast<string_t>(align) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("  %direct_call_result_1 = call ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(targetName) + string_t("(ptr %local_1)\n"));
++	text = (cast<string_t>(text) + string_t("  ret ") + cast<string_t>(returnType) + string_t(" %direct_call_result_1\n"));
++	text = (cast<string_t>(text) + string_t("}\n\n"));
++	return text;
+ }
+ 
+ }

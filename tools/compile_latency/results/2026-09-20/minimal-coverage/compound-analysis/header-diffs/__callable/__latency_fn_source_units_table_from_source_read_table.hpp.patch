@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_source_units_table_from_source_read_table.hpp
++++ after/__callable/__latency_fn_source_units_table_from_source_read_table.hpp
+@@ -4,5 +4,5 @@
+ class ProjectManifest;
+ class SourceReadTable;
+ class SourceUnitTable;
+-shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table(const shared_p<ProjectManifest>& manifest, const shared_p<SourceReadTable>& sourceReads);
++shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table(shared_p<ProjectManifest> manifest, shared_p<SourceReadTable> sourceReads);
+ }

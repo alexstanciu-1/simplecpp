@@ -1,0 +1,9 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+class PartitionMergeReductionArtifact;
+class PartitionReadinessArtifact;
+struct ResidentSourceUnitFrontendPayloadTableRow;
+void __latency_fn_resident_source_unit_frontend_payload_tables_record_worker_payload_install_plan_metrics(shared_p<CompilerProjectRunReport>& report, vector_t<ResidentSourceUnitFrontendPayloadTableRow>& workerPayloadTables, shared_p<PartitionReadinessArtifact> workerPublication, shared_p<PartitionMergeReductionArtifact> sequentialReduction, shared_p<PartitionMergeReductionArtifact> workerReduction, bool_t handoffMatches);
+}

@@ -1,0 +1,75 @@
+--- before/__callable/backend_preflight_requests_group_17.cpp
++++ after/__callable/backend_preflight_requests_group_17.cpp
+@@ -11,7 +11,13 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_backend_preflight_requests_local_operand_stable_hash(BackendLocalOperandRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("backend_preflight_requests::local_operand_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/backend/backend_preflight_requests.phs", __latency_lines_backend_preflight_requests[220]);
+-	string_t identity = required_cast<string_t>((string_t("backend_local_operand:v2:") + cast<string_t>(cast<int_t<>>(row->owner_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->local_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->value_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->type_ref_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->value)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->local_operation_id))));
++	string_t identity = required_cast<string_t>(string_t("backend_local_operand:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->owner_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->local_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->value_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->type_ref_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->value)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->local_operation_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -21,7 +27,13 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_backend_preflight_requests_call_argument_stable_hash(BackendCallArgumentRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("backend_preflight_requests::call_argument_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/backend/backend_preflight_requests.phs", __latency_lines_backend_preflight_requests[221]);
+-	string_t identity = required_cast<string_t>((string_t("backend_call_argument:v2:") + cast<string_t>(cast<int_t<>>(row->owner_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->argument_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->type_ref_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->value)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->position)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->flags))));
++	string_t identity = required_cast<string_t>(string_t("backend_call_argument:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->owner_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->argument_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->type_ref_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->value)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->position)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->flags)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -31,7 +43,25 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_backend_preflight_requests_control_flow_operand_stable_hash(BackendControlFlowOperandRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("backend_preflight_requests::control_flow_operand_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/backend/backend_preflight_requests.phs", __latency_lines_backend_preflight_requests[222]);
+-	string_t identity = required_cast<string_t>((string_t("backend_control_flow_operand:v2:") + cast<string_t>(cast<int_t<>>(row->owner_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->body_first_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->body_last_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->body_terminator_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->body_terminator_kind_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->else_body_first_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->else_body_last_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_type_ref_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_value)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_operand_kind_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_local_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_left_local_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_right_local_source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_lhs_type_ref_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->condition_local_operation_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->control_operation_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->flags))));
++	string_t identity = required_cast<string_t>(string_t("backend_control_flow_operand:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->owner_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->body_first_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->body_last_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->body_terminator_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->body_terminator_kind_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->else_body_first_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->else_body_last_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_type_ref_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_value)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_operand_kind_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_local_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_left_local_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_right_local_source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_lhs_type_ref_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->condition_local_operation_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->control_operation_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->flags)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -41,7 +71,14 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_backend_preflight_requests_direct_call_gate_stable_hash(DirectCallAuthorizationGateRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("backend_preflight_requests::direct_call_gate_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/backend/backend_preflight_requests.phs", __latency_lines_backend_preflight_requests[223]);
+-	string_t identity = required_cast<string_t>((string_t("direct_call_gate:v2:") + cast<string_t>(cast<int_t<>>(row->gate_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->reference_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->from_symbol_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->target_symbol_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->abi_status_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->blocked_reason_id))));
++	string_t identity = required_cast<string_t>(string_t("direct_call_gate:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->gate_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->reference_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->from_symbol_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->target_symbol_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->abi_status_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->blocked_reason_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 

@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics.hpp
++++ after/__callable/__latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ class CompilerProjectRunReport;
+ class SourceUnitTable;
+-void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount);
++void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount);
+ }

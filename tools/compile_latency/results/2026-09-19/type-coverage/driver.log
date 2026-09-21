@@ -1,0 +1,33 @@
+START 43a83246
+DONE 43a83246 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 1, "pending": 10}, "timed_code_cases": 1, "timed_code_cases_within_target": 1, "comment_only_cases": 0}
+START 1a24a85d
+DONE 1a24a85d measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 2, "pending": 9}, "timed_code_cases": 2, "timed_code_cases_within_target": 2, "comment_only_cases": 0}
+START 5ce42535
+DONE 5ce42535 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 3, "pending": 8}, "timed_code_cases": 3, "timed_code_cases_within_target": 3, "comment_only_cases": 0}
+START cf3c2d08
+DONE cf3c2d08 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 4, "pending": 7}, "timed_code_cases": 4, "timed_code_cases_within_target": 4, "comment_only_cases": 0}
+START 534d70a6
+DONE 534d70a6 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 5, "pending": 6}, "timed_code_cases": 5, "timed_code_cases_within_target": 5, "comment_only_cases": 0}
+START 1610af1a
+DONE 1610af1a measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 6, "pending": 5}, "timed_code_cases": 6, "timed_code_cases_within_target": 6, "comment_only_cases": 0}
+START f1d3a846
+DONE f1d3a846 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 7, "pending": 4}, "timed_code_cases": 7, "timed_code_cases_within_target": 7, "comment_only_cases": 0}
+START b54f2766
+DONE b54f2766 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 8, "pending": 3}, "timed_code_cases": 8, "timed_code_cases_within_target": 8, "comment_only_cases": 0}
+START cec8c616
+DONE cec8c616 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 9, "pending": 2}, "timed_code_cases": 8, "timed_code_cases_within_target": 8, "comment_only_cases": 1}
+START e8e8a063
+DONE e8e8a063 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 10, "pending": 1}, "timed_code_cases": 9, "timed_code_cases_within_target": 8, "comment_only_cases": 1}
+START 4abe635f
+DONE 4abe635f replay_incompatible
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 10, "replay_incompatible": 1}, "timed_code_cases": 9, "timed_code_cases_within_target": 8, "comment_only_cases": 1}

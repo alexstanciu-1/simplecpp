@@ -1,0 +1,19 @@
+{
+  "sources": [
+    "structures/artifacts/compiler_profile_event_row.phs",
+    "compile/support/compiler_profile_events.phs",
+    "profile/gate_profile_helpers.phs",
+    "main.phs"
+  ],
+  "changed_generated_inputs": [
+    "main.cpp",
+    "profile/gate_profile_helpers.cpp",
+    "__callable/compiler_profile_events_append_event.cpp",
+    "__callable/compiler_profile_events_locations.cpp",
+    "structures/artifacts/compiler_profile_event_row.hpp",
+    "__partitions/profile/gate_profile_helpers/part_0.cpp"
+  ],
+  "scope": "real by-value field and existing writer/reader; observed data flows through profile event vector into gate summary",
+  "jobs": 12,
+  "cache": "disabled"
+}

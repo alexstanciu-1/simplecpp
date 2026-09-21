@@ -1,0 +1,17 @@
+{
+  "scope": "generated C++ analogue of twenty added fields across three value records plus real writer and executable witnesses; not full historical replay",
+  "private_provider": true,
+  "jobs": 12,
+  "frontend_assumed_seconds": 1.5,
+  "restored": true,
+  "phase": "complete",
+  "original_generated_hashes": {
+    "__private_types/ProviderTraitDescriptorRow.hpp": "ed2979e1d23181c80002feeec23a93c5091cfd241311a50d31f7caeb973b38f9",
+    "__private_types/TypeTraitRow.hpp": "cc8d5156fd2f5920935186328433fe8358bb8ba19196b6a6f5e484c52fbf8ea7",
+    "__private_types/TypeTraitTable.hpp": "5756c738d2e2aa03905169d1d153b48f9308f2ce74baf6838e03db09b5917194",
+    "__callable/type_traits_row_from_descriptor.cpp": "a1d3bb1a55bcf5a8eaaad41ebce9508c738ffb65defa9786ebb5247f1a982324",
+    "main.cpp": "d8c38d80d612db8baaf97ca0e6db151583d2a0ba614e6e21e2f60b560da5c2ac",
+    "__callable/type_traits_group_3.cpp": "30e98185016615b0cbef39569ca47f81e9ed9bab4762b3c72ae97f9393358418"
+  },
+  "result": "measured"
+}

@@ -1,0 +1,270 @@
+commit 93a00a4c89c9667099adae554f213a300a53ef9b
+Author: Alex Stanciu <ealexs@gmail.com>
+Date:   Fri Aug 7 20:49:43 2026 +0300
+
+    feat: make SL-04 TDD cleanup gate green
+
+diff --git a/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md b/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md
+index 5d93334e..0042a475 100644
+--- a/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md
++++ b/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md
+@@ -808,3 +808,50 @@ Next handoff:
+   storage/lifetime and ownership/cleanup evidence, and it must keep
+   by-reference invalidation and cleanup handoff explicit rather than hiding it
+   in lowering.
++
++## SL-04 TDD Pilot Result
++
++Implementation date: 2026-08-07
++
++Slice:
++
++- `SL-04` branch/loop cleanup TDD pilot.
++
++Implementation shape:
++
++- Added a reusable cleanup-sensitive control-flow preflight helper that reads
++  fixture source files through `ProjectManifest` and asks generated
++  TypeRef/type-trait metadata whether a source spelling has a cleanup-required
++  provider trait.
++- The fixture runner now emits fixture-keyed blocked rows with stable blocked
++  reason ids instead of marking every complete fixture as completed.
++- `SL-04` now runs as a green row assertion gate: scalar branch completes,
++  runtime-owned branch blocks, and nested branch-in-loop blocks.
++
++Timing snapshot:
++
++| Check | Result | Elapsed | Max RSS | Notes |
++|---|---|---:|---:|---|
++| Baseline `SL-04` expected-red gate before edit | ok expected red | 0.47s | 31,104 KB | 1 matched row, 2 intended mismatches. |
++| Harness-project rebuild | ok | 231.63s | 539,020 KB | Rebuilt the harness project; useful as broad rebuild cost, but not the gate executable used by `SL-04`. |
++| Direct compiler rebuild with `SCPP_NINJA_JOBS=16` | ok | 321.01s | 539,544 KB | Rebuilt `compiler/src/.prism/build/main`; one source transpiled, native rebuild still rebuilt broadly. |
++| First stale-binary `SL-04` run after harness rebuild | failed as expected | 0.26s | 31,232 KB | Proved the gate was still using the old direct compiler executable. |
++| `compiler/tools/run_sl04_branch_loop_cleanup_tdd_gate.sh` | ok green | 0.33s | 31,232 KB | 3 expected rows, 3 observed rows, 3 matched, 0 mismatches. |
++| `compiler/tools/run_90_percent_campaign_smoke_tdd_gate.sh` | ok green | 0.30s | 31,232 KB | Campaign smoke remains green. |
++| `compiler/tools/run_sl_milestone_tdd_gate.sh` | ok manifest_green | 0.24s | 31,360 KB | Milestone is still manifest-level beyond `SL-04`. |
++| `compiler/tools/run_debug_profile_artifact_helpers_audit.sh` | ok | 0.15s | 31,232 KB | Debug/profile helper strategy unchanged. |
++| `compiler/tools/run_tdd_90_debug_profile_artifact_gate.sh` | ok | 0.23s | 31,360 KB | Debug/profile artifact export remains green. |
++
++Timing interpretation:
++
++- The actual TDD gates are fast enough for tight cycles: roughly 0.15s to
++  0.33s in this slice.
++- The compiler rebuild path is the current bottleneck. The direct compiler
++  build rebuilt broadly even after only one source file transpiled, so later
++  TDD work should prefer running gates against an already-built compiler and
++  record rebuild cost separately from gate cost.
++
++Next handoff:
++
++- Continue the reset in inventory order with `SL-05`, but keep each focused
++  task gate row-running before marking that task `green`.
+diff --git a/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md b/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md
+index ef1919b1..1e01b341 100644
+--- a/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md
++++ b/compiler/docs/future/90_percent_functionality/tdd_samples_creation_backlog_2026_08_07.md
+@@ -140,7 +140,7 @@ Use the restart policy vocabulary:
+ | TDD-17 | staged sample folder | green | `tdd_samples/` staged manifests, source snippets, gate schemas, and runner specs. | Allows actual sample/gate design work without touching active compiler paths. |
+ | TDD-18 | all-entry staged samples | manifest_green | Source-like sample snippets for every inventory entry, grouped by phase. | `SL`, `FN`, `CF`, `RI`, `RV`, `WR`, `MH`, `OBJ`, `DX`, `PG`, and `MX` samples are promoted; keep snippets small and pressure-oriented. |
+ | TDD-19 | promote staged contracts | green | `compiler/tools/tdd_90_compiler_fixture_adapter_lib.sh`, `compiler/tools/tdd_90_scope_export.php`, and `compiler/tools/tdd_90_row_assertions.php`. | Generic task/phase/sample scopes now produce expected rows and compare observed compiler fixture rows. |
+-| TDD-20 | `SL` active fixtures and gates | test_red | `compiler/fixtures/tdd_90_*`, `compiler/fixtures/tdd_90_manifest.tsv`, and `compiler/tools/run_sl*_tdd_gate.sh`. | `SL-04` is the first pilot gate using reusable row assertions; the SL milestone uses the generic combiner. |
++| TDD-20 | `SL` active fixtures and gates | manifest_green | `compiler/fixtures/tdd_90_*`, `compiler/fixtures/tdd_90_manifest.tsv`, and `compiler/tools/run_sl*_tdd_gate.sh`. | `SL-04` row assertions are green; the SL milestone remains manifest-level until `SL-05` through `SL-07` get row-running task gates. |
+ | TDD-21 | `FN` active fixtures and gates | manifest_green | `compiler/fixtures/tdd_90_fn*`, `compiler/fixtures/tdd_90_manifest.tsv`, and `compiler/tools/run_fn*_tdd_gate.sh`. | Function/call/ABI milestone substrate is manifest-gated and runnable; row assertions still need promotion. |
+ | TDD-22 | `CF` active fixtures and gates | manifest_green | `compiler/fixtures/tdd_90_cf*`, `compiler/fixtures/tdd_90_manifest.tsv`, and `compiler/tools/run_cf*_tdd_gate.sh`. | Control-flow milestone substrate is manifest-gated and runnable; row assertions still need promotion. |
+ | TDD-23 | `RI` active fixtures and gates | manifest_green | `compiler/fixtures/tdd_90_ri*`, `compiler/fixtures/tdd_90_manifest.tsv`, and `compiler/tools/run_ri*_tdd_gate.sh`. | Range/index/foreach milestone substrate is manifest-gated and runnable; row assertions still need promotion. |
+diff --git a/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md b/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md
+index cb4be14b..d5392d46 100644
+--- a/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md
++++ b/compiler/docs/future/90_percent_functionality/tdd_task_contract_index_2026_08_07.md
+@@ -75,7 +75,7 @@ Detailed staged contracts:
+ | SL-01 | historical | Scalar local/return/temp storage source samples and request-row assertions. | `compiler/tools/run_sl01_scalar_storage_tdd_gate.sh` | `SL` |
+ | SL-02 | historical | Parameter/argument by-value storage handoff samples. | `compiler/tools/run_sl02_parameter_argument_storage_tdd_gate.sh` | `SL` |
+ | SL-03 | historical | By-reference parameter blocked/addressability samples. | `compiler/tools/run_sl03_reference_parameter_storage_tdd_gate.sh` | `SL` |
+-| SL-04 | manifest_green | Branch/loop cleanup obligation samples, blockers, and CFG/storage/ownership row assertions. | `compiler/tools/run_sl04_branch_loop_cleanup_tdd_gate.sh` | `SL` |
++| SL-04 | green | Branch/loop cleanup obligation samples, blockers, and CFG/storage/ownership row assertions. | `compiler/tools/run_sl04_branch_loop_cleanup_tdd_gate.sh` | `SL` |
+ | SL-05 | manifest_green | Early-return cleanup obligation samples proving owned values do not silently leak. | `compiler/tools/run_sl05_early_return_cleanup_tdd_gate.sh` | `SL` |
+ | SL-06 | manifest_green | Container element storage policy samples for copy/move/cleanup contracts. | `compiler/tools/run_sl06_container_element_storage_tdd_gate.sh` | `SL` |
+ | SL-07 | manifest_green | Object/member/property storage context samples and object/layout blockers. | `compiler/tools/run_sl07_object_member_storage_tdd_gate.sh` | `SL` |
+diff --git a/compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs b/compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs
+new file mode 100644
+index 00000000..071ad67b
+--- /dev/null
++++ b/compiler/src/compile/capabilities/control_flow_cleanup_preflight.phs
+@@ -0,0 +1,82 @@
++// Role: Fixture-source preflight rows for cleanup-sensitive control-flow gaps.
++final class control_flow_cleanup_preflight {
++
++	public static function blocked_reason_none_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function blocked_reason_missing_cleanup_obligation_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function blocked_reason_path_coverage_blocked_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function blocked_layer_cleanup_preflight_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function has_branch(string $source): bool {
++		return str_contains($source, "if (")
++			|| str_contains($source, "if\t")
++			|| str_contains($source, "else");
++	}
++
++	public static function has_loop(string $source): bool {
++		return str_contains($source, "while (")
++			|| str_contains($source, "for (")
++			|| str_contains($source, "do {");
++	}
++
++	public static function source_contains_type_spelling(string $source, string $spelling): bool {
++		return str_contains($source, " " . $spelling)
++			|| str_contains($source, "\t" . $spelling)
++			|| str_contains($source, "<" . $spelling)
++			|| str_contains($source, "," . $spelling)
++			|| str_contains($source, ":" . $spelling);
++	}
++
++	public static function type_ref_requires_cleanup(uint32 $typeRefId): bool {
++		$trait ProviderTraitDescriptorRow = semantic_type_ref_providers::provider_trait_descriptor_by_type_ref_id($typeRefId);
++		return (int)$trait->cleanup_policy_id === (int)type_traits::cleanup_policy_runtime_release_required_id();
++	}
++
++	public static function has_cleanup_bearing_source_value(string $source): bool {
++		foreach (semantic_type_ref_providers::provider_spelling_descriptors() as $spelling) {
++			if (!control_flow_cleanup_preflight::source_contains_type_spelling($source, $spelling->source_name)) {
++				continue;
++			}
++			if (control_flow_cleanup_preflight::type_ref_requires_cleanup($spelling->type_ref_id)) {
++				return true;
++			}
++		}
++		return false;
++	}
++
++	public static function blocked_reason_for_source(string $source): uint16 {
++		if (!control_flow_cleanup_preflight::has_cleanup_bearing_source_value($source)) {
++			return control_flow_cleanup_preflight::blocked_reason_none_id();
++		}
++		if (!control_flow_cleanup_preflight::has_branch($source) && !control_flow_cleanup_preflight::has_loop($source)) {
++			return control_flow_cleanup_preflight::blocked_reason_none_id();
++		}
++		if (control_flow_cleanup_preflight::has_branch($source) && control_flow_cleanup_preflight::has_loop($source)) {
++			return control_flow_cleanup_preflight::blocked_reason_path_coverage_blocked_id();
++		}
++		return control_flow_cleanup_preflight::blocked_reason_missing_cleanup_obligation_id();
++	}
++
++	public static function blocked_reason_for_fixture(PipelineConfig $config): uint16 {
++		$manifest ProjectManifest = project_manifest::from_fixture_dir($config->fixture_dir);
++		foreach ($manifest->source_relative_paths as $relativePath) {
++			$sourcePath string = $config->fixture_dir . "/" . $relativePath;
++			$source string = source_files::content_or_empty($sourcePath);
++			$blockedReasonId uint16 = control_flow_cleanup_preflight::blocked_reason_for_source($source);
++			if ((int)$blockedReasonId !== (int)control_flow_cleanup_preflight::blocked_reason_none_id()) {
++				return $blockedReasonId;
++			}
++		}
++		return control_flow_cleanup_preflight::blocked_reason_none_id();
++	}
++}
+diff --git a/compiler/src/compile/pipeline/fixture_runner.phs b/compiler/src/compile/pipeline/fixture_runner.phs
+index 306f5f1a..b636eccc 100644
+--- a/compiler/src/compile/pipeline/fixture_runner.phs
++++ b/compiler/src/compile/pipeline/fixture_runner.phs
+@@ -29,13 +29,13 @@ final class fixture_runner {
+ 		return $row;
+ 	}
+ 
+-	public static function blocked_row(uint32 $runId): FixtureRunRow {
++	public static function blocked_row(uint32 $runId, uint16 $blockedReasonId): FixtureRunRow {
+ 		$row FixtureRunRow = fixture_runner::empty_row();
+ 		$row->run_id = $runId;
+ 		$row->fixture_key_id = $runId;
+ 		$row->status_id = fixture_runner::blocked_status_id();
+-		$row->blocked_layer_id = structure_row_ids::uint16_from_int(1);
+-		$row->blocked_reason_id = structure_row_ids::uint16_from_int(1);
++		$row->blocked_layer_id = control_flow_cleanup_preflight::blocked_layer_cleanup_preflight_id();
++		$row->blocked_reason_id = $blockedReasonId;
+ 		return $row;
+ 	}
+ 
+@@ -50,22 +50,32 @@ final class fixture_runner {
+ 		$report->symbol_lookup_probe_count = structure_row_ids::uint32_from_int((int)$report->symbol_lookup_probe_count + 1);
+ 	}
+ 
+-	public static function append_blocked(FixtureRunReport &$report): void {
++	public static function append_blocked(FixtureRunReport &$report, string $fixtureKey, uint16 $blockedReasonId): void {
+ 		$runId uint32 = structure_row_ids::next_dense_id(count($report->rows));
+-		$report->fixture_keys[] = "";
+-		$report->rows[] = fixture_runner::blocked_row($runId);
++		$report->fixture_keys[] = $fixtureKey;
++		$report->rows[] = fixture_runner::blocked_row($runId, $blockedReasonId);
+ 		$report->row_count = structure_row_ids::uint32_from_int(count($report->rows));
+ 		$report->blocked_count = structure_row_ids::uint32_from_int((int)$report->blocked_count + 1);
+ 	}
+ 
++	public static function append_config_result(FixtureRunReport &$report, PipelineConfig $config): void {
++		$blockedReasonId uint16 = control_flow_cleanup_preflight::blocked_reason_for_fixture($config);
++		if ((int)$blockedReasonId !== (int)control_flow_cleanup_preflight::blocked_reason_none_id()) {
++			fixture_runner::append_blocked($report, $config->fixture_key, $blockedReasonId);
++			return;
++		}
++		fixture_runner::append_completed($report, $config->fixture_key);
++	}
++
+ 	public static function run_batch(PipelineBatchConfig $batch): FixtureRunReport {
+ 		$report FixtureRunReport = new FixtureRunReport();
+ 		if (!pipeline_config_helpers::batch_is_complete($batch)) {
+-			fixture_runner::append_blocked($report);
++			fixture_runner::append_blocked($report, "", control_flow_cleanup_preflight::blocked_reason_missing_cleanup_obligation_id());
+ 			return $report;
+ 		}
+ 		foreach ($batch->fixture_keys as $fixtureKey) {
+-			fixture_runner::append_completed($report, $fixtureKey);
++			$config PipelineConfig = pipeline_config_helpers::from_batch_fixture($batch, $fixtureKey);
++			fixture_runner::append_config_result($report, $config);
+ 		}
+ 		return $report;
+ 	}
+@@ -73,10 +83,10 @@ final class fixture_runner {
+ 	public static function run_single(PipelineConfig $config): FixtureRunReport {
+ 		$report FixtureRunReport = new FixtureRunReport();
+ 		if (!pipeline_config_helpers::is_complete($config)) {
+-			fixture_runner::append_blocked($report);
++			fixture_runner::append_blocked($report, $config->fixture_key, control_flow_cleanup_preflight::blocked_reason_missing_cleanup_obligation_id());
+ 			return $report;
+ 		}
+-		fixture_runner::append_completed($report, $config->fixture_key);
++		fixture_runner::append_config_result($report, $config);
+ 		return $report;
+ 	}
+ 
+diff --git a/compiler/tools/run_sl04_branch_loop_cleanup_tdd_gate.sh b/compiler/tools/run_sl04_branch_loop_cleanup_tdd_gate.sh
+index 65fb30cb..56b0cc75 100755
+--- a/compiler/tools/run_sl04_branch_loop_cleanup_tdd_gate.sh
++++ b/compiler/tools/run_sl04_branch_loop_cleanup_tdd_gate.sh
+@@ -6,7 +6,7 @@ source "$SCRIPT_DIR/audit_gate_lib.sh"
+ source "$SCRIPT_DIR/tdd_90_compiler_fixture_adapter_lib.sh"
+ 
+ export SCPP_TDD_90_TASK="SL-04"
+-export SCPP_TDD_90_EXPECT_RED="${SCPP_TDD_90_EXPECT_RED:-1}"
++export SCPP_TDD_90_EXPECT_RED="${SCPP_TDD_90_EXPECT_RED:-0}"
+ audit_gate_init "sl04_branch_loop_cleanup_tdd_gate" "SCPP_TDD_90_SL04_GATE_DIR" "sl04_branch_loop_cleanup_tdd_gate" "sl04_branch_loop_cleanup_tdd_gate.out"
+ audit_gate_run_php "tdd_90_manifest_gate.php"
+ 
+@@ -25,6 +25,8 @@ tdd_90_assert_scope_rows
+ assert_metric_equals "tdd_90_scope_export" "ok"
+ assert_metric_equals "tdd_90_scope_sample_count" "3"
+ assert_metric_equals "tdd_90_row_assertions" "ok"
+-assert_metric_equals "tdd_90_row_assertion_status" "test_red_expected"
++assert_metric_equals "tdd_90_row_assertion_status" "green"
++assert_metric_equals "tdd_90_row_assertion_matched_count" "3"
++assert_metric_equals "tdd_90_row_assertion_mismatch_count" "0"
+ 
+ tdd_90_emit_compact_success

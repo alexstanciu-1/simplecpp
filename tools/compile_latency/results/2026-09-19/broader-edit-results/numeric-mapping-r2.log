@@ -1,0 +1,5 @@
+[1/5] CXX layout/compile/model/type_ref_identity.o
+[2/5] CXX layout/compile/capabilities/type_traits.o
+[3/5] CALLABLE_PART layout_parts/main.o
+[4/5] CXX layout/compile/backend/primitive_abi_adapter_matrix.o
+[5/5] LINK main

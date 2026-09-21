@@ -1,0 +1,17 @@
+{
+  "commit": "4abe635f",
+  "sources": [
+    "compile/backend/compiler_entry_backend.phs",
+    "compile/semantic/semantic_body_capability_consumers.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "baseline",
+  "result": "replay_incompatible",
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "isolate_shared_carriers": true,
+  "isolate_value_traits": true,
+  "error": "[1/7] CXX expanded/__callable/semantic_body_capability_consumers_locations.o\n[2/7] CXX expanded/__callable/compiler_entry_backend_locations.o\n[3/7] CALLABLE_PART expanded_parts/__callable/compiler_entry_backend_group_0.o\nFAILED: expanded_parts/__callable/compiler_entry_backend_group_0.o \nclang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../expanded/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -include-pch expanded-project.pch -MMD -MF expanded_parts/__callable/compiler_entry_backend_group_0.o.d -MT expanded_parts/__callable/compiler_entry_backend_group_0.o -c /tmp/scpp-edit-latency-20260919/app/.prism/expanded/generated/__callable/compiler_entry_backend_group_0.cpp -o expanded_parts/__callable/compiler_entry_backend_group_0.o\n/tmp/scpp-edit-latency-20260919/app/.prism/expanded/generated/__callable/compiler_entry_backend_group_0.cpp:63:38: error: no member named 'append_literal_return' in 'scpp::semantic_body_capability_consumers'\n   63 |         semantic_body_capability_consumers::append_literal_return(consumerPlan, literalNode->node_id, literal->type_ref_id);\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n1 error generated.\n[4/7] CALLABLE_PART expanded_parts/__callable/semantic_body_capability_consumers_group_1.o\n[5/7] CALLABLE_PART expanded_parts/__callable/semantic_body_capability_consumers_group_0.o\n[6/7] CALLABLE_PART expanded_parts/__callable/compiler_entry_backend_group_1.o\nninja: build stopped: subcommand failed.\n",
+  "restored": true
+}

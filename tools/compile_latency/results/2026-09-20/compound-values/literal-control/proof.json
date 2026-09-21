@@ -1,0 +1,7 @@
+{
+  "fixture_source": "known literal-return control",
+  "compiler": "current full compiler application under provider-publication policy",
+  "native_exit": 42,
+  "expected": 42,
+  "scope": "preserved current behavior; not full twelve-source historical replay"
+}

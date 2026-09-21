@@ -1,0 +1,19 @@
+{
+  "case": "frontend",
+  "historical_commit": "60011d4c",
+  "scope": "contemporary analogue; not full historical checkout",
+  "source_files": [
+    "main.phs",
+    "compile/frontend_adapter/phs/frontend_model_builder.phs",
+    "compile/backend/llvm_text_from_plan.phs"
+  ],
+  "changed_generated_inputs": [
+    "main.cpp",
+    "compile/backend/llvm_text_from_plan.cpp",
+    "compile/frontend_adapter/phs/frontend_model_builder.hpp",
+    "compile/frontend_adapter/phs/frontend_model_builder.cpp"
+  ],
+  "rounds": 1,
+  "jobs": 12,
+  "cache": "disabled"
+}

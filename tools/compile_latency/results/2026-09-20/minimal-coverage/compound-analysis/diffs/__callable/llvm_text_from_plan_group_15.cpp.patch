@@ -1,0 +1,66 @@
+--- before/__callable/llvm_text_from_plan_group_15.cpp
++++ after/__callable/llvm_text_from_plan_group_15.cpp
+@@ -89,7 +89,9 @@
+ 	string_t tempName = required_cast<string_t>(__latency_fn_llvm_text_from_plan_binary_result_name_for_operator(operatorRow, valueId));
+ 	string_t instruction = required_cast<string_t>(__latency_fn_llvm_text_from_plan_binary_instruction_for_operator(operatorRow));
+ 	string_t operandType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_binary_operand_llvm_type_for_operator(operatorRow));
+-	return (string_t("  ") + cast<string_t>(tempName) + string_t(" = ") + cast<string_t>(instruction) + string_t(" ") + cast<string_t>(operandType) + string_t(" ") + cast<string_t>(leftValue) + string_t(", ") + cast<string_t>(rightValue) + string_t("\n") + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(tempName) + string_t("\n"));
++	string_t text = required_cast<string_t>((string_t("  ") + cast<string_t>(tempName) + string_t(" = ") + cast<string_t>(instruction) + string_t(" ") + cast<string_t>(operandType) + string_t(" ") + cast<string_t>(leftValue) + string_t(", ") + cast<string_t>(rightValue) + string_t("\n")));
++	text = (cast<string_t>(text) + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(tempName) + string_t("\n"));
++	return text;
+ }
+ 
+ }
+@@ -99,7 +101,9 @@
+ string_t __latency_fn_llvm_text_from_plan_return_ternary_select_from_condition_text(const string_t& returnType, int_t<> valueId, const string_t& conditionText, int_t<> thenValue, int_t<> elseValue) {
+ 	SCPP_CALL_DEPTH_GUARD("llvm_text_from_plan::return_ternary_select_from_condition_text", "/tmp/scpp-edit-latency-20260919/app/compile/backend/llvm_text_from_plan.phs", __latency_lines_llvm_text_from_plan[136]);
+ 	string_t tempName = required_cast<string_t>((string_t("%ternary_select_") + cast<string_t>(valueId)));
+-	return (string_t("  ") + cast<string_t>(tempName) + string_t(" = select i1 ") + cast<string_t>(conditionText) + string_t(", ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(thenValue) + string_t(", ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(elseValue) + string_t("\n") + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(tempName) + string_t("\n"));
++	string_t text = required_cast<string_t>((string_t("  ") + cast<string_t>(tempName) + string_t(" = select i1 ") + cast<string_t>(conditionText) + string_t(", ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(thenValue) + string_t(", ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(elseValue) + string_t("\n")));
++	text = (cast<string_t>(text) + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(tempName) + string_t("\n"));
++	return text;
+ }
+ 
+ }
+@@ -148,7 +152,11 @@
+ 		return string_t("");
+ 	}
+ 	string_t returnType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_llvm_type_for_type_ref(value->type_ref_id));
+-	return (string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n") + string_t("entry:\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_return_value_text_from_emission(emission, value, returnType)) + string_t("}\n\n"));
++	string_t text = required_cast<string_t>((string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n")));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_return_value_text_from_emission(emission, value, returnType)));
++	text = (cast<string_t>(text) + string_t("}\n\n"));
++	return text;
+ }
+ 
+ }
+@@ -165,7 +173,11 @@
+ 		return string_t("");
+ 	}
+ 	string_t returnType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_llvm_type_for_type_ref(value->type_ref_id));
+-	return (string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n") + string_t("entry:\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_return_value_text_from_emission_and_backend_requests(emission, requests, value, returnType)) + string_t("}\n\n"));
++	string_t text = required_cast<string_t>((string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n")));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_return_value_text_from_emission_and_backend_requests(emission, requests, value, returnType)));
++	text = (cast<string_t>(text) + string_t("}\n\n"));
++	return text;
+ }
+ 
+ }
+@@ -182,7 +194,11 @@
+ 		return string_t("");
+ 	}
+ 	string_t returnType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_llvm_type_for_type_ref(lastValue->type_ref_id));
+-	return (string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n") + string_t("entry:\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_function_body_text_from_local_emission(emission, returnType)) + string_t("}\n\n"));
+-}
+-
+-}
++	string_t text = required_cast<string_t>((string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("() {\n")));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_function_body_text_from_local_emission(emission, returnType)));
++	text = (cast<string_t>(text) + string_t("}\n\n"));
++	return text;
++}
++
++}

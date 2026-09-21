@@ -1,0 +1,22 @@
+{
+  "external_source_hash_differences": [],
+  "scratch_non_entrypoint_phs_differences": [],
+  "extra_scratch_phs_files": [],
+  "restored_cases": [
+    "1a24a85d",
+    "f1d3a846",
+    "cec8c616",
+    "b54f2766",
+    "534d70a6",
+    "e8e8a063",
+    "5ce42535",
+    "43a83246",
+    "cf3c2d08",
+    "4abe635f"
+  ],
+  "restored_ninja_no_op": true,
+  "final_source_diagnostics_passed": true,
+  "active_native_layout": "latency-expanded.ninja, original four isolated callable owners plus existing partitions/row/counter boundaries; no coverage-case optimization",
+  "entrypoint": "intentional twenty-witness harness",
+  "historical_fixture": "copied from Git into scratch sibling fixtures for path replay, with archived provenance"
+}

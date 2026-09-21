@@ -1,0 +1,10 @@
+[1/10] CXX compile/frontend_adapter/phs/token_kinds.o
+[2/10] CXX compile/frontend_adapter/phs/parser_state.o
+[3/10] CXX compile/frontend_adapter/phs/phs_tokenizer.o
+[4/10] CXX compile/frontend_adapter/phs/frontend_model_builder.o
+[5/10] CXX compile/backend/abi_bridge/runtime_abi_bridge.o
+[6/10] CXX compile/capabilities/runtime_helper_contract_readiness.o
+[7/10] CXX main.o
+[8/10] CXX compile/incremental/resident_daemon_file_ipc.o
+[9/10] CXX compile/backend/llvm_text_from_plan.o
+[10/10] LINK main

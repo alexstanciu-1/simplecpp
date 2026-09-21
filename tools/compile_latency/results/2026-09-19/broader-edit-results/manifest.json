@@ -1,0 +1,32 @@
+{
+  "numeric_mapping": {
+    "scope": "Three real numeric mapping bodies plus main witness; analogous edit, not complete new numeric-type implementation",
+    "source_files": [
+      "compile/model/type_ref_identity.phs",
+      "compile/capabilities/type_traits.phs",
+      "compile/backend/primitive_abi_adapter_matrix.phs",
+      "main.phs"
+    ],
+    "generated_inputs": [
+      "main.cpp",
+      "compile/model/type_ref_identity.cpp",
+      "compile/backend/primitive_abi_adapter_matrix.cpp",
+      "compile/capabilities/type_traits.cpp"
+    ],
+    "outputs": [
+      "layout/compile/backend/primitive_abi_adapter_matrix.o",
+      "layout/compile/capabilities/type_traits.o",
+      "layout/compile/model/type_ref_identity.o",
+      "layout_parts/main.o",
+      "main"
+    ]
+  },
+  "native_helper_extraction": {
+    "scope": "Extract real MT heartbeat key construction to a new native implementation file; existing public class and PCH unchanged; witness prepared before timing",
+    "outputs": [
+      "layout_parts/compile/support/production_mt_heartbeat/part_0.o",
+      "layout_parts/extracted_heartbeat.o",
+      "main"
+    ]
+  }
+}

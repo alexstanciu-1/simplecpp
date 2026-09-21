@@ -1,0 +1,11 @@
+--- before/__callable/source_units_group_8.cpp
++++ after/__callable/source_units_group_8.cpp
+@@ -55,7 +55,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceUnitTable> __latency_fn_source_units_table_from_manifest(const shared_p<ProjectManifest>& manifest) {
++shared_p<SourceUnitTable> __latency_fn_source_units_table_from_manifest(shared_p<ProjectManifest> manifest) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::table_from_manifest", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[61]);
+ 	shared_p<SourceReadTable> sourceReads = __latency_fn_source_units_source_read_table_from_manifest(manifest);
+ 	return __latency_fn_source_units_table_from_source_read_table_adopting_texts(manifest, sourceReads);

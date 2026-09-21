@@ -1,0 +1,23 @@
+commit 1610af1a689a183f7b8fc5ff795b0dde2dacc276
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Wed Aug 12 05:53:09 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Wed Aug 12 05:53:09 2026 +0300
+
+    Route literal return coverage through consumer plan
+
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index 3427febd..c6429533 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -21,7 +21,9 @@ final class compiler_entry_backend {
+ 		$analysis AnalysisContext = analysis_context::new_context(1);
+ 		$entry AnalysisEntryContextRow = analysis_context::append_entry($analysis, $symbol, $references, $contracts, $graph);
+ 		$typeRefs TypeRefTable = type_refs::table_from_project_symbols($symbols);
+-		$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_literal($typeRefs, $literalNode->node_id, $literal->type_ref_id);
++		$consumerPlan CapabilityConsumerPlan = capability_consumer_plans::new_plan();
++		semantic_body_capability_consumers::append_literal_return($consumerPlan, $literalNode->node_id, $literal->type_ref_id);
++		$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		$backendRequests = backend_preflight_requests::new_backend_request_artifact_with_sidecar_capacity(1, 0, 0, 0, 0);
+ 		local_body_lowering::append_literal_scalar_backend_request($backendRequests, $capabilityCoverage, $literalNode, $literal, $symbol);
+ 		$plan = lowering_plan::from_entry_and_backend_requests($entry, $backendRequests);

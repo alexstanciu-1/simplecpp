@@ -1,0 +1,34 @@
+{
+  "commit": "43a83246",
+  "sources": [
+    "compile/backend/backend_module_composition.phs",
+    "compile/backend/llvm_text_from_plan.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "isolate_shared_carriers": true,
+  "isolate_value_traits": true,
+  "isolate_provider_traits": true,
+  "before_hunk_setup_seconds": 2.855950405006297,
+  "forced_new_objects": [],
+  "changed_generated_inputs": [
+    "__callable/llvm_text_from_plan_function_composition_input_from_call_arguments_text.cpp",
+    "__callable/backend_module_composition_group_0.cpp",
+    "__callable/backend_module_composition_function_text_for_symbol.cpp",
+    "__callable/llvm_text_from_plan_group_18.cpp",
+    "__callable/llvm_text_from_plan_function_text_from_call_composition.cpp",
+    "__callable/llvm_text_from_plan_function_composition_input_from_local_reference_argument.cpp",
+    "__callable/backend_module_composition_locations.cpp",
+    "__callable/llvm_text_from_plan_locations.cpp",
+    "compile/backend/llvm_text_from_plan.cpp",
+    "compile/backend/backend_module_composition.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/part_12.cpp"
+  ],
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

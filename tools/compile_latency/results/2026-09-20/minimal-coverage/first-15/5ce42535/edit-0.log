@@ -1,0 +1,4 @@
+[1/4] CXX minimal/__callable/llvm_text_from_plan_locations.o
+[2/4] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_18.o
+[3/4] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_17.o
+[4/4] LINK minimal-main

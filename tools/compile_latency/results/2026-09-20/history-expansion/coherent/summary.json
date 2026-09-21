@@ -1,0 +1,58 @@
+{
+  "scope": "full historical compiler/src states except unchanged instrumented main; current generator/runtime/output policy, not historical toolchain",
+  "pinned_revision": "9776900f6c305729ae6ef8474052363508913315",
+  "instrumented_main_sha256": "c3c191aac9c79a45720f5980d11534cf2f14b3e1fe8b7ba9e55a4c2ae3f8f9bb",
+  "cases": [
+    {
+      "commit": "9103637e",
+      "phase": "before_setup",
+      "result": "blocked",
+      "before_revision": "2ad7c2b2d840bce8462a7b78d5dbf4c7d027a955",
+      "after_revision": "9103637ef8a1501f98d6ca2d60ec2a4346963d86",
+      "changed_sources": [
+        "compile/artifacts/analysis_context_identity.phs",
+        "compile/backend/abi_bridge/runtime_abi_bridge.phs",
+        "compile/backend/backend_emission_decisions.phs",
+        "compile/backend/backend_preflight_requests.phs",
+        "compile/backend/compiler_entry_backend.phs",
+        "compile/backend/llvm_api_sink_preflight.phs",
+        "compile/backend/llvm_text_from_plan.phs",
+        "compile/backend/local_body_lowering.phs",
+        "compile/backend/lowering_plan.phs",
+        "compile/backend/scalar_body_statement_collection.phs",
+        "compile/capabilities/runtime_helper_contract_readiness.phs",
+        "compile/control_flow/control_flow_dataflows.phs",
+        "compile/control_flow/control_flow_transfers.phs",
+        "compile/frontend_adapter/phs/frontend_model_builder.phs",
+        "compile/frontend_adapter/phs/parser_cursor.phs",
+        "compile/frontend_adapter/phs/parser_state.phs",
+        "compile/frontend_adapter/phs/phs_tokenizer.phs",
+        "compile/incremental/partition_readiness.phs",
+        "compile/incremental/resident_daemon_file_ipc.phs",
+        "compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+        "compile/incremental/resident_source_unit_symbol_states.phs",
+        "compile/incremental/source_unit_early_skip.phs",
+        "compile/model/frontend_body_summaries.phs",
+        "compile/model/project_reference_resolution.phs",
+        "compile/model/project_symbol_index.phs",
+        "compile/model/source_buffers.phs",
+        "compile/model/source_units.phs",
+        "compile/support/compiler_export_artifacts.phs"
+      ],
+      "error": "Class outside recorded field/type metadata: EmissionLLVMWorkerInput"
+    },
+    {
+      "commit": "41392c03",
+      "phase": "before_setup",
+      "result": "blocked",
+      "before_revision": "4abe635ffc807a14377c362227b31ed16b076841",
+      "after_revision": "41392c03bd2c5149a20fe5503135aef58e23cbf9",
+      "changed_sources": [
+        "compile/backend/backend_module_composition.phs",
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "error": "Class outside recorded field/type metadata: EmissionLLVMWorkerInput"
+    }
+  ],
+  "restored": true
+}

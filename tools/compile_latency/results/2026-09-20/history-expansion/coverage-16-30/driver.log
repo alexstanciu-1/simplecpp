@@ -1,0 +1,9 @@
+START b1f1fd46
+DONE b1f1fd46 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 12, "measured": 1, "pending": 2}, "timed_code_cases": 1, "timed_code_cases_within_target": 1, "comment_only_cases": 0}
+START 4a4e0803
+DONE 4a4e0803 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 12, "measured": 2, "pending": 1}, "timed_code_cases": 2, "timed_code_cases_within_target": 2, "comment_only_cases": 0}
+START ea9d053c
+DONE ea9d053c measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 12, "measured": 3}, "timed_code_cases": 3, "timed_code_cases_within_target": 3, "comment_only_cases": 0}

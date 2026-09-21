@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentPublicSurfaceIncrementalAcceptanceRow;
+struct ResidentSymbolDefinitionChangeRow;
+ResidentPublicSurfaceIncrementalAcceptanceRow __latency_fn_resident_public_surface_incremental_acceptance_row_from_symbol_change(shared_p<CompilerProjectRunReport> report, ResidentSymbolDefinitionChangeRow change);
+}

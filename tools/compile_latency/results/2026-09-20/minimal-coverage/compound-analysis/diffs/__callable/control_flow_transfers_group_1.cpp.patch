@@ -1,0 +1,21 @@
+--- before/__callable/control_flow_transfers_group_1.cpp
++++ after/__callable/control_flow_transfers_group_1.cpp
+@@ -79,7 +79,17 @@
+ 	if (static_cast<bool>(php::condition_truthy(decision->ready))) {
+ 		statusId = __latency_fn_control_flow_transfers_status_ready_id();
+ 	}
+-	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(rowId)) + string_t("\t") + cast<string_t>(cast<int_t<>>(symbol->symbol_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(symbol->source_unit_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(transferKindId)) + string_t("\t") + cast<string_t>(cast<int_t<>>(statusId)) + string_t("\t") + cast<string_t>(cast<int_t<>>(decision->diagnostic_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(statementNode->node_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(enclosingLoopNodeId)) + string_t("\t") + cast<string_t>(cast<int_t<>>(loopDepth)) + string_t("\t") + cast<string_t>(cast<int_t<>>(decision->resolved_target_id)) + string_t("\t") + cast<string_t>(cast<int_t<>>(decision->cleanup_status_id)) + string_t("\n"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(rowId)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(symbol->symbol_id)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(symbol->source_unit_id)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(transferKindId)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(statusId)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(decision->diagnostic_id)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(statementNode->node_id)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(enclosingLoopNodeId)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(loopDepth)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(decision->resolved_target_id)) + string_t("\t"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(decision->cleanup_status_id)) + string_t("\n"));
+ }
+ 
+ }

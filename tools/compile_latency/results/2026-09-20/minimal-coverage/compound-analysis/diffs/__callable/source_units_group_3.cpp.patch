@@ -1,0 +1,29 @@
+--- before/__callable/source_units_group_3.cpp
++++ after/__callable/source_units_group_3.cpp
+@@ -22,7 +22,7 @@
+ #include "__callable/__latency_fn_source_units_source_text_from_worker_result.hpp"
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-bool_t __latency_fn_source_units_source_read_manifest_order_match(const shared_p<SourceReadTable>& sourceReads) {
++bool_t __latency_fn_source_units_source_read_manifest_order_match(shared_p<SourceReadTable> sourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_manifest_order_match", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[32]);
+ 	int_t<> expectedOrder = required_cast<int_t<>>(static_cast<int_t<> >(1));
+ 	auto __latency_local_0 = sourceReads->results;
+@@ -40,7 +40,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-bool_t __latency_fn_source_units_source_read_hash_match(const shared_p<SourceReadTable>& sourceReads) {
++bool_t __latency_fn_source_units_source_read_hash_match(shared_p<SourceReadTable> sourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_hash_match", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[33]);
+ 	int_t<> index = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	auto __latency_local_0 = sourceReads->results;
+@@ -105,7 +105,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-vector_t<shared_p<SourceReadWorkerProbeInput>> __latency_fn_source_units_source_read_worker_probe_inputs(const shared_p<SourceReadTable>& sourceReads) {
++vector_t<shared_p<SourceReadWorkerProbeInput>> __latency_fn_source_units_source_read_worker_probe_inputs(shared_p<SourceReadTable> sourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_worker_probe_inputs", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[36]);
+ 	vector_t<shared_p<SourceReadWorkerProbeInput>> inputs = {};
+ 	php::vector_reserve(inputs, cast<int_t<>>(sourceReads->descriptor_count));

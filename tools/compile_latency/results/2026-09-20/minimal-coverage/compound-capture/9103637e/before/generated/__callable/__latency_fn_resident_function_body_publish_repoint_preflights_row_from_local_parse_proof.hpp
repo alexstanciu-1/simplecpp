@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentFunctionBodyLocalParseProofRow;
+struct ResidentFunctionBodyPublishRepointPreflightRow;
+ResidentFunctionBodyPublishRepointPreflightRow __latency_fn_resident_function_body_publish_repoint_preflights_row_from_local_parse_proof(ResidentFunctionBodyLocalParseProofRow proof);
+}

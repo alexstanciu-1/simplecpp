@@ -1,0 +1,2 @@
+#include <scpp/lang/php.hpp>
+namespace scpp { extern const int __latency_lines_llvm_api_sink_preflight[] = {4,8,12,16,20,24,28,32,36,40,44,54,67,79,88,98,107,117,134,154,170,181,192,203,213,219,235,251,267,273,279,285,300,314}; }

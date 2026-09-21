@@ -1,0 +1,8 @@
+[1/8] CXX layout/structures/artifacts/compiler_profile_event_row.o
+[2/8] CALLABLE_PART layout_parts/profile/gate_profile_helpers/part_0.o
+[3/8] CALLABLE_PART layout_parts/__callable/compiler_profile_events_debug_string.o
+[4/8] CALLABLE_PART layout_parts/__callable/compiler_profile_events_append_event.o
+[5/8] CALLABLE_PART layout_parts/main.o
+[6/8] CXX layout/compile/support/performance_memory_estimates.o
+[7/8] CXX layout/structures/pipeline/compiler_project_run_report.o
+[8/8] LINK main

@@ -1,0 +1,15 @@
+[1/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_body_statement.o
+[2/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_return_statement.o
+[3/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_statement_list_until_eof_with_implicit_return.o
+[4/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_for_statement.o
+[5/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_statement_list_until_close.o
+[6/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_if_statement.o
+[7/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_statement_list_until_close_with_implicit_return.o
+[8/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_function_body.o
+[9/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_while_statement.o
+[10/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_return_expression.o
+[11/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_function_declaration.o
+[12/15] CXX expanded/__callable/frontend_model_builder_locations.o
+[13/15] CXX expanded/compile/incremental/resident_function_body_local_parse_proofs.o
+[14/15] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_parse_synthetic_script_entry_declaration_until_close.o
+[15/15] LINK main

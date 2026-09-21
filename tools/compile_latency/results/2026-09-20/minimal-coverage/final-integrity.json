@@ -1,0 +1,11 @@
+{
+  "original_source_unchanged": true,
+  "scratch_source_restored": true,
+  "main_and_catalog_restored": true,
+  "all_cases_restored": true,
+  "policy_frozen_through_coverage": true,
+  "generation_idempotent": true,
+  "native_noop": true,
+  "graph_equals_prior_minimal_baseline": true,
+  "final_representation_and_adapter_proofs_passed": true
+}

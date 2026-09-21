@@ -1,0 +1,21 @@
+commit f1d3a846d63aec0bddba0f31bdb3b5feb5e6819e
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 22:20:22 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 22:20:22 2026 +0300
+
+    Retarget structure smoke away from fixtures
+
+diff --git a/compiler/src/compile/support/structure_kernel_smoke_runner.phs b/compiler/src/compile/support/structure_kernel_smoke_runner.phs
+index 3f2ad387..f0b1dbec 100644
+--- a/compiler/src/compile/support/structure_kernel_smoke_runner.phs
++++ b/compiler/src/compile/support/structure_kernel_smoke_runner.phs
+@@ -12,7 +12,7 @@ function structure_kernel_run_smoke(): bool {
+ 	}
+ 
+ 	$batch PipelineBatchConfig = new PipelineBatchConfig();
+-	$batch->project_root = "../fixtures";
++	$batch->project_root = "../tests/smoke/structure_kernel";
+ 	$batch->build_root = $outputRoot . "/compiler_project_runner";
+ 	$batch->run_labels[] = "return_42";
+ 

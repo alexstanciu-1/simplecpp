@@ -1,0 +1,20 @@
+{
+  "native_seconds": [
+    7.018727943010163,
+    5.520329802995548,
+    5.812096721987473
+  ],
+  "median_native_seconds": 5.812096721987473,
+  "median_with_assumed_frontend_seconds": 7.312096721987473,
+  "objects_per_trial": 14,
+  "pch_rebuilds": 0,
+  "signatures_changed": 9,
+  "calls_changed": 16,
+  "source_files_changed": 2,
+  "external_source_hash_differences": [],
+  "scratch_non_entrypoint_phs_differences": [],
+  "extra_scratch_phs_files": [],
+  "restored_smoke_passed": true,
+  "restored_ninja_no_op": true,
+  "limitation": "historical-shaped signature propagation, not a replay of the entire int64-plus commit; arithmetic fixture blocked in both retained original-object and current layouts"
+}

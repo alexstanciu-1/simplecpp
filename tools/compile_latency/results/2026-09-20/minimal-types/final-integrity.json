@@ -1,0 +1,12 @@
+{
+  "external_mismatches": [],
+  "scratch_phs_mismatches_except_instrumented_main": [],
+  "main_and_catalog_restored": true,
+  "generation_idempotent": true,
+  "native_noop": true,
+  "policy_frozen_during_replays": true,
+  "all_current_original_types_published": true,
+  "type_count": 485,
+  "aggregate_headers_reachable": false,
+  "runtime_only_pch": true
+}

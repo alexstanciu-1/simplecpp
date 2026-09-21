@@ -1,0 +1,16 @@
+--- before/__callable/llvm_text_from_plan_group_17.cpp
++++ after/__callable/llvm_text_from_plan_group_17.cpp
+@@ -72,7 +72,12 @@
+ 	string_t returnType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_llvm_type_for_type_ref(symbol->return_type_ref_id));
+ 	string_t operandType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_llvm_type_for_type_ref(cast<int_t<std::uint32_t>>(leftTypeRefId)));
+ 	string_t resultName = required_cast<string_t>(__latency_fn_llvm_text_from_plan_binary_result_name_for_operator(operatorRow, static_cast<int_t<> >(1)));
+-	return (string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("(") + cast<string_t>(__latency_fn_llvm_text_from_plan_parameter_signature_text(symbols, symbol)) + string_t(") {\n") + string_t("entry:\n") + string_t("  ") + cast<string_t>(resultName) + string_t(" = ") + cast<string_t>(__latency_fn_llvm_text_from_plan_binary_instruction_for_operator(operatorRow)) + string_t(" ") + cast<string_t>(operandType) + string_t(" ") + cast<string_t>(leftOperand) + string_t(", ") + cast<string_t>(rightOperand) + string_t("\n") + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(resultName) + string_t("\n") + string_t("}\n\n"));
++	string_t text = required_cast<string_t>((string_t("define ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("(") + cast<string_t>(__latency_fn_llvm_text_from_plan_parameter_signature_text(symbols, symbol)) + string_t(") {\n")));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  ") + cast<string_t>(resultName) + string_t(" = ") + cast<string_t>(__latency_fn_llvm_text_from_plan_binary_instruction_for_operator(operatorRow)) + string_t(" ") + cast<string_t>(operandType) + string_t(" ") + cast<string_t>(leftOperand) + string_t(", ") + cast<string_t>(rightOperand) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(resultName) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("}\n\n"));
++	return text;
+ }
+ 
+ }

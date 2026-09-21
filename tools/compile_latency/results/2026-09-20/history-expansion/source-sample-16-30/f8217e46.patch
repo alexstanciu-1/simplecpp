@@ -1,0 +1,1572 @@
+diff --git a/compiler/src/compile/model/project_symbol_index.phs b/compiler/src/compile/model/project_symbol_index.phs
+index 89a8b7dc..5d2d1452 100644
+--- a/compiler/src/compile/model/project_symbol_index.phs
++++ b/compiler/src/compile/model/project_symbol_index.phs
+@@ -80,12 +80,6 @@ final class project_symbol_index {
+ 		return frontend_body_summaries::literal_status_ready($literalStatusId);
+ 	}
+ 
+-	public static function operator_has_feature(uint16 $operatorId, uint16 $featureId): bool {
+-		$operatorRow SemanticOperatorLookupRow = semantic_operator_lookup::row_by_operator_id($operatorId);
+-		return (int)$operatorRow->operator_id > 0
+-			&& (int)$operatorRow->feature_id === (int)$featureId;
+-	}
+-
+ 	public static function update_lookup_policy(ProjectSymbolIndex $index): void {
+ 		if ((int)$index->symbol_count > 32) {
+ 			$index->lookup_policy_status_id = project_symbol_index::lookup_policy_index_recommended_id();
+@@ -670,199 +664,6 @@ final class project_symbol_index {
+ 		return $literal;
+ 	}
+ 
+-	public static function fill_return_binary_literal_summary(ProjectSymbolIndexRow &$row, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->node_id === 0) {
+-				return;
+-			}
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_binary_id()) {
+-					return;
+-				}
+-				$binary FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $valueNode->payload_row_id, $counters);
+-				$operatorRow SemanticOperatorLookupRow = semantic_operator_lookup::row_by_operator_id($binary->operator_id);
+-				if ((int)$operatorRow->operator_id === 0) {
+-					return;
+-				}
+-				$leftNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->left_node_id, $counters);
+-				$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->right_node_id, $counters);
+-				if ((int)$leftNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$leftNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()
+-					|| (int)$rightNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$rightNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$leftLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $leftNode->payload_row_id, $counters);
+-				$rightLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $rightNode->payload_row_id, $counters);
+-				if ((int)$leftLiteral->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($leftLiteral->literal_status_id)
+-					|| (int)$rightLiteral->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($rightLiteral->literal_status_id)) {
+-					return;
+-				}
+-				$row->return_binary_literal_node_id = $valueNode->node_id;
+-				$row->return_binary_literal_operator_id = $binary->operator_id;
+-				$row->return_binary_literal_type_ref_id = $binary->inferred_type_ref_id;
+-				$row->return_binary_left_literal_node_id = $leftNode->node_id;
+-				$row->return_binary_left_literal_type_ref_id = $leftLiteral->type_ref_id;
+-				$row->return_binary_left_literal_numeric_payload = $leftLiteral->numeric_payload;
+-				$row->return_binary_left_literal_status_id = $leftLiteral->literal_status_id;
+-				$row->return_binary_right_literal_node_id = $rightNode->node_id;
+-				$row->return_binary_right_literal_type_ref_id = $rightLiteral->type_ref_id;
+-				$row->return_binary_right_literal_numeric_payload = $rightLiteral->numeric_payload;
+-				$row->return_binary_right_literal_status_id = $rightLiteral->literal_status_id;
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_return_binary_literal_summary(ProjectSymbolIndexRow $row): bool {
+-		$operatorRow SemanticOperatorLookupRow = semantic_operator_lookup::row_by_operator_id($row->return_binary_literal_operator_id);
+-		return (int)$row->return_binary_literal_node_id > 0
+-			&& (int)$operatorRow->operator_id > 0
+-			&& (int)$row->return_binary_literal_type_ref_id > 0
+-			&& (int)$row->return_binary_left_literal_node_id > 0
+-			&& (int)$row->return_binary_left_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->return_binary_left_literal_status_id)
+-			&& (int)$row->return_binary_right_literal_node_id > 0
+-			&& (int)$row->return_binary_right_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->return_binary_right_literal_status_id);
+-	}
+-
+-	public static function fill_scalar_assignment_binary_return_summary(ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$localNameRange SourceRangeRow = [];
+-		$localDeclarationNode FrontendNodeRow = [];
+-		$initialLiteralNode FrontendNodeRow = [];
+-		$initialLiteral FrontendLiteralPayloadRow = [];
+-		$assignmentNode FrontendNodeRow = [];
+-		$assignmentLiteralNode FrontendNodeRow = [];
+-		$assignmentLiteral FrontendLiteralPayloadRow = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()
+-				&& (int)$localDeclarationNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$localNameRange = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$localNameRange->source_range_id === 0
+-					|| (int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$localDeclarationNode = $statementNode;
+-				$initialLiteralNode = $valueNode;
+-				$initialLiteral = $literal;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_assignment_id()
+-				&& (int)$localDeclarationNode->node_id > 0
+-				&& (int)$assignmentNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$targetRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if (!frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $targetRange)
+-					|| (int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$assignmentNode = $statementNode;
+-				$assignmentLiteralNode = $valueNode;
+-				$assignmentLiteral = $literal;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& (int)$assignmentNode->node_id > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_binary_id()) {
+-					return;
+-				}
+-				$binary FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $valueNode->payload_row_id, $counters);
+-				$leftNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->left_node_id, $counters);
+-				$leftRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $leftNode, $counters);
+-				if (!frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $leftRange)) {
+-					return;
+-				}
+-				$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->right_node_id, $counters);
+-				if ((int)$rightNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$rightNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$rightLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $rightNode->payload_row_id, $counters);
+-				if ((int)$rightLiteral->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($rightLiteral->literal_status_id)) {
+-					return;
+-				}
+-				$row->scalar_assignment_local_declaration_node_id = $localDeclarationNode->node_id;
+-				$row->scalar_assignment_initial_literal_node_id = $initialLiteralNode->node_id;
+-				$row->scalar_assignment_initial_literal_type_ref_id = $initialLiteral->type_ref_id;
+-				$row->scalar_assignment_initial_literal_numeric_payload = $initialLiteral->numeric_payload;
+-				$row->scalar_assignment_initial_literal_status_id = $initialLiteral->literal_status_id;
+-				$row->scalar_assignment_node_id = $assignmentNode->node_id;
+-				$row->scalar_assignment_literal_node_id = $assignmentLiteralNode->node_id;
+-				$row->scalar_assignment_literal_type_ref_id = $assignmentLiteral->type_ref_id;
+-				$row->scalar_assignment_literal_numeric_payload = $assignmentLiteral->numeric_payload;
+-				$row->scalar_assignment_literal_status_id = $assignmentLiteral->literal_status_id;
+-				$row->scalar_assignment_binary_node_id = $valueNode->node_id;
+-				$row->scalar_assignment_binary_operator_id = $binary->operator_id;
+-				$row->scalar_assignment_binary_type_ref_id = $binary->inferred_type_ref_id;
+-				$row->scalar_assignment_binary_right_literal_node_id = $rightNode->node_id;
+-				$row->scalar_assignment_binary_right_literal_type_ref_id = $rightLiteral->type_ref_id;
+-				$row->scalar_assignment_binary_right_literal_numeric_payload = $rightLiteral->numeric_payload;
+-				$row->scalar_assignment_binary_right_literal_status_id = $rightLiteral->literal_status_id;
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_scalar_assignment_binary_return_summary(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->scalar_assignment_local_declaration_node_id > 0
+-			&& (int)$row->scalar_assignment_initial_literal_node_id > 0
+-			&& (int)$row->scalar_assignment_initial_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->scalar_assignment_initial_literal_status_id)
+-			&& (int)$row->scalar_assignment_node_id > 0
+-			&& (int)$row->scalar_assignment_literal_node_id > 0
+-			&& (int)$row->scalar_assignment_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->scalar_assignment_literal_status_id)
+-			&& (int)$row->scalar_assignment_binary_node_id > 0
+-			&& (int)$row->scalar_assignment_binary_operator_id > 0
+-			&& (int)$row->scalar_assignment_binary_type_ref_id > 0
+-			&& (int)$row->scalar_assignment_binary_right_literal_node_id > 0
+-			&& (int)$row->scalar_assignment_binary_right_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->scalar_assignment_binary_right_literal_status_id);
+-	}
+-
+ 	public static function fill_direct_call_candidate_from_value_node(ProjectSymbolIndex $index, ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendNodeRow $valueNode, FrontendModelKernelCounters $counters): bool {
+ 		if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+ 			|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_call_id()) {
+@@ -959,1152 +760,6 @@ final class project_symbol_index {
+ 		return $literal;
+ 	}
+ 
+-	public static function fill_local_load_return_summary(ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$localNameRange SourceRangeRow = [];
+-		$localDeclarationNode FrontendNodeRow = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()
+-				&& (int)$localDeclarationNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$localNameRange = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				if ((int)$localNameRange->source_range_id === 0) {
+-					return;
+-				}
+-				$localDeclarationNode = $statementNode;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& (int)$localDeclarationNode->node_id > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				$returnNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $valueNode, $counters);
+-				if (!frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $returnNameRange)) {
+-					return;
+-				}
+-				$localStatement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $localDeclarationNode->payload_row_id, $counters);
+-				$initialLiteralNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $localStatement->value_node_id, $counters);
+-				$initialLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $initialLiteralNode->payload_row_id, $counters);
+-				if ((int)$initialLiteral->type_ref_id === 0) {
+-					return;
+-				}
+-				$row->local_load_declaration_node_id = $localDeclarationNode->node_id;
+-				$row->local_load_initial_literal_node_id = $initialLiteralNode->node_id;
+-				$row->local_load_initial_literal_type_ref_id = $initialLiteral->type_ref_id;
+-				$row->local_load_initial_literal_numeric_payload = $initialLiteral->numeric_payload;
+-				$row->local_load_initial_literal_status_id = $initialLiteral->literal_status_id;
+-				$row->local_load_return_node_id = $statementNode->node_id;
+-				$row->local_load_return_variable_node_id = $valueNode->node_id;
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_local_load_return_summary(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->local_load_declaration_node_id > 0
+-			&& (int)$row->local_load_initial_literal_node_id > 0
+-			&& (int)$row->local_load_initial_literal_type_ref_id > 0
+-			&& (int)$row->local_load_return_node_id > 0
+-			&& (int)$row->local_load_return_variable_node_id > 0;
+-	}
+-
+-	public static function append_local_binary_summary(ProjectSymbolIndex $index, ProjectSymbolIndexRow &$row, FrontendNodeRow $localDeclarationNode, FrontendNodeRow $initialLiteralNode, FrontendLiteralPayloadRow $initialLiteral): uint32 {
+-		$summary ProjectSymbolLocalBinarySummaryRow = [];
+-		$summary->summary_id = structure_row_ids::next_dense_id(count($index->local_binary_summaries));
+-		$summary->symbol_id = $row->symbol_id;
+-		$summary->local_ordinal = structure_row_ids::uint32_from_int((int)$row->local_binary_summary_count + 1);
+-		$summary->local_declaration_node_id = $localDeclarationNode->node_id;
+-		$summary->initial_literal_node_id = $initialLiteralNode->node_id;
+-		$summary->initial_literal_type_ref_id = $initialLiteral->type_ref_id;
+-		$summary->initial_literal_numeric_payload = $initialLiteral->numeric_payload;
+-		$summary->initial_literal_status_id = $initialLiteral->literal_status_id;
+-		$index->local_binary_summaries[] = $summary;
+-		if ((int)$row->local_binary_first_summary_id === 0) {
+-			$row->local_binary_first_summary_id = $summary->summary_id;
+-		}
+-		$row->local_binary_summary_count = structure_row_ids::uint32_from_int((int)$row->local_binary_summary_count + 1);
+-		return $summary->summary_id;
+-	}
+-
+-	public static function local_binary_operator_row_from_provider(FrontendExpressionPayloadRow $binary, uint32 $providerTypeRefId, uint32 $rightTypeRefId): SemanticOperatorLookupRow {
+-		$parsedOperatorRow SemanticOperatorLookupRow = semantic_operator_lookup::row_by_operator_id($binary->operator_id);
+-		if ((int)$parsedOperatorRow->operator_id === 0) {
+-			$empty SemanticOperatorLookupRow = new SemanticOperatorLookupRow();
+-			return $empty;
+-		}
+-		return semantic_operator_lookup::row_by_feature_id_and_type_refs($parsedOperatorRow->feature_id, $providerTypeRefId, $rightTypeRefId);
+-	}
+-
+-	public static function fill_local_binary_summary(ProjectSymbolIndex $index, ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$localNameRanges vector<SourceRangeRow> = [];
+-		$localDeclarationNodes vector<FrontendNodeRow> = [];
+-		$localInitialLiteralNodes vector<FrontendNodeRow> = [];
+-		$localInitialLiterals vector<FrontendLiteralPayloadRow> = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$localNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				$initialLiteralNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$localNameRange->source_range_id === 0
+-					|| (int)$initialLiteralNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$initialLiteralNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$initialLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $initialLiteralNode->payload_row_id, $counters);
+-				if ((int)$initialLiteral->payload_id === 0) {
+-					return;
+-				}
+-				$localNameRanges[] = $localNameRange;
+-				$localDeclarationNodes[] = $statementNode;
+-				$localInitialLiteralNodes[] = $initialLiteralNode;
+-				$localInitialLiterals[] = $initialLiteral;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& count($localDeclarationNodes) > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_binary_id()) {
+-					return;
+-				}
+-				$binary FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $valueNode->payload_row_id, $counters);
+-				$leftNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->left_node_id, $counters);
+-				$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->right_node_id, $counters);
+-				$leftNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $leftNode, $counters);
+-				if ((int)$leftNameRange->source_range_id === 0) {
+-					return;
+-				}
+-				$matchedLocalIndex int = -1;
+-				$indexLocal int = count($localNameRanges) - 1;
+-				while ($indexLocal >= 0) {
+-					$localNameRange SourceRangeRow = $localNameRanges[$indexLocal];
+-					if (frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $leftNameRange)) {
+-						$matchedLocalIndex = $indexLocal;
+-						break;
+-					}
+-					$indexLocal = $indexLocal - 1;
+-				}
+-				if ($matchedLocalIndex < 0) {
+-					return;
+-				}
+-				$rightTypeRefId uint32 = structure_row_ids::none_id();
+-				$rightLocalDeclarationNodeId uint32 = structure_row_ids::none_id();
+-				$rightLiteral FrontendLiteralPayloadRow = [];
+-				if ((int)$rightNode->row_family_id === (int)frontend_model_tables::row_family_expression_id()
+-					&& (int)$rightNode->row_kind_id === (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					$rightLiteral = frontend_model_tables::literal_by_id($model, $rightNode->payload_row_id, $counters);
+-					if ((int)$rightLiteral->payload_id === 0) {
+-						return;
+-					}
+-					$rightTypeRefId = $rightLiteral->type_ref_id;
+-				} else {
+-					$rightNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $rightNode, $counters);
+-					if ((int)$rightNameRange->source_range_id === 0) {
+-						return;
+-					}
+-					$rightLocalIndex int = count($localNameRanges) - 1;
+-					while ($rightLocalIndex >= 0) {
+-						$rightLocalNameRange SourceRangeRow = $localNameRanges[$rightLocalIndex];
+-						if (frontend_body_summaries::source_range_text_equals($sourceText, $rightLocalNameRange, $rightNameRange)) {
+-							$rightLocalDeclarationNodeId = $localDeclarationNodes[$rightLocalIndex]->node_id;
+-							$rightTypeRefId = $localInitialLiterals[$rightLocalIndex]->type_ref_id;
+-							break;
+-						}
+-						$rightLocalIndex = $rightLocalIndex - 1;
+-					}
+-					if ((int)$rightLocalDeclarationNodeId === 0) {
+-						return;
+-					}
+-				}
+-				$providerTypeRefId uint32 = $localInitialLiterals[$matchedLocalIndex]->type_ref_id;
+-				$operatorRow SemanticOperatorLookupRow = project_symbol_index::local_binary_operator_row_from_provider($binary, $providerTypeRefId, $rightTypeRefId);
+-				if ((int)$operatorRow->operator_id === 0) {
+-					return;
+-				}
+-				$row->local_binary_return_local_declaration_node_id = $localDeclarationNodes[$matchedLocalIndex]->node_id;
+-				$row->local_binary_node_id = $valueNode->node_id;
+-				if ((int)$rightLocalDeclarationNodeId > 0) {
+-					$row->local_binary_right_local_declaration_node_id = $rightLocalDeclarationNodeId;
+-				} else {
+-					$row->local_binary_right_literal_node_id = $rightNode->node_id;
+-					$row->local_binary_right_literal_type_ref_id = $rightLiteral->type_ref_id;
+-					$row->local_binary_right_literal_numeric_payload = $rightLiteral->numeric_payload;
+-					$row->local_binary_right_literal_status_id = $rightLiteral->literal_status_id;
+-				}
+-				$row->local_binary_operator_id = $operatorRow->operator_id;
+-				$row->local_binary_provider_type_ref_id = $providerTypeRefId;
+-				$row->local_binary_type_ref_id = frontend_model_builder::operator_result_type_ref_for_left($operatorRow, $providerTypeRefId);
+-				$localIndex int = 0;
+-				while ($localIndex < count($localDeclarationNodes)) {
+-					project_symbol_index::append_local_binary_summary($index, $row, $localDeclarationNodes[$localIndex], $localInitialLiteralNodes[$localIndex], $localInitialLiterals[$localIndex]);
+-					$localIndex = $localIndex + 1;
+-				}
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_local_binary_summary(ProjectSymbolIndex $index, ProjectSymbolIndexRow $row): bool {
+-		$hasRightLiteral bool = (int)$row->local_binary_right_literal_node_id > 0
+-			&& (int)$row->local_binary_right_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->local_binary_right_literal_status_id);
+-		$hasRightLocal bool = (int)$row->local_binary_right_local_declaration_node_id > 0;
+-		if ((int)$row->local_binary_first_summary_id === 0
+-			|| (int)$row->local_binary_summary_count === 0
+-			|| (int)$row->local_binary_return_local_declaration_node_id === 0
+-			|| (int)$row->local_binary_node_id === 0
+-			|| (!$hasRightLiteral && !$hasRightLocal)
+-			|| (int)$row->local_binary_operator_id === 0
+-			|| (int)$row->local_binary_provider_type_ref_id === 0
+-			|| (int)$row->local_binary_type_ref_id === 0) {
+-			return false;
+-		}
+-		$startIndex int = structure_row_ids::dense_index($row->local_binary_first_summary_id);
+-		$endIndex int = $startIndex + (int)$row->local_binary_summary_count;
+-		return $startIndex >= 0 && $endIndex <= count($index->local_binary_summaries);
+-	}
+-
+-	public static function local_binary_summary_rows(ProjectSymbolIndex $index, ProjectSymbolIndexRow $row): vector<ProjectSymbolLocalBinarySummaryRow> {
+-		$rows vector<ProjectSymbolLocalBinarySummaryRow> = [];
+-		if (!project_symbol_index::symbol_has_local_binary_summary($index, $row)) {
+-			return $rows;
+-		}
+-		vector_reserve($rows, (int)$row->local_binary_summary_count);
+-		$startIndex int = structure_row_ids::dense_index($row->local_binary_first_summary_id);
+-		$endIndex int = $startIndex + (int)$row->local_binary_summary_count;
+-		$indexLocal int = $startIndex;
+-		while ($indexLocal < $endIndex) {
+-			$summary ProjectSymbolLocalBinarySummaryRow = $index->local_binary_summaries[$indexLocal];
+-			if ((int)$summary->symbol_id === (int)$row->symbol_id) {
+-				$rows[] = $summary;
+-			}
+-			$indexLocal = $indexLocal + 1;
+-		}
+-		return $rows;
+-	}
+-
+-	public static function fill_parameter_binary_summary(ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0
+-			|| (int)$declaration->body_node_id === 0
+-			|| (int)$declaration->parameter_list_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$parameterNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $declaration->parameter_list_node_id, $counters);
+-		$parameterNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $parameterNode, $counters);
+-		if ((int)$parameterNameRange->source_range_id === 0) {
+-			return;
+-		}
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_binary_id()) {
+-					return;
+-				}
+-				$binary FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $valueNode->payload_row_id, $counters);
+-				if (!project_symbol_index::operator_has_feature($binary->operator_id, type_capability_readiness::feature_binary_operator_plus_id())) {
+-					return;
+-				}
+-				$leftNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->left_node_id, $counters);
+-				$leftNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $leftNode, $counters);
+-				if (!frontend_body_summaries::source_range_text_equals($sourceText, $parameterNameRange, $leftNameRange)) {
+-					return;
+-				}
+-				$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->right_node_id, $counters);
+-				if ((int)$rightNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$rightNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$rightLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $rightNode->payload_row_id, $counters);
+-				if ((int)$rightLiteral->payload_id === 0) {
+-					return;
+-				}
+-				$row->parameter_binary_node_id = $valueNode->node_id;
+-				$row->parameter_binary_right_literal_node_id = $rightNode->node_id;
+-				$row->parameter_binary_right_literal_type_ref_id = $rightLiteral->type_ref_id;
+-				$row->parameter_binary_right_literal_numeric_payload = $rightLiteral->numeric_payload;
+-				$row->parameter_binary_right_literal_status_id = $rightLiteral->literal_status_id;
+-				$row->parameter_binary_operator_id = $binary->operator_id;
+-				$row->parameter_binary_type_ref_id = $binary->inferred_type_ref_id;
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_parameter_binary_summary(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->parameter_count === 1
+-			&& (int)$row->parameter_binary_node_id > 0
+-			&& (int)$row->parameter_binary_right_literal_node_id > 0
+-			&& (int)$row->parameter_binary_right_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->parameter_binary_right_literal_status_id)
+-			&& project_symbol_index::operator_has_feature($row->parameter_binary_operator_id, type_capability_readiness::feature_binary_operator_plus_id())
+-			&& (int)$row->parameter_binary_type_ref_id > 0;
+-	}
+-
+-	public static function parameter_binary_right_literal_node_from_symbol_summary(ProjectSymbolIndexRow $row): FrontendNodeRow {
+-		if (!project_symbol_index::symbol_has_parameter_binary_summary($row)) {
+-			$empty FrontendNodeRow = [];
+-			return $empty;
+-		}
+-		$node FrontendNodeRow = [];
+-		$node->node_id = $row->parameter_binary_right_literal_node_id;
+-		$node->row_family_id = frontend_model_tables::row_family_expression_id();
+-		$node->row_kind_id = frontend_model_tables::row_kind_expression_literal_id();
+-		return $node;
+-	}
+-
+-	public static function parameter_binary_right_literal_payload_from_symbol_summary(ProjectSymbolIndexRow $row): FrontendLiteralPayloadRow {
+-		$literal FrontendLiteralPayloadRow = [];
+-		if (!project_symbol_index::symbol_has_parameter_binary_summary($row)) {
+-			return $literal;
+-		}
+-		$literal->type_ref_id = $row->parameter_binary_right_literal_type_ref_id;
+-		$literal->numeric_payload = $row->parameter_binary_right_literal_numeric_payload;
+-		$literal->literal_status_id = $row->parameter_binary_right_literal_status_id;
+-		return $literal;
+-	}
+-
+-	public static function fill_echo_literal_return_summary(ProjectSymbolIndexRow &$row, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0
+-			|| (int)$declaration->body_node_id === 0
+-			|| !project_symbol_index::symbol_has_return_literal_summary($row)) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$pendingEchoNode FrontendNodeRow = [];
+-		$pendingEchoLiteralNode FrontendNodeRow = [];
+-		$pendingEchoLiteral FrontendLiteralPayloadRow = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_echo_id()) {
+-				if ((int)$pendingEchoNode->node_id > 0) {
+-					return;
+-				}
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()
+-					|| (int)$valueNode->next_sibling_node_id !== 0) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$pendingEchoNode = $statementNode;
+-				$pendingEchoLiteralNode = $valueNode;
+-				$pendingEchoLiteral = $literal;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& (int)$pendingEchoNode->node_id > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->node_id !== (int)$row->return_literal_node_id) {
+-					return;
+-				}
+-				$row->echo_statement_node_id = $pendingEchoNode->node_id;
+-				$row->echo_literal_node_id = $pendingEchoLiteralNode->node_id;
+-				$row->echo_literal_payload_id = $pendingEchoLiteral->payload_id;
+-				$row->echo_literal_source_range_id = $pendingEchoLiteral->source_range_id;
+-				$row->echo_literal_kind_id = $pendingEchoLiteral->literal_kind_id;
+-				$row->echo_literal_type_ref_id = $pendingEchoLiteral->type_ref_id;
+-				$row->echo_literal_numeric_payload = $pendingEchoLiteral->numeric_payload;
+-				$row->echo_literal_status_id = $pendingEchoLiteral->literal_status_id;
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_echo_literal_return_summary(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->echo_statement_node_id > 0
+-			&& (int)$row->echo_literal_node_id > 0
+-			&& (int)$row->echo_literal_payload_id > 0
+-			&& (int)$row->echo_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->echo_literal_status_id)
+-			&& project_symbol_index::symbol_has_return_literal_summary($row);
+-	}
+-
+-	public static function echo_statement_node_from_symbol_summary(ProjectSymbolIndexRow $row): FrontendNodeRow {
+-		if (!project_symbol_index::symbol_has_echo_literal_return_summary($row)) {
+-			$empty FrontendNodeRow = [];
+-			return $empty;
+-		}
+-		$node FrontendNodeRow = [];
+-		$node->node_id = $row->echo_statement_node_id;
+-		$node->row_family_id = frontend_model_tables::row_family_statement_id();
+-		$node->row_kind_id = frontend_model_tables::row_kind_statement_echo_id();
+-		return $node;
+-	}
+-
+-	public static function echo_literal_node_from_symbol_summary(ProjectSymbolIndexRow $row): FrontendNodeRow {
+-		if (!project_symbol_index::symbol_has_echo_literal_return_summary($row)) {
+-			$empty FrontendNodeRow = [];
+-			return $empty;
+-		}
+-		$node FrontendNodeRow = [];
+-		$node->node_id = $row->echo_literal_node_id;
+-		$node->row_family_id = frontend_model_tables::row_family_expression_id();
+-		$node->row_kind_id = frontend_model_tables::row_kind_expression_literal_id();
+-		$node->payload_row_id = $row->echo_literal_payload_id;
+-		$node->source_range_id = $row->echo_literal_source_range_id;
+-		return $node;
+-	}
+-
+-	public static function echo_literal_payload_from_symbol_summary(ProjectSymbolIndexRow $row): FrontendLiteralPayloadRow {
+-		$literal FrontendLiteralPayloadRow = [];
+-		if (!project_symbol_index::symbol_has_echo_literal_return_summary($row)) {
+-			return $literal;
+-		}
+-		$literal->payload_id = $row->echo_literal_payload_id;
+-		$literal->literal_kind_id = $row->echo_literal_kind_id;
+-		$literal->type_ref_id = $row->echo_literal_type_ref_id;
+-		$literal->numeric_payload = $row->echo_literal_numeric_payload;
+-		$literal->literal_status_id = $row->echo_literal_status_id;
+-		$literal->source_range_id = $row->echo_literal_source_range_id;
+-		return $literal;
+-	}
+-
+-	public static function fill_if_assignment_return_summary(ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$localNameRange SourceRangeRow = [];
+-		$localDeclarationNode FrontendNodeRow = [];
+-		$initialLiteralNode FrontendNodeRow = [];
+-		$initialLiteral FrontendLiteralPayloadRow = [];
+-		$ifNode FrontendNodeRow = [];
+-		$conditionLiteralNode FrontendNodeRow = [];
+-		$conditionLiteral FrontendLiteralPayloadRow = [];
+-		$ifBodyFirstNodeId uint32 = structure_row_ids::none_id();
+-		$nestedAssignmentNode FrontendNodeRow = [];
+-		$nestedAssignmentLiteralNode FrontendNodeRow = [];
+-		$nestedAssignmentLiteral FrontendLiteralPayloadRow = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()
+-				&& (int)$localDeclarationNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$localNameRange = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				$initialNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$localNameRange->source_range_id === 0
+-					|| (int)$initialNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$initialNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $initialNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$localDeclarationNode = $statementNode;
+-				$initialLiteralNode = $initialNode;
+-				$initialLiteral = $literal;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_if_id()
+-				&& (int)$localDeclarationNode->node_id > 0
+-				&& (int)$ifNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$conditionNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->condition_node_id, $counters);
+-				if ((int)$conditionNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$conditionNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()
+-					|| (int)$statement->body_first_node_id === 0) {
+-					return;
+-				}
+-				$condition FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $conditionNode->payload_row_id, $counters);
+-				$bodyNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->body_first_node_id, $counters);
+-				if ((int)$condition->payload_id === 0
+-					|| !type_capability_readiness::condition_truthiness_supported_for_type_ref($condition->type_ref_id)
+-					|| (int)$bodyNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()
+-					|| (int)$bodyNode->row_kind_id !== (int)frontend_model_tables::row_kind_statement_assignment_id()) {
+-					return;
+-				}
+-				$bodyStatement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $bodyNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $bodyStatement->target_node_id, $counters);
+-				$targetNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $bodyStatement->value_node_id, $counters);
+-				if (!frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $targetNameRange)
+-					|| (int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$assignmentLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$assignmentLiteral->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($assignmentLiteral->literal_status_id)) {
+-					return;
+-				}
+-				$ifNode = $statementNode;
+-				$conditionLiteralNode = $conditionNode;
+-				$conditionLiteral = $condition;
+-				$ifBodyFirstNodeId = $statement->body_first_node_id;
+-				$nestedAssignmentNode = $bodyNode;
+-				$nestedAssignmentLiteralNode = $valueNode;
+-				$nestedAssignmentLiteral = $assignmentLiteral;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& (int)$ifNode->node_id > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				$returnNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $valueNode, $counters);
+-				if (!frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $returnNameRange)) {
+-					return;
+-				}
+-				$row->if_local_declaration_node_id = $localDeclarationNode->node_id;
+-				$row->if_initial_literal_node_id = $initialLiteralNode->node_id;
+-				$row->if_initial_literal_type_ref_id = $initialLiteral->type_ref_id;
+-				$row->if_initial_literal_numeric_payload = $initialLiteral->numeric_payload;
+-				$row->if_initial_literal_status_id = $initialLiteral->literal_status_id;
+-				$row->if_statement_node_id = $ifNode->node_id;
+-				$row->if_condition_literal_node_id = $conditionLiteralNode->node_id;
+-				$row->if_condition_literal_type_ref_id = $conditionLiteral->type_ref_id;
+-				$row->if_condition_literal_numeric_payload = $conditionLiteral->numeric_payload;
+-				$row->if_condition_literal_status_id = $conditionLiteral->literal_status_id;
+-				$row->if_body_first_node_id = $ifBodyFirstNodeId;
+-				$row->if_nested_assignment_node_id = $nestedAssignmentNode->node_id;
+-				$row->if_nested_assignment_literal_node_id = $nestedAssignmentLiteralNode->node_id;
+-				$row->if_nested_assignment_literal_type_ref_id = $nestedAssignmentLiteral->type_ref_id;
+-				$row->if_nested_assignment_literal_numeric_payload = $nestedAssignmentLiteral->numeric_payload;
+-				$row->if_nested_assignment_literal_status_id = $nestedAssignmentLiteral->literal_status_id;
+-				$row->if_return_node_id = $statementNode->node_id;
+-				$row->if_return_variable_node_id = $valueNode->node_id;
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_if_assignment_return_summary(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->if_local_declaration_node_id > 0
+-			&& (int)$row->if_initial_literal_node_id > 0
+-			&& (int)$row->if_initial_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_initial_literal_status_id)
+-			&& (int)$row->if_statement_node_id > 0
+-			&& (int)$row->if_condition_literal_node_id > 0
+-			&& type_capability_readiness::condition_truthiness_supported_for_type_ref($row->if_condition_literal_type_ref_id)
+-			&& (int)$row->if_body_first_node_id > 0
+-			&& (int)$row->if_nested_assignment_node_id > 0
+-			&& (int)$row->if_nested_assignment_literal_node_id > 0
+-			&& (int)$row->if_nested_assignment_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_nested_assignment_literal_status_id)
+-			&& (int)$row->if_return_node_id > 0
+-			&& (int)$row->if_return_variable_node_id > 0;
+-	}
+-
+-	public static function return_literal_from_statement_node(FrontendModel $model, uint32 $statementNodeId, FrontendNodeRow &$returnNode, FrontendNodeRow &$literalNode, FrontendLiteralPayloadRow &$literal): bool {
+-		if ((int)$statementNodeId === 0) {
+-			return false;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-		if ((int)$statementNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()
+-			|| (int)$statementNode->row_kind_id !== (int)frontend_model_tables::row_kind_statement_return_id()) {
+-			return false;
+-		}
+-		$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-		$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-		if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-			|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-			return false;
+-		}
+-		$valueLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-		if ((int)$valueLiteral->payload_id === 0
+-			|| !project_symbol_index::literal_status_ready($valueLiteral->literal_status_id)) {
+-			return false;
+-		}
+-		$returnNode = $statementNode;
+-		$literalNode = $valueNode;
+-		$literal = $valueLiteral;
+-		return true;
+-	}
+-
+-	public static function fill_if_literal_return_summary(ProjectSymbolIndexRow &$row, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$ifNode FrontendNodeRow = [];
+-		$conditionLiteralNode FrontendNodeRow = [];
+-		$conditionLiteral FrontendLiteralPayloadRow = [];
+-		$ifBodyFirstNodeId uint32 = structure_row_ids::none_id();
+-		$thenReturnNode FrontendNodeRow = [];
+-		$thenLiteralNode FrontendNodeRow = [];
+-		$thenLiteral FrontendLiteralPayloadRow = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_if_id()
+-				&& (int)$ifNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$conditionNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->condition_node_id, $counters);
+-				if ((int)$conditionNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$conditionNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()
+-					|| (int)$statement->body_first_node_id === 0) {
+-					return;
+-				}
+-				$condition FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $conditionNode->payload_row_id, $counters);
+-				$bodyNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->body_first_node_id, $counters);
+-				if ((int)$condition->payload_id === 0
+-					|| !type_capability_readiness::condition_truthiness_supported_for_type_ref($condition->type_ref_id)
+-					|| !project_symbol_index::literal_status_ready($condition->literal_status_id)
+-					|| (int)$bodyNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()
+-					|| (int)$bodyNode->row_kind_id !== (int)frontend_model_tables::row_kind_statement_return_id()) {
+-					return;
+-				}
+-				$bodyStatement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $bodyNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $bodyStatement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$ifNode = $statementNode;
+-				$conditionLiteralNode = $conditionNode;
+-				$conditionLiteral = $condition;
+-				$ifBodyFirstNodeId = $statement->body_first_node_id;
+-				$thenReturnNode = $bodyNode;
+-				$thenLiteralNode = $valueNode;
+-				$thenLiteral = $literal;
+-				if ((int)$statement->else_body_first_node_id > 0
+-					&& (int)$statement->else_body_first_node_id === (int)$statement->else_body_last_node_id) {
+-					$elseReturnNode FrontendNodeRow = [];
+-					$elseLiteralNode FrontendNodeRow = [];
+-					$elseLiteral FrontendLiteralPayloadRow = [];
+-					if (!project_symbol_index::return_literal_from_statement_node($model, $statement->else_body_first_node_id, $elseReturnNode, $elseLiteralNode, $elseLiteral)) {
+-						return;
+-					}
+-					$row->if_return_statement_node_id = $ifNode->node_id;
+-					$row->if_return_condition_literal_node_id = $conditionLiteralNode->node_id;
+-					$row->if_return_condition_literal_type_ref_id = $conditionLiteral->type_ref_id;
+-					$row->if_return_condition_literal_numeric_payload = $conditionLiteral->numeric_payload;
+-					$row->if_return_condition_literal_status_id = $conditionLiteral->literal_status_id;
+-					$row->if_return_body_first_node_id = $ifBodyFirstNodeId;
+-					$row->if_return_then_node_id = $thenReturnNode->node_id;
+-					$row->if_return_then_literal_node_id = $thenLiteralNode->node_id;
+-					$row->if_return_then_literal_type_ref_id = $thenLiteral->type_ref_id;
+-					$row->if_return_then_literal_numeric_payload = $thenLiteral->numeric_payload;
+-					$row->if_return_then_literal_status_id = $thenLiteral->literal_status_id;
+-					$row->if_return_fallback_node_id = $elseReturnNode->node_id;
+-					$row->if_return_fallback_literal_node_id = $elseLiteralNode->node_id;
+-					$row->if_return_fallback_literal_type_ref_id = $elseLiteral->type_ref_id;
+-					$row->if_return_fallback_literal_numeric_payload = $elseLiteral->numeric_payload;
+-					$row->if_return_fallback_literal_status_id = $elseLiteral->literal_status_id;
+-					return;
+-				}
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& (int)$ifNode->node_id > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$row->if_return_statement_node_id = $ifNode->node_id;
+-				$row->if_return_condition_literal_node_id = $conditionLiteralNode->node_id;
+-				$row->if_return_condition_literal_type_ref_id = $conditionLiteral->type_ref_id;
+-				$row->if_return_condition_literal_numeric_payload = $conditionLiteral->numeric_payload;
+-				$row->if_return_condition_literal_status_id = $conditionLiteral->literal_status_id;
+-				$row->if_return_body_first_node_id = $ifBodyFirstNodeId;
+-				$row->if_return_then_node_id = $thenReturnNode->node_id;
+-				$row->if_return_then_literal_node_id = $thenLiteralNode->node_id;
+-				$row->if_return_then_literal_type_ref_id = $thenLiteral->type_ref_id;
+-				$row->if_return_then_literal_numeric_payload = $thenLiteral->numeric_payload;
+-				$row->if_return_then_literal_status_id = $thenLiteral->literal_status_id;
+-				$row->if_return_fallback_node_id = $statementNode->node_id;
+-				$row->if_return_fallback_literal_node_id = $valueNode->node_id;
+-				$row->if_return_fallback_literal_type_ref_id = $literal->type_ref_id;
+-				$row->if_return_fallback_literal_numeric_payload = $literal->numeric_payload;
+-				$row->if_return_fallback_literal_status_id = $literal->literal_status_id;
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_if_literal_return_summary(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->if_return_statement_node_id > 0
+-			&& (int)$row->if_return_condition_literal_node_id > 0
+-			&& type_capability_readiness::condition_truthiness_supported_for_type_ref($row->if_return_condition_literal_type_ref_id)
+-			&& project_symbol_index::literal_status_ready($row->if_return_condition_literal_status_id)
+-			&& (int)$row->if_return_body_first_node_id > 0
+-			&& (int)$row->if_return_then_node_id > 0
+-			&& (int)$row->if_return_then_literal_node_id > 0
+-			&& (int)$row->if_return_then_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_return_then_literal_status_id)
+-			&& (int)$row->if_return_fallback_node_id > 0
+-			&& (int)$row->if_return_fallback_literal_node_id > 0
+-			&& (int)$row->if_return_fallback_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_return_fallback_literal_status_id);
+-	}
+-
+-	public static function fill_if_local_bool_return_summary(ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$localDeclarationNode FrontendNodeRow = [];
+-		$localNameRange SourceRangeRow = [];
+-		$initialLiteralNode FrontendNodeRow = [];
+-		$initialLiteral FrontendLiteralPayloadRow = [];
+-		$ifNode FrontendNodeRow = [];
+-		$conditionVariableNode FrontendNodeRow = [];
+-		$ifBodyFirstNodeId uint32 = structure_row_ids::none_id();
+-		$thenReturnNode FrontendNodeRow = [];
+-		$thenLiteralNode FrontendNodeRow = [];
+-		$thenLiteral FrontendLiteralPayloadRow = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()
+-				&& (int)$localDeclarationNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				$localNameRange = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				if ((int)$localNameRange->source_range_id === 0
+-					|| (int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !type_capability_readiness::condition_truthiness_supported_for_type_ref($literal->type_ref_id)
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$localDeclarationNode = $statementNode;
+-				$initialLiteralNode = $valueNode;
+-				$initialLiteral = $literal;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_if_id()
+-				&& (int)$localDeclarationNode->node_id > 0
+-				&& (int)$ifNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$conditionNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->condition_node_id, $counters);
+-				if ((int)$conditionNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$conditionNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_variable_id()
+-					|| (int)$statement->body_first_node_id === 0) {
+-					return;
+-				}
+-				$conditionRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $conditionNode, $counters);
+-				if (!frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $conditionRange)) {
+-					return;
+-				}
+-				$conditionExpression FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $conditionNode->payload_row_id, $counters);
+-				if (!type_capability_readiness::condition_truthiness_supported_for_type_ref($conditionExpression->inferred_type_ref_id)) {
+-					return;
+-				}
+-				$bodyNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->body_first_node_id, $counters);
+-				if ((int)$bodyNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()
+-					|| (int)$bodyNode->row_kind_id !== (int)frontend_model_tables::row_kind_statement_return_id()) {
+-					return;
+-				}
+-				$bodyStatement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $bodyNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $bodyStatement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$ifNode = $statementNode;
+-				$conditionVariableNode = $conditionNode;
+-				$ifBodyFirstNodeId = $statement->body_first_node_id;
+-				$thenReturnNode = $bodyNode;
+-				$thenLiteralNode = $valueNode;
+-				$thenLiteral = $literal;
+-				if ((int)$statement->else_body_first_node_id > 0) {
+-					if ((int)$statement->body_first_node_id !== (int)$statement->body_last_node_id
+-						|| (int)$statement->else_body_first_node_id !== (int)$statement->else_body_last_node_id) {
+-						return;
+-					}
+-					$elseReturnNode FrontendNodeRow = [];
+-					$elseLiteralNode FrontendNodeRow = [];
+-					$elseLiteral FrontendLiteralPayloadRow = [];
+-					if (!project_symbol_index::return_literal_from_statement_node($model, $statement->else_body_first_node_id, $elseReturnNode, $elseLiteralNode, $elseLiteral)) {
+-						return;
+-					}
+-					$row->if_local_return_local_declaration_node_id = $localDeclarationNode->node_id;
+-					$row->if_local_return_initial_literal_node_id = $initialLiteralNode->node_id;
+-					$row->if_local_return_initial_literal_type_ref_id = $initialLiteral->type_ref_id;
+-					$row->if_local_return_initial_literal_numeric_payload = $initialLiteral->numeric_payload;
+-					$row->if_local_return_initial_literal_status_id = $initialLiteral->literal_status_id;
+-					$row->if_local_return_statement_node_id = $ifNode->node_id;
+-					$row->if_local_return_condition_variable_node_id = $conditionVariableNode->node_id;
+-					$row->if_local_return_body_first_node_id = $ifBodyFirstNodeId;
+-					$row->if_local_return_then_node_id = $thenReturnNode->node_id;
+-					$row->if_local_return_then_literal_node_id = $thenLiteralNode->node_id;
+-					$row->if_local_return_then_literal_type_ref_id = $thenLiteral->type_ref_id;
+-					$row->if_local_return_then_literal_numeric_payload = $thenLiteral->numeric_payload;
+-					$row->if_local_return_then_literal_status_id = $thenLiteral->literal_status_id;
+-					$row->if_local_return_fallback_node_id = $elseReturnNode->node_id;
+-					$row->if_local_return_fallback_literal_node_id = $elseLiteralNode->node_id;
+-					$row->if_local_return_fallback_literal_type_ref_id = $elseLiteral->type_ref_id;
+-					$row->if_local_return_fallback_literal_numeric_payload = $elseLiteral->numeric_payload;
+-					$row->if_local_return_fallback_literal_status_id = $elseLiteral->literal_status_id;
+-					return;
+-				}
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& (int)$ifNode->node_id > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$row->if_local_return_local_declaration_node_id = $localDeclarationNode->node_id;
+-				$row->if_local_return_initial_literal_node_id = $initialLiteralNode->node_id;
+-				$row->if_local_return_initial_literal_type_ref_id = $initialLiteral->type_ref_id;
+-				$row->if_local_return_initial_literal_numeric_payload = $initialLiteral->numeric_payload;
+-				$row->if_local_return_initial_literal_status_id = $initialLiteral->literal_status_id;
+-				$row->if_local_return_statement_node_id = $ifNode->node_id;
+-				$row->if_local_return_condition_variable_node_id = $conditionVariableNode->node_id;
+-				$row->if_local_return_body_first_node_id = $ifBodyFirstNodeId;
+-				$row->if_local_return_then_node_id = $thenReturnNode->node_id;
+-				$row->if_local_return_then_literal_node_id = $thenLiteralNode->node_id;
+-				$row->if_local_return_then_literal_type_ref_id = $thenLiteral->type_ref_id;
+-				$row->if_local_return_then_literal_numeric_payload = $thenLiteral->numeric_payload;
+-				$row->if_local_return_then_literal_status_id = $thenLiteral->literal_status_id;
+-				$row->if_local_return_fallback_node_id = $statementNode->node_id;
+-				$row->if_local_return_fallback_literal_node_id = $valueNode->node_id;
+-				$row->if_local_return_fallback_literal_type_ref_id = $literal->type_ref_id;
+-				$row->if_local_return_fallback_literal_numeric_payload = $literal->numeric_payload;
+-				$row->if_local_return_fallback_literal_status_id = $literal->literal_status_id;
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_if_local_bool_return_summary(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->if_local_return_local_declaration_node_id > 0
+-			&& (int)$row->if_local_return_initial_literal_node_id > 0
+-			&& type_capability_readiness::condition_truthiness_supported_for_type_ref($row->if_local_return_initial_literal_type_ref_id)
+-			&& project_symbol_index::literal_status_ready($row->if_local_return_initial_literal_status_id)
+-			&& (int)$row->if_local_return_statement_node_id > 0
+-			&& (int)$row->if_local_return_condition_variable_node_id > 0
+-			&& (int)$row->if_local_return_body_first_node_id > 0
+-			&& (int)$row->if_local_return_then_node_id > 0
+-			&& (int)$row->if_local_return_then_literal_node_id > 0
+-			&& (int)$row->if_local_return_then_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_local_return_then_literal_status_id)
+-			&& (int)$row->if_local_return_fallback_node_id > 0
+-			&& (int)$row->if_local_return_fallback_literal_node_id > 0
+-			&& (int)$row->if_local_return_fallback_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_local_return_fallback_literal_status_id);
+-	}
+-
+-	public static function fill_if_local_binary_return_summary(ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$localNameRanges vector<SourceRangeRow> = [];
+-		$localDeclarationNodes vector<FrontendNodeRow> = [];
+-		$localInitialLiteralNodes vector<FrontendNodeRow> = [];
+-		$localInitialLiterals vector<FrontendLiteralPayloadRow> = [];
+-		$ifNode FrontendNodeRow = [];
+-		$conditionBinaryNode FrontendNodeRow = [];
+-		$conditionBinary FrontendExpressionPayloadRow = [];
+-		$conditionLeftVariableNode FrontendNodeRow = [];
+-		$conditionRightVariableNode FrontendNodeRow = [];
+-		$conditionOperatorRow SemanticOperatorLookupRow = new SemanticOperatorLookupRow();
+-		$leftLocalIndex int = -1;
+-		$rightLocalIndex int = -1;
+-		$ifBodyFirstNodeId uint32 = structure_row_ids::none_id();
+-		$thenReturnNode FrontendNodeRow = [];
+-		$thenLiteralNode FrontendNodeRow = [];
+-		$thenLiteral FrontendLiteralPayloadRow = [];
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()
+-				&& (int)$ifNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				$localNameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $targetNode, $counters);
+-				if ((int)$localNameRange->source_range_id === 0
+-					|| (int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$localNameRanges[] = $localNameRange;
+-				$localDeclarationNodes[] = $statementNode;
+-				$localInitialLiteralNodes[] = $valueNode;
+-				$localInitialLiterals[] = $literal;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_if_id()
+-				&& count($localDeclarationNodes) >= 2
+-				&& (int)$ifNode->node_id === 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$conditionNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->condition_node_id, $counters);
+-				if ((int)$conditionNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$conditionNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_binary_id()
+-					|| (int)$statement->body_first_node_id === 0) {
+-					return;
+-				}
+-				$binary FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $conditionNode->payload_row_id, $counters);
+-				if ((int)$binary->payload_id === 0
+-					|| !type_capability_readiness::condition_truthiness_supported_for_type_ref($binary->inferred_type_ref_id)) {
+-					return;
+-				}
+-				$leftNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->left_node_id, $counters);
+-				$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->right_node_id, $counters);
+-				if ((int)$leftNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$leftNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_variable_id()
+-					|| (int)$rightNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$rightNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_variable_id()) {
+-					return;
+-				}
+-				$leftRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $leftNode, $counters);
+-				$rightRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $rightNode, $counters);
+-				$index int = 0;
+-				while ($index < count($localNameRanges)) {
+-					$localNameRange SourceRangeRow = $localNameRanges[$index];
+-					if (frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $leftRange)) {
+-						$leftLocalIndex = $index;
+-					}
+-					if (frontend_body_summaries::source_range_text_equals($sourceText, $localNameRange, $rightRange)) {
+-						$rightLocalIndex = $index;
+-					}
+-					$index = $index + 1;
+-				}
+-				if ($leftLocalIndex < 0 || $rightLocalIndex < 0) {
+-					return;
+-				}
+-				$leftLiteral FrontendLiteralPayloadRow = $localInitialLiterals[$leftLocalIndex];
+-				$rightLiteral FrontendLiteralPayloadRow = $localInitialLiterals[$rightLocalIndex];
+-				$operatorRow SemanticOperatorLookupRow = project_symbol_index::local_binary_operator_row_from_provider($binary, $leftLiteral->type_ref_id, $rightLiteral->type_ref_id);
+-				if ((int)$operatorRow->operator_id === 0
+-					|| !type_capability_readiness::condition_truthiness_supported_for_type_ref($operatorRow->result_type_ref_id)
+-					|| !semantic_operator_lookup::has_lowering_adapter($operatorRow->operator_id)) {
+-					return;
+-				}
+-				$bodyNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->body_first_node_id, $counters);
+-				if ((int)$bodyNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()
+-					|| (int)$bodyNode->row_kind_id !== (int)frontend_model_tables::row_kind_statement_return_id()) {
+-					return;
+-				}
+-				$bodyStatement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $bodyNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $bodyStatement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$ifNode = $statementNode;
+-				$conditionBinaryNode = $conditionNode;
+-				$conditionBinary = $binary;
+-				$conditionLeftVariableNode = $leftNode;
+-				$conditionRightVariableNode = $rightNode;
+-				$conditionOperatorRow = $operatorRow;
+-				$ifBodyFirstNodeId = $statement->body_first_node_id;
+-				$thenReturnNode = $bodyNode;
+-				$thenLiteralNode = $valueNode;
+-				$thenLiteral = $literal;
+-				if ((int)$statement->else_body_first_node_id > 0) {
+-					if ((int)$statement->body_first_node_id !== (int)$statement->body_last_node_id
+-						|| (int)$statement->else_body_first_node_id !== (int)$statement->else_body_last_node_id) {
+-						return;
+-					}
+-					$elseReturnNode FrontendNodeRow = [];
+-					$elseLiteralNode FrontendNodeRow = [];
+-					$elseLiteral FrontendLiteralPayloadRow = [];
+-					if (!project_symbol_index::return_literal_from_statement_node($model, $statement->else_body_first_node_id, $elseReturnNode, $elseLiteralNode, $elseLiteral)) {
+-						return;
+-					}
+-					$leftLocalDeclarationNode FrontendNodeRow = $localDeclarationNodes[$leftLocalIndex];
+-					$leftInitialLiteralNode FrontendNodeRow = $localInitialLiteralNodes[$leftLocalIndex];
+-					$leftInitialLiteral FrontendLiteralPayloadRow = $localInitialLiterals[$leftLocalIndex];
+-					$rightLocalDeclarationNode FrontendNodeRow = $localDeclarationNodes[$rightLocalIndex];
+-					$rightInitialLiteralNode FrontendNodeRow = $localInitialLiteralNodes[$rightLocalIndex];
+-					$rightInitialLiteral FrontendLiteralPayloadRow = $localInitialLiterals[$rightLocalIndex];
+-					$row->if_local_binary_return_left_local_declaration_node_id = $leftLocalDeclarationNode->node_id;
+-					$row->if_local_binary_return_left_initial_literal_node_id = $leftInitialLiteralNode->node_id;
+-					$row->if_local_binary_return_left_initial_literal_type_ref_id = $leftInitialLiteral->type_ref_id;
+-					$row->if_local_binary_return_left_initial_literal_numeric_payload = $leftInitialLiteral->numeric_payload;
+-					$row->if_local_binary_return_left_initial_literal_status_id = $leftInitialLiteral->literal_status_id;
+-					$row->if_local_binary_return_right_local_declaration_node_id = $rightLocalDeclarationNode->node_id;
+-					$row->if_local_binary_return_right_initial_literal_node_id = $rightInitialLiteralNode->node_id;
+-					$row->if_local_binary_return_right_initial_literal_type_ref_id = $rightInitialLiteral->type_ref_id;
+-					$row->if_local_binary_return_right_initial_literal_numeric_payload = $rightInitialLiteral->numeric_payload;
+-					$row->if_local_binary_return_right_initial_literal_status_id = $rightInitialLiteral->literal_status_id;
+-					$row->if_local_binary_return_statement_node_id = $ifNode->node_id;
+-					$row->if_local_binary_return_condition_binary_node_id = $conditionBinaryNode->node_id;
+-					$row->if_local_binary_return_condition_left_variable_node_id = $conditionLeftVariableNode->node_id;
+-					$row->if_local_binary_return_condition_right_variable_node_id = $conditionRightVariableNode->node_id;
+-					$row->if_local_binary_return_condition_operator_id = $conditionOperatorRow->operator_id;
+-					$row->if_local_binary_return_condition_provider_type_ref_id = $conditionOperatorRow->lhs_type_ref_id;
+-					$row->if_local_binary_return_condition_result_type_ref_id = $conditionBinary->inferred_type_ref_id;
+-					$row->if_local_binary_return_body_first_node_id = $ifBodyFirstNodeId;
+-					$row->if_local_binary_return_then_node_id = $thenReturnNode->node_id;
+-					$row->if_local_binary_return_then_literal_node_id = $thenLiteralNode->node_id;
+-					$row->if_local_binary_return_then_literal_type_ref_id = $thenLiteral->type_ref_id;
+-					$row->if_local_binary_return_then_literal_numeric_payload = $thenLiteral->numeric_payload;
+-					$row->if_local_binary_return_then_literal_status_id = $thenLiteral->literal_status_id;
+-					$row->if_local_binary_return_fallback_node_id = $elseReturnNode->node_id;
+-					$row->if_local_binary_return_fallback_literal_node_id = $elseLiteralNode->node_id;
+-					$row->if_local_binary_return_fallback_literal_type_ref_id = $elseLiteral->type_ref_id;
+-					$row->if_local_binary_return_fallback_literal_numeric_payload = $elseLiteral->numeric_payload;
+-					$row->if_local_binary_return_fallback_literal_status_id = $elseLiteral->literal_status_id;
+-					return;
+-				}
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()
+-				&& (int)$ifNode->node_id > 0) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-					|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					return;
+-				}
+-				$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-				if ((int)$literal->payload_id === 0
+-					|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-					return;
+-				}
+-				$leftLocalDeclarationNode FrontendNodeRow = $localDeclarationNodes[$leftLocalIndex];
+-				$leftInitialLiteralNode FrontendNodeRow = $localInitialLiteralNodes[$leftLocalIndex];
+-				$leftInitialLiteral FrontendLiteralPayloadRow = $localInitialLiterals[$leftLocalIndex];
+-				$rightLocalDeclarationNode FrontendNodeRow = $localDeclarationNodes[$rightLocalIndex];
+-				$rightInitialLiteralNode FrontendNodeRow = $localInitialLiteralNodes[$rightLocalIndex];
+-				$rightInitialLiteral FrontendLiteralPayloadRow = $localInitialLiterals[$rightLocalIndex];
+-				$row->if_local_binary_return_left_local_declaration_node_id = $leftLocalDeclarationNode->node_id;
+-				$row->if_local_binary_return_left_initial_literal_node_id = $leftInitialLiteralNode->node_id;
+-				$row->if_local_binary_return_left_initial_literal_type_ref_id = $leftInitialLiteral->type_ref_id;
+-				$row->if_local_binary_return_left_initial_literal_numeric_payload = $leftInitialLiteral->numeric_payload;
+-				$row->if_local_binary_return_left_initial_literal_status_id = $leftInitialLiteral->literal_status_id;
+-				$row->if_local_binary_return_right_local_declaration_node_id = $rightLocalDeclarationNode->node_id;
+-				$row->if_local_binary_return_right_initial_literal_node_id = $rightInitialLiteralNode->node_id;
+-				$row->if_local_binary_return_right_initial_literal_type_ref_id = $rightInitialLiteral->type_ref_id;
+-				$row->if_local_binary_return_right_initial_literal_numeric_payload = $rightInitialLiteral->numeric_payload;
+-				$row->if_local_binary_return_right_initial_literal_status_id = $rightInitialLiteral->literal_status_id;
+-				$row->if_local_binary_return_statement_node_id = $ifNode->node_id;
+-				$row->if_local_binary_return_condition_binary_node_id = $conditionBinaryNode->node_id;
+-				$row->if_local_binary_return_condition_left_variable_node_id = $conditionLeftVariableNode->node_id;
+-				$row->if_local_binary_return_condition_right_variable_node_id = $conditionRightVariableNode->node_id;
+-				$row->if_local_binary_return_condition_operator_id = $conditionOperatorRow->operator_id;
+-				$row->if_local_binary_return_condition_provider_type_ref_id = $conditionOperatorRow->lhs_type_ref_id;
+-				$row->if_local_binary_return_condition_result_type_ref_id = $conditionBinary->inferred_type_ref_id;
+-				$row->if_local_binary_return_body_first_node_id = $ifBodyFirstNodeId;
+-				$row->if_local_binary_return_then_node_id = $thenReturnNode->node_id;
+-				$row->if_local_binary_return_then_literal_node_id = $thenLiteralNode->node_id;
+-				$row->if_local_binary_return_then_literal_type_ref_id = $thenLiteral->type_ref_id;
+-				$row->if_local_binary_return_then_literal_numeric_payload = $thenLiteral->numeric_payload;
+-				$row->if_local_binary_return_then_literal_status_id = $thenLiteral->literal_status_id;
+-				$row->if_local_binary_return_fallback_node_id = $statementNode->node_id;
+-				$row->if_local_binary_return_fallback_literal_node_id = $valueNode->node_id;
+-				$row->if_local_binary_return_fallback_literal_type_ref_id = $literal->type_ref_id;
+-				$row->if_local_binary_return_fallback_literal_numeric_payload = $literal->numeric_payload;
+-				$row->if_local_binary_return_fallback_literal_status_id = $literal->literal_status_id;
+-				return;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_if_local_binary_return_summary(ProjectSymbolIndexRow $row): bool {
+-		$operatorRow SemanticOperatorLookupRow = semantic_operator_lookup::row_by_operator_id($row->if_local_binary_return_condition_operator_id);
+-		return (int)$row->if_local_binary_return_left_local_declaration_node_id > 0
+-			&& (int)$row->if_local_binary_return_left_initial_literal_node_id > 0
+-			&& (int)$row->if_local_binary_return_left_initial_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_local_binary_return_left_initial_literal_status_id)
+-			&& (int)$row->if_local_binary_return_right_local_declaration_node_id > 0
+-			&& (int)$row->if_local_binary_return_right_initial_literal_node_id > 0
+-			&& (int)$row->if_local_binary_return_right_initial_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_local_binary_return_right_initial_literal_status_id)
+-			&& (int)$row->if_local_binary_return_statement_node_id > 0
+-			&& (int)$row->if_local_binary_return_condition_binary_node_id > 0
+-			&& (int)$row->if_local_binary_return_condition_left_variable_node_id > 0
+-			&& (int)$row->if_local_binary_return_condition_right_variable_node_id > 0
+-			&& (int)$operatorRow->operator_id > 0
+-			&& (int)$row->if_local_binary_return_condition_provider_type_ref_id > 0
+-			&& type_capability_readiness::condition_truthiness_supported_for_type_ref($row->if_local_binary_return_condition_result_type_ref_id)
+-			&& (int)$row->if_local_binary_return_body_first_node_id > 0
+-			&& (int)$row->if_local_binary_return_then_node_id > 0
+-			&& (int)$row->if_local_binary_return_then_literal_node_id > 0
+-			&& (int)$row->if_local_binary_return_then_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_local_binary_return_then_literal_status_id)
+-			&& (int)$row->if_local_binary_return_fallback_node_id > 0
+-			&& (int)$row->if_local_binary_return_fallback_literal_node_id > 0
+-			&& (int)$row->if_local_binary_return_fallback_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->if_local_binary_return_fallback_literal_status_id);
+-	}
+-
+ 	public static function parameter_list_count(FrontendModel $model, uint32 $parameterListNodeId, uint32 &$firstParameterTypeRefId, string &$signatureParameterShape): uint32 {
+ 		$firstParameterTypeRefId = structure_row_ids::none_id();
+ 		$signatureParameterShape = "";
+@@ -2400,21 +1055,6 @@ final class project_symbol_index {
+ 				}
+ 			}
+ 		}
+-		if ((int)$sourceRow->local_binary_summary_count > 0) {
+-			$row->local_binary_first_summary_id = structure_row_ids::none_id();
+-			$row->local_binary_summary_count = structure_row_ids::none_id();
+-			foreach (project_symbol_index::local_binary_summary_rows($source, $sourceRow) as $sourceSummary) {
+-				$summary ProjectSymbolLocalBinarySummaryRow = $sourceSummary;
+-				$summary->summary_id = structure_row_ids::next_dense_id(count($target->local_binary_summaries));
+-				$summary->symbol_id = $row->symbol_id;
+-				$summary->local_ordinal = structure_row_ids::uint32_from_int((int)$row->local_binary_summary_count + 1);
+-				$target->local_binary_summaries[] = $summary;
+-				if ((int)$row->local_binary_first_summary_id === 0) {
+-					$row->local_binary_first_summary_id = $summary->summary_id;
+-				}
+-				$row->local_binary_summary_count = structure_row_ids::uint32_from_int((int)$row->local_binary_summary_count + 1);
+-			}
+-		}
+ 		project_symbol_index::record_function_name_symbol($target, $row);
+ 		$target->rows[] = $row;
+ 		$target->declaration_rows_indexed = project_symbol_index::add_u32($target->declaration_rows_indexed, 1);
+diff --git a/compiler/src/structures/project/project_symbol_index.phs b/compiler/src/structures/project/project_symbol_index.phs
+index a33247ad..67be9740 100644
+--- a/compiler/src/structures/project/project_symbol_index.phs
++++ b/compiler/src/structures/project/project_symbol_index.phs
+@@ -22,7 +22,6 @@ class ProjectSymbolIndex {
+ 	public $body_shapes vector<string> = [];
+ 	public $source_unit_keys vector<string> = [];
+ 	public $parameter_rows vector<ProjectSymbolParameterRow> = [];
+-	public $local_binary_summaries vector<ProjectSymbolLocalBinarySummaryRow> = [];
+ 	public $function_import_rows vector<ProjectSymbolFunctionImportRow> = [];
+ 	public $name_ids_by_text hash<uint32> = [];
+ 	public $qualified_name_ids_by_text hash<uint32> = [];
+diff --git a/compiler/src/structures/project/project_symbol_index_row.phs b/compiler/src/structures/project/project_symbol_index_row.phs
+index 53d0c390..f8c9a0bf 100644
+--- a/compiler/src/structures/project/project_symbol_index_row.phs
++++ b/compiler/src/structures/project/project_symbol_index_row.phs
+@@ -36,146 +36,4 @@ struct ProjectSymbolIndexRow {
+ 	public uint32 $return_literal_type_ref_id = 0;
+ 	public int32 $return_literal_numeric_payload = 0;
+ 	public uint16 $return_literal_status_id = 0;
+-	public uint32 $return_binary_literal_node_id = 0;
+-	public uint16 $return_binary_literal_operator_id = 0;
+-	public uint32 $return_binary_literal_type_ref_id = 0;
+-	public uint32 $return_binary_left_literal_node_id = 0;
+-	public uint32 $return_binary_left_literal_type_ref_id = 0;
+-	public int32 $return_binary_left_literal_numeric_payload = 0;
+-	public uint16 $return_binary_left_literal_status_id = 0;
+-	public uint32 $return_binary_right_literal_node_id = 0;
+-	public uint32 $return_binary_right_literal_type_ref_id = 0;
+-	public int32 $return_binary_right_literal_numeric_payload = 0;
+-	public uint16 $return_binary_right_literal_status_id = 0;
+-	public uint32 $scalar_assignment_local_declaration_node_id = 0;
+-	public uint32 $scalar_assignment_initial_literal_node_id = 0;
+-	public uint32 $scalar_assignment_initial_literal_type_ref_id = 0;
+-	public int32 $scalar_assignment_initial_literal_numeric_payload = 0;
+-	public uint16 $scalar_assignment_initial_literal_status_id = 0;
+-	public uint32 $scalar_assignment_node_id = 0;
+-	public uint32 $scalar_assignment_literal_node_id = 0;
+-	public uint32 $scalar_assignment_literal_type_ref_id = 0;
+-	public int32 $scalar_assignment_literal_numeric_payload = 0;
+-	public uint16 $scalar_assignment_literal_status_id = 0;
+-	public uint32 $scalar_assignment_binary_node_id = 0;
+-	public uint16 $scalar_assignment_binary_operator_id = 0;
+-	public uint32 $scalar_assignment_binary_type_ref_id = 0;
+-	public uint32 $scalar_assignment_binary_right_literal_node_id = 0;
+-	public uint32 $scalar_assignment_binary_right_literal_type_ref_id = 0;
+-	public int32 $scalar_assignment_binary_right_literal_numeric_payload = 0;
+-	public uint16 $scalar_assignment_binary_right_literal_status_id = 0;
+-	public uint32 $local_load_declaration_node_id = 0;
+-	public uint32 $local_load_initial_literal_node_id = 0;
+-	public uint32 $local_load_initial_literal_type_ref_id = 0;
+-	public int32 $local_load_initial_literal_numeric_payload = 0;
+-	public uint16 $local_load_initial_literal_status_id = 0;
+-	public uint32 $local_load_return_node_id = 0;
+-	public uint32 $local_load_return_variable_node_id = 0;
+-	public uint32 $local_binary_first_summary_id = 0;
+-	public uint32 $local_binary_summary_count = 0;
+-	public uint32 $local_binary_return_local_declaration_node_id = 0;
+-	public uint32 $local_binary_node_id = 0;
+-	public uint32 $local_binary_right_literal_node_id = 0;
+-	public uint32 $local_binary_right_literal_type_ref_id = 0;
+-	public int32 $local_binary_right_literal_numeric_payload = 0;
+-	public uint16 $local_binary_right_literal_status_id = 0;
+-	public uint32 $local_binary_right_local_declaration_node_id = 0;
+-	public uint16 $local_binary_operator_id = 0;
+-	public uint32 $local_binary_provider_type_ref_id = 0;
+-	public uint32 $local_binary_type_ref_id = 0;
+-	public uint32 $parameter_binary_node_id = 0;
+-	public uint32 $parameter_binary_right_literal_node_id = 0;
+-	public uint32 $parameter_binary_right_literal_type_ref_id = 0;
+-	public int32 $parameter_binary_right_literal_numeric_payload = 0;
+-	public uint16 $parameter_binary_right_literal_status_id = 0;
+-	public uint16 $parameter_binary_operator_id = 0;
+-	public uint32 $parameter_binary_type_ref_id = 0;
+-	public uint32 $echo_statement_node_id = 0;
+-	public uint32 $echo_literal_node_id = 0;
+-	public uint32 $echo_literal_payload_id = 0;
+-	public uint32 $echo_literal_source_range_id = 0;
+-	public uint16 $echo_literal_kind_id = 0;
+-	public uint32 $echo_literal_type_ref_id = 0;
+-	public int32 $echo_literal_numeric_payload = 0;
+-	public uint16 $echo_literal_status_id = 0;
+-	public uint32 $if_local_declaration_node_id = 0;
+-	public uint32 $if_initial_literal_node_id = 0;
+-	public uint32 $if_initial_literal_type_ref_id = 0;
+-	public int32 $if_initial_literal_numeric_payload = 0;
+-	public uint16 $if_initial_literal_status_id = 0;
+-	public uint32 $if_statement_node_id = 0;
+-	public uint32 $if_condition_literal_node_id = 0;
+-	public uint32 $if_condition_literal_type_ref_id = 0;
+-	public int32 $if_condition_literal_numeric_payload = 0;
+-	public uint16 $if_condition_literal_status_id = 0;
+-	public uint32 $if_body_first_node_id = 0;
+-	public uint32 $if_nested_assignment_node_id = 0;
+-	public uint32 $if_nested_assignment_literal_node_id = 0;
+-	public uint32 $if_nested_assignment_literal_type_ref_id = 0;
+-	public int32 $if_nested_assignment_literal_numeric_payload = 0;
+-	public uint16 $if_nested_assignment_literal_status_id = 0;
+-	public uint32 $if_return_node_id = 0;
+-	public uint32 $if_return_variable_node_id = 0;
+-	public uint32 $if_return_statement_node_id = 0;
+-	public uint32 $if_return_condition_literal_node_id = 0;
+-	public uint32 $if_return_condition_literal_type_ref_id = 0;
+-	public int32 $if_return_condition_literal_numeric_payload = 0;
+-	public uint16 $if_return_condition_literal_status_id = 0;
+-	public uint32 $if_return_body_first_node_id = 0;
+-	public uint32 $if_return_then_node_id = 0;
+-	public uint32 $if_return_then_literal_node_id = 0;
+-	public uint32 $if_return_then_literal_type_ref_id = 0;
+-	public int32 $if_return_then_literal_numeric_payload = 0;
+-	public uint16 $if_return_then_literal_status_id = 0;
+-	public uint32 $if_return_fallback_node_id = 0;
+-	public uint32 $if_return_fallback_literal_node_id = 0;
+-	public uint32 $if_return_fallback_literal_type_ref_id = 0;
+-	public int32 $if_return_fallback_literal_numeric_payload = 0;
+-	public uint16 $if_return_fallback_literal_status_id = 0;
+-	public uint32 $if_local_return_local_declaration_node_id = 0;
+-	public uint32 $if_local_return_initial_literal_node_id = 0;
+-	public uint32 $if_local_return_initial_literal_type_ref_id = 0;
+-	public int32 $if_local_return_initial_literal_numeric_payload = 0;
+-	public uint16 $if_local_return_initial_literal_status_id = 0;
+-	public uint32 $if_local_return_statement_node_id = 0;
+-	public uint32 $if_local_return_condition_variable_node_id = 0;
+-	public uint32 $if_local_return_body_first_node_id = 0;
+-	public uint32 $if_local_return_then_node_id = 0;
+-	public uint32 $if_local_return_then_literal_node_id = 0;
+-	public uint32 $if_local_return_then_literal_type_ref_id = 0;
+-	public int32 $if_local_return_then_literal_numeric_payload = 0;
+-	public uint16 $if_local_return_then_literal_status_id = 0;
+-	public uint32 $if_local_return_fallback_node_id = 0;
+-	public uint32 $if_local_return_fallback_literal_node_id = 0;
+-	public uint32 $if_local_return_fallback_literal_type_ref_id = 0;
+-	public int32 $if_local_return_fallback_literal_numeric_payload = 0;
+-	public uint16 $if_local_return_fallback_literal_status_id = 0;
+-	public uint32 $if_local_binary_return_left_local_declaration_node_id = 0;
+-	public uint32 $if_local_binary_return_left_initial_literal_node_id = 0;
+-	public uint32 $if_local_binary_return_left_initial_literal_type_ref_id = 0;
+-	public int32 $if_local_binary_return_left_initial_literal_numeric_payload = 0;
+-	public uint16 $if_local_binary_return_left_initial_literal_status_id = 0;
+-	public uint32 $if_local_binary_return_right_local_declaration_node_id = 0;
+-	public uint32 $if_local_binary_return_right_initial_literal_node_id = 0;
+-	public uint32 $if_local_binary_return_right_initial_literal_type_ref_id = 0;
+-	public int32 $if_local_binary_return_right_initial_literal_numeric_payload = 0;
+-	public uint16 $if_local_binary_return_right_initial_literal_status_id = 0;
+-	public uint32 $if_local_binary_return_statement_node_id = 0;
+-	public uint32 $if_local_binary_return_condition_binary_node_id = 0;
+-	public uint32 $if_local_binary_return_condition_left_variable_node_id = 0;
+-	public uint32 $if_local_binary_return_condition_right_variable_node_id = 0;
+-	public uint16 $if_local_binary_return_condition_operator_id = 0;
+-	public uint32 $if_local_binary_return_condition_provider_type_ref_id = 0;
+-	public uint32 $if_local_binary_return_condition_result_type_ref_id = 0;
+-	public uint32 $if_local_binary_return_body_first_node_id = 0;
+-	public uint32 $if_local_binary_return_then_node_id = 0;
+-	public uint32 $if_local_binary_return_then_literal_node_id = 0;
+-	public uint32 $if_local_binary_return_then_literal_type_ref_id = 0;
+-	public int32 $if_local_binary_return_then_literal_numeric_payload = 0;
+-	public uint16 $if_local_binary_return_then_literal_status_id = 0;
+-	public uint32 $if_local_binary_return_fallback_node_id = 0;
+-	public uint32 $if_local_binary_return_fallback_literal_node_id = 0;
+-	public uint32 $if_local_binary_return_fallback_literal_type_ref_id = 0;
+-	public int32 $if_local_binary_return_fallback_literal_numeric_payload = 0;
+-	public uint16 $if_local_binary_return_fallback_literal_status_id = 0;
+ }
+diff --git a/compiler/src/structures/project/project_symbol_local_binary_summary_row.phs b/compiler/src/structures/project/project_symbol_local_binary_summary_row.phs
+deleted file mode 100644
+index ecb8fadb..00000000
+--- a/compiler/src/structures/project/project_symbol_local_binary_summary_row.phs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-// Role: Compact symbol-owned summary for local declarations followed by a binary return.
+-struct ProjectSymbolLocalBinarySummaryRow {
+-	public uint32 $summary_id = 0;
+-	public uint32 $symbol_id = 0;
+-	public uint32 $local_ordinal = 0;
+-	public uint32 $local_declaration_node_id = 0;
+-	public uint32 $initial_literal_node_id = 0;
+-	public uint32 $initial_literal_type_ref_id = 0;
+-	public int32 $initial_literal_numeric_payload = 0;
+-	public uint16 $initial_literal_status_id = 0;
+-}

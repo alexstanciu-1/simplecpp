@@ -1,0 +1,20 @@
+{
+  "sources": [
+    "compile/frontend_adapter/phs/frontend_model_builder.phs",
+    "compile/backend/llvm_text_from_plan.phs"
+  ],
+  "scope": "new numeric source alias using existing int32 semantics, plus historical-shaped explicit backend mapping branches; not a new integer representation",
+  "baseline_alias_rejected": true,
+  "edited_alias_exit_code": 42,
+  "outputs": [
+    "expanded/__callable/frontend_model_builder_locations.o",
+    "expanded_parts/__callable/frontend_model_builder_latency_i32_alias_id.o",
+    "expanded_parts/__callable/frontend_model_builder_primitive_type_ref_id_for_name.o",
+    "expanded_parts/__callable/frontend_model_builder_source_type_ref_id_for_name.o",
+    "expanded_parts/compile/backend/llvm_text_from_plan/locations.o",
+    "expanded_parts/compile/backend/llvm_text_from_plan/part_1.o",
+    "expanded_parts/compile/backend/llvm_text_from_plan/part_9.o",
+    "main"
+  ],
+  "timing": "Ninja through compiler executable; fixture pipeline/LLVM compile/execution excluded as correctness checks"
+}

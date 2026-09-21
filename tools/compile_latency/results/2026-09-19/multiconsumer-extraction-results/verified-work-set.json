@@ -1,0 +1,15 @@
+{
+  "outputs": [
+    "expanded/compile/backend/backend_object_link_cache.o",
+    "expanded/compile/backend/lowering_plan.o",
+    "expanded/compile/capabilities/storage_lifetime_readiness.o",
+    "expanded/compile/capabilities/type_capability_readiness.o",
+    "expanded/compile/incremental/resident_source_unit_symbol_states.o",
+    "expanded/compile/model/project_reference_resolution.o",
+    "expanded/compile/support/mt_publication_metrics.o",
+    "expanded_parts/compile/backend/llvm_text_from_plan/part_16.o",
+    "expanded_parts/latency_publication_gate.o",
+    "expanded_parts/main.o",
+    "main"
+  ]
+}

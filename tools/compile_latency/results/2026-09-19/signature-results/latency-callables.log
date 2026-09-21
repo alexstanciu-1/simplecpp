@@ -1,0 +1,10 @@
+[1/10] CXX callables/__callable/compiler_profile_events_locations.o
+[2/10] CXX callables/__callable/compiler_profile_events_append_elapsed.o
+[3/10] CXX callables/profile/gate_profile_helpers.o
+[4/10] CXX callables/__callable/compiler_profile_events_elapsed_us_since.o
+[5/10] CXX callables/compile/support/production_mt_heartbeat.o
+[6/10] CXX callables/compile/model/project_symbol_index.o
+[7/10] CXX callables/compile/model/source_units.o
+[8/10] CXX callables/main.o
+[9/10] CXX callables/compile/incremental/resident_source_unit_frontend_payload_tables.o
+[10/10] LINK main

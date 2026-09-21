@@ -1,0 +1,101 @@
+diff --git a/compiler/src/compile/backend/backend_module_composition.phs b/compiler/src/compile/backend/backend_module_composition.phs
+index 43d5e5af..3803a20d 100644
+--- a/compiler/src/compile/backend/backend_module_composition.phs
++++ b/compiler/src/compile/backend/backend_module_composition.phs
+@@ -70,43 +70,35 @@ final class backend_module_composition {
+ 		$initialValue = structure_row_ids::int32_from_int(0);
+ 		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+ 		$argumentNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $argument->argument_source_row_id, $counters);
+-		$argumentName string = frontend_body_summaries::variable_name_text($model, $sourceText, $argumentNode, $counters);
+-		if ($argumentName === "") {
++		if ((int)$argumentNode->node_id === 0) {
+ 			return false;
+ 		}
+-		$statementNodeId uint32 = $symbol->body_first_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()) {
+-				return false;
+-			}
+-			$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-			if ((int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()) {
+-				$targetNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->target_node_id, $counters);
+-				$localName string = frontend_body_summaries::variable_name_text($model, $sourceText, $targetNode, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				if ($localName === $argumentName
+-					&& (int)$valueNode->row_family_id === (int)frontend_model_tables::row_family_expression_id()
+-					&& (int)$valueNode->row_kind_id === (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-					$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
+-					$typeRefId uint32 = frontend_model_builder::expression_type_ref_from_node($model, $targetNode->node_id, $counters);
+-					if ((int)$typeRefId === (int)$argument->type_ref_id
+-						&& type_refs::scalar_value_type_compatible_without_conversion($typeRefId, $literal->type_ref_id)
+-						&& project_symbol_index::literal_status_ready($literal->literal_status_id)) {
+-						$localTypeRefId = $typeRefId;
+-						$initialValue = $literal->numeric_payload;
+-						return true;
+-					}
+-				}
+-			} else {
+-				$callNode FrontendNodeRow = project_reference_resolution::call_expression_node_from_statement_value($model, $statementNode, $counters);
+-				if ((int)$callNode->node_id > 0) {
+-					return false;
+-				}
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
++		$declarationNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $symbol->source_row_id, $counters);
++		if ((int)$declarationNode->node_id === 0
++			|| (int)$declarationNode->payload_kind_id !== (int)frontend_model_tables::payload_kind_declaration_id()) {
++			return false;
++		}
++		$declaration FrontendDeclarationPayloadRow = frontend_model_tables::declaration_by_id($model, $declarationNode->payload_row_id, $counters);
++		$summary FrontendBodySummaryArtifact = frontend_body_summaries::from_declaration($model, $sourceText, $declaration);
++		$localId uint32 = frontend_body_summaries::local_id_for_variable_node($summary, $model, $sourceText, $argumentNode, $counters);
++		$local FrontendLocalBindingSummaryRow = frontend_body_summaries::local_by_id($summary, $localId);
++		if ((int)$local->local_id === 0 || (int)$local->initializer_node_id === 0) {
++			return false;
++		}
++		$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $local->initializer_node_id, $counters);
++		if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
++			|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_literal_id()) {
++			return false;
++		}
++		$literal FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $valueNode->payload_row_id, $counters);
++		if ((int)$local->type_ref_id !== (int)$argument->type_ref_id
++			|| !type_refs::scalar_value_type_compatible_without_conversion($local->type_ref_id, $literal->type_ref_id)
++			|| !project_symbol_index::literal_status_ready($literal->literal_status_id)) {
++			return false;
+ 		}
+-		return false;
++		$localTypeRefId = $local->type_ref_id;
++		$initialValue = $literal->numeric_payload;
++		return true;
+ 	}
+ 
+ 	public static function module_text_for_entry(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $entrySymbol, FrontendModel $model, string $sourceText, BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests): string {
+diff --git a/compiler/src/compile/model/frontend_body_summaries.phs b/compiler/src/compile/model/frontend_body_summaries.phs
+index 9c874a0c..14072ccb 100644
+--- a/compiler/src/compile/model/frontend_body_summaries.phs
++++ b/compiler/src/compile/model/frontend_body_summaries.phs
+@@ -189,6 +189,22 @@ final class frontend_body_summaries {
+ 		return $row;
+ 	}
+ 
++	public static function local_by_id(FrontendBodySummaryArtifact $artifact, uint32 $localId): FrontendLocalBindingSummaryRow {
++		if ((int)$localId > 0 && (int)$localId <= count($artifact->locals)) {
++			$row FrontendLocalBindingSummaryRow = $artifact->locals[(int)$localId - 1];
++			if ((int)$row->local_id === (int)$localId) {
++				return $row;
++			}
++		}
++		foreach ($artifact->locals as $row) {
++			if ((int)$row->local_id === (int)$localId) {
++				return $row;
++			}
++		}
++		$empty FrontendLocalBindingSummaryRow = [];
++		return $empty;
++	}
++
+ 	public static function local_id_for_variable_node(FrontendBodySummaryArtifact &$artifact, FrontendModel $model, const string &$sourceText, FrontendNodeRow $variableNode, FrontendModelKernelCounters $counters): uint32 {
+ 		$nameRange SourceRangeRow = frontend_body_summaries::variable_name_range($model, $variableNode, $counters);
+ 		return frontend_body_summaries::local_id_for_name_range($artifact, $sourceText, $nameRange);

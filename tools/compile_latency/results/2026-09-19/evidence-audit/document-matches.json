@@ -1,0 +1,519 @@
+{
+  "query": "ninja.{0,45}[0-9]+\\.[0-9]+|[0-9]+\\.[0-9]+s.{0,35}(?:build|rebuild)|rebuild.fanout|scoped.pack.{0,35}(?:fail|regression)",
+  "roots": [
+    "compiler/docs",
+    "compiler/archive"
+  ],
+  "matches": [
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_debt_register_2026_07_20.md",
+      "line": 31,
+      "text": "| Validation cost | Debug and release compiler rebuilds are expensive, and the current S2S/generated-C++/native-C++ bootstrap path has a scoped-pack correctness regression for edited compiler files. | Vendor Simple C++ branch `codex/compiler-vector-runtime` was pushed through `80490d94`; issue #224 is closed. Earlier local debug no-op builds were Ninja-clean around 3.7-4.4 seconds and a representative public-surface edit stayed narrow at one transpiled source, five generated objects, and link. The 2026-07-29 `int32_local_return` probe invalidated that assumption: normal scoped-pack build failed in 25.67s, while broad-pack fallback succeeded but rebuilt 453 objects in 549.90s. Focused fixture execution with the broad-built compiler stayed fast at 0.05s wall. | Treat scoped-pack correctness as the next build-tooling blocker before larger catalog batches. Prefer tiny source slices and focused validation; avoid O3. Run real O3 only on explicit request, before performance/speedup claims, after production worker/default-selection changes, after hot-path changes, when debug timing/memory drifts by roughly more than 20-25 percent, or about every 10 meaningful compiler steps after normal debug builds are healthy again. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_debt_register_2026_07_20.md",
+      "line": 1132,
+      "text": "the release Ninja file, and Ninja had no work; wrapper elapsed was 1:10.53 with"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/core/compiler_core_roadmap_backlog.md",
+      "line": 331,
+      "text": "| Implementation performance review | No speculative string/buffer rewrite was added. The hot cost observed here is still compiler rebuild fanout, not int64 fixture execution or LLVM text materialization. The implementation adds one compact expression-payload update helper and passes TypeRef ids through existing rows. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 250,
+      "text": "| MT2-H43 | Move production dispatch readiness after activation-gate evidence. | done | Dispatch selection/decision rows now consume the post-activation payload publication proof instead of the earlier source-only scheduler proof. Focused proof records one scheduler payload-handoff-ready row, zero scheduler payload-handoff blockers, one dispatch-policy physical-payload-ready row, zero dispatch-policy physical-payload blockers, one dispatch-decision physical-payload-ready row, zero dispatch-decision physical-payload blockers, two selected one-thread executions, zero real-worker selections, one O3 measurement requirement, one blocked speedup claim, six published payload segments, and zero payload-copy bytes. Validation: cheap transpiles passed, debug build rebuilt 100 native steps in 126.10s, focused incremental proof passed in 4.13s with build skipped, STAN advisory analyzed four changed units/reused 423, and `git diff --check` passed. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 252,
+      "text": "| MT2-H45 | Record production source-unit frontend real-worker trial authorization rows. | done | Dispatch-decision rows now distinguish physical payload readiness from trial authorization and execution selection. The default production call keeps trial authorization false, so focused/O3 proofs record one real-worker trial candidate, zero trial authorizations, one measurement-blocked trial, zero trial selections, two selected one-thread executions, zero real-worker selections, and zero payload-copy bytes. Validation: cheap transpiles passed, debug build rebuilt five PHS files and 101 native steps in 120.78s, focused incremental proof passed in 4.08s with build skipped, release/O3 smoke with scaling skipped rebuilt five PHS files and 101 native steps in 491.80s and reported max RSS 11,264 KB, STAN advisory analyzed five units/reused 422 with the existing 68 warnings, and `git diff --check` passed. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 253,
+      "text": "| MT2-H46 | Record production worker-shadow handoff timing rows. | done | The production worker-shadow handoff now reports timing samples, blocking task-run/coordinator-wait elapsed ms, deterministic publication elapsed ms, and total handoff elapsed ms. These rows feed future trial authorization without changing the default one-thread production selection or claiming speedup. Focused proof recorded two timing samples, task-run/coordinator-wait/publication rounded to 0 ms on the tiny fixtures, total handoff 13 ms, and zero payload-copy bytes. Validation: cheap transpiles passed, debug build rebuilt two PHS files and 100 native steps in 122.35s, focused incremental proof passed in 4.12s with build skipped, STAN advisory analyzed two units/reused 425 with the existing 68 warnings, shell syntax and `git diff --check` passed. A release/O3 smoke with scaling skipped was attempted after two PHS files retranspiled, but the native release rebuild produced no progress output past the initial build header and was stopped after exceeding the prior source-change O3 duration; keep O3 timing confirmation deferred to the next measurement gate rather than edit-time. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 269,
+      "text": "| MT2-H62 | Add production frontend payload replacement preflight blocker. | done | The production source-unit frontend worker path now has a compact `SourceUnitFrontendWorkerPayloadInstallPreflightRow` family that consumes descriptor-installed payload rows plus task-owned segment adoption/publication rows. The default focused proof records two preflight runs, three source-unit rows, nine required payload segments, nine adoption/publication rows, nine worker-payload-ready rows, nine coordinator-adopted and published segments, three metadata-ready rows, zero production-replacement-ready rows, three production-replacement-blocked rows, zero install-ready rows, three install-blocked rows, three `production_payload_replacement_missing` blockers, three coordinator-installed payload sources, zero worker-installed payload sources, nonzero metadata commit bytes, and zero payload-copy bytes. The explicit full-payload trial now blocks on the same named production replacement reason instead of the older generic task-run value-result boundary, while default and descriptor-only trials keep that blocker at zero. Validation: shell syntax passed; `XDEBUG_MODE=off php ../../../vendor/simple_cpp/bin/scpp.php main.phs >/tmp/scpp_v2_main_payload_install_preflight.cpp` passed; debug build retranspiled 427 PHS files and rebuilt 428 native steps plus link; `XDEBUG_MODE=off SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_BOOTSTRAP_MODE=smoke SCPP_V2_RUN_WORKER_TRIAL_ASSERTIONS=1 SCPP_V2_RUN_WORKER_FULL_PAYLOAD_TRIAL_ASSERTIONS=1 bash compiler/tools/run_incremental_proof.sh` passed in 8.75s; release build retranspiled 427 PHS files and rebuilt 428 release native steps plus link; `XDEBUG_MODE=off SCPP_NINJA_JOBS=16 SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_SKIP_SCALING=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_WORKER_TRIAL=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_FULL_PAYLOAD_TRIAL=1 bash compiler/tools/run_mt_stage_worker_benchmark_o3.sh` passed with max RSS 11,776 KB, preflight rows 3, published payload segments 9, production replacement blockers 3, full-payload trial replacement blocker 1, real-worker selected 0, speedup claim ready 0, and scaling intentionally skipped; STAN analyzed five units/reused 423 with the existing 68 warnings. `git diff --check` passed. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 270,
+      "text": "| MT2-H63 | Add production frontend payload replacement materializer proof. | done | The production source-unit frontend worker path now has a compact `SourceUnitFrontendWorkerPayloadReplacementMaterializerRow` family that consumes install-preflight rows plus worker descriptor-install payload tables and the coordinator-built production payload table slots. The focused proof records two materializer runs, three source-unit rows, three preflight rows, three deterministic destination token/model slots, nine required and published worker-owned payload segments, three preflight-ready rows, three destination-slot-ready rows, three worker-payload-ready rows, zero production-carrier-ready rows, three production-carrier-blocked rows, zero install-ready rows, three install-blocked rows, three `production_payload_materializer_missing` blockers, three coordinator-installed payload sources, zero worker-installed payload sources, 240 metadata commit bytes, and zero payload-copy bytes. The row proves the replacement destination is deterministic while keeping the actual production `TokenStream`/`FrontendModel` carrier swap blocked; default and full-payload trial dispatch decisions still select one-thread/coordinator-owned payloads and make no speedup claim. Validation: shell syntax passed; `XDEBUG_MODE=off php ../../../vendor/simple_cpp/bin/scpp.php main.phs >/tmp/scpp_v2_main_payload_materializer.cpp` passed; debug build retranspiled 428 PHS files and rebuilt 429 native steps plus link; `XDEBUG_MODE=off SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_BOOTSTRAP_MODE=smoke SCPP_V2_RUN_WORKER_TRIAL_ASSERTIONS=1 SCPP_V2_RUN_WORKER_FULL_PAYLOAD_TRIAL_ASSERTIONS=1 bash compiler/tools/run_incremental_proof.sh` passed in 8.84s; release build retranspiled 428 PHS files and rebuilt 429 release native steps plus link; `XDEBUG_MODE=off SCPP_NINJA_JOBS=16 SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_SKIP_SCALING=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_WORKER_TRIAL=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_FULL_PAYLOAD_TRIAL=1 bash compiler/tools/run_mt_stage_worker_benchmark_o3.sh` passed in 1.48s with max RSS 11,776 KB, materializer rows 3, destination slots 3, published payload segments 9, production-carrier blockers 3, payload-copy bytes 0, full-payload trial replacement blocker 1, real-worker selected 0, speedup claim ready 0, and scaling intentionally skipped; STAN analyzed four units/reused 425 with the existing 68 warnings. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 271,
+      "text": "| MT2-H64 | Add production frontend payload carrier/install proof. | done | The production source-unit frontend worker path now has a compact `SourceUnitFrontendWorkerPayloadCarrierInstallRow` family that consumes replacement materializer rows and publishes one deterministic carrier-install metadata row per source unit. The focused proof records two carrier-install runs, three source-unit rows, three materializer input rows, three input/output/published publication rows, nine required and published payload segments, three materializer-ready rows, three destination-slot-ready rows, three worker-payload-ready rows, zero token/frontend carrier-ready rows, three token/frontend carrier blockers each, zero production-swap/install-ready rows, three production-swap/install blockers each, three `production_payload_carrier_missing` blockers, three coordinator-installed payload sources, zero worker-installed payload sources, simulated first input order sum 3, two sequential/simulated output matches, zero mismatches, and zero payload-copy bytes. The row proves deterministic carrier-install publication while the actual `TokenStream`/`FrontendModel` carrier contract and production swap remain blocked. Validation: shell syntax passed; `XDEBUG_MODE=off php ../../../vendor/simple_cpp/bin/scpp.php main.phs >/tmp/scpp_v2_main_carrier_install.cpp` passed; `XDEBUG_MODE=off php ../../../vendor/simple_cpp/bin/scpp.php compile/incremental/resident_source_unit_frontend_payload_tables.phs >/tmp/scpp_v2_payload_carrier.cpp` passed; debug build retranspiled 429 PHS files and rebuilt 430 native steps plus link; `XDEBUG_MODE=off SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_BOOTSTRAP_MODE=smoke SCPP_V2_RUN_WORKER_TRIAL_ASSERTIONS=1 SCPP_V2_RUN_WORKER_FULL_PAYLOAD_TRIAL_ASSERTIONS=1 bash compiler/tools/run_incremental_proof.sh` passed in 9.17s; release build retranspiled 429 PHS files and rebuilt 430 release native steps plus link; `XDEBUG_MODE=off SCPP_NINJA_JOBS=16 SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_SKIP_SCALING=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_WORKER_TRIAL=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_FULL_PAYLOAD_TRIAL=1 bash compiler/tools/run_mt_stage_worker_benchmark_o3.sh` passed in 1.58s with max RSS 11,776 KB, carrier-install rows 3, published rows 3, carrier blockers 3, metadata commit bytes 552, payload-copy bytes 0, full-payload trial replacement blocker 1, real-worker selected 0, speedup claim ready 0, and scaling intentionally skipped; STAN analyzed four units/reused 426 with the existing 68 warnings. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 272,
+      "text": "| MT2-H65 | Add production frontend payload carrier contract proof. | done | The production source-unit frontend worker path now has a compact `SourceUnitFrontendWorkerPayloadCarrierContractRow` family that consumes carrier-install rows and publishes one deterministic carrier-contract metadata row per source unit. The focused proof records two carrier-contract runs, three source-unit rows, three carrier-install input rows, three input/output/published publication rows, nine required and published payload segments, three carrier-install-ready rows, three token-carrier-ready rows, three frontend-carrier-ready rows, zero token/frontend carrier blockers, zero production-swap/install-ready rows, three production-swap/install blockers each, three `production_payload_swap_missing` blockers, three coordinator-installed payload sources, zero worker-installed payload sources, simulated first input order sum 3, two sequential/simulated output matches, zero mismatches, and zero payload-copy bytes. The row proves token/frontend carrier contract readiness while keeping the actual production `TokenStream`/`FrontendModel` swap and install blocked. Validation: shell syntax passed; `XDEBUG_MODE=off php ../../../vendor/simple_cpp/bin/scpp.php main.phs >/tmp/scpp_v2_main_carrier_contract.cpp` passed; `XDEBUG_MODE=off php ../../../vendor/simple_cpp/bin/scpp.php compile/incremental/resident_source_unit_frontend_payload_tables.phs >/tmp/scpp_v2_payload_carrier_contract.cpp` passed; debug build retranspiled 430 PHS files and rebuilt 431 native steps plus link; `XDEBUG_MODE=off SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_BOOTSTRAP_MODE=smoke SCPP_V2_RUN_WORKER_TRIAL_ASSERTIONS=1 SCPP_V2_RUN_WORKER_FULL_PAYLOAD_TRIAL_ASSERTIONS=1 bash compiler/tools/run_incremental_proof.sh` passed in 10.45s; release build retranspiled 430 PHS files and rebuilt 431 release native steps plus link; `XDEBUG_MODE=off SCPP_NINJA_JOBS=16 SCPP_SKIP_COMPILER_BUILD=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_SKIP_SCALING=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_WORKER_TRIAL=1 SCPP_V2_MT_STAGE_WORKER_BENCHMARK_RUN_FULL_PAYLOAD_TRIAL=1 bash compiler/tools/run_mt_stage_worker_benchmark_o3.sh` passed in 1.78s with max RSS 12,160 KB, carrier-contract rows 3, token/frontend carrier ready rows 3 each, production-swap blockers 3, metadata commit bytes 528, payload-copy bytes 0, full-payload trial replacement blocker 1, real-worker selected 0, speedup claim ready 0, and scaling intentionally skipped; STAN analyzed four units/reused 427 with the existing 68 warnings. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 273,
+      "text": "| MT2-H66 | Add production frontend payload swap proof. | done | The production source-unit frontend worker path now has a compact `SourceUnitFrontendWorkerPayloadProductionSwapRow` family that consumes carrier-contract rows and publishes one deterministic production-swap metadata row per source unit. The focused proof records two production-swap runs, three source-unit rows, three carrier-contract inputs, three input/output/published publication rows, nine required and published payload segments, three carrier-contract-ready rows, three token-carrier-ready rows, three frontend-carrier-ready rows, three production-swap-ready rows, zero production-swap blockers, zero install-ready rows, three install-blocked rows, three `production_payload_install_missing` blockers, three coordinator-installed payload sources, zero worker-installed payload sources, simulated first input order sum 3, two sequential/simulated output matches, zero mismatches, and zero payload-copy bytes. The row proves deterministic production swap readiness while keeping final payload installation and worker-installed payload selection blocked. Validation: shell syntax passed; PHS transpiles for `main.phs` and `resident_source_unit_frontend_payload_tables.phs` passed; an initial debug build exposed generated C++ bracket-depth in the giant main cold-proof boolean and was fixed by splitting the H66 checks into a named boolean; the retry debug build passed after retranspiling one PHS file and rebuilding 301 native steps plus link; focused proof with worker/full-payload assertions passed in 9.86s; release build retranspiled 431 PHS files and rebuilt 432 release native steps plus link; O3 smoke with scaling skipped and descriptor/full-payload trials passed in 1.82s with max RSS 12,288 KB, production-swap rows 3, production-swap-ready rows 3, install blockers 3, metadata commit bytes 552, payload-copy bytes 0, real-worker selected 0, speedup claim ready 0, and scaling intentionally skipped; STAN analyzed four units/reused 428 with the existing 68 warnings. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 274,
+      "text": "| MT2-H67 | Add production frontend payload install proof. | done | The production source-unit frontend worker path now has a compact `SourceUnitFrontendWorkerPayloadProductionInstallRow` family that consumes production-swap rows and publishes one deterministic production-install metadata row per source unit. The focused proof records two production-install runs, three source-unit rows, three production-swap inputs, three input/output/published publication rows, nine required and published payload segments, three carrier-contract-ready rows, three token-carrier-ready rows, three frontend-carrier-ready rows, three production-swap-ready rows, zero production-swap blockers, three install-ready rows, zero install-blocked rows, three blocker-clear rows, zero `production_payload_install_missing` blockers, zero coordinator-installed payload sources, three worker-installed payload sources, simulated first input order sum 3, two sequential/simulated output matches, zero mismatches, nonzero metadata commit bytes, and zero payload-copy bytes. The row proves deterministic production install metadata can select worker-owned token/frontend payload segments after the swap boundary, while the separate production dispatch decision remains conservative: default and full-payload trial dispatch still keep live payloads coordinator-installed, production real-worker selection remains 0, and speedup claim readiness remains 0 until a later dispatch-promotion/scaling slice consumes the install proof. Validation: shell syntax passed; PHS transpiles for `main.phs`, `resident_source_unit_frontend_payload_tables.phs`, and `source_unit_frontend_worker_payload_production_install_row.phs` passed; debug build retranspiled 432 PHS files and rebuilt 433 native steps plus link; focused proof with worker/full-payload assertions passed in 10.16s; release build retranspiled 432 PHS files and rebuilt 433 release native steps plus link; O3 smoke with scaling skipped and descriptor/full-payload trials passed in 1.89s with max RSS 12,160 KB, production-install rows 3, install-ready rows 3, worker-installed payload sources 3, coordinator-installed payload sources 0, metadata commit bytes 552, payload-copy bytes 0, default real-worker selected 0, full-payload trial still blocked at dispatch, speedup claim ready 0, and scaling intentionally skipped; STAN analyzed four units/reused 429 with the existing 68 warnings. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 284,
+      "text": "| MT2-H77 | Add link/coordinator upstream object-output readiness proof. | done | Link publication metrics now consume the object-output worker-candidate readiness bit from H76 while keeping link itself coordinator-owned. Default production and descriptor-only worker-shadow trials keep upstream object-output worker-ready 0, upstream coordinator blocker 1, link worker-candidate-ready 0, O3 measurement required 0, speedup blocker 0, worker-selected 0, actual links 0, and zero payload-copy bytes. The explicit full-payload trial consumes the H76 object-output candidate signal, clears the upstream object-output blocker, and records upstream object-output worker-ready 1 while still keeping link worker-candidate-ready 0, O3 measurement required 0, speedup blocker 0, worker-selected 0, actual links 0, one coordinator-ownership blocker, and zero payload-copy bytes. Validation: shell syntax passed; focused PHS transpiles for `backend_object_link_cache.phs` and `fixture_runner.phs` passed; debug build retranspiled two PHS files, skipped 431 unchanged, rebuilt 101 native steps plus link, and passed with collection 1.98s / Ninja 111.47s; focused incremental proof with descriptor/full-payload assertions passed in 11.60s; STAN analyzed two units/reused 432 with the existing 68 warnings; warm no-change debug build retranspiled 0, skipped 433, and Ninja had no work with collection 1.45s / Ninja 21ms; `git diff --check` passed. O3/scaling was not run because this slice makes no speedup claim, keeps link worker-candidate-ready at zero, keeps actual links at zero, and follows the calibration cadence. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 297,
+      "text": "| MT2-H90 | Run cadence-triggered frontend promotion O3 calibration refresh. | done | The cadence-triggered profile-separated release/O3 frontend promotion wrapper ran with worker-trial and full-payload-trial assertions enabled, consumed the current debug baseline, and appended real non-estimated ledger sample 2 for commit `bdbe220e`. Latest evidence: calibration samples/debug-ratio samples 2/2 with 3 required, stable debug-to-O3 ratio ready 0, current debug-ratio sample ready 1, default/trial O3 wall 190 / 150 ms, scaling cold/no-change/body/surface 379 / 17 / 132 / 126 ms, scaling RSS/PSS 40,476,672 / 37,442,560 bytes, ratios 994 / 1253 / 5432 / 109 percent, comparison/real-O3-scaling/functional-incremental/zero-payload-copy/output-match ready all 1, payload-copy bytes 0, and default-selection/speedup readiness 0. The post-O3 estimate/focused postcheck reset the nonclaim cadence to skip-ok with 0 meaningful steps since sample 2, 10 cadence steps remaining, selected activation blocker `waiting_for_real_o3_samples_and_stable_debug_ratio`, compiler precheck run 1, routine O3 skipped 1, and readiness 0. Validation: shell syntax passed; real O3 wrapper passed in 14.25s with build skipped; direct estimate passed; skip-build focused proof with explicit refreshed ledger/debug-baseline inputs passed; `git diff --check` passed; no PHS source changed, so STAN was not rerun. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 311,
+      "text": "| MT2-H104 | Carry the accepted stable-ratio policy into downstream promotion handoffs. | done | `run_incremental_proof.sh` now forwards the compact H103 policy envelope from the frontend default-worker handoff into symbol/fact, references/contracts, capability/readiness, storage/lifetime, lowering/backend request, LLVM text emission, object-output, and link/coordinator promotion artifacts. Every downstream handoff carries the accepted `all_ratio_strict_for_default_promotion` policy, policy status/reason, all/timing/memory spread flags, estimate-not-usable rows, O3-required-before-claim rows, and explicit readiness requirements for accepted plus clear frontend policy evidence. Latest validation did not run O3: shell syntax passed; direct estimate passed with cadence total/meaningful/ignored 3/2/1, eight cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy evidence status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and default/production/speedup readiness 0; skip-build focused proof passed in 13.41s without O3 or rebuild and carried the same policy envelope through the link/coordinator handoff while keeping downstream worker selections, object writes, actual links, production readiness, and speedup readiness at zero. No compiler rebuild or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 312,
+      "text": "| MT2-H105 | Add downstream stable-ratio policy-clear simulation rows. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_stable_ratio_policy_clear_simulation.out` during the optional frontend promotion estimate postcheck. The artifact consumes the link/coordinator promotion handoff, records the real source frontend policy envelope as blocked, then simulates only the frontend stable-ratio policy evidence as clear/ready. Symbol/fact, references/contracts, capability/readiness, storage/lifetime, lowering/backend request, LLVM text emission, object-output, and link/coordinator all preserve upstream worker readiness 0, stage publication readiness 0, worker-ready-after-policy-clear 0, worker-selected-after-policy-clear 0, and a named blocker. Latest validation did not run O3: shell syntax passed; direct estimate passed with cadence total/meaningful/ignored 4/3/1, seven cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and default/production/speedup readiness 0; skip-build focused proof passed in 14.01s without O3 or rebuild and reported eight downstream stages, policy-clear-only 1, non-policy readiness rows preserved 1, workers ready/selected after policy clear 0/0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0. No compiler rebuild or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 313,
+      "text": "| MT2-H106 | Add downstream upstream-readiness unblock matrix before worker selection. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_upstream_readiness_unblock_matrix.out` during the optional frontend promotion estimate postcheck. The artifact consumes the H105 policy-clear simulation, loads the simulated-ready policy evidence, and then clears exactly one upstream worker-readiness boundary per downstream stage while preserving each stage-local publication/ownership blocker. Symbol/fact, references/contracts, capability/readiness, storage/lifetime, lowering/backend request, LLVM text emission, object-output, and link/coordinator all record source upstream readiness 0, simulated upstream readiness 1, cleared upstream boundaries 1, stage publication readiness 0, stage-publication readiness required 1, worker-ready-after-upstream-clear 0, worker-selected-after-upstream-clear 0, and an exact local blocker. Latest validation did not run O3: direct estimate passed with cadence total/meaningful/ignored 5/4/1, six cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and production/speedup readiness 0; shell syntax passed; skip-build focused proof passed in 14.72s without O3 or rebuild and reported eight matrix rows, policy-clear loaded 1, upstream-readiness-clear-only 1, per-stage upstream clears 8, stage publication preserved 1, stage-publication-ready-after-upstream-clear 0, workers ready/selected after upstream clear 0/0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0. No compiler rebuild or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 314,
+      "text": "| MT2-H107 | Add downstream stage-publication clear candidate matrix before worker selection. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_stage_publication_clear_candidate_matrix.out` during the optional frontend promotion estimate postcheck. The artifact consumes the H106 upstream-readiness matrix, loads simulated-ready policy/upstream evidence, and then clears stage-local publication/ownership readiness one stage at a time. Symbol/fact, references/contracts, capability/readiness, storage/lifetime, lowering/backend request, LLVM text emission, and object-output become worker-candidate-ready after the staged clear, but actual worker selection stays 0 behind the real worker selection gate. Link/coordinator stays non-candidate and coordinator-owned. Latest validation did not run O3: direct estimate passed with cadence total/meaningful/ignored 6/5/1, five cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and production/speedup readiness 0; shell syntax passed; skip-build focused proof passed in 14.99s without O3 or rebuild and reported eight matrix rows, policy/upstream clear loaded 1/1, source upstream readiness cleared 8, stage-publication clear-only 1, per-stage publication clears 8, worker-candidate-ready rows 7, worker-candidate-blocked rows 1, workers selected 0, object writes 0, actual links 0, candidate-ready-is-sufficient-for-worker-selection 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0. No compiler build or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 315,
+      "text": "| MT2-H108 | Add downstream candidate-selection blocked summary before real workers. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_candidate_selection_blocked_summary.out` during the optional frontend promotion estimate postcheck. The artifact consumes the H107 candidate matrix, aggregates the seven worker-candidate-ready downstream stages plus the coordinator-owned link boundary, names the remaining real-worker execution proof, default-selection gate, and O3 evidence blockers, and keeps the first real-worker candidate order not ready. Latest validation did not run O3: direct estimate passed with cadence total/meaningful/ignored 7/6/1, four cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and production/speedup readiness 0; shell syntax passed; skip-build focused proof passed in 14.97s without O3 or rebuild and reported eight selection rows, seven candidate-ready-but-selection-blocked rows, zero selection-ready rows, eight selection-blocked rows, seven real-worker-gate blockers, one coordinator-owned link blocker, blocking gates `real_worker_execution_proof,default_selection_gate,o3_evidence`, first candidate order ready 0 with blocker `real_worker_execution_proof_not_ready`, workers selected 0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0. No compiler build or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 316,
+      "text": "| MT2-H109 | Add first downstream real-worker candidate order preflight before execution. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_real_worker_candidate_order_preflight.out` during the optional frontend promotion estimate postcheck. The artifact consumes the H108 blocked-selection summary, publishes deterministic downstream pipeline order for the seven candidate-ready stages, names `symbol_fact` as rank 1, records all ordered stages as not executable, keeps link/coordinator out of the order and deferred behind `coordinator_owned_link_boundary`, and carries the real-worker one-thread proof, default-selection, and O3 evidence blockers. Latest validation did not run O3: direct estimate passed with cadence total/meaningful/ignored 8/7/1, three cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and production/speedup readiness 0; shell syntax and `git diff --check` passed; skip-build focused proof passed in 15.42s without O3 or rebuild and reported source candidate-ready stage count 7, source selection ready/blocked rows 0/8, deterministic non-execution order rows 7, first candidate `symbol_fact`, order rows 2..7 waiting on predecessor real-worker proofs, link/coordinator deferred 1, real-worker one-thread/default/O3 required 1/1/1 and ready 0/0/0, first candidate order ready 0 with blocker `real_worker_execution_proof_not_ready`, workers selected 0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0. No compiler build or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 317,
+      "text": "| MT2-H110 | Add symbol/fact one-thread real-worker execution proof before selection. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_symbol_fact_one_thread_real_worker_execution_proof.out` during the optional frontend promotion estimate postcheck. The artifact consumes the H109 candidate-order preflight plus the existing symbol/fact promotion handoff and real-worker probe rows. It proves the rank-1 `symbol_fact` candidate has a ready one-thread/simulated-worker execution proof: three worker-owned symbol/fact descriptors, three one-thread rows, three simulated-worker rows, deterministic publication equality, worker first input order 3 to prove completion order is not publication order, 192 metadata commit bytes, zero payload-copy bytes, and separated measurement fields for one-thread worker, parallel worker, coordinator wait, coordinator publish, RSS/PSS placeholder, no-change, and small-edit timings. The proof keeps default production payload readiness unchanged at zero, keeps default-selection and O3 evidence gates blocked, keeps references/contracts waiting for the symbol/fact proof handoff, and leaves worker selection, object writes, actual links, production readiness, speedup readiness, O3 reruns, O3-skip-as-promotion-evidence, and estimates-as-readiness all zero. Latest validation did not run O3: direct estimate passed with cadence total/meaningful/ignored 9/8/1, two cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and production/speedup readiness 0; shell syntax passed; skip-build focused proof passed in 15.92s without O3 or rebuild and reported H110 ready 1 with remaining gates `default_selection_gate,o3_evidence`. No compiler build or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 318,
+      "text": "| MT2-H111 | Carry the symbol/fact one-thread execution proof into the references/contracts preflight. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_reference_contract_preflight_from_symbol_fact_proof.out` during the optional frontend promotion estimate postcheck. The artifact consumes the H110 symbol/fact one-thread proof plus the existing references/contracts promotion handoff. It proves the predecessor `symbol_fact` execution proof is visible and ready, clears only the prior `waiting_for_symbol_fact_real_worker_proof` order blocker, carries the three symbol/fact rows/segments, 192 metadata commit bytes, and zero payload-copy bytes, and preserves the default references/contracts handoff as still blocked by default symbol/fact worker readiness. References/contracts now records its own execution proof as required/not ready, keeps preflight readiness 0 with blocker `reference_contract_execution_proof_not_ready`, keeps capability/readiness waiting on references/contracts, and leaves worker selection, object writes, actual links, production readiness, speedup readiness, O3 reruns, O3-skip-as-promotion-evidence, and estimates-as-readiness all zero. Latest validation did not run O3: direct estimate passed with cadence total/meaningful/ignored 10/9/1, one cadence step remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and production/speedup readiness 0; shell syntax passed; skip-build focused proof passed in 16.78s without O3 or rebuild and reported predecessor proof ready 1, symbol/fact wait blocker cleared 1, references/contracts execution proof ready 0, workers selected 0, production readiness 0, and speedup readiness 0. No compiler build or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 320,
+      "text": "| MT2-H113 | Add references/contracts one-thread real-worker execution proof before selection. | done | `run_incremental_proof.sh` now emits `incremental_proof_downstream_reference_contract_one_thread_real_worker_execution_proof.out` during the optional frontend promotion estimate postcheck. The artifact consumes the H111 references/contracts preflight plus the real-worker references/contracts probe rows. It proves the rank-2 `reference_contract` candidate has a ready one-thread/simulated-worker execution proof after the symbol/fact predecessor proof is visible: three worker-owned segments, three one-thread descriptor rows, three simulated-worker descriptor rows, six published reference/contract rows, deterministic publication equality, worker first input order 3, 192 metadata commit bytes, and zero payload-copy bytes. It deliberately distinguishes the default production handoff rows, which remain two rows and still blocked by default symbol/fact worker readiness, from the worker-probe proof rows. Latest validation did not run O3: direct estimate passed with cadence total/meaningful/ignored 1/0/1, ten cadence steps remaining, `o3_nonclaim_batch_decision=skip_ok`, policy status `blocked`, policy reason `wall_time_ratio_spread_exceeds_threshold`, all/timing/memory dimensions within spread 0/0/1, and production/speedup readiness 0; shell syntax passed; skip-build focused proof passed in 17.25s without O3 or rebuild and reported H113 ready 1, default-selection/O3 gates still blocked, capability/readiness waiting rows 1, later stage waiting rows 5, workers selected 0, object writes 0, actual links 0, production readiness 0, and speedup readiness 0. No compiler build or STAN was required because this slice changed only shell/docs and made no performance or worker-default claim. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 341,
+      "text": "| MT2-H132A | Refresh post-H132 O3 cadence and debug-ratio evidence. | done | The post-H132 estimate correctly reported the cadence gate due after commit `75806699`: cadence total/meaningful/ignored 11/10/1, zero steps remaining, `o3_nonclaim_batch_decision=refresh_required`, and `o3_can_skip_for_nonclaim_batch=0`. The first build-including O3 wrapper pass used the updated vendor branch and warm release tree: 0 transpiled files, 433 skipped unchanged files, release Ninja generated, `clang++ -fuse-ld=mold`, `release (report_only)` grouping, object cache disabled, Ninja no work, rebuilt outputs none, wrapper elapsed 68.89s, and build command timing separately measured 36.25s with max RSS 312,284 KB. That warm no-change release build is modestly faster than the H122 post-vendor 39.96s warm no-change datapoint, so the vendor improvements helped a little more here, but this still does not prove edited-source rebuild savings. Because that first O3 pass did not load the debug baseline, it appended sample 8 without debug-ratio fields. A no-build debug baseline then passed in 77.57s with default/trial 1790 / 1790 ms and scaling cold/no-change/body/surface 19764 / 293 / 8824 / 8886 ms. A second no-build O3 wrapper consumed that baseline, passed in 12.54s, appended sample 9 for commit `75806699`, and reset the cadence: samples/debug-ratio samples 9/7, repeated O3 ready 1, current debug-ratio sample ready 1, stable ratio ready 0, O3 default/trial 150 / 150 ms, scaling cold/no-change/body/surface 373 / 16 / 125 / 124 ms, scaling RSS/PSS 40,046,592 / 37,232,640 bytes, ratios 1193 / 1193 / 5298 / 109 percent, `default_selection_ready=0`, and `speedup_claim_ready=0`. The post-refresh estimate reported `sample_freshness_status=current_commit`, cadence total/meaningful/ignored 0/0/0, ten steps remaining, `o3_nonclaim_batch_decision=skip_ok`, latest real O3 rows 150 / 150 / 373 / 37,232,640, estimated O3 values labeled advisory, and production/default/speedup readiness still zero. No PHS source changed, so STAN was not rerun. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 352,
+      "text": "| MT2-H142A | Refresh post-H142 O3 cadence and debug-ratio evidence. | done | The H142 post-commit estimate reached the 10 meaningful-step cadence since sample 9 (`75806699`) and selected the nonclaim refresh path: cadence total/meaningful/ignored 11/10/1, zero steps remaining, `o3_nonclaim_batch_decision=refresh_required`, trigger `cadence`, and `o3_can_skip_for_nonclaim_batch=0`. The cadence-triggered O3 wrapper then ran with worker-trial and full-payload-trial assertions enabled, scaling enabled, and the durable debug baseline loaded. It used the warm release tree with 0 transpiled files, 433 skipped unchanged files, release Ninja regenerated, Ninja no work, wrapper elapsed 1:10.53 with outer max RSS 312,464 KB, and wrapper-reported max RSS 12,544 KB. It appended durable sample 10 for commit `c9ff03a3`: O3 default/trial wall 190 / 150 ms, scaling cold/no-change/body/surface 376 / 17 / 127 / 129 ms, scaling RSS/PSS 40,165,376 / 37,266,432 bytes, debug-to-O3 ratios 942 / 1193 / 5256 / 109 percent, comparison/real-O3-scaling/functional-incremental/zero-payload-copy/output-match ready all 1, current debug-ratio sample ready 1, samples/debug-ratio samples 10/8, repeated O3/scaling ready 1, stable debug-to-O3 ratio still 0, default-selection readiness 0, and speedup-claim readiness 0. The post-refresh estimate reported sample freshness `current_commit`, cadence total/meaningful/ignored 0/0/0, ten steps remaining, `o3_nonclaim_batch_decision=skip_ok`, latest real O3 rows 190 / 150 / 376 / 37,266,432, and production/default/speedup readiness still zero. The post-refresh skip-build focused proof with `SCPP_V2_RUN_FRONTEND_PROMOTION_ESTIMATE_ASSERTIONS=1` passed in 35.31s with max RSS 17,152 KB and kept H142 selection-handoff rows active while production/default/speedup readiness remained zero. No PHS source changed, so STAN was not rerun. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1623,
+      "text": "native rebuild fanout: 425 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1627,
+      "text": "native rebuild fanout: 426 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1639,
+      "text": "release native rebuild fanout: 415 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1667,
+      "text": "native rebuild fanout: none; ninja no work"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1696,
+      "text": "native rebuild fanout: 100 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1709,
+      "text": "native rebuild fanout: none; ninja no work"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1741,
+      "text": "native rebuild fanout: 416 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1769,
+      "text": "native rebuild fanout: 3 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1790,
+      "text": "native rebuild fanout: 417 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1815,
+      "text": "native rebuild fanout: 418 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1856,
+      "text": "native rebuild fanout: 315 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1887,
+      "text": "native rebuild fanout: 422 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1920,
+      "text": "native rebuild fanout: 414 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/mt_phase2_stage_evaluation_backlog_2026_07_20.md",
+      "line": 1938,
+      "text": "native rebuild fanout: 422 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/capability_catalog_multithreading_milestone_plan_2026_07_20.md",
+      "line": 179,
+      "text": "  dependency_state 2.353s, pack_write 0.180s, ninja 26.752s"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/capability_catalog_multithreading_milestone_plan_2026_07_20.md",
+      "line": 193,
+      "text": "normal scoped-pack edited build = fail, 25.67s wall, missing generated dependencies"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 24,
+      "text": "- `BASE`: green, 5 tests, 35 checked artifacts, 1.47s build reuse, 0.21s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 25,
+      "text": "- `SF`: green, 15 tests, 97 checked artifacts, 1.47s build reuse, 0.24s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 26,
+      "text": "- `EX`: green, 14 tests, 92 checked artifacts, 1.50s build reuse, 0.05s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 33,
+      "text": "- `BASE`: green, 5 tests, 35 checked artifacts, 1.45s build reuse, 0.22s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 34,
+      "text": "- `SF`: green, 15 tests, 97 checked artifacts, 1.49s build reuse, 0.27s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 35,
+      "text": "- `EX`: green, 14 tests, 92 checked artifacts, 1.50s build reuse, 0.05s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 41,
+      "text": "- `BASE`: green, 5 tests, 35 checked artifacts, 1.47s build reuse, 0.22s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 42,
+      "text": "- `SF`: green, 15 tests, 97 checked artifacts, 1.42s build reuse, 0.24s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 43,
+      "text": "- `EX`: green, 14 tests, 92 checked artifacts, 1.45s build reuse, 0.05s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 50,
+      "text": "- `BASE`: green after expectation promotion, 5 tests, 35 checked artifacts, 1.47s build reuse, 0.22s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 51,
+      "text": "- `SF`: green after expectation promotion, 15 tests, 97 checked artifacts, 1.47s build reuse, 0.25s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 52,
+      "text": "- `EX`: green, 14 tests, 92 checked artifacts, 1.45s build reuse, 0.05s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 60,
+      "text": "- `BASE`: green after expectation promotion, 5 tests, 35 checked artifacts, 1.45s build reuse, 0.22s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 61,
+      "text": "- `SF`: green after expectation promotion, 15 tests, 97 checked artifacts, 1.45s build reuse, 0.24s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 62,
+      "text": "- `EX`: green after expectation promotion, 14 tests, 92 checked artifacts, 1.46s build reuse, 0.05s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 68,
+      "text": "- compiler build through pure runner: green, 154.5s build step"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 70,
+      "text": "- `BASE`: green, 5 tests, 35 checked artifacts, 1.42s build reuse, 0.22s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 71,
+      "text": "- `SF`: green, 15 tests, 97 checked artifacts, 1.39s build reuse, 0.25s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/pure_tdd_antidrift_cleanup_backlog_2026_08_09.md",
+      "line": 72,
+      "text": "- `EX`: green, 14 tests, 92 checked artifacts, 1.47s build reuse, 0.05s compiler run"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 878,
+      "text": "| Direct compiler rebuild with `SCPP_NINJA_JOBS=16` | ok | 321.01s | 539,544 KB | Rebuilt `compiler/src/.prism/build/main`; one source transpiled, native rebuild still rebuilt broadly. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1082,
+      "text": "| No-change vendored `build --no-stan` with `SCPP_NINJA_JOBS=16` | ok | 1.65s | 115,072 KB | No files transpiled; Ninja had no work to do. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1274,
+      "text": "  `php ../../vendor/simple_cpp/bin/scpp.php explain-build rebuild-fanout`"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1292,
+      "text": "| `ninja_subprocess_ms` | 137.248s |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1302,
+      "text": "| `ninja_subprocess_ms` | 0.028s |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1308,
+      "text": "| `rebuild-fanout` | 187 outputs, 186 generated objects, 176 project-unit packs changed, Ninja no-work `no` | 0 outputs, 0 objects, 0 project-unit packs changed, Ninja no-work `yes` |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1322,
+      "text": "  not C++ object rebuild fanout."
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1325,
+      "text": "  disproportionate rebuild fanout or if the task explicitly targets build"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1368,
+      "text": "| `scpp explain-build rebuild-fanout` | ok | n/a | n/a | 4 outputs, 3 generated objects, 0 project-unit pack changes. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1424,
+      "text": "| `scpp explain-build rebuild-fanout` | ok | n/a | n/a | 4 outputs, 3 generated objects, 0 project-unit packs changed, 1 stale broad pack header removed. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1479,
+      "text": "| `scpp explain-build rebuild-fanout` | ok | n/a | n/a | 4 outputs, 3 generated objects, 0 project-unit packs changed, 0 removed. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 1572,
+      "text": "| `scpp explain-build rebuild-fanout` | ok | n/a | n/a | 4 outputs, 3 generated objects, 0 project-unit packs changed, 0 removed. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 2786,
+      "text": "| Vendored `scpp.php build --no-stan --timings` from `compiler/src` | ok | 27.79s | First edit rebuild: 5 PHS sources transpiled, 25 outputs rebuilt/linked. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 2787,
+      "text": "| Vendored `scpp.php build --no-stan --timings` from `compiler/src` | ok | 8.27s | Follow-up guard rebuild: 1 PHS source transpiled, 4 outputs rebuilt/linked. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 3732,
+      "text": "| `php compiler/tools/run_90_campaign_start_guard.php` | ok | First composition probe after adding the helper had a cold-ish valid BASE build of 199.57s, then invalid BASE reused build at 1.58s. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 3733,
+      "text": "| `php compiler/tools/run_90_campaign_start_guard.php` | ok | Final check after rewiring: valid BASE build 1.50s, run 1.11s; invalid BASE build 1.54s, run 0.03s. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 3768,
+      "text": "| `php compiler/tools/run_90_campaign_start_guard.php` | ok | Warm check: valid BASE build 1.52s, run 1.12s; invalid BASE build 1.50s, run 0.03s. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 3838,
+      "text": "| `php compiler/tools/run_90_campaign_start_guard.php` | ok | Purity guard green; valid BASE cold build 162.39s, run 1.12s; invalid BASE warm build 1.49s, run 0.03s. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/00_inventory/implementation_progress_2026_08_05.md",
+      "line": 3872,
+      "text": "| `php compiler/tools/run_90_campaign_start_guard.php` | ok | Purity guard green; valid BASE build 24.03s, run 1.18s; invalid BASE warm build 1.48s, run 0.03s. |"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/definition_driven_drift_correction_plan_2026_08_11.md",
+      "line": 300,
+      "text": "- `SCPP_NINJA_JOBS=16 /usr/bin/php8.5 vendor/simple_cpp/bin/scpp.php build --entry=main.phs --no-stan --timings`"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/future/90_percent_functionality/definition_driven_drift_correction_plan_2026_08_11.md",
+      "line": 389,
+      "text": "- `SCPP_NINJA_JOBS=16 /usr/bin/php8.5 vendor/simple_cpp/bin/scpp.php build --entry=main.phs --no-stan --timings`"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_current_state_summary.md",
+      "line": 91,
+      "text": "builds were Ninja-clean at about 3.7-4.4 seconds, and the representative"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_current_state_summary.md",
+      "line": 133,
+      "text": "  dependency_state 2.353s, pack_write 0.180s, ninja 26.752s"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_current_state_summary.md",
+      "line": 3885,
+      "text": "native rebuild fanout: 242 objects plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_current_state_summary.md",
+      "line": 3897,
+      "text": "release native rebuild fanout: 415 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/v2_current_state_summary.md",
+      "line": 3925,
+      "text": "native rebuild fanout: 426 steps plus link"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 388,
+      "text": "post-H132 cadence refresh: after commit `75806699`, the estimate reported cadence due with total/meaningful/ignored 11/10/1 and `refresh_required`; the build-including O3 pass used the updated vendor branch and warm release tree with 0 transpiled, 433 skipped, Ninja no work, no rebuilt outputs, 68.89s wrapper duration, and a separate 36.25s warm release no-change build-command timing, which is modestly better than H122's 39.96s warm no-change datapoint but still not proof of edited-source rebuild savings; the first O3 sample lacked debug-ratio fields, so a no-build debug baseline refreshed default/trial 1790/1790 ms and scaling cold/no-change/body/surface 19764/293/8824/8886 ms, then a no-build O3 wrapper appended sample 9 for `75806699` with O3 default/trial 150/150 ms, scaling cold/no-change/body/surface 373/16/125/124 ms, RSS/PSS 40046592/37232640 bytes, ratios 1193/1193/5298/109 percent, samples/debug-ratio samples 9/7, repeated O3 ready 1, stable ratio still blocked, default-selection/speedup readiness 0; post-refresh estimate is current-commit, cadence 0/0/0, ten steps remaining, and `o3_nonclaim_batch_decision=skip_ok`"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 389,
+      "text": "post-H142 cadence refresh: after H142, the estimate reported cadence due with total/meaningful/ignored 11/10/1, zero steps remaining, `refresh_required`, trigger `cadence`, and `o3_can_skip_for_nonclaim_batch=0`; the O3 wrapper used the warm release tree with 0 transpiled, 433 skipped, release Ninja regenerated, Ninja no work, wrapper elapsed 1:10.53, outer max RSS 312,464 KB, and wrapper-reported max RSS 12,544 KB; it appended sample 10 for `c9ff03a3` with O3 default/trial 190/150 ms, scaling cold/no-change/body/surface 376/17/127/129 ms, RSS/PSS 40165376/37266432 bytes, ratios 942/1193/5256/109 percent, samples/debug-ratio samples 10/8, repeated O3 ready 1, current debug-ratio sample ready 1, stable ratio still blocked, default-selection/speedup readiness 0; post-refresh estimate is current-commit, cadence 0/0/0, ten steps remaining, `o3_nonclaim_batch_decision=skip_ok`, and production/default/speedup readiness 0; post-refresh focused proof passed in 35.31s with max RSS 17,152 KB"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 971,
+      "text": "H77 debug build: 2 PHS files, 101 native steps plus link, Ninja 111.47s"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1036,
+      "text": "H90 cadence O3 wrapper: passed in 14.25s with build skipped, worker-trial and full-payload-trial assertions enabled, sample id/count 2/2, debug-ratio samples 2, required samples 3, stable ratio ready 0, current ratios 994 / 1253 / 5432 / 109 percent, default/trial wall 190 / 150 ms, scaling cold/no-change/body/surface 379 / 17 / 132 / 126 ms, scaling RSS/PSS 40,476,672 / 37,442,560 bytes, comparison/real-O3-scaling/functional-incremental/zero-payload-copy/output-match ready all 1, payload-copy bytes 0, default_selection_ready=0, speedup_claim_ready=0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1075,
+      "text": "H101 cadence O3 wrapper: passed in 12.53s with release build skipped, worker-trial and full-payload-trial assertions enabled, durable debug baseline loaded, and scaling enabled; appended sample id/count 3/3 for commit `bdb88dd2`, debug-ratio samples 3, required samples 3, repeated O3/scaling ready 1, stable ratio ready 0, current ratios 821 / 1253 / 5549 / 109 percent, default/trial wall 230 / 150 ms, scaling cold/no-change/body/surface 371 / 16 / 140 / 131 ms, scaling RSS/PSS 40,378,368 / 37,356,544 bytes, comparison/real-O3-scaling/functional-incremental/zero-payload-copy/output-match ready all 1, payload-copy bytes 0, default_selection_ready=0, and speedup_claim_ready=0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1080,
+      "text": "H102 focused default handoff proof: passed in 12.80s without O3 or rebuild; activation preflight and default-worker handoff carried stable-ratio window ready 0, samples 3/3, exceeded dimensions default_wall/trial_wall/scaling_cold, exceeded count 3, selected blocker `waiting_for_stable_debug_ratio`, compiler precheck run 1, routine O3 skipped 1, clear-state simulation still kept real evidence ready 0, default execution one_thread, production readiness 0, and speedup readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1084,
+      "text": "H103 focused default handoff proof: passed in 13.80s without O3 or rebuild; activation preflight, default-worker handoff, and clear-state simulation carried the H103 policy rows, kept selected blocker `waiting_for_stable_debug_ratio` in the real path, kept clear-state selected_blocker=none as a precondition-only simulation, preserved stable-ratio window ready 0, exceeded dimensions default_wall/trial_wall/scaling_cold, real repeated evidence 0, default execution one_thread, production readiness 0, and speedup readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1088,
+      "text": "H104 focused downstream handoff proof: passed in 13.41s without O3 or rebuild; symbol/fact, references/contracts, capability/readiness, storage/lifetime, lowering/backend request, LLVM text emission, object-output, and link/coordinator handoffs carried the H103 policy envelope, required accepted plus clear frontend stable-ratio policy evidence, preserved real repeated evidence 0, kept downstream worker selections 0, kept object writes and actual links 0, and kept production/speedup readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1092,
+      "text": "H105 downstream policy-clear simulation proof: passed in 14.01s without O3 or rebuild; the new artifact consumed link/coordinator handoff, recorded source policy blocked and simulated policy ready/clear, covered eight downstream stages, preserved upstream worker readiness 0 and stage-local publication readiness 0 for each stage, kept workers ready/selected after policy clear 0/0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1096,
+      "text": "H106 downstream upstream-readiness unblock matrix proof: passed in 14.72s without O3 or rebuild; the new artifact consumed the H105 policy-clear source, loaded simulated-ready policy evidence, emitted eight matrix rows, simulated one upstream worker-readiness clear per stage, preserved stage-local publication readiness 0, shifted blockers to local publication/ownership reasons, kept worker-ready/selected after upstream clear 0/0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1100,
+      "text": "H107 downstream stage-publication clear candidate matrix proof: passed in 14.99s without O3 or rebuild; the new artifact consumed the H106 upstream-readiness source, loaded simulated-ready policy/upstream evidence, emitted eight matrix rows, simulated stage-local publication/ownership readiness clear per stage, recorded seven worker-candidate-ready downstream rows, kept link/coordinator non-candidate and coordinator-owned, kept workers selected 0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1104,
+      "text": "H108 downstream candidate-selection blocked summary proof: passed in 14.97s without O3 or rebuild; the new artifact consumed the H107 candidate matrix, emitted eight blocked selection rows, recorded seven candidate-ready-but-selection-blocked rows, zero selection-ready rows, seven real-worker-gate blockers, one coordinator-owned link boundary, blocking gates `real_worker_execution_proof,default_selection_gate,o3_evidence`, first real-worker candidate order ready 0 with blocker `real_worker_execution_proof_not_ready`, kept workers selected 0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1108,
+      "text": "H109 downstream real-worker candidate order preflight proof: passed in 15.42s without O3 or rebuild; the new artifact consumed the H108 blocked-selection summary, emitted seven deterministic non-execution order rows in pipeline order, named `symbol_fact` rank 1, kept rows 2..7 waiting on predecessor real-worker proofs, kept link/coordinator out of the order and deferred by `coordinator_owned_link_boundary`, required real-worker one-thread/default/O3 gates 1/1/1 while keeping them ready 0/0/0, kept first candidate order ready 0 with blocker `real_worker_execution_proof_not_ready`, workers selected 0, object writes 0, actual links 0, production readiness 0, speedup readiness 0, O3 rerun 0, O3-skip-as-promotion-evidence 0, and estimates-used-as-readiness 0"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1755,
+      "text": "explicit H80 evidence path: focused proof passed in 7.20s without build/O3"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 1756,
+      "text": "default missing-ledger path: focused proof passed in 6.96s without build/O3"
+    },
+    {
+      "file": "/home/alexv/__AI/simple_cpp_compiler/compiler/docs/archive/audits_handoffs/v2_handover_mt_next_chat_2026_07_21.md",
+      "line": 2343,
+      "text": "release Ninja regenerated, and Ninja no work; wrapper elapsed was 1:10.53 with"
+    }
+  ]
+}

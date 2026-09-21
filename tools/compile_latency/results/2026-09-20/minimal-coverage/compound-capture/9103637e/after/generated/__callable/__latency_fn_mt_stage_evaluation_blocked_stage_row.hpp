@@ -1,0 +1,6 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct MtStageEvaluationRow;
+MtStageEvaluationRow __latency_fn_mt_stage_evaluation_blocked_stage_row(int_t<std::uint32_t> rowId, int_t<std::uint16_t> stageKindId, int_t<std::uint16_t> parallelUnitId, int_t<std::uint16_t> blockedReasonId);
+}

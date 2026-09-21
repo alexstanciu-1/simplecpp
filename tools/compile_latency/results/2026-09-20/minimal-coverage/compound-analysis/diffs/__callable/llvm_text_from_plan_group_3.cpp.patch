@@ -1,0 +1,36 @@
+--- before/__callable/llvm_text_from_plan_group_3.cpp
++++ after/__callable/llvm_text_from_plan_group_3.cpp
+@@ -63,13 +63,19 @@
+ 	SCPP_CALL_DEPTH_GUARD("llvm_text_from_plan::main_exit_text_for_descriptor", "/tmp/scpp-edit-latency-20260919/app/compile/backend/llvm_text_from_plan.phs", __latency_lines_llvm_text_from_plan[34]);
+ 	string_t returnType = required_cast<string_t>(descriptor->llvm_type);
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(descriptor->main_exit_policy_id), cast<int_t<>>(__latency_fn_llvm_text_from_plan_main_exit_policy_bool_zext_id())))) {
+-		return string_t("  %exit_value = zext i1 %run_value to i32\n  ret i32 %exit_value\n");
++		string_t text = required_cast<string_t>(string_t("  %exit_value = zext i1 %run_value to i32\n"));
++		text = (cast<string_t>(text) + string_t("  ret i32 %exit_value\n"));
++		return text;
+ 	}
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(descriptor->main_exit_policy_id), cast<int_t<>>(__latency_fn_llvm_text_from_plan_main_exit_policy_signed_extend_id())))) {
+-		return (string_t("  %exit_value = sext ") + cast<string_t>(returnType) + string_t(" %run_value to i32\n") + string_t("  ret i32 %exit_value\n"));
++		string_t text = required_cast<string_t>((string_t("  %exit_value = sext ") + cast<string_t>(returnType) + string_t(" %run_value to i32\n")));
++		text = (cast<string_t>(text) + string_t("  ret i32 %exit_value\n"));
++		return text;
+ 	}
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(descriptor->main_exit_policy_id), cast<int_t<>>(__latency_fn_llvm_text_from_plan_main_exit_policy_unsigned_extend_id())))) {
+-		return (string_t("  %exit_value = zext ") + cast<string_t>(returnType) + string_t(" %run_value to i32\n") + string_t("  ret i32 %exit_value\n"));
++		string_t text = required_cast<string_t>((string_t("  %exit_value = zext ") + cast<string_t>(returnType) + string_t(" %run_value to i32\n")));
++		text = (cast<string_t>(text) + string_t("  ret i32 %exit_value\n"));
++		return text;
+ 	}
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(descriptor->main_exit_policy_id), cast<int_t<>>(__latency_fn_llvm_text_from_plan_main_exit_policy_i32_return_id())))) {
+ 		return string_t("  ret i32 %run_value\n");
+@@ -77,7 +83,9 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(descriptor->main_exit_policy_id), cast<int_t<>>(__latency_fn_llvm_text_from_plan_main_exit_policy_blocked_id())))) {
+ 		return string_t("  ret i32 0\n");
+ 	}
+-	return (string_t("  %exit_value = trunc ") + cast<string_t>(returnType) + string_t(" %run_value to i32\n") + string_t("  ret i32 %exit_value\n"));
++	string_t text = required_cast<string_t>((string_t("  %exit_value = trunc ") + cast<string_t>(returnType) + string_t(" %run_value to i32\n")));
++	text = (cast<string_t>(text) + string_t("  ret i32 %exit_value\n"));
++	return text;
+ }
+ 
+ }

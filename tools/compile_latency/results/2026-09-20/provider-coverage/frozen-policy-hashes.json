@@ -1,0 +1,12 @@
+{
+  "expanded_layout.py": "cb4515ccaa0d0df575d3be98e5c5f28aba25c063037c6b090f6c1104497d2eeb",
+  "type_publication.py": "7a35f7c0d2343c0cf7490ee745acae4aeadaf171989a0205ddad7d31fcc41e57",
+  "type_publication_metadata.json": "800bdaf064311d11cef840346121f6f5c26fcdc9125b632264365bbc61931de0",
+  "run_coverage_replay.py": "1581aace9a29d3877685aa1fe702926dd2b0bb2bb834f5f1a0bf1ed3f58a0b3b",
+  "callable_surface.py": "6306f6eded4d7ade3906fc8542c10fb489e4417d6ff2f0a4beae8d109b2a745b",
+  "adapter_surface.py": "3d346ac6b2235cdd86cf557767b0fce4b86f8a13f9dd5d9d4e4e06220fa53b0a",
+  "callable_groups.py": "a2c066e909d36e0f0e00b10de133cf07be8899dcdf3db4bf273671491a208893",
+  "partitioned_callables.py": "aee8f9f4c26e6866dc339bff857a62577177e18299b506c4afc2d7406bb99919",
+  "run_corpus.py": "185b44417fb2c0d8de021a0e0d421dac686d149093868e00e82b31c3a29fbfd3",
+  "experiment.py": "7bb36748be7a005e2293d30c2e6c2e675ae51d0fed3ce20f0eeb5eb7bcf07ba5"
+}

@@ -1,0 +1,29 @@
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index 674f6223..6cfa36a0 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -212,7 +212,6 @@ final class compiler_entry_backend {
+ 		$forConditionFeatureId uint16 = structure_row_ids::none_kind_id();
+ 		$forConditionLocalOperationId uint16 = structure_row_ids::none_kind_id();
+ 		$forBodySequence ScalarLoopBodyStatementSequence = new ScalarLoopBodyStatementSequence();
+-		$forUpdateAssigns bool = false;
+ 		$thenLiteralNode FrontendNodeRow = [];
+ 		$thenLiteral FrontendLiteralPayloadRow = [];
+ 		$fallbackLiteralNode FrontendNodeRow = [];
+@@ -467,7 +466,6 @@ final class compiler_entry_backend {
+ 				$forInitStatementRowId = $statement->target_node_id;
+ 				$forUpdateStatementRowId = $statement->value_node_id;
+ 				$forUpdateLastSourceRowId = $updateStatement->value_node_id;
+-				$forUpdateAssigns = true;
+ 					} else if ((int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()) {
+ 				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+ 				if ((int)$ifSourceRowId > 0
+@@ -614,7 +612,7 @@ final class compiler_entry_backend {
+ 			$consumerPlan = semantic_body_capability_consumers::scalar_while_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $whileSourceRowId, $whileConditionSourceRowId, $whileConditionFeatureId, $whileConditionProviderTypeRefId, $whileConditionTypeRefId, $returnSourceRowId, $returnTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		} else if ((int)$forSourceRowId > 0) {
+-			if (((int)$forBodySequence->effect_count === 0 && (int)$forBodySequence->terminator_kind_id === 0) || !$forUpdateAssigns || (int)$forConditionTypeRefId === 0) {
++			if (((int)$forBodySequence->effect_count === 0 && (int)$forBodySequence->terminator_kind_id === 0) || (int)$forUpdateStatementRowId === 0 || (int)$forConditionTypeRefId === 0) {
+ 				$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 				return backend_emission_decisions::from_lowering_plan($plan);
+ 			}

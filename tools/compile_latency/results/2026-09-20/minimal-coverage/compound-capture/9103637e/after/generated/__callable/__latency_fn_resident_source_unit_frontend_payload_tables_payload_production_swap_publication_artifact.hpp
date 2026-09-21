@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class PartitionReadinessArtifact;
+struct SourceUnitFrontendWorkerPayloadProductionSwapRow;
+shared_p<PartitionReadinessArtifact> __latency_fn_resident_source_unit_frontend_payload_tables_payload_production_swap_publication_artifact(vector_t<SourceUnitFrontendWorkerPayloadProductionSwapRow>& swapRows, bool_t simulatedOrder);
+}

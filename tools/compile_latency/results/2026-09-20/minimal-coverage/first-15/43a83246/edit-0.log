@@ -1,0 +1,6 @@
+[1/6] CXX minimal/__callable/backend_module_composition_locations.o
+[2/6] CXX minimal/__callable/llvm_text_from_plan_locations.o
+[3/6] CALLABLE_PART minimal_parts/compile/backend/llvm_text_from_plan/part_0.o
+[4/6] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_18.o
+[5/6] CALLABLE_PART minimal_parts/__callable/backend_module_composition_group_0.o
+[6/6] LINK minimal-main

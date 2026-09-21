@@ -1,0 +1,38 @@
+--- before/__callable/source_units_group_7.cpp
++++ after/__callable/source_units_group_7.cpp
+@@ -66,7 +66,7 @@
+ #include "__callable/__latency_fn_source_units_table_row_from_source_read_result.hpp"
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-void __latency_fn_source_units_record_source_read_worker_probe_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& sourceReads, int_t<> workerCount) {
++void __latency_fn_source_units_record_source_read_worker_probe_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> sourceReads, int_t<> workerCount) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::record_source_read_worker_probe_metrics", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[54]);
+ 	__latency_fn_proof_metrics_add_report_counter(report, __latency_fn_proof_metrics_key_source_read_worker_probe_runs(), __latency_fn_structure_row_ids_uint32_from_int(static_cast<int_t<> >(1)));
+ 	__latency_fn_proof_metrics_add_report_counter(report, __latency_fn_proof_metrics_key_source_read_worker_probe_requested_workers(), __latency_fn_structure_row_ids_uint32_from_int(workerCount));
+@@ -107,7 +107,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-void __latency_fn_source_units_record_source_read_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& sourceReads, int_t<std::uint32_t> elapsedUs) {
++void __latency_fn_source_units_record_source_read_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> sourceReads, int_t<std::uint32_t> elapsedUs) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::record_source_read_metrics", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[55]);
+ 	__latency_fn_proof_metrics_append_unique_report_counter(report, __latency_fn_proof_metrics_key_source_read_descriptor_rows(), __latency_fn_structure_row_ids_uint32_from_int(cast<int_t<>>(sourceReads->descriptor_count)));
+ 	__latency_fn_proof_metrics_append_unique_report_counter(report, __latency_fn_proof_metrics_key_source_read_result_rows(), __latency_fn_structure_row_ids_uint32_from_int(cast<int_t<>>(sourceReads->result_count)));
+@@ -131,7 +131,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table(const shared_p<ProjectManifest>& manifest, const shared_p<SourceReadTable>& sourceReads) {
++shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table(shared_p<ProjectManifest> manifest, shared_p<SourceReadTable> sourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::table_from_source_read_table", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[56]);
+ 	shared_p<SourceUnitTable> table = create<SourceUnitTable>();
+ 	table->scope_id = __latency_fn_source_units_scope_project_manifest_sources_id();
+@@ -171,7 +171,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table_adopting_texts(const shared_p<ProjectManifest>& manifest, shared_p<SourceReadTable>& sourceReads) {
++shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table_adopting_texts(shared_p<ProjectManifest> manifest, shared_p<SourceReadTable>& sourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::table_from_source_read_table_adopting_texts", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[57]);
+ 	shared_p<SourceUnitTable> table = create<SourceUnitTable>();
+ 	table->scope_id = __latency_fn_source_units_scope_project_manifest_sources_id();

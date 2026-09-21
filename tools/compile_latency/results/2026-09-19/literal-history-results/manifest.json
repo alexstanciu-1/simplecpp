@@ -1,0 +1,16 @@
+{
+  "commit": "1610af1a689a183f7b8fc5ff795b0dde2dacc276",
+  "scope": "exact source hunk replay in current surrounding program, NOT historical toolchain replay",
+  "selection": "one of last 15 source-changing non-merge commits before workload revision; no historical latency criterion",
+  "source": "compile/backend/compiler_entry_backend.phs",
+  "before": "\t\t$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_literal($typeRefs, $literalNode->node_id, $literal->type_ref_id);",
+  "after": "\t\t$consumerPlan CapabilityConsumerPlan = capability_consumer_plans::new_plan();\n\t\tsemantic_body_capability_consumers::append_literal_return($consumerPlan, $literalNode->node_id, $literal->type_ref_id);\n\t\t$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);",
+  "outputs": [
+    "expanded/compile/backend/compiler_entry_backend.o",
+    "main"
+  ],
+  "changed_generated_inputs": [
+    "compile/backend/compiler_entry_backend.cpp"
+  ],
+  "proof": "both old and new paths emit int32 literal-return LLVM exiting42"
+}

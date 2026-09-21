@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentSourceUnitFrontendTaskPayloadSegmentHandleRequestRow;
+struct ResidentSourceUnitFrontendTaskPayloadSegmentHandleReservationRow;
+vector_t<ResidentSourceUnitFrontendTaskPayloadSegmentHandleReservationRow> __latency_fn_resident_source_unit_frontend_payload_tables_task_payload_segment_handle_reservation_rows_from_request_rows(vector_t<ResidentSourceUnitFrontendTaskPayloadSegmentHandleRequestRow>& requestRows);
+}

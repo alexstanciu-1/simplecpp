@@ -1,0 +1,4 @@
+[1/4] CALLABLE_PART layout_parts/latency_heartbeat_format.o
+[2/4] CALLABLE_PART layout_parts/compile/support/production_mt_heartbeat/part_0.o
+[3/4] CALLABLE_PART layout_parts/main.o
+[4/4] LINK main

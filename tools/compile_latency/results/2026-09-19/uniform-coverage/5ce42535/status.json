@@ -1,0 +1,22 @@
+{
+  "commit": "5ce42535",
+  "sources": [
+    "compile/backend/llvm_text_from_plan.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "uniform_helpers": true,
+  "before_hunk_setup_seconds": 167.1244758029934,
+  "forced_new_objects": [],
+  "changed_generated_inputs": [
+    "compile/backend/llvm_text_from_plan.cpp",
+    "compile/backend/llvm_text_from_plan.hpp",
+    "__partitions/compile/backend/llvm_text_from_plan/part_12.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/locations.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/part_11.cpp"
+  ],
+  "early_stop": "one successful screen above20s; not a median",
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

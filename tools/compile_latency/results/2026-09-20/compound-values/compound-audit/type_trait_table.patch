@@ -1,0 +1,15 @@
+diff --git a/compiler/v2/src/structures/capabilities/type_trait_table.phs b/compiler/v2/src/structures/capabilities/type_trait_table.phs
+index 7fefc065..c48660e3 100644
+--- a/compiler/v2/src/structures/capabilities/type_trait_table.phs
++++ b/compiler/v2/src/structures/capabilities/type_trait_table.phs
+@@ -3,6 +3,10 @@ struct TypeTraitTable {
+ 	public uint16 $artifact_kind_id = 1;
+ 	public uint16 $schema_version = 1;
+ 	public uint16 $lookup_model_id = 1;
++	public uint16 $lookup_policy_status_id = 1;
++	public uint32 $lookup_index_threshold = 0;
+ 	public uint32 $trait_count = 0;
++	public uint32 $numeric_ready_count = 0;
++	public uint32 $numeric_blocked_count = 0;
+ 	public $traits vector<TypeTraitRow> = [];
+ }

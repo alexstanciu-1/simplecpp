@@ -1,0 +1,37 @@
+{
+  "owner": "compile/support/mt_publication_metrics.phs",
+  "new_source": "compile/support/latency_publication_gate.phs",
+  "consumers": [
+    "compile/model/project_reference_resolution.phs",
+    "compile/backend/llvm_text_from_plan.phs",
+    "compile/backend/backend_object_link_cache.phs",
+    "compile/backend/lowering_plan.phs",
+    "compile/incremental/resident_source_unit_symbol_states.phs",
+    "compile/capabilities/type_capability_readiness.phs",
+    "compile/capabilities/storage_lifetime_readiness.phs"
+  ],
+  "narrow_includes": [
+    "main.cpp",
+    "compile/model/project_reference_resolution.cpp",
+    "compile/backend/lowering_plan.cpp",
+    "compile/backend/llvm_text_from_plan.cpp",
+    "compile/backend/backend_object_link_cache.cpp",
+    "compile/support/latency_publication_gate.cpp",
+    "compile/support/mt_publication_metrics.cpp",
+    "compile/incremental/resident_source_unit_symbol_states.cpp",
+    "compile/capabilities/storage_lifetime_readiness.cpp",
+    "compile/capabilities/type_capability_readiness.cpp",
+    "__partitions/compile/model/project_reference_resolution/part_5.cpp",
+    "__partitions/compile/backend/lowering_plan/part_4.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/part_16.cpp",
+    "__partitions/compile/backend/backend_object_link_cache/part_3.cpp",
+    "__partitions/compile/backend/backend_object_link_cache/part_2.cpp",
+    "__partitions/compile/incremental/resident_source_unit_symbol_states/part_1.cpp",
+    "__partitions/compile/capabilities/storage_lifetime_readiness/part_3.cpp",
+    "__partitions/compile/capabilities/type_capability_readiness/part_11.cpp"
+  ],
+  "jobs": 12,
+  "cache": "disabled",
+  "partition_consumers": true,
+  "scope": "Actual final MT gate body relocated; compatibility wrapper retained; all eight production call sites in seven files redirected; explicit future discovery metadata"
+}

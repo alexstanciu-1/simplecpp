@@ -1,0 +1,17 @@
+{
+  "commit": "534d70a6",
+  "sources": [
+    "compile/pipeline/pipeline_config_helpers.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "before_hunk_setup_seconds": 143.39603339202586,
+  "changed_generated_inputs": [
+    "compile/pipeline/pipeline_config_helpers.cpp",
+    "compile/pipeline/pipeline_config_helpers.hpp"
+  ],
+  "early_stop": "one successful screen above20s; not a median",
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

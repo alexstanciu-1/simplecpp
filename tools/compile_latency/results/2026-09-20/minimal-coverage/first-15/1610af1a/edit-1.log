@@ -1,0 +1,3 @@
+[1/3] CXX minimal/__callable/compiler_entry_backend_locations.o
+[2/3] CALLABLE_PART minimal_parts/__callable/compiler_entry_backend_group_0.o
+[3/3] LINK minimal-main

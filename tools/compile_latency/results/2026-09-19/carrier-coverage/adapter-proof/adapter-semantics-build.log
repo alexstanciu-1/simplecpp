@@ -1,0 +1,4 @@
+[1/4] CALLABLE_PART adapter-semantics.o
+[2/4] LINK adapter-semantics
+[3/4] CXX adapter-original.o
+[4/4] LINK adapter-original

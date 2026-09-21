@@ -1,0 +1,60 @@
+commit 534d70a618cc8efd42f2f9abedac7949308037a8
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:49:32 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:49:32 2026 +0300
+
+    Remove legacy case env fallbacks
+
+diff --git a/compiler/src/compile/pipeline/pipeline_config_helpers.phs b/compiler/src/compile/pipeline/pipeline_config_helpers.phs
+index 0c5b0f13..14f6801e 100644
+--- a/compiler/src/compile/pipeline/pipeline_config_helpers.phs
++++ b/compiler/src/compile/pipeline/pipeline_config_helpers.phs
+@@ -9,40 +9,32 @@ final class pipeline_config_helpers {
+ 		return "";
+ 	}
+ 
+-	public static function env_or_legacy_empty(string $name, string $legacyName): string {
+-		$value string = pipeline_config_helpers::env_or_empty($name);
+-		if ($value !== "") {
+-			return $value;
+-		}
+-		return pipeline_config_helpers::env_or_empty($legacyName);
+-	}
+-
+ 	public static function project_dir_from_env(): string {
+-		return pipeline_config_helpers::env_or_legacy_empty("SCPP_V2_PROJECT_DIR", "SCPP_V2_CASE_DIR");
++		return pipeline_config_helpers::env_or_empty("SCPP_V2_PROJECT_DIR");
+ 	}
+ 
+ 	public static function run_label_from_env(): string {
+-		return pipeline_config_helpers::env_or_legacy_empty("SCPP_V2_RUN_LABEL", "SCPP_V2_CASE_KEY");
++		return pipeline_config_helpers::env_or_empty("SCPP_V2_RUN_LABEL");
+ 	}
+ 
+ 	public static function project_root_from_env(): string {
+-		return pipeline_config_helpers::env_or_legacy_empty("SCPP_V2_PROJECT_ROOT", "SCPP_V2_CASE_ROOT");
++		return pipeline_config_helpers::env_or_empty("SCPP_V2_PROJECT_ROOT");
+ 	}
+ 
+ 	public static function run_labels_text_from_env(): string {
+-		return pipeline_config_helpers::env_or_legacy_empty("SCPP_V2_RUN_LABELS", "SCPP_V2_CASE_KEYS");
++		return pipeline_config_helpers::env_or_empty("SCPP_V2_RUN_LABELS");
+ 	}
+ 
+ 	public static function project_run_rows_tsv_from_env(): string {
+-		return pipeline_config_helpers::env_or_legacy_empty("SCPP_V2_PROJECT_RUN_ROWS_TSV", "SCPP_V2_CASE_RUNNER_ROWS_TSV");
++		return pipeline_config_helpers::env_or_empty("SCPP_V2_PROJECT_RUN_ROWS_TSV");
+ 	}
+ 
+ 	public static function project_run_artifact_path_from_env(): string {
+-		return pipeline_config_helpers::env_or_legacy_empty("SCPP_V2_PROJECT_RUN_ARTIFACT_PATH", "SCPP_V2_CASE_RUNNER_ARTIFACT_PATH");
++		return pipeline_config_helpers::env_or_empty("SCPP_V2_PROJECT_RUN_ARTIFACT_PATH");
+ 	}
+ 
+ 	public static function project_run_execution_dir_from_env(): string {
+-		return pipeline_config_helpers::env_or_legacy_empty("SCPP_V2_PROJECT_RUN_EXECUTION_DIR", "SCPP_V2_CASE_RUNNER_EXECUTION_DIR");
++		return pipeline_config_helpers::env_or_empty("SCPP_V2_PROJECT_RUN_EXECUTION_DIR");
+ 	}
+ 
+ 	public static function selected_artifact_keys_from_env(): vector<string> {

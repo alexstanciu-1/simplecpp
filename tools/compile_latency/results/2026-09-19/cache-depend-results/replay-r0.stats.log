@@ -1,0 +1,19 @@
+Cache directory:    /tmp/scpp-edit-latency-20260919/ccache-3zx137f0
+Config file:        /tmp/scpp-edit-latency-20260919/ccache-3zx137f0/ccache.conf
+System config file:
+Stats updated:      Sat Sep 19 11:09:43 2026
+Cacheable calls:     22 /  22 (100.0%)
+  Hits:              11 /  22 (50.00%)
+    Direct:          11 /  11 (100.0%)
+    Preprocessed:     0 /  11 ( 0.00%)
+  Misses:            11 /  22 (50.00%)
+Successful lookups:
+  Direct:            11 /  22 (50.00%)
+  Preprocessed:       0
+Local storage:
+  Cache size (GB):  0.0 / 1.0 ( 0.12%)
+  Files:             22
+  Hits:              11 /  22 (50.00%)
+  Misses:            11 /  22 (50.00%)
+  Reads:             33
+  Writes:            22

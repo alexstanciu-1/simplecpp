@@ -1,0 +1,983 @@
+{
+  "scope": "exact captured graph/manifest match to timed replay; textual categories, not proof of semantic equivalence or avoidable work",
+  "categories": {
+    "body_or_other_cpp": {
+      "objects": 41,
+      "compiler_job_wall_seconds": 184.509
+    },
+    "function_signatures_only": {
+      "objects": 15,
+      "compiler_job_wall_seconds": 76.131
+    },
+    "location_metadata": {
+      "objects": 14,
+      "compiler_job_wall_seconds": 46.346
+    },
+    "new_cpp": {
+      "objects": 1,
+      "compiler_job_wall_seconds": 2.844
+    },
+    "unchanged_cpp_dependency": {
+      "objects": 7,
+      "compiler_job_wall_seconds": 40.229
+    }
+  },
+  "changed_headers": [
+    "__callable/__latency_fn_control_flow_dataflows_append_local_write_set_row.hpp",
+    "__callable/__latency_fn_control_flow_dataflows_append_local_write_statement.hpp",
+    "__callable/__latency_fn_control_flow_dataflows_append_merge_for_if.hpp",
+    "__callable/__latency_fn_control_flow_dataflows_empty_local_write_set.hpp",
+    "__callable/__latency_fn_local_body_lowering_append_if_condition_backend_request.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_locked_publication_metrics.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_publication_metrics.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_source_text_for_worker_input.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_source_texts_for_payload_tables.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_max.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_total.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_build_result_for_input.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_build_results_are_publishable.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_elapsed_us.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_for_input.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_input.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_input_from_source_units.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_inputs_for_payload_tables.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_inputs_for_source_units.hpp",
+    "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input.hpp",
+    "__callable/__latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics.hpp",
+    "__callable/__latency_fn_resident_source_unit_symbol_states_record_symbol_fact_publication_metrics__exec.hpp",
+    "__callable/__latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input.hpp",
+    "__callable/__latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact.hpp",
+    "__callable/__latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_published_row_total.hpp",
+    "__callable/__latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_for_input.hpp",
+    "__callable/__latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs.hpp",
+    "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_is_local.hpp",
+    "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_is_local_immediate.hpp",
+    "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_id.hpp",
+    "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_immediate_id.hpp",
+    "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_none_id.hpp",
+    "__callable/__latency_fn_source_units_append_source_read_worker_result.hpp",
+    "__callable/__latency_fn_source_units_publish_source_read_worker_batch.hpp",
+    "__callable/__latency_fn_source_units_record_source_read_metrics.hpp",
+    "__callable/__latency_fn_source_units_record_source_read_worker_probe_metrics.hpp",
+    "__callable/__latency_fn_source_units_record_source_read_worker_publication_not_selected.hpp",
+    "__callable/__latency_fn_source_units_source_read_descriptor_result_metadata_mismatch_count.hpp",
+    "__callable/__latency_fn_source_units_source_read_descriptor_row.hpp",
+    "__callable/__latency_fn_source_units_source_read_descriptor_table_from_manifest.hpp",
+    "__callable/__latency_fn_source_units_source_read_hash_match.hpp",
+    "__callable/__latency_fn_source_units_source_read_line_count.hpp",
+    "__callable/__latency_fn_source_units_source_read_manifest_order_match.hpp",
+    "__callable/__latency_fn_source_units_source_read_result_metadata_bytes.hpp",
+    "__callable/__latency_fn_source_units_source_read_result_row.hpp",
+    "__callable/__latency_fn_source_units_source_read_table_from_manifest.hpp",
+    "__callable/__latency_fn_source_units_source_read_table_from_worker_results.hpp",
+    "__callable/__latency_fn_source_units_source_read_table_metadata_mismatch_count.hpp",
+    "__callable/__latency_fn_source_units_source_read_table_text_hash_mismatch_count.hpp",
+    "__callable/__latency_fn_source_units_source_read_worker_count_for_manifest.hpp",
+    "__callable/__latency_fn_source_units_source_read_worker_probe_inputs.hpp",
+    "__callable/__latency_fn_source_units_source_read_worker_probe_mismatch_count.hpp",
+    "__callable/__latency_fn_source_units_table_from_manifest.hpp",
+    "__callable/__latency_fn_source_units_table_from_source_read_table.hpp",
+    "__callable/__latency_fn_source_units_table_from_source_read_table_adopting_texts.hpp",
+    "__callable/__latency_fn_source_units_table_row.hpp",
+    "__callable/__latency_fn_source_units_worker_published_source_read_table.hpp",
+    "__callable/__latency_fn_source_units_worker_published_source_read_table_from_descriptors.hpp",
+    "__types/ControlFlowLocalWriteSet.hpp",
+    "__types/ScalarConditionOperand.hpp"
+  ],
+  "objects": [
+    {
+      "object": "minimal/__callable/compiler_entry_backend_locations.o",
+      "source": "__callable/compiler_entry_backend_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 2.787,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/compile/control_flow/control_flow_dataflows.o",
+      "source": "compile/control_flow/control_flow_dataflows.cpp",
+      "category": "new_cpp",
+      "job_wall_seconds": 2.844,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/control_flow_dataflows_locations.o",
+      "source": "__callable/control_flow_dataflows_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 2.873,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/llvm_api_sink_preflight_locations.o",
+      "source": "__callable/llvm_api_sink_preflight_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 2.885,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/compile/backend/scalar_body_statement_collection.o",
+      "source": "compile/backend/scalar_body_statement_collection.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.075,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/scalar_body_statement_collection_locations.o",
+      "source": "__callable/scalar_body_statement_collection_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.079,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/backend_emission_decisions_locations.o",
+      "source": "__callable/backend_emission_decisions_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.134,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/lowering_plan_locations.o",
+      "source": "__callable/lowering_plan_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.323,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/runtime_abi_bridge_locations.o",
+      "source": "__callable/runtime_abi_bridge_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.392,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/backend_preflight_requests_locations.o",
+      "source": "__callable/backend_preflight_requests_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.399,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/llvm_text_from_plan_locations.o",
+      "source": "__callable/llvm_text_from_plan_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.452,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/runtime_helper_contract_readiness_locations.o",
+      "source": "__callable/runtime_helper_contract_readiness_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.529,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/resident_daemon_file_ipc_locations.o",
+      "source": "__callable/resident_daemon_file_ipc_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.213,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/control_flow_transfers_locations.o",
+      "source": "__callable/control_flow_transfers_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.348,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/source_unit_early_skip_locations.o",
+      "source": "__callable/source_unit_early_skip_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 3.286,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/runtime_abi_bridge_group_2.o",
+      "source": "__callable/runtime_abi_bridge_group_2.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.3,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal/__callable/partition_readiness_locations.o",
+      "source": "__callable/partition_readiness_locations.cpp",
+      "category": "location_metadata",
+      "job_wall_seconds": 4.646,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/analysis_context_identity_group_0.o",
+      "source": "__callable/analysis_context_identity_group_0.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.459,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/backend_emission_decisions_group_6.o",
+      "source": "__callable/backend_emission_decisions_group_6.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.251,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/backend_preflight_requests_group_16.o",
+      "source": "__callable/backend_preflight_requests_group_16.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.269,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/runtime_abi_bridge_group_1.o",
+      "source": "__callable/runtime_abi_bridge_group_1.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.707,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/backend_preflight_requests_group_17.o",
+      "source": "__callable/backend_preflight_requests_group_17.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 5.305,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/backend_preflight_requests_group_15.o",
+      "source": "__callable/backend_preflight_requests_group_15.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 5.491,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/backend_emission_decisions_group_5.o",
+      "source": "__callable/backend_emission_decisions_group_5.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 5.702,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_api_sink_preflight_group_3.o",
+      "source": "__callable/llvm_api_sink_preflight_group_3.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.119,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_api_sink_preflight_group_2.o",
+      "source": "__callable/llvm_api_sink_preflight_group_2.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.609,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_3.o",
+      "source": "__callable/llvm_text_from_plan_group_3.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.003,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_2.o",
+      "source": "__callable/llvm_text_from_plan_group_2.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.115,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_10.o",
+      "source": "__callable/llvm_text_from_plan_group_10.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.142,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_15.o",
+      "source": "__callable/llvm_text_from_plan_group_15.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.915,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_11.o",
+      "source": "__callable/llvm_text_from_plan_group_11.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.085,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_18.o",
+      "source": "__callable/llvm_text_from_plan_group_18.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.431,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_14.o",
+      "source": "__callable/llvm_text_from_plan_group_14.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.769,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_17.o",
+      "source": "__callable/llvm_text_from_plan_group_17.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.969,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/compiler_entry_backend_group_1.o",
+      "source": "__callable/compiler_entry_backend_group_1.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 7.005,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_16.o",
+      "source": "__callable/llvm_text_from_plan_group_16.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.679,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_25.o",
+      "source": "__callable/llvm_text_from_plan_group_25.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.394,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_26.o",
+      "source": "__callable/llvm_text_from_plan_group_26.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 5.274,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/llvm_text_from_plan_group_27.o",
+      "source": "__callable/llvm_text_from_plan_group_27.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.752,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/lowering_plan_group_4.o",
+      "source": "__callable/lowering_plan_group_4.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.599,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/scalar_body_statement_collection_group_0.o",
+      "source": "__callable/scalar_body_statement_collection_group_0.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.573,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/local_body_lowering_group_1.o",
+      "source": "__callable/local_body_lowering_group_1.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 5.083,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/lowering_plan_group_5.o",
+      "source": "__callable/lowering_plan_group_5.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 5.053,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/runtime_helper_contract_readiness_group_1.o",
+      "source": "__callable/runtime_helper_contract_readiness_group_1.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.609,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/runtime_helper_contract_readiness_group_2.o",
+      "source": "__callable/runtime_helper_contract_readiness_group_2.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.988,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/control_flow_dataflows_group_2.o",
+      "source": "__callable/control_flow_dataflows_group_2.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.624,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/control_flow_dataflows_group_1.o",
+      "source": "__callable/control_flow_dataflows_group_1.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.885,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/control_flow_dataflows_group_3.o",
+      "source": "__callable/control_flow_dataflows_group_3.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.663,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/control_flow_dataflows_group_4.o",
+      "source": "__callable/control_flow_dataflows_group_4.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.865,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/partition_readiness_group_5.o",
+      "source": "__callable/partition_readiness_group_5.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.759,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/resident_daemon_file_ipc_group_9.o",
+      "source": "__callable/resident_daemon_file_ipc_group_9.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.91,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/resident_daemon_file_ipc_group_11.o",
+      "source": "__callable/resident_daemon_file_ipc_group_11.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 3.771,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/resident_daemon_file_ipc_group_5.o",
+      "source": "__callable/resident_daemon_file_ipc_group_5.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.356,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/control_flow_transfers_group_1.o",
+      "source": "__callable/control_flow_transfers_group_1.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.617,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/resident_daemon_file_ipc_group_10.o",
+      "source": "__callable/resident_daemon_file_ipc_group_10.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.143,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/resident_function_body_summary_project_references_group_0.o",
+      "source": "__callable/resident_function_body_summary_project_references_group_0.cpp",
+      "category": "unchanged_cpp_dependency",
+      "job_wall_seconds": 3.735,
+      "changed_signatures_before": [],
+      "changed_signatures_after": [],
+      "changed_reachable_headers": [
+        "__callable/__latency_fn_source_units_table_from_manifest.hpp"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_function_body_row_list_publish_results_group_2.o",
+      "source": "__callable/resident_function_body_row_list_publish_results_group_2.cpp",
+      "category": "unchanged_cpp_dependency",
+      "job_wall_seconds": 5.437,
+      "changed_signatures_before": [],
+      "changed_signatures_after": [],
+      "changed_reachable_headers": [
+        "__callable/__latency_fn_source_units_table_from_manifest.hpp"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_daemon_incremental_proof_group_0.o",
+      "source": "__callable/resident_daemon_incremental_proof_group_0.cpp",
+      "category": "unchanged_cpp_dependency",
+      "job_wall_seconds": 6.152,
+      "changed_signatures_before": [],
+      "changed_signatures_after": [],
+      "changed_reachable_headers": [
+        "__callable/__latency_fn_source_units_table_from_manifest.hpp"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_frontend_payload_tables_group_4.o",
+      "source": "__callable/resident_source_unit_frontend_payload_tables_group_4.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 4.67,
+      "changed_signatures_before": [
+        "SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit(SourceUnitTableRow sourceUnit, const string_t& sourceText) {",
+        "SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_for_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_estimated_frontend_result_payload_copy_bytes(shared_p<TokenStream> tokens, shared_p<FrontendModel> model) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_estimated_symbol_result_payload_copy_bytes(shared_p<ProjectSymbolIndex> symbols) {",
+        "shared_p<SourceUnitFrontendWorkerFrontendPayloadCarrier> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_payload_carrier_from_model(int_t<> sourceUnitId, shared_p<TokenStream> tokens, shared_p<FrontendModel> model) {",
+        "shared_p<SourceUnitFrontendWorkerBuildResult> __latency_fn_resident_source_unit_frontend_payload_tables_worker_build_result_for_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {"
+      ],
+      "changed_signatures_after": [
+        "SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit(SourceUnitTableRow sourceUnit, const string_t& sourceText) {",
+        "SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_for_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_estimated_frontend_result_payload_copy_bytes(shared_p<TokenStream> tokens, shared_p<FrontendModel> model) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_estimated_symbol_result_payload_copy_bytes(shared_p<ProjectSymbolIndex> symbols) {",
+        "shared_p<SourceUnitFrontendWorkerFrontendPayloadCarrier> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_payload_carrier_from_model(int_t<> sourceUnitId, shared_p<TokenStream> tokens, shared_p<FrontendModel> model) {",
+        "shared_p<SourceUnitFrontendWorkerBuildResult> __latency_fn_resident_source_unit_frontend_payload_tables_worker_build_result_for_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_function_body_parse_slices_group_1.o",
+      "source": "__callable/resident_function_body_parse_slices_group_1.cpp",
+      "category": "unchanged_cpp_dependency",
+      "job_wall_seconds": 5.954,
+      "changed_signatures_before": [],
+      "changed_signatures_after": [],
+      "changed_reachable_headers": [
+        "__callable/__latency_fn_source_units_table_from_manifest.hpp"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_function_body_local_parse_proofs_group_1.o",
+      "source": "__callable/resident_function_body_local_parse_proofs_group_1.cpp",
+      "category": "unchanged_cpp_dependency",
+      "job_wall_seconds": 6.559,
+      "changed_signatures_before": [],
+      "changed_signatures_after": [],
+      "changed_reachable_headers": [
+        "__callable/__latency_fn_source_units_table_from_manifest.hpp"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_frontend_payload_tables_group_5.o",
+      "source": "__callable/resident_source_unit_frontend_payload_tables_group_5.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 4.038,
+      "changed_signatures_before": [
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_token_row_scale() {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_frontend_node_scale() {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_token_rows(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_frontend_nodes(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_segment_count_for_rows(int_t<> rowCount) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_token_segments(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_frontend_node_segments(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_parser_errors(int_t<> descriptor) {",
+        "shared_p<SourceUnitFrontendWorkerPayloadInput> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_input(const SourceUnitTableRow& sourceUnit, const string_t& sourceText) {",
+        "shared_p<SourceUnitFrontendWorkerPayloadInput> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_input_from_source_units(const shared_p<SourceUnitTable>& sourceUnits, const SourceUnitTableRow& sourceUnit) {",
+        "string_t __latency_fn_resident_source_unit_frontend_payload_tables_source_text_for_worker_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {",
+        "vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_inputs_for_payload_tables(const shared_p<SourceUnitTable>& sourceUnits, const vector_t<ResidentSourceUnitFrontendPayloadTableRow>& payloadTables) {",
+        "vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_inputs_for_source_units(const shared_p<SourceUnitTable>& sourceUnits) {"
+      ],
+      "changed_signatures_after": [
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_token_row_scale() {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_frontend_node_scale() {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_token_rows(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_frontend_nodes(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_segment_count_for_rows(int_t<> rowCount) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_token_segments(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_frontend_node_segments(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_parser_errors(int_t<> descriptor) {",
+        "shared_p<SourceUnitFrontendWorkerPayloadInput> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_input(SourceUnitTableRow sourceUnit, const string_t& sourceText) {",
+        "shared_p<SourceUnitFrontendWorkerPayloadInput> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_input_from_source_units(shared_p<SourceUnitTable> sourceUnits, SourceUnitTableRow sourceUnit) {",
+        "string_t __latency_fn_resident_source_unit_frontend_payload_tables_source_text_for_worker_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {",
+        "vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_inputs_for_payload_tables(shared_p<SourceUnitTable> sourceUnits, const vector_t<ResidentSourceUnitFrontendPayloadTableRow>& payloadTables) {",
+        "vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_inputs_for_source_units(shared_p<SourceUnitTable> sourceUnits) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_frontend_payload_tables_group_6.o",
+      "source": "__callable/resident_source_unit_frontend_payload_tables_group_6.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 4.875,
+      "changed_signatures_before": [
+        "vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_build_results(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, int_t<> workerCount) {",
+        "bool_t __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_build_results_are_publishable(const shared_p<SourceUnitTable>& sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_payload_copy_byte_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_input_payload_copy_byte_total(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_tokenizer_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_parser_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_symbol_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_elapsed_us(const shared_p<SourceUnitFrontendWorkerBuildResult>& result) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_elapsed_us_max(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_parser_elapsed_us_max(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {"
+      ],
+      "changed_signatures_after": [
+        "vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_build_results(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, int_t<> workerCount) {",
+        "bool_t __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_build_results_are_publishable(shared_p<SourceUnitTable> sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_payload_copy_byte_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_input_payload_copy_byte_total(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_tokenizer_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_parser_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_symbol_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_elapsed_us(shared_p<SourceUnitFrontendWorkerBuildResult> result) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_elapsed_us_total(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_elapsed_us_max(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {",
+        "int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_result_parser_elapsed_us_max(const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_symbol_states_group_2.o",
+      "source": "__callable/resident_source_unit_symbol_states_group_2.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 5.094,
+      "changed_signatures_before": [
+        "shared_p<PartitionReadinessArtifact> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact(const shared_p<SourceUnitTable>& sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, bool_t simulatedOrder) {",
+        "int_t<std::uint32_t> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_published_row_total(const shared_p<PartitionReadinessArtifact>& artifact) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_symbol_scale() {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_declaration_scale() {",
+        "shared_p<SourceUnitTable> __latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input, const SourceUnitTableRow& sourceUnit, const string_t& sourceText) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_for_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_symbols(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_declarations(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_parser_errors(int_t<> descriptor) {",
+        "vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs(const shared_p<SourceUnitTable>& sourceUnits) {"
+      ],
+      "changed_signatures_after": [
+        "shared_p<PartitionReadinessArtifact> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact(shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, bool_t simulatedOrder) {",
+        "int_t<std::uint32_t> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_published_row_total(shared_p<PartitionReadinessArtifact> artifact) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_symbol_scale() {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_declaration_scale() {",
+        "shared_p<SourceUnitTable> __latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input, SourceUnitTableRow sourceUnit, const string_t& sourceText) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_for_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_symbols(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_declarations(int_t<> descriptor) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_parser_errors(int_t<> descriptor) {",
+        "vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs(shared_p<SourceUnitTable> sourceUnits) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_frontend_payload_tables_group_7.o",
+      "source": "__callable/resident_source_unit_frontend_payload_tables_group_7.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 6.06,
+      "changed_signatures_before": [
+        "int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_total(const shared_p<SourceUnitTable>& sourceUnits) {",
+        "int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_max(const shared_p<SourceUnitTable>& sourceUnits) {",
+        "bool_t __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_inputs_use_source_unit_sidecars(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs) {",
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_single_pipeline_publication_summary_metrics(shared_p<CompilerProjectRunReport>& report, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> publishedResults, int_t<std::uint32_t> payloadCopyBytes) {",
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_worker_copy_boundary_audit_metrics(shared_p<CompilerProjectRunReport>& report, int_t<> inputRows, int_t<> publishedResults, int_t<std::uint32_t> inputSourceTextBytes, int_t<std::uint32_t> liveResultPayloadCopyBytes, int_t<std::uint32_t> localWorkerPayloadBytes, bool_t inputSidecarSelected, bool_t lockedPublicationSelected) {",
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> taskRunElapsedUs, int_t<std::uint32_t> frontendPublishElapsedUs, int_t<std::uint32_t> symbolPublishElapsedUs, int_t<std::uint32_t> publicationElapsedUs, int_t<std::uint32_t> totalElapsedUs) {"
+      ],
+      "changed_signatures_after": [
+        "int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_total(shared_p<SourceUnitTable> sourceUnits) {",
+        "int_t<std::uint32_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_unit_source_byte_max(shared_p<SourceUnitTable> sourceUnits) {",
+        "bool_t __latency_fn_resident_source_unit_frontend_payload_tables_worker_frontend_inputs_use_source_unit_sidecars(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs) {",
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_single_pipeline_publication_summary_metrics(shared_p<CompilerProjectRunReport>& report, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> publishedResults, int_t<std::uint32_t> payloadCopyBytes) {",
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_worker_copy_boundary_audit_metrics(shared_p<CompilerProjectRunReport>& report, int_t<> inputRows, int_t<> publishedResults, int_t<std::uint32_t> inputSourceTextBytes, int_t<std::uint32_t> liveResultPayloadCopyBytes, int_t<std::uint32_t> localWorkerPayloadBytes, bool_t inputSidecarSelected, bool_t lockedPublicationSelected) {",
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, const vector_t<shared_p<SourceUnitFrontendWorkerBuildResult>>& results, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> taskRunElapsedUs, int_t<std::uint32_t> frontendPublishElapsedUs, int_t<std::uint32_t> symbolPublishElapsedUs, int_t<std::uint32_t> publicationElapsedUs, int_t<std::uint32_t> totalElapsedUs) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_frontend_payload_tables_group_8.o",
+      "source": "__callable/resident_source_unit_frontend_payload_tables_group_8.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 6.431,
+      "changed_signatures_before": [
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_locked_publication_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, const shared_p<SourceUnitFrontendWorkerLockedPublicationStats>& stats, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> taskRunElapsedUs, int_t<std::uint32_t> totalElapsedUs) {",
+        "vector_t<int_t<>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptors(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, int_t<> workerCount) {",
+        "vector_t<int_t<>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptors_sequential(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs) {",
+        "vector_t<string_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_texts_for_payload_tables(const shared_p<SourceUnitTable>& sourceUnits, const vector_t<ResidentSourceUnitFrontendPayloadTableRow>& payloadTables) {",
+        "ResidentSourceUnitFrontendPayloadTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_table_row_from_descriptor(ResidentSourceUnitFrontendPayloadTableRow coordinatorHandle, int_t<> descriptor) {"
+      ],
+      "changed_signatures_after": [
+        "void __latency_fn_resident_source_unit_frontend_payload_tables_record_real_worker_locked_publication_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, shared_p<SourceUnitFrontendWorkerLockedPublicationStats> stats, int_t<> workerCount, bool_t selected, int_t<std::uint32_t> taskRunElapsedUs, int_t<std::uint32_t> totalElapsedUs) {",
+        "vector_t<int_t<>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptors(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, int_t<> workerCount) {",
+        "vector_t<int_t<>> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptors_sequential(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs) {",
+        "vector_t<string_t> __latency_fn_resident_source_unit_frontend_payload_tables_source_texts_for_payload_tables(shared_p<SourceUnitTable> sourceUnits, const vector_t<ResidentSourceUnitFrontendPayloadTableRow>& payloadTables) {",
+        "ResidentSourceUnitFrontendPayloadTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_table_row_from_descriptor(ResidentSourceUnitFrontendPayloadTableRow coordinatorHandle, int_t<> descriptor) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_1.o",
+      "source": "__callable/source_units_group_1.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 3.955,
+      "changed_signatures_before": [
+        "int_t<> __latency_fn_source_units_source_read_worker_count_for_manifest(const shared_p<ProjectManifest>& manifest) {",
+        "int_t<> __latency_fn_source_units_source_read_worker_pool_size() {",
+        "bool_t __latency_fn_source_units_source_read_worker_publication_enabled() {",
+        "bool_t __latency_fn_source_units_source_read_worker_try_lock_publication_enabled() {",
+        "bool_t __latency_fn_source_units_source_read_hash_audit_enabled() {",
+        "bool_t __latency_fn_source_units_source_read_light_metrics_enabled() {",
+        "int_t<> __latency_fn_source_units_source_read_worker_publish_batch_cap() {",
+        "int_t<> __latency_fn_source_units_line_count(const string_t& source) {",
+        "string_t __latency_fn_source_units_content_debug_key(SourceUnitTableRow row) {",
+        "string_t __latency_fn_source_units_incremental_owner_key(shared_p<SourceUnitTable> table, SourceUnitTableRow row) {",
+        "SourceUnitTableRow __latency_fn_source_units_table_row(const ProjectManifestSourceRow& source, const string_t& sourceText) {"
+      ],
+      "changed_signatures_after": [
+        "int_t<> __latency_fn_source_units_source_read_worker_count_for_manifest(shared_p<ProjectManifest> manifest) {",
+        "int_t<> __latency_fn_source_units_source_read_worker_pool_size() {",
+        "bool_t __latency_fn_source_units_source_read_worker_publication_enabled() {",
+        "bool_t __latency_fn_source_units_source_read_worker_try_lock_publication_enabled() {",
+        "bool_t __latency_fn_source_units_source_read_hash_audit_enabled() {",
+        "bool_t __latency_fn_source_units_source_read_light_metrics_enabled() {",
+        "int_t<> __latency_fn_source_units_source_read_worker_publish_batch_cap() {",
+        "int_t<> __latency_fn_source_units_line_count(const string_t& source) {",
+        "string_t __latency_fn_source_units_content_debug_key(SourceUnitTableRow row) {",
+        "string_t __latency_fn_source_units_incremental_owner_key(shared_p<SourceUnitTable> table, SourceUnitTableRow row) {",
+        "SourceUnitTableRow __latency_fn_source_units_table_row(ProjectManifestSourceRow source, const string_t& sourceText) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_unit_early_skip_group_3.o",
+      "source": "__callable/source_unit_early_skip_group_3.cpp",
+      "category": "body_or_other_cpp",
+      "job_wall_seconds": 4.191,
+      "changed_signatures_before": [],
+      "changed_signatures_after": []
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_2.o",
+      "source": "__callable/source_units_group_2.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 4.367,
+      "changed_signatures_before": [
+        "SourceUnitTableRow __latency_fn_source_units_table_row_from_source_read_result(SourceReadResultRow result) {",
+        "SourceReadDescriptorRow __latency_fn_source_units_source_read_descriptor_row(const ProjectManifestSourceRow& source, int_t<> manifestOrder) {",
+        "SourceReadResultRow __latency_fn_source_units_source_read_result_row(const SourceReadDescriptorRow& descriptor, const string_t& sourceText, bool_t readOk) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_manifest(const shared_p<ProjectManifest>& manifest) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_source_read_descriptor_table_from_manifest(const shared_p<ProjectManifest>& manifest) {",
+        "int_t<std::uint32_t> __latency_fn_source_units_source_read_result_metadata_bytes(const shared_p<SourceReadTable>& sourceReads) {",
+        "int_t<std::uint32_t> __latency_fn_source_units_source_read_line_count(const shared_p<SourceReadTable>& sourceReads) {"
+      ],
+      "changed_signatures_after": [
+        "SourceUnitTableRow __latency_fn_source_units_table_row_from_source_read_result(SourceReadResultRow result) {",
+        "SourceReadDescriptorRow __latency_fn_source_units_source_read_descriptor_row(ProjectManifestSourceRow source, int_t<> manifestOrder) {",
+        "SourceReadResultRow __latency_fn_source_units_source_read_result_row(SourceReadDescriptorRow descriptor, const string_t& sourceText, bool_t readOk) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_manifest(shared_p<ProjectManifest> manifest) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_source_read_descriptor_table_from_manifest(shared_p<ProjectManifest> manifest) {",
+        "int_t<std::uint32_t> __latency_fn_source_units_source_read_result_metadata_bytes(shared_p<SourceReadTable> sourceReads) {",
+        "int_t<std::uint32_t> __latency_fn_source_units_source_read_line_count(shared_p<SourceReadTable> sourceReads) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_frontend_payload_tables_group_30.o",
+      "source": "__callable/resident_source_unit_frontend_payload_tables_group_30.cpp",
+      "category": "unchanged_cpp_dependency",
+      "job_wall_seconds": 7.202,
+      "changed_signatures_before": [],
+      "changed_signatures_after": [],
+      "changed_reachable_headers": [
+        "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_source_texts_for_payload_tables.hpp",
+        "__callable/__latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_inputs_for_payload_tables.hpp"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_3.o",
+      "source": "__callable/source_units_group_3.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 4.402,
+      "changed_signatures_before": [
+        "bool_t __latency_fn_source_units_source_read_manifest_order_match(const shared_p<SourceReadTable>& sourceReads) {",
+        "bool_t __latency_fn_source_units_source_read_hash_match(const shared_p<SourceReadTable>& sourceReads) {",
+        "int_t<> __latency_fn_source_units_source_read_result_signature(SourceReadResultRow result) {",
+        "shared_p<SourceReadWorkerProbeInput> __latency_fn_source_units_source_read_worker_probe_input(SourceReadDescriptorRow descriptor, const string_t& path) {",
+        "vector_t<shared_p<SourceReadWorkerProbeInput>> __latency_fn_source_units_source_read_worker_probe_inputs(const shared_p<SourceReadTable>& sourceReads) {",
+        "int_t<> __latency_fn_source_units_source_read_worker_probe_descriptor_for_input(shared_p<SourceReadWorkerProbeInput> input) {",
+        "shared_p<SourceReadWorkerResult> __latency_fn_source_units_source_read_worker_result_from_row__exec(SourceReadResultRow row, string_t& sourceText) {",
+        "string_t __latency_fn_source_units_source_text_from_worker_result(shared_p<SourceReadWorkerResult> workerResult) {"
+      ],
+      "changed_signatures_after": [
+        "bool_t __latency_fn_source_units_source_read_manifest_order_match(shared_p<SourceReadTable> sourceReads) {",
+        "bool_t __latency_fn_source_units_source_read_hash_match(shared_p<SourceReadTable> sourceReads) {",
+        "int_t<> __latency_fn_source_units_source_read_result_signature(SourceReadResultRow result) {",
+        "shared_p<SourceReadWorkerProbeInput> __latency_fn_source_units_source_read_worker_probe_input(SourceReadDescriptorRow descriptor, const string_t& path) {",
+        "vector_t<shared_p<SourceReadWorkerProbeInput>> __latency_fn_source_units_source_read_worker_probe_inputs(shared_p<SourceReadTable> sourceReads) {",
+        "int_t<> __latency_fn_source_units_source_read_worker_probe_descriptor_for_input(shared_p<SourceReadWorkerProbeInput> input) {",
+        "shared_p<SourceReadWorkerResult> __latency_fn_source_units_source_read_worker_result_from_row__exec(SourceReadResultRow row, string_t& sourceText) {",
+        "string_t __latency_fn_source_units_source_text_from_worker_result(shared_p<SourceReadWorkerResult> workerResult) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/resident_source_unit_symbol_states_group_3.o",
+      "source": "__callable/resident_source_unit_symbol_states_group_3.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 6.471,
+      "changed_signatures_before": [
+        "vector_t<int_t<>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptors(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, int_t<> workerCount) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_symbol_total(const vector_t<int_t<>>& descriptors) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_parser_error_total(const vector_t<int_t<>>& descriptors) {",
+        "void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_worker_handoff_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, const vector_t<int_t<>>& workerDescriptors, int_t<std::uint32_t> coordinatorSymbolRows, bool_t matches) {",
+        "void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount) {",
+        "void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_publication_metrics__exec(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceUnitTable>& sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount, bool_t frontendPayloadSourceWorkerReady, bool_t& symbolFactWorkerCandidateReady) {"
+      ],
+      "changed_signatures_after": [
+        "vector_t<int_t<>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptors(const vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>>& inputs, int_t<> workerCount) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_symbol_total(const vector_t<int_t<>>& descriptors) {",
+        "int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_parser_error_total(const vector_t<int_t<>>& descriptors) {",
+        "void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_worker_handoff_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, const vector_t<int_t<>>& workerDescriptors, int_t<std::uint32_t> coordinatorSymbolRows, bool_t matches) {",
+        "void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_live_worker_publication_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount) {",
+        "void __latency_fn_resident_source_unit_symbol_states_record_symbol_fact_publication_metrics__exec(shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount, bool_t frontendPayloadSourceWorkerReady, bool_t& symbolFactWorkerCandidateReady) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_4.o",
+      "source": "__callable/source_units_group_4.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 4.628,
+      "changed_signatures_before": [
+        "SourceReadResultRow __latency_fn_source_units_source_read_result_row_from_worker_result(shared_p<SourceReadWorkerResult> result) {",
+        "shared_p<SourceReadWorkerResult> __latency_fn_source_units_source_read_worker_result_for_input(shared_p<SourceReadWorkerProbeInput> input) {",
+        "vector_t<shared_p<SourceReadWorkerResult>> __latency_fn_source_units_source_read_worker_results(const vector_t<shared_p<SourceReadWorkerProbeInput>>& inputs, int_t<> workerCount) {",
+        "shared_p<SourceReadWorkerResult> __latency_fn_source_units_source_read_worker_result_for_manifest_order(const vector_t<shared_p<SourceReadWorkerResult>>& workerResults, int_t<> manifestOrder) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_worker_results(const shared_p<SourceReadTable>& descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& workerResults) {",
+        "void __latency_fn_source_units_append_source_read_worker_result(shared_p<SourceReadTable>& table, const shared_p<SourceReadTable>& descriptorSourceReads, shared_p<SourceReadWorkerResult> workerResult) {"
+      ],
+      "changed_signatures_after": [
+        "SourceReadResultRow __latency_fn_source_units_source_read_result_row_from_worker_result(shared_p<SourceReadWorkerResult> result) {",
+        "shared_p<SourceReadWorkerResult> __latency_fn_source_units_source_read_worker_result_for_input(shared_p<SourceReadWorkerProbeInput> input) {",
+        "vector_t<shared_p<SourceReadWorkerResult>> __latency_fn_source_units_source_read_worker_results(const vector_t<shared_p<SourceReadWorkerProbeInput>>& inputs, int_t<> workerCount) {",
+        "shared_p<SourceReadWorkerResult> __latency_fn_source_units_source_read_worker_result_for_manifest_order(const vector_t<shared_p<SourceReadWorkerResult>>& workerResults, int_t<> manifestOrder) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_worker_results(shared_p<SourceReadTable> descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& workerResults) {",
+        "void __latency_fn_source_units_append_source_read_worker_result(shared_p<SourceReadTable>& table, shared_p<SourceReadTable> descriptorSourceReads, shared_p<SourceReadWorkerResult> workerResult) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_5.o",
+      "source": "__callable/source_units_group_5.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 5.797,
+      "changed_signatures_before": [
+        "void __latency_fn_source_units_publish_source_read_worker_batch(shared_p<SourceReadTable>& table, const shared_p<SourceReadTable>& descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& batch, shared_p<SourceReadWorkerPublicationStats>& stats) {",
+        "vector_t<int_t<>> __latency_fn_source_units_source_read_worker_probe_descriptors(const vector_t<shared_p<SourceReadWorkerProbeInput>>& inputs, int_t<> workerCount) {",
+        "int_t<> __latency_fn_source_units_source_read_worker_probe_mismatch_count(const shared_p<SourceReadTable>& sourceReads, const vector_t<int_t<>>& workerDescriptors) {",
+        "int_t<> __latency_fn_source_units_source_read_table_metadata_mismatch_count(const shared_p<SourceReadTable>& left, const shared_p<SourceReadTable>& right) {",
+        "int_t<> __latency_fn_source_units_source_read_table_text_hash_mismatch_count(const shared_p<SourceReadTable>& left, const shared_p<SourceReadTable>& right) {",
+        "int_t<> __latency_fn_source_units_source_read_descriptor_result_metadata_mismatch_count(const shared_p<SourceReadTable>& descriptorSourceReads, const shared_p<SourceReadTable>& workerSourceReads) {",
+        "void __latency_fn_source_units_record_source_read_worker_publication_not_selected(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& sourceReads, int_t<> workerCount) {"
+      ],
+      "changed_signatures_after": [
+        "void __latency_fn_source_units_publish_source_read_worker_batch(shared_p<SourceReadTable>& table, shared_p<SourceReadTable> descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& batch, shared_p<SourceReadWorkerPublicationStats>& stats) {",
+        "vector_t<int_t<>> __latency_fn_source_units_source_read_worker_probe_descriptors(const vector_t<shared_p<SourceReadWorkerProbeInput>>& inputs, int_t<> workerCount) {",
+        "int_t<> __latency_fn_source_units_source_read_worker_probe_mismatch_count(shared_p<SourceReadTable> sourceReads, const vector_t<int_t<>>& workerDescriptors) {",
+        "int_t<> __latency_fn_source_units_source_read_table_metadata_mismatch_count(shared_p<SourceReadTable> left, shared_p<SourceReadTable> right) {",
+        "int_t<> __latency_fn_source_units_source_read_table_text_hash_mismatch_count(shared_p<SourceReadTable> left, shared_p<SourceReadTable> right) {",
+        "int_t<> __latency_fn_source_units_source_read_descriptor_result_metadata_mismatch_count(shared_p<SourceReadTable> descriptorSourceReads, shared_p<SourceReadTable> workerSourceReads) {",
+        "void __latency_fn_source_units_record_source_read_worker_publication_not_selected(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> sourceReads, int_t<> workerCount) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_6.o",
+      "source": "__callable/source_units_group_6.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 5.762,
+      "changed_signatures_before": [
+        "shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& coordinatorSourceReads, int_t<> workerCount) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table_from_descriptors(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& descriptorSourceReads, int_t<> workerCount) {"
+      ],
+      "changed_signatures_after": [
+        "shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> coordinatorSourceReads, int_t<> workerCount) {",
+        "shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table_from_descriptors(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> descriptorSourceReads, int_t<> workerCount) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_8.o",
+      "source": "__callable/source_units_group_8.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 4.41,
+      "changed_signatures_before": [
+        "void __latency_fn_source_units_record_source_unit_table_text_adoption_metrics(shared_p<CompilerProjectRunReport>& report) {",
+        "void __latency_fn_source_units_record_source_read_metrics_elapsed(shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> elapsedUs) {",
+        "void __latency_fn_source_units_record_source_unit_table_materialization_elapsed(shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> elapsedUs) {",
+        "shared_p<SourceUnitTable> __latency_fn_source_units_table_from_manifest(const shared_p<ProjectManifest>& manifest) {",
+        "SourceUnitTableRow __latency_fn_source_units_row_by_id(shared_p<SourceUnitTable> table, int_t<std::uint32_t> sourceUnitId) {",
+        "string_t __latency_fn_source_units_source_text_by_id(shared_p<SourceUnitTable> table, int_t<std::uint32_t> sourceUnitId) {"
+      ],
+      "changed_signatures_after": [
+        "void __latency_fn_source_units_record_source_unit_table_text_adoption_metrics(shared_p<CompilerProjectRunReport>& report) {",
+        "void __latency_fn_source_units_record_source_read_metrics_elapsed(shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> elapsedUs) {",
+        "void __latency_fn_source_units_record_source_unit_table_materialization_elapsed(shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> elapsedUs) {",
+        "shared_p<SourceUnitTable> __latency_fn_source_units_table_from_manifest(shared_p<ProjectManifest> manifest) {",
+        "SourceUnitTableRow __latency_fn_source_units_row_by_id(shared_p<SourceUnitTable> table, int_t<std::uint32_t> sourceUnitId) {",
+        "string_t __latency_fn_source_units_source_text_by_id(shared_p<SourceUnitTable> table, int_t<std::uint32_t> sourceUnitId) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/source_units_group_7.o",
+      "source": "__callable/source_units_group_7.cpp",
+      "category": "function_signatures_only",
+      "job_wall_seconds": 5.171,
+      "changed_signatures_before": [
+        "void __latency_fn_source_units_record_source_read_worker_probe_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& sourceReads, int_t<> workerCount) {",
+        "void __latency_fn_source_units_record_source_read_metrics(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& sourceReads, int_t<std::uint32_t> elapsedUs) {",
+        "shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table(const shared_p<ProjectManifest>& manifest, const shared_p<SourceReadTable>& sourceReads) {",
+        "shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table_adopting_texts(const shared_p<ProjectManifest>& manifest, shared_p<SourceReadTable>& sourceReads) {"
+      ],
+      "changed_signatures_after": [
+        "void __latency_fn_source_units_record_source_read_worker_probe_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> sourceReads, int_t<> workerCount) {",
+        "void __latency_fn_source_units_record_source_read_metrics(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> sourceReads, int_t<std::uint32_t> elapsedUs) {",
+        "shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table(shared_p<ProjectManifest> manifest, shared_p<SourceReadTable> sourceReads) {",
+        "shared_p<SourceUnitTable> __latency_fn_source_units_table_from_source_read_table_adopting_texts(shared_p<ProjectManifest> manifest, shared_p<SourceReadTable>& sourceReads) {"
+      ]
+    },
+    {
+      "object": "minimal_parts/__callable/compiler_project_runner_group_1.o",
+      "source": "__callable/compiler_project_runner_group_1.cpp",
+      "category": "unchanged_cpp_dependency",
+      "job_wall_seconds": 5.19,
+      "changed_signatures_before": [],
+      "changed_signatures_after": [],
+      "changed_reachable_headers": [
+        "__callable/__latency_fn_source_units_table_from_manifest.hpp"
+      ]
+    }
+  ]
+}

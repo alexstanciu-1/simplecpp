@@ -1,0 +1,4 @@
+[1/4] CXX minimal/__callable/frontend_model_builder_locations.o
+[2/4] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_6.o
+[3/4] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_14.o
+[4/4] LINK minimal-main

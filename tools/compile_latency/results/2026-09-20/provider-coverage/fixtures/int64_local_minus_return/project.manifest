@@ -1,0 +1,3 @@
+entry=run
+expected_result=38
+source=main.phs

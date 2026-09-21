@@ -1,0 +1,855 @@
+{
+  "scope": "Structural generated-adapter audit only; no transformed native correctness or timing proof",
+  "accepted": [
+    {
+      "owner": "backend_object_link_cache",
+      "header": "compile/backend/backend_object_link_cache.hpp",
+      "normalizers": {
+        "_norm_record_object_output_publication_metrics__objectOutputWorkerCandidateReady": {
+          "template_parameters": "typename T_objectOutputWorkerCandidateReady",
+          "return_type": "bool_t&",
+          "parameters": "T_objectOutputWorkerCandidateReady&& _objectOutputWorkerCandidateReady",
+          "same_owner_calls": []
+        },
+        "_norm_record_object_output_publication_metrics__objectOutputWorkerSelected": {
+          "template_parameters": "typename T_objectOutputWorkerSelected",
+          "return_type": "bool_t&",
+          "parameters": "T_objectOutputWorkerSelected&& _objectOutputWorkerSelected",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "record_object_output_publication_metrics": {
+          "template_parameters": "typename T_objectOutputWorkerCandidateReady, typename T_objectOutputWorkerSelected",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> ownerRunId, shared_p<BackendPartitionExecutionArtifact> partitions, int_t<> workerCount, bool_t upstreamEmissionLLVMWorkerReady, T_objectOutputWorkerCandidateReady&& _objectOutputWorkerCandidateReady, T_objectOutputWorkerSelected&& _objectOutputWorkerSelected",
+          "same_owner_calls": [
+            "_norm_record_object_output_publication_metrics__objectOutputWorkerCandidateReady",
+            "_norm_record_object_output_publication_metrics__objectOutputWorkerSelected",
+            "record_object_output_publication_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 60
+    },
+    {
+      "owner": "compiler_entry_backend",
+      "header": "compile/backend/compiler_entry_backend.hpp",
+      "normalizers": {
+        "_norm_append_assignment_backend_requests_in_source_range__binaryIndex": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "int_t<>&",
+          "parameters": "T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": []
+        },
+        "_norm_append_assignment_backend_request_by_source_row_id__binaryIndex": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "int_t<>&",
+          "parameters": "T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "append_assignment_backend_requests_in_source_range": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "void",
+          "parameters": "shared_p<BackendRequestAuthorizationArtifact>& backendRequests, shared_p<CapabilityCoverageArtifact> capabilityCoverage, ProjectSymbolIndexRow symbol, const vector_t<int_t<std::uint32_t>>& assignmentSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentTypeRefIds, const vector_t<int_t<std::uint32_t>>& assignmentTargetLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentValueSourceRowIds, const vector_t<int_t<std::int32_t>>& assignmentValues, const vector_t<string_t>& assignmentValueTexts, const vector_t<int_t<std::uint16_t>>& assignmentLocalOperationIds, const vector_t<int_t<std::uint32_t>>& binarySourceRowIds, const vector_t<int_t<std::uint16_t>>& binaryFeatureIds, const vector_t<int_t<std::uint32_t>>& binaryLeftLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& binaryRightSourceRowIds, const vector_t<int_t<std::int32_t>>& binaryRightValues, int_t<std::uint32_t> firstSourceRowId, int_t<std::uint32_t> lastSourceRowId, T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": [
+            "_norm_append_assignment_backend_requests_in_source_range__binaryIndex",
+            "append_assignment_backend_requests_in_source_range__exec"
+          ]
+        },
+        "append_assignment_backend_request_by_source_row_id": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "void",
+          "parameters": "shared_p<BackendRequestAuthorizationArtifact>& backendRequests, shared_p<CapabilityCoverageArtifact> capabilityCoverage, ProjectSymbolIndexRow symbol, const vector_t<int_t<std::uint32_t>>& assignmentSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentTypeRefIds, const vector_t<int_t<std::uint32_t>>& assignmentTargetLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentValueSourceRowIds, const vector_t<int_t<std::int32_t>>& assignmentValues, const vector_t<string_t>& assignmentValueTexts, const vector_t<int_t<std::uint16_t>>& assignmentLocalOperationIds, const vector_t<int_t<std::uint32_t>>& binarySourceRowIds, const vector_t<int_t<std::uint16_t>>& binaryFeatureIds, const vector_t<int_t<std::uint32_t>>& binaryLeftLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& binaryRightSourceRowIds, const vector_t<int_t<std::int32_t>>& binaryRightValues, int_t<std::uint32_t> sourceRowId, T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": [
+            "_norm_append_assignment_backend_request_by_source_row_id__binaryIndex",
+            "append_assignment_backend_request_by_source_row_id__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 8
+    },
+    {
+      "owner": "llvm_text_from_plan",
+      "header": "compile/backend/llvm_text_from_plan.hpp",
+      "normalizers": {
+        "_norm_append_if_end_after_body_last__activeIfEndLabel": {
+          "template_parameters": "typename T_activeIfEndLabel",
+          "return_type": "string_t&",
+          "parameters": "T_activeIfEndLabel&& _activeIfEndLabel",
+          "same_owner_calls": []
+        },
+        "_norm_append_if_end_after_body_last__activeIfElseLabel": {
+          "template_parameters": "typename T_activeIfElseLabel",
+          "return_type": "string_t&",
+          "parameters": "T_activeIfElseLabel&& _activeIfElseLabel",
+          "same_owner_calls": []
+        },
+        "_norm_append_after_return_branch_boundary__activeIfEndLabel": {
+          "template_parameters": "typename T_activeIfEndLabel",
+          "return_type": "string_t&",
+          "parameters": "T_activeIfEndLabel&& _activeIfEndLabel",
+          "same_owner_calls": []
+        },
+        "_norm_append_after_return_branch_boundary__activeIfElseLabel": {
+          "template_parameters": "typename T_activeIfElseLabel",
+          "return_type": "string_t&",
+          "parameters": "T_activeIfElseLabel&& _activeIfElseLabel",
+          "same_owner_calls": []
+        },
+        "_norm_append_after_return_branch_boundary__returned": {
+          "template_parameters": "typename T_returned",
+          "return_type": "bool_t&",
+          "parameters": "T_returned&& _returned",
+          "same_owner_calls": []
+        },
+        "_norm_record_emission_llvm_publication_metrics__emissionLLVMWorkerCandidateReady": {
+          "template_parameters": "typename T_emissionLLVMWorkerCandidateReady",
+          "return_type": "bool_t&",
+          "parameters": "T_emissionLLVMWorkerCandidateReady&& _emissionLLVMWorkerCandidateReady",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "append_if_end_after_body_last": {
+          "template_parameters": "typename T_activeIfEndLabel, typename T_activeIfElseLabel",
+          "return_type": "void",
+          "parameters": "str::text_builder& lines, T_activeIfEndLabel&& _activeIfEndLabel, int_t<std::uint32_t>& activeIfBodyLastSourceRowId, T_activeIfElseLabel&& _activeIfElseLabel, int_t<std::uint32_t>& activeIfElseBodyLastSourceRowId, int_t<std::uint32_t> currentSourceRowId",
+          "same_owner_calls": [
+            "_norm_append_if_end_after_body_last__activeIfElseLabel",
+            "_norm_append_if_end_after_body_last__activeIfEndLabel",
+            "append_if_end_after_body_last__exec"
+          ]
+        },
+        "append_after_return_branch_boundary": {
+          "template_parameters": "typename T_activeIfEndLabel, typename T_activeIfElseLabel, typename T_returned",
+          "return_type": "void",
+          "parameters": "str::text_builder& lines, T_activeIfEndLabel&& _activeIfEndLabel, int_t<std::uint32_t>& activeIfBodyLastSourceRowId, T_activeIfElseLabel&& _activeIfElseLabel, int_t<std::uint32_t>& activeIfElseBodyLastSourceRowId, int_t<std::uint32_t> currentSourceRowId, T_returned&& _returned",
+          "same_owner_calls": [
+            "_norm_append_after_return_branch_boundary__activeIfElseLabel",
+            "_norm_append_after_return_branch_boundary__activeIfEndLabel",
+            "_norm_append_after_return_branch_boundary__returned",
+            "append_after_return_branch_boundary__exec"
+          ]
+        },
+        "record_emission_llvm_publication_metrics": {
+          "template_parameters": "typename T_emissionLLVMWorkerCandidateReady",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> ownerRunId, ProjectSymbolIndexRow entrySymbol, shared_p<BackendRequestAuthorizationArtifact>& requests, shared_p<LoweringPlan> plan, BackendEmissionDecisionArtifact& emission, FunctionBodyTextEmissionPreflightArtifact preflightArtifact, const string_t& moduleText, shared_p<EmissionLLVMModuleCompositionSnapshot> moduleCompositionSnapshot, int_t<> workerCount, bool_t upstreamBackendLoweringWorkerReady, T_emissionLLVMWorkerCandidateReady&& _emissionLLVMWorkerCandidateReady",
+          "same_owner_calls": [
+            "_norm_record_emission_llvm_publication_metrics__emissionLLVMWorkerCandidateReady",
+            "record_emission_llvm_publication_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 197
+    },
+    {
+      "owner": "lowering_plan",
+      "header": "compile/backend/lowering_plan.hpp",
+      "normalizers": {
+        "_norm_record_backend_lowering_publication_metrics__backendLoweringWorkerCandidateReady": {
+          "template_parameters": "typename T_backendLoweringWorkerCandidateReady",
+          "return_type": "bool_t&",
+          "parameters": "T_backendLoweringWorkerCandidateReady&& _backendLoweringWorkerCandidateReady",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "record_backend_lowering_publication_metrics": {
+          "template_parameters": "typename T_backendLoweringWorkerCandidateReady",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> ownerRunId, ProjectSymbolIndexRow entrySymbol, AnalysisEntryContextRow entry, ProjectCallableContractRow contract, OperationReadiness operation, StorageLifetimeRequestRow storage, shared_p<BackendRequestAuthorizationArtifact> requests, shared_p<LoweringPlan> plan, int_t<> workerCount, bool_t upstreamStorageLifetimeWorkerReady, T_backendLoweringWorkerCandidateReady&& _backendLoweringWorkerCandidateReady",
+          "same_owner_calls": [
+            "_norm_record_backend_lowering_publication_metrics__backendLoweringWorkerCandidateReady",
+            "record_backend_lowering_publication_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 80
+    },
+    {
+      "owner": "scalar_loop_backend_requests",
+      "header": "compile/backend/scalar_loop_backend_requests.hpp",
+      "normalizers": {
+        "_norm_append_while_statement_sequence_requests__binaryIndex": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "int_t<>&",
+          "parameters": "T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": []
+        },
+        "_norm_append_for_statement_sequence_requests__binaryIndex": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "int_t<>&",
+          "parameters": "T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "append_while_statement_sequence_requests": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "void",
+          "parameters": "shared_p<BackendRequestAuthorizationArtifact>& backendRequests, shared_p<CapabilityCoverageArtifact> capabilityCoverage, ProjectSymbolIndexRow symbol, const vector_t<int_t<std::uint32_t>>& assignmentSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentTypeRefIds, const vector_t<int_t<std::uint32_t>>& assignmentTargetLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentValueSourceRowIds, const vector_t<int_t<std::int32_t>>& assignmentValues, const vector_t<string_t>& assignmentValueTexts, const vector_t<int_t<std::uint16_t>>& assignmentLocalOperationIds, const vector_t<int_t<std::uint32_t>>& binarySourceRowIds, const vector_t<int_t<std::uint16_t>>& binaryFeatureIds, const vector_t<int_t<std::uint32_t>>& binaryLeftLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& binaryRightSourceRowIds, const vector_t<int_t<std::int32_t>>& binaryRightValues, int_t<std::uint32_t> whileSourceRowId, int_t<std::uint32_t> whileConditionSourceRowId, shared_p<ScalarLoopBodyStatementSequence> bodySequence, int_t<std::uint32_t> whileConditionLocalSourceRowId, int_t<std::uint32_t> whileConditionProviderTypeRefId, int_t<std::uint32_t> whileConditionTypeRefId, int_t<std::int32_t> whileConditionValue, int_t<std::uint16_t> whileConditionLocalOperationId, int_t<std::uint32_t> returnSourceRowId, int_t<std::uint32_t> returnLocalSourceRowId, int_t<std::uint32_t> returnValueSourceRowId, int_t<std::uint32_t> returnTypeRefId, T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": [
+            "_norm_append_while_statement_sequence_requests__binaryIndex",
+            "append_while_statement_sequence_requests__exec"
+          ]
+        },
+        "append_for_statement_sequence_requests": {
+          "template_parameters": "typename T_binaryIndex",
+          "return_type": "void",
+          "parameters": "shared_p<BackendRequestAuthorizationArtifact>& backendRequests, shared_p<CapabilityCoverageArtifact> capabilityCoverage, ProjectSymbolIndexRow symbol, const vector_t<int_t<std::uint32_t>>& assignmentSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentTypeRefIds, const vector_t<int_t<std::uint32_t>>& assignmentTargetLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& assignmentValueSourceRowIds, const vector_t<int_t<std::int32_t>>& assignmentValues, const vector_t<string_t>& assignmentValueTexts, const vector_t<int_t<std::uint16_t>>& assignmentLocalOperationIds, const vector_t<int_t<std::uint32_t>>& binarySourceRowIds, const vector_t<int_t<std::uint16_t>>& binaryFeatureIds, const vector_t<int_t<std::uint32_t>>& binaryLeftLocalSourceRowIds, const vector_t<int_t<std::uint32_t>>& binaryRightSourceRowIds, const vector_t<int_t<std::int32_t>>& binaryRightValues, int_t<std::uint32_t> forSourceRowId, int_t<std::uint32_t> forConditionSourceRowId, shared_p<ScalarLoopBodyStatementSequence> bodySequence, int_t<std::uint32_t> forInitStatementRowId, int_t<std::uint32_t> forUpdateStatementRowId, int_t<std::uint32_t> forUpdateLastSourceRowId, int_t<std::uint32_t> forConditionLocalSourceRowId, int_t<std::uint32_t> forConditionProviderTypeRefId, int_t<std::uint32_t> forConditionTypeRefId, int_t<std::int32_t> forConditionValue, int_t<std::uint16_t> forConditionLocalOperationId, int_t<std::uint32_t> returnSourceRowId, int_t<std::uint32_t> returnLocalSourceRowId, int_t<std::uint32_t> returnValueSourceRowId, int_t<std::uint32_t> returnTypeRefId, T_binaryIndex&& _binaryIndex",
+          "same_owner_calls": [
+            "_norm_append_for_statement_sequence_requests__binaryIndex",
+            "append_for_statement_sequence_requests__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 2
+    },
+    {
+      "owner": "storage_lifetime_readiness",
+      "header": "compile/capabilities/storage_lifetime_readiness.hpp",
+      "normalizers": {
+        "_norm_record_storage_lifetime_publication_metrics__storageLifetimeWorkerCandidateReady": {
+          "template_parameters": "typename T_storageLifetimeWorkerCandidateReady",
+          "return_type": "bool_t&",
+          "parameters": "T_storageLifetimeWorkerCandidateReady&& _storageLifetimeWorkerCandidateReady",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "record_storage_lifetime_publication_metrics": {
+          "template_parameters": "typename T_storageLifetimeWorkerCandidateReady",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> ownerRunId, ProjectSymbolIndexRow entrySymbol, OperationReadiness readyOperation, OperationReadiness blockedOperation, CapabilityConsumerRow readyConsumer, CapabilityConsumerRow blockedConsumer, CapabilityProviderRow provider, StorageLifetimeRequestRow readyRow, StorageLifetimeRequestRow blockedRow, int_t<> workerCount, bool_t upstreamCapabilityReadinessWorkerReady, T_storageLifetimeWorkerCandidateReady&& _storageLifetimeWorkerCandidateReady",
+          "same_owner_calls": [
+            "_norm_record_storage_lifetime_publication_metrics__storageLifetimeWorkerCandidateReady",
+            "record_storage_lifetime_publication_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 70
+    },
+    {
+      "owner": "type_capability_readiness",
+      "header": "compile/capabilities/type_capability_readiness.hpp",
+      "normalizers": {
+        "_norm_record_capability_readiness_publication_metrics__capabilityReadinessWorkerCandidateReady": {
+          "template_parameters": "typename T_capabilityReadinessWorkerCandidateReady",
+          "return_type": "bool_t&",
+          "parameters": "T_capabilityReadinessWorkerCandidateReady&& _capabilityReadinessWorkerCandidateReady",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "record_capability_readiness_publication_metrics": {
+          "template_parameters": "typename T_capabilityReadinessWorkerCandidateReady",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, int_t<std::uint32_t> ownerRunId, ProjectSymbolIndexRow entrySymbol, TypeRefTable typeRefs, shared_p<ProjectCallableContractArtifact> contracts, shared_p<CapabilityCoverageArtifact> coverage, int_t<> workerCount, bool_t upstreamReferenceContractWorkerReady, T_capabilityReadinessWorkerCandidateReady&& _capabilityReadinessWorkerCandidateReady",
+          "same_owner_calls": [
+            "_norm_record_capability_readiness_publication_metrics__capabilityReadinessWorkerCandidateReady",
+            "record_capability_readiness_publication_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 201
+    },
+    {
+      "owner": "control_flow_dataflows",
+      "header": "compile/control_flow/control_flow_dataflows.hpp",
+      "normalizers": {
+        "_norm_statement_local_name_and_type_ref__name": {
+          "template_parameters": "typename T_name",
+          "return_type": "string_t&",
+          "parameters": "T_name&& _name",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "statement_local_name_and_type_ref": {
+          "template_parameters": "typename T_name",
+          "return_type": "bool_t",
+          "parameters": "shared_p<FrontendModel> model, const string_t& sourceText, FrontendNodeRow statementNode, FrontendStatementPayloadRow statement, T_name&& _name, int_t<std::uint32_t>& typeRefId, shared_p<FrontendModelKernelCounters> counters",
+          "same_owner_calls": [
+            "_norm_statement_local_name_and_type_ref__name",
+            "statement_local_name_and_type_ref__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 45
+    },
+    {
+      "owner": "control_flow_transfers",
+      "header": "compile/control_flow/control_flow_transfers.hpp",
+      "normalizers": {
+        "_norm_append_transfer_row__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        },
+        "_norm_append_statement_list_transfers__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "append_transfer_row": {
+          "template_parameters": "typename T_text",
+          "return_type": "void",
+          "parameters": "T_text&& _text, int_t<std::uint32_t> rowId, ProjectSymbolIndexRow symbol, shared_p<FrontendModel> model, FrontendNodeRow statementNode, int_t<std::uint16_t> transferKindId, int_t<std::uint32_t> enclosingLoopNodeId, int_t<std::uint16_t> loopDepth, shared_p<FrontendModelKernelCounters> counters",
+          "same_owner_calls": [
+            "_norm_append_transfer_row__text",
+            "append_transfer_row__exec"
+          ]
+        },
+        "append_statement_list_transfers": {
+          "template_parameters": "typename T_text",
+          "return_type": "void",
+          "parameters": "T_text&& _text, int_t<std::uint32_t>& rowCount, ProjectSymbolIndexRow symbol, shared_p<FrontendModel> model, int_t<std::uint32_t> firstStatementNodeId, int_t<std::uint32_t> enclosingLoopNodeId, int_t<std::uint16_t> loopDepth, shared_p<FrontendModelKernelCounters> counters",
+          "same_owner_calls": [
+            "_norm_append_statement_list_transfers__text",
+            "append_statement_list_transfers__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 19
+    },
+    {
+      "owner": "deterministic_work_ordering",
+      "header": "compile/incremental/deterministic_work_ordering.hpp",
+      "normalizers": {
+        "_norm_stable_hash_mix_row_value__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_row_value__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_output_row__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_output_row__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "stable_hash_mix_row_value": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, int_t<> value",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_row_value__hashA",
+            "_norm_stable_hash_mix_row_value__hashB",
+            "stable_hash_mix_row_value__exec"
+          ]
+        },
+        "stable_hash_mix_output_row": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, DeterministicWorkOrderRow row",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_output_row__hashA",
+            "_norm_stable_hash_mix_output_row__hashB",
+            "stable_hash_mix_output_row__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 23
+    },
+    {
+      "owner": "mt_stage_evaluation",
+      "header": "compile/incremental/mt_stage_evaluation.hpp",
+      "normalizers": {
+        "_norm_stable_hash_mix_value__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_value__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_segment__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_segment__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "stable_hash_mix_value": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, int_t<> value",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_value__hashA",
+            "_norm_stable_hash_mix_value__hashB",
+            "stable_hash_mix_value__exec"
+          ]
+        },
+        "stable_hash_mix_segment": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, int_t<> selectedCount, MtWorkerSegmentRow segment",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_segment__hashA",
+            "_norm_stable_hash_mix_segment__hashB",
+            "stable_hash_mix_segment__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 62
+    },
+    {
+      "owner": "partition_merge_reductions",
+      "header": "compile/incremental/partition_merge_reductions.hpp",
+      "normalizers": {
+        "_norm_stable_hash_mix_row_value__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_row_value__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_output_row__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_output_row__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "stable_hash_mix_row_value": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, int_t<> value",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_row_value__hashA",
+            "_norm_stable_hash_mix_row_value__hashB",
+            "stable_hash_mix_row_value__exec"
+          ]
+        },
+        "stable_hash_mix_output_row": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, PartitionMergeReductionRow row",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_output_row__hashA",
+            "_norm_stable_hash_mix_output_row__hashB",
+            "stable_hash_mix_output_row__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 27
+    },
+    {
+      "owner": "resident_source_unit_frontend_payload_tables",
+      "header": "compile/incremental/resident_source_unit_frontend_payload_tables.hpp",
+      "normalizers": {
+        "_norm_record_worker_payload_handoff_metrics__frontendPayloadSourceWorkerReady": {
+          "template_parameters": "typename T_frontendPayloadSourceWorkerReady",
+          "return_type": "bool_t&",
+          "parameters": "T_frontendPayloadSourceWorkerReady&& _frontendPayloadSourceWorkerReady",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "record_worker_payload_handoff_metrics": {
+          "template_parameters": "typename T_frontendPayloadSourceWorkerReady",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, vector_t<ResidentSourceUnitFrontendPayloadTableRow>& payloadTables, int_t<> workerCount, T_frontendPayloadSourceWorkerReady&& _frontendPayloadSourceWorkerReady",
+          "same_owner_calls": [
+            "_norm_record_worker_payload_handoff_metrics__frontendPayloadSourceWorkerReady",
+            "record_worker_payload_handoff_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 243
+    },
+    {
+      "owner": "resident_source_unit_symbol_states",
+      "header": "compile/incremental/resident_source_unit_symbol_states.hpp",
+      "normalizers": {
+        "_norm_record_symbol_fact_publication_metrics__symbolFactWorkerCandidateReady": {
+          "template_parameters": "typename T_symbolFactWorkerCandidateReady",
+          "return_type": "bool_t&",
+          "parameters": "T_symbolFactWorkerCandidateReady&& _symbolFactWorkerCandidateReady",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "record_symbol_fact_publication_metrics": {
+          "template_parameters": "typename T_symbolFactWorkerCandidateReady",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, int_t<> workerCount, bool_t frontendPayloadSourceWorkerReady, T_symbolFactWorkerCandidateReady&& _symbolFactWorkerCandidateReady",
+          "same_owner_calls": [
+            "_norm_record_symbol_fact_publication_metrics__symbolFactWorkerCandidateReady",
+            "record_symbol_fact_publication_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 39
+    },
+    {
+      "owner": "scheduler_api",
+      "header": "compile/incremental/scheduler_api.hpp",
+      "normalizers": {
+        "_norm_stable_hash_mix_value__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_value__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_task_output__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_task_output__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_session__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_session__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_worker__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_worker__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_task_api__hashA": {
+          "template_parameters": "typename T_hashA",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashA&& _hashA",
+          "same_owner_calls": []
+        },
+        "_norm_stable_hash_mix_task_api__hashB": {
+          "template_parameters": "typename T_hashB",
+          "return_type": "int_t<>&",
+          "parameters": "T_hashB&& _hashB",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "stable_hash_mix_value": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, int_t<> value",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_value__hashA",
+            "_norm_stable_hash_mix_value__hashB",
+            "stable_hash_mix_value__exec"
+          ]
+        },
+        "stable_hash_mix_task_output": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, SchedulerTaskRow task",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_task_output__hashA",
+            "_norm_stable_hash_mix_task_output__hashB",
+            "stable_hash_mix_task_output__exec"
+          ]
+        },
+        "stable_hash_mix_session": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, SchedulerSessionRow session",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_session__hashA",
+            "_norm_stable_hash_mix_session__hashB",
+            "stable_hash_mix_session__exec"
+          ]
+        },
+        "stable_hash_mix_worker": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, SchedulerWorkerRow worker",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_worker__hashA",
+            "_norm_stable_hash_mix_worker__hashB",
+            "stable_hash_mix_worker__exec"
+          ]
+        },
+        "stable_hash_mix_task_api": {
+          "template_parameters": "typename T_hashA, typename T_hashB",
+          "return_type": "void",
+          "parameters": "T_hashA&& _hashA, T_hashB&& _hashB, SchedulerTaskRow task",
+          "same_owner_calls": [
+            "_norm_stable_hash_mix_task_api__hashA",
+            "_norm_stable_hash_mix_task_api__hashB",
+            "stable_hash_mix_task_api__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 46
+    },
+    {
+      "owner": "project_reference_resolution",
+      "header": "compile/model/project_reference_resolution.hpp",
+      "normalizers": {
+        "_norm_record_reference_contract_publication_metrics__referenceContractWorkerCandidateReady": {
+          "template_parameters": "typename T_referenceContractWorkerCandidateReady",
+          "return_type": "bool_t&",
+          "parameters": "T_referenceContractWorkerCandidateReady&& _referenceContractWorkerCandidateReady",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "record_reference_contract_publication_metrics": {
+          "template_parameters": "typename T_referenceContractWorkerCandidateReady",
+          "return_type": "void",
+          "parameters": "shared_p<CompilerProjectRunReport>& report, shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, shared_p<ProjectSymbolIndex> projectSymbols, ProjectSymbolIndexRow entrySymbol, const string_t& entryText, shared_p<ProjectReferenceResolution> references, shared_p<ProjectCallableContractArtifact> contracts, int_t<> workerCount, bool_t upstreamSymbolFactWorkerReady, T_referenceContractWorkerCandidateReady&& _referenceContractWorkerCandidateReady",
+          "same_owner_calls": [
+            "_norm_record_reference_contract_publication_metrics__referenceContractWorkerCandidateReady",
+            "record_reference_contract_publication_metrics__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 82
+    },
+    {
+      "owner": "project_symbol_index",
+      "header": "compile/model/project_symbol_index.hpp",
+      "normalizers": {
+        "_norm_declaration_body_shape__usedCachedDigest": {
+          "template_parameters": "typename T_usedCachedDigest",
+          "return_type": "bool_t&",
+          "parameters": "T_usedCachedDigest&& _usedCachedDigest",
+          "same_owner_calls": []
+        },
+        "_norm_parameter_list_count__signatureParameterShape": {
+          "template_parameters": "typename T_signatureParameterShape",
+          "return_type": "string_t&",
+          "parameters": "T_signatureParameterShape&& _signatureParameterShape",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "declaration_body_shape": {
+          "template_parameters": "typename T_usedCachedDigest",
+          "return_type": "string_t",
+          "parameters": "shared_p<FrontendModel> model, const string_t& sourceText, FrontendDeclarationPayloadRow declaration, int_t<std::uint32_t>& bodyLengthOut, int_t<std::uint32_t>& walkRowsOut, T_usedCachedDigest&& _usedCachedDigest",
+          "same_owner_calls": [
+            "_norm_declaration_body_shape__usedCachedDigest",
+            "declaration_body_shape__exec"
+          ]
+        },
+        "parameter_list_count": {
+          "template_parameters": "typename T_signatureParameterShape",
+          "return_type": "int_t<std::uint32_t>",
+          "parameters": "shared_p<FrontendModel> model, int_t<std::uint32_t> parameterListNodeId, int_t<std::uint32_t>& firstParameterTypeRefId, T_signatureParameterShape&& _signatureParameterShape",
+          "same_owner_calls": [
+            "_norm_parameter_list_count__signatureParameterShape",
+            "parameter_list_count__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 86
+    },
+    {
+      "owner": "source_units",
+      "header": "compile/model/source_units.hpp",
+      "normalizers": {
+        "_norm_source_read_worker_result_from_row__sourceText": {
+          "template_parameters": "typename T_sourceText",
+          "return_type": "string_t&",
+          "parameters": "T_sourceText&& _sourceText",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "source_read_worker_result_from_row": {
+          "template_parameters": "typename T_sourceText",
+          "return_type": "shared_p<SourceReadWorkerResult>",
+          "parameters": "SourceReadResultRow row, T_sourceText&& _sourceText",
+          "same_owner_calls": [
+            "_norm_source_read_worker_result_from_row__sourceText",
+            "source_read_worker_result_from_row__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 65
+    },
+    {
+      "owner": "compiler_export_artifacts",
+      "header": "compile/support/compiler_export_artifacts.hpp",
+      "normalizers": {
+        "_norm_append_tokens_tsv__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        },
+        "_norm_append_parse_tsv__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "append_tokens_tsv": {
+          "template_parameters": "typename T_text",
+          "return_type": "void",
+          "parameters": "T_text&& _text, SourceUnitTableRow sourceUnit, shared_p<TokenStream> tokens",
+          "same_owner_calls": [
+            "_norm_append_tokens_tsv__text",
+            "append_tokens_tsv__exec"
+          ]
+        },
+        "append_parse_tsv": {
+          "template_parameters": "typename T_text",
+          "return_type": "void",
+          "parameters": "T_text&& _text, SourceUnitTableRow sourceUnit, shared_p<FrontendModel> model",
+          "same_owner_calls": [
+            "_norm_append_parse_tsv__text",
+            "append_parse_tsv__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 11
+    },
+    {
+      "owner": "pure_tdd_stage_artifacts",
+      "header": "compile/support/pure_tdd_stage_artifacts.hpp",
+      "normalizers": {
+        "_norm_append_tokens_tsv__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        },
+        "_norm_append_parse_tsv__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        },
+        "_norm_append_backend_call_arguments_tsv__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "append_tokens_tsv": {
+          "template_parameters": "typename T_text",
+          "return_type": "void",
+          "parameters": "T_text&& _text, SourceUnitTableRow sourceUnit, shared_p<TokenStream> tokens",
+          "same_owner_calls": [
+            "_norm_append_tokens_tsv__text",
+            "append_tokens_tsv__exec"
+          ]
+        },
+        "append_parse_tsv": {
+          "template_parameters": "typename T_text",
+          "return_type": "void",
+          "parameters": "T_text&& _text, SourceUnitTableRow sourceUnit, shared_p<FrontendModel> model",
+          "same_owner_calls": [
+            "_norm_append_parse_tsv__text",
+            "append_parse_tsv__exec"
+          ]
+        },
+        "append_backend_call_arguments_tsv": {
+          "template_parameters": "typename T_text",
+          "return_type": "void",
+          "parameters": "T_text&& _text, int_t<std::uint32_t> ownerSymbolId, shared_p<BackendRequestAuthorizationArtifact> requests",
+          "same_owner_calls": [
+            "_norm_append_backend_call_arguments_tsv__text",
+            "append_backend_call_arguments_tsv__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 11
+    },
+    {
+      "owner": "source_files",
+      "header": "compile/support/source_files.hpp",
+      "normalizers": {
+        "_norm_read_text__text": {
+          "template_parameters": "typename T_text",
+          "return_type": "string_t&",
+          "parameters": "T_text&& _text",
+          "same_owner_calls": []
+        }
+      },
+      "wrappers": {
+        "read_text": {
+          "template_parameters": "typename T_text",
+          "return_type": "bool_t",
+          "parameters": "const string_t& path, T_text&& _text",
+          "same_owner_calls": [
+            "_norm_read_text__text",
+            "read_text__exec"
+          ]
+        }
+      },
+      "concrete_declaration_count": 2
+    }
+  ],
+  "rejected": []
+}

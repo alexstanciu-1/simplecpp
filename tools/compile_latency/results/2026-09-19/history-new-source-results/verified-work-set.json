@@ -1,0 +1,11 @@
+{
+  "outputs": [
+    "layout_parts/compile/support/production_mt_heartbeat/part_0.o",
+    "layout_parts/latency_heartbeat_format.o",
+    "layout_parts/main.o",
+    "main"
+  ],
+  "pch_rebuilds": 0,
+  "runtime_rebuilds": 0,
+  "trials": 3
+}

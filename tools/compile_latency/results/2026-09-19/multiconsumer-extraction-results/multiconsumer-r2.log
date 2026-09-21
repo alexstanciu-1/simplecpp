@@ -1,0 +1,11 @@
+[1/11] CALLABLE_PART expanded_parts/latency_publication_gate.o
+[2/11] CALLABLE_PART expanded_parts/main.o
+[3/11] CALLABLE_PART expanded_parts/compile/backend/llvm_text_from_plan/part_16.o
+[4/11] CXX expanded/compile/support/mt_publication_metrics.o
+[5/11] CXX expanded/compile/incremental/resident_source_unit_symbol_states.o
+[6/11] CXX expanded/compile/backend/backend_object_link_cache.o
+[7/11] CXX expanded/compile/capabilities/storage_lifetime_readiness.o
+[8/11] CXX expanded/compile/model/project_reference_resolution.o
+[9/11] CXX expanded/compile/backend/lowering_plan.o
+[10/11] CXX expanded/compile/capabilities/type_capability_readiness.o
+[11/11] LINK main

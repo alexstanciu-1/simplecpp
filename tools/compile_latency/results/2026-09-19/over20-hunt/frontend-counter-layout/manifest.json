@@ -1,0 +1,16 @@
+{
+  "case": "frontend-counter-layout",
+  "source_files": [
+    "structure_kernel/frontend_model_tables.phs",
+    "main.phs",
+    "structure_kernel/frontend_model_kernel_counters.phs"
+  ],
+  "changed_generated_inputs": [
+    "main.cpp",
+    "structure_kernel/frontend_model_tables.cpp",
+    "structure_kernel/frontend_model_kernel_counters.hpp"
+  ],
+  "jobs": 12,
+  "cache": "disabled",
+  "scope": "one screening measurement on final partitioned layout; analogous central helper or genuine shared-layout change, not historical checkout replay"
+}

@@ -1,0 +1,247 @@
+diff --git a/compiler/src/compile/capabilities/type_capability_readiness.phs b/compiler/src/compile/capabilities/type_capability_readiness.phs
+index ad34cf15..03bf147d 100644
+--- a/compiler/src/compile/capabilities/type_capability_readiness.phs
++++ b/compiler/src/compile/capabilities/type_capability_readiness.phs
+@@ -1580,28 +1580,6 @@ final class type_capability_readiness {
+ 		return $artifact;
+ 	}
+ 
+-	public static function coverage_from_type_refs_and_scalar_assignment_echo(TypeRefTable $typeRefs, vector<uint32> $localSourceRowIds, vector<uint32> $assignmentSourceRowIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, uint32 $echoSourceRowId, uint32 $typeRefId): CapabilityCoverageArtifact {
+-		$echoSourceRowIds vector<uint32> = [];
+-		$ifSourceRowIds vector<uint32> = [];
+-		$localSourceTypeRefIds vector<uint32> = [];
+-		$assignmentTypeRefIds vector<uint32> = [];
+-		$binaryProviderTypeRefIds vector<uint32> = [];
+-		$binaryResultTypeRefIds vector<uint32> = [];
+-		foreach ($localSourceRowIds as $localSourceRowId) {
+-			$localSourceTypeRefIds[] = $typeRefId;
+-		}
+-		foreach ($assignmentSourceRowIds as $assignmentSourceRowId) {
+-			$assignmentTypeRefIds[] = $typeRefId;
+-		}
+-		foreach ($binarySourceRowIds as $binarySourceRowId) {
+-			$binaryProviderTypeRefIds[] = $typeRefId;
+-			$binaryResultTypeRefIds[] = $typeRefId;
+-		}
+-		$echoSourceRowIds[] = $echoSourceRowId;
+-		$ifConditionTypeRefIds vector<uint32> = [];
+-		return type_capability_readiness::coverage_from_type_refs_and_scalar_assignment_echo_sequence($typeRefs, $localSourceRowIds, $localSourceTypeRefIds, $assignmentSourceRowIds, $assignmentTypeRefIds, $binarySourceRowIds, $binaryFeatureIds, $binaryProviderTypeRefIds, $binaryResultTypeRefIds, $echoSourceRowIds, $ifSourceRowIds, $ifConditionTypeRefIds, $typeRefId);
+-	}
+-
+ 	public static function type_ref_id_for_source_row_id(vector<uint32> $sourceRowIds, vector<uint32> $typeRefIds, uint32 $sourceRowId, uint32 $fallbackTypeRefId): uint32 {
+ 		$index int = 0;
+ 		while ($index < count($sourceRowIds) && $index < count($typeRefIds)) {
+@@ -1620,213 +1598,6 @@ final class type_capability_readiness {
+ 		return $typeRefIds[$index];
+ 	}
+ 
+-	public static function coverage_from_type_refs_and_scalar_assignment_echo_sequence(TypeRefTable $typeRefs, vector<uint32> $localSourceRowIds, vector<uint32> $localSourceTypeRefIds, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, vector<uint32> $binaryProviderTypeRefIds, vector<uint32> $binaryResultTypeRefIds, vector<uint32> $echoSourceRowIds, vector<uint32> $ifSourceRowIds, vector<uint32> $ifConditionTypeRefIds, uint32 $typeRefId): CapabilityCoverageArtifact {
+-		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), count($localSourceRowIds) + count($assignmentSourceRowIds) + count($binarySourceRowIds) + count($echoSourceRowIds) + count($ifSourceRowIds));
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_scalar_local_storage_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_scalar_echo_output_id());
+-		if (count($ifSourceRowIds) > 0) {
+-			type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_control_flow_id());
+-		}
+-		if (count($binarySourceRowIds) > 0) {
+-			type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_numeric_binary_operator_id());
+-		}
+-		foreach ($typeRefs->types as $typeRef) {
+-			type_capability_readiness::append_provider($artifact, type_capability_readiness::provider_from_type_ref($typeRef));
+-		}
+-		foreach ($localSourceRowIds as $localSourceRowId) {
+-			$localTypeRefId uint32 = type_capability_readiness::type_ref_id_for_source_row_id($localSourceRowIds, $localSourceTypeRefIds, $localSourceRowId, $typeRefId);
+-			$storageConsumer CapabilityConsumerRow = type_capability_readiness::local_storage_consumer($localSourceRowId, $localTypeRefId);
+-			type_capability_readiness::append_consumer($artifact, $storageConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($storageConsumer));
+-		}
+-		foreach ($assignmentSourceRowIds as $assignmentSourceRowId) {
+-			$assignmentTypeRefId uint32 = type_capability_readiness::type_ref_id_for_source_row_id($assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentSourceRowId, $typeRefId);
+-			$assignmentConsumer CapabilityConsumerRow = type_capability_readiness::local_assignment_consumer($assignmentSourceRowId, $assignmentTypeRefId);
+-			type_capability_readiness::append_consumer($artifact, $assignmentConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($assignmentConsumer));
+-		}
+-		$binaryIndex int = 0;
+-		foreach ($binarySourceRowIds as $binarySourceRowId) {
+-			$binaryFeatureId uint16 = type_capability_readiness::feature_binary_operator_plus_id();
+-			if ($binaryIndex < count($binaryFeatureIds)) {
+-				$binaryFeatureId = $binaryFeatureIds[$binaryIndex];
+-			}
+-			$binaryProviderTypeRefId uint32 = $typeRefId;
+-			if ($binaryIndex < count($binaryProviderTypeRefIds)) {
+-				$binaryProviderTypeRefId = $binaryProviderTypeRefIds[$binaryIndex];
+-			}
+-			$binaryConsumer CapabilityConsumerRow = type_capability_readiness::binary_operator_consumer($binarySourceRowId, $binaryProviderTypeRefId, $binaryFeatureId);
+-			type_capability_readiness::append_consumer($artifact, $binaryConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($binaryConsumer));
+-			$binaryIndex = $binaryIndex + 1;
+-		}
+-		foreach ($echoSourceRowIds as $echoSourceRowId) {
+-			$echoConsumer CapabilityConsumerRow = type_capability_readiness::echo_scalar_consumer($echoSourceRowId, $typeRefId);
+-			type_capability_readiness::append_consumer($artifact, $echoConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($echoConsumer));
+-		}
+-		$ifIndex int = 0;
+-		foreach ($ifSourceRowIds as $ifSourceRowId) {
+-			$ifConditionTypeRefId uint32 = type_capability_readiness::type_ref_id_for_index_or_unknown($ifConditionTypeRefIds, $ifIndex);
+-			$ifConsumer CapabilityConsumerRow = type_capability_readiness::if_condition_consumer($ifSourceRowId, $ifConditionTypeRefId);
+-			type_capability_readiness::append_consumer($artifact, $ifConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($ifConsumer));
+-			$ifIndex = $ifIndex + 1;
+-		}
+-		return $artifact;
+-	}
+-
+-	public static function coverage_from_type_refs_and_scalar_assignment_if_local_return_sequence(TypeRefTable $typeRefs, vector<uint32> $localSourceRowIds, vector<uint32> $localSourceTypeRefIds, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, vector<uint32> $binaryProviderTypeRefIds, vector<uint32> $binaryResultTypeRefIds, uint32 $ifSourceRowId, uint32 $thenLiteralSourceRowId, uint32 $fallbackLiteralSourceRowId, uint32 $conditionTypeRefId, uint32 $returnTypeRefId): CapabilityCoverageArtifact {
+-		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), count($localSourceRowIds) + count($assignmentSourceRowIds) + count($binarySourceRowIds) + 3);
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_scalar_local_storage_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_control_flow_id());
+-		foreach ($binaryFeatureIds as $binaryFeatureId) {
+-			type_capability_readiness::append_registry($artifact, type_capability_readiness::binary_operator_capability_id_for_feature($binaryFeatureId));
+-		}
+-		foreach ($typeRefs->types as $typeRef) {
+-			type_capability_readiness::append_provider($artifact, type_capability_readiness::provider_from_type_ref($typeRef));
+-		}
+-		foreach ($localSourceRowIds as $localSourceRowId) {
+-			$localTypeRefId uint32 = type_capability_readiness::type_ref_id_for_source_row_id($localSourceRowIds, $localSourceTypeRefIds, $localSourceRowId, $returnTypeRefId);
+-			$storageConsumer CapabilityConsumerRow = type_capability_readiness::local_storage_consumer($localSourceRowId, $localTypeRefId);
+-			type_capability_readiness::append_consumer($artifact, $storageConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($storageConsumer));
+-		}
+-		foreach ($assignmentSourceRowIds as $assignmentSourceRowId) {
+-			$assignmentTypeRefId uint32 = type_capability_readiness::type_ref_id_for_source_row_id($assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentSourceRowId, $returnTypeRefId);
+-			$assignmentConsumer CapabilityConsumerRow = type_capability_readiness::local_assignment_consumer($assignmentSourceRowId, $assignmentTypeRefId);
+-			type_capability_readiness::append_consumer($artifact, $assignmentConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($assignmentConsumer));
+-		}
+-		$binaryIndex int = 0;
+-		foreach ($binarySourceRowIds as $binarySourceRowId) {
+-			$binaryFeatureId uint16 = type_capability_readiness::feature_binary_operator_plus_id();
+-			if ($binaryIndex < count($binaryFeatureIds)) {
+-				$binaryFeatureId = $binaryFeatureIds[$binaryIndex];
+-			}
+-			$binaryProviderTypeRefId uint32 = $returnTypeRefId;
+-			if ($binaryIndex < count($binaryProviderTypeRefIds)) {
+-				$binaryProviderTypeRefId = $binaryProviderTypeRefIds[$binaryIndex];
+-			}
+-			$binaryConsumer CapabilityConsumerRow = type_capability_readiness::binary_operator_consumer($binarySourceRowId, $binaryProviderTypeRefId, $binaryFeatureId);
+-			type_capability_readiness::append_consumer($artifact, $binaryConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($binaryConsumer));
+-			$binaryIndex = $binaryIndex + 1;
+-		}
+-		$ifConsumer CapabilityConsumerRow = type_capability_readiness::if_condition_consumer($ifSourceRowId, $conditionTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $ifConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($ifConsumer));
+-		$thenConsumer CapabilityConsumerRow = type_capability_readiness::literal_scalar_consumer($thenLiteralSourceRowId, $returnTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $thenConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($thenConsumer));
+-		$fallbackConsumer CapabilityConsumerRow = type_capability_readiness::literal_scalar_consumer($fallbackLiteralSourceRowId, $returnTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $fallbackConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($fallbackConsumer));
+-		return $artifact;
+-	}
+-
+-	public static function coverage_from_type_refs_and_scalar_assignment_ternary_return_sequence(TypeRefTable $typeRefs, vector<uint32> $localSourceRowIds, vector<uint32> $localSourceTypeRefIds, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, vector<uint32> $binaryProviderTypeRefIds, vector<uint32> $binaryResultTypeRefIds, uint32 $ternarySourceRowId, uint32 $conditionSourceRowId, uint32 $thenLiteralSourceRowId, uint32 $elseLiteralSourceRowId, uint32 $conditionTypeRefId, uint32 $returnTypeRefId): CapabilityCoverageArtifact {
+-		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), count($localSourceRowIds) + count($assignmentSourceRowIds) + count($binarySourceRowIds) + 4);
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_scalar_local_storage_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_return_lowering_authorized_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_control_flow_id());
+-		foreach ($binaryFeatureIds as $binaryFeatureId) {
+-			type_capability_readiness::append_registry($artifact, type_capability_readiness::binary_operator_capability_id_for_feature($binaryFeatureId));
+-		}
+-		foreach ($typeRefs->types as $typeRef) {
+-			type_capability_readiness::append_provider($artifact, type_capability_readiness::provider_from_type_ref($typeRef));
+-		}
+-		foreach ($localSourceRowIds as $localSourceRowId) {
+-			$localTypeRefId uint32 = type_capability_readiness::type_ref_id_for_source_row_id($localSourceRowIds, $localSourceTypeRefIds, $localSourceRowId, $returnTypeRefId);
+-			$storageConsumer CapabilityConsumerRow = type_capability_readiness::local_storage_consumer($localSourceRowId, $localTypeRefId);
+-			type_capability_readiness::append_consumer($artifact, $storageConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($storageConsumer));
+-		}
+-		foreach ($assignmentSourceRowIds as $assignmentSourceRowId) {
+-			$assignmentTypeRefId uint32 = type_capability_readiness::type_ref_id_for_source_row_id($assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentSourceRowId, $returnTypeRefId);
+-			$assignmentConsumer CapabilityConsumerRow = type_capability_readiness::local_assignment_consumer($assignmentSourceRowId, $assignmentTypeRefId);
+-			type_capability_readiness::append_consumer($artifact, $assignmentConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($assignmentConsumer));
+-		}
+-		$binaryIndex int = 0;
+-		foreach ($binarySourceRowIds as $binarySourceRowId) {
+-			$binaryFeatureId uint16 = type_capability_readiness::feature_binary_operator_plus_id();
+-			if ($binaryIndex < count($binaryFeatureIds)) {
+-				$binaryFeatureId = $binaryFeatureIds[$binaryIndex];
+-			}
+-			$binaryProviderTypeRefId uint32 = $returnTypeRefId;
+-			if ($binaryIndex < count($binaryProviderTypeRefIds)) {
+-				$binaryProviderTypeRefId = $binaryProviderTypeRefIds[$binaryIndex];
+-			}
+-			$binaryConsumer CapabilityConsumerRow = type_capability_readiness::binary_operator_consumer($binarySourceRowId, $binaryProviderTypeRefId, $binaryFeatureId);
+-			type_capability_readiness::append_consumer($artifact, $binaryConsumer);
+-			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($binaryConsumer));
+-			$binaryIndex = $binaryIndex + 1;
+-		}
+-		$conditionConsumer CapabilityConsumerRow = type_capability_readiness::local_load_return_consumer($conditionSourceRowId, $conditionTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $conditionConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($conditionConsumer));
+-		$thenConsumer CapabilityConsumerRow = type_capability_readiness::literal_scalar_consumer($thenLiteralSourceRowId, $returnTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $thenConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($thenConsumer));
+-		$elseConsumer CapabilityConsumerRow = type_capability_readiness::literal_scalar_consumer($elseLiteralSourceRowId, $returnTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $elseConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($elseConsumer));
+-		$ternaryConsumer CapabilityConsumerRow = type_capability_readiness::ternary_select_consumer($ternarySourceRowId, $conditionTypeRefId, $returnTypeRefId, $returnTypeRefId, $returnTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $ternaryConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($ternaryConsumer));
+-		return $artifact;
+-	}
+-
+-	public static function coverage_from_type_refs_and_if_assignment_return(TypeRefTable $typeRefs, uint32 $localSourceRowId, uint32 $ifSourceRowId, uint32 $assignmentSourceRowId, uint32 $returnSourceRowId, uint32 $scalarTypeRefId, uint32 $conditionTypeRefId): CapabilityCoverageArtifact {
+-		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), 5);
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_scalar_local_storage_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_control_flow_id());
+-		foreach ($typeRefs->types as $typeRef) {
+-			type_capability_readiness::append_provider($artifact, type_capability_readiness::provider_from_type_ref($typeRef));
+-		}
+-		$storageConsumer CapabilityConsumerRow = type_capability_readiness::local_storage_consumer($localSourceRowId, $scalarTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $storageConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($storageConsumer));
+-		$initConsumer CapabilityConsumerRow = type_capability_readiness::local_assignment_consumer($localSourceRowId, $scalarTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $initConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($initConsumer));
+-		$ifConsumer CapabilityConsumerRow = type_capability_readiness::if_condition_consumer($ifSourceRowId, $conditionTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $ifConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($ifConsumer));
+-		$assignmentConsumer CapabilityConsumerRow = type_capability_readiness::local_assignment_consumer($assignmentSourceRowId, $scalarTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $assignmentConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($assignmentConsumer));
+-		$returnConsumer CapabilityConsumerRow = type_capability_readiness::local_load_return_consumer($returnSourceRowId, $scalarTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $returnConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($returnConsumer));
+-		return $artifact;
+-	}
+-
+-	public static function coverage_from_type_refs_and_if_literal_return(TypeRefTable $typeRefs, uint32 $ifSourceRowId, uint32 $thenLiteralSourceRowId, uint32 $fallbackLiteralSourceRowId, uint32 $thenTypeRefId, uint32 $fallbackTypeRefId, uint32 $conditionTypeRefId): CapabilityCoverageArtifact {
+-		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), 3);
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_return_lowering_authorized_id());
+-		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_control_flow_id());
+-		foreach ($typeRefs->types as $typeRef) {
+-			type_capability_readiness::append_provider($artifact, type_capability_readiness::provider_from_type_ref($typeRef));
+-		}
+-		$ifConsumer CapabilityConsumerRow = type_capability_readiness::if_condition_consumer($ifSourceRowId, $conditionTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $ifConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($ifConsumer));
+-		$thenConsumer CapabilityConsumerRow = type_capability_readiness::literal_scalar_consumer($thenLiteralSourceRowId, $thenTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $thenConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($thenConsumer));
+-		$fallbackConsumer CapabilityConsumerRow = type_capability_readiness::literal_scalar_consumer($fallbackLiteralSourceRowId, $fallbackTypeRefId);
+-		type_capability_readiness::append_consumer($artifact, $fallbackConsumer);
+-		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($fallbackConsumer));
+-		return $artifact;
+-	}
+-
+ 	public static function coverage_from_type_refs_and_if_local_bool_return(TypeRefTable $typeRefs, uint32 $localSourceRowId, uint32 $ifSourceRowId, uint32 $thenLiteralSourceRowId, uint32 $fallbackLiteralSourceRowId, uint32 $localTypeRefId, uint32 $thenTypeRefId, uint32 $fallbackTypeRefId, uint32 $conditionTypeRefId): CapabilityCoverageArtifact {
+ 		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), 5);
+ 		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());

@@ -1,0 +1,29 @@
+--- before/__callable/resident_source_unit_frontend_payload_tables_group_4.cpp
++++ after/__callable/resident_source_unit_frontend_payload_tables_group_4.cpp
+@@ -86,7 +86,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_frontend_payload_tables[]; }
+ namespace scpp {
+-SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {
++SourceUnitTableRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_shadow_source_unit_from_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_frontend_payload_tables::worker_shadow_source_unit_from_input", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_frontend_payload_tables.phs", __latency_lines_resident_source_unit_frontend_payload_tables[55]);
+ 	SourceUnitTableRow row = SourceUnitTableRow{};
+ 	row->source_unit_id = __latency_fn_resident_source_unit_frontend_payload_tables_uint32_from_int(input->source_unit_id);
+@@ -107,7 +107,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_frontend_payload_tables[]; }
+ namespace scpp {
+-int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_for_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {
++int_t<> __latency_fn_resident_source_unit_frontend_payload_tables_worker_payload_descriptor_for_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_frontend_payload_tables::worker_payload_descriptor_for_input", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_frontend_payload_tables.phs", __latency_lines_resident_source_unit_frontend_payload_tables[56]);
+ 	string_t sourceText = required_cast<string_t>(__latency_fn_resident_source_unit_frontend_payload_tables_source_text_for_worker_input(input));
+ 	shared_p<TokenStream> tokens = __latency_fn_phs_tokenizer_from_source_text(__latency_fn_resident_source_unit_frontend_payload_tables_uint32_from_int(input->source_unit_id), __latency_fn_resident_source_unit_frontend_payload_tables_uint32_from_int(static_cast<int_t<> >(1)), sourceText);
+@@ -162,7 +162,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_frontend_payload_tables[]; }
+ namespace scpp {
+-shared_p<SourceUnitFrontendWorkerBuildResult> __latency_fn_resident_source_unit_frontend_payload_tables_worker_build_result_for_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {
++shared_p<SourceUnitFrontendWorkerBuildResult> __latency_fn_resident_source_unit_frontend_payload_tables_worker_build_result_for_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_frontend_payload_tables::worker_build_result_for_input", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_frontend_payload_tables.phs", __latency_lines_resident_source_unit_frontend_payload_tables[60]);
+ 	shared_p<SourceUnitFrontendWorkerBuildResult> result = create<SourceUnitFrontendWorkerBuildResult>();
+ 	result->source_unit_id = input->source_unit_id;

@@ -1,0 +1,7 @@
+{
+  "commit": "4abe635f",
+  "old_policy": "tools/compile_latency/results/2026-09-20/provider-coverage/4abe635f/status.json",
+  "new_policy": "first-15/4abe635f/status.json",
+  "matching_diagnostic": "no member named 'append_literal_return' in 'scpp::semantic_body_capability_consumers'",
+  "interpretation": "same invalid current-context before-state; no candidate regression demonstrated"
+}

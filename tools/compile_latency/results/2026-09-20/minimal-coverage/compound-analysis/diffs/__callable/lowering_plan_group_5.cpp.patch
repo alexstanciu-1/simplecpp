@@ -1,0 +1,21 @@
+--- before/__callable/lowering_plan_group_5.cpp
++++ after/__callable/lowering_plan_group_5.cpp
+@@ -41,7 +41,17 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_lowering_plan_blocked_request_stable_hash(LoweringBlockedRequestRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("lowering_plan::blocked_request_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/backend/lowering_plan.phs", __latency_lines_lowering_plan[58]);
+-	string_t identity = required_cast<string_t>((string_t("lowering_blocked_request:v2:") + cast<string_t>(cast<int_t<>>(row->blocked_request_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->backend_request_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->contract_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_row_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->feature_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->lowering_adapter_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->cache_owner_symbol_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->plan_effect_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->blocked_reason_id))));
++	string_t identity = required_cast<string_t>(string_t("lowering_blocked_request:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->blocked_request_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->backend_request_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->contract_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_row_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->feature_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->lowering_adapter_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->cache_owner_symbol_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->plan_effect_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->blocked_reason_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 

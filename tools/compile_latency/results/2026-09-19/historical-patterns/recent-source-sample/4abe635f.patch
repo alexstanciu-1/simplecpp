@@ -1,0 +1,138 @@
+commit 4abe635ffc807a14377c362227b31ed16b076841
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:00:49 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:00:49 2026 +0300
+
+    Generalize scalar capability consumer plans
+
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index ee854548..3427febd 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -599,27 +599,36 @@ final class compiler_entry_backend {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 					return backend_emission_decisions::from_lowering_plan($plan);
+ 			}
+-			$consumerPlan = semantic_body_capability_consumers::scalar_if_literal_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $ifSourceRowId, $thenLiteralNode->node_id, $fallbackLiteralNode->node_id, $ifCondition->type_ref_id, $returnTypeRefId);
++			$consumerPlan = semantic_body_capability_consumers::new_scalar_body_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $returnTypeRefId);
++			semantic_body_capability_consumers::append_control_condition($consumerPlan, semantic_body_capability_consumers::control_condition_if_id(), $ifSourceRowId, structure_row_ids::none_id(), structure_row_ids::none_kind_id(), structure_row_ids::none_id(), $ifCondition->type_ref_id);
++			semantic_body_capability_consumers::append_literal_return($consumerPlan, $thenLiteralNode->node_id, $returnTypeRefId);
++			semantic_body_capability_consumers::append_literal_return($consumerPlan, $fallbackLiteralNode->node_id, $returnTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		} else if ((int)$whileSourceRowId > 0) {
+ 				if (((int)$whileBodySequence->effect_count === 0 && (int)$whileBodySequence->terminator_kind_id === 0) || (int)$whileConditionTypeRefId === 0) {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 					return backend_emission_decisions::from_lowering_plan($plan);
+ 				}
+-			$consumerPlan = semantic_body_capability_consumers::scalar_while_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $whileSourceRowId, $whileConditionSourceRowId, $whileConditionFeatureId, $whileConditionProviderTypeRefId, $whileConditionTypeRefId, $returnSourceRowId, $returnTypeRefId);
++			$consumerPlan = semantic_body_capability_consumers::new_scalar_body_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $returnTypeRefId);
++			semantic_body_capability_consumers::append_local_return($consumerPlan, $returnSourceRowId, $returnTypeRefId);
++			semantic_body_capability_consumers::append_control_condition($consumerPlan, semantic_body_capability_consumers::control_condition_while_id(), $whileSourceRowId, $whileConditionSourceRowId, $whileConditionFeatureId, $whileConditionProviderTypeRefId, $whileConditionTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		} else if ((int)$forSourceRowId > 0) {
+ 			if (((int)$forBodySequence->effect_count === 0 && (int)$forBodySequence->terminator_kind_id === 0) || (int)$forUpdateStatementRowId === 0 || (int)$forConditionTypeRefId === 0) {
+ 				$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 				return backend_emission_decisions::from_lowering_plan($plan);
+ 			}
+-			$consumerPlan = semantic_body_capability_consumers::scalar_for_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $forSourceRowId, $forConditionSourceRowId, $forConditionFeatureId, $forConditionProviderTypeRefId, $forConditionTypeRefId, $returnSourceRowId, $returnTypeRefId);
++			$consumerPlan = semantic_body_capability_consumers::new_scalar_body_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $returnTypeRefId);
++			semantic_body_capability_consumers::append_local_return($consumerPlan, $returnSourceRowId, $returnTypeRefId);
++			semantic_body_capability_consumers::append_control_condition($consumerPlan, semantic_body_capability_consumers::control_condition_for_id(), $forSourceRowId, $forConditionSourceRowId, $forConditionFeatureId, $forConditionProviderTypeRefId, $forConditionTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		} else if ((int)$returnLiteralNode->node_id > 0) {
+-			$consumerPlan = semantic_body_capability_consumers::scalar_literal_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $returnLiteralNode->node_id, $returnTypeRefId);
++			$consumerPlan = semantic_body_capability_consumers::new_scalar_body_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $returnTypeRefId);
++			semantic_body_capability_consumers::append_literal_return($consumerPlan, $returnLiteralNode->node_id, $returnTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		} else {
+-			$consumerPlan = semantic_body_capability_consumers::scalar_local_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $returnSourceRowId, $returnTypeRefId);
++			$consumerPlan = semantic_body_capability_consumers::new_scalar_body_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $returnTypeRefId);
++			semantic_body_capability_consumers::append_local_return($consumerPlan, $returnSourceRowId, $returnTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		}
+ 		$requestCapacity int = count($body->local_source_row_ids) + count($body->assignment_source_row_ids) + 1;
+diff --git a/compiler/src/compile/semantic/semantic_body_capability_consumers.phs b/compiler/src/compile/semantic/semantic_body_capability_consumers.phs
+index 6318af75..7f124325 100644
+--- a/compiler/src/compile/semantic/semantic_body_capability_consumers.phs
++++ b/compiler/src/compile/semantic/semantic_body_capability_consumers.phs
+@@ -1,6 +1,18 @@
+ // Role: Converts semantic body facts into generic capability consumer plans.
+ final class semantic_body_capability_consumers {
+ 
++	public static function control_condition_if_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function control_condition_while_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function control_condition_for_id(): uint16 {
++		return structure_row_ids::uint16_from_int(3);
++	}
++
+ 	public static function append_scalar_body_common(CapabilityConsumerPlan &$plan, ScalarBodyBackendCollection $body, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, uint32 $fallbackTypeRefId): void {
+ 		$localIndex int = 0;
+ 		while ($localIndex < count($body->local_source_row_ids)
+@@ -31,42 +43,31 @@ final class semantic_body_capability_consumers {
+ 		}
+ 	}
+ 
+-	public static function scalar_local_return_plan(ScalarBodyBackendCollection $body, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, uint32 $returnSourceRowId, uint32 $returnTypeRefId): CapabilityConsumerPlan {
++	public static function new_scalar_body_plan(ScalarBodyBackendCollection $body, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, uint32 $fallbackTypeRefId): CapabilityConsumerPlan {
+ 		$plan CapabilityConsumerPlan = capability_consumer_plans::new_plan();
+-		semantic_body_capability_consumers::append_scalar_body_common($plan, $body, $assignmentSourceRowIds, $assignmentTypeRefIds, $returnTypeRefId);
+-		capability_consumer_plans::append_local_load_return($plan, $returnSourceRowId, $returnTypeRefId);
++		semantic_body_capability_consumers::append_scalar_body_common($plan, $body, $assignmentSourceRowIds, $assignmentTypeRefIds, $fallbackTypeRefId);
+ 		return $plan;
+ 	}
+ 
+-	public static function scalar_literal_return_plan(ScalarBodyBackendCollection $body, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, uint32 $returnLiteralSourceRowId, uint32 $returnTypeRefId): CapabilityConsumerPlan {
+-		$plan CapabilityConsumerPlan = capability_consumer_plans::new_plan();
+-		capability_consumer_plans::add_registry($plan, type_capability_readiness::capability_return_lowering_authorized_id());
+-		semantic_body_capability_consumers::append_scalar_body_common($plan, $body, $assignmentSourceRowIds, $assignmentTypeRefIds, $returnTypeRefId);
+-		capability_consumer_plans::append_literal_scalar($plan, $returnLiteralSourceRowId, $returnTypeRefId);
+-		return $plan;
+-	}
+-
+-	public static function scalar_while_return_plan(ScalarBodyBackendCollection $body, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, uint32 $whileSourceRowId, uint32 $whileConditionSourceRowId, uint16 $whileConditionFeatureId, uint32 $whileConditionProviderTypeRefId, uint32 $whileConditionTypeRefId, uint32 $returnSourceRowId, uint32 $returnTypeRefId): CapabilityConsumerPlan {
+-		$plan CapabilityConsumerPlan = semantic_body_capability_consumers::scalar_local_return_plan($body, $assignmentSourceRowIds, $assignmentTypeRefIds, $returnSourceRowId, $returnTypeRefId);
+-		capability_consumer_plans::append_binary_operator($plan, $whileConditionSourceRowId, $whileConditionProviderTypeRefId, $whileConditionFeatureId);
+-		capability_consumer_plans::append_while_condition($plan, $whileSourceRowId, $whileConditionTypeRefId);
+-		return $plan;
++	public static function append_local_return(CapabilityConsumerPlan &$plan, uint32 $returnSourceRowId, uint32 $returnTypeRefId): void {
++		capability_consumer_plans::append_local_load_return($plan, $returnSourceRowId, $returnTypeRefId);
+ 	}
+ 
+-	public static function scalar_for_return_plan(ScalarBodyBackendCollection $body, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, uint32 $forSourceRowId, uint32 $forConditionSourceRowId, uint16 $forConditionFeatureId, uint32 $forConditionProviderTypeRefId, uint32 $forConditionTypeRefId, uint32 $returnSourceRowId, uint32 $returnTypeRefId): CapabilityConsumerPlan {
+-		$plan CapabilityConsumerPlan = semantic_body_capability_consumers::scalar_local_return_plan($body, $assignmentSourceRowIds, $assignmentTypeRefIds, $returnSourceRowId, $returnTypeRefId);
+-		capability_consumer_plans::append_binary_operator($plan, $forConditionSourceRowId, $forConditionProviderTypeRefId, $forConditionFeatureId);
+-		capability_consumer_plans::append_for_condition($plan, $forSourceRowId, $forConditionTypeRefId);
+-		return $plan;
++	public static function append_literal_return(CapabilityConsumerPlan &$plan, uint32 $returnLiteralSourceRowId, uint32 $returnTypeRefId): void {
++		capability_consumer_plans::add_registry($plan, type_capability_readiness::capability_return_lowering_authorized_id());
++		capability_consumer_plans::append_literal_scalar($plan, $returnLiteralSourceRowId, $returnTypeRefId);
+ 	}
+ 
+-	public static function scalar_if_literal_return_plan(ScalarBodyBackendCollection $body, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, uint32 $ifSourceRowId, uint32 $thenLiteralSourceRowId, uint32 $fallbackLiteralSourceRowId, uint32 $conditionTypeRefId, uint32 $returnTypeRefId): CapabilityConsumerPlan {
+-		$plan CapabilityConsumerPlan = capability_consumer_plans::new_plan();
+-		capability_consumer_plans::add_registry($plan, type_capability_readiness::capability_return_lowering_authorized_id());
+-		semantic_body_capability_consumers::append_scalar_body_common($plan, $body, $assignmentSourceRowIds, $assignmentTypeRefIds, $returnTypeRefId);
+-		capability_consumer_plans::append_if_condition($plan, $ifSourceRowId, $conditionTypeRefId);
+-		capability_consumer_plans::append_literal_scalar($plan, $thenLiteralSourceRowId, $returnTypeRefId);
+-		capability_consumer_plans::append_literal_scalar($plan, $fallbackLiteralSourceRowId, $returnTypeRefId);
+-		return $plan;
++	public static function append_control_condition(CapabilityConsumerPlan &$plan, uint16 $conditionKindId, uint32 $controlSourceRowId, uint32 $conditionSourceRowId, uint16 $conditionFeatureId, uint32 $conditionProviderTypeRefId, uint32 $conditionTypeRefId): void {
++		if ((int)$conditionSourceRowId > 0 && (int)$conditionProviderTypeRefId > 0 && (int)$conditionFeatureId > 0) {
++			capability_consumer_plans::append_binary_operator($plan, $conditionSourceRowId, $conditionProviderTypeRefId, $conditionFeatureId);
++		}
++		if ((int)$conditionKindId === (int)semantic_body_capability_consumers::control_condition_if_id()) {
++			capability_consumer_plans::append_if_condition($plan, $controlSourceRowId, $conditionTypeRefId);
++		} else if ((int)$conditionKindId === (int)semantic_body_capability_consumers::control_condition_while_id()) {
++			capability_consumer_plans::append_while_condition($plan, $controlSourceRowId, $conditionTypeRefId);
++		} else if ((int)$conditionKindId === (int)semantic_body_capability_consumers::control_condition_for_id()) {
++			capability_consumer_plans::append_for_condition($plan, $controlSourceRowId, $conditionTypeRefId);
++		}
+ 	}
+ }

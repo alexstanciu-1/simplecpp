@@ -1,0 +1,30 @@
+{
+  "commit": "1a24a85d",
+  "sources": [
+    "compile/pipeline/compiler_project_runner.phs",
+    "compile/support/compiler_export_artifacts.phs",
+    "compile/support/pure_tdd_stage_artifacts.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "isolate_shared_carriers": true,
+  "isolate_value_traits": true,
+  "before_hunk_setup_seconds": 2.5757934669964015,
+  "forced_new_objects": [
+    "expanded_parts/__callable/pure_tdd_stage_artifacts_group_1.o"
+  ],
+  "changed_generated_inputs": [
+    "__callable/compiler_project_runner_group_1.cpp",
+    "__callable/compiler_project_runner_row_from_config.cpp",
+    "__callable/compiler_export_artifacts_group_0.cpp",
+    "__callable/compiler_export_artifacts_locations.cpp",
+    "__callable/pure_tdd_stage_artifacts_locations.cpp",
+    "__callable/compiler_project_runner_locations.cpp"
+  ],
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

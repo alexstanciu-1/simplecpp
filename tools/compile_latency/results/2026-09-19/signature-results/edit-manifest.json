@@ -1,0 +1,12 @@
+{
+  "call_sites": {
+    "profile/gate_profile_helpers.phs": 1,
+    "compile/model/source_units.phs": 3,
+    "compile/model/project_symbol_index.phs": 1,
+    "compile/support/compiler_profile_events.phs": 1,
+    "compile/support/production_mt_heartbeat.phs": 1,
+    "compile/incremental/resident_source_unit_frontend_payload_tables.phs": 6,
+    "main.phs": 0
+  },
+  "new_parameter": "minimumUs uint32"
+}

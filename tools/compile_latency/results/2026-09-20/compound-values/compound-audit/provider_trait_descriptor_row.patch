@@ -1,0 +1,17 @@
+diff --git a/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs b/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs
+index 91dff198..62139748 100644
+--- a/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs
++++ b/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs
+@@ -13,4 +13,12 @@ struct ProviderTraitDescriptorRow {
+ 	public uint16 $defaultability_id = 0;
+ 	public uint16 $abi_align_bytes = 0;
+ 	public uint16 $status_id = 0;
++	public uint16 $numeric_kind_id = 0;
++	public uint16 $integer_width_bits = 0;
++	public uint16 $integer_width_policy_id = 0;
++	public uint16 $alias_policy_id = 0;
++	public uint32 $canonical_numeric_type_ref_id = 0;
++	public uint16 $numeric_operator_mask = 0;
++	public uint16 $numeric_status_id = 0;
++	public uint16 $numeric_blocked_reason_id = 0;
+ }

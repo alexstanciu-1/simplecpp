@@ -1,0 +1,22 @@
+{
+  "commit": "ea9d053c",
+  "sources": [
+    "compile/capabilities/type_capability_readiness.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "isolate_shared_carriers": true,
+  "isolate_value_traits": true,
+  "isolate_provider_traits": true,
+  "before_hunk_setup_seconds": 2.2073592970264144,
+  "forced_new_objects": [],
+  "changed_generated_inputs": [
+    "__callable/type_capability_readiness_locations.cpp"
+  ],
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

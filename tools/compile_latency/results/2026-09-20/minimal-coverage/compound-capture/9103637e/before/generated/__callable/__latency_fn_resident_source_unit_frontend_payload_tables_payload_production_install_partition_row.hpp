@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct PartitionReadinessRow;
+struct SourceUnitFrontendWorkerPayloadProductionInstallRow;
+PartitionReadinessRow __latency_fn_resident_source_unit_frontend_payload_tables_payload_production_install_partition_row(SourceUnitFrontendWorkerPayloadProductionInstallRow installRow);
+}

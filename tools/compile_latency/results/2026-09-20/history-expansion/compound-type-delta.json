@@ -1,0 +1,13 @@
+{
+  "added_types": {
+    "ScalarConditionOperand": {
+      "kind": "class",
+      "source": "compiler/src/compile/backend/scalar_body_statement_collection.phs"
+    },
+    "ControlFlowLocalWriteSet": {
+      "kind": "class",
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs"
+    }
+  },
+  "removed_types": {}
+}

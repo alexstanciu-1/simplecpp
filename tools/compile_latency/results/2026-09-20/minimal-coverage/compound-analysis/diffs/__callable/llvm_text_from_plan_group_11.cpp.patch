@@ -1,0 +1,58 @@
+--- before/__callable/llvm_text_from_plan_group_11.cpp
++++ after/__callable/llvm_text_from_plan_group_11.cpp
+@@ -47,7 +47,26 @@
+ 	if (static_cast<bool>(php::identical(bodyText, string_t("")))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("; v2 PHS backend-emission LLVM text sink\n; backend_value_stack_status=ok\n; backend_local_slot_status=ok\nsource_filename = \"compiler/reset-runner-entry\"\ntarget triple = \"x86_64-pc-linux-gnu\"\n\n@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\ndeclare i32 @printf(ptr, ...)\n\ndefine ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n") + string_t("entry:\n") + cast<string_t>(bodyText) + string_t("}\n") + string_t("\n") + string_t("define i32 @main() {\n") + string_t("entry:\n") + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)) + string_t("}\n"));
++	string_t text = required_cast<string_t>(string_t("; v2 PHS backend-emission LLVM text sink\n"));
++	text = (cast<string_t>(text) + string_t("; backend_value_stack_status=ok\n"));
++	text = (cast<string_t>(text) + string_t("; backend_local_slot_status=ok\n"));
++	text = (cast<string_t>(text) + string_t("source_filename = \"compiler/reset-runner-entry\"\n"));
++	text = (cast<string_t>(text) + string_t("target triple = \"x86_64-pc-linux-gnu\"\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\n"));
++	text = (cast<string_t>(text) + string_t("declare i32 @printf(ptr, ...)\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("define ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + cast<string_t>(bodyText));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("define i32 @main() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	return text;
+ }
+ 
+ }
+@@ -114,7 +133,26 @@
+ 	if (static_cast<bool>(php::identical(bodyText, string_t("")))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("; v2 PHS backend-emission LLVM text sink\n; backend_value_stack_status=ok\n; backend_local_slot_status=ok\nsource_filename = \"compiler/reset-runner-entry\"\ntarget triple = \"x86_64-pc-linux-gnu\"\n\n@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\ndeclare i32 @printf(ptr, ...)\n\ndefine ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n") + string_t("entry:\n") + cast<string_t>(bodyText) + string_t("}\n") + string_t("\n") + string_t("define i32 @main() {\n") + string_t("entry:\n") + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n") + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)) + string_t("}\n"));
++	string_t text = required_cast<string_t>(string_t("; v2 PHS backend-emission LLVM text sink\n"));
++	text = (cast<string_t>(text) + string_t("; backend_value_stack_status=ok\n"));
++	text = (cast<string_t>(text) + string_t("; backend_local_slot_status=ok\n"));
++	text = (cast<string_t>(text) + string_t("source_filename = \"compiler/reset-runner-entry\"\n"));
++	text = (cast<string_t>(text) + string_t("target triple = \"x86_64-pc-linux-gnu\"\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("@.scpp_echo_i64_fmt = private unnamed_addr constant [5 x i8] c\"%ld\\0A\\00\"\n"));
++	text = (cast<string_t>(text) + string_t("declare i32 @printf(ptr, ...)\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("define ") + cast<string_t>(returnType) + string_t(" @scpp_run() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + cast<string_t>(bodyText));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	text = (cast<string_t>(text) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("define i32 @main() {\n"));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  %run_value = call ") + cast<string_t>(returnType) + string_t(" @scpp_run()\n"));
++	text = (cast<string_t>(text) + cast<string_t>(__latency_fn_llvm_text_from_plan_main_exit_text_for_type_ref(lastValue->type_ref_id)));
++	text = (cast<string_t>(text) + string_t("}\n"));
++	return text;
+ }
+ 
+ }

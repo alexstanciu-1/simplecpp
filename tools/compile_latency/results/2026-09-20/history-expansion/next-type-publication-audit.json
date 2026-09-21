@@ -1,0 +1,47 @@
+{
+  "ScalarConditionOperand": {
+    "owner": "compile/backend/scalar_body_statement_collection.hpp",
+    "definition_sha256": "03c946502eda33c4ccc36040865598742a5bdbd22c1f3780c1f6c7b7e48bbfa4",
+    "lexical_active_cpp_consumers": [
+      "__callable/compiler_entry_backend_group_1.cpp",
+      "__callable/scalar_body_statement_collection_group_0.cpp",
+      "compile/backend/scalar_body_statement_collection.cpp"
+    ],
+    "non_callable_headers_mentioning_type": [
+      "__project_fwd.hpp",
+      "compile/backend/scalar_body_statement_collection.hpp"
+    ],
+    "scope": "restored pinned source; lexical screening only, not a complete semantic dependency proof"
+  },
+  "ControlFlowLocalWriteSet": {
+    "owner": "compile/control_flow/control_flow_dataflows.hpp",
+    "definition_sha256": "a70f7f5ccb4605a4a58c14ee6443b4a3c4ed27f4cce06e531dfb69fe6c035289",
+    "lexical_active_cpp_consumers": [
+      "__callable/control_flow_dataflows_group_1.cpp",
+      "__callable/control_flow_dataflows_group_2.cpp",
+      "__callable/control_flow_dataflows_group_3.cpp",
+      "compile/control_flow/control_flow_dataflows.cpp"
+    ],
+    "non_callable_headers_mentioning_type": [
+      "__project_fwd.hpp",
+      "compile/control_flow/control_flow_dataflows.hpp"
+    ],
+    "scope": "restored pinned source; lexical screening only, not a complete semantic dependency proof"
+  },
+  "BackendModuleCompositionInput": {
+    "owner": "compile/backend/llvm_text_from_plan.hpp",
+    "definition_sha256": "99645f0c3bc0c05a186f2aa0f6e8daa46432486676ef4f425e1ee2699f6cd1d8",
+    "lexical_active_cpp_consumers": [
+      "__callable/backend_module_composition_group_0.cpp",
+      "__callable/llvm_text_from_plan_group_17.cpp",
+      "__callable/llvm_text_from_plan_group_18.cpp",
+      "__callable/llvm_text_from_plan_group_23.cpp",
+      "__partitions/compile/backend/llvm_text_from_plan/part_0.cpp"
+    ],
+    "non_callable_headers_mentioning_type": [
+      "__project_fwd.hpp",
+      "compile/backend/llvm_text_from_plan.hpp"
+    ],
+    "scope": "restored pinned source; lexical screening only, not a complete semantic dependency proof"
+  }
+}

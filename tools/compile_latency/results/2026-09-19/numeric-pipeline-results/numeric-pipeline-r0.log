@@ -1,0 +1,8 @@
+[1/8] CXX expanded_parts/compile/backend/llvm_text_from_plan/locations.o
+[2/8] CXX expanded/__callable/frontend_model_builder_locations.o
+[3/8] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_latency_i32_alias_id.o
+[4/8] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_source_type_ref_id_for_name.o
+[5/8] CALLABLE_PART expanded_parts/__callable/frontend_model_builder_primitive_type_ref_id_for_name.o
+[6/8] CALLABLE_PART expanded_parts/compile/backend/llvm_text_from_plan/part_1.o
+[7/8] CALLABLE_PART expanded_parts/compile/backend/llvm_text_from_plan/part_9.o
+[8/8] LINK main

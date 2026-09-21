@@ -1,0 +1,190 @@
+{
+  "selection": "last 15 non-merge commits touching compiler/src reachable from pinned workload revision; no compile-time filtering",
+  "workload_revision": "9776900f6c305729ae6ef8474052363508913315",
+  "scope": "candidate workload sample; commit granularity, not measured individual editor save events; not representative of all users",
+  "commits": [
+    {
+      "commit": "1a24a85dbf58c46b78ae905e8d374107b509aa18",
+      "subject": "Export backend call argument rows for FN proof",
+      "source_numstat": [
+        "1\t0\tcompiler/src/compile/pipeline/compiler_project_runner.phs",
+        "22\t0\tcompiler/src/compile/support/compiler_export_artifacts.phs",
+        "21\t0\tcompiler/src/compile/support/pure_tdd_stage_artifacts.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "1610af1a689a183f7b8fc5ff795b0dde2dacc276",
+      "subject": "Route literal return coverage through consumer plan",
+      "source_numstat": [
+        "3\t1\tcompiler/src/compile/backend/compiler_entry_backend.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "f1d3a846d63aec0bddba0f31bdb3b5feb5e6819e",
+      "subject": "Retarget structure smoke away from fixtures",
+      "source_numstat": [
+        "1\t1\tcompiler/src/compile/support/structure_kernel_smoke_runner.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "cec8c6168605aedd84deee5d5f275de60f091147",
+      "subject": "Retarget direct call evidence wording",
+      "source_numstat": [
+        "1\t1\tcompiler/src/structures/incremental/resident_project_snapshot_diff_row.phs",
+        "1\t1\tcompiler/src/structures/incremental/resident_project_snapshot_row.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "db047e109b317be2eabf13bae12acf8e4ea834f4",
+      "subject": "Retarget semantic gate to project runner",
+      "source_numstat": [
+        "4\t0\tcompiler/src/compile/support/structure_kernel_smoke_runner.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "b54f2766a2935951997fe5f0c8464aa32f025211",
+      "subject": "Generalize call expression lookahead",
+      "source_numstat": [
+        "32\t33\tcompiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "534d70a618cc8efd42f2f9abedac7949308037a8",
+      "subject": "Remove legacy case env fallbacks",
+      "source_numstat": [
+        "7\t15\tcompiler/src/compile/pipeline/pipeline_config_helpers.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "e8e8a063c56749f120c9a13ce42e14e6992682b3",
+      "subject": "Remove dead fixed argument LLVM materializer",
+      "source_numstat": [
+        "0\t32\tcompiler/src/compile/backend/llvm_text_from_plan.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "b085d9523d9f9c85e03adda84d9031cc270b550a",
+      "subject": "Rename LLVM worker handoff as module composition",
+      "source_numstat": [
+        "31\t31\tcompiler/src/compile/backend/llvm_text_from_plan.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "5ce425359dec58c4d19dd8829fee9424714abc42",
+      "subject": "Rename backend LLVM source filename label",
+      "source_numstat": [
+        "7\t3\tcompiler/src/compile/backend/llvm_text_from_plan.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "43a83246bbb41c96fe3a252e856107a1e8876130",
+      "subject": "Route caller function text through composition input",
+      "source_numstat": [
+        "4\t2\tcompiler/src/compile/backend/backend_module_composition.phs",
+        "44\t24\tcompiler/src/compile/backend/llvm_text_from_plan.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "cf3c2d08869afec35a92b440220b86def2b5d890",
+      "subject": "Remove obsolete LLVM module composition delegates",
+      "source_numstat": [
+        "0\t16\tcompiler/src/compile/backend/llvm_text_from_plan.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "41392c03bd2c5149a20fe5503135aef58e23cbf9",
+      "subject": "Route LLVM module composition through input rows",
+      "source_numstat": [
+        "5\t2\tcompiler/src/compile/backend/backend_module_composition.phs",
+        "53\t10\tcompiler/src/compile/backend/llvm_text_from_plan.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "4abe635ffc807a14377c362227b31ed16b076841",
+      "subject": "Generalize scalar capability consumer plans",
+      "source_numstat": [
+        "14\t5\tcompiler/src/compile/backend/compiler_entry_backend.phs",
+        "30\t29\tcompiler/src/compile/semantic/semantic_body_capability_consumers.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    },
+    {
+      "commit": "9103637ef8a1501f98d6ca2d60ec2a4346963d86",
+      "subject": "Correct definition-driven compiler drift",
+      "source_numstat": [
+        "12\t12\tcompiler/src/compile/artifacts/analysis_context_identity.phs",
+        "63\t61\tcompiler/src/compile/backend/abi_bridge/runtime_abi_bridge.phs",
+        "59\t55\tcompiler/src/compile/backend/backend_emission_decisions.phs",
+        "118\t111\tcompiler/src/compile/backend/backend_preflight_requests.phs",
+        "28\t30\tcompiler/src/compile/backend/compiler_entry_backend.phs",
+        "43\t40\tcompiler/src/compile/backend/llvm_api_sink_preflight.phs",
+        "265\t232\tcompiler/src/compile/backend/llvm_text_from_plan.phs",
+        "2\t2\tcompiler/src/compile/backend/local_body_lowering.phs",
+        "52\t49\tcompiler/src/compile/backend/lowering_plan.phs",
+        "31\t0\tcompiler/src/compile/backend/scalar_body_statement_collection.phs",
+        "45\t43\tcompiler/src/compile/capabilities/runtime_helper_contract_readiness.phs",
+        "302\t83\tcompiler/src/compile/control_flow/control_flow_dataflows.phs",
+        "11\t12\tcompiler/src/compile/control_flow/control_flow_transfers.phs",
+        "84\t84\tcompiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+        "2\t2\tcompiler/src/compile/frontend_adapter/phs/parser_cursor.phs",
+        "4\t4\tcompiler/src/compile/frontend_adapter/phs/parser_state.phs",
+        "10\t10\tcompiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+        "24\t23\tcompiler/src/compile/incremental/partition_readiness.phs",
+        "162\t151\tcompiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+        "28\t28\tcompiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+        "10\t10\tcompiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+        "25\t24\tcompiler/src/compile/incremental/source_unit_early_skip.phs",
+        "7\t7\tcompiler/src/compile/model/frontend_body_summaries.phs",
+        "7\t7\tcompiler/src/compile/model/project_reference_resolution.phs",
+        "14\t14\tcompiler/src/compile/model/project_symbol_index.phs",
+        "4\t4\tcompiler/src/compile/model/source_buffers.phs",
+        "26\t26\tcompiler/src/compile/model/source_units.phs",
+        "1\t1\tcompiler/src/compile/support/compiler_export_artifacts.phs"
+      ],
+      "added_files": [],
+      "deleted_files": [],
+      "measured": false
+    }
+  ]
+}

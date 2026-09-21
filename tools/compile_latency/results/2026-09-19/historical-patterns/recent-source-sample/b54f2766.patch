@@ -1,0 +1,114 @@
+commit b54f2766a2935951997fe5f0c8464aa32f025211
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:56:48 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:56:48 2026 +0300
+
+    Generalize call expression lookahead
+
+diff --git a/compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs b/compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+index d15dd240..b880b6a3 100644
+--- a/compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs
++++ b/compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+@@ -757,13 +757,36 @@ final class frontend_model_builder {
+ 		return $callNodeId;
+ 	}
+ 
+-	public static function at_zero_arg_call_expression(PhsParserState $state, string $source): bool {
+-		return parser_cursor::peek_at($source, $state->tokens, $state->cursor, 0, token_kinds::identifier(), "")
+-			&& parser_cursor::peek_at($source, $state->tokens, $state->cursor, 1, token_kinds::symbol(), "(")
+-			&& parser_cursor::peek_at($source, $state->tokens, $state->cursor, 2, token_kinds::symbol(), ")");
++	public static function at_call_argument_list_after_open_offset(PhsParserState $state, string $source, int $openOffset): bool {
++		if (!parser_cursor::peek_at($source, $state->tokens, $state->cursor, $openOffset, token_kinds::symbol(), "(")) {
++			return false;
++		}
++		$offset int = $openOffset + 1;
++		if (parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ")")) {
++			return true;
++		}
++		while (true) {
++			if (!frontend_model_builder::at_scalar_expression_start_at_offset($state, $source, $offset)) {
++				return false;
++			}
++			$offset = $offset + 1;
++			while (!parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ")")
++				&& !parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ",")) {
++				$token TokenRow = parser_cursor::peek($state->tokens, $state->cursor, $offset);
++				if ((int)$token->kind_id === (int)token_kinds::eof()) {
++					return false;
++				}
++				$offset = $offset + 1;
++			}
++			if (parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ")")) {
++				return true;
++			}
++			$offset = $offset + 1;
++		}
++		return false;
+ 	}
+ 
+-	public static function at_qualified_zero_arg_call_expression(PhsParserState $state, string $source): bool {
++	public static function at_qualified_call_expression(PhsParserState $state, string $source): bool {
+ 		$offset int = 0;
+ 		if (parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), "\\")) {
+ 			$offset = $offset + 1;
+@@ -781,9 +804,7 @@ final class frontend_model_builder {
+ 			}
+ 			$offset = $offset + 1;
+ 		}
+-		return $qualified
+-			&& parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), "(")
+-			&& parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset + 1, token_kinds::symbol(), ")");
++		return $qualified && frontend_model_builder::at_call_argument_list_after_open_offset($state, $source, $offset);
+ 	}
+ 
+ 	public static function at_scalar_expression_start_at_offset(PhsParserState $state, string $source, int $offset): bool {
+@@ -806,29 +827,7 @@ final class frontend_model_builder {
+ 			|| !parser_cursor::peek_at($source, $state->tokens, $state->cursor, 1, token_kinds::symbol(), "(")) {
+ 			return false;
+ 		}
+-		$offset int = 2;
+-		if (parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ")")) {
+-			return true;
+-		}
+-		while (true) {
+-			if (!frontend_model_builder::at_scalar_expression_start_at_offset($state, $source, $offset)) {
+-				return false;
+-			}
+-			$offset = $offset + 1;
+-			while (!parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ")")
+-				&& !parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ",")) {
+-				$token TokenRow = parser_cursor::peek($state->tokens, $state->cursor, $offset);
+-				if ((int)$token->kind_id === (int)token_kinds::eof()) {
+-					return false;
+-				}
+-				$offset = $offset + 1;
+-			}
+-			if (parser_cursor::peek_at($source, $state->tokens, $state->cursor, $offset, token_kinds::symbol(), ")")) {
+-				return true;
+-			}
+-			$offset = $offset + 1;
+-		}
+-		return false;
++		return frontend_model_builder::at_call_argument_list_after_open_offset($state, $source, 1);
+ 	}
+ 
+ 	public static function at_function_parameter(PhsParserState $state, string $source): bool {
+@@ -2064,7 +2063,7 @@ final class frontend_model_builder {
+ 			return $valueNodeId;
+ 		}
+ 		if ((parser_state::at($state, $source, token_kinds::identifier(), "") && parser_cursor::peek_at($source, $state->tokens, $state->cursor, 1, token_kinds::symbol(), "("))
+-			|| frontend_model_builder::at_qualified_zero_arg_call_expression($state, $source)) {
++			|| frontend_model_builder::at_qualified_call_expression($state, $source)) {
+ 			return frontend_model_builder::append_call_expression($state, $source, $model, $returnNodeId, $counters);
+ 		}
+ 		parser_state::diagnostic($state);
+@@ -2121,7 +2120,7 @@ final class frontend_model_builder {
+ 
+ 	public static function at_call_expression_statement(PhsParserState $state, string $source): bool {
+ 		return frontend_model_builder::at_call_expression_with_argument_list($state, $source)
+-			|| frontend_model_builder::at_qualified_zero_arg_call_expression($state, $source);
++			|| frontend_model_builder::at_qualified_call_expression($state, $source);
+ 	}
+ 
+ 	public static function parse_expression_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {

@@ -1,0 +1,20 @@
+{
+  "case": "new-source",
+  "historical_commit": "4840c64f",
+  "scope": "contemporary analogue; not full historical checkout",
+  "source_files": [
+    "main.phs",
+    "compile/support/production_mt_heartbeat.phs",
+    "compile/support/latency_heartbeat_format.phs"
+  ],
+  "changed_generated_inputs": [
+    "main.cpp",
+    "compile/support/latency_heartbeat_format.cpp",
+    "compile/support/production_mt_heartbeat.cpp",
+    "compile/support/latency_heartbeat_format.hpp",
+    "__partitions/compile/support/production_mt_heartbeat/part_0.cpp"
+  ],
+  "rounds": 3,
+  "jobs": 12,
+  "cache": "disabled"
+}

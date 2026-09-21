@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentFunctionBodyPublishRepointPreflightRow;
+struct ResidentFunctionBodyStableNodeRemapProofRow;
+ResidentFunctionBodyStableNodeRemapProofRow __latency_fn_resident_function_body_stable_node_remap_proofs_row_from_publish_repoint_preflight(ResidentFunctionBodyPublishRepointPreflightRow preflight);
+}

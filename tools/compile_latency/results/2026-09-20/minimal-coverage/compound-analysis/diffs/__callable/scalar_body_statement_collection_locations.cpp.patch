@@ -1,0 +1,6 @@
+--- before/__callable/scalar_body_statement_collection_locations.cpp
++++ after/__callable/scalar_body_statement_collection_locations.cpp
+@@ -1,2 +1,2 @@
+ #include <scpp/lang/php.hpp>
+-namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[] = {18,22,26,30,35,0,0,0,0,0,39,90,127,194,203}; }
++namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[] = {29,33,37,41,46,50,54,58,62,66,70,121,158,225,234}; }

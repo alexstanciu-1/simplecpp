@@ -1,0 +1,99 @@
+--- before/__callable/compiler_entry_backend_group_1.cpp
++++ after/__callable/compiler_entry_backend_group_1.cpp
+@@ -19,6 +19,7 @@
+ #include "__types/ProjectSymbolIndex.hpp"
+ #include "__types/ProjectSymbolIndexRow.hpp"
+ #include "__types/ScalarBodyBackendCollection.hpp"
++#include "__types/ScalarConditionOperand.hpp"
+ #include "__types/ScalarIfBranchOutcome.hpp"
+ #include "__types/ScalarLoopBodyStatementSequence.hpp"
+ #include "__types/SemanticOperatorLookupRow.hpp"
+@@ -71,6 +72,9 @@
+ #include "__callable/__latency_fn_scalar_body_statement_collection_append_local_declaration.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_append_loop_body_statement_sequence.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_collect_local_immediate_bool_condition.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_is_local_immediate.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_id.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_immediate_id.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_if_branch_outcome_assignment_id.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_if_branch_outcome_is_return.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_if_branch_outcome_ready.hpp"
+@@ -130,13 +134,7 @@
+ 	int_t<std::uint32_t> ifBodyLastSourceRowId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+ 	int_t<std::uint32_t> ifElseBodyFirstSourceRowId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+ 	int_t<std::uint32_t> ifElseBodyLastSourceRowId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+-	int_t<std::uint32_t> ifConditionTypeRefId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+-	int_t<std::int32_t> ifConditionValue = required_cast<int_t<std::int32_t>>(__latency_fn_structure_row_ids_int32_from_int(static_cast<int_t<> >(0)));
+-	int_t<std::uint32_t> ifConditionLocalSourceRowId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+-	int_t<std::uint32_t> ifConditionProviderTypeRefId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+-	int_t<std::uint16_t> ifConditionLocalOperationId = required_cast<int_t<std::uint16_t>>(__latency_fn_structure_row_ids_none_kind_id());
+-	bool_t ifConditionIsLocal = required_cast<bool_t>(bool_t(static_cast<bool_t>(false)));
+-	bool_t ifConditionIsLocalImmediate = required_cast<bool_t>(bool_t(static_cast<bool_t>(false)));
++	shared_p<ScalarConditionOperand> ifCondition = create<ScalarConditionOperand>();
+ 	int_t<std::uint32_t> whileSourceRowId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+ 	int_t<std::uint32_t> whileConditionSourceRowId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+ 	int_t<std::uint32_t> whileConditionTypeRefId = required_cast<int_t<std::uint32_t>>(__latency_fn_structure_row_ids_none_id());
+@@ -207,9 +205,10 @@
+ 							plan = __latency_fn_lowering_plan_new_plan(static_cast<int_t<> >(0), static_cast<int_t<> >(0), symbol->source_unit_id, symbol->symbol_id);
+ 							return __latency_fn_backend_emission_decisions_from_lowering_plan(plan);
+ 						}
+-						ifConditionTypeRefId = cast<int_t<std::uint32_t>>(conditionTypeRefId);
+-						ifConditionLocalSourceRowId = cast<int_t<std::uint32_t>>(conditionLocalSourceRowId);
+-						ifConditionIsLocal = bool_t(static_cast<bool_t>(true));
++						ifCondition->ready = static_cast<bool_t>(true);
++						ifCondition->operand_kind_id = __latency_fn_scalar_body_statement_collection_condition_operand_local_id();
++						ifCondition->type_ref_id = conditionTypeRefId;
++						ifCondition->local_source_row_id = conditionLocalSourceRowId;
+ 					}
+ 					else {
+ 						if (static_cast<bool>((php::identical(cast<int_t<>>(conditionNode->row_family_id), cast<int_t<>>(__latency_fn_frontend_model_tables_row_family_expression_id())) && php::identical(cast<int_t<>>(conditionNode->row_kind_id), cast<int_t<>>(__latency_fn_frontend_model_tables_row_kind_expression_binary_id()))))) {
+@@ -233,12 +232,14 @@
+ 								plan = __latency_fn_lowering_plan_new_plan(static_cast<int_t<> >(0), static_cast<int_t<> >(0), symbol->source_unit_id, symbol->symbol_id);
+ 								return __latency_fn_backend_emission_decisions_from_lowering_plan(plan);
+ 							}
+-							ifConditionTypeRefId = operatorRow->result_type_ref_id;
+-							ifConditionLocalSourceRowId = cast<int_t<std::uint32_t>>(leftLocalSourceRowId);
+-							ifConditionProviderTypeRefId = cast<int_t<std::uint32_t>>(providerTypeRefId);
+-							ifConditionLocalOperationId = cast<int_t<std::uint16_t>>(localOperationId);
+-							ifConditionValue = cast<int_t<std::int32_t>>(rightValue);
+-							ifConditionIsLocalImmediate = bool_t(static_cast<bool_t>(true));
++							ifCondition->ready = static_cast<bool_t>(true);
++							ifCondition->operand_kind_id = __latency_fn_scalar_body_statement_collection_condition_operand_local_immediate_id();
++							ifCondition->type_ref_id = operatorRow->result_type_ref_id;
++							ifCondition->local_source_row_id = leftLocalSourceRowId;
++							ifCondition->provider_type_ref_id = providerTypeRefId;
++							ifCondition->feature_id = operatorRow->feature_id;
++							ifCondition->local_operation_id = localOperationId;
++							ifCondition->value = rightValue;
+ 							{
+ 							auto __latency_local_0 = conditionNode->node_id;
+ 							(void) body->binary_source_row_ids.append(__latency_local_0);
+@@ -543,11 +544,11 @@
+ 	__latency_fn_scalar_body_backend_collection_append_coverage_assignment_sources(body, coverageAssignmentSourceRowIds, coverageAssignmentTypeRefIds);
+ 	shared_p<CapabilityConsumerPlan> consumerPlan = create<CapabilityConsumerPlan>();
+ 	if (static_cast<bool>((cast<int_t<>>(ifSourceRowId) > static_cast<int_t<> >(0)))) {
+-		if (static_cast<bool>((((!__latency_fn_scalar_body_statement_collection_if_branch_outcome_ready(ifBranchOutcome)) || (__latency_fn_scalar_body_statement_collection_if_branch_outcome_is_return(ifBranchOutcome) && (php::identical(cast<int_t<>>(thenLiteralNode->node_id), static_cast<int_t<> >(0)) || php::identical(cast<int_t<>>(fallbackLiteralNode->node_id), static_cast<int_t<> >(0))))) || php::identical(cast<int_t<>>(ifConditionTypeRefId), static_cast<int_t<> >(0))))) {
++		if (static_cast<bool>(((((!__latency_fn_scalar_body_statement_collection_if_branch_outcome_ready(ifBranchOutcome)) || (__latency_fn_scalar_body_statement_collection_if_branch_outcome_is_return(ifBranchOutcome) && (php::identical(cast<int_t<>>(thenLiteralNode->node_id), static_cast<int_t<> >(0)) || php::identical(cast<int_t<>>(fallbackLiteralNode->node_id), static_cast<int_t<> >(0))))) || (!ifCondition->ready)) || php::identical(cast<int_t<>>(ifCondition->type_ref_id), static_cast<int_t<> >(0))))) {
+ 			plan = __latency_fn_lowering_plan_new_plan(static_cast<int_t<> >(0), static_cast<int_t<> >(0), symbol->source_unit_id, symbol->symbol_id);
+ 			return __latency_fn_backend_emission_decisions_from_lowering_plan(plan);
+ 		}
+-		consumerPlan = __latency_fn_semantic_body_capability_consumers_scalar_if_literal_return_plan(body, coverageAssignmentSourceRowIds, coverageAssignmentTypeRefIds, ifSourceRowId, thenLiteralNode->node_id, fallbackLiteralNode->node_id, ifConditionTypeRefId, returnTypeRefId);
++		consumerPlan = __latency_fn_semantic_body_capability_consumers_scalar_if_literal_return_plan(body, coverageAssignmentSourceRowIds, coverageAssignmentTypeRefIds, ifSourceRowId, thenLiteralNode->node_id, fallbackLiteralNode->node_id, ifCondition->type_ref_id, returnTypeRefId);
+ 		capabilityCoverage = __latency_fn_type_capability_readiness_coverage_from_type_refs_and_consumer_plan(typeRefs, consumerPlan);
+ 	}
+ 	else {
+@@ -618,11 +619,11 @@
+ 			controlThenLastSourceRowId = thenLiteralNode->node_id;
+ 			controlElseLastSourceRowId = fallbackLiteralNode->node_id;
+ 		}
+-		if (static_cast<bool>(php::condition_truthy(ifConditionIsLocalImmediate))) {
+-			__latency_fn_local_body_lowering_append_if_local_immediate_condition_backend_request(backendRequests, capabilityCoverage, ifSourceRowId, ifConditionSourceRowId, ifBodyFirstSourceRowId, controlThenLastSourceRowId, ifElseBodyFirstSourceRowId, controlElseLastSourceRowId, ifConditionLocalSourceRowId, ifConditionProviderTypeRefId, ifConditionTypeRefId, ifConditionValue, ifConditionLocalOperationId, symbol);
++		if (static_cast<bool>(php::condition_truthy(__latency_fn_scalar_body_statement_collection_condition_operand_is_local_immediate(ifCondition)))) {
++			__latency_fn_local_body_lowering_append_if_local_immediate_condition_backend_request(backendRequests, capabilityCoverage, ifSourceRowId, ifConditionSourceRowId, ifBodyFirstSourceRowId, controlThenLastSourceRowId, ifElseBodyFirstSourceRowId, controlElseLastSourceRowId, ifCondition->local_source_row_id, ifCondition->provider_type_ref_id, ifCondition->type_ref_id, ifCondition->value, ifCondition->local_operation_id, symbol);
+ 		}
+ 		else {
+-			__latency_fn_local_body_lowering_append_if_condition_backend_request(backendRequests, capabilityCoverage, ifSourceRowId, ifConditionSourceRowId, ifBodyFirstSourceRowId, controlThenLastSourceRowId, ifElseBodyFirstSourceRowId, controlElseLastSourceRowId, ifConditionTypeRefId, ifConditionValue, ifConditionLocalSourceRowId, ifConditionIsLocal, symbol);
++			__latency_fn_local_body_lowering_append_if_condition_backend_request(backendRequests, capabilityCoverage, ifSourceRowId, ifConditionSourceRowId, ifBodyFirstSourceRowId, controlThenLastSourceRowId, ifElseBodyFirstSourceRowId, controlElseLastSourceRowId, ifCondition->type_ref_id, ifCondition->value, ifCondition->local_source_row_id, ifCondition->operand_kind_id, symbol);
+ 		}
+ 		if (static_cast<bool>(php::condition_truthy(__latency_fn_scalar_body_statement_collection_if_branch_outcome_is_return(ifBranchOutcome)))) {
+ 			__latency_fn_local_body_lowering_append_literal_scalar_backend_request(backendRequests, capabilityCoverage, thenLiteralNode, thenLiteral, symbol);

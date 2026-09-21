@@ -1,0 +1,93 @@
+commit e8e8a063c56749f120c9a13ce42e14e6992682b3
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:42:55 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:42:55 2026 +0300
+
+    Remove dead fixed argument LLVM materializer
+
+diff --git a/compiler/src/compile/backend/llvm_text_from_plan.phs b/compiler/src/compile/backend/llvm_text_from_plan.phs
+index ff26d438..2152bb1d 100644
+--- a/compiler/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/src/compile/backend/llvm_text_from_plan.phs
+@@ -90,7 +90,6 @@ final class EmissionLLVMWorkerInput {
+ 	public string $target_llvm_function_name = "";
+ 	public int $target_source_unit_id = 0;
+ 	public int $target_symbol_id = 0;
+-	public int $target_literal_right_operand_value = 0;
+ 	public $target_request_ids vector<int> = [];
+ 	public $target_request_contract_ids vector<int> = [];
+ 	public $target_request_project_callable_contract_ids vector<int> = [];
+@@ -203,7 +202,6 @@ final class EmissionLLVMModuleCompositionSnapshot {
+ 	public string $target_llvm_function_name = "";
+ 	public int $target_source_unit_id = 0;
+ 	public int $target_symbol_id = 0;
+-	public int $literal_right_operand_value = 0;
+ 	public BackendRequestAuthorizationArtifact $target_requests;
+ 	public LoweringPlan $target_plan;
+ }
+@@ -2071,10 +2069,6 @@ final class llvm_text_from_plan {
+ 		return 1;
+ 	}
+ 
+-	public static function module_composition_mode_fixed_arg_parameter_add_id(): int {
+-		return 2;
+-	}
+-
+ 	public static function empty_module_composition_snapshot(): EmissionLLVMModuleCompositionSnapshot {
+ 		$snapshot EmissionLLVMModuleCompositionSnapshot = new EmissionLLVMModuleCompositionSnapshot();
+ 		$snapshot->mode_id = llvm_text_from_plan::module_composition_mode_none_id();
+@@ -2094,14 +2088,6 @@ final class llvm_text_from_plan {
+ 		return $snapshot;
+ 	}
+ 
+-	public static function fixed_arg_parameter_add_module_composition_snapshot(string $targetName, int $rightLiteralValue): EmissionLLVMModuleCompositionSnapshot {
+-		$snapshot EmissionLLVMModuleCompositionSnapshot = llvm_text_from_plan::empty_module_composition_snapshot();
+-		$snapshot->mode_id = llvm_text_from_plan::module_composition_mode_fixed_arg_parameter_add_id();
+-		$snapshot->target_llvm_function_name = $targetName;
+-		$snapshot->literal_right_operand_value = $rightLiteralValue;
+-		return $snapshot;
+-	}
+-
+ 	public static function return_value_text_from_emission(BackendEmissionDecisionArtifact &$emission, BackendEmissionValueRow $value, string $returnType): string {
+ 		$binaryOperand BackendBinaryOperandRow = backend_emission_decisions::binary_operand_by_owner_row_id($emission, $value->value_id);
+ 		if ((int)$binaryOperand->owner_row_id > 0) {
+@@ -2249,19 +2235,6 @@ final class llvm_text_from_plan {
+ 		return text_builder_take_string($lines);
+ 	}
+ 
+-	public static function parameter_add_function_text(string $llvmFunctionName, FrontendLiteralPayloadRow $rightLiteral): string {
+-		return llvm_text_from_plan::parameter_add_function_text_from_value($llvmFunctionName, (int)$rightLiteral->numeric_payload);
+-	}
+-
+-	public static function parameter_add_function_text_from_value(string $llvmFunctionName, int $rightLiteralValue): string {
+-		$text string = "define i64 " . $llvmFunctionName . "(i64 %arg_1) {\n";
+-		$text = $text . "entry:\n";
+-		$text = $text . "  %binary_add_1 = add i64 %arg_1, " . $rightLiteralValue . "\n";
+-		$text = $text . "  ret i64 %binary_add_1\n";
+-		$text = $text . "}\n\n";
+-		return $text;
+-	}
+-
+ 	public static function parameter_arg_index_for_variable_node(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, FrontendNodeRow $variableNode, uint32 &$typeRefIdOut): int {
+ 		$typeRefIdOut = structure_row_ids::none_id();
+ 		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+@@ -3102,7 +3075,6 @@ final class llvm_text_from_plan {
+ 		$input->target_llvm_function_name = $moduleCompositionSnapshot->target_llvm_function_name;
+ 		$input->target_source_unit_id = $moduleCompositionSnapshot->target_source_unit_id;
+ 		$input->target_symbol_id = $moduleCompositionSnapshot->target_symbol_id;
+-		$input->target_literal_right_operand_value = $moduleCompositionSnapshot->literal_right_operand_value;
+ 		if ($moduleCompositionSnapshot->mode_id === llvm_text_from_plan::module_composition_mode_direct_call_target_requests_id()) {
+ 			$targetRequests BackendRequestAuthorizationArtifact = $moduleCompositionSnapshot->target_requests;
+ 			llvm_text_from_plan::snapshot_target_requests_into_input($input, $targetRequests);
+@@ -3349,10 +3321,6 @@ final class llvm_text_from_plan {
+ 			$targetEmission BackendEmissionDecisionArtifact = backend_emission_decisions::from_lowering_plan_and_backend_requests($targetPlan, $targetRequests);
+ 			$composition BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_emission($input->target_llvm_function_name);
+ 			$moduleText = llvm_text_from_plan::module_text_from_target_emission_composition($emission, $requests, $targetEmission, $targetRequests, $composition);
+-		} else if ($input->module_composition_mode_id === llvm_text_from_plan::module_composition_mode_fixed_arg_parameter_add_id()) {
+-			$targetFunctionText string = llvm_text_from_plan::parameter_add_function_text_from_value($input->target_llvm_function_name, $input->target_literal_right_operand_value);
+-			$composition BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_text($targetFunctionText, $input->target_llvm_function_name);
+-			$moduleText = llvm_text_from_plan::module_text_from_target_text_composition($emission, $requests, $composition);
+ 		}
+ 		$result EmissionLLVMWorkerResult = new EmissionLLVMWorkerResult();
+ 		$result->source_unit_id = $input->source_unit_id;

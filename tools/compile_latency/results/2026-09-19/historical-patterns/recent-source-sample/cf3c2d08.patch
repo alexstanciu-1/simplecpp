@@ -1,0 +1,42 @@
+commit cf3c2d08869afec35a92b440220b86def2b5d890
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:17:36 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:17:36 2026 +0300
+
+    Remove obsolete LLVM module composition delegates
+
+diff --git a/compiler/src/compile/backend/llvm_text_from_plan.phs b/compiler/src/compile/backend/llvm_text_from_plan.phs
+index 6b8ed0e8..fd01b3ac 100644
+--- a/compiler/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/src/compile/backend/llvm_text_from_plan.phs
+@@ -2498,11 +2498,6 @@ final class llvm_text_from_plan {
+ 		return $input;
+ 	}
+ 
+-	public static function module_text_from_entry_call_with_target_text(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, string $targetFunctionText, string $targetName): string {
+-		$input BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_text($targetFunctionText, $targetName);
+-		return llvm_text_from_plan::module_text_from_target_text_composition($entryEmission, $entryRequests, $input);
+-	}
+-
+ 	public static function module_text_from_target_text_composition(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendModuleCompositionInput $input): string {
+ 		if ((int)llvm_text_from_plan::sink_status_from_emission($entryEmission) !== (int)llvm_text_from_plan::status_ready_id()
+ 			|| (int)$input->composition_kind_id !== (int)llvm_text_from_plan::module_composition_kind_target_text_id()
+@@ -2570,17 +2565,6 @@ final class llvm_text_from_plan {
+ 		return $text;
+ 	}
+ 
+-	public static function module_text_from_entry_and_target_emissions(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendEmissionDecisionArtifact &$targetEmission, BackendRequestAuthorizationArtifact &$targetRequests, ProjectSymbolIndex $symbols): string {
+-		$callValue BackendEmissionValueRow = backend_emission_decisions::value_by_id_and_backend_requests($entryEmission, $entryRequests, structure_row_ids::uint32_from_int(1));
+-		$targetName string = llvm_text_from_plan::llvm_function_name_for_symbol($symbols, $callValue->target_symbol_id);
+-		return llvm_text_from_plan::module_text_from_entry_and_target_emissions_with_target_name($entryEmission, $entryRequests, $targetEmission, $targetRequests, $targetName);
+-	}
+-
+-	public static function module_text_from_entry_and_target_emissions_with_target_name(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendEmissionDecisionArtifact &$targetEmission, BackendRequestAuthorizationArtifact &$targetRequests, string $targetName): string {
+-		$input BackendModuleCompositionInput = llvm_text_from_plan::module_composition_input_from_target_emission($targetName);
+-		return llvm_text_from_plan::module_text_from_target_emission_composition($entryEmission, $entryRequests, $targetEmission, $targetRequests, $input);
+-	}
+-
+ 	public static function module_text_from_target_emission_composition(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendEmissionDecisionArtifact &$targetEmission, BackendRequestAuthorizationArtifact &$targetRequests, BackendModuleCompositionInput $input): string {
+ 		if ((int)llvm_text_from_plan::sink_status_from_emission($entryEmission) !== (int)llvm_text_from_plan::status_ready_id()
+ 			|| (int)llvm_text_from_plan::sink_status_from_emission($targetEmission) !== (int)llvm_text_from_plan::status_ready_id()

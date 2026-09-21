@@ -1,0 +1,47 @@
+--- before/__callable/resident_source_unit_symbol_states_group_2.cpp
++++ after/__callable/resident_source_unit_symbol_states_group_2.cpp
+@@ -43,7 +43,7 @@
+ #include "__callable/__latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs.hpp"
+ namespace scpp { extern const int __latency_lines_resident_source_unit_symbol_states[]; }
+ namespace scpp {
+-shared_p<PartitionReadinessArtifact> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact(const shared_p<SourceUnitTable>& sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, bool_t simulatedOrder) {
++shared_p<PartitionReadinessArtifact> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_artifact(shared_p<SourceUnitTable> sourceUnits, int_t<std::uint32_t> ownerRunId, const vector_t<int_t<std::uint32_t>>& firstSymbolIds, const vector_t<int_t<std::uint32_t>>& symbolCounts, bool_t simulatedOrder) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_symbol_states::symbol_fact_publication_artifact", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_symbol_states.phs", __latency_lines_resident_source_unit_symbol_states[21]);
+ 	shared_p<PartitionReadinessArtifact> artifact = __latency_fn_partition_readiness_new_artifact(cast<int_t<>>(sourceUnits->source_unit_count));
+ 	if (static_cast<bool>(php::condition_truthy(simulatedOrder))) {
+@@ -66,7 +66,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_symbol_states[]; }
+ namespace scpp {
+-int_t<std::uint32_t> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_published_row_total(const shared_p<PartitionReadinessArtifact>& artifact) {
++int_t<std::uint32_t> __latency_fn_resident_source_unit_symbol_states_symbol_fact_publication_published_row_total(shared_p<PartitionReadinessArtifact> artifact) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_symbol_states::symbol_fact_publication_published_row_total", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_symbol_states.phs", __latency_lines_resident_source_unit_symbol_states[22]);
+ 	int_t<> total = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	auto __latency_local_0 = artifact->rows;
+@@ -101,7 +101,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_symbol_states[]; }
+ namespace scpp {
+-shared_p<SourceUnitTable> __latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input, const SourceUnitTableRow& sourceUnit, const string_t& sourceText) {
++shared_p<SourceUnitTable> __latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input, SourceUnitTableRow sourceUnit, const string_t& sourceText) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_symbol_states::source_unit_table_for_worker_input", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_symbol_states.phs", __latency_lines_resident_source_unit_symbol_states[25]);
+ 	shared_p<SourceUnitTable> table = create<SourceUnitTable>();
+ 	table->scope_id = __latency_fn_source_units_scope_project_manifest_sources_id();
+@@ -129,7 +129,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_symbol_states[]; }
+ namespace scpp {
+-int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_for_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input) {
++int_t<> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_descriptor_for_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_symbol_states::symbol_fact_worker_descriptor_for_input", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_symbol_states.phs", __latency_lines_resident_source_unit_symbol_states[26]);
+ 	string_t sourceText = required_cast<string_t>(__latency_fn_resident_source_unit_frontend_payload_tables_source_text_for_worker_input(input));
+ 	shared_p<TokenStream> tokens = __latency_fn_phs_tokenizer_from_source_text(__latency_fn_resident_source_unit_frontend_payload_tables_uint32_from_int(input->source_unit_id), __latency_fn_resident_source_unit_frontend_payload_tables_uint32_from_int(static_cast<int_t<> >(1)), sourceText);
+@@ -173,7 +173,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_resident_source_unit_symbol_states[]; }
+ namespace scpp {
+-vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs(const shared_p<SourceUnitTable>& sourceUnits) {
++vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> __latency_fn_resident_source_unit_symbol_states_symbol_fact_worker_inputs(shared_p<SourceUnitTable> sourceUnits) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_source_unit_symbol_states::symbol_fact_worker_inputs", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_source_unit_symbol_states.phs", __latency_lines_resident_source_unit_symbol_states[30]);
+ 	vector_t<shared_p<SourceUnitFrontendWorkerPayloadInput>> inputs = {};
+ 	php::vector_reserve(inputs, cast<int_t<>>(sourceUnits->source_unit_count));

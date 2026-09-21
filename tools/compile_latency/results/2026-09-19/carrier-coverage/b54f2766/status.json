@@ -1,0 +1,25 @@
+{
+  "commit": "b54f2766",
+  "sources": [
+    "compile/frontend_adapter/phs/frontend_model_builder.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "isolate_shared_carriers": true,
+  "before_hunk_setup_seconds": 2.1780890959780663,
+  "forced_new_objects": [],
+  "changed_generated_inputs": [
+    "__callable/frontend_model_builder_at_call_expression_statement.cpp",
+    "__callable/frontend_model_builder_parse_return_expression.cpp",
+    "__callable/frontend_model_builder_group_14.cpp",
+    "__callable/frontend_model_builder_at_call_expression_with_argument_list.cpp",
+    "__callable/frontend_model_builder_locations.cpp",
+    "__callable/frontend_model_builder_group_6.cpp"
+  ],
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

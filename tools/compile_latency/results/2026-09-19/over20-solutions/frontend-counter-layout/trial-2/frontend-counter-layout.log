@@ -1,0 +1,6 @@
+[1/6] CXX expanded/__callable/frontend_model_tables_locations.o
+[2/6] CXX expanded/structure_kernel/frontend_model_kernel_counters.o
+[3/6] CXX expanded/__counter/boundary.o
+[4/6] CALLABLE_PART expanded_parts/__callable/frontend_model_tables_update_expression_payload.o
+[5/6] CALLABLE_PART expanded_parts/main.o
+[6/6] LINK main

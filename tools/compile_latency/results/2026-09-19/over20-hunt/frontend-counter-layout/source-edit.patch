@@ -1,0 +1,19 @@
+--- before/structure_kernel/frontend_model_tables.phs
++++ after/structure_kernel/frontend_model_tables.phs
+@@ -488,6 +488,7 @@
+ 		}
+ 		$model->expressions[structure_row_ids::dense_index($row->payload_id)] = $row;
+ 		$counters->update_call_count = $counters->update_call_count + 1;
++		$counters->latency_expression_updates = structure_row_ids::uint32_from_int((int)$counters->latency_expression_updates + 1);
+ 		return true;
+ 	}
+ 
+--- before/structure_kernel/frontend_model_kernel_counters.phs
++++ after/structure_kernel/frontend_model_kernel_counters.phs
+@@ -1,5 +1,6 @@
+ // Role: Tiny structure-kernel counters for frontend table helper smoke tests.
+ class FrontendModelKernelCounters {
++	public uint32 $latency_expression_updates = 0;
+ 	public int $reserve_call_count = 0;
+ 	public int $append_call_count = 0;
+ 	public int $lookup_call_count = 0;

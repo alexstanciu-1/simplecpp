@@ -1,0 +1,108 @@
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index 6cfa36a0..9c375dd7 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -218,8 +218,7 @@ final class compiler_entry_backend {
+ 		$fallbackLiteral FrontendLiteralPayloadRow = [];
+ 		$returnLiteralNode FrontendNodeRow = [];
+ 		$returnLiteral FrontendLiteralPayloadRow = [];
+-		$ifBranchesAssign bool = false;
+-		$ifBranchesReturn bool = false;
++		$ifBranchOutcome ScalarIfBranchOutcome = new ScalarIfBranchOutcome();
+ 
+ 		$statementNodeId uint32 = $symbol->body_first_node_id;
+ 		while ((int)$statementNodeId > 0) {
+@@ -348,7 +347,7 @@ final class compiler_entry_backend {
+ 							$returnSourceRowId = $statementNode->node_id;
+ 							$returnValueSourceRowId = $elseBodyValueNode->node_id;
+ 							$returnTypeRefId = $elseBodyLiteral->type_ref_id;
+-							$ifBranchesReturn = true;
++							$ifBranchOutcome->outcome_kind_id = scalar_body_statement_collection::if_branch_outcome_return_id();
+ 						} else if ((int)$bodyNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_assignment_id()
+ 							&& (int)$elseBodyNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_assignment_id()
+ 							&& (int)$statementNode->next_sibling_node_id > 0) {
+@@ -366,7 +365,7 @@ final class compiler_entry_backend {
+ 								$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 								return backend_emission_decisions::from_lowering_plan($plan);
+ 							}
+-							$ifBranchesAssign = true;
++							$ifBranchOutcome->outcome_kind_id = scalar_body_statement_collection::if_branch_outcome_assignment_id();
+ 						} else {
+ 							$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 							return backend_emission_decisions::from_lowering_plan($plan);
+@@ -388,7 +387,7 @@ final class compiler_entry_backend {
+ 								}
+ 								$thenLiteralNode = $bodyValueNode;
+ 								$thenLiteral = $bodyLiteral;
+-								$ifBranchesReturn = true;
++								$ifBranchOutcome->outcome_kind_id = scalar_body_statement_collection::if_branch_outcome_return_id();
+ 							} else {
+ 								$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 								return backend_emission_decisions::from_lowering_plan($plan);
+@@ -594,8 +593,8 @@ final class compiler_entry_backend {
+ 		scalar_body_backend_collection::append_coverage_assignment_sources($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds);
+ 		$consumerPlan CapabilityConsumerPlan = new CapabilityConsumerPlan();
+ 			if ((int)$ifSourceRowId > 0) {
+-				if ((!$ifBranchesReturn && !$ifBranchesAssign)
+-					|| ($ifBranchesReturn
++				if (!scalar_body_statement_collection::if_branch_outcome_ready($ifBranchOutcome)
++					|| (scalar_body_statement_collection::if_branch_outcome_is_return($ifBranchOutcome)
+ 						&& ((int)$thenLiteralNode->node_id === 0
+ 							|| (int)$fallbackLiteralNode->node_id === 0))
+ 					|| (int)$ifConditionTypeRefId === 0) {
+@@ -661,7 +660,7 @@ final class compiler_entry_backend {
+ 				compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $body->assignment_source_row_ids, $body->assignment_type_ref_ids, $body->assignment_target_local_source_row_ids, $body->assignment_value_source_row_ids, $body->assignment_values, $body->assignment_value_texts, $body->assignment_local_operation_ids, $body->binary_source_row_ids, $body->binary_feature_ids, $body->binary_left_local_source_row_ids, $body->binary_right_source_row_ids, $body->binary_right_values, structure_row_ids::none_id(), structure_row_ids::uint32_from_int((int)$ifSourceRowId - 1), $binaryIndex);
+ 				$controlThenLastSourceRowId uint32 = $ifBodyLastSourceRowId;
+ 				$controlElseLastSourceRowId uint32 = $ifElseBodyLastSourceRowId;
+-				if ($ifBranchesReturn) {
++				if (scalar_body_statement_collection::if_branch_outcome_is_return($ifBranchOutcome)) {
+ 					$controlThenLastSourceRowId = $thenLiteralNode->node_id;
+ 					$controlElseLastSourceRowId = $fallbackLiteralNode->node_id;
+ 				}
+@@ -699,7 +698,7 @@ final class compiler_entry_backend {
+ 						$symbol
+ 					);
+ 				}
+-				if ($ifBranchesReturn) {
++				if (scalar_body_statement_collection::if_branch_outcome_is_return($ifBranchOutcome)) {
+ 					local_body_lowering::append_literal_scalar_backend_request($backendRequests, $capabilityCoverage, $thenLiteralNode, $thenLiteral, $symbol);
+ 					local_body_lowering::append_literal_scalar_backend_request($backendRequests, $capabilityCoverage, $fallbackLiteralNode, $fallbackLiteral, $symbol);
+ 				} else {
+diff --git a/compiler/src/compile/backend/scalar_body_statement_collection.phs b/compiler/src/compile/backend/scalar_body_statement_collection.phs
+index 82f0ceec..c1ae37b7 100644
+--- a/compiler/src/compile/backend/scalar_body_statement_collection.phs
++++ b/compiler/src/compile/backend/scalar_body_statement_collection.phs
+@@ -9,8 +9,33 @@ final class ScalarLoopBodyStatementSequence {
+ 	public uint16 $terminator_kind_id = 0;
+ }
+ 
++final class ScalarIfBranchOutcome {
++	public uint16 $outcome_kind_id = 0;
++}
++
+ final class scalar_body_statement_collection {
+ 
++	public static function if_branch_outcome_none_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function if_branch_outcome_assignment_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function if_branch_outcome_return_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function if_branch_outcome_ready(ScalarIfBranchOutcome $outcome): bool {
++		return (int)$outcome->outcome_kind_id === (int)scalar_body_statement_collection::if_branch_outcome_assignment_id()
++			|| (int)$outcome->outcome_kind_id === (int)scalar_body_statement_collection::if_branch_outcome_return_id();
++	}
++
++	public static function if_branch_outcome_is_return(ScalarIfBranchOutcome $outcome): bool {
++		return (int)$outcome->outcome_kind_id === (int)scalar_body_statement_collection::if_branch_outcome_return_id();
++	}
++
+ 	public static function append_local_declaration(FrontendModel $model, string $sourceText, FrontendModelKernelCounters $counters, FrontendNodeRow $statementNode, FrontendStatementPayloadRow $statement, ScalarBodyBackendCollection &$body): bool {
+ 		if ((int)$statementNode->row_kind_id !== (int)frontend_model_tables::row_kind_statement_local_declaration_id()) {
+ 			return false;

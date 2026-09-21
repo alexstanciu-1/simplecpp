@@ -1,0 +1,132 @@
+commit 43a83246bbb41c96fe3a252e856107a1e8876130
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:25:38 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:25:38 2026 +0300
+
+    Route caller function text through composition input
+
+diff --git a/compiler/src/compile/backend/backend_module_composition.phs b/compiler/src/compile/backend/backend_module_composition.phs
+index 83b17159..a1f0d3b1 100644
+--- a/compiler/src/compile/backend/backend_module_composition.phs
++++ b/compiler/src/compile/backend/backend_module_composition.phs
+@@ -36,7 +36,7 @@ final class backend_module_composition {
+ 				$localTypeRefId uint32 = structure_row_ids::none_id();
+ 				$localInitialValue int32 = structure_row_ids::int32_from_int(0);
+ 				if (backend_module_composition::stable_local_literal_initialization_for_argument($symbol, $model, $sourceText, $arguments[0], $localTypeRefId, $localInitialValue)) {
+-					return llvm_text_from_plan::direct_call_function_text_from_local_reference_argument(
++					$composition BackendFunctionCompositionInput = llvm_text_from_plan::function_composition_input_from_local_reference_argument(
+ 						$functionName,
+ 						llvm_text_from_plan::llvm_type_for_type_ref($contract->return_type_ref_id),
+ 						$targetText,
+@@ -44,16 +44,18 @@ final class backend_module_composition {
+ 						$localTypeRefId,
+ 						$localInitialValue
+ 					);
++					return llvm_text_from_plan::function_text_from_call_composition($composition);
+ 				}
+ 			}
+ 			$argumentListText string = llvm_text_from_plan::call_argument_list_text($backendArgs);
+-			return llvm_text_from_plan::direct_call_function_text_from_target_text(
++			$composition BackendFunctionCompositionInput = llvm_text_from_plan::function_composition_input_from_call_arguments_text(
+ 				$functionName,
+ 				llvm_text_from_plan::llvm_type_for_type_ref($contract->return_type_ref_id),
+ 				$targetText,
+ 				llvm_text_from_plan::llvm_function_name_for_symbol($symbols, $targetSymbol->symbol_id),
+ 				$argumentListText
+ 			);
++			return llvm_text_from_plan::function_text_from_call_composition($composition);
+ 		}
+ 		$targetRequests BackendRequestAuthorizationArtifact = new BackendRequestAuthorizationArtifact();
+ 		$targetPlan LoweringPlan = new LoweringPlan();
+diff --git a/compiler/src/compile/backend/llvm_text_from_plan.phs b/compiler/src/compile/backend/llvm_text_from_plan.phs
+index fd01b3ac..f4139f76 100644
+--- a/compiler/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/src/compile/backend/llvm_text_from_plan.phs
+@@ -167,6 +167,17 @@ final class BackendModuleCompositionInput {
+ 	public string $target_function_name = "";
+ }
+ 
++final class BackendFunctionCompositionInput {
++	public string $caller_function_name = "";
++	public string $return_type_text = "";
++	public string $target_function_text = "";
++	public string $target_function_name = "";
++	public string $argument_list_text = "";
++	public bool $local_reference_argument_enabled = false;
++	public uint32 $local_argument_type_ref_id = 0;
++	public int32 $local_argument_initial_value = 0;
++}
++
+ final class EmissionLLVMWorkerResult {
+ 	public int $source_unit_id = 0;
+ 	public int $symbol_id = 0;
+@@ -2532,35 +2543,44 @@ final class llvm_text_from_plan {
+ 		return $text;
+ 	}
+ 
+-	public static function direct_call_function_text_from_target_text(string $llvmFunctionName, string $returnType, string $targetFunctionText, string $targetName, string $argumentListText): string {
+-		if ($targetFunctionText === "" || $targetName === "") {
+-			return "";
+-		}
+-		$text string = $targetFunctionText;
+-		$text = $text . "define " . $returnType . " " . $llvmFunctionName . "() {\n";
+-		$text = $text . "entry:\n";
+-		$text = $text . "  %direct_call_result_1 = call " . $returnType . " " . $targetName . "(" . $argumentListText . ")\n";
+-		$text = $text . "  ret " . $returnType . " %direct_call_result_1\n";
+-		$text = $text . "}\n\n";
+-		return $text;
++	public static function function_composition_input_from_call_arguments_text(string $callerFunctionName, string $returnType, string $targetFunctionText, string $targetName, string $argumentListText): BackendFunctionCompositionInput {
++		$input BackendFunctionCompositionInput = new BackendFunctionCompositionInput();
++		$input->caller_function_name = $callerFunctionName;
++		$input->return_type_text = $returnType;
++		$input->target_function_text = $targetFunctionText;
++		$input->target_function_name = $targetName;
++		$input->argument_list_text = $argumentListText;
++		return $input;
+ 	}
+ 
+-	public static function direct_call_function_text_from_local_reference_argument(string $llvmFunctionName, string $returnType, string $targetFunctionText, string $targetName, uint32 $localTypeRefId, int32 $initialValue): string {
+-		if ($targetFunctionText === "" || $targetName === "") {
+-			return "";
+-		}
+-		$localType string = llvm_text_from_plan::llvm_type_for_type_ref($localTypeRefId);
+-		if ($localType === "") {
++	public static function function_composition_input_from_local_reference_argument(string $callerFunctionName, string $returnType, string $targetFunctionText, string $targetName, uint32 $localTypeRefId, int32 $initialValue): BackendFunctionCompositionInput {
++		$input BackendFunctionCompositionInput = llvm_text_from_plan::function_composition_input_from_call_arguments_text($callerFunctionName, $returnType, $targetFunctionText, $targetName, "");
++		$input->local_reference_argument_enabled = true;
++		$input->local_argument_type_ref_id = $localTypeRefId;
++		$input->local_argument_initial_value = $initialValue;
++		return $input;
++	}
++
++	public static function function_text_from_call_composition(BackendFunctionCompositionInput $input): string {
++		if ($input->target_function_text === "" || $input->target_function_name === "" || $input->caller_function_name === "" || $input->return_type_text === "") {
+ 			return "";
+ 		}
+-		$align int = llvm_text_from_plan::llvm_align_for_type_ref($localTypeRefId);
+-		$text string = $targetFunctionText;
+-		$text = $text . "define " . $returnType . " " . $llvmFunctionName . "() {\n";
++		$text string = $input->target_function_text;
++		$text = $text . "define " . $input->return_type_text . " " . $input->caller_function_name . "() {\n";
+ 		$text = $text . "entry:\n";
+-		$text = $text . "  %local_1 = alloca " . $localType . ", align " . $align . "\n";
+-		$text = $text . "  store " . $localType . " " . (int)$initialValue . ", ptr %local_1, align " . $align . "\n";
+-		$text = $text . "  %direct_call_result_1 = call " . $returnType . " " . $targetName . "(ptr %local_1)\n";
+-		$text = $text . "  ret " . $returnType . " %direct_call_result_1\n";
++		if ($input->local_reference_argument_enabled) {
++			$localType string = llvm_text_from_plan::llvm_type_for_type_ref($input->local_argument_type_ref_id);
++			if ($localType === "") {
++				return "";
++			}
++			$align int = llvm_text_from_plan::llvm_align_for_type_ref($input->local_argument_type_ref_id);
++			$text = $text . "  %local_1 = alloca " . $localType . ", align " . $align . "\n";
++			$text = $text . "  store " . $localType . " " . (int)$input->local_argument_initial_value . ", ptr %local_1, align " . $align . "\n";
++			$text = $text . "  %direct_call_result_1 = call " . $input->return_type_text . " " . $input->target_function_name . "(ptr %local_1)\n";
++		} else {
++			$text = $text . "  %direct_call_result_1 = call " . $input->return_type_text . " " . $input->target_function_name . "(" . $input->argument_list_text . ")\n";
++		}
++		$text = $text . "  ret " . $input->return_type_text . " %direct_call_result_1\n";
+ 		$text = $text . "}\n\n";
+ 		return $text;
+ 	}

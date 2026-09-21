@@ -1,0 +1,6 @@
+ninja: Entering directory `/tmp/scpp-edit-latency-20260919/app/.prism/build'
+[1/5] CALLABLE_PART expanded_parts/__callable/analysis_context_identity_group_0.o
+[2/5] CALLABLE_PART expanded_parts/__callable/local_body_lowering_group_2.o
+[3/5] CALLABLE_PART expanded_parts/__callable/local_body_lowering_routes_group_1.o
+[4/5] CALLABLE_PART expanded_parts/__callable/local_body_lowering_routes_group_0.o
+[5/5] LINK main

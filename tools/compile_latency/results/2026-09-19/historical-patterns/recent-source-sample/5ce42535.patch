@@ -1,0 +1,50 @@
+commit 5ce425359dec58c4d19dd8829fee9424714abc42
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 16:30:44 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 16:30:44 2026 +0300
+
+    Rename backend LLVM source filename label
+
+diff --git a/compiler/src/compile/backend/llvm_text_from_plan.phs b/compiler/src/compile/backend/llvm_text_from_plan.phs
+index f4139f76..19716b1f 100644
+--- a/compiler/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/src/compile/backend/llvm_text_from_plan.phs
+@@ -2494,6 +2494,10 @@ final class llvm_text_from_plan {
+ 		return structure_row_ids::uint16_from_int(2);
+ 	}
+ 
++	public static function backend_module_source_filename(): string {
++		return "compiler/backend-module-composition";
++	}
++
+ 	public static function module_composition_input_from_target_text(string $targetFunctionText, string $targetName): BackendModuleCompositionInput {
+ 		$input BackendModuleCompositionInput = new BackendModuleCompositionInput();
+ 		$input->composition_kind_id = llvm_text_from_plan::module_composition_kind_target_text_id();
+@@ -2525,7 +2529,7 @@ final class llvm_text_from_plan {
+ 		$text string = "; v2 PHS backend-emission LLVM text sink\n";
+ 		$text = $text . "; backend_value_stack_status=ok\n";
+ 		$text = $text . "; backend_local_slot_status=ok\n";
+-		$text = $text . "source_filename = \"compiler/reset-runner-direct-call\"\n";
++		$text = $text . "source_filename = \"" . llvm_text_from_plan::backend_module_source_filename() . "\"\n";
+ 		$text = $text . "target triple = \"x86_64-pc-linux-gnu\"\n";
+ 		$text = $text . "\n";
+ 		$text = $text . $input->target_function_text;
+@@ -2602,7 +2606,7 @@ final class llvm_text_from_plan {
+ 			text_builder_append_string($lines, "; v2 PHS backend-emission LLVM text sink\n"
+ 				. "; backend_value_stack_status=ok\n"
+ 				. "; backend_local_slot_status=ok\n"
+-				. "source_filename = \"compiler/reset-runner-direct-call\"\n"
++				. "source_filename = \"" . llvm_text_from_plan::backend_module_source_filename() . "\"\n"
+ 				. "target triple = \"x86_64-pc-linux-gnu\"\n"
+ 				. "\n");
+ 			if (!llvm_text_from_plan::append_local_function_text_from_emission_and_backend_requests($lines, $input->target_function_name, $targetEmission, $targetRequests)) {
+@@ -2628,7 +2632,7 @@ final class llvm_text_from_plan {
+ 		$text string = "; v2 PHS backend-emission LLVM text sink\n";
+ 		$text = $text . "; backend_value_stack_status=ok\n";
+ 		$text = $text . "; backend_local_slot_status=ok\n";
+-		$text = $text . "source_filename = \"compiler/reset-runner-direct-call\"\n";
++		$text = $text . "source_filename = \"" . llvm_text_from_plan::backend_module_source_filename() . "\"\n";
+ 		$text = $text . "target triple = \"x86_64-pc-linux-gnu\"\n";
+ 		$text = $text . "\n";
+ 		$text = $text . $targetFunctionText;

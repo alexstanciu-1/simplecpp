@@ -1,0 +1,79 @@
+--- before/__callable/scalar_body_statement_collection_group_0.cpp
++++ after/__callable/scalar_body_statement_collection_group_0.cpp
+@@ -5,6 +5,7 @@
+ #include "__types/FrontendNodeRow.hpp"
+ #include "__types/FrontendStatementPayloadRow.hpp"
+ #include "__types/ScalarBodyBackendCollection.hpp"
++#include "__types/ScalarConditionOperand.hpp"
+ #include "__types/ScalarIfBranchOutcome.hpp"
+ #include "__types/scalar_body_statement_collection.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_if_branch_outcome_none_id.hpp"
+@@ -18,6 +19,16 @@
+ #include "__callable/__latency_fn_scalar_body_statement_collection_if_branch_outcome_return_id.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_if_branch_outcome_is_return.hpp"
+ #include "__callable/__latency_fn_scalar_body_statement_collection_if_branch_outcome_return_id.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_none_id.hpp"
++#include "__callable/__latency_fn_structure_row_ids_none_kind_id.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_id.hpp"
++#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_immediate_id.hpp"
++#include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_is_local.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_id.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_is_local_immediate.hpp"
++#include "__callable/__latency_fn_scalar_body_statement_collection_condition_operand_local_immediate_id.hpp"
+ #include "__callable/__latency_fn_backend_preflight_requests_local_operation_store_id.hpp"
+ #include "__callable/__latency_fn_frontend_model_builder_expression_type_ref_from_node.hpp"
+ #include "__callable/__latency_fn_frontend_model_builder_numeric_type_ref_accepts_decimal_literal.hpp"
+@@ -98,6 +109,51 @@
+ 
+ namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[]; }
+ namespace scpp {
++int_t<std::uint16_t> __latency_fn_scalar_body_statement_collection_condition_operand_none_id() {
++	SCPP_CALL_DEPTH_GUARD("scalar_body_statement_collection::condition_operand_none_id", "/tmp/scpp-edit-latency-20260919/app/compile/backend/scalar_body_statement_collection.phs", __latency_lines_scalar_body_statement_collection[5]);
++	return __latency_fn_structure_row_ids_none_kind_id();
++}
++
++}
++
++namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[]; }
++namespace scpp {
++int_t<std::uint16_t> __latency_fn_scalar_body_statement_collection_condition_operand_local_id() {
++	SCPP_CALL_DEPTH_GUARD("scalar_body_statement_collection::condition_operand_local_id", "/tmp/scpp-edit-latency-20260919/app/compile/backend/scalar_body_statement_collection.phs", __latency_lines_scalar_body_statement_collection[6]);
++	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(1));
++}
++
++}
++
++namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[]; }
++namespace scpp {
++int_t<std::uint16_t> __latency_fn_scalar_body_statement_collection_condition_operand_local_immediate_id() {
++	SCPP_CALL_DEPTH_GUARD("scalar_body_statement_collection::condition_operand_local_immediate_id", "/tmp/scpp-edit-latency-20260919/app/compile/backend/scalar_body_statement_collection.phs", __latency_lines_scalar_body_statement_collection[7]);
++	return __latency_fn_structure_row_ids_uint16_from_int(static_cast<int_t<> >(2));
++}
++
++}
++
++namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[]; }
++namespace scpp {
++bool_t __latency_fn_scalar_body_statement_collection_condition_operand_is_local(shared_p<ScalarConditionOperand> operand) {
++	SCPP_CALL_DEPTH_GUARD("scalar_body_statement_collection::condition_operand_is_local", "/tmp/scpp-edit-latency-20260919/app/compile/backend/scalar_body_statement_collection.phs", __latency_lines_scalar_body_statement_collection[8]);
++	return bool_t(php::identical(cast<int_t<>>(operand->operand_kind_id), cast<int_t<>>(__latency_fn_scalar_body_statement_collection_condition_operand_local_id())));
++}
++
++}
++
++namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[]; }
++namespace scpp {
++bool_t __latency_fn_scalar_body_statement_collection_condition_operand_is_local_immediate(shared_p<ScalarConditionOperand> operand) {
++	SCPP_CALL_DEPTH_GUARD("scalar_body_statement_collection::condition_operand_is_local_immediate", "/tmp/scpp-edit-latency-20260919/app/compile/backend/scalar_body_statement_collection.phs", __latency_lines_scalar_body_statement_collection[9]);
++	return bool_t(php::identical(cast<int_t<>>(operand->operand_kind_id), cast<int_t<>>(__latency_fn_scalar_body_statement_collection_condition_operand_local_immediate_id())));
++}
++
++}
++
++namespace scpp { extern const int __latency_lines_scalar_body_statement_collection[]; }
++namespace scpp {
+ bool_t __latency_fn_scalar_body_statement_collection_append_local_declaration(shared_p<FrontendModel> model, const string_t& sourceText, shared_p<FrontendModelKernelCounters> counters, FrontendNodeRow statementNode, FrontendStatementPayloadRow statement, shared_p<ScalarBodyBackendCollection>& body) {
+ 	SCPP_CALL_DEPTH_GUARD("scalar_body_statement_collection::append_local_declaration", "/tmp/scpp-edit-latency-20260919/app/compile/backend/scalar_body_statement_collection.phs", __latency_lines_scalar_body_statement_collection[10]);
+ 	if (static_cast<bool>(php::condition_truthy(php::not_identical(cast<int_t<>>(statementNode->row_kind_id), cast<int_t<>>(__latency_fn_frontend_model_tables_row_kind_statement_local_declaration_id()))))) {

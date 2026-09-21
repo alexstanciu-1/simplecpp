@@ -1,0 +1,4 @@
+function run(): latency_i32 {
+	$x latency_i32 = 42;
+	return $x;
+}

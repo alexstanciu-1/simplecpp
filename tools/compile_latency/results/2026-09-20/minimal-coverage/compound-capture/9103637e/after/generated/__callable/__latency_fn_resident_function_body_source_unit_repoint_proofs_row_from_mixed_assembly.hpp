@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyMixedFrontendAssemblyProofRow;
+struct ResidentFunctionBodySourceUnitRepointProofRow;
+ResidentFunctionBodySourceUnitRepointProofRow __latency_fn_resident_function_body_source_unit_repoint_proofs_row_from_mixed_assembly(shared_p<CompilerProjectRunReport> report, ResidentFunctionBodyMixedFrontendAssemblyProofRow assembly);
+}

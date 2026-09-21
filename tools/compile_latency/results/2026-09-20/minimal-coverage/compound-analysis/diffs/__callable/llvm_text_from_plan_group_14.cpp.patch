@@ -1,0 +1,13 @@
+--- before/__callable/llvm_text_from_plan_group_14.cpp
++++ after/__callable/llvm_text_from_plan_group_14.cpp
+@@ -132,7 +132,9 @@
+ 	BackendBinaryOperandRow binaryOperand = __latency_fn_backend_emission_decisions_binary_operand_by_owner_row_id(emission, value->value_id);
+ 	if (static_cast<bool>((cast<int_t<>>(binaryOperand->owner_row_id) > static_cast<int_t<> >(0)))) {
+ 		string_t tempName = required_cast<string_t>((string_t("%binary_add_") + cast<string_t>(cast<int_t<>>(value->value_id))));
+-		return (string_t("  ") + cast<string_t>(tempName) + string_t(" = add ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(cast<int_t<>>(binaryOperand->left_value)) + string_t(", ") + cast<string_t>(cast<int_t<>>(binaryOperand->right_value)) + string_t("\n") + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(tempName) + string_t("\n"));
++		string_t text = required_cast<string_t>((string_t("  ") + cast<string_t>(tempName) + string_t(" = add ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(cast<int_t<>>(binaryOperand->left_value)) + string_t(", ") + cast<string_t>(cast<int_t<>>(binaryOperand->right_value)) + string_t("\n")));
++		text = (cast<string_t>(text) + string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(tempName) + string_t("\n"));
++		return text;
+ 	}
+ 	return (string_t("  ret ") + cast<string_t>(returnType) + string_t(" ") + cast<string_t>(cast<int_t<>>(value->value)) + string_t("\n"));
+ }

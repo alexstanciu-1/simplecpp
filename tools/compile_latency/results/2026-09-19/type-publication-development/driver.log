@@ -1,0 +1,5 @@
+START 43a83246
+DONE 43a83246 measured
+{"scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature", "counts": {"context_limit": 4, "measured": 1, "pending": 10}, "timed_code_cases": 1, "timed_code_cases_within_target": 0, "comment_only_cases": 0}
+START 1a24a85d
+Driver failed: 1a24a85d

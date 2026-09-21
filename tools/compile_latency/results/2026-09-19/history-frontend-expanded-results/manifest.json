@@ -1,0 +1,24 @@
+{
+  "case": "frontend",
+  "historical_commit": "60011d4c",
+  "scope": "contemporary analogue; not full historical checkout",
+  "source_files": [
+    "main.phs",
+    "compile/frontend_adapter/phs/frontend_model_builder.phs",
+    "compile/backend/llvm_text_from_plan.phs"
+  ],
+  "changed_generated_inputs": [
+    "main.cpp",
+    "__callable/frontend_model_builder_primitive_type_ref_id_for_name.cpp",
+    "__callable/frontend_model_builder_latency_primitive_i32_id.cpp",
+    "__callable/frontend_model_builder_locations.cpp",
+    "__callable/__latency_fn_frontend_model_builder_latency_primitive_i32_id.hpp",
+    "compile/backend/llvm_text_from_plan.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/locations.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/part_1.cpp",
+    "__partitions/compile/backend/llvm_text_from_plan/part_9.cpp"
+  ],
+  "rounds": 3,
+  "jobs": 12,
+  "cache": "disabled"
+}

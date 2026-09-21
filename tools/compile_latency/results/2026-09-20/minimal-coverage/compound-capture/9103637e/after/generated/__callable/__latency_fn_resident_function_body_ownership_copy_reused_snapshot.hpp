@@ -1,0 +1,9 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ProjectSymbolIndexRow;
+struct ResidentFrontendNodeListSnapshotRow;
+struct ResidentFunctionBodySnapshotRow;
+struct ResidentSourceUnitFrontendStateRow;
+ResidentFunctionBodySnapshotRow __latency_fn_resident_function_body_ownership_copy_reused_snapshot(ResidentFunctionBodySnapshotRow previous, ProjectSymbolIndexRow symbol, ResidentSourceUnitFrontendStateRow frontendState, ResidentFrontendNodeListSnapshotRow frontendSnapshot, int_t<std::uint32_t> ownerRunId);
+}

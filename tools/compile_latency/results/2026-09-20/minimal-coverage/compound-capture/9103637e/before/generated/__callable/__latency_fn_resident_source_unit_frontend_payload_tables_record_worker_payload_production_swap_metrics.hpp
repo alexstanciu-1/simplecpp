@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct SourceUnitFrontendWorkerPayloadCarrierContractRow;
+void __latency_fn_resident_source_unit_frontend_payload_tables_record_worker_payload_production_swap_metrics(shared_p<CompilerProjectRunReport>& report, vector_t<SourceUnitFrontendWorkerPayloadCarrierContractRow>& contractRows);
+}

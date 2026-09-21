@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input.hpp
++++ after/__callable/__latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input.hpp
+@@ -4,5 +4,5 @@
+ class SourceUnitFrontendWorkerPayloadInput;
+ class SourceUnitTable;
+ struct SourceUnitTableRow;
+-shared_p<SourceUnitTable> __latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input(const shared_p<SourceUnitFrontendWorkerPayloadInput>& input, const SourceUnitTableRow& sourceUnit, const string_t& sourceText);
++shared_p<SourceUnitTable> __latency_fn_resident_source_unit_symbol_states_source_unit_table_for_worker_input(shared_p<SourceUnitFrontendWorkerPayloadInput> input, SourceUnitTableRow sourceUnit, const string_t& sourceText);
+ }

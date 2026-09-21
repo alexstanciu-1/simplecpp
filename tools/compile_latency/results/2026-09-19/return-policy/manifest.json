@@ -1,0 +1,160 @@
+{
+  "scope": "current-workload analogue of e1b50b4e signature propagation; NOT the full historical patch",
+  "sources": [
+    "compile/incremental/resident_function_body_local_parse_proofs.phs",
+    "compile/frontend_adapter/phs/frontend_model_builder.phs"
+  ],
+  "changed_signatures": [
+    "parse_body_statement",
+    "parse_for_statement",
+    "parse_function_body",
+    "parse_if_statement",
+    "parse_return_expression",
+    "parse_return_statement",
+    "parse_statement_list_until_close",
+    "parse_statement_list_until_close_with_implicit_return",
+    "parse_while_statement"
+  ],
+  "changed_calls": [
+    {
+      "source": "compile/incremental/resident_function_body_local_parse_proofs.phs",
+      "owner": "build_local_model_from_slice",
+      "callee": "parse_statement_list_until_close",
+      "argument": "!str_starts_with($sourceText, \"// latency deny returns\")"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_if_statement",
+      "callee": "parse_statement_list_until_close",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_if_statement",
+      "callee": "parse_statement_list_until_close",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_while_statement",
+      "callee": "parse_statement_list_until_close",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_for_statement",
+      "callee": "parse_statement_list_until_close",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_return_statement",
+      "callee": "parse_return_expression",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_body_statement",
+      "callee": "parse_if_statement",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_body_statement",
+      "callee": "parse_while_statement",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_body_statement",
+      "callee": "parse_for_statement",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_body_statement",
+      "callee": "parse_return_statement",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_statement_list_until_close",
+      "callee": "parse_body_statement",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_statement_list_until_close_with_implicit_return",
+      "callee": "parse_statement_list_until_close",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_statement_list_until_eof_with_implicit_return",
+      "callee": "parse_body_statement",
+      "argument": "!str_starts_with($source, \"// latency deny returns\")"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_function_body",
+      "callee": "parse_statement_list_until_close",
+      "argument": "$latencyAllowReturns"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_function_declaration",
+      "callee": "parse_function_body",
+      "argument": "!str_starts_with($source, \"// latency deny returns\")"
+    },
+    {
+      "source": "compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "owner": "parse_synthetic_script_entry_declaration_until_close",
+      "callee": "parse_statement_list_until_close_with_implicit_return",
+      "argument": "!str_starts_with($source, \"// latency deny returns\")"
+    }
+  ],
+  "native_outputs": [
+    "expanded/__callable/frontend_model_builder_locations.o",
+    "expanded/compile/incremental/resident_function_body_local_parse_proofs.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_body_statement.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_for_statement.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_function_body.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_function_declaration.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_if_statement.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_return_expression.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_return_statement.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_statement_list_until_close.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_statement_list_until_close_with_implicit_return.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_statement_list_until_eof_with_implicit_return.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_synthetic_script_entry_declaration_until_close.o",
+    "expanded_parts/__callable/frontend_model_builder_parse_while_statement.o",
+    "main"
+  ],
+  "changed_generated_inputs": [
+    "__callable/frontend_model_builder_parse_statement_list_until_close_with_implicit_return.cpp",
+    "__callable/frontend_model_builder_parse_if_statement.cpp",
+    "__callable/frontend_model_builder_parse_function_body.cpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_statement_list_until_close.hpp",
+    "__callable/frontend_model_builder_parse_body_statement.cpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_if_statement.hpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_for_statement.hpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_return_expression.hpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_while_statement.hpp",
+    "__callable/frontend_model_builder_parse_return_statement.cpp",
+    "__callable/frontend_model_builder_parse_return_expression.cpp",
+    "__callable/frontend_model_builder_parse_while_statement.cpp",
+    "__callable/frontend_model_builder_parse_synthetic_script_entry_declaration_until_close.cpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_function_body.hpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_body_statement.hpp",
+    "__callable/frontend_model_builder_parse_for_statement.cpp",
+    "__callable/frontend_model_builder_parse_statement_list_until_close.cpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_statement_list_until_close_with_implicit_return.hpp",
+    "__callable/frontend_model_builder_locations.cpp",
+    "__callable/frontend_model_builder_parse_function_declaration.cpp",
+    "__callable/__latency_fn_frontend_model_builder_parse_return_statement.hpp",
+    "__callable/frontend_model_builder_parse_statement_list_until_eof_with_implicit_return.cpp",
+    "compile/incremental/resident_function_body_local_parse_proofs.cpp"
+  ],
+  "behavior": "baseline accepts both fixtures; edited compiler accepts ordinary int32 local-return fixture (LLVM exit42), rejects marked fixture via propagated return policy",
+  "timing": "native compiler rebuild only; fixture compilation/execution are separate correctness checks"
+}

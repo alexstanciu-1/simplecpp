@@ -1,0 +1,11 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class PartitionMergeReductionArtifact;
+struct ResidentSourceUnitFrontendPayloadAdoptionRow;
+struct ResidentSourceUnitFrontendPayloadTableRow;
+struct ResidentSourceUnitFrontendTaskPayloadSegmentAdoptionPublicationRow;
+struct SourceUnitFrontendWorkerActivationGateRow;
+class SourceUnitTable;
+SourceUnitFrontendWorkerActivationGateRow __latency_fn_resident_source_unit_frontend_payload_tables_worker_activation_gate_row(shared_p<SourceUnitTable> sourceUnits, vector_t<ResidentSourceUnitFrontendPayloadTableRow>& workerPayloadTables, shared_p<PartitionMergeReductionArtifact> sequentialReduction, shared_p<PartitionMergeReductionArtifact> workerReduction, vector_t<ResidentSourceUnitFrontendPayloadAdoptionRow>& adoptionRows, vector_t<ResidentSourceUnitFrontendTaskPayloadSegmentAdoptionPublicationRow>& adoptionPublicationRows, int_t<std::uint32_t> ownerRunId, int_t<> workerCount, bool_t handoffMatches);
+}

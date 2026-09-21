@@ -1,0 +1,21 @@
+{
+  "commit": "1610af1a",
+  "sources": [
+    "compile/backend/compiler_entry_backend.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "before_hunk_setup_seconds": 2.9144338510232046,
+  "forced_new_objects": [],
+  "changed_generated_inputs": [
+    "__callable/compiler_entry_backend_group_0.cpp",
+    "__callable/compiler_entry_backend_literal_return_emission_from_frontend.cpp",
+    "__callable/compiler_entry_backend_locations.cpp"
+  ],
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

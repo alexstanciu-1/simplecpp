@@ -1,0 +1,60 @@
+{
+  "41392c03": {
+    "rebuilt_objects": 7,
+    "changed_active_cpp_objects": 7,
+    "unchanged_cpp_rebuilt_objects": 0,
+    "changed_cpp_job_wall_seconds": 17.57,
+    "unchanged_cpp_job_wall_seconds": 0.0,
+    "unchanged_cpp_objects": [],
+    "total_compiler_job_wall_seconds": 17.57,
+    "observed_work_divided_by_12_seconds": 1.4641666666666666,
+    "note": "Unchanged C++ can legitimately require compilation after a declaration/type change. Counts do not prove unnecessary dependencies. Work/12 holds observed job durations fixed; not a hardware-independent lower bound."
+  },
+  "9103637e": {
+    "rebuilt_objects": 78,
+    "changed_active_cpp_objects": 71,
+    "unchanged_cpp_rebuilt_objects": 7,
+    "changed_cpp_job_wall_seconds": 309.83,
+    "unchanged_cpp_job_wall_seconds": 40.229,
+    "unchanged_cpp_objects": [
+      {
+        "object": "minimal_parts/__callable/resident_function_body_summary_project_references_group_0.o",
+        "source": "__callable/resident_function_body_summary_project_references_group_0.cpp",
+        "job_wall_ms": 3735
+      },
+      {
+        "object": "minimal_parts/__callable/resident_function_body_row_list_publish_results_group_2.o",
+        "source": "__callable/resident_function_body_row_list_publish_results_group_2.cpp",
+        "job_wall_ms": 5437
+      },
+      {
+        "object": "minimal_parts/__callable/resident_daemon_incremental_proof_group_0.o",
+        "source": "__callable/resident_daemon_incremental_proof_group_0.cpp",
+        "job_wall_ms": 6152
+      },
+      {
+        "object": "minimal_parts/__callable/resident_function_body_parse_slices_group_1.o",
+        "source": "__callable/resident_function_body_parse_slices_group_1.cpp",
+        "job_wall_ms": 5954
+      },
+      {
+        "object": "minimal_parts/__callable/resident_function_body_local_parse_proofs_group_1.o",
+        "source": "__callable/resident_function_body_local_parse_proofs_group_1.cpp",
+        "job_wall_ms": 6559
+      },
+      {
+        "object": "minimal_parts/__callable/resident_source_unit_frontend_payload_tables_group_30.o",
+        "source": "__callable/resident_source_unit_frontend_payload_tables_group_30.cpp",
+        "job_wall_ms": 7202
+      },
+      {
+        "object": "minimal_parts/__callable/compiler_project_runner_group_1.o",
+        "source": "__callable/compiler_project_runner_group_1.cpp",
+        "job_wall_ms": 5190
+      }
+    ],
+    "total_compiler_job_wall_seconds": 350.059,
+    "observed_work_divided_by_12_seconds": 29.171583333333334,
+    "note": "Unchanged C++ can legitimately require compilation after a declaration/type change. Counts do not prove unnecessary dependencies. Work/12 holds observed job durations fixed; not a hardware-independent lower bound."
+  }
+}

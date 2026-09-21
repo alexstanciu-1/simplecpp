@@ -1,0 +1,17 @@
+{
+  "rebuilt_outputs": [
+    "layout/__callable/compiler_profile_events_locations.o",
+    "layout_parts/__callable/compiler_profile_events_append_elapsed.o",
+    "layout_parts/__callable/compiler_profile_events_elapsed_us_since.o",
+    "layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_19.o",
+    "layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.o",
+    "layout_parts/compile/model/project_symbol_index/part_3.o",
+    "layout_parts/compile/model/source_units/part_3.o",
+    "layout_parts/compile/model/source_units/part_4.o",
+    "layout_parts/compile/support/production_mt_heartbeat/part_0.o",
+    "layout_parts/main.o",
+    "layout_parts/profile/gate_profile_helpers/part_0.o",
+    "main"
+  ],
+  "unchanged_objects": 522
+}

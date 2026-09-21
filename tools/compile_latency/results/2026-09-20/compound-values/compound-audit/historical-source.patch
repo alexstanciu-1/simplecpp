@@ -1,0 +1,1173 @@
+diff --git a/compiler/v2/src/compile/backend/backend_preflight_requests.phs b/compiler/v2/src/compile/backend/backend_preflight_requests.phs
+index 55ae90e3..ad0bc30e 100644
+--- a/compiler/v2/src/compile/backend/backend_preflight_requests.phs
++++ b/compiler/v2/src/compile/backend/backend_preflight_requests.phs
+@@ -89,6 +89,10 @@ final class backend_preflight_requests {
+ 		return structure_row_ids::uint16_from_int(9);
+ 	}
+ 
++	public static function lowering_step_kind_int_sub_id(): uint16 {
++		return structure_row_ids::uint16_from_int(10);
++	}
++
+ 	public static function local_operation_alloca_id(): uint16 {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+@@ -105,6 +109,10 @@ final class backend_preflight_requests {
+ 		return structure_row_ids::uint16_from_int(4);
+ 	}
+ 
++	public static function local_operation_loaded_sub_immediate_id(): uint16 {
++		return structure_row_ids::uint16_from_int(5);
++	}
++
+ 	public static function control_operation_if_bool_then_id(): uint16 {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+@@ -222,6 +230,9 @@ final class backend_preflight_requests {
+ 		if ((int)$operation->consumer_feature_id === (int)type_capability_readiness::feature_binary_operator_plus_id()) {
+ 			return backend_preflight_requests::lowering_step_kind_int_add_id();
+ 		}
++		if ((int)$operation->consumer_feature_id === (int)type_capability_readiness::feature_binary_operator_minus_id()) {
++			return backend_preflight_requests::lowering_step_kind_int_sub_id();
++		}
+ 		if ((int)$operation->consumer_feature_id === (int)type_capability_readiness::feature_local_storage_id()) {
+ 			return backend_preflight_requests::lowering_step_kind_local_alloca_id();
+ 		}
+diff --git a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+index 0897d4ca..0654d4f9 100644
+--- a/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
++++ b/compiler/v2/src/compile/backend/llvm_text_from_plan.phs
+@@ -354,6 +354,31 @@ final class llvm_text_from_plan {
+ 		text_builder_append_int($lines, $valueId);
+ 	}
+ 
++	public static function append_binary_sub_name(text_builder &$lines, int $valueId): void {
++		text_builder_append_string($lines, "%binary_sub_");
++		text_builder_append_int($lines, $valueId);
++	}
++
++	public static function append_binary_result_name(text_builder &$lines, int $valueId, uint16 $localOperationId): void {
++		if ((int)$localOperationId === (int)backend_preflight_requests::local_operation_loaded_sub_immediate_id()) {
++			llvm_text_from_plan::append_binary_sub_name($lines, $valueId);
++			return;
++		}
++		llvm_text_from_plan::append_binary_add_name($lines, $valueId);
++	}
++
++	public static function local_operation_is_loaded_binary_immediate(uint16 $localOperationId): bool {
++		return (int)$localOperationId === (int)backend_preflight_requests::local_operation_loaded_add_immediate_id()
++			|| (int)$localOperationId === (int)backend_preflight_requests::local_operation_loaded_sub_immediate_id();
++	}
++
++	public static function binary_instruction_for_local_operation(uint16 $localOperationId): string {
++		if ((int)$localOperationId === (int)backend_preflight_requests::local_operation_loaded_sub_immediate_id()) {
++			return "sub";
++		}
++		return "add";
++	}
++
+ 	public static function append_local_alloca_text(text_builder &$lines, int $slotIndex, string $llvmType, int $align): void {
+ 		text_builder_append_string($lines, "  ");
+ 		llvm_text_from_plan::append_local_slot_name($lines, $slotIndex);
+@@ -389,9 +414,15 @@ final class llvm_text_from_plan {
+ 	}
+ 
+ 	public static function append_local_add_immediate_text(text_builder &$lines, int $valueId, string $llvmType, int $value): void {
++		llvm_text_from_plan::append_local_binary_immediate_text($lines, $valueId, $llvmType, $value, backend_preflight_requests::local_operation_loaded_add_immediate_id());
++	}
++
++	public static function append_local_binary_immediate_text(text_builder &$lines, int $valueId, string $llvmType, int $value, uint16 $localOperationId): void {
+ 		text_builder_append_string($lines, "  ");
+-		llvm_text_from_plan::append_binary_add_name($lines, $valueId);
+-		text_builder_append_string($lines, " = add ");
++		llvm_text_from_plan::append_binary_result_name($lines, $valueId, $localOperationId);
++		text_builder_append_string($lines, " = ");
++		text_builder_append_string($lines, llvm_text_from_plan::binary_instruction_for_local_operation($localOperationId));
++		text_builder_append_string($lines, " ");
+ 		text_builder_append_string($lines, $llvmType);
+ 		text_builder_append_string($lines, " ");
+ 		llvm_text_from_plan::append_local_load_name($lines, $valueId);
+@@ -409,10 +440,14 @@ final class llvm_text_from_plan {
+ 	}
+ 
+ 	public static function append_return_binary_add_text(text_builder &$lines, string $returnType, int $valueId): void {
++		llvm_text_from_plan::append_return_binary_result_text($lines, $returnType, $valueId, backend_preflight_requests::local_operation_loaded_add_immediate_id());
++	}
++
++	public static function append_return_binary_result_text(text_builder &$lines, string $returnType, int $valueId, uint16 $localOperationId): void {
+ 		text_builder_append_string($lines, "  ret ");
+ 		text_builder_append_string($lines, $returnType);
+ 		text_builder_append_string($lines, " ");
+-		llvm_text_from_plan::append_binary_add_name($lines, $valueId);
++		llvm_text_from_plan::append_binary_result_name($lines, $valueId, $localOperationId);
+ 		text_builder_append_string($lines, "\n");
+ 	}
+ 
+@@ -464,14 +499,14 @@ final class llvm_text_from_plan {
+ 					$align int = llvm_text_from_plan::llvm_align_for_type_ref($localOperand->type_ref_id);
+ 					llvm_text_from_plan::append_local_store_text($lines, $slotIndex, $llvmType, $align, (int)$localOperand->value);
+ 				}
+-			} else if ((int)$localOperand->local_operation_id === (int)backend_preflight_requests::local_operation_loaded_add_immediate_id()) {
++			} else if (llvm_text_from_plan::local_operation_is_loaded_binary_immediate($localOperand->local_operation_id)) {
+ 				$slotIndex int = llvm_text_from_plan::local_slot_index($localSourceRows, $localOperand->local_source_row_id);
+ 				if ($slotIndex > 0) {
+ 					$llvmType string = llvm_text_from_plan::llvm_type_for_type_ref($localOperand->type_ref_id);
+ 					$align int = llvm_text_from_plan::llvm_align_for_type_ref($localOperand->type_ref_id);
+ 					llvm_text_from_plan::append_local_load_text($lines, (int)$value->value_id, $slotIndex, $llvmType, $align);
+-					llvm_text_from_plan::append_local_add_immediate_text($lines, (int)$value->value_id, $llvmType, (int)$localOperand->value);
+-					llvm_text_from_plan::append_return_binary_add_text($lines, $returnType, (int)$value->value_id);
++					llvm_text_from_plan::append_local_binary_immediate_text($lines, (int)$value->value_id, $llvmType, (int)$localOperand->value, $localOperand->local_operation_id);
++					llvm_text_from_plan::append_return_binary_result_text($lines, $returnType, (int)$value->value_id, $localOperand->local_operation_id);
+ 					$returned = true;
+ 				}
+ 			} else if ((int)$localOperand->local_operation_id === (int)backend_preflight_requests::local_operation_loaded_return_id()) {
+@@ -549,14 +584,14 @@ final class llvm_text_from_plan {
+ 					$align int = llvm_text_from_plan::llvm_align_for_type_ref($localOperand->type_ref_id);
+ 					llvm_text_from_plan::append_local_store_text($lines, $slotIndex, $llvmType, $align, (int)$localOperand->value);
+ 				}
+-			} else if ((int)$localOperand->local_operation_id === (int)backend_preflight_requests::local_operation_loaded_add_immediate_id()) {
++			} else if (llvm_text_from_plan::local_operation_is_loaded_binary_immediate($localOperand->local_operation_id)) {
+ 				$slotIndex int = llvm_text_from_plan::local_slot_index($localSourceRows, $localOperand->local_source_row_id);
+ 				if ($slotIndex > 0) {
+ 					$llvmType string = llvm_text_from_plan::llvm_type_for_type_ref($localOperand->type_ref_id);
+ 					$align int = llvm_text_from_plan::llvm_align_for_type_ref($localOperand->type_ref_id);
+ 					llvm_text_from_plan::append_local_load_text($lines, (int)$value->value_id, $slotIndex, $llvmType, $align);
+-					llvm_text_from_plan::append_local_add_immediate_text($lines, (int)$value->value_id, $llvmType, (int)$localOperand->value);
+-					llvm_text_from_plan::append_return_binary_add_text($lines, $returnType, (int)$value->value_id);
++					llvm_text_from_plan::append_local_binary_immediate_text($lines, (int)$value->value_id, $llvmType, (int)$localOperand->value, $localOperand->local_operation_id);
++					llvm_text_from_plan::append_return_binary_result_text($lines, $returnType, (int)$value->value_id, $localOperand->local_operation_id);
+ 					$returned = true;
+ 				}
+ 			} else if ((int)$localOperand->local_operation_id === (int)backend_preflight_requests::local_operation_loaded_return_id()) {
+diff --git a/compiler/v2/src/compile/backend/local_body_lowering.phs b/compiler/v2/src/compile/backend/local_body_lowering.phs
+index 676a6b59..e90e1eb4 100644
+--- a/compiler/v2/src/compile/backend/local_body_lowering.phs
++++ b/compiler/v2/src/compile/backend/local_body_lowering.phs
+@@ -157,6 +157,20 @@ final class local_body_lowering {
+ 		return operation_readiness::readiness_from_capability($consumer, $readiness);
+ 	}
+ 
++	public static function feature_id_for_binary_operator_id(uint16 $operatorId): uint16 {
++		if ((int)$operatorId === (int)frontend_model_builder::operator_minus_id()) {
++			return type_capability_readiness::feature_binary_operator_minus_id();
++		}
++		return type_capability_readiness::feature_binary_operator_plus_id();
++	}
++
++	public static function local_operation_id_for_binary_operator_id(uint16 $operatorId): uint16 {
++		if ((int)$operatorId === (int)frontend_model_builder::operator_minus_id()) {
++			return backend_preflight_requests::local_operation_loaded_sub_immediate_id();
++		}
++		return backend_preflight_requests::local_operation_loaded_add_immediate_id();
++	}
++
+ 	public static function append_local_backend_request(BackendRequestAuthorizationArtifact &$backendRequests, CapabilityCoverageArtifact $capabilityCoverage, uint16 $featureId, uint32 $sourceRowId, uint32 $localSourceRowId, uint32 $valueSourceRowId, int32 $value, uint16 $localOperationId, ProjectSymbolIndexRow $entrySymbol): void {
+ 		$operation OperationReadiness = local_body_lowering::operation_from_capability_source($capabilityCoverage, $featureId, $sourceRowId);
+ 		$consumer CapabilityConsumerRow = type_capability_readiness::consumer_by_feature_and_source_row_id($capabilityCoverage, $featureId, $sourceRowId);
+@@ -247,13 +261,15 @@ final class local_body_lowering {
+ 		$binary FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $binaryNode->payload_row_id, $counters);
+ 		$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $binary->right_node_id, $counters);
+ 		$rightLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $rightNode->payload_row_id, $counters);
++		$binaryFeatureId uint16 = local_body_lowering::feature_id_for_binary_operator_id($binary->operator_id);
++		$localOperationId uint16 = local_body_lowering::local_operation_id_for_binary_operator_id($binary->operator_id);
+ 		$localSourceRowIds vector<uint32> = [];
+ 		foreach ($localDeclarationNodes as $localDeclarationNode) {
+ 			$localSourceRowIds[] = $localDeclarationNode->node_id;
+ 		}
+ 
+ 		$typeRefTable TypeRefTable = type_refs::table_from_project_symbols($projectSymbols);
+-		$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_local_declarations_binary_return($typeRefTable, $localSourceRowIds, $binaryNode->node_id, $binary->inferred_type_ref_id);
++		$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_local_declarations_binary_return_feature($typeRefTable, $localSourceRowIds, $binaryNode->node_id, $binary->inferred_type_ref_id, $binaryFeatureId);
+ 		$requestCapacity int = (count($localDeclarationNodes) * 2) + 1;
+ 		$backendRequests = backend_preflight_requests::new_backend_request_artifact_with_sidecar_capacity($requestCapacity, 0, $requestCapacity, 0, 0);
+ 		$provider CapabilityProviderRow = type_capability_readiness::provider_by_type_ref_id($capabilityCoverage, $binary->inferred_type_ref_id);
+@@ -298,7 +314,7 @@ final class local_body_lowering {
+ 			$returnLocalDeclarationNode->node_id,
+ 			$rightNode->node_id,
+ 			$rightLiteral->numeric_payload,
+-			backend_preflight_requests::local_operation_loaded_add_immediate_id(),
++			$localOperationId,
+ 			$symbol
+ 		);
+ 
+diff --git a/compiler/v2/src/compile/backend/lowering_plan.phs b/compiler/v2/src/compile/backend/lowering_plan.phs
+index 1629f7f0..3516cbbe 100644
+--- a/compiler/v2/src/compile/backend/lowering_plan.phs
++++ b/compiler/v2/src/compile/backend/lowering_plan.phs
+@@ -95,6 +95,9 @@ final class lowering_plan {
+ 		if ((int)$id === (int)backend_preflight_requests::lowering_step_kind_local_load_return_id()) {
+ 			return "local_load_return";
+ 		}
++		if ((int)$id === (int)backend_preflight_requests::lowering_step_kind_int_sub_id()) {
++			return "int_sub";
++		}
+ 		return "unknown";
+ 	}
+ 
+diff --git a/compiler/v2/src/compile/capabilities/type_capability_readiness.phs b/compiler/v2/src/compile/capabilities/type_capability_readiness.phs
+index a9f78c26..d6804204 100644
+--- a/compiler/v2/src/compile/capabilities/type_capability_readiness.phs
++++ b/compiler/v2/src/compile/capabilities/type_capability_readiness.phs
+@@ -65,6 +65,10 @@ final class type_capability_readiness {
+ 		return structure_row_ids::uint16_from_int(9);
+ 	}
+ 
++	public static function feature_binary_operator_minus_id(): uint16 {
++		return structure_row_ids::uint16_from_int(10);
++	}
++
+ 	public static function source_key_type_ref_row_id(): uint16 {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+@@ -101,6 +105,22 @@ final class type_capability_readiness {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+ 
++	public static function blocked_reason_unsupported_numeric_operator_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function blocked_reason_unknown_type_trait_id(): uint16 {
++		return structure_row_ids::uint16_from_int(3);
++	}
++
++	public static function blocked_reason_non_numeric_type_id(): uint16 {
++		return structure_row_ids::uint16_from_int(4);
++	}
++
++	public static function blocked_reason_numeric_operator_not_in_trait_mask_id(): uint16 {
++		return structure_row_ids::uint16_from_int(5);
++	}
++
+ 	public static function adapter_none_id(): uint16 {
+ 		return structure_row_ids::none_kind_id();
+ 	}
+@@ -220,19 +240,62 @@ final class type_capability_readiness {
+ 	}
+ 
+ 	public static function binary_operator_plus_consumer(uint32 $binarySourceRowId, uint32 $typeRefId): CapabilityConsumerRow {
++		return type_capability_readiness::binary_operator_consumer($binarySourceRowId, $typeRefId, type_capability_readiness::feature_binary_operator_plus_id());
++	}
++
++	public static function binary_operator_minus_consumer(uint32 $binarySourceRowId, uint32 $typeRefId): CapabilityConsumerRow {
++		return type_capability_readiness::binary_operator_consumer($binarySourceRowId, $typeRefId, type_capability_readiness::feature_binary_operator_minus_id());
++	}
++
++	public static function binary_operator_consumer(uint32 $binarySourceRowId, uint32 $typeRefId, uint16 $featureId): CapabilityConsumerRow {
+ 		$row CapabilityConsumerRow = [];
+ 		$row->capability_id = type_capability_readiness::capability_numeric_binary_operator_id();
+ 		$row->source_row_id = $binarySourceRowId;
+ 		$row->provider_source_row_id = $typeRefId;
+-		$row->feature_id = type_capability_readiness::feature_binary_operator_plus_id();
++		$row->feature_id = $featureId;
+ 		$row->source_key_id = type_capability_readiness::source_key_frontend_expression_row_id();
+ 		$row->provider_source_key_id = type_capability_readiness::source_key_type_ref_row_id();
+ 		$row->provider_type_ref_id = $typeRefId;
+-		$row->status_id = type_capability_readiness::status_ready_id();
+-		$row->blocked_reason_id = type_capability_readiness::blocked_reason_none_id();
++		$trait TypeTraitRow = type_traits::row_from_type_ref_id($typeRefId);
++		if (type_capability_readiness::numeric_feature_supported_by_trait($trait, $featureId)) {
++			$row->status_id = type_capability_readiness::status_ready_id();
++			$row->blocked_reason_id = type_capability_readiness::blocked_reason_none_id();
++			return $row;
++		}
++		$row->status_id = type_capability_readiness::status_blocked_id();
++		$row->blocked_reason_id = type_capability_readiness::numeric_feature_blocked_reason_from_trait($trait, $featureId);
+ 		return $row;
+ 	}
+ 
++	public static function numeric_feature_supported_by_trait(TypeTraitRow $trait, uint16 $featureId): bool {
++		return (int)type_capability_readiness::numeric_feature_blocked_reason_from_trait($trait, $featureId) === (int)type_capability_readiness::blocked_reason_none_id();
++	}
++
++	public static function numeric_feature_blocked_reason_from_trait(TypeTraitRow $trait, uint16 $featureId): uint16 {
++		if ((int)$trait->status_id !== (int)type_traits::status_ready_id()) {
++			return type_capability_readiness::blocked_reason_unknown_type_trait_id();
++		}
++		if ((int)$trait->numeric_status_id !== (int)type_traits::status_ready_id()) {
++			if ((int)$trait->numeric_blocked_reason_id === (int)type_traits::numeric_blocked_reason_not_numeric_type_id()) {
++				return type_capability_readiness::blocked_reason_non_numeric_type_id();
++			}
++			return type_capability_readiness::blocked_reason_unknown_type_trait_id();
++		}
++		if ((int)$featureId === (int)type_capability_readiness::feature_binary_operator_plus_id()) {
++			if (type_traits::supports_integer_operator($trait, type_traits::numeric_operator_plus_bit_id())) {
++				return type_capability_readiness::blocked_reason_none_id();
++			}
++			return type_capability_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id();
++		}
++		if ((int)$featureId === (int)type_capability_readiness::feature_binary_operator_minus_id()) {
++			if (type_traits::supports_integer_operator($trait, type_traits::numeric_operator_minus_bit_id())) {
++				return type_capability_readiness::blocked_reason_none_id();
++			}
++			return type_capability_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id();
++		}
++		return type_capability_readiness::blocked_reason_unsupported_numeric_operator_id();
++	}
++
+ 	public static function local_storage_consumer(uint32 $statementSourceRowId, uint32 $typeRefId): CapabilityConsumerRow {
+ 		$row CapabilityConsumerRow = [];
+ 		$row->capability_id = type_capability_readiness::capability_scalar_local_storage_id();
+@@ -362,19 +425,27 @@ final class type_capability_readiness {
+ 	}
+ 
+ 	public static function coverage_from_type_refs_and_binary_plus(TypeRefTable $typeRefs, uint32 $binarySourceRowId, uint32 $typeRefId): CapabilityCoverageArtifact {
++		return type_capability_readiness::coverage_from_type_refs_and_binary_operator($typeRefs, $binarySourceRowId, $typeRefId, type_capability_readiness::feature_binary_operator_plus_id());
++	}
++
++	public static function coverage_from_type_refs_and_binary_operator(TypeRefTable $typeRefs, uint32 $binarySourceRowId, uint32 $typeRefId, uint16 $featureId): CapabilityCoverageArtifact {
+ 		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), 1);
+ 		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+ 		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_numeric_binary_operator_id());
+ 		foreach ($typeRefs->types as $typeRef) {
+ 			type_capability_readiness::append_provider($artifact, type_capability_readiness::provider_from_type_ref($typeRef));
+ 		}
+-		$consumer CapabilityConsumerRow = type_capability_readiness::binary_operator_plus_consumer($binarySourceRowId, $typeRefId);
++		$consumer CapabilityConsumerRow = type_capability_readiness::binary_operator_consumer($binarySourceRowId, $typeRefId, $featureId);
+ 		type_capability_readiness::append_consumer($artifact, $consumer);
+ 		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($consumer));
+ 		return $artifact;
+ 	}
+ 
+ 	public static function coverage_from_type_refs_and_scalar_assignment(TypeRefTable $typeRefs, uint32 $localSourceRowId, uint32 $assignmentSourceRowId, uint32 $binarySourceRowId, uint32 $typeRefId): CapabilityCoverageArtifact {
++		return type_capability_readiness::coverage_from_type_refs_and_scalar_assignment_feature($typeRefs, $localSourceRowId, $assignmentSourceRowId, $binarySourceRowId, $typeRefId, type_capability_readiness::feature_binary_operator_plus_id());
++	}
++
++	public static function coverage_from_type_refs_and_scalar_assignment_feature(TypeRefTable $typeRefs, uint32 $localSourceRowId, uint32 $assignmentSourceRowId, uint32 $binarySourceRowId, uint32 $typeRefId, uint16 $featureId): CapabilityCoverageArtifact {
+ 		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), 4);
+ 		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+ 		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_scalar_local_storage_id());
+@@ -391,13 +462,17 @@ final class type_capability_readiness {
+ 		$assignmentConsumer CapabilityConsumerRow = type_capability_readiness::local_assignment_consumer($assignmentSourceRowId, $typeRefId);
+ 		type_capability_readiness::append_consumer($artifact, $assignmentConsumer);
+ 		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($assignmentConsumer));
+-		$binaryConsumer CapabilityConsumerRow = type_capability_readiness::binary_operator_plus_consumer($binarySourceRowId, $typeRefId);
++		$binaryConsumer CapabilityConsumerRow = type_capability_readiness::binary_operator_consumer($binarySourceRowId, $typeRefId, $featureId);
+ 		type_capability_readiness::append_consumer($artifact, $binaryConsumer);
+ 		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($binaryConsumer));
+ 		return $artifact;
+ 	}
+ 
+ 	public static function coverage_from_type_refs_and_local_declarations_binary_return(TypeRefTable $typeRefs, vector<uint32> $localSourceRowIds, uint32 $binarySourceRowId, uint32 $typeRefId): CapabilityCoverageArtifact {
++		return type_capability_readiness::coverage_from_type_refs_and_local_declarations_binary_return_feature($typeRefs, $localSourceRowIds, $binarySourceRowId, $typeRefId, type_capability_readiness::feature_binary_operator_plus_id());
++	}
++
++	public static function coverage_from_type_refs_and_local_declarations_binary_return_feature(TypeRefTable $typeRefs, vector<uint32> $localSourceRowIds, uint32 $binarySourceRowId, uint32 $typeRefId, uint16 $featureId): CapabilityCoverageArtifact {
+ 		$artifact CapabilityCoverageArtifact = type_capability_readiness::new_artifact(count($typeRefs->types), (count($localSourceRowIds) * 2) + 1);
+ 		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_type_ref_known_id());
+ 		type_capability_readiness::append_registry($artifact, type_capability_readiness::capability_scalar_local_storage_id());
+@@ -413,7 +488,7 @@ final class type_capability_readiness {
+ 			type_capability_readiness::append_consumer($artifact, $initConsumer);
+ 			type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($initConsumer));
+ 		}
+-		$binaryConsumer CapabilityConsumerRow = type_capability_readiness::binary_operator_plus_consumer($binarySourceRowId, $typeRefId);
++		$binaryConsumer CapabilityConsumerRow = type_capability_readiness::binary_operator_consumer($binarySourceRowId, $typeRefId, $featureId);
+ 		type_capability_readiness::append_consumer($artifact, $binaryConsumer);
+ 		type_capability_readiness::append_readiness($artifact, type_capability_readiness::readiness_from_consumer($binaryConsumer));
+ 		return $artifact;
+@@ -667,6 +742,9 @@ final class type_capability_readiness {
+ 		if ((int)$featureId === (int)type_capability_readiness::feature_binary_operator_plus_id()) {
+ 			return "binary_operator_plus";
+ 		}
++		if ((int)$featureId === (int)type_capability_readiness::feature_binary_operator_minus_id()) {
++			return "binary_operator_minus";
++		}
+ 		if ((int)$featureId === (int)type_capability_readiness::feature_local_storage_id()) {
+ 			return "local_storage";
+ 		}
+@@ -702,6 +780,18 @@ final class type_capability_readiness {
+ 		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_backend_preflight_not_reintroduced_id()) {
+ 			return "backend_preflight_not_reintroduced";
+ 		}
++		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_unsupported_numeric_operator_id()) {
++			return "unsupported_numeric_operator";
++		}
++		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_unknown_type_trait_id()) {
++			return "unknown_type_trait";
++		}
++		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_non_numeric_type_id()) {
++			return "non_numeric_type";
++		}
++		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id()) {
++			return "numeric_operator_not_in_trait_mask";
++		}
+ 		return "unknown";
+ 	}
+ 
+@@ -709,6 +799,15 @@ final class type_capability_readiness {
+ 		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_backend_preflight_not_reintroduced_id()) {
+ 			return "restore_backend_preflights_and_backend_request_rows";
+ 		}
++		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_unknown_type_trait_id()) {
++			return "add_or_import_type_trait_descriptor";
++		}
++		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_non_numeric_type_id()) {
++			return "choose_a_numeric_provider_or_add_a_non_numeric_feature_contract";
++		}
++		if ((int)$blockedReasonId === (int)type_capability_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id()) {
++			return "add_operator_bit_to_numeric_trait_and_backend_adapter";
++		}
+ 		return "";
+ 	}
+ 
+diff --git a/compiler/v2/src/compile/capabilities/type_traits.phs b/compiler/v2/src/compile/capabilities/type_traits.phs
+new file mode 100644
+index 00000000..b2126c28
+--- /dev/null
++++ b/compiler/v2/src/compile/capabilities/type_traits.phs
+@@ -0,0 +1,419 @@
++// Role: Builds compact Type Trait rows and primitive numeric operator support.
++final class type_traits {
++
++	public static function artifact_kind_type_trait_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function lookup_model_provider_trait_descriptor_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function lookup_policy_scan_ok_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function lookup_policy_index_recommended_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function lookup_index_threshold_traits(): uint32 {
++		return structure_row_ids::uint32_from_int(16);
++	}
++
++	public static function family_primitive_scalar_id(): uint32 {
++		return structure_row_ids::uint32_from_int(1);
++	}
++
++	public static function abi_shape_primitive_i64_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function abi_shape_primitive_i1_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function storage_policy_inline_scalar_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function copy_policy_trivial_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function cleanup_policy_none_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function truthiness_numeric_zero_false_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function truthiness_bool_value_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function comparability_scalar_value_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function hashability_scalar_value_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function defaultability_zero_value_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function numeric_kind_none_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function numeric_kind_signed_integer_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function integer_width_policy_none_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function integer_width_policy_fixed_width_explicit_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function integer_width_policy_language_int_alias_i64_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function alias_policy_none_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function alias_policy_canonical_self_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function alias_policy_language_int_to_int64_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function numeric_operator_mask_none_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function numeric_operator_plus_bit_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function numeric_operator_minus_bit_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function numeric_operator_mask_plus_minus_id(): uint16 {
++		return structure_row_ids::uint16_from_int((int)type_traits::numeric_operator_plus_bit_id() + (int)type_traits::numeric_operator_minus_bit_id());
++	}
++
++	public static function status_ready_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function status_unknown_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function status_blocked_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function numeric_blocked_reason_none_id(): uint16 {
++		return structure_row_ids::none_kind_id();
++	}
++
++	public static function numeric_blocked_reason_not_numeric_type_id(): uint16 {
++		return structure_row_ids::uint16_from_int(1);
++	}
++
++	public static function numeric_blocked_reason_unknown_type_trait_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function provider_id_for_type_ref_id(uint32 $typeRefId): uint32 {
++		if ((int)$typeRefId === (int)type_refs::int_id()) {
++			return structure_row_ids::uint32_from_int(1);
++		}
++		if ((int)$typeRefId === (int)type_refs::int64_id()) {
++			return structure_row_ids::uint32_from_int(2);
++		}
++		if ((int)$typeRefId === (int)type_refs::bool_id()) {
++			return structure_row_ids::uint32_from_int(3);
++		}
++		return structure_row_ids::none_id();
++	}
++
++	public static function descriptor_from_type_ref_id(uint32 $typeRefId): ProviderTraitDescriptorRow {
++		$row ProviderTraitDescriptorRow = [];
++		$row->type_ref_id = $typeRefId;
++		$row->provider_id = type_traits::provider_id_for_type_ref_id($typeRefId);
++		if ((int)$row->provider_id === 0) {
++			$row->status_id = type_traits::status_unknown_id();
++			$row->numeric_status_id = type_traits::status_blocked_id();
++			$row->numeric_blocked_reason_id = type_traits::numeric_blocked_reason_unknown_type_trait_id();
++			return $row;
++		}
++		$row->family_id = type_traits::family_primitive_scalar_id();
++		$row->storage_policy_id = type_traits::storage_policy_inline_scalar_id();
++		$row->copy_policy_id = type_traits::copy_policy_trivial_id();
++		$row->cleanup_policy_id = type_traits::cleanup_policy_none_id();
++		$row->comparability_id = type_traits::comparability_scalar_value_id();
++		$row->hashability_id = type_traits::hashability_scalar_value_id();
++		$row->defaultability_id = type_traits::defaultability_zero_value_id();
++		$row->status_id = type_traits::status_ready_id();
++		if ((int)$typeRefId === (int)type_refs::bool_id()) {
++			$row->abi_shape_id = type_traits::abi_shape_primitive_i1_id();
++			$row->truthiness_id = type_traits::truthiness_bool_value_id();
++			$row->abi_align_bytes = structure_row_ids::uint16_from_int(1);
++			$row->numeric_kind_id = type_traits::numeric_kind_none_id();
++			$row->integer_width_bits = structure_row_ids::none_kind_id();
++			$row->integer_width_policy_id = type_traits::integer_width_policy_none_id();
++			$row->alias_policy_id = type_traits::alias_policy_canonical_self_id();
++			$row->canonical_numeric_type_ref_id = structure_row_ids::none_id();
++			$row->numeric_operator_mask = type_traits::numeric_operator_mask_none_id();
++			$row->numeric_status_id = type_traits::status_blocked_id();
++			$row->numeric_blocked_reason_id = type_traits::numeric_blocked_reason_not_numeric_type_id();
++			return $row;
++		}
++		$row->abi_shape_id = type_traits::abi_shape_primitive_i64_id();
++		$row->truthiness_id = type_traits::truthiness_numeric_zero_false_id();
++		$row->abi_align_bytes = structure_row_ids::uint16_from_int(8);
++		$row->numeric_kind_id = type_traits::numeric_kind_signed_integer_id();
++		$row->integer_width_bits = structure_row_ids::uint16_from_int(64);
++		$row->integer_width_policy_id = type_traits::integer_width_policy_fixed_width_explicit_id();
++		$row->alias_policy_id = type_traits::alias_policy_canonical_self_id();
++		$row->canonical_numeric_type_ref_id = $typeRefId;
++		if ((int)$typeRefId === (int)type_refs::int_id()) {
++			$row->integer_width_policy_id = type_traits::integer_width_policy_language_int_alias_i64_id();
++			$row->alias_policy_id = type_traits::alias_policy_language_int_to_int64_id();
++			$row->canonical_numeric_type_ref_id = type_refs::int64_id();
++		}
++		$row->numeric_operator_mask = type_traits::numeric_operator_mask_plus_minus_id();
++		$row->numeric_status_id = type_traits::status_ready_id();
++		$row->numeric_blocked_reason_id = type_traits::numeric_blocked_reason_none_id();
++		return $row;
++	}
++
++	public static function row_from_descriptor(ProviderTraitDescriptorRow $descriptor): TypeTraitRow {
++		$row TypeTraitRow = [];
++		$row->type_ref_id = $descriptor->type_ref_id;
++		$row->provider_id = $descriptor->provider_id;
++		$row->family_id = $descriptor->family_id;
++		$row->abi_shape_id = $descriptor->abi_shape_id;
++		$row->storage_policy_id = $descriptor->storage_policy_id;
++		$row->copy_policy_id = $descriptor->copy_policy_id;
++		$row->cleanup_policy_id = $descriptor->cleanup_policy_id;
++		$row->truthiness_id = $descriptor->truthiness_id;
++		$row->comparability_id = $descriptor->comparability_id;
++		$row->hashability_id = $descriptor->hashability_id;
++		$row->defaultability_id = $descriptor->defaultability_id;
++		$row->abi_align_bytes = $descriptor->abi_align_bytes;
++		$row->element_type_ref_id = structure_row_ids::none_id();
++		$row->element_count = structure_row_ids::none_id();
++		$row->status_id = $descriptor->status_id;
++		$row->numeric_kind_id = $descriptor->numeric_kind_id;
++		$row->integer_width_bits = $descriptor->integer_width_bits;
++		$row->integer_width_policy_id = $descriptor->integer_width_policy_id;
++		$row->alias_policy_id = $descriptor->alias_policy_id;
++		$row->canonical_numeric_type_ref_id = $descriptor->canonical_numeric_type_ref_id;
++		$row->numeric_operator_mask = $descriptor->numeric_operator_mask;
++		$row->numeric_status_id = $descriptor->numeric_status_id;
++		$row->numeric_blocked_reason_id = $descriptor->numeric_blocked_reason_id;
++		return $row;
++	}
++
++	public static function row_from_type_ref_id(uint32 $typeRefId): TypeTraitRow {
++		return type_traits::row_from_descriptor(type_traits::descriptor_from_type_ref_id($typeRefId));
++	}
++
++	public static function table_from_type_refs(TypeRefTable $typeRefs): TypeTraitTable {
++		$table TypeTraitTable = [];
++		$table->artifact_kind_id = type_traits::artifact_kind_type_trait_id();
++		$table->schema_version = structure_row_ids::uint16_from_int(2);
++		$table->lookup_model_id = type_traits::lookup_model_provider_trait_descriptor_id();
++		$table->lookup_index_threshold = type_traits::lookup_index_threshold_traits();
++		vector_reserve($table->traits, count($typeRefs->types));
++		foreach ($typeRefs->types as $typeRef) {
++			$row TypeTraitRow = type_traits::row_from_type_ref_id($typeRef->type_ref_id);
++			$table->traits[] = $row;
++			if ((int)$row->numeric_status_id === (int)type_traits::status_ready_id()) {
++				$table->numeric_ready_count = structure_row_ids::uint32_from_int((int)$table->numeric_ready_count + 1);
++			} else if ((int)$row->numeric_status_id === (int)type_traits::status_blocked_id()) {
++				$table->numeric_blocked_count = structure_row_ids::uint32_from_int((int)$table->numeric_blocked_count + 1);
++			}
++		}
++		$table->trait_count = structure_row_ids::uint32_from_int(count($table->traits));
++		$table->lookup_policy_status_id = type_traits::lookup_policy_for_trait_count($table->trait_count);
++		return $table;
++	}
++
++	public static function lookup_policy_for_trait_count(uint32 $traitCount): uint16 {
++		if ((int)$traitCount > (int)type_traits::lookup_index_threshold_traits()) {
++			return type_traits::lookup_policy_index_recommended_id();
++		}
++		return type_traits::lookup_policy_scan_ok_id();
++	}
++
++	public static function row_by_type_ref_id(TypeTraitTable $table, uint32 $typeRefId): TypeTraitRow {
++		foreach ($table->traits as $row) {
++			if ((int)$row->type_ref_id === (int)$typeRefId) {
++				return $row;
++			}
++		}
++		$empty TypeTraitRow = [];
++		return $empty;
++	}
++
++	public static function lookup_policy_name(uint16 $lookupPolicyId): string {
++		if ((int)$lookupPolicyId === (int)type_traits::lookup_policy_scan_ok_id()) {
++			return "scan_ok";
++		}
++		if ((int)$lookupPolicyId === (int)type_traits::lookup_policy_index_recommended_id()) {
++			return "index_recommended";
++		}
++		return "unknown";
++	}
++
++	public static function status_name(uint16 $statusId): string {
++		if ((int)$statusId === (int)type_traits::status_ready_id()) {
++			return "ready";
++		}
++		if ((int)$statusId === (int)type_traits::status_blocked_id()) {
++			return "blocked";
++		}
++		return "unknown";
++	}
++
++	public static function numeric_kind_name(uint16 $numericKindId): string {
++		if ((int)$numericKindId === (int)type_traits::numeric_kind_none_id()) {
++			return "none";
++		}
++		if ((int)$numericKindId === (int)type_traits::numeric_kind_signed_integer_id()) {
++			return "signed_integer";
++		}
++		return "unknown";
++	}
++
++	public static function integer_width_policy_name(uint16 $policyId): string {
++		if ((int)$policyId === (int)type_traits::integer_width_policy_none_id()) {
++			return "none";
++		}
++		if ((int)$policyId === (int)type_traits::integer_width_policy_fixed_width_explicit_id()) {
++			return "fixed_width_explicit";
++		}
++		if ((int)$policyId === (int)type_traits::integer_width_policy_language_int_alias_i64_id()) {
++			return "language_int_alias_i64";
++		}
++		return "unknown";
++	}
++
++	public static function alias_policy_name(uint16 $policyId): string {
++		if ((int)$policyId === (int)type_traits::alias_policy_none_id()) {
++			return "none";
++		}
++		if ((int)$policyId === (int)type_traits::alias_policy_canonical_self_id()) {
++			return "canonical_self";
++		}
++		if ((int)$policyId === (int)type_traits::alias_policy_language_int_to_int64_id()) {
++			return "language_int_to_int64";
++		}
++		return "unknown";
++	}
++
++	public static function numeric_operator_mask_name(uint16 $mask): string {
++		if ((int)$mask === (int)type_traits::numeric_operator_mask_none_id()) {
++			return "none";
++		}
++		if ((int)$mask === (int)type_traits::numeric_operator_mask_plus_minus_id()) {
++			return "plus_minus";
++		}
++		return "custom";
++	}
++
++	public static function numeric_blocked_reason_name(uint16 $reasonId): string {
++		if ((int)$reasonId === (int)type_traits::numeric_blocked_reason_none_id()) {
++			return "";
++		}
++		if ((int)$reasonId === (int)type_traits::numeric_blocked_reason_not_numeric_type_id()) {
++			return "not_numeric_type";
++		}
++		if ((int)$reasonId === (int)type_traits::numeric_blocked_reason_unknown_type_trait_id()) {
++			return "unknown_type_trait";
++		}
++		return "unknown";
++	}
++
++	public static function row_debug_string(TypeTraitRow $row): string {
++		$text text_builder = text_builder_create();
++		text_builder_reserve_bytes($text, 192);
++		text_builder_append_string($text, "type_trait:");
++		text_builder_append_string($text, type_ref_identity::name($row->type_ref_id));
++		text_builder_append_string($text, ":provider=");
++		text_builder_append_int($text, (int)$row->provider_id);
++		text_builder_append_string($text, ":numeric=");
++		text_builder_append_string($text, type_traits::status_name($row->numeric_status_id));
++		text_builder_append_string($text, ":kind=");
++		text_builder_append_string($text, type_traits::numeric_kind_name($row->numeric_kind_id));
++		text_builder_append_string($text, ":width=");
++		text_builder_append_int($text, (int)$row->integer_width_bits);
++		text_builder_append_string($text, ":width_policy=");
++		text_builder_append_string($text, type_traits::integer_width_policy_name($row->integer_width_policy_id));
++		text_builder_append_string($text, ":alias_policy=");
++		text_builder_append_string($text, type_traits::alias_policy_name($row->alias_policy_id));
++		text_builder_append_string($text, ":canonical_numeric_type=");
++		text_builder_append_string($text, type_ref_identity::name($row->canonical_numeric_type_ref_id));
++		text_builder_append_string($text, ":operators=");
++		text_builder_append_string($text, type_traits::numeric_operator_mask_name($row->numeric_operator_mask));
++		text_builder_append_string($text, ":blocked_reason=");
++		text_builder_append_string($text, type_traits::numeric_blocked_reason_name($row->numeric_blocked_reason_id));
++		return text_builder_take_string($text);
++	}
++
++	public static function table_debug_string(TypeTraitTable $table): string {
++		$text text_builder = text_builder_create();
++		text_builder_reserve_bytes($text, 128);
++		text_builder_append_string($text, "type_trait_table:schema=");
++		text_builder_append_int($text, (int)$table->schema_version);
++		text_builder_append_string($text, ":traits=");
++		text_builder_append_int($text, (int)$table->trait_count);
++		text_builder_append_string($text, ":numeric_ready=");
++		text_builder_append_int($text, (int)$table->numeric_ready_count);
++		text_builder_append_string($text, ":numeric_blocked=");
++		text_builder_append_int($text, (int)$table->numeric_blocked_count);
++		text_builder_append_string($text, ":lookup_policy=");
++		text_builder_append_string($text, type_traits::lookup_policy_name($table->lookup_policy_status_id));
++		text_builder_append_string($text, ":lookup_index_threshold=");
++		text_builder_append_int($text, (int)$table->lookup_index_threshold);
++		return text_builder_take_string($text);
++	}
++
++	public static function numeric_operator_mask_has_bit(uint16 $mask, uint16 $bit): bool {
++		$maskValue int = (int)$mask;
++		$bitValue int = (int)$bit;
++		if ($bitValue <= 0) {
++			return false;
++		}
++		$period int = $bitValue * 2;
++		$remainder int = $maskValue % $period;
++		return $remainder >= $bitValue;
++	}
++
++	public static function supports_integer_operator(TypeTraitRow $row, uint16 $operatorBit): bool {
++		return (int)$row->status_id === (int)type_traits::status_ready_id()
++			&& (int)$row->numeric_status_id === (int)type_traits::status_ready_id()
++			&& (int)$row->numeric_kind_id === (int)type_traits::numeric_kind_signed_integer_id()
++			&& type_traits::numeric_operator_mask_has_bit($row->numeric_operator_mask, $operatorBit);
++	}
++
++	public static function supports_integer_plus_minus(TypeTraitRow $row): bool {
++		return type_traits::supports_integer_operator($row, type_traits::numeric_operator_plus_bit_id())
++			&& type_traits::supports_integer_operator($row, type_traits::numeric_operator_minus_bit_id());
++	}
++}
+diff --git a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+index 998deb29..68462f8f 100644
+--- a/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
++++ b/compiler/v2/src/compile/frontend_adapter/phs/frontend_model_builder.phs
+@@ -37,6 +37,10 @@ final class frontend_model_builder {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+ 
++	public static function operator_minus_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
+ 	public static function primitive_int_type_ref_id(): uint32 {
+ 		return structure_row_ids::uint32_from_int(1);
+ 	}
+@@ -284,7 +288,15 @@ final class frontend_model_builder {
+ 	}
+ 
+ 	public static function append_binary_plus_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {
+-		parser_state::expect($state, $source, token_kinds::symbol(), "+");
++		return frontend_model_builder::append_binary_expression_from_left_with_type($state, $source, $model, $parentNodeId, $leftNodeId, $inferredTypeRefId, frontend_model_builder::operator_plus_id(), "+", $counters);
++	}
++
++	public static function append_binary_minus_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {
++		return frontend_model_builder::append_binary_expression_from_left_with_type($state, $source, $model, $parentNodeId, $leftNodeId, $inferredTypeRefId, frontend_model_builder::operator_minus_id(), "-", $counters);
++	}
++
++	public static function append_binary_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, uint16 $operatorId, string $operatorSymbol, FrontendModelKernelCounters $counters): uint32 {
++		parser_state::expect($state, $source, token_kinds::symbol(), $operatorSymbol);
+ 		$rightNodeId uint32 = frontend_model_builder::append_literal_expression_with_numeric_type($state, $source, $model, structure_row_ids::none_id(), frontend_model_builder::expression_type_ref_or_int($inferredTypeRefId), $counters);
+ 		$leftNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $leftNodeId, $counters);
+ 		$rightNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $rightNodeId, $counters);
+@@ -299,7 +311,7 @@ final class frontend_model_builder {
+ 		$binaryPayload FrontendExpressionPayloadRow = [
+ 			"payload_id" => structure_row_ids::none_id(),
+ 			"expression_kind_id" => frontend_model_tables::row_kind_expression_binary_id(),
+-			"operator_id" => frontend_model_builder::operator_plus_id(),
++			"operator_id" => $operatorId,
+ 			"callee_node_id" => structure_row_ids::none_id(),
+ 			"callee_name_id" => structure_row_ids::none_id(),
+ 			"left_node_id" => $leftNodeId,
+@@ -550,6 +562,9 @@ final class frontend_model_builder {
+ 			if ($canParseBinary && parser_state::at($state, $source, token_kinds::symbol(), "+")) {
+ 				return frontend_model_builder::append_binary_plus_expression_from_left_with_type($state, $source, $model, $returnNodeId, $leftNodeId, $expressionTypeRefId, $counters);
+ 			}
++			if ($canParseBinary && parser_state::at($state, $source, token_kinds::symbol(), "-")) {
++				return frontend_model_builder::append_binary_minus_expression_from_left_with_type($state, $source, $model, $returnNodeId, $leftNodeId, $expressionTypeRefId, $counters);
++			}
+ 			return $leftNodeId;
+ 		}
+ 		if (parser_state::at($state, $source, token_kinds::symbol(), "$")) {
+@@ -557,6 +572,9 @@ final class frontend_model_builder {
+ 			if (parser_state::at($state, $source, token_kinds::symbol(), "+")) {
+ 				return frontend_model_builder::append_binary_plus_expression_from_left_with_type($state, $source, $model, $returnNodeId, $leftNodeId, $expressionTypeRefId, $counters);
+ 			}
++			if (parser_state::at($state, $source, token_kinds::symbol(), "-")) {
++				return frontend_model_builder::append_binary_minus_expression_from_left_with_type($state, $source, $model, $returnNodeId, $leftNodeId, $expressionTypeRefId, $counters);
++			}
+ 			return $leftNodeId;
+ 		}
+ 		if (parser_state::at($state, $source, token_kinds::identifier(), "") && parser_cursor::peek_at($source, $state->tokens, $state->cursor, 1, token_kinds::symbol(), "(")) {
+diff --git a/compiler/v2/src/compile/operations/operation_readiness.phs b/compiler/v2/src/compile/operations/operation_readiness.phs
+index efbdc08d..83904cba 100644
+--- a/compiler/v2/src/compile/operations/operation_readiness.phs
++++ b/compiler/v2/src/compile/operations/operation_readiness.phs
+@@ -37,6 +37,10 @@ final class operation_readiness {
+ 		return structure_row_ids::uint16_from_int(9);
+ 	}
+ 
++	public static function operation_kind_binary_operator_minus_id(): uint16 {
++		return structure_row_ids::uint16_from_int(10);
++	}
++
+ 	public static function contract_callable_return_type_id(): uint16 {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+@@ -73,6 +77,10 @@ final class operation_readiness {
+ 		return structure_row_ids::uint16_from_int(9);
+ 	}
+ 
++	public static function contract_binary_minus_int_int_to_int_id(): uint16 {
++		return structure_row_ids::uint16_from_int(10);
++	}
++
+ 	public static function lowering_adapter_none_id(): uint16 {
+ 		return structure_row_ids::none_kind_id();
+ 	}
+@@ -109,6 +117,10 @@ final class operation_readiness {
+ 		return structure_row_ids::uint16_from_int(8);
+ 	}
+ 
++	public static function lowering_adapter_primitive_i64_sub_id(): uint16 {
++		return structure_row_ids::uint16_from_int(9);
++	}
++
+ 	public static function status_ready_id(): uint16 {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+@@ -125,6 +137,22 @@ final class operation_readiness {
+ 		return structure_row_ids::uint16_from_int(1);
+ 	}
+ 
++	public static function blocked_reason_unsupported_numeric_operator_id(): uint16 {
++		return structure_row_ids::uint16_from_int(2);
++	}
++
++	public static function blocked_reason_unknown_type_trait_id(): uint16 {
++		return structure_row_ids::uint16_from_int(3);
++	}
++
++	public static function blocked_reason_non_numeric_type_id(): uint16 {
++		return structure_row_ids::uint16_from_int(4);
++	}
++
++	public static function blocked_reason_numeric_operator_not_in_trait_mask_id(): uint16 {
++		return structure_row_ids::uint16_from_int(5);
++	}
++
+ 	public static function operation_kind_name(uint16 $operationKindId): string {
+ 		if ((int)$operationKindId === (int)operation_readiness::operation_kind_callable_return_value_id()) {
+ 			return "callable_return_value";
+@@ -153,6 +181,9 @@ final class operation_readiness {
+ 		if ((int)$operationKindId === (int)operation_readiness::operation_kind_local_load_return_id()) {
+ 			return "local_load_return";
+ 		}
++		if ((int)$operationKindId === (int)operation_readiness::operation_kind_binary_operator_minus_id()) {
++			return "binary_operator_minus";
++		}
+ 		return "unknown";
+ 	}
+ 
+@@ -173,6 +204,18 @@ final class operation_readiness {
+ 		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_backend_lowering_not_reintroduced_id()) {
+ 			return "backend_lowering_not_reintroduced";
+ 		}
++		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_unsupported_numeric_operator_id()) {
++			return "unsupported_numeric_operator";
++		}
++		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_unknown_type_trait_id()) {
++			return "unknown_type_trait";
++		}
++		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_non_numeric_type_id()) {
++			return "non_numeric_type";
++		}
++		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id()) {
++			return "numeric_operator_not_in_trait_mask";
++		}
+ 		return "unknown";
+ 	}
+ 
+@@ -180,9 +223,60 @@ final class operation_readiness {
+ 		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_backend_lowering_not_reintroduced_id()) {
+ 			return "restore_backend_preflights_requests_and_lowering_plan_rows";
+ 		}
++		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_unknown_type_trait_id()) {
++			return "add_or_import_type_trait_descriptor";
++		}
++		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_non_numeric_type_id()) {
++			return "choose_a_numeric_provider_or_add_a_non_numeric_feature_contract";
++		}
++		if ((int)$blockedReasonId === (int)operation_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id()) {
++			return "add_operator_bit_to_numeric_trait_and_backend_adapter";
++		}
+ 		return "";
+ 	}
+ 
++	public static function is_numeric_binary_feature(uint16 $featureId): bool {
++		return (int)$featureId === (int)type_capability_readiness::feature_binary_operator_plus_id()
++			|| (int)$featureId === (int)type_capability_readiness::feature_binary_operator_minus_id();
++	}
++
++	public static function operation_kind_for_numeric_binary_feature(uint16 $featureId): uint16 {
++		if ((int)$featureId === (int)type_capability_readiness::feature_binary_operator_minus_id()) {
++			return operation_readiness::operation_kind_binary_operator_minus_id();
++		}
++		return operation_readiness::operation_kind_binary_operator_plus_id();
++	}
++
++	public static function contract_id_for_numeric_binary_feature(uint16 $featureId): uint16 {
++		if ((int)$featureId === (int)type_capability_readiness::feature_binary_operator_minus_id()) {
++			return operation_readiness::contract_binary_minus_int_int_to_int_id();
++		}
++		return operation_readiness::contract_binary_plus_int_int_to_int_id();
++	}
++
++	public static function lowering_adapter_for_numeric_binary_feature(uint16 $featureId): uint16 {
++		if ((int)$featureId === (int)type_capability_readiness::feature_binary_operator_minus_id()) {
++			return operation_readiness::lowering_adapter_primitive_i64_sub_id();
++		}
++		return operation_readiness::lowering_adapter_primitive_i64_add_id();
++	}
++
++	public static function blocked_reason_from_capability_blocked_reason(uint16 $capabilityBlockedReasonId): uint16 {
++		if ((int)$capabilityBlockedReasonId === (int)type_capability_readiness::blocked_reason_unknown_type_trait_id()) {
++			return operation_readiness::blocked_reason_unknown_type_trait_id();
++		}
++		if ((int)$capabilityBlockedReasonId === (int)type_capability_readiness::blocked_reason_non_numeric_type_id()) {
++			return operation_readiness::blocked_reason_non_numeric_type_id();
++		}
++		if ((int)$capabilityBlockedReasonId === (int)type_capability_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id()) {
++			return operation_readiness::blocked_reason_numeric_operator_not_in_trait_mask_id();
++		}
++		if ((int)$capabilityBlockedReasonId === (int)type_capability_readiness::blocked_reason_unsupported_numeric_operator_id()) {
++			return operation_readiness::blocked_reason_unsupported_numeric_operator_id();
++		}
++		return operation_readiness::blocked_reason_backend_lowering_not_reintroduced_id();
++	}
++
+ 	public static function contract_from_capability_consumer(CapabilityConsumerRow $consumer): OperationContract {
+ 		$row OperationContract = [];
+ 		$row->lowering_adapter_id = operation_readiness::lowering_adapter_none_id();
+@@ -208,12 +302,17 @@ final class operation_readiness {
+ 			$row->status_id = operation_readiness::status_ready_id();
+ 			return $row;
+ 		}
+-		if ((int)$consumer->feature_id === (int)type_capability_readiness::feature_binary_operator_plus_id()) {
+-			$row->contract_id = operation_readiness::contract_binary_plus_int_int_to_int_id();
+-			$row->operation_kind_id = operation_readiness::operation_kind_binary_operator_plus_id();
+-			$row->lowering_adapter_id = operation_readiness::lowering_adapter_primitive_i64_add_id();
++		if (operation_readiness::is_numeric_binary_feature($consumer->feature_id)) {
++			$trait TypeTraitRow = type_traits::row_from_type_ref_id($consumer->provider_type_ref_id);
++			$row->contract_id = operation_readiness::contract_id_for_numeric_binary_feature($consumer->feature_id);
++			$row->operation_kind_id = operation_readiness::operation_kind_for_numeric_binary_feature($consumer->feature_id);
+ 			$row->rhs_type_ref_id = $consumer->provider_type_ref_id;
+-			$row->status_id = operation_readiness::status_ready_id();
++			if (type_capability_readiness::numeric_feature_supported_by_trait($trait, $consumer->feature_id)) {
++				$row->lowering_adapter_id = operation_readiness::lowering_adapter_for_numeric_binary_feature($consumer->feature_id);
++				$row->status_id = operation_readiness::status_ready_id();
++				return $row;
++			}
++			$row->status_id = operation_readiness::status_blocked_id();
+ 			return $row;
+ 		}
+ 		if ((int)$consumer->feature_id === (int)type_capability_readiness::feature_local_storage_id()) {
+@@ -273,6 +372,14 @@ final class operation_readiness {
+ 			return $row;
+ 		}
+ 		$row->status_id = operation_readiness::status_blocked_id();
++		if ((int)$capabilityReadiness->blocked_reason_id !== (int)type_capability_readiness::blocked_reason_none_id()) {
++			$row->blocked_reason_id = operation_readiness::blocked_reason_from_capability_blocked_reason($capabilityReadiness->blocked_reason_id);
++			return $row;
++		}
++		if ((int)$contract->status_id === (int)operation_readiness::status_blocked_id()) {
++			$row->blocked_reason_id = operation_readiness::blocked_reason_unsupported_numeric_operator_id();
++			return $row;
++		}
+ 		$row->blocked_reason_id = operation_readiness::blocked_reason_backend_lowering_not_reintroduced_id();
+ 		return $row;
+ 	}
+diff --git a/compiler/v2/src/compile/pipeline/fixture_runner.phs b/compiler/v2/src/compile/pipeline/fixture_runner.phs
+index 6eeb2fbc..5a46ac4a 100644
+--- a/compiler/v2/src/compile/pipeline/fixture_runner.phs
++++ b/compiler/v2/src/compile/pipeline/fixture_runner.phs
+@@ -900,6 +900,8 @@ final class fixture_runner {
+ 		$initialLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($entryModel, $initialLiteralNode->payload_row_id, $counters);
+ 		$assignmentLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($entryModel, $assignmentLiteralNode->payload_row_id, $counters);
+ 		$rightLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($entryModel, $rightNode->payload_row_id, $counters);
++		$binaryFeatureId uint16 = local_body_lowering::feature_id_for_binary_operator_id($binary->operator_id);
++		$localOperationId uint16 = local_body_lowering::local_operation_id_for_binary_operator_id($binary->operator_id);
+ 
+ 		$references ProjectReferenceResolution = project_reference_resolution::new_artifact(0);
+ 		$contracts ProjectCallableContractArtifact = project_callable_contracts::new_artifact(0);
+@@ -908,7 +910,7 @@ final class fixture_runner {
+ 		$entry AnalysisEntryContextRow = analysis_context::append_entry($analysis, $entrySymbol, $references, $contracts, $graph);
+ 
+ 		$typeRefTable TypeRefTable = type_refs::table_from_project_symbols($projectSymbols);
+-		$capabilityCoverage CapabilityCoverageArtifact = type_capability_readiness::coverage_from_type_refs_and_scalar_assignment($typeRefTable, $localDeclarationNode->node_id, $assignmentNode->node_id, $binaryNode->node_id, $binary->inferred_type_ref_id);
++		$capabilityCoverage CapabilityCoverageArtifact = type_capability_readiness::coverage_from_type_refs_and_scalar_assignment_feature($typeRefTable, $localDeclarationNode->node_id, $assignmentNode->node_id, $binaryNode->node_id, $binary->inferred_type_ref_id, $binaryFeatureId);
+ 		$backendRequests BackendRequestAuthorizationArtifact = backend_preflight_requests::new_backend_request_artifact(4);
+ 		fixture_runner::append_local_backend_request(
+ 			$backendRequests,
+@@ -946,12 +948,12 @@ final class fixture_runner {
+ 		fixture_runner::append_local_backend_request(
+ 			$backendRequests,
+ 			$capabilityCoverage,
+-			type_capability_readiness::feature_binary_operator_plus_id(),
++			$binaryFeatureId,
+ 			$binaryNode->node_id,
+ 			$localDeclarationNode->node_id,
+ 			$rightNode->node_id,
+ 			$rightLiteral->numeric_payload,
+-			backend_preflight_requests::local_operation_loaded_add_immediate_id(),
++			$localOperationId,
+ 			$entrySymbol
+ 		);
+ 
+diff --git a/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs b/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs
+index 91dff198..62139748 100644
+--- a/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs
++++ b/compiler/v2/src/structures/capabilities/provider_trait_descriptor_row.phs
+@@ -13,4 +13,12 @@ struct ProviderTraitDescriptorRow {
+ 	public uint16 $defaultability_id = 0;
+ 	public uint16 $abi_align_bytes = 0;
+ 	public uint16 $status_id = 0;
++	public uint16 $numeric_kind_id = 0;
++	public uint16 $integer_width_bits = 0;
++	public uint16 $integer_width_policy_id = 0;
++	public uint16 $alias_policy_id = 0;
++	public uint32 $canonical_numeric_type_ref_id = 0;
++	public uint16 $numeric_operator_mask = 0;
++	public uint16 $numeric_status_id = 0;
++	public uint16 $numeric_blocked_reason_id = 0;
+ }
+diff --git a/compiler/v2/src/structures/capabilities/type_trait_row.phs b/compiler/v2/src/structures/capabilities/type_trait_row.phs
+index 2ed4c087..564ee163 100644
+--- a/compiler/v2/src/structures/capabilities/type_trait_row.phs
++++ b/compiler/v2/src/structures/capabilities/type_trait_row.phs
+@@ -15,4 +15,12 @@ struct TypeTraitRow {
+ 	public uint32 $element_type_ref_id = 0;
+ 	public uint32 $element_count = 0;
+ 	public uint16 $status_id = 0;
++	public uint16 $numeric_kind_id = 0;
++	public uint16 $integer_width_bits = 0;
++	public uint16 $integer_width_policy_id = 0;
++	public uint16 $alias_policy_id = 0;
++	public uint32 $canonical_numeric_type_ref_id = 0;
++	public uint16 $numeric_operator_mask = 0;
++	public uint16 $numeric_status_id = 0;
++	public uint16 $numeric_blocked_reason_id = 0;
+ }
+diff --git a/compiler/v2/src/structures/capabilities/type_trait_table.phs b/compiler/v2/src/structures/capabilities/type_trait_table.phs
+index 7fefc065..c48660e3 100644
+--- a/compiler/v2/src/structures/capabilities/type_trait_table.phs
++++ b/compiler/v2/src/structures/capabilities/type_trait_table.phs
+@@ -3,6 +3,10 @@ struct TypeTraitTable {
+ 	public uint16 $artifact_kind_id = 1;
+ 	public uint16 $schema_version = 1;
+ 	public uint16 $lookup_model_id = 1;
++	public uint16 $lookup_policy_status_id = 1;
++	public uint32 $lookup_index_threshold = 0;
+ 	public uint32 $trait_count = 0;
++	public uint32 $numeric_ready_count = 0;
++	public uint32 $numeric_blocked_count = 0;
+ 	public $traits vector<TypeTraitRow> = [];
+ }

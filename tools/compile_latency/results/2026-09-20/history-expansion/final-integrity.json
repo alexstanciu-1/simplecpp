@@ -1,0 +1,9 @@
+{
+  "external_mismatches": [],
+  "scratch_phs_mismatches_except_main": [],
+  "extra_phs": [],
+  "main_sha256": "c3c191aac9c79a45720f5980d11534cf2f14b3e1fe8b7ba9e55a4c2ae3f8f9bb",
+  "catalog_sha256": "13a1a7d86fbc7075dd7ec3732cd6f351ed5a718792174d3289fe31cbdf165343",
+  "native_noop": true,
+  "graph_equals_prior_provider_graph": true
+}

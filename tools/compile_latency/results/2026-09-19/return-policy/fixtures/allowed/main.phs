@@ -1,0 +1,4 @@
+function run(): int32 {
+ $x int32 = 42;
+ return $x;
+}

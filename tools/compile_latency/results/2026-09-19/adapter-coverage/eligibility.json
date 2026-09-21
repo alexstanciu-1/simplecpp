@@ -1,0 +1,138 @@
+{
+  "selection": "last 15 non-merge commits touching compiler/src reachable from pinned workload revision; no compile-time filtering",
+  "scope": "textual applicability only; does not prove semantic compatibility or build correctness",
+  "commits": [
+    {
+      "commit": "1a24a85d",
+      "subject": "Export backend call argument rows for FN proof",
+      "status": "not_measured",
+      "sources": [
+        "compile/pipeline/compiler_project_runner.phs",
+        "compile/support/compiler_export_artifacts.phs",
+        "compile/support/pure_tdd_stage_artifacts.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "1610af1a",
+      "subject": "Route literal return coverage through consumer plan",
+      "status": "not_measured",
+      "sources": [
+        "compile/backend/compiler_entry_backend.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "f1d3a846",
+      "subject": "Retarget structure smoke away from fixtures",
+      "status": "not_measured",
+      "sources": [
+        "compile/support/structure_kernel_smoke_runner.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "cec8c616",
+      "subject": "Retarget direct call evidence wording",
+      "status": "not_measured",
+      "sources": [
+        "structures/incremental/resident_project_snapshot_diff_row.phs",
+        "structures/incremental/resident_project_snapshot_row.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "db047e10",
+      "subject": "Retarget semantic gate to project runner",
+      "status": "not_measured",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/support/structure_kernel_smoke_runner.phs"
+    },
+    {
+      "commit": "b54f2766",
+      "subject": "Generalize call expression lookahead",
+      "status": "not_measured",
+      "sources": [
+        "compile/frontend_adapter/phs/frontend_model_builder.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "534d70a6",
+      "subject": "Remove legacy case env fallbacks",
+      "status": "not_measured",
+      "sources": [
+        "compile/pipeline/pipeline_config_helpers.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "e8e8a063",
+      "subject": "Remove dead fixed argument LLVM materializer",
+      "status": "not_measured",
+      "sources": [
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "b085d952",
+      "subject": "Rename LLVM worker handoff as module composition",
+      "status": "not_measured",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/llvm_text_from_plan.phs"
+    },
+    {
+      "commit": "5ce42535",
+      "subject": "Rename backend LLVM source filename label",
+      "status": "not_measured",
+      "sources": [
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "43a83246",
+      "subject": "Route caller function text through composition input",
+      "status": "not_measured",
+      "sources": [
+        "compile/backend/backend_module_composition.phs",
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "cf3c2d08",
+      "subject": "Remove obsolete LLVM module composition delegates",
+      "status": "not_measured",
+      "sources": [
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "41392c03",
+      "subject": "Route LLVM module composition through input rows",
+      "status": "not_measured",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/llvm_text_from_plan.phs"
+    },
+    {
+      "commit": "4abe635f",
+      "subject": "Generalize scalar capability consumer plans",
+      "status": "not_measured",
+      "sources": [
+        "compile/backend/compiler_entry_backend.phs",
+        "compile/semantic/semantic_body_capability_consumers.phs"
+      ],
+      "textual_replay_eligible": true
+    },
+    {
+      "commit": "9103637e",
+      "subject": "Correct definition-driven compiler drift",
+      "status": "not_measured",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs"
+    }
+  ]
+}

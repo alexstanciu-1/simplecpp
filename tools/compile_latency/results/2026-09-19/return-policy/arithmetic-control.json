@@ -1,0 +1,15 @@
+{
+  "scope": "link-only control from retained original baseline objects; not a fresh historical checkout rebuild",
+  "baseline_graph_sha256": "e76deadee907f4826ddf974d8c8ed9d1ec0e3305bae9b3995405f81380e03010",
+  "original_input_count": 453,
+  "results": [
+    {
+      "layout": "original-object-layout",
+      "rows": "run_id\trun_label\tstatus\tactive_layer\tblocked_reason_id\tcompleted_layer_id\tblocked_layer_id\n1\tarithmetic-control\tblocked_current_layers\tbackend_text\t5\t0\t4\n"
+    },
+    {
+      "layout": "current-isolated-layout",
+      "rows": "run_id\trun_label\tstatus\tactive_layer\tblocked_reason_id\tcompleted_layer_id\tblocked_layer_id\n1\tarithmetic-control\tblocked_current_layers\tbackend_text\t5\t0\t4\n"
+    }
+  ]
+}

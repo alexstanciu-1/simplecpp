@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_source_units_source_read_table_from_worker_results.hpp
++++ after/__callable/__latency_fn_source_units_source_read_table_from_worker_results.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ class SourceReadTable;
+ class SourceReadWorkerResult;
+-shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_worker_results(const shared_p<SourceReadTable>& descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& workerResults);
++shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_worker_results(shared_p<SourceReadTable> descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& workerResults);
+ }

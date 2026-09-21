@@ -1,0 +1,7 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentFunctionBodyLogicalFrontendConsumerDescriptorRow;
+struct ResidentFunctionBodyLogicalFrontendViewRow;
+ResidentFunctionBodyLogicalFrontendConsumerDescriptorRow __latency_fn_resident_function_body_logical_frontend_consumer_descriptors_descriptor_from_view(ResidentFunctionBodyLogicalFrontendViewRow view);
+}

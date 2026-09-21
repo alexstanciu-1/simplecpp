@@ -1,0 +1,187 @@
+[1/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_5.o
+[2/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_6.o
+[3/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_7.o
+[4/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_12.o
+[5/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_3.o
+[6/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_11.o
+[7/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_4.o
+[8/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_8.o
+[9/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_9.o
+[10/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_2.o
+[11/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_10.o
+[12/524] CALLABLE_PART minimal_parts/__callable/compiler_entry_backend_group_1.o
+[13/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_15.o
+[14/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_13.o
+[15/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_19.o
+[16/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_18.o
+[17/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_14.o
+[18/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_21.o
+[19/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_16.o
+[20/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_22.o
+[21/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_17.o
+[22/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_20.o
+[23/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_23.o
+[24/524] CALLABLE_PART minimal_parts/__callable/local_body_lowering_group_1.o
+[25/524] CALLABLE_PART minimal_parts/__callable/local_body_lowering_group_2.o
+[26/524] CALLABLE_PART minimal_parts/__callable/local_body_lowering_routes_group_0.o
+[27/524] CALLABLE_PART minimal_parts/__callable/local_body_lowering_group_0.o
+[28/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_1.o
+[29/524] CALLABLE_PART minimal_parts/__callable/local_body_lowering_routes_group_1.o
+[30/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_0.o
+[31/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_3.o
+[32/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_2.o
+[33/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_4.o
+[34/524] CALLABLE_PART minimal_parts/__callable/llvm_text_from_plan_group_24.o
+[35/524] CALLABLE_PART minimal_parts/__callable/primitive_abi_adapter_matrix_group_0.o
+[36/524] CALLABLE_PART minimal_parts/__callable/primitive_abi_adapter_matrix_group_2.o
+[37/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_6.o
+[38/524] CALLABLE_PART minimal_parts/__callable/primitive_abi_adapter_matrix_group_1.o
+[39/524] CALLABLE_PART minimal_parts/__callable/primitive_abi_adapter_matrix_group_3.o
+[40/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_5.o
+[41/524] CALLABLE_PART minimal_parts/__callable/primitive_abi_adapter_matrix_group_4.o
+[42/524] CALLABLE_PART minimal_parts/__callable/scalar_loop_backend_requests_group_0.o
+[43/524] CALLABLE_PART minimal_parts/__callable/scalar_body_statement_collection_group_0.o
+[44/524] CALLABLE_PART minimal_parts/__callable/scalar_body_backend_collection_group_0.o
+[45/524] CALLABLE_PART minimal_parts/__callable/scalar_body_statement_collection_group_1.o
+[46/524] CALLABLE_PART minimal_parts/__callable/lowering_plan_group_7.o
+[47/524] CALLABLE_PART minimal_parts/__callable/capability_consumer_plans_group_0.o
+[48/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_0.o
+[49/524] CALLABLE_PART minimal_parts/__callable/runtime_helper_contract_readiness_group_0.o
+[50/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_1.o
+[51/524] CALLABLE_PART minimal_parts/__callable/runtime_helper_contract_readiness_group_1.o
+[52/524] CALLABLE_PART minimal_parts/__callable/runtime_helper_contract_readiness_group_2.o
+[53/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_2.o
+[54/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_3.o
+[55/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_4.o
+[56/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_5.o
+[57/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_0.o
+[58/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_2.o
+[59/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_1.o
+[60/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_3.o
+[61/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_4.o
+[62/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_6.o
+[63/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_8.o
+[64/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_6.o
+[65/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_5.o
+[66/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_7.o
+[67/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_9.o
+[68/524] CALLABLE_PART minimal_parts/__callable/storage_lifetime_readiness_group_7.o
+[69/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_10.o
+[70/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_11.o
+[71/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_13.o
+[72/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_14.o
+[73/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_15.o
+[74/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_12.o
+[75/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_21.o
+[76/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_16.o
+[77/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_17.o
+[78/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_18.o
+[79/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_22.o
+[80/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_23.o
+[81/524] CALLABLE_PART minimal_parts/__callable/type_traits_group_0.o
+[82/524] CALLABLE_PART minimal_parts/__callable/type_traits_group_1.o
+[83/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_20.o
+[84/524] CALLABLE_PART minimal_parts/__callable/type_traits_group_2.o
+[85/524] CALLABLE_PART minimal_parts/__callable/type_traits_group_3.o
+[86/524] CALLABLE_PART minimal_parts/__callable/type_capability_readiness_group_19.o
+[87/524] CALLABLE_PART minimal_parts/__callable/type_traits_group_6.o
+[88/524] CALLABLE_PART minimal_parts/__callable/type_traits_group_5.o
+[89/524] CALLABLE_PART minimal_parts/__callable/type_traits_group_4.o
+[90/524] CALLABLE_PART minimal_parts/__callable/control_flow_dataflows_group_0.o
+[91/524] CALLABLE_PART minimal_parts/__callable/control_flow_dataflows_group_1.o
+[92/524] CALLABLE_PART minimal_parts/__callable/control_flow_graphs_group_0.o
+[93/524] CALLABLE_PART minimal_parts/__callable/control_flow_dataflows_group_2.o
+[94/524] CALLABLE_PART minimal_parts/__callable/control_flow_graphs_group_1.o
+[95/524] CALLABLE_PART minimal_parts/__callable/control_flow_dataflows_group_3.o
+[96/524] CALLABLE_PART minimal_parts/__callable/control_flow_dataflows_group_4.o
+[97/524] CALLABLE_PART minimal_parts/__callable/control_flow_graphs_group_3.o
+[98/524] CALLABLE_PART minimal_parts/__callable/control_flow_graphs_group_2.o
+[99/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_0.o
+[100/524] CALLABLE_PART minimal_parts/__callable/control_flow_transfers_group_0.o
+[101/524] CALLABLE_PART minimal_parts/__callable/control_flow_transfers_group_1.o
+[102/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_1.o
+[103/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_3.o
+[104/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_2.o
+[105/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_6.o
+[106/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_5.o
+[107/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_8.o
+[108/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_4.o
+[109/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_7.o
+[110/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_9.o
+[111/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_12.o
+[112/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_10.o
+[113/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_11.o
+[114/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_13.o
+[115/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_15.o
+FAILED: minimal_parts/__callable/frontend_model_builder_group_15.o 
+clang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../minimal/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include expanded_runtime_pch.hpp -MMD -MF minimal_parts/__callable/frontend_model_builder_group_15.o.d -MT minimal_parts/__callable/frontend_model_builder_group_15.o -c /tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_15.cpp -o minimal_parts/__callable/frontend_model_builder_group_15.o
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_15.cpp:174:157: error: member access into incomplete type 'scpp::ParserDiagnosticTable'
+  174 |         if (static_cast<bool>((php::identical(cast<int_t<>>(firstStatementNodeId), static_cast<int_t<> >(0)) || php::not_identical(cast<int_t<>>(state->diagnostics->error_count), static_cast<int_t<> >(0))))) {
+      |                                                                                                                                                                    ^
+../minimal/generated/__types/PhsParserState.hpp:8:7: note: forward declaration of 'scpp::ParserDiagnosticTable'
+    8 | class ParserDiagnosticTable;
+      |       ^
+1 error generated.
+[116/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_18.o
+FAILED: minimal_parts/__callable/frontend_model_builder_group_18.o 
+clang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../minimal/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include expanded_runtime_pch.hpp -MMD -MF minimal_parts/__callable/frontend_model_builder_group_18.o.d -MT minimal_parts/__callable/frontend_model_builder_group_18.o -c /tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_18.cpp -o minimal_parts/__callable/frontend_model_builder_group_18.o
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_18.cpp:128:173: error: member access into incomplete type 'scpp::ParserDiagnosticTable'
+  128 |                 if (static_cast<bool>(((!__latency_fn_parser_state_at(state, source, __latency_fn_token_kinds_symbol(), string_t("}"))) && php::identical(cast<int_t<>>(state->diagnostics->error_count), static_cast<int_t<> >(0))))) {
+      |                                                                                                                                                                                           ^
+../minimal/generated/__types/PhsParserState.hpp:8:7: note: forward declaration of 'scpp::ParserDiagnosticTable'
+    8 | class ParserDiagnosticTable;
+      |       ^
+1 error generated.
+[117/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_14.o
+[118/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_19.o
+FAILED: minimal_parts/__callable/frontend_model_builder_group_19.o 
+clang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../minimal/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include expanded_runtime_pch.hpp -MMD -MF minimal_parts/__callable/frontend_model_builder_group_19.o.d -MT minimal_parts/__callable/frontend_model_builder_group_19.o -c /tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_19.cpp -o minimal_parts/__callable/frontend_model_builder_group_19.o
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_19.cpp:167:19: error: member access into incomplete type 'scpp::FrontendNodeList'
+  167 |                 model->node_rows->segment_threshold = segmentThreshold;
+      |                                 ^
+../minimal/generated/__types/FrontendModel.hpp:18:7: note: forward declaration of 'scpp::FrontendNodeList'
+   18 | class FrontendNodeList;
+      |       ^
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_19.cpp:170:19: error: member access into incomplete type 'scpp::FrontendNodeList'
+  170 |                 model->node_rows->segment_capacity = segmentCapacity;
+      |                                 ^
+../minimal/generated/__types/FrontendModel.hpp:18:7: note: forward declaration of 'scpp::FrontendNodeList'
+   18 | class FrontendNodeList;
+      |       ^
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_19.cpp:214:53: error: member access into incomplete type 'scpp::ParserDiagnosticTable'
+  214 |         model->parser_diagnostic_count = state->diagnostics->row_count;
+      |                                                            ^
+../minimal/generated/__types/PhsParserState.hpp:8:7: note: forward declaration of 'scpp::ParserDiagnosticTable'
+    8 | class ParserDiagnosticTable;
+      |       ^
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/frontend_model_builder_group_19.cpp:215:48: error: member access into incomplete type 'scpp::ParserDiagnosticTable'
+  215 |         model->parser_error_count = state->diagnostics->error_count;
+      |                                                       ^
+../minimal/generated/__types/PhsParserState.hpp:8:7: note: forward declaration of 'scpp::ParserDiagnosticTable'
+    8 | class ParserDiagnosticTable;
+      |       ^
+4 errors generated.
+[119/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_17.o
+[120/524] CALLABLE_PART minimal_parts/__callable/frontend_model_builder_group_16.o
+[121/524] CALLABLE_PART minimal_parts/__callable/parser_cursor_group_0.o
+[122/524] CALLABLE_PART minimal_parts/__callable/parser_diagnostics_group_0.o
+[123/524] CALLABLE_PART minimal_parts/__callable/phs_tokenizer_group_0.o
+FAILED: minimal_parts/__callable/phs_tokenizer_group_0.o 
+clang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../minimal/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include expanded_runtime_pch.hpp -MMD -MF minimal_parts/__callable/phs_tokenizer_group_0.o.d -MT minimal_parts/__callable/phs_tokenizer_group_0.o -c /tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/phs_tokenizer_group_0.cpp -o minimal_parts/__callable/phs_tokenizer_group_0.o
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/phs_tokenizer_group_0.cpp:175:21: error: member access into incomplete type 'scpp::TokenRowList'
+  175 |                 stream->token_rows->segment_threshold = segmentThreshold;
+      |                                   ^
+../minimal/generated/__types/TokenStream.hpp:8:7: note: forward declaration of 'scpp::TokenRowList'
+    8 | class TokenRowList;
+      |       ^
+/tmp/scpp-edit-latency-20260919/app/.prism/minimal/generated/__callable/phs_tokenizer_group_0.cpp:178:21: error: member access into incomplete type 'scpp::TokenRowList'
+  178 |                 stream->token_rows->segment_capacity = segmentCapacity;
+      |                                   ^
+../minimal/generated/__types/TokenStream.hpp:8:7: note: forward declaration of 'scpp::TokenRowList'
+    8 | class TokenRowList;
+      |       ^
+2 errors generated.
+[124/524] CALLABLE_PART minimal_parts/__callable/parser_diagnostics_group_1.o
+[125/524] CALLABLE_PART minimal_parts/__callable/parser_state_group_1.o
+[126/524] CALLABLE_PART minimal_parts/__callable/parser_state_group_0.o
+ninja: build stopped: subcommand failed.

@@ -1,0 +1,34 @@
+ninja explain: output layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__partitions/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.cpp (1789805415289706657 vs 1789805575469718515)
+ninja explain: layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.o is dirty
+ninja explain: output layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_19.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__partitions/compile/incremental/resident_source_unit_frontend_payload_tables/part_19.cpp (1789805415525706662 vs 1789805575473718515)
+ninja explain: layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_19.o is dirty
+ninja explain: output layout_parts/compile/model/project_symbol_index/part_3.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__partitions/compile/model/project_symbol_index/part_3.cpp (1789805415065706654 vs 1789805575457718515)
+ninja explain: layout_parts/compile/model/project_symbol_index/part_3.o is dirty
+ninja explain: output layout_parts/compile/model/source_units/part_3.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__partitions/compile/model/source_units/part_3.cpp (1789805415641706665 vs 1789805575461718515)
+ninja explain: layout_parts/compile/model/source_units/part_3.o is dirty
+ninja explain: output layout_parts/compile/model/source_units/part_4.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__partitions/compile/model/source_units/part_4.cpp (1789805415189706657 vs 1789805575461718515)
+ninja explain: layout_parts/compile/model/source_units/part_4.o is dirty
+ninja explain: output layout_parts/__callable/compiler_profile_events_elapsed_us_since.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__callable/compiler_profile_events_elapsed_us_since.cpp (1789805414677706647 vs 1789805575213718503)
+ninja explain: layout_parts/__callable/compiler_profile_events_elapsed_us_since.o is dirty
+ninja explain: output layout_parts/__callable/compiler_profile_events_append_elapsed.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__callable/compiler_profile_events_append_elapsed.cpp (1789805414741706649 vs 1789805575217718503)
+ninja explain: layout_parts/__callable/compiler_profile_events_append_elapsed.o is dirty
+ninja explain: output layout/__callable/compiler_profile_events_locations.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__callable/compiler_profile_events_locations.cpp (1789805414149706638 vs 1789805575221718503)
+ninja explain: layout/__callable/compiler_profile_events_locations.o is dirty
+ninja explain: output layout_parts/compile/support/production_mt_heartbeat/part_0.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__partitions/compile/support/production_mt_heartbeat/part_0.cpp (1789805414873706651 vs 1789805575465718515)
+ninja explain: layout_parts/compile/support/production_mt_heartbeat/part_0.o is dirty
+ninja explain: output layout_parts/main.o older than most recent input ../layout/generated/main.cpp (1789805415253706658 vs 1789805575109718498)
+ninja explain: layout_parts/main.o is dirty
+ninja explain: output layout_parts/profile/gate_profile_helpers/part_0.o older than most recent input /tmp/scpp-edit-latency-20260919/app/.prism/layout/generated/__partitions/profile/gate_profile_helpers/part_0.cpp (1789805414757706649 vs 1789805575481718515)
+ninja explain: layout_parts/profile/gate_profile_helpers/part_0.o is dirty
+[1/12] CALLABLE_PART layout_parts/main.o
+[2/12] CALLABLE_PART layout_parts/__callable/compiler_profile_events_elapsed_us_since.o
+[3/12] CALLABLE_PART layout_parts/__callable/compiler_profile_events_append_elapsed.o
+[4/12] CXX layout/__callable/compiler_profile_events_locations.o
+[5/12] CALLABLE_PART layout_parts/compile/model/source_units/part_3.o
+[6/12] CALLABLE_PART layout_parts/compile/model/source_units/part_4.o
+[7/12] CALLABLE_PART layout_parts/compile/model/project_symbol_index/part_3.o
+[8/12] CALLABLE_PART layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_2.o
+[9/12] CALLABLE_PART layout_parts/compile/incremental/resident_source_unit_frontend_payload_tables/part_19.o
+[10/12] CALLABLE_PART layout_parts/compile/support/production_mt_heartbeat/part_0.o
+[11/12] CALLABLE_PART layout_parts/profile/gate_profile_helpers/part_0.o
+[12/12] LINK main

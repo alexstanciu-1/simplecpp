@@ -1,0 +1,9 @@
+--- before/__callable/__latency_fn_source_units_source_read_result_row.hpp
++++ after/__callable/__latency_fn_source_units_source_read_result_row.hpp
+@@ -3,5 +3,5 @@
+ namespace scpp {
+ struct SourceReadDescriptorRow;
+ struct SourceReadResultRow;
+-SourceReadResultRow __latency_fn_source_units_source_read_result_row(const SourceReadDescriptorRow& descriptor, const string_t& sourceText, bool_t readOk);
++SourceReadResultRow __latency_fn_source_units_source_read_result_row(SourceReadDescriptorRow descriptor, const string_t& sourceText, bool_t readOk);
+ }

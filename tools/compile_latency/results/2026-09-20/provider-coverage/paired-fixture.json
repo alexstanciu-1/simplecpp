@@ -1,0 +1,36 @@
+{
+  "results": {
+    "candidate_before": {
+      "returncode": 0,
+      "completed": [
+        "compiler_project_runner_completed=0"
+      ],
+      "blocked": [
+        "compiler_project_runner_blocked=1"
+      ],
+      "llvm_artifacts": []
+    },
+    "previous-policy": {
+      "returncode": 0,
+      "completed": [
+        "compiler_project_runner_completed=0"
+      ],
+      "blocked": [
+        "compiler_project_runner_blocked=1"
+      ],
+      "llvm_artifacts": []
+    },
+    "candidate-restored": {
+      "returncode": 0,
+      "completed": [
+        "compiler_project_runner_completed=0"
+      ],
+      "blocked": [
+        "compiler_project_runner_blocked=1"
+      ],
+      "llvm_artifacts": []
+    }
+  },
+  "equal": true,
+  "scope": "same pinned source and historical fixture, previous value policy versus provider candidate; blocked status predates provider publication"
+}

@@ -1,0 +1,6 @@
+[1/6] CXX expanded/__callable/compiler_entry_backend_locations.o
+[2/6] CXX expanded/__callable/project_reference_resolution_locations.o
+[3/6] CALLABLE_PART expanded_parts/__callable/compiler_entry_backend_group_2.o
+[4/6] CALLABLE_PART expanded_parts/__callable/compiler_entry_backend_group_0.o
+[5/6] CALLABLE_PART expanded_parts/__callable/backend_module_composition_group_0.o
+[6/6] LINK main

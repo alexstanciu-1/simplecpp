@@ -1,0 +1,200 @@
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index 19538af6..674f6223 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -193,26 +193,16 @@ final class compiler_entry_backend {
+ 		$ifConditionIsLocalImmediate bool = false;
+ 		$whileSourceRowId uint32 = structure_row_ids::none_id();
+ 		$whileConditionSourceRowId uint32 = structure_row_ids::none_id();
+-		$whileBodyFirstSourceRowId uint32 = structure_row_ids::none_id();
+-		$whileBodyLastSourceRowId uint32 = structure_row_ids::none_id();
+-		$whileBodyFirstStatementRowId uint32 = structure_row_ids::none_id();
+-		$whileBodyLastStatementRowId uint32 = structure_row_ids::none_id();
+ 		$whileConditionTypeRefId uint32 = structure_row_ids::none_id();
+ 		$whileConditionValue int32 = structure_row_ids::int32_from_int(0);
+ 		$whileConditionLocalSourceRowId uint32 = structure_row_ids::none_id();
+ 		$whileConditionProviderTypeRefId uint32 = structure_row_ids::none_id();
+ 		$whileConditionFeatureId uint16 = structure_row_ids::none_kind_id();
+ 		$whileConditionLocalOperationId uint16 = structure_row_ids::none_kind_id();
+-		$whileBodyHasEffects bool = false;
+-		$whileBodyTerminatorSourceRowId uint32 = structure_row_ids::none_id();
+-		$whileBodyTerminatorKindId uint16 = backend_preflight_requests::control_flow_terminator_none_id();
++		$whileBodySequence ScalarLoopBodyStatementSequence = new ScalarLoopBodyStatementSequence();
+ 		$forSourceRowId uint32 = structure_row_ids::none_id();
+ 		$forConditionSourceRowId uint32 = structure_row_ids::none_id();
+-		$forBodyFirstSourceRowId uint32 = structure_row_ids::none_id();
+-		$forBodyLastSourceRowId uint32 = structure_row_ids::none_id();
+ 		$forInitStatementRowId uint32 = structure_row_ids::none_id();
+-		$forBodyFirstStatementRowId uint32 = structure_row_ids::none_id();
+-		$forBodyLastStatementRowId uint32 = structure_row_ids::none_id();
+ 		$forUpdateStatementRowId uint32 = structure_row_ids::none_id();
+ 		$forUpdateLastSourceRowId uint32 = structure_row_ids::none_id();
+ 		$forConditionTypeRefId uint32 = structure_row_ids::none_id();
+@@ -221,9 +211,7 @@ final class compiler_entry_backend {
+ 		$forConditionProviderTypeRefId uint32 = structure_row_ids::none_id();
+ 		$forConditionFeatureId uint16 = structure_row_ids::none_kind_id();
+ 		$forConditionLocalOperationId uint16 = structure_row_ids::none_kind_id();
+-		$forBodyHasEffects bool = false;
+-		$forBodyTerminatorSourceRowId uint32 = structure_row_ids::none_id();
+-		$forBodyTerminatorKindId uint16 = backend_preflight_requests::control_flow_terminator_none_id();
++		$forBodySequence ScalarLoopBodyStatementSequence = new ScalarLoopBodyStatementSequence();
+ 		$forUpdateAssigns bool = false;
+ 		$thenLiteralNode FrontendNodeRow = [];
+ 		$thenLiteral FrontendLiteralPayloadRow = [];
+@@ -417,7 +405,7 @@ final class compiler_entry_backend {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 					return backend_emission_decisions::from_lowering_plan($plan);
+ 				}
+-				$whileBodySequence ScalarLoopBodyStatementSequence = scalar_body_statement_collection::append_loop_body_statement_sequence($model, $sourceText, $counters, $statement->body_first_node_id, $statement->body_last_node_id, $body);
++				$whileBodySequence = scalar_body_statement_collection::append_loop_body_statement_sequence($model, $sourceText, $counters, $statement->body_first_node_id, $statement->body_last_node_id, $body);
+ 				if (!$whileBodySequence->ready) {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 					return backend_emission_decisions::from_lowering_plan($plan);
+@@ -430,15 +418,8 @@ final class compiler_entry_backend {
+ 						return backend_emission_decisions::from_lowering_plan($plan);
+ 					}
+ 				}
+-				$whileBodyHasEffects = (int)$whileBodySequence->effect_count > 0;
+-				$whileBodyTerminatorSourceRowId = $whileBodySequence->terminator_statement_row_id;
+-				$whileBodyTerminatorKindId = $whileBodySequence->terminator_kind_id;
+ 				$whileSourceRowId = $statementNode->node_id;
+ 				$whileConditionSourceRowId = $conditionNode->node_id;
+-				$whileBodyFirstSourceRowId = $whileBodySequence->first_statement_row_id;
+-				$whileBodyLastSourceRowId = $whileBodySequence->last_effect_source_row_id;
+-				$whileBodyFirstStatementRowId = $whileBodySequence->first_statement_row_id;
+-				$whileBodyLastStatementRowId = $whileBodySequence->last_statement_row_id;
+ 			} else if ((int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_for_id()) {
+ 				if ((int)$ifSourceRowId > 0 || (int)$whileSourceRowId > 0 || (int)$forSourceRowId > 0) {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+@@ -463,7 +444,7 @@ final class compiler_entry_backend {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 					return backend_emission_decisions::from_lowering_plan($plan);
+ 				}
+-				$forBodySequence ScalarLoopBodyStatementSequence = scalar_body_statement_collection::append_loop_body_statement_sequence($model, $sourceText, $counters, $statement->body_first_node_id, $statement->body_last_node_id, $body);
++				$forBodySequence = scalar_body_statement_collection::append_loop_body_statement_sequence($model, $sourceText, $counters, $statement->body_first_node_id, $statement->body_last_node_id, $body);
+ 				if (!$forBodySequence->ready) {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 					return backend_emission_decisions::from_lowering_plan($plan);
+@@ -476,9 +457,6 @@ final class compiler_entry_backend {
+ 						return backend_emission_decisions::from_lowering_plan($plan);
+ 					}
+ 				}
+-				$forBodyHasEffects = (int)$forBodySequence->effect_count > 0;
+-				$forBodyTerminatorSourceRowId = $forBodySequence->terminator_statement_row_id;
+-				$forBodyTerminatorKindId = $forBodySequence->terminator_kind_id;
+ 				$updateStatement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $updateNode->payload_row_id, $counters);
+ 				if (!scalar_body_statement_collection::append_assignment($model, $sourceText, $counters, $updateNode, $updateStatement, $body)) {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+@@ -487,10 +465,6 @@ final class compiler_entry_backend {
+ 				$forSourceRowId = $statementNode->node_id;
+ 				$forConditionSourceRowId = $conditionNode->node_id;
+ 				$forInitStatementRowId = $statement->target_node_id;
+-				$forBodyFirstSourceRowId = $forBodySequence->first_statement_row_id;
+-				$forBodyLastSourceRowId = $forBodySequence->last_effect_source_row_id;
+-				$forBodyFirstStatementRowId = $forBodySequence->first_statement_row_id;
+-				$forBodyLastStatementRowId = $forBodySequence->last_statement_row_id;
+ 				$forUpdateStatementRowId = $statement->value_node_id;
+ 				$forUpdateLastSourceRowId = $updateStatement->value_node_id;
+ 				$forUpdateAssigns = true;
+@@ -633,14 +607,14 @@ final class compiler_entry_backend {
+ 			$consumerPlan = semantic_body_capability_consumers::scalar_if_literal_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $ifSourceRowId, $thenLiteralNode->node_id, $fallbackLiteralNode->node_id, $ifConditionTypeRefId, $returnTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		} else if ((int)$whileSourceRowId > 0) {
+-				if ((!$whileBodyHasEffects && (int)$whileBodyTerminatorKindId === 0) || (int)$whileConditionTypeRefId === 0) {
++				if (((int)$whileBodySequence->effect_count === 0 && (int)$whileBodySequence->terminator_kind_id === 0) || (int)$whileConditionTypeRefId === 0) {
+ 					$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 					return backend_emission_decisions::from_lowering_plan($plan);
+ 				}
+ 			$consumerPlan = semantic_body_capability_consumers::scalar_while_return_plan($body, $coverageAssignmentSourceRowIds, $coverageAssignmentTypeRefIds, $whileSourceRowId, $whileConditionSourceRowId, $whileConditionFeatureId, $whileConditionProviderTypeRefId, $whileConditionTypeRefId, $returnSourceRowId, $returnTypeRefId);
+ 			$capabilityCoverage = type_capability_readiness::coverage_from_type_refs_and_consumer_plan($typeRefs, $consumerPlan);
+ 		} else if ((int)$forSourceRowId > 0) {
+-			if ((!$forBodyHasEffects && (int)$forBodyTerminatorKindId === 0) || !$forUpdateAssigns || (int)$forConditionTypeRefId === 0) {
++			if (((int)$forBodySequence->effect_count === 0 && (int)$forBodySequence->terminator_kind_id === 0) || !$forUpdateAssigns || (int)$forConditionTypeRefId === 0) {
+ 				$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 				return backend_emission_decisions::from_lowering_plan($plan);
+ 			}
+@@ -752,9 +726,9 @@ final class compiler_entry_backend {
+ 					}
+ 				}
+ 			} else if ((int)$whileSourceRowId > 0) {
+-				scalar_loop_backend_requests::append_while_statement_sequence_requests($backendRequests, $capabilityCoverage, $symbol, $body->assignment_source_row_ids, $body->assignment_type_ref_ids, $body->assignment_target_local_source_row_ids, $body->assignment_value_source_row_ids, $body->assignment_values, $body->assignment_value_texts, $body->assignment_local_operation_ids, $body->binary_source_row_ids, $body->binary_feature_ids, $body->binary_left_local_source_row_ids, $body->binary_right_source_row_ids, $body->binary_right_values, $whileSourceRowId, $whileConditionSourceRowId, $whileBodyFirstSourceRowId, $whileBodyLastSourceRowId, $whileBodyFirstStatementRowId, $whileBodyLastStatementRowId, $whileBodyTerminatorSourceRowId, $whileBodyTerminatorKindId, $whileConditionLocalSourceRowId, $whileConditionProviderTypeRefId, $whileConditionTypeRefId, $whileConditionValue, $whileConditionLocalOperationId, $whileBodyHasEffects, $returnSourceRowId, $returnLocalSourceRowId, $returnValueSourceRowId, $returnTypeRefId, $binaryIndex);
++				scalar_loop_backend_requests::append_while_statement_sequence_requests($backendRequests, $capabilityCoverage, $symbol, $body->assignment_source_row_ids, $body->assignment_type_ref_ids, $body->assignment_target_local_source_row_ids, $body->assignment_value_source_row_ids, $body->assignment_values, $body->assignment_value_texts, $body->assignment_local_operation_ids, $body->binary_source_row_ids, $body->binary_feature_ids, $body->binary_left_local_source_row_ids, $body->binary_right_source_row_ids, $body->binary_right_values, $whileSourceRowId, $whileConditionSourceRowId, $whileBodySequence, $whileConditionLocalSourceRowId, $whileConditionProviderTypeRefId, $whileConditionTypeRefId, $whileConditionValue, $whileConditionLocalOperationId, $returnSourceRowId, $returnLocalSourceRowId, $returnValueSourceRowId, $returnTypeRefId, $binaryIndex);
+ 		} else if ((int)$forSourceRowId > 0) {
+-			scalar_loop_backend_requests::append_for_statement_sequence_requests($backendRequests, $capabilityCoverage, $symbol, $body->assignment_source_row_ids, $body->assignment_type_ref_ids, $body->assignment_target_local_source_row_ids, $body->assignment_value_source_row_ids, $body->assignment_values, $body->assignment_value_texts, $body->assignment_local_operation_ids, $body->binary_source_row_ids, $body->binary_feature_ids, $body->binary_left_local_source_row_ids, $body->binary_right_source_row_ids, $body->binary_right_values, $forSourceRowId, $forConditionSourceRowId, $forBodyFirstSourceRowId, $forBodyLastSourceRowId, $forInitStatementRowId, $forBodyFirstStatementRowId, $forBodyLastStatementRowId, $forBodyTerminatorSourceRowId, $forBodyTerminatorKindId, $forUpdateStatementRowId, $forUpdateLastSourceRowId, $forConditionLocalSourceRowId, $forConditionProviderTypeRefId, $forConditionTypeRefId, $forConditionValue, $forConditionLocalOperationId, $forBodyHasEffects, backend_preflight_requests::control_flow_terminator_is_break($forBodyTerminatorKindId), $returnSourceRowId, $returnLocalSourceRowId, $returnValueSourceRowId, $returnTypeRefId, $binaryIndex);
++			scalar_loop_backend_requests::append_for_statement_sequence_requests($backendRequests, $capabilityCoverage, $symbol, $body->assignment_source_row_ids, $body->assignment_type_ref_ids, $body->assignment_target_local_source_row_ids, $body->assignment_value_source_row_ids, $body->assignment_values, $body->assignment_value_texts, $body->assignment_local_operation_ids, $body->binary_source_row_ids, $body->binary_feature_ids, $body->binary_left_local_source_row_ids, $body->binary_right_source_row_ids, $body->binary_right_values, $forSourceRowId, $forConditionSourceRowId, $forBodySequence, $forInitStatementRowId, $forUpdateStatementRowId, $forUpdateLastSourceRowId, $forConditionLocalSourceRowId, $forConditionProviderTypeRefId, $forConditionTypeRefId, $forConditionValue, $forConditionLocalOperationId, $returnSourceRowId, $returnLocalSourceRowId, $returnValueSourceRowId, $returnTypeRefId, $binaryIndex);
+ 		} else if ((int)$returnBinarySourceRowId > 0) {
+ 				compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $body->assignment_source_row_ids, $body->assignment_type_ref_ids, $body->assignment_target_local_source_row_ids, $body->assignment_value_source_row_ids, $body->assignment_values, $body->assignment_value_texts, $body->assignment_local_operation_ids, $body->binary_source_row_ids, $body->binary_feature_ids, $body->binary_left_local_source_row_ids, $body->binary_right_source_row_ids, $body->binary_right_values, structure_row_ids::none_id(), structure_row_ids::none_id(), $binaryIndex);
+ 				local_body_lowering::append_local_backend_request(
+diff --git a/compiler/src/compile/backend/scalar_loop_backend_requests.phs b/compiler/src/compile/backend/scalar_loop_backend_requests.phs
+index 174ee2a0..aaf23d3f 100644
+--- a/compiler/src/compile/backend/scalar_loop_backend_requests.phs
++++ b/compiler/src/compile/backend/scalar_loop_backend_requests.phs
+@@ -1,17 +1,17 @@
+ // Role: Sequences scalar loop backend requests from statement/effect/terminator rows.
+ final class scalar_loop_backend_requests {
+ 
+-	public static function append_while_statement_sequence_requests(BackendRequestAuthorizationArtifact &$backendRequests, CapabilityCoverageArtifact $capabilityCoverage, ProjectSymbolIndexRow $symbol, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, vector<uint32> $assignmentTargetLocalSourceRowIds, vector<uint32> $assignmentValueSourceRowIds, vector<int32> $assignmentValues, vector<string> $assignmentValueTexts, vector<uint16> $assignmentLocalOperationIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, vector<uint32> $binaryLeftLocalSourceRowIds, vector<uint32> $binaryRightSourceRowIds, vector<int32> $binaryRightValues, uint32 $whileSourceRowId, uint32 $whileConditionSourceRowId, uint32 $whileBodyFirstSourceRowId, uint32 $whileBodyLastSourceRowId, uint32 $whileBodyFirstStatementRowId, uint32 $whileBodyLastStatementRowId, uint32 $whileBodyTerminatorSourceRowId, uint16 $whileBodyTerminatorKindId, uint32 $whileConditionLocalSourceRowId, uint32 $whileConditionProviderTypeRefId, uint32 $whileConditionTypeRefId, int32 $whileConditionValue, uint16 $whileConditionLocalOperationId, bool $whileBodyHasEffects, uint32 $returnSourceRowId, uint32 $returnLocalSourceRowId, uint32 $returnValueSourceRowId, uint32 $returnTypeRefId, int &$binaryIndex): void {
++	public static function append_while_statement_sequence_requests(BackendRequestAuthorizationArtifact &$backendRequests, CapabilityCoverageArtifact $capabilityCoverage, ProjectSymbolIndexRow $symbol, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, vector<uint32> $assignmentTargetLocalSourceRowIds, vector<uint32> $assignmentValueSourceRowIds, vector<int32> $assignmentValues, vector<string> $assignmentValueTexts, vector<uint16> $assignmentLocalOperationIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, vector<uint32> $binaryLeftLocalSourceRowIds, vector<uint32> $binaryRightSourceRowIds, vector<int32> $binaryRightValues, uint32 $whileSourceRowId, uint32 $whileConditionSourceRowId, ScalarLoopBodyStatementSequence $bodySequence, uint32 $whileConditionLocalSourceRowId, uint32 $whileConditionProviderTypeRefId, uint32 $whileConditionTypeRefId, int32 $whileConditionValue, uint16 $whileConditionLocalOperationId, uint32 $returnSourceRowId, uint32 $returnLocalSourceRowId, uint32 $returnValueSourceRowId, uint32 $returnTypeRefId, int &$binaryIndex): void {
+ 		compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, structure_row_ids::none_id(), structure_row_ids::uint32_from_int((int)$whileSourceRowId - 1), $binaryIndex);
+ 		local_body_lowering::append_while_local_immediate_condition_backend_request(
+ 			$backendRequests,
+ 			$capabilityCoverage,
+ 			$whileSourceRowId,
+ 			$whileConditionSourceRowId,
+-			$whileBodyFirstSourceRowId,
+-			$whileBodyLastSourceRowId,
+-			$whileBodyTerminatorSourceRowId,
+-			$whileBodyTerminatorKindId,
++			$bodySequence->first_statement_row_id,
++			$bodySequence->last_effect_source_row_id,
++			$bodySequence->terminator_statement_row_id,
++			$bodySequence->terminator_kind_id,
+ 			$whileConditionLocalSourceRowId,
+ 			$whileConditionProviderTypeRefId,
+ 			$whileConditionTypeRefId,
+@@ -19,13 +19,13 @@ final class scalar_loop_backend_requests {
+ 			$whileConditionLocalOperationId,
+ 			$symbol
+ 		);
+-		if ($whileBodyHasEffects) {
+-			compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, $whileBodyFirstStatementRowId, $whileBodyLastStatementRowId, $binaryIndex);
++		if ((int)$bodySequence->effect_count > 0) {
++			compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, $bodySequence->first_statement_row_id, $bodySequence->last_statement_row_id, $binaryIndex);
+ 		}
+ 		local_body_lowering::append_local_load_return_backend_request($backendRequests, $capabilityCoverage, $returnSourceRowId, $returnLocalSourceRowId, $returnValueSourceRowId, $returnTypeRefId, $symbol);
+ 	}
+ 
+-	public static function append_for_statement_sequence_requests(BackendRequestAuthorizationArtifact &$backendRequests, CapabilityCoverageArtifact $capabilityCoverage, ProjectSymbolIndexRow $symbol, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, vector<uint32> $assignmentTargetLocalSourceRowIds, vector<uint32> $assignmentValueSourceRowIds, vector<int32> $assignmentValues, vector<string> $assignmentValueTexts, vector<uint16> $assignmentLocalOperationIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, vector<uint32> $binaryLeftLocalSourceRowIds, vector<uint32> $binaryRightSourceRowIds, vector<int32> $binaryRightValues, uint32 $forSourceRowId, uint32 $forConditionSourceRowId, uint32 $forBodyFirstSourceRowId, uint32 $forBodyLastSourceRowId, uint32 $forInitStatementRowId, uint32 $forBodyFirstStatementRowId, uint32 $forBodyLastStatementRowId, uint32 $forBodyTerminatorSourceRowId, uint16 $forBodyTerminatorKindId, uint32 $forUpdateStatementRowId, uint32 $forUpdateLastSourceRowId, uint32 $forConditionLocalSourceRowId, uint32 $forConditionProviderTypeRefId, uint32 $forConditionTypeRefId, int32 $forConditionValue, uint16 $forConditionLocalOperationId, bool $forBodyHasEffects, bool $forBodyTerminatesWithBreak, uint32 $returnSourceRowId, uint32 $returnLocalSourceRowId, uint32 $returnValueSourceRowId, uint32 $returnTypeRefId, int &$binaryIndex): void {
++	public static function append_for_statement_sequence_requests(BackendRequestAuthorizationArtifact &$backendRequests, CapabilityCoverageArtifact $capabilityCoverage, ProjectSymbolIndexRow $symbol, vector<uint32> $assignmentSourceRowIds, vector<uint32> $assignmentTypeRefIds, vector<uint32> $assignmentTargetLocalSourceRowIds, vector<uint32> $assignmentValueSourceRowIds, vector<int32> $assignmentValues, vector<string> $assignmentValueTexts, vector<uint16> $assignmentLocalOperationIds, vector<uint32> $binarySourceRowIds, vector<uint16> $binaryFeatureIds, vector<uint32> $binaryLeftLocalSourceRowIds, vector<uint32> $binaryRightSourceRowIds, vector<int32> $binaryRightValues, uint32 $forSourceRowId, uint32 $forConditionSourceRowId, ScalarLoopBodyStatementSequence $bodySequence, uint32 $forInitStatementRowId, uint32 $forUpdateStatementRowId, uint32 $forUpdateLastSourceRowId, uint32 $forConditionLocalSourceRowId, uint32 $forConditionProviderTypeRefId, uint32 $forConditionTypeRefId, int32 $forConditionValue, uint16 $forConditionLocalOperationId, uint32 $returnSourceRowId, uint32 $returnLocalSourceRowId, uint32 $returnValueSourceRowId, uint32 $returnTypeRefId, int &$binaryIndex): void {
+ 		compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, structure_row_ids::none_id(), structure_row_ids::uint32_from_int((int)$forInitStatementRowId - 1), $binaryIndex);
+ 		compiler_entry_backend::append_assignment_backend_request_by_source_row_id($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, $forInitStatementRowId, $binaryIndex);
+ 		local_body_lowering::append_for_local_immediate_condition_backend_request(
+@@ -33,10 +33,10 @@ final class scalar_loop_backend_requests {
+ 			$capabilityCoverage,
+ 			$forSourceRowId,
+ 			$forConditionSourceRowId,
+-			$forBodyFirstSourceRowId,
+-			$forBodyLastSourceRowId,
+-			$forBodyTerminatorSourceRowId,
+-			$forBodyTerminatorKindId,
++			$bodySequence->first_statement_row_id,
++			$bodySequence->last_effect_source_row_id,
++			$bodySequence->terminator_statement_row_id,
++			$bodySequence->terminator_kind_id,
+ 			$forUpdateLastSourceRowId,
+ 			$forConditionLocalSourceRowId,
+ 			$forConditionProviderTypeRefId,
+@@ -45,10 +45,10 @@ final class scalar_loop_backend_requests {
+ 			$forConditionLocalOperationId,
+ 			$symbol
+ 		);
+-		if ($forBodyHasEffects) {
+-			compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, $forBodyFirstStatementRowId, $forBodyLastStatementRowId, $binaryIndex);
++		if ((int)$bodySequence->effect_count > 0) {
++			compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, $bodySequence->first_statement_row_id, $bodySequence->last_statement_row_id, $binaryIndex);
+ 		}
+-		if (!$forBodyTerminatesWithBreak) {
++		if (!backend_preflight_requests::control_flow_terminator_is_break($bodySequence->terminator_kind_id)) {
+ 			compiler_entry_backend::append_assignment_backend_requests_in_source_range($backendRequests, $capabilityCoverage, $symbol, $assignmentSourceRowIds, $assignmentTypeRefIds, $assignmentTargetLocalSourceRowIds, $assignmentValueSourceRowIds, $assignmentValues, $assignmentValueTexts, $assignmentLocalOperationIds, $binarySourceRowIds, $binaryFeatureIds, $binaryLeftLocalSourceRowIds, $binaryRightSourceRowIds, $binaryRightValues, $forUpdateStatementRowId, $forUpdateStatementRowId, $binaryIndex);
+ 		}
+ 		local_body_lowering::append_local_load_return_backend_request($backendRequests, $capabilityCoverage, $returnSourceRowId, $returnLocalSourceRowId, $returnValueSourceRowId, $returnTypeRefId, $symbol);

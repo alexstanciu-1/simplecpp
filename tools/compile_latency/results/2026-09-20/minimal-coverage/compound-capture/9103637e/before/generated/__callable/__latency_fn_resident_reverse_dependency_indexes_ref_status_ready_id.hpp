@@ -1,0 +1,5 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+int_t<std::uint16_t> __latency_fn_resident_reverse_dependency_indexes_ref_status_ready_id();
+}

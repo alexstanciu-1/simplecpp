@@ -1,0 +1,20 @@
+--- before/__callable/source_units_group_6.cpp
++++ after/__callable/source_units_group_6.cpp
+@@ -79,7 +79,7 @@
+ #include "__callable/__latency_fn_structure_row_ids_uint32_from_int.hpp"
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& coordinatorSourceReads, int_t<> workerCount) {
++shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> coordinatorSourceReads, int_t<> workerCount) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::worker_published_source_read_table", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[52]);
+ 	if (static_cast<bool>(((workerCount <= static_cast<int_t<> >(0)) || (cast<int_t<>>(coordinatorSourceReads->descriptor_count) <= static_cast<int_t<> >(0))))) {
+ 		__latency_fn_source_units_record_source_read_worker_publication_not_selected(report, coordinatorSourceReads, workerCount);
+@@ -127,7 +127,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table_from_descriptors(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& descriptorSourceReads, int_t<> workerCount) {
++shared_p<SourceReadTable> __latency_fn_source_units_worker_published_source_read_table_from_descriptors(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> descriptorSourceReads, int_t<> workerCount) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::worker_published_source_read_table_from_descriptors", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[53]);
+ 	if (static_cast<bool>(((workerCount <= static_cast<int_t<> >(0)) || (cast<int_t<>>(descriptorSourceReads->descriptor_count) <= static_cast<int_t<> >(0))))) {
+ 		__latency_fn_source_units_record_source_read_worker_publication_not_selected(report, descriptorSourceReads, workerCount);

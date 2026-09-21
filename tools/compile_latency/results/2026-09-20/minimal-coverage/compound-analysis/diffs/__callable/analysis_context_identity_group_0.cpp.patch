@@ -1,0 +1,22 @@
+--- before/__callable/analysis_context_identity_group_0.cpp
++++ after/__callable/analysis_context_identity_group_0.cpp
+@@ -46,7 +46,18 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_analysis_context_identity_stable_hash(AnalysisEntryContextRow row, shared_p<ProjectSymbolIndex> symbols) {
+ 	SCPP_CALL_DEPTH_GUARD("analysis_context_identity::stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/artifacts/analysis_context_identity.phs", __latency_lines_analysis_context_identity[2]);
+-	string_t identity = required_cast<string_t>((string_t("analysis_entry:v2:") + cast<string_t>(__latency_fn_analysis_context_identity_debug_string(row, symbols)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_unit_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->declaration_node_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->graph_symbol_node_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->first_reference_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->reference_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->first_callable_contract_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->callable_contract_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->first_dependency_edge_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->dependency_edge_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->downstream_table_status_id))));
++	string_t identity = required_cast<string_t>(string_t("analysis_entry:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(__latency_fn_analysis_context_identity_debug_string(row, symbols)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_unit_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->declaration_node_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->graph_symbol_node_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->first_reference_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->reference_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->first_callable_contract_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->callable_contract_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->first_dependency_edge_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->dependency_edge_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->downstream_table_status_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 

@@ -1,0 +1,158 @@
+--- before/__callable/resident_daemon_file_ipc_group_10.cpp
++++ after/__callable/resident_daemon_file_ipc_group_10.cpp
+@@ -23,7 +23,11 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(row->scan_id), static_cast<int_t<> >(0)))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("resident_daemon_source_slot_scan:") + cast<string_t>(cast<int_t<>>(row->source_slot_stat_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->candidate_event_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->event_count)));
++	string_t text = required_cast<string_t>(string_t("resident_daemon_source_slot_scan:"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->source_slot_stat_count)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(cast<int_t<>>(row->candidate_event_count)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(cast<int_t<>>(row->event_count)));
++	return text;
+ }
+ 
+ }
+@@ -35,7 +39,12 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(row->projection_id), static_cast<int_t<> >(0)))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("resident_daemon_dirty_projection:") + cast<string_t>(cast<int_t<>>(row->projection_id)) + string_t(":dirty=") + cast<string_t>(cast<int_t<>>(row->dirty_source_count)) + string_t(":parse=") + cast<string_t>(cast<int_t<>>(row->parse_candidate_count)) + string_t(":mode=") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_dirty_projection_execution_mode_name(row->execution_mode_id)));
++	string_t text = required_cast<string_t>(string_t("resident_daemon_dirty_projection:"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->projection_id)));
++	text = (cast<string_t>(text) + string_t(":dirty=") + cast<string_t>(cast<int_t<>>(row->dirty_source_count)));
++	text = (cast<string_t>(text) + string_t(":parse=") + cast<string_t>(cast<int_t<>>(row->parse_candidate_count)));
++	text = (cast<string_t>(text) + string_t(":mode=") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_dirty_projection_execution_mode_name(row->execution_mode_id)));
++	return text;
+ }
+ 
+ }
+@@ -47,7 +56,10 @@
+ 	if (static_cast<bool>(php::identical(cast<int_t<>>(row->loop_id), static_cast<int_t<> >(0)))) {
+ 		return string_t("");
+ 	}
+-	return (string_t("resident_daemon_loop:") + cast<string_t>(cast<int_t<>>(row->processed_request_count)) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_loop_shutdown_reason_name(row->shutdown_reason_id)));
++	string_t text = required_cast<string_t>(string_t("resident_daemon_loop:"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->processed_request_count)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(__latency_fn_resident_daemon_file_ipc_loop_shutdown_reason_name(row->shutdown_reason_id)));
++	return text;
+ }
+ 
+ }
+@@ -56,7 +68,17 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_resident_daemon_file_ipc_session_stable_hash(ResidentDaemonSessionRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_daemon_file_ipc::session_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_daemon_file_ipc.phs", __latency_lines_resident_daemon_file_ipc[108]);
+-	string_t identity = required_cast<string_t>((string_t("resident_daemon_session:v2:") + cast<string_t>(cast<int_t<>>(row->session_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->project_root_path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->session_path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->request_dir_path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->response_dir_path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->pid)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->generation)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->idle_timeout_ms)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->transport_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id))));
++	string_t identity = required_cast<string_t>(string_t("resident_daemon_session:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->session_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->project_root_path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->session_path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->request_dir_path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->response_dir_path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->pid)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->generation)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->idle_timeout_ms)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->transport_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -66,7 +88,16 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_resident_daemon_file_ipc_loop_stable_hash(ResidentDaemonLoopPolicyRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_daemon_file_ipc::loop_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_daemon_file_ipc.phs", __latency_lines_resident_daemon_file_ipc[109]);
+-	string_t identity = required_cast<string_t>((string_t("resident_daemon_loop:v2:") + cast<string_t>(cast<int_t<>>(row->loop_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->session_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->idle_timeout_ms)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->test_idle_timeout_ms)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->poll_interval_ms)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->request_limit)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->processed_request_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->shutdown_reason_id))));
++	string_t identity = required_cast<string_t>(string_t("resident_daemon_loop:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->loop_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->session_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->idle_timeout_ms)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->test_idle_timeout_ms)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->poll_interval_ms)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->request_limit)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->processed_request_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->shutdown_reason_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -76,7 +107,18 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_resident_daemon_file_ipc_source_slot_stat_stable_hash(ResidentDaemonSourceSlotStatRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_daemon_file_ipc::source_slot_stat_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_daemon_file_ipc.phs", __latency_lines_resident_daemon_file_ipc[110]);
+-	string_t identity = required_cast<string_t>((string_t("resident_daemon_source_slot_stat:v2:") + cast<string_t>(cast<int_t<>>(row->stat_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->previous_size)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->current_size)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->previous_content_hash)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->current_content_hash)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->previous_mtime_tick)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->current_mtime_tick)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->scan_status_id))));
++	string_t identity = required_cast<string_t>(string_t("resident_daemon_source_slot_stat:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->stat_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_slot_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->previous_size)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->current_size)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->previous_content_hash)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->current_content_hash)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->previous_mtime_tick)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->current_mtime_tick)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->scan_status_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -86,7 +128,15 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_resident_daemon_file_ipc_source_slot_scan_stable_hash(ResidentDaemonSourceSlotScanRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_daemon_file_ipc::source_slot_scan_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_daemon_file_ipc.phs", __latency_lines_resident_daemon_file_ipc[111]);
+-	string_t identity = required_cast<string_t>((string_t("resident_daemon_source_slot_scan:v2:") + cast<string_t>(cast<int_t<>>(row->scan_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_stat_first_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_stat_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->candidate_event_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->event_first_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->event_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id))));
++	string_t identity = required_cast<string_t>(string_t("resident_daemon_source_slot_scan:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->scan_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_slot_stat_first_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_slot_stat_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->candidate_event_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->event_first_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->event_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -96,7 +146,23 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_resident_daemon_file_ipc_dirty_source_projection_stable_hash(ResidentDaemonDirtySourceProjectionRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_daemon_file_ipc::dirty_source_projection_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_daemon_file_ipc.phs", __latency_lines_resident_daemon_file_ipc[112]);
+-	string_t identity = required_cast<string_t>((string_t("resident_daemon_dirty_projection:v2:") + cast<string_t>(cast<int_t<>>(row->projection_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->scan_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->owner_run_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->transaction_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_event_first_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_event_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->input_source_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->dirty_source_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->reused_source_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->changed_source_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->added_source_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->deleted_source_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->parse_candidate_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->execution_mode_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id))));
++	string_t identity = required_cast<string_t>(string_t("resident_daemon_dirty_projection:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->projection_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->scan_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->owner_run_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->transaction_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_slot_event_first_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_slot_event_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->input_source_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->dirty_source_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->reused_source_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->changed_source_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->added_source_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->deleted_source_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->parse_candidate_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->execution_mode_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 
+@@ -106,7 +172,16 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_resident_daemon_file_ipc_request_stable_hash(ResidentDaemonRequestRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("resident_daemon_file_ipc::request_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/incremental/resident_daemon_file_ipc.phs", __latency_lines_resident_daemon_file_ipc[113]);
+-	string_t identity = required_cast<string_t>((string_t("resident_daemon_request:v2:") + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->session_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->project_root_path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->request_path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->response_path_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_event_first_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->source_slot_event_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->command_kind_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id))));
++	string_t identity = required_cast<string_t>(string_t("resident_daemon_request:v2:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->request_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->session_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->project_root_path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->request_path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->response_path_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_slot_event_first_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->source_slot_event_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->command_kind_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 

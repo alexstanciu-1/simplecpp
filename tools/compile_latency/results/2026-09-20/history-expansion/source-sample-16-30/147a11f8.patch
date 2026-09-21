@@ -1,0 +1,399 @@
+diff --git a/compiler/src/compile/backend/backend_module_composition.phs b/compiler/src/compile/backend/backend_module_composition.phs
+index aa14785f..7422710f 100644
+--- a/compiler/src/compile/backend/backend_module_composition.phs
++++ b/compiler/src/compile/backend/backend_module_composition.phs
+@@ -10,7 +10,7 @@ final class backend_module_composition {
+ 		if ($parameterText !== "") {
+ 			return $parameterText;
+ 		}
+-		if (project_symbol_index::symbol_has_direct_call_candidate($symbol)) {
++		if (project_reference_resolution::symbol_has_direct_call_expression($model, $symbol)) {
+ 			$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
+ 			$reference ProjectReferenceResolutionRow = compiler_entry_backend::direct_call_reference_from_frontend($references, $symbols, $model, $sourceText, $symbol);
+ 			if ((int)$reference->status_id !== (int)project_reference_resolution::status_resolved_id()) {
+@@ -110,7 +110,7 @@ final class backend_module_composition {
+ 	}
+ 
+ 	public static function module_text_for_entry(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $entrySymbol, FrontendModel $model, string $sourceText, BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests): string {
+-		if (!project_symbol_index::symbol_has_direct_call_candidate($entrySymbol)) {
++		if (!project_reference_resolution::symbol_has_direct_call_expression($model, $entrySymbol)) {
+ 			return llvm_text_from_plan::module_text_from_emission_and_backend_requests($entryEmission, $entryRequests);
+ 		}
+ 		$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
+diff --git a/compiler/src/compile/backend/compiler_entry_backend.phs b/compiler/src/compile/backend/compiler_entry_backend.phs
+index db17b3c8..35827eaf 100644
+--- a/compiler/src/compile/backend/compiler_entry_backend.phs
++++ b/compiler/src/compile/backend/compiler_entry_backend.phs
+@@ -41,25 +41,12 @@ final class compiler_entry_backend {
+ 		return backend_emission_decisions::from_lowering_plan_and_backend_requests($plan, $backendRequests);
+ 	}
+ 
+-	public static function direct_call_reference_from_candidate_fields(ProjectReferenceResolution $references, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol): ProjectReferenceResolutionRow {
+-		return project_reference_resolution::append_direct_call_from_candidate_fields_with_first_argument_type(
+-			$references,
+-			$symbols,
+-			$symbol,
+-			$symbol->direct_call_candidate_node_id,
+-			project_symbol_index::direct_call_candidate_callee_name($symbols, $symbol),
+-			$symbol->direct_call_candidate_argument_count,
+-			$symbol->direct_call_candidate_first_argument_literal_type_ref_id,
+-			$symbol->direct_call_candidate_first_argument_literal_status_id
+-		);
+-	}
+-
+ 	public static function direct_call_reference_from_frontend(ProjectReferenceResolution $references, ProjectSymbolIndex $symbols, FrontendModel $model, string $sourceText, ProjectSymbolIndexRow $symbol): ProjectReferenceResolutionRow {
+ 		return project_reference_resolution::append_direct_call_from_frontend($references, $symbols, $model, $sourceText, $symbol);
+ 	}
+ 
+-	public static function direct_call_emission_for_candidate(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
+-		if (!project_symbol_index::symbol_has_direct_call_candidate($symbol)) {
++	public static function direct_call_emission_from_frontend(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
++		if (!project_reference_resolution::symbol_has_direct_call_expression($model, $symbol)) {
+ 			$plan = lowering_plan::new_plan(0, 0, $symbol->source_unit_id, $symbol->symbol_id);
+ 			return backend_emission_decisions::from_lowering_plan($plan);
+ 		}
+@@ -805,8 +792,8 @@ final class compiler_entry_backend {
+ 	}
+ 
+ 	public static function backend_emission_for_entry(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {
+-		if (project_symbol_index::symbol_has_direct_call_candidate($symbol)) {
+-			return compiler_entry_backend::direct_call_emission_for_candidate($symbols, $symbol, $model, $sourceText, $backendRequests, $plan, $capabilityCoverage);
++		if (project_reference_resolution::symbol_has_direct_call_expression($model, $symbol)) {
++			return compiler_entry_backend::direct_call_emission_from_frontend($symbols, $symbol, $model, $sourceText, $backendRequests, $plan, $capabilityCoverage);
+ 		}
+ 		$localEmission BackendEmissionDecisionArtifact = compiler_entry_backend::scalar_local_body_emission($symbols, $symbol, $model, $sourceText, $backendRequests, $plan, $capabilityCoverage);
+ 		if ((int)backend_emission_decisions::status_from_plan($plan) === (int)backend_emission_decisions::status_ready_id()) {
+diff --git a/compiler/src/compile/model/project_reference_resolution.phs b/compiler/src/compile/model/project_reference_resolution.phs
+index 66e9633a..101b2c67 100644
+--- a/compiler/src/compile/model/project_reference_resolution.phs
++++ b/compiler/src/compile/model/project_reference_resolution.phs
+@@ -27,11 +27,6 @@ final class ReferenceContractWorkerInput {
+ 	public $symbol_signature_shapes vector<string> = [];
+ 	public $symbol_body_shapes vector<string> = [];
+ 	public $symbol_source_unit_keys vector<string> = [];
+-	public $symbol_direct_call_candidate_node_ids vector<int> = [];
+-	public $symbol_direct_call_candidate_callee_names vector<string> = [];
+-	public $symbol_direct_call_candidate_argument_counts vector<int> = [];
+-	public $symbol_direct_call_candidate_first_argument_literal_type_ref_ids vector<int> = [];
+-	public $symbol_direct_call_candidate_first_argument_literal_status_ids vector<int> = [];
+ 	public $function_import_source_unit_ids vector<int> = [];
+ 	public $function_import_source_row_ids vector<int> = [];
+ 	public $function_import_namespaces vector<string> = [];
+@@ -330,6 +325,11 @@ final class project_reference_resolution {
+ 		return $empty;
+ 	}
+ 
++	public static function symbol_has_direct_call_expression(FrontendModel $model, ProjectSymbolIndexRow $fromSymbol): bool {
++		$callNode FrontendNodeRow = project_reference_resolution::call_expression_node_from_symbol($model, $fromSymbol);
++		return (int)$callNode->node_id > 0;
++	}
++
+ 	public static function call_expression_node_from_statement_value(FrontendModel $model, FrontendNodeRow $statementNode, FrontendModelKernelCounters $counters): FrontendNodeRow {
+ 		if ((int)$statementNode->row_family_id !== (int)frontend_model_tables::row_family_statement_id()) {
+ 			$empty FrontendNodeRow = [];
+@@ -673,25 +673,6 @@ final class project_reference_resolution {
+ 		project_reference_resolution::update_row($artifact, $reference);
+ 	}
+ 
+-	public static function append_first_actual_argument_from_direct_call_candidate(ProjectReferenceResolution $artifact, ProjectReferenceResolutionRow &$reference, ProjectSymbolIndexRow $fromSymbol): void {
+-		if ((int)$reference->actual_arg_count === 0
+-			|| (int)$reference->actual_argument_row_count > 0
+-			|| !project_symbol_index::symbol_has_direct_call_candidate_first_literal_argument($fromSymbol)) {
+-			return;
+-		}
+-		project_reference_resolution::append_actual_argument_from_values(
+-			$artifact,
+-			$reference,
+-			$fromSymbol->direct_call_candidate_first_argument_literal_node_id,
+-			$fromSymbol->direct_call_candidate_first_argument_literal_type_ref_id,
+-			$fromSymbol->direct_call_candidate_first_argument_literal_numeric_payload,
+-			$fromSymbol->direct_call_candidate_first_argument_literal_status_id,
+-			structure_row_ids::uint16_from_int(1),
+-			structure_row_ids::none_kind_id()
+-		);
+-		project_reference_resolution::update_row($artifact, $reference);
+-	}
+-
+ 	public static function actual_argument_rows(ProjectReferenceResolution $artifact, ProjectReferenceResolutionRow $reference): vector<ProjectReferenceActualArgumentRow> {
+ 		$rows vector<ProjectReferenceActualArgumentRow> = [];
+ 		if ((int)$reference->actual_argument_row_count === 0) {
+@@ -911,11 +892,6 @@ final class project_reference_resolution {
+ 		vector_reserve($input->symbol_signature_shapes, $symbolCapacity);
+ 		vector_reserve($input->symbol_body_shapes, $symbolCapacity);
+ 		vector_reserve($input->symbol_source_unit_keys, $symbolCapacity);
+-		vector_reserve($input->symbol_direct_call_candidate_node_ids, $symbolCapacity);
+-		vector_reserve($input->symbol_direct_call_candidate_callee_names, $symbolCapacity);
+-		vector_reserve($input->symbol_direct_call_candidate_argument_counts, $symbolCapacity);
+-		vector_reserve($input->symbol_direct_call_candidate_first_argument_literal_type_ref_ids, $symbolCapacity);
+-		vector_reserve($input->symbol_direct_call_candidate_first_argument_literal_status_ids, $symbolCapacity);
+ 		vector_reserve($input->function_import_source_unit_ids, $symbolCapacity);
+ 		vector_reserve($input->function_import_source_row_ids, $symbolCapacity);
+ 		vector_reserve($input->function_import_namespaces, $symbolCapacity);
+@@ -938,11 +914,6 @@ final class project_reference_resolution {
+ 		$input->symbol_signature_shapes[] = project_symbol_index::signature_shape($symbols, $row);
+ 		$input->symbol_body_shapes[] = project_symbol_index::body_shape($symbols, $row);
+ 		$input->symbol_source_unit_keys[] = project_symbol_index::source_unit_key($symbols, $row);
+-		$input->symbol_direct_call_candidate_node_ids[] = (int)$row->direct_call_candidate_node_id;
+-		$input->symbol_direct_call_candidate_callee_names[] = project_symbol_index::direct_call_candidate_callee_name($symbols, $row);
+-		$input->symbol_direct_call_candidate_argument_counts[] = (int)$row->direct_call_candidate_argument_count;
+-		$input->symbol_direct_call_candidate_first_argument_literal_type_ref_ids[] = (int)$row->direct_call_candidate_first_argument_literal_type_ref_id;
+-		$input->symbol_direct_call_candidate_first_argument_literal_status_ids[] = (int)$row->direct_call_candidate_first_argument_literal_status_id;
+ 	}
+ 
+ 	public static function append_worker_function_import_snapshot(ReferenceContractWorkerInput $input, ProjectSymbolIndex $symbols, ProjectSymbolFunctionImportRow $row): void {
+@@ -968,9 +939,7 @@ final class project_reference_resolution {
+ 		$input->source_length = (int)$sourceUnit->source_length;
+ 		$input->line_count = (int)$sourceUnit->line_count;
+ 		$input->entry_symbol_id = (int)$entrySymbol->symbol_id;
+-		if (!project_symbol_index::symbol_has_direct_call_candidate($entrySymbol)) {
+-			$input->source_text = $entryText;
+-		}
++		$input->source_text = $entryText;
+ 		project_reference_resolution::reserve_reference_contract_worker_input($input, (int)$symbols->symbol_count);
+ 		foreach ($symbols->rows as $row) {
+ 			project_reference_resolution::append_worker_symbol_snapshot($input, $symbols, $row);
+@@ -1037,14 +1006,6 @@ final class project_reference_resolution {
+ 			$row->source_unit_key_id = project_symbol_index::intern_source_unit_key($symbols, $sourceUnitKey);
+ 			$row->parameter_count = structure_row_ids::uint32_from_int(project_reference_resolution::snapshot_int_at($input->symbol_parameter_counts, $index));
+ 			$row->first_parameter_type_ref_id = structure_row_ids::uint32_from_int(project_reference_resolution::snapshot_int_at($input->symbol_first_parameter_type_ref_ids, $index));
+-			$row->direct_call_candidate_node_id = structure_row_ids::uint32_from_int(project_reference_resolution::snapshot_int_at($input->symbol_direct_call_candidate_node_ids, $index));
+-			$directCallCandidateCalleeName string = project_reference_resolution::snapshot_string_at($input->symbol_direct_call_candidate_callee_names, $index);
+-			if ($directCallCandidateCalleeName !== "") {
+-				$row->direct_call_candidate_callee_name_id = project_symbol_index::intern_name($symbols, $directCallCandidateCalleeName);
+-			}
+-			$row->direct_call_candidate_argument_count = structure_row_ids::uint32_from_int(project_reference_resolution::snapshot_int_at($input->symbol_direct_call_candidate_argument_counts, $index));
+-			$row->direct_call_candidate_first_argument_literal_type_ref_id = structure_row_ids::uint32_from_int(project_reference_resolution::snapshot_int_at($input->symbol_direct_call_candidate_first_argument_literal_type_ref_ids, $index));
+-			$row->direct_call_candidate_first_argument_literal_status_id = structure_row_ids::uint16_from_int(project_reference_resolution::snapshot_int_at($input->symbol_direct_call_candidate_first_argument_literal_status_ids, $index));
+ 			project_symbol_index::record_function_name_symbol($symbols, $row);
+ 			$symbols->rows[] = $row;
+ 			$index = $index + 1;
+@@ -1076,36 +1037,22 @@ final class project_reference_resolution {
+ 		$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
+ 		$contracts ProjectCallableContractArtifact = project_callable_contracts::new_artifact(1);
+ 		$parserErrors int = 0;
+-		$reference ProjectReferenceResolutionRow = [];
+-		if (project_symbol_index::symbol_has_direct_call_candidate($entrySymbol)) {
+-			$reference = project_reference_resolution::append_direct_call_from_candidate_fields_with_first_argument_type(
+-				$references,
+-				$symbols,
+-				$entrySymbol,
+-				$entrySymbol->direct_call_candidate_node_id,
+-				project_symbol_index::direct_call_candidate_callee_name($symbols, $entrySymbol),
+-				$entrySymbol->direct_call_candidate_argument_count,
+-				$entrySymbol->direct_call_candidate_first_argument_literal_type_ref_id,
+-				$entrySymbol->direct_call_candidate_first_argument_literal_status_id
+-			);
+-		} else {
+-			$fallbackSourceText string = $input->source_text;
+-			$tokens TokenStream = phs_tokenizer::from_source_text(
+-				structure_row_ids::uint32_from_int($input->source_unit_id),
+-				structure_row_ids::uint32_from_int(1),
+-				$fallbackSourceText
+-			);
+-			$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-			$sourceUnit SourceUnitTableRow = project_reference_resolution::source_unit_from_reference_contract_worker_input($input);
+-			$model FrontendModel = frontend_model_builder::parse_source_unit(
+-				$sourceUnit,
+-				$fallbackSourceText,
+-				$tokens,
+-				$counters
+-			);
+-			$reference = project_reference_resolution::append_direct_call_from_frontend($references, $symbols, $model, $fallbackSourceText, $entrySymbol);
+-			$parserErrors = (int)$model->parser_error_count;
+-		}
++		$fallbackSourceText string = $input->source_text;
++		$tokens TokenStream = phs_tokenizer::from_source_text(
++			structure_row_ids::uint32_from_int($input->source_unit_id),
++			structure_row_ids::uint32_from_int(1),
++			$fallbackSourceText
++		);
++		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
++		$sourceUnit SourceUnitTableRow = project_reference_resolution::source_unit_from_reference_contract_worker_input($input);
++		$model FrontendModel = frontend_model_builder::parse_source_unit(
++			$sourceUnit,
++			$fallbackSourceText,
++			$tokens,
++			$counters
++		);
++		$reference ProjectReferenceResolutionRow = project_reference_resolution::append_direct_call_from_frontend($references, $symbols, $model, $fallbackSourceText, $entrySymbol);
++		$parserErrors = (int)$model->parser_error_count;
+ 		if ((int)$reference->status_id === (int)project_reference_resolution::status_resolved_id()) {
+ 			project_callable_contracts::append_from_reference($contracts, $reference, $references, $symbols);
+ 		}
+@@ -1152,8 +1099,7 @@ final class project_reference_resolution {
+ 			$index int = 0;
+ 			while ($index < count($input->symbol_ids)) {
+ 				if (project_reference_resolution::snapshot_int_at($input->symbol_ids, $index) === (int)$input->entry_symbol_id
+-					&& project_reference_resolution::snapshot_int_at($input->symbol_direct_call_candidate_node_ids, $index) > 0
+-					&& project_reference_resolution::snapshot_string_at($input->symbol_direct_call_candidate_callee_names, $index) !== "") {
++					&& $input->source_text !== "") {
+ 					$total = $total + 1;
+ 					break;
+ 				}
+diff --git a/compiler/src/compile/model/project_symbol_index.phs b/compiler/src/compile/model/project_symbol_index.phs
+index 59b12687..4d4c021e 100644
+--- a/compiler/src/compile/model/project_symbol_index.phs
++++ b/compiler/src/compile/model/project_symbol_index.phs
+@@ -330,10 +330,6 @@ final class project_symbol_index {
+ 		return project_symbol_index::materialized_string($index->names, $row->name_id, "");
+ 	}
+ 
+-	public static function direct_call_candidate_callee_name(ProjectSymbolIndex $index, ProjectSymbolIndexRow $row): string {
+-		return project_symbol_index::materialized_string($index->names, $row->direct_call_candidate_callee_name_id, "");
+-	}
+-
+ 	public static function qualified_name(ProjectSymbolIndex $index, ProjectSymbolIndexRow $row): string {
+ 		return project_symbol_index::materialized_string($index->qualified_names, $row->qualified_name_id, "");
+ 	}
+@@ -664,102 +660,6 @@ final class project_symbol_index {
+ 		return $literal;
+ 	}
+ 
+-	public static function fill_direct_call_candidate_from_value_node(ProjectSymbolIndex $index, ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendNodeRow $valueNode, FrontendModelKernelCounters $counters): bool {
+-		if ((int)$valueNode->row_family_id !== (int)frontend_model_tables::row_family_expression_id()
+-			|| (int)$valueNode->row_kind_id !== (int)frontend_model_tables::row_kind_expression_call_id()) {
+-			return false;
+-		}
+-		$expression FrontendExpressionPayloadRow = frontend_model_tables::expression_by_id($model, $valueNode->payload_row_id, $counters);
+-		$name FrontendNamePayloadRow = frontend_model_tables::name_by_id($model, $expression->callee_name_id, $counters);
+-		$calleeName string = project_symbol_index::source_range_text($model, $sourceText, $name->source_range_id);
+-		if ($calleeName === "") {
+-			return false;
+-		}
+-		$row->direct_call_candidate_node_id = $valueNode->node_id;
+-		$row->direct_call_candidate_callee_name_id = project_symbol_index::intern_name($index, $calleeName);
+-		$row->direct_call_candidate_argument_count = structure_row_ids::uint32_from_int((int)$expression->argument_count);
+-		$argumentNodeId uint32 = $expression->first_argument_node_id;
+-		if ((int)$argumentNodeId === 0) {
+-			$argumentNodeId = $valueNode->first_child_node_id;
+-		}
+-		if ((int)$argumentNodeId > 0) {
+-			$argumentNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $argumentNodeId, $counters);
+-			if ((int)$argumentNode->row_family_id === (int)frontend_model_tables::row_family_expression_id()
+-				&& (int)$argumentNode->row_kind_id === (int)frontend_model_tables::row_kind_expression_literal_id()) {
+-				$argumentLiteral FrontendLiteralPayloadRow = frontend_model_tables::literal_by_id($model, $argumentNode->payload_row_id, $counters);
+-				$row->direct_call_candidate_first_argument_literal_node_id = $argumentNode->node_id;
+-				$row->direct_call_candidate_first_argument_literal_type_ref_id = $argumentLiteral->type_ref_id;
+-				$row->direct_call_candidate_first_argument_literal_numeric_payload = $argumentLiteral->numeric_payload;
+-				$row->direct_call_candidate_first_argument_literal_status_id = $argumentLiteral->literal_status_id;
+-			}
+-		}
+-		return true;
+-	}
+-
+-	public static function fill_direct_call_candidate_fields(ProjectSymbolIndex $index, ProjectSymbolIndexRow &$row, const string &$sourceText, FrontendModel $model, FrontendDeclarationPayloadRow $declaration): void {
+-		if ((int)$model->parser_error_count > 0 || (int)$declaration->body_node_id === 0) {
+-			return;
+-		}
+-		$counters FrontendModelKernelCounters = new FrontendModelKernelCounters();
+-		$statementNodeId uint32 = $declaration->body_node_id;
+-		while ((int)$statementNodeId > 0) {
+-			$statementNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statementNodeId, $counters);
+-			if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_return_id()) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				project_symbol_index::fill_direct_call_candidate_from_value_node($index, $row, $sourceText, $model, $valueNode, $counters);
+-				return;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_expression_id()) {
+-				$statement FrontendStatementPayloadRow = frontend_model_tables::statement_by_id($model, $statementNode->payload_row_id, $counters);
+-				$valueNode FrontendNodeRow = frontend_model_tables::node_by_id($model, $statement->value_node_id, $counters);
+-				project_symbol_index::fill_direct_call_candidate_from_value_node($index, $row, $sourceText, $model, $valueNode, $counters);
+-				return;
+-			} else if ((int)$statementNode->row_family_id === (int)frontend_model_tables::row_family_statement_id()
+-				&& (int)$statementNode->row_kind_id === (int)frontend_model_tables::row_kind_statement_local_declaration_id()) {
+-				$statementNodeId = $statementNode->next_sibling_node_id;
+-				continue;
+-			} else {
+-				return;
+-			}
+-			$statementNodeId = $statementNode->next_sibling_node_id;
+-		}
+-	}
+-
+-	public static function symbol_has_direct_call_candidate(ProjectSymbolIndexRow $row): bool {
+-		return (int)$row->direct_call_candidate_node_id > 0
+-			&& (int)$row->direct_call_candidate_callee_name_id > 0;
+-	}
+-
+-	public static function symbol_has_direct_call_candidate_first_literal_argument(ProjectSymbolIndexRow $row): bool {
+-		return project_symbol_index::symbol_has_direct_call_candidate($row)
+-			&& (int)$row->direct_call_candidate_first_argument_literal_node_id > 0
+-			&& (int)$row->direct_call_candidate_first_argument_literal_type_ref_id > 0
+-			&& project_symbol_index::literal_status_ready($row->direct_call_candidate_first_argument_literal_status_id);
+-	}
+-
+-	public static function direct_call_candidate_first_literal_argument_node(ProjectSymbolIndexRow $row): FrontendNodeRow {
+-		if (!project_symbol_index::symbol_has_direct_call_candidate_first_literal_argument($row)) {
+-			$empty FrontendNodeRow = [];
+-			return $empty;
+-		}
+-		$node FrontendNodeRow = [];
+-		$node->node_id = $row->direct_call_candidate_first_argument_literal_node_id;
+-		return $node;
+-	}
+-
+-	public static function direct_call_candidate_first_literal_argument_payload(ProjectSymbolIndexRow $row): FrontendLiteralPayloadRow {
+-		$literal FrontendLiteralPayloadRow = [];
+-		if (!project_symbol_index::symbol_has_direct_call_candidate_first_literal_argument($row)) {
+-			return $literal;
+-		}
+-		$literal->type_ref_id = $row->direct_call_candidate_first_argument_literal_type_ref_id;
+-		$literal->numeric_payload = $row->direct_call_candidate_first_argument_literal_numeric_payload;
+-		$literal->literal_status_id = $row->direct_call_candidate_first_argument_literal_status_id;
+-		return $literal;
+-	}
+-
+ 	public static function parameter_list_count(FrontendModel $model, uint32 $parameterListNodeId, uint32 &$firstParameterTypeRefId, string &$signatureParameterShape): uint32 {
+ 		$firstParameterTypeRefId = structure_row_ids::none_id();
+ 		$signatureParameterShape = "";
+@@ -957,7 +857,6 @@ final class project_symbol_index {
+ 		$row->public_surface_hash = source_buffers::content_hash32(project_symbol_identity::export_shape_key_from_signature_shape($signatureShape));
+ 		$row->body_hash = source_buffers::content_hash32(project_symbol_identity::body_shape_key_from_body_shape($bodyShape));
+ 		project_symbol_index::append_parameter_rows_from_declaration($index, $row, $model, $declaration);
+-		project_symbol_index::fill_direct_call_candidate_fields($index, $row, $sourceText, $model, $declaration);
+ 		project_symbol_index::fill_return_literal_fields($row, $model, $declaration);
+ 		return $row;
+ 	}
+diff --git a/compiler/src/compile/support/pure_tdd_stage_artifacts.phs b/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
+index 56c4f2ce..b8f185a2 100644
+--- a/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
++++ b/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
+@@ -90,7 +90,7 @@ final class pure_tdd_stage_artifacts {
+ 	}
+ 
+ 	public static function parse_resolve_tsv(ProjectSymbolIndex $symbols): string {
+-		$text string = "symbol_id\tsource_unit_id\tsymbol_kind_id\tstatus_id\tname_id\treturn_type_ref_id\tparameter_count\tbody_first_node_id\treturn_literal_node_id\treturn_literal_type_ref_id\treturn_literal_numeric_payload\tdirect_call_candidate_node_id\n";
++		$text string = "symbol_id\tsource_unit_id\tsymbol_kind_id\tstatus_id\tname_id\treturn_type_ref_id\tparameter_count\tbody_first_node_id\treturn_literal_node_id\treturn_literal_type_ref_id\treturn_literal_numeric_payload\n";
+ 		foreach ($symbols->rows as $row) {
+ 			$text = $text
+ 				. (int)$row->symbol_id . "\t"
+@@ -103,8 +103,7 @@ final class pure_tdd_stage_artifacts {
+ 				. (int)$row->body_first_node_id . "\t"
+ 				. (int)$row->return_literal_node_id . "\t"
+ 				. (int)$row->return_literal_type_ref_id . "\t"
+-				. (int)$row->return_literal_numeric_payload . "\t"
+-				. (int)$row->direct_call_candidate_node_id . "\n";
++				. (int)$row->return_literal_numeric_payload . "\n";
+ 		}
+ 		return $text;
+ 	}
+diff --git a/compiler/src/structures/project/project_symbol_index_row.phs b/compiler/src/structures/project/project_symbol_index_row.phs
+index f8c9a0bf..0a881be8 100644
+--- a/compiler/src/structures/project/project_symbol_index_row.phs
++++ b/compiler/src/structures/project/project_symbol_index_row.phs
+@@ -22,13 +22,6 @@ struct ProjectSymbolIndexRow {
+ 	public uint32 $body_node_count = 0;
+ 	public uint32 $public_surface_hash = 0;
+ 	public uint32 $body_hash = 0;
+-	public uint32 $direct_call_candidate_node_id = 0;
+-	public uint32 $direct_call_candidate_callee_name_id = 0;
+-	public uint32 $direct_call_candidate_argument_count = 0;
+-	public uint32 $direct_call_candidate_first_argument_literal_node_id = 0;
+-	public uint32 $direct_call_candidate_first_argument_literal_type_ref_id = 0;
+-	public int32 $direct_call_candidate_first_argument_literal_numeric_payload = 0;
+-	public uint16 $direct_call_candidate_first_argument_literal_status_id = 0;
+ 	public uint32 $return_literal_node_id = 0;
+ 	public uint32 $return_literal_payload_id = 0;
+ 	public uint32 $return_literal_source_range_id = 0;

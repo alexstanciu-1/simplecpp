@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct ResidentSourceUnitFrontendPayloadAdoptionRow;
+struct ResidentSourceUnitFrontendPayloadArenaContractRow;
+struct ResidentSourceUnitFrontendPayloadTableRow;
+ResidentSourceUnitFrontendPayloadAdoptionRow __latency_fn_resident_source_unit_frontend_payload_tables_adoption_row_from_descriptor_install_row(ResidentSourceUnitFrontendPayloadTableRow payloadTable, ResidentSourceUnitFrontendPayloadArenaContractRow contractRow, int_t<> adoptionRowId, int_t<std::uint32_t> publishedRowFirstId);
+}

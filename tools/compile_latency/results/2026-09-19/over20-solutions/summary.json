@@ -1,0 +1,50 @@
+[
+  {
+    "case": "model-table-helper",
+    "baseline_single_screening_seconds": 141.7437613279908,
+    "trials": [
+      4,
+      5,
+      6
+    ],
+    "native_seconds": [
+      2.9756291919911746,
+      2.846684641990578,
+      2.847036211984232
+    ],
+    "median_native_seconds": 2.847036211984232,
+    "same_work_set": [
+      "expanded/__callable/frontend_model_tables_locations.o",
+      "expanded_parts/__callable/frontend_model_builder_mark_expression_node_flag.o",
+      "expanded_parts/__callable/frontend_model_builder_retag_expression_node_type.o",
+      "expanded_parts/__callable/frontend_model_tables_latency_update_expression_payload.o",
+      "expanded_parts/main.o",
+      "main"
+    ],
+    "median_with_assumed_frontend_seconds": 4.347036211984232
+  },
+  {
+    "case": "frontend-counter-layout",
+    "baseline_single_screening_seconds": 181.19396219900227,
+    "trials": [
+      1,
+      2,
+      3
+    ],
+    "native_seconds": [
+      3.069120236003073,
+      3.597001509013353,
+      3.3731102210003883
+    ],
+    "median_native_seconds": 3.3731102210003883,
+    "same_work_set": [
+      "expanded/__callable/frontend_model_tables_locations.o",
+      "expanded/__counter/boundary.o",
+      "expanded/structure_kernel/frontend_model_kernel_counters.o",
+      "expanded_parts/__callable/frontend_model_tables_update_expression_payload.o",
+      "expanded_parts/main.o",
+      "main"
+    ],
+    "median_with_assumed_frontend_seconds": 4.873110221000388
+  }
+]

@@ -1,0 +1,46 @@
+--- before/__callable/control_flow_dataflows_group_1.cpp
++++ after/__callable/control_flow_dataflows_group_1.cpp
+@@ -1,6 +1,7 @@
+ #include <scpp/lang/php.hpp>
+ #include "__types/ControlFlowDataflowArtifact.hpp"
+ #include "__types/ControlFlowDataflowRow.hpp"
++#include "__types/ControlFlowLocalWriteSet.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_branch_kind_loop_update_id.hpp"
+ #include "__callable/__latency_fn_structure_row_ids_uint16_from_int.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_status_definitely_assigned_id.hpp"
+@@ -27,6 +28,8 @@
+ #include "__callable/__latency_fn_control_flow_dataflows_local_name_id.hpp"
+ #include "__callable/__latency_fn_structure_row_ids_none_id.hpp"
+ #include "__callable/__latency_fn_structure_row_ids_uint32_from_int.hpp"
++#include "__callable/__latency_fn_control_flow_dataflows_empty_local_write_set.hpp"
++#include "__callable/__latency_fn_control_flow_dataflows_append_local_write_set_row.hpp"
+ #include "__callable/__latency_fn_control_flow_dataflows_append_row.hpp"
+ #include "__callable/__latency_fn_structure_row_ids_next_dense_id.hpp"
+ #include "__callable/__latency_fn_structure_row_ids_uint32_from_int.hpp"
+@@ -157,6 +160,26 @@
+ 	}
+ 	(void) artifact->local_names.append(name);
+ 	return __latency_fn_structure_row_ids_uint32_from_int(php::count(artifact->local_names));
++}
++
++}
++
++namespace scpp { extern const int __latency_lines_control_flow_dataflows[]; }
++namespace scpp {
++shared_p<ControlFlowLocalWriteSet> __latency_fn_control_flow_dataflows_empty_local_write_set() {
++	SCPP_CALL_DEPTH_GUARD("control_flow_dataflows::empty_local_write_set", "/tmp/scpp-edit-latency-20260919/app/compile/control_flow/control_flow_dataflows.phs", __latency_lines_control_flow_dataflows[29]);
++	return create<ControlFlowLocalWriteSet>();
++}
++
++}
++
++namespace scpp { extern const int __latency_lines_control_flow_dataflows[]; }
++namespace scpp {
++void __latency_fn_control_flow_dataflows_append_local_write_set_row(shared_p<ControlFlowLocalWriteSet>& writes, int_t<std::uint32_t> nameId, int_t<std::uint32_t> sourceRowId, int_t<std::uint32_t> typeRefId) {
++	SCPP_CALL_DEPTH_GUARD("control_flow_dataflows::append_local_write_set_row", "/tmp/scpp-edit-latency-20260919/app/compile/control_flow/control_flow_dataflows.phs", __latency_lines_control_flow_dataflows[30]);
++	(void) writes->name_ids.push_back(nameId);
++	(void) writes->source_row_ids.push_back(sourceRowId);
++	(void) writes->type_ref_ids.push_back(typeRefId);
+ }
+ 
+ }

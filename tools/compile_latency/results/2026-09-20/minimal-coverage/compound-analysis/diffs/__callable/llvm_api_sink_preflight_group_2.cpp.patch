@@ -1,0 +1,57 @@
+--- before/__callable/llvm_api_sink_preflight_group_2.cpp
++++ after/__callable/llvm_api_sink_preflight_group_2.cpp
+@@ -150,7 +150,10 @@
+ namespace scpp {
+ string_t __latency_fn_llvm_api_sink_preflight_preflight_debug_string(LlvmApiSinkPreflightRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("llvm_api_sink_preflight::preflight_debug_string", "/tmp/scpp-edit-latency-20260919/app/compile/backend/llvm_api_sink_preflight.phs", __latency_lines_llvm_api_sink_preflight[28]);
+-	return (string_t("llvm_api_sink_preflight:") + cast<string_t>(cast<int_t<>>(row->preflight_id)) + string_t(":") + cast<string_t>(__latency_fn_llvm_api_sink_preflight_status_name(row->status_id)));
++	string_t text = required_cast<string_t>(string_t("llvm_api_sink_preflight:"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->preflight_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(__latency_fn_llvm_api_sink_preflight_status_name(row->status_id)));
++	return text;
+ }
+ 
+ }
+@@ -159,7 +162,10 @@
+ namespace scpp {
+ string_t __latency_fn_llvm_api_sink_preflight_module_build_debug_string(LlvmApiModuleBuildRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("llvm_api_sink_preflight::module_build_debug_string", "/tmp/scpp-edit-latency-20260919/app/compile/backend/llvm_api_sink_preflight.phs", __latency_lines_llvm_api_sink_preflight[29]);
+-	return (string_t("llvm_api_module_build:") + cast<string_t>(cast<int_t<>>(row->module_build_id)) + string_t(":") + cast<string_t>(__latency_fn_llvm_api_sink_preflight_status_name(row->status_id)));
++	string_t text = required_cast<string_t>(string_t("llvm_api_module_build:"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->module_build_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(__latency_fn_llvm_api_sink_preflight_status_name(row->status_id)));
++	return text;
+ }
+ 
+ }
+@@ -168,7 +174,10 @@
+ namespace scpp {
+ string_t __latency_fn_llvm_api_sink_preflight_handle_summary_debug_string(LlvmApiHandleMapSummaryRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("llvm_api_sink_preflight::handle_summary_debug_string", "/tmp/scpp-edit-latency-20260919/app/compile/backend/llvm_api_sink_preflight.phs", __latency_lines_llvm_api_sink_preflight[30]);
+-	return (string_t("llvm_api_handle_map:") + cast<string_t>(cast<int_t<>>(row->summary_id)) + string_t(":") + cast<string_t>(__latency_fn_llvm_api_sink_preflight_status_name(row->status_id)));
++	string_t text = required_cast<string_t>(string_t("llvm_api_handle_map:"));
++	text = (cast<string_t>(text) + cast<string_t>(cast<int_t<>>(row->summary_id)));
++	text = (cast<string_t>(text) + string_t(":") + cast<string_t>(__latency_fn_llvm_api_sink_preflight_status_name(row->status_id)));
++	return text;
+ }
+ 
+ }
+@@ -177,7 +186,17 @@
+ namespace scpp {
+ int_t<std::uint64_t> __latency_fn_llvm_api_sink_preflight_preflight_stable_hash(LlvmApiSinkPreflightRow row) {
+ 	SCPP_CALL_DEPTH_GUARD("llvm_api_sink_preflight::preflight_stable_hash", "/tmp/scpp-edit-latency-20260919/app/compile/backend/llvm_api_sink_preflight.phs", __latency_lines_llvm_api_sink_preflight[31]);
+-	string_t identity = required_cast<string_t>((string_t("llvm_api_sink_preflight:v1:") + cast<string_t>(cast<int_t<>>(row->preflight_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->sink_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->owner_source_unit_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->owner_symbol_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->emission_decision_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->value_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->block_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->sidecar_count)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":") + cast<string_t>(cast<int_t<>>(row->blocked_reason_id))));
++	string_t identity = required_cast<string_t>(string_t("llvm_api_sink_preflight:v1:"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->preflight_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->sink_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->owner_source_unit_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->owner_symbol_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->emission_decision_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->value_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->block_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->sidecar_count)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->status_id)) + string_t(":"));
++	identity = (cast<string_t>(identity) + cast<string_t>(cast<int_t<>>(row->blocked_reason_id)));
+ 	return php::stable_hash_string_u64(identity);
+ }
+ 

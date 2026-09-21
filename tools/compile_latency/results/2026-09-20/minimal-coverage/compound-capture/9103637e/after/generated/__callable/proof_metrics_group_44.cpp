@@ -1,0 +1,180 @@
+#include <scpp/lang/php.hpp>
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_frontend_node_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_reserved_handles.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_worker_acquired_handles.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_worker_payload_ready_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_coordinator_adoption_ready_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_blocked_reason_coordinator_adoption_missing.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_published_payload_segments.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_metadata_commit_bytes.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_payload_copy_bytes.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_runs.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_token_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_frontend_node_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_materialization_inputs.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_worker_payload_ready_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adopted_segments.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adoption_ready_rows.hpp"
+#include "__callable/__latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_input_rows.hpp"
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_frontend_node_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_frontend_node_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[791]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_frontend_node_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_reserved_handles() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_reserved_handles", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[792]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_reserved_handles");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_worker_acquired_handles() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_worker_acquired_handles", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[793]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_worker_acquired_handles");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_worker_payload_ready_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_worker_payload_ready_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[794]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_worker_payload_ready_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_coordinator_adoption_ready_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_coordinator_adoption_ready_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[795]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_coordinator_adoption_ready_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_blocked_reason_coordinator_adoption_missing() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_blocked_reason_coordinator_adoption_missing", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[796]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_blocked_reason_coordinator_adoption_missing");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_published_payload_segments() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_published_payload_segments", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[797]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_published_payload_segments");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_metadata_commit_bytes() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_metadata_commit_bytes", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[798]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_metadata_commit_bytes");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_materialization_payload_copy_bytes() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_materialization_payload_copy_bytes", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[799]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_materialization_payload_copy_bytes");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_runs() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_runs", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[800]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_runs");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[801]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_token_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_token_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[802]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_token_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_frontend_node_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_frontend_node_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[803]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_frontend_node_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_materialization_inputs() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_materialization_inputs", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[804]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_materialization_inputs");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_worker_payload_ready_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_worker_payload_ready_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[805]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_worker_payload_ready_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adopted_segments() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adopted_segments", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[806]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adopted_segments");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adoption_ready_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adoption_ready_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[807]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_coordinator_adoption_ready_rows");
+}
+
+}
+
+namespace scpp { extern const int __latency_lines_proof_metrics[]; }
+namespace scpp {
+string_t __latency_fn_proof_metrics_key_source_unit_frontend_worker_task_payload_segment_adoption_publication_input_rows() {
+	SCPP_CALL_DEPTH_GUARD("proof_metrics::key_source_unit_frontend_worker_task_payload_segment_adoption_publication_input_rows", "/tmp/scpp-edit-latency-20260919/app/compile/support/proof_metrics.phs", __latency_lines_proof_metrics[808]);
+	return string_t("source_unit_frontend_worker_task_payload_segment_adoption_publication_input_rows");
+}
+
+}

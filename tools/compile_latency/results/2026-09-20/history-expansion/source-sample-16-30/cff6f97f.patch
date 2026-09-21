@@ -1,0 +1,135 @@
+diff --git a/compiler/src/compile/model/project_reference_resolution.phs b/compiler/src/compile/model/project_reference_resolution.phs
+index 101b2c67..ef3f7e44 100644
+--- a/compiler/src/compile/model/project_reference_resolution.phs
++++ b/compiler/src/compile/model/project_reference_resolution.phs
+@@ -64,7 +64,7 @@ final class project_reference_resolution {
+ 		return structure_row_ids::uint16_from_int(3);
+ 	}
+ 
+-	public static function resolution_kind_no_call_candidate_id(): uint16 {
++	public static function resolution_kind_no_call_expression_id(): uint16 {
+ 		return structure_row_ids::uint16_from_int(4);
+ 	}
+ 
+@@ -131,8 +131,8 @@ final class project_reference_resolution {
+ 		if ((int)$id === (int)project_reference_resolution::resolution_kind_multiple_matching_symbols_id()) {
+ 			return "multiple_matching_symbols";
+ 		}
+-		if ((int)$id === (int)project_reference_resolution::resolution_kind_no_call_candidate_id()) {
+-			return "no_call_candidate";
++		if ((int)$id === (int)project_reference_resolution::resolution_kind_no_call_expression_id()) {
++			return "no_call_expression";
+ 		}
+ 		return "unknown";
+ 	}
+@@ -241,8 +241,8 @@ final class project_reference_resolution {
+ 		return project_reference_resolution::materialized_string($artifact->callee_names, $row->callee_name_id, "");
+ 	}
+ 
+-	public static function candidate_row_key(ProjectReferenceResolution $artifact, ProjectReferenceResolutionRow $row): string {
+-		return "frontend_call_expression_node:" . (int)$row->candidate_row_id . ":callee:" . project_reference_resolution::callee_name($artifact, $row);
++	public static function call_expression_node_key(ProjectReferenceResolution $artifact, ProjectReferenceResolutionRow $row): string {
++		return "frontend_call_expression_node:" . (int)$row->call_expression_node_id . ":callee:" . project_reference_resolution::callee_name($artifact, $row);
+ 	}
+ 
+ 	public static function resolved_symbol_key(ProjectReferenceResolution $artifact, ProjectReferenceResolutionRow $row): string {
+@@ -495,7 +495,7 @@ final class project_reference_resolution {
+ 			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->reference_id);
+ 			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->from_symbol_id);
+ 			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->from_source_unit_id);
+-			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->candidate_row_id);
++			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->call_expression_node_id);
+ 			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->resolved_symbol_id);
+ 			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->resolved_source_unit_id);
+ 			$hash = project_reference_resolution::semantic_hash_mix_int($hash, (int)$row->match_count);
+@@ -704,16 +704,16 @@ final class project_reference_resolution {
+ 		return $rows;
+ 	}
+ 
+-	public static function append_direct_call_from_candidate_fields(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $fromSymbol, uint32 $candidateRowId, string $calleeName, uint32 $actualArgCount): ProjectReferenceResolutionRow {
+-		return project_reference_resolution::append_direct_call_from_candidate_fields_with_first_argument_type($artifact, $symbols, $fromSymbol, $candidateRowId, $calleeName, $actualArgCount, structure_row_ids::none_id(), structure_row_ids::none_kind_id());
++	public static function append_direct_call_from_call_expression_fields(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $fromSymbol, uint32 $callExpressionNodeId, string $calleeName, uint32 $actualArgCount): ProjectReferenceResolutionRow {
++		return project_reference_resolution::append_direct_call_from_call_expression_fields_with_first_argument_type($artifact, $symbols, $fromSymbol, $callExpressionNodeId, $calleeName, $actualArgCount, structure_row_ids::none_id(), structure_row_ids::none_kind_id());
+ 	}
+ 
+-	public static function append_direct_call_from_candidate_fields_with_first_argument_type(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $fromSymbol, uint32 $candidateRowId, string $calleeName, uint32 $actualArgCount, uint32 $actualFirstArgumentTypeRefId, uint16 $actualFirstArgumentStatusId): ProjectReferenceResolutionRow {
++	public static function append_direct_call_from_call_expression_fields_with_first_argument_type(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $fromSymbol, uint32 $callExpressionNodeId, string $calleeName, uint32 $actualArgCount, uint32 $actualFirstArgumentTypeRefId, uint16 $actualFirstArgumentStatusId): ProjectReferenceResolutionRow {
+ 		$row ProjectReferenceResolutionRow = [];
+ 		$row->reference_id = structure_row_ids::next_dense_id(count($artifact->rows));
+ 		$row->from_symbol_id = $fromSymbol->symbol_id;
+ 		$row->from_source_unit_id = $fromSymbol->source_unit_id;
+-		$row->candidate_row_id = $candidateRowId;
++		$row->call_expression_node_id = $callExpressionNodeId;
+ 		$fromSymbolKey string = project_symbol_index::symbol_key($symbols, $fromSymbol);
+ 		$fromSourceUnitKey string = project_symbol_index::source_unit_key($symbols, $fromSymbol);
+ 		$row->from_symbol_key_id = project_reference_resolution::intern_from_symbol_key($artifact, $fromSymbolKey);
+@@ -723,8 +723,8 @@ final class project_reference_resolution {
+ 		$row->actual_first_argument_type_ref_id = $actualFirstArgumentTypeRefId;
+ 		$row->actual_first_argument_status_id = $actualFirstArgumentStatusId;
+ 
+-		if ((int)$candidateRowId === 0 || $calleeName === "") {
+-			$row->resolution_kind_id = project_reference_resolution::resolution_kind_no_call_candidate_id();
++		if ((int)$callExpressionNodeId === 0 || $calleeName === "") {
++			$row->resolution_kind_id = project_reference_resolution::resolution_kind_no_call_expression_id();
+ 			$row->status_id = project_reference_resolution::status_unresolved_id();
+ 			$artifact->unresolved_count = structure_row_ids::uint32_from_int((int)$artifact->unresolved_count + 1);
+ 			$artifact->rows[] = $row;
+@@ -812,9 +812,9 @@ final class project_reference_resolution {
+ 		return $row;
+ 	}
+ 
+-	public static function append_direct_call_from_candidate_source_range(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, const string &$sourceText, ProjectSymbolIndexRow $fromSymbol, uint32 $candidateRowId, uint32 $calleeStartOffset, uint32 $calleeLength, uint32 $actualArgCount): ProjectReferenceResolutionRow {
++	public static function append_direct_call_from_call_expression_source_range(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, const string &$sourceText, ProjectSymbolIndexRow $fromSymbol, uint32 $callExpressionNodeId, uint32 $calleeStartOffset, uint32 $calleeLength, uint32 $actualArgCount): ProjectReferenceResolutionRow {
+ 		$calleeName string = project_reference_resolution::callee_name_from_source_range($sourceText, $calleeStartOffset, $calleeLength);
+-		return project_reference_resolution::append_direct_call_from_candidate_fields($artifact, $symbols, $fromSymbol, $candidateRowId, $calleeName, $actualArgCount);
++		return project_reference_resolution::append_direct_call_from_call_expression_fields($artifact, $symbols, $fromSymbol, $callExpressionNodeId, $calleeName, $actualArgCount);
+ 	}
+ 
+ 	public static function reference_contract_publication_row(uint32 $ownerRunId, ProjectSymbolIndexRow $entrySymbol, ProjectReferenceResolution $references, ProjectCallableContractArtifact $contracts): PartitionReadinessRow {
+@@ -1235,7 +1235,7 @@ final class project_reference_resolution {
+ 				}
+ 			}
+ 		}
+-		$reference ProjectReferenceResolutionRow = project_reference_resolution::append_direct_call_from_candidate_fields_with_first_argument_type($artifact, $symbols, $fromSymbol, $callNode->node_id, $calleeName, $actualArgCount, $actualFirstArgumentTypeRefId, $actualFirstArgumentStatusId);
++		$reference ProjectReferenceResolutionRow = project_reference_resolution::append_direct_call_from_call_expression_fields_with_first_argument_type($artifact, $symbols, $fromSymbol, $callNode->node_id, $calleeName, $actualArgCount, $actualFirstArgumentTypeRefId, $actualFirstArgumentStatusId);
+ 		project_reference_resolution::append_actual_arguments_from_call_expression($artifact, $reference, $model, $callNode);
+ 		project_reference_resolution::append_default_actual_arguments_from_resolved_target($artifact, $reference, $symbols);
+ 		return project_reference_resolution::row_by_id($artifact, $reference->reference_id);
+diff --git a/compiler/src/compile/model/reference_identity.phs b/compiler/src/compile/model/reference_identity.phs
+index 0e0f6d58..aadc631d 100644
+--- a/compiler/src/compile/model/reference_identity.phs
++++ b/compiler/src/compile/model/reference_identity.phs
+@@ -32,7 +32,7 @@ final class reference_identity {
+ 			return false;
+ 		}
+ 		return (int)$left->from_symbol_id === (int)$right->from_symbol_id
+-			&& (int)$left->candidate_row_id === (int)$right->candidate_row_id
++			&& (int)$left->call_expression_node_id === (int)$right->call_expression_node_id
+ 			&& (int)$left->callee_name_id === (int)$right->callee_name_id;
+ 	}
+ 
+@@ -40,7 +40,7 @@ final class reference_identity {
+ 		$identity string = "project_reference:v2:"
+ 			. project_reference_resolution::from_symbol_key($artifact, $row) . ":"
+ 			. project_reference_resolution::callee_name($artifact, $row) . ":"
+-			. project_reference_resolution::candidate_row_key($artifact, $row) . ":"
++			. project_reference_resolution::call_expression_node_key($artifact, $row) . ":"
+ 			. project_reference_resolution::resolved_symbol_key($artifact, $row) . ":"
+ 			. (int)$row->status_id;
+ 		return stable_hash_string_u64($identity);
+diff --git a/compiler/src/structures/project/project_reference_resolution_row.phs b/compiler/src/structures/project/project_reference_resolution_row.phs
+index e3aedc0f..4893caa5 100644
+--- a/compiler/src/structures/project/project_reference_resolution_row.phs
++++ b/compiler/src/structures/project/project_reference_resolution_row.phs
+@@ -1,9 +1,9 @@
+-// Role: One call-candidate reference resolved against the project symbol index.
++// Role: One call-expression reference resolved against the project symbol index.
+ struct ProjectReferenceResolutionRow {
+ 	public uint32 $reference_id = 0;
+ 	public uint32 $from_symbol_id = 0;
+ 	public uint32 $from_source_unit_id = 0;
+-	public uint32 $candidate_row_id = 0;
++	public uint32 $call_expression_node_id = 0;
+ 	public uint32 $resolved_symbol_id = 0;
+ 	public uint32 $resolved_source_unit_id = 0;
+ 	public uint16 $resolution_kind_id = 0;

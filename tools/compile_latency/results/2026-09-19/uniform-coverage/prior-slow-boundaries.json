@@ -1,0 +1,91 @@
+[
+  {
+    "commit": "1a24a85d",
+    "prior_native_seconds": 139.1433576240088,
+    "changed_headers": [
+      {
+        "header": "compile/support/pure_tdd_stage_artifacts.hpp",
+        "eligible_owner_source": false,
+        "template_owner_source": true
+      },
+      {
+        "header": "compile/support/compiler_export_artifacts.hpp",
+        "eligible_owner_source": false,
+        "template_owner_source": true
+      }
+    ],
+    "source_patch_classification": "Adds export helpers, including a writable-string adapter; existing types",
+    "new_type_publication_required": false,
+    "classification_basis": "Manual reading of the archived exact source patch; header correlation alone is insufficient"
+  },
+  {
+    "commit": "534d70a6",
+    "prior_native_seconds": 177.86660870999913,
+    "changed_headers": [
+      {
+        "header": "compile/pipeline/pipeline_config_helpers.hpp",
+        "eligible_owner_source": true,
+        "template_owner_source": false
+      }
+    ],
+    "source_patch_classification": "Removes a legacy environment fallback helper; plain static callable",
+    "new_type_publication_required": false,
+    "classification_basis": "Manual reading of the archived exact source patch; header correlation alone is insufficient"
+  },
+  {
+    "commit": "e8e8a063",
+    "prior_native_seconds": 141.29517816001317,
+    "changed_headers": [
+      {
+        "header": "compile/backend/llvm_text_from_plan.hpp",
+        "eligible_owner_source": false,
+        "template_owner_source": true
+      }
+    ],
+    "source_patch_classification": "Removes dead LLVM helpers from a template-bearing owner",
+    "new_type_publication_required": false,
+    "classification_basis": "Manual reading of the archived exact source patch; header correlation alone is insufficient"
+  },
+  {
+    "commit": "5ce42535",
+    "prior_native_seconds": 138.97041815301054,
+    "changed_headers": [
+      {
+        "header": "compile/backend/llvm_text_from_plan.hpp",
+        "eligible_owner_source": false,
+        "template_owner_source": true
+      }
+    ],
+    "source_patch_classification": "Adds an LLVM source-filename helper and updates three calls",
+    "new_type_publication_required": false,
+    "classification_basis": "Manual reading of the archived exact source patch; header correlation alone is insufficient"
+  },
+  {
+    "commit": "43a83246",
+    "prior_native_seconds": 143.4053347390145,
+    "changed_headers": [
+      {
+        "header": "compile/backend/llvm_text_from_plan.hpp",
+        "eligible_owner_source": false,
+        "template_owner_source": true
+      }
+    ],
+    "source_patch_classification": "Adds BackendFunctionCompositionInput with eight fields and coordinates two-owner calls",
+    "new_type_publication_required": true,
+    "classification_basis": "Manual reading of the archived exact source patch; header correlation alone is insufficient"
+  },
+  {
+    "commit": "cf3c2d08",
+    "prior_native_seconds": 139.0939780260087,
+    "changed_headers": [
+      {
+        "header": "compile/backend/llvm_text_from_plan.hpp",
+        "eligible_owner_source": false,
+        "template_owner_source": true
+      }
+    ],
+    "source_patch_classification": "Removes obsolete LLVM delegates from a template-bearing owner",
+    "new_type_publication_required": false,
+    "classification_basis": "Manual reading of the archived exact source patch; header correlation alone is insufficient"
+  }
+]

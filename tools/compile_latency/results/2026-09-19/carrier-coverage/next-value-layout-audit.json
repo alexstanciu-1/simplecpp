@@ -1,0 +1,28 @@
+{
+  "scope": "Lexical direct mentions, not a semantic or transitive complete-type dependency closure. No native timings or output changes.",
+  "type": "TypeTraitRow",
+  "active_cpp_mentions": [
+    "__callable/backend_emission_decisions_group_2.cpp",
+    "__callable/llvm_text_from_plan_group_13.cpp",
+    "__callable/llvm_text_from_plan_group_14.cpp",
+    "__callable/llvm_text_from_plan_group_2.cpp",
+    "__callable/llvm_text_from_plan_group_4.cpp",
+    "__callable/local_body_lowering_group_0.cpp",
+    "__callable/operation_readiness_group_9.cpp",
+    "__callable/storage_lifetime_readiness_group_3.cpp",
+    "__callable/storage_lifetime_readiness_group_4.cpp",
+    "__callable/type_capability_readiness_group_10.cpp",
+    "__callable/type_capability_readiness_group_11.cpp",
+    "__callable/type_capability_readiness_group_4.cpp",
+    "__callable/type_capability_readiness_group_8.cpp",
+    "__callable/type_capability_readiness_group_9.cpp",
+    "__callable/type_traits_group_3.cpp",
+    "__callable/type_traits_group_4.cpp",
+    "__callable/type_traits_group_5.cpp",
+    "__callable/type_traits_group_6.cpp"
+  ],
+  "non_callable_headers_excluding_bare_forwards": [
+    "structures/capabilities/type_trait_table.hpp",
+    "structures/capabilities/type_trait_row.hpp"
+  ]
+}

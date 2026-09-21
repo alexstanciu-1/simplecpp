@@ -1,0 +1,10 @@
+[1/9] clang++ -std=c++23 -I../callables/generated -O0 -c ../callables/generated/pair.cpp -o callables/pair.o
+[2/9] clang++ -std=c++23 -I../callables/generated -O0 -c ../callables/generated/main.cpp -o callables/main.o
+[3/9] clang++ -std=c++23 -I../callables/generated -O0 -c /tmp/scpp-callable-ownership-khu6hdes/app/.prism/callables/generated/__callable/Alpha___scpp_static_accepts.cpp -o callables/__callable/Alpha___scpp_static_accepts.o
+[4/9] clang++ -std=c++23 -I../callables/generated -O0 -c /tmp/scpp-callable-ownership-khu6hdes/app/.prism/callables/generated/__callable/Alpha_value.cpp -o callables/__callable/Alpha_value.o
+[5/9] clang++ -std=c++23 -I../callables/generated  -c /tmp/scpp-callable-ownership-khu6hdes/app/.prism/callables/generated/__callable/Alpha_locations.cpp -o callables/__callable/Alpha_locations.o
+[6/9] clang++ -std=c++23 -I../callables/generated -O0 -c /tmp/scpp-callable-ownership-khu6hdes/app/.prism/callables/generated/__callable/Beta___scpp_static_accepts.cpp -o callables/__callable/Beta___scpp_static_accepts.o
+[7/9] clang++ -std=c++23 -I../callables/generated -O0 -c /tmp/scpp-callable-ownership-khu6hdes/app/.prism/callables/generated/__callable/Beta_value.cpp -o callables/__callable/Beta_value.o
+[8/9] clang++ -std=c++23 -I../callables/generated  -c /tmp/scpp-callable-ownership-khu6hdes/app/.prism/callables/generated/__callable/Beta_locations.cpp -o callables/__callable/Beta_locations.o
+[9/9] clang++ callables/pair.o callables/__callable/Alpha___scpp_static_accepts.o callables/__callable/Alpha_value.o callables/__callable/Alpha_locations.o callables/__callable/Beta___scpp_static_accepts.o callables/__callable/Beta_value.o callables/__callable/Beta_locations.o callables/main.o -o main
+PASS: two helper owners, cross-owner call, preserved carrier data and class identity, no depth guards

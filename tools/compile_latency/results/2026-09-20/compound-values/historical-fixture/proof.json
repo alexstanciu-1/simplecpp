@@ -1,0 +1,7 @@
+{
+  "fixture_source": "exact 7d58f273 historical fixture",
+  "result": "blocked_by_current_runner",
+  "completed": 0,
+  "blocked": 1,
+  "scope": "feature check failed; no historical int64 subtraction correctness claim; preexisting versus regression not established by a paired baseline fixture test"
+}

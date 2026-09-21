@@ -1,0 +1,415 @@
+{
+  "scope": "fixed output policy per study; recent commit sample in current surroundings, not general editor-save success probability; generic smoke/literal validation does not prove every changed feature",
+  "counts": {
+    "context_limit": 4,
+    "measured": 10,
+    "replay_incompatible": 1
+  },
+  "timed_code_cases": 9,
+  "timed_code_cases_within_target": 9,
+  "comment_only_cases": 1,
+  "cases": [
+    {
+      "commit": "1a24a85d",
+      "subject": "Export backend call argument rows for FN proof",
+      "status": "measured",
+      "sources": [
+        "compile/pipeline/compiler_project_runner.phs",
+        "compile/support/compiler_export_artifacts.phs",
+        "compile/support/pure_tdd_stage_artifacts.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.7470312590012327,
+      "native_trials": [
+        2.83685892901849,
+        2.915319307008758,
+        3.016790409979876
+      ],
+      "native_summary_seconds": 2.915319307008758,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 4.415319307008758,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        6,
+        6,
+        6
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "1610af1a",
+      "subject": "Route literal return coverage through consumer plan",
+      "status": "measured",
+      "sources": [
+        "compile/backend/compiler_entry_backend.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.256990391004365,
+      "native_trials": [
+        2.2079932729830034,
+        2.220691717986483,
+        2.220656721969135
+      ],
+      "native_summary_seconds": 2.220656721969135,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 3.720656721969135,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        2,
+        2,
+        2
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "f1d3a846",
+      "subject": "Retarget structure smoke away from fixtures",
+      "status": "measured",
+      "sources": [
+        "compile/support/structure_kernel_smoke_runner.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.7909592330106534,
+      "native_trials": [
+        2.75581969297491,
+        2.7689896959927864,
+        2.7564636719762348
+      ],
+      "native_summary_seconds": 2.7564636719762348,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 4.256463671976235,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        1,
+        1,
+        1
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "cec8c616",
+      "subject": "Retarget direct call evidence wording",
+      "status": "measured",
+      "sources": [
+        "structures/incremental/resident_project_snapshot_diff_row.phs",
+        "structures/incremental/resident_project_snapshot_row.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": true,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 0.08920678205322474,
+      "native_trials": [
+        0.08106501604197547,
+        0.08287901699077338,
+        0.08162412495585158
+      ],
+      "native_summary_seconds": 0.08162412495585158,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 1.5816241249558516,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        0,
+        0,
+        0
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "db047e10",
+      "subject": "Retarget semantic gate to project runner",
+      "status": "context_limit",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/support/structure_kernel_smoke_runner.phs",
+      "comment_only": false
+    },
+    {
+      "commit": "b54f2766",
+      "subject": "Generalize call expression lookahead",
+      "status": "measured",
+      "sources": [
+        "compile/frontend_adapter/phs/frontend_model_builder.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.1780890959780663,
+      "native_trials": [
+        2.0108361869934015,
+        2.305535677995067,
+        2.0727430600090884
+      ],
+      "native_summary_seconds": 2.0727430600090884,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 3.5727430600090884,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        3,
+        3,
+        3
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "534d70a6",
+      "subject": "Remove legacy case env fallbacks",
+      "status": "measured",
+      "sources": [
+        "compile/pipeline/pipeline_config_helpers.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.141356870008167,
+      "native_trials": [
+        2.0271999410470016,
+        2.0698318440117873,
+        2.0593995949602686
+      ],
+      "native_summary_seconds": 2.0593995949602686,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 3.5593995949602686,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        2,
+        2,
+        2
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "e8e8a063",
+      "subject": "Remove dead fixed argument LLVM materializer",
+      "status": "measured",
+      "sources": [
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 3.382786230999045,
+      "native_trials": [
+        3.2260238609742373,
+        3.168881821038667,
+        3.1911321750376374
+      ],
+      "native_summary_seconds": 3.1911321750376374,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 4.691132175037637,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        8,
+        8,
+        8
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "b085d952",
+      "subject": "Rename LLVM worker handoff as module composition",
+      "status": "context_limit",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/llvm_text_from_plan.phs",
+      "comment_only": false
+    },
+    {
+      "commit": "5ce42535",
+      "subject": "Rename backend LLVM source filename label",
+      "status": "measured",
+      "sources": [
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.2240992370061576,
+      "native_trials": [
+        2.1366274390020408,
+        2.245432713010814,
+        2.266120092011988
+      ],
+      "native_summary_seconds": 2.245432713010814,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 3.745432713010814,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        3,
+        3,
+        3
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "43a83246",
+      "subject": "Route caller function text through composition input",
+      "status": "measured",
+      "sources": [
+        "compile/backend/backend_module_composition.phs",
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 2.5188857300090604,
+      "native_trials": [
+        2.4429429180454463,
+        2.5144753089989536,
+        2.502550988981966
+      ],
+      "native_summary_seconds": 2.502550988981966,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 4.002550988981966,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        5,
+        5,
+        5
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "cf3c2d08",
+      "subject": "Remove obsolete LLVM module composition delegates",
+      "status": "measured",
+      "sources": [
+        "compile/backend/llvm_text_from_plan.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "forward_edit",
+      "error": null,
+      "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+      "baseline_setup_seconds": 1.8506745909689926,
+      "native_trials": [
+        1.612476748006884,
+        1.5982238490250893,
+        1.6346700270078145
+      ],
+      "native_summary_seconds": 1.612476748006884,
+      "summary_kind": "median",
+      "with_assumed_frontend_seconds": 3.112476748006884,
+      "within_target": true,
+      "all_trials_within_target": true,
+      "objects": [
+        1,
+        1,
+        1
+      ],
+      "pch_counts": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "commit": "41392c03",
+      "subject": "Route LLVM module composition through input rows",
+      "status": "context_limit",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/llvm_text_from_plan.phs",
+      "comment_only": false
+    },
+    {
+      "commit": "4abe635f",
+      "subject": "Generalize scalar capability consumer plans",
+      "status": "replay_incompatible",
+      "sources": [
+        "compile/backend/compiler_entry_backend.phs",
+        "compile/semantic/semantic_body_capability_consumers.phs"
+      ],
+      "textual_replay_eligible": true,
+      "comment_only": false,
+      "restored": true,
+      "phase": "baseline",
+      "error": "[1/7] CXX expanded/__callable/semantic_body_capability_consumers_locations.o\n[2/7] CXX expanded/__callable/compiler_entry_backend_locations.o\n[3/7] CALLABLE_PART expanded_parts/__callable/compiler_entry_backend_group_0.o\nFAILED: expanded_parts/__callable/compiler_entry_backend_group_0.o \nclang++ -std=c++23 -fPIC -O0 -g1 -pipe -I../../../vendor/runtime/include -I../expanded/generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -include-pch expanded-project.pch -MMD -MF expanded_parts/__callable/compiler_entry_backend_group_0.o.d -MT expanded_parts/__callable/compiler_entry_backend_group_0.o -c /tmp/scpp-edit-latency-20260919/app/.prism/expanded/generated/__callable/compiler_entry_backend_group_0.cpp -o expanded_parts/__callable/compiler_entry_backend_group_0.o\n/tmp/scpp-edit-latency-20260919/app/.prism/expanded/generated/__callable/compiler_entry_backend_group_0.cpp:63:38: error: no member named 'append_literal_return' in 'scpp::semantic_body_capability_consumers'\n   63 |         semantic_body_capability_consumers::append_literal_return(consumerPlan, literalNode->node_id, literal->type_ref_id);\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n1 error generated.\n[4/7] CALLABLE_PART expanded_parts/__callable/semantic_body_capability_consumers_group_1.o\n[5/7] CALLABLE_PART expanded_parts/__callable/semantic_body_capability_consumers_group_0.o\n[6/7] CALLABLE_PART expanded_parts/__callable/compiler_entry_backend_group_1.o\nninja: build stopped: subcommand failed.\n",
+      "validation": null,
+      "baseline_setup_seconds": null
+    },
+    {
+      "commit": "9103637e",
+      "subject": "Correct definition-driven compiler drift",
+      "status": "context_limit",
+      "textual_replay_eligible": false,
+      "limitation": "Current hunk context differs or is ambiguous: compile/backend/compiler_entry_backend.phs",
+      "comment_only": false
+    }
+  ]
+}

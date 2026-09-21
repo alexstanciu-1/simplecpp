@@ -1,0 +1,10 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class BackendRequestAuthorizationArtifact;
+struct FrontendLiteralPayloadRow;
+struct OperationReadiness;
+struct ProjectSymbolIndexRow;
+struct StorageLifetimeRequestRow;
+shared_p<BackendRequestAuthorizationArtifact> __latency_fn_backend_preflight_requests_backend_request_artifact_from_literal(OperationReadiness operation, StorageLifetimeRequestRow storage, FrontendLiteralPayloadRow literal, ProjectSymbolIndexRow ownerSymbol);
+}

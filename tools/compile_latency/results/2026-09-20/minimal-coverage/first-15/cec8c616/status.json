@@ -1,0 +1,22 @@
+{
+  "commit": "cec8c616",
+  "sources": [
+    "structures/incremental/resident_project_snapshot_diff_row.phs",
+    "structures/incremental/resident_project_snapshot_row.phs"
+  ],
+  "protocol": "exact hunks in current surroundings; fixed output strategy; 3 trials unless first native build exceeds20s; no optimization during this study",
+  "phase": "forward_edit",
+  "result": "measured",
+  "minimal_types": true,
+  "uniform_helpers": false,
+  "isolate_adapters": true,
+  "isolate_composition_type": true,
+  "isolate_shared_carriers": true,
+  "isolate_value_traits": true,
+  "isolate_provider_traits": true,
+  "before_hunk_setup_seconds": 0.08057145198108628,
+  "forced_new_objects": [],
+  "changed_generated_inputs": [],
+  "validation": "full link, before/after smoke and literal LLVM exit42; not exhaustive changed-feature validation",
+  "restored": true
+}

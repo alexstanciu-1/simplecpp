@@ -1,0 +1,6 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+struct TypeTraitRow;
+int_t<std::uint16_t> __latency_fn_type_capability_readiness_binary_operator_feature_blocked_reason_from_trait(TypeTraitRow trait, int_t<std::uint16_t> featureId);
+}
