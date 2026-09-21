@@ -12,6 +12,76 @@ use Scpp\S2S\Support\GenerationException;
  */
 final class TypeMapper
 {
+	// Atomic names whose declarations come from the runtime umbrella. Declaration
+	// ownership is separate from representation: runtime class aliases still use
+	// the ordinary shared class-handle mapping, unlike runtime value types.
+	private const RUNTIME_PROVIDED_TYPES = [
+		'int',
+		'int8',
+		'int16',
+		'int32',
+		'int64',
+		'uint8',
+		'byte',
+		'uint16',
+		'uint32',
+		'uint64',
+		'float',
+		'bool',
+		'string',
+		'array',
+		'mixed',
+		'dynamic',
+		'void',
+		'false',
+		'null',
+		'vector',
+		'vector_t',
+		'fixed_array',
+		'fixed_array_t',
+		'hash',
+		'hash_t',
+		'error',
+		'resource_handle',
+		'nullable_resource_handle',
+		'falseable_resource_handle',
+		'token_buffer',
+		'string_parts_builder',
+		'text_builder',
+		'source_buffer',
+		'byte_span',
+		'source_line_index',
+		'source_location',
+		'int_t',
+		'int_t<>',
+		'float_t',
+		'bool_t',
+		'string_t',
+		'mixed_t',
+		'dynamic_t<>',
+		'error_t',
+		'resource_handle_t',
+		'nullable_resource_handle_t',
+		'falseable_resource_handle_t',
+		'token_buffer_t',
+		'tokenizer::token_buffer_t',
+		'str::string_parts_builder',
+		'str::text_builder',
+		'source::source_buffer',
+		'source::byte_span',
+		'source::source_line_index',
+		'source::source_location',
+		'file_lock_handle',
+		'process_handle',
+		'process_output',
+	];
+
+	/** Called after traversing container/wrapper arguments; never match by basename. */
+	public function isRuntimeProvidedType(string $type): bool
+	{
+		return in_array(ltrim(trim($type), '\\'), self::RUNTIME_PROVIDED_TYPES, true);
+	}
+
 	/** @var array<string, bool> */
 	private array $enumNames = [];
 	/** @var array<string, string> */

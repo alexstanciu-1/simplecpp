@@ -2,7 +2,7 @@
 
 Doc Status: planning
 Status: collection/STAN, managed-process and file-lock runtime slices implemented locally; portable PHP integration and migration proofs remain outstanding.
-Revision: constrained sequence/keyed adapter follow-up after downstream integration review.
+Revision: runtime alias signature ownership repair after downstream facade integration.
 Baseline inspected: `main`, `8cc4d8ff`, tag `v0.1.76`.
 Issue: <https://github.com/alexstanciu-1/simplecpp/issues/231>
 
@@ -194,6 +194,38 @@ key/order retention, carrier rejection, read-only string/container callbacks,
 nested calls and typed argument/return/element boundaries. The PHP framework,
 converter bindings and downstream parity/migration proofs remain owned by v0.2;
 this follow-up supplies the previously missing constrained native surface.
+
+## Runtime alias signature follow-up
+
+Downstream [reported successful converted collection and cumulative compiler
+proofs on `08c8206a`](https://github.com/alexstanciu-1/simplecpp/issues/231#issuecomment-5764637852)
+and selected that candidate for portability work. The same integration exposed
+conflicting generated class forward declarations for `file_lock_handle`,
+`process_handle` and `process_output` in facade signatures.
+
+A standalone multi-file strict fixture reproduced all three alias conflicts.
+The fix moves the existing atomic runtime-declaration ownership list from the
+header emitter into `TypeMapper` and registers the three aliases there. Header
+emission consults that owner after traversing container/wrapper arguments. This
+classification does not change shared-handle representation or ordinary user
+class forward declarations, and never matches qualified user names by basename.
+
+Validation for this follow-up:
+
+- `php tests/tools/test_scpp_runtime_type_declarations.php`: all three aliases,
+  leading backslashes, shared and by-reference representation, result/vector
+  signatures, retained user-class forwards and qualified-name discrimination.
+- `python3 tests/tools/test_scpp_runtime_alias_signatures.py`: real multi-file strict
+  build/run for parameters, returns, by-reference lock output, methods and fields;
+  lock contention/reacquisition, process output and shared-handle invalidation.
+- `python3 tests/tools/test_scpp_file_locks.py` and
+  `python3 tests/tools/test_scpp_process.py`: existing local-slot regressions.
+- `php tests/tools/test_scpp_strict_runtime_catalog.php`: existing runtime exports.
+
+Downstream PHP backend tests are reported as passing, but process/lock native
+facade parity was blocked by these declarations. This fix supplies another native
+candidate; it does not claim that downstream parity or migration proofs are done.
+No additional process/lock behavior, constructor or module scope is introduced.
 
 ## 1. Original design scope (implementation updates above take precedence)
 

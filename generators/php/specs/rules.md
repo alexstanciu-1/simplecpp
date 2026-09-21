@@ -478,6 +478,16 @@ Known semantic edge:
 
 ### Forward Declarations
 - forward declarations may be used only in trivial obvious cases where a class type is referenced through `shared_p<T>` in declarations
+- `TypeMapper` owns classification of atomic runtime-provided type declarations.
+  After traversing container/wrapper arguments, the header emitter consults that
+  owner rather than declaring runtime types as user classes. In particular,
+  `file_lock_handle`, `process_handle` and `process_output` are runtime aliases;
+  emitting `class` declarations for them is invalid. Leading source backslashes
+  do not change their ownership; qualified user names are not matched by basename.
+- Declaration ownership is independent of value/handle representation. These
+  aliases retain ordinary shared class-handle mapping in parameters, returns,
+  fields and wrapper payloads, including native handle references for authored
+  by-reference parameters. Ordinary user-class forward declarations remain valid.
 - the generator must not build a dependency solver for include optimization
 - if a case is not trivially safe for forward declaration, the generator may use the simpler include-based path instead
 

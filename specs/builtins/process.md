@@ -24,6 +24,11 @@ fields `stdout_text`, `stderr_text` (string), `exit_code`, `signal` (int),
 Each result call returns an independent snapshot; changing it does not change
 future result calls. Snapshots already returned survive handle close.
 
+`process_handle` and `process_output` are public runtime aliases, not user class
+declarations. They are valid at ordinary function/method parameter and return
+boundaries and in typed fields, as well as local variables. Generated headers
+use the runtime-provided declarations and must not forward-declare them as classes.
+
 ## Launch and streams
 
 Require an absolute executable path, absolute nonempty cwd, and nonnegative

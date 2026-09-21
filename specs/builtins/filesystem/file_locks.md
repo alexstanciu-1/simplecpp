@@ -10,6 +10,11 @@ acquisition. Copying a source handle aliases that token; it does not acquire or
 duplicate a lock. Calls on one token must be serialized by application discipline.
 No source constructor, descriptor access, or user-stream interoperability is exposed.
 
+`file_lock_handle` is a public runtime alias with ordinary shared class-handle
+representation. Function/method parameters, returns and typed fields may use it;
+an authored by-reference output parameter refers to the handle slot. Generated
+headers use the runtime declaration and must not emit `class file_lock_handle;`.
+
 `fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool>`
 returns success(true) on acquisition, success(false) on contention, and an error
 on invalid state/path, open failure or other OS failure. The output must be empty
