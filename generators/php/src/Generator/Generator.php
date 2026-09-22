@@ -1704,7 +1704,7 @@ final class Generator
 			$classNode = $expr->children['class'] ?? null;
 			if (is_object($classNode) && (($classNode->kind ?? null) === AstKind::NAME)) {
 				$rawName = (string) ($classNode->children['name'] ?? '');
-				if ($namespacePhp !== null && $namespacePhp !== '' && $rawName !== '' && !str_starts_with($rawName, '\\') && str_starts_with($rawName, $namespacePhp . '\\')) {
+				if ($namespacePhp !== null && $namespacePhp !== '' && $rawName !== '' && !$this->isAbsoluteClassReference($classNode) && str_starts_with($rawName, $namespacePhp . '\\')) {
 					$this->errors[] = 'Qualified self-reference construction is rejected at line ' . $line . ': use ' . substr($rawName, strlen($namespacePhp) + 1) . ' or \\' . $rawName . '.';
 				}
 			}
@@ -8540,6 +8540,13 @@ final class Generator
 		return str_starts_with($name, '\\') ? '::scpp::' . $mapped : $mapped;
 	}
 
+	/** Absolute AST names store their root in flags, not necessarily in name text. */
+	private function isAbsoluteClassReference(object $node): bool
+	{
+		return (int) ($node->flags ?? 0) === 0
+			|| str_starts_with((string) ($node->children['name'] ?? ''), '\\');
+	}
+
 	private function renderClassName(mixed $node, ?string $namespacePhp): string
 	{
 		if (!is_object($node)) {
@@ -8562,7 +8569,7 @@ final class Generator
 			return '/* unsupported-static */';
 		}
 		$flags = (int) ($node->flags ?? 0);
-		if ($flags === 0 || str_starts_with($name, '\\')) {
+		if ($this->isAbsoluteClassReference($node)) {
 			return $this->renderDeclaredClassReference('\\' . ltrim($name, '\\'));
 		}
 		return $this->renderSymbolPath($name, $flags, false);

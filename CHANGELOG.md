@@ -7,6 +7,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
+## 0.1.78 - 2026-09-22
+
+### Fixes
+
+- Fixed rejection of explicitly absolute construction into the current namespace (#235). Validation and rendering now agree on AST absolute-name flags, preserving rooted C++ class identity when the enclosing method has the same name as the constructed class.
+- Retained the existing rejection of genuinely relative duplicated-namespace construction. Ordinary unqualified, global and cross-namespace construction retain their existing lowering contracts.
+
+### Additions
+
+- Completes the target fix for the #236 follow-up to v0.1.77. This release includes all previously released #231–#233 collection, process, lock, declaration, nested-vector, inheritance, host-path and snapshot changes.
+
+### Breaking Changes
+
+- No intentional API changes. v0.1.77 remains an immutable published release.
+
+### Migration Notes
+
+- Use explicit absolute construction (`new \example\row()`) where method/type name collisions would hide an unqualified C++ type. Inside `namespace A\B`, use `new X()` or `new \A\B\X()` rather than `new A\B\X()`.
+- Existing STAN basename-ambiguity and short-versus-qualified return advisories are not resolved by this focused construction fix. It does not add general name inference or change unqualified C++ lookup or cross-static-type object identity.
+- The v0.1.77 runtime limits still apply: managed processes, file locks and checked snapshots have Linux-only backends; other targets report unsupported. Process deadlines need polling. Snapshots check identity/version and bounded content, not atomicity; same-size/same-whole-second-mtime edits can pass. Pure Windows path-policy tests are not native Windows host-helper execution evidence.
+- Rebuild runtime artifacts when adopting the combined APIs from a version before v0.1.77. Downstream whole-compiler migration completion remains separate from this release.
+
 ## 0.1.77 - 2026-09-22
 
 ### Additions

@@ -573,6 +573,14 @@ Examples:
 - `new X()` â†’ `create<X>()`
 - `new \A\B\X()` â†’ `create<::scpp::A::B::X>()`
 
+Absolute-name AST flags and a textual leading backslash both identify a rooted
+class reference. Construction validation and rendering must agree on that fact,
+including absolute references into the current namespace. Rooted construction
+must continue to work when an enclosing method has the same name as the class.
+Genuinely relative duplicated-namespace names remain rejected: inside
+`namespace A\B`, use `new X()` or `new \A\B\X()`, not `new A\B\X()`.
+This does not change ordinary unqualified name lookup or add symbol inference.
+
 The generator must not emit raw `new` for these supported construction forms.
 
 ### 15.2 Static Access
