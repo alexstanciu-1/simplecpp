@@ -108,7 +108,8 @@
     "src/01_prepare_inputs/load_runtime/handlers/bindings.php",
     "src/01_prepare_inputs/load_runtime/handlers/callables.php",
     "src/01_prepare_inputs/load_runtime/utilities/callable_bindings.php",
-    "src/01_prepare_inputs/load_runtime/handlers/storage.php"
+    "src/01_prepare_inputs/load_runtime/handlers/storage.php",
+    "src/01_prepare_inputs/load_runtime/handlers/package_types.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

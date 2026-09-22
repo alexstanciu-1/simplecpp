@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught Error: Class "type_model\construction_kind" not found in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/reference/pre-rewrite/src/04_analyze/type_model/data/definitions.php:63
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/package_measurements/oracle.php(6): type_model\lifetime_contract->__construct()
+#1 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/reference/pre-rewrite/src/04_analyze/type_model/data/definitions.php on line 63

@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **107 production files**: input preparation (137 outcomes),
+Active readiness is **108 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -148,3 +148,10 @@ The reserved-local preflight is implemented. Cumulative PHP/tool checks pass for
 107 ready files; keyword locals now fail before native build, while declared
 parameters and fields retain their supported behavior. Evidence and focused native
 regressions: `results/reserved-locals-01`. Next: package type/import ownership.
+
+
+Package physical measurements now add 106 PHP/native outcomes and retained importer
+acceptance comparisons (`results/package-measurements-01`). All six storage kinds,
+alignment and integer width/signedness are validated without granting type ownership.
+Next: language exposure and exact accepted native/source owner binding, then complete
+package acceptance; those remain incomplete.

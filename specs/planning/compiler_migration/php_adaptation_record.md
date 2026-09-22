@@ -1277,3 +1277,27 @@ so old converted output cannot bypass the new check after a tool update.
 Evidence: `results/reserved-locals-01`. Readiness remains 107 production files.
 Next: measured package type ingestion and its accepted-owner dependencies; complete
 source export ownership remains required before claiming full package acceptance.
+
+
+## Package type measurements before owner binding
+
+`Package_Type_Import::measure` migrates the physical validation segment of the
+prototype `Package_Types::types` into a named `Package_Type_Measurement`. It retains
+provider-local identity, kind, size, alignment and nullable integer width/signedness.
+It deliberately does not return a `Runtime_Type` or grant language/resource/lifetime
+permissions; the remaining importer must bind those through their existing owners.
+
+A bounded doubling loop replaces the alignment bitmask, and a guarded multiplication
+replaces unchecked `size * 8`. This preserves the width-fit rule without native signed
+overflow or PHP floating-point promotion. Signed false is retained as a present value.
+As in the prototype, unexposed void measurement uses zero size without inspecting
+`size_bytes`; the later exposed-void binding check must still require explicit zero.
+
+The proof uses all six kinds, malformed/missing fields, non-power-of-two alignment,
+misaligned size and limits around INT64_MAX. Retained comparisons invoke the actual
+prototype importer on unexposed rows with a real catalog, not a rewritten validator.
+The initial oracle harness missed a lifecycle include; one host-harness correction
+fixed it after the portable PHP outcomes had already passed. No production correction
+was needed. Review also tightened the rejection probe so fixture-field reads cannot
+mask unexpected acceptance; a final native verification covers that test change.
+Evidence: `results/package-measurements-01`.

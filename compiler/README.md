@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **107 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **108 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -114,3 +114,10 @@ Prepared callable ABI transport and semantic compatibility add 66 PHP/native che
 and retained-validator agreement for 32 compatibility cases and slot mappings.
 Storage-family contracts now add 53 PHP/native checks, including exact descriptor
 ownership validation. Complete prepared-package consumption remains pending.
+
+
+Package physical measurements now add 106 PHP/native outcomes and retained importer
+acceptance comparisons (`results/package-measurements-01`). All six storage kinds,
+alignment and integer width/signedness are validated without granting type ownership.
+Next: language exposure and exact accepted native/source owner binding, then complete
+package acceptance; those remain incomplete.

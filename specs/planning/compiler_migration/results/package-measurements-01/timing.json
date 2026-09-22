@@ -1,0 +1,20 @@
+{
+  "authoring_start_epoch": 1790101156,
+  "php_ready_epoch": 1790101242.2410522,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/package_types.php": "b70065d875655e0c3493bd64fae173c5f712f236775d0151414e8557ed65fd1c"
+  },
+  "authoring_to_php_ready_seconds": 86.241,
+  "php_ready_to_native_pass_seconds": 66.574,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "host_oracle_harness_corrections": 1,
+  "host_oracle_note": "Added missing retained lifecycle include; initial portable PHP expectations had already passed.",
+  "native_build_seconds": 30.659,
+  "consolidation_start_epoch": 1790101342.4368806,
+  "final_verification_builds": 1,
+  "test_hardening_cycles": 1,
+  "test_hardening": "Rejected cases skip expected value reads, preventing a fixture accessor exception from masking unexpected acceptance.",
+  "consolidation_end_epoch": 1790101456.533078
+}

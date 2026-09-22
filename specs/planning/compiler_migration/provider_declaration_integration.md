@@ -151,3 +151,10 @@ eight-primitive/six-operation storage protocol (`results/storage-import-01`). Th
 shared pointer syntax regression passes 66 native outcomes. Next: a narrow reserved
 local-name preflight to eliminate repeated avoidable native build failures, then
 remaining package type/import ownership and acceptance dependencies.
+
+
+Package physical measurements now add 106 PHP/native outcomes and retained importer
+acceptance comparisons (`results/package-measurements-01`). All six storage kinds,
+alignment and integer width/signedness are validated without granting type ownership.
+Next: language exposure and exact accepted native/source owner binding, then complete
+package acceptance; those remain incomplete.
