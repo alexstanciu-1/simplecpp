@@ -1,0 +1,61 @@
+Transpiled PHP files: 45, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/47] PCH app_pch.hpp.gch
+[2/47] CXX scpp_framework/collections.o
+[3/47] CXX src/01_prepare_inputs/load_runtime/data/family_preparation.o
+[4/47] CXX src/01_prepare_inputs/load_runtime/data/runtime.o
+[5/47] CXX scpp_framework/exceptions.o
+[6/47] CXX main.o
+[7/47] CXX src/01_prepare_inputs/load_runtime/handlers/lifecycle.o
+[8/47] CXX src/01_prepare_inputs/load_runtime/handlers/package_syntax.o
+[9/47] CXX src/01_prepare_inputs/load_runtime/data/project.o
+[10/47] CXX scpp_framework/json_document.o
+[11/47] CXX src/01_prepare_inputs/load_runtime/data/package_context.o
+[12/47] CXX src/01_prepare_inputs/load_runtime/handlers/native_import.o
+[13/47] CXX src/01_prepare_inputs/load_runtime/data/package_bindings.o
+[14/47] CXX scpp_framework/strings.o
+[15/47] CXX scpp_framework/filesystem.o
+[16/47] CXX src/01_prepare_inputs/load_runtime/handlers/package_types.o
+[17/47] CXX src/01_prepare_inputs/load_runtime/data/package.o
+[18/47] CXX src/04_analyze/type_model/data/callable_modes.o
+[19/47] CXX src/01_prepare_inputs/load_runtime/handlers/type_exposure.o
+[20/47] CXX src/01_prepare_inputs/load_runtime/project_import.o
+[21/47] CXX src/04_analyze/type_model/callable_contracts.o
+[22/47] CXX src/04_analyze/resolve_types/data/export_identity.o
+[23/47] CXX src/04_analyze/type_model/data/lifecycle.o
+[24/47] CXX src/04_analyze/type_model/data/context.o
+[25/47] CXX src/01_prepare_inputs/load_runtime/handlers/resources.o
+[26/47] CXX src/04_analyze/type_model/data/generic.o
+[27/47] CXX src/04_analyze/type_model/data/definitions.o
+[28/47] CXX src/04_analyze/type_model/data/catalog.o
+[29/47] CXX src/04_analyze/type_model/data/callables.o
+[30/47] CXX probe.o
+[31/47] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[32/47] CXX src/01_prepare_inputs/load_runtime/handlers/package_type_map.o
+[33/47] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[34/47] CXX src/04_analyze/type_model/data/native_record_layout.o
+[35/47] CXX src/04_analyze/type_model/data/records.o
+[36/47] CXX src/04_analyze/type_model/data/type_references.o
+[37/47] CXX src/04_analyze/type_model/data/semantic_calls.o
+[38/47] CXX src/04_analyze/type_model/data/representations.o
+[39/47] CXX src/04_analyze/type_model/data/semantic_modes.o
+[40/47] CXX src/05_generate_code/prepare_backend/data/configuration.o
+[41/47] CXX src/05_generate_code/prepare_backend/data/abi.o
+[42/47] CXX src/04_analyze/type_model/data/resources.o
+[43/47] CXX src/compile/data/native_project.o
+[44/47] CXX src/04_analyze/type_model/data/storage.o
+[45/47] CXX src/05_generate_code/prepare_backend/data/layout.o
+[46/47] CXX src/05_generate_code/prepare_backend/data/source_exports.o
+[47/47] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/01_prepare_inputs/load_runtime/data/family_preparation.o, .prism/build/src/01_prepare_inputs/load_runtime/data/package.o, .prism/build/src/01_prepare_inputs/load_runtime/data/package_bindings.o, .prism/build/src/01_prepare_inputs/load_runtime/data/package_context.o, .prism/build/src/01_prepare_inputs/load_runtime/data/project.o, .prism/build/src/01_prepare_inputs/load_runtime/data/runtime.o, .prism/build/src/01_prepare_inputs/load_runtime/handlers/lifecycle.o, .prism/build/src/01_prepare_inputs/load_runtime/handlers/native_import.o, .prism/build/src/01_prepare_inputs/load_runtime/handlers/package_syntax.o, .prism/build/src/01_prepare_inputs/load_runtime/handlers/package_type_map.o, .prism/build/src/01_prepare_inputs/load_runtime/handlers/package_types.o, .prism/build/src/01_prepare_inputs/load_runtime/handlers/resources.o, .prism/build/src/01_prepare_inputs/load_runtime/handlers/type_exposure.o, .prism/build/src/01_prepare_inputs/load_runtime/project_import.o, .prism/build/src/04_analyze/resolve_types/data/export_identity.o, .prism/build/src/04_analyze/type_model/callable_contracts.o, .prism/build/src/04_analyze/type_model/data/callable_modes.o, .prism/build/src/04_analyze/type_model/data/callables.o, .prism/build/src/04_analyze/type_model/data/catalog.o, .prism/build/src/04_analyze/type_model/data/context.o, .prism/build/src/04_analyze/type_model/data/definitions.o, .prism/build/src/04_analyze/type_model/data/generic.o, .prism/build/src/04_analyze/type_model/data/lifecycle.o, .prism/build/src/04_analyze/type_model/data/lifecycle_roles.o, .prism/build/src/04_analyze/type_model/data/lifetime_contract.o, .prism/build/src/04_analyze/type_model/data/native_record_layout.o, .prism/build/src/04_analyze/type_model/data/records.o, .prism/build/src/04_analyze/type_model/data/representations.o, .prism/build/src/04_analyze/type_model/data/resources.o, .prism/build/src/04_analyze/type_model/data/semantic_calls.o, .prism/build/src/04_analyze/type_model/data/semantic_modes.o, .prism/build/src/04_analyze/type_model/data/storage.o, .prism/build/src/04_analyze/type_model/data/type_references.o, .prism/build/src/05_generate_code/prepare_backend/data/abi.o, .prism/build/src/05_generate_code/prepare_backend/data/configuration.o, .prism/build/src/05_generate_code/prepare_backend/data/layout.o, .prism/build/src/05_generate_code/prepare_backend/data/source_exports.o, .prism/build/src/compile/data/native_project.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

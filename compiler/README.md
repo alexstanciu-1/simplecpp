@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **127 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **128 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -219,3 +219,13 @@ old bindings keep current objects. Source payload bindings require exact export
 definition identity, and late failure leaves both input maps untouched. Next:
 package binding/project-context comparison and adapter acceptance integration;
 the retention helper assumes the caller has established the same package context.
+
+
+Package-context matching adds 33 PHP/native outcomes (`results/package-context-01`).
+Current selection is an explicit record; directory/manifest bytes, base catalog,
+binding maps and project receipt/export membership must agree. Rebuilt ordinary
+bindings may match, but accepted native/source owners retain exact object identity.
+This deliberately makes reconstructed accepted owners a cache miss instead of
+returning an old package carrying stale owner associations. Artifact/receipt
+validation must still precede the query. Next: package metadata/artifact acceptance
+and source receipt validation; complete adapter integration remains unfinished.

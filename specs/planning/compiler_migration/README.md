@@ -6,7 +6,7 @@ accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; source collection proved:** input preparation, tokenization,
 parser storage/grammar/queries/project reuse, source symbols, entry selection, representations, lifecycle contracts and scalar catalog/entry binding provide
-127 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
+128 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
 and nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks; its scalar catalog return-type binding is now proved (116 PHP/native outcomes).
 See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).
@@ -282,7 +282,7 @@ decoder loses object/list identity needed by manifest validation. A lossless inp
 boundary is required before porting Manifest_Syntax; snapshot export is unaffected.
 
 Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
-eight host checks; active coverage is 127 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
+eight host checks; active coverage is 128 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
 
 
 Package type composition adds 38 PHP/native outcomes and 38 retained acceptance
@@ -339,3 +339,13 @@ old bindings keep current objects. Source payload bindings require exact export
 definition identity, and late failure leaves both input maps untouched. Next:
 package binding/project-context comparison and adapter acceptance integration;
 the retention helper assumes the caller has established the same package context.
+
+
+Package-context matching adds 33 PHP/native outcomes (`results/package-context-01`).
+Current selection is an explicit record; directory/manifest bytes, base catalog,
+binding maps and project receipt/export membership must agree. Rebuilt ordinary
+bindings may match, but accepted native/source owners retain exact object identity.
+This deliberately makes reconstructed accepted owners a cache miss instead of
+returning an old package carrying stale owner associations. Artifact/receipt
+validation must still precede the query. Next: package metadata/artifact acceptance
+and source receipt validation; complete adapter integration remains unfinished.

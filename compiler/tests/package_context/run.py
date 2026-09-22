@@ -1,4 +1,4 @@
-"""Bound runtime type retention and unchanged-input publication."""
+"""Package reuse context with exact accepted owner identity."""
 import argparse
 import hashlib
 import json
@@ -9,9 +9,8 @@ import time
 import importlib.util
 
 ROOT = Path(__file__).resolve().parents[3]
-FILES = ['src/01_prepare_inputs/load_runtime/utilities/type_retention.php']
-DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/storage.php', 'src/04_analyze/type_model/data/records.php', 'src/01_prepare_inputs/load_runtime/data/runtime.php', 'src/01_prepare_inputs/load_runtime/handlers/package_syntax.php', 'src/04_analyze/type_model/data/context.php', 'src/compile/data/native_project.php', 'src/04_analyze/resolve_types/data/export_identity.php', 'src/05_generate_code/prepare_backend/data/configuration.php', 'src/05_generate_code/prepare_backend/data/layout.php', 'src/05_generate_code/prepare_backend/data/abi.php', 'src/05_generate_code/prepare_backend/data/source_exports.php', 'src/04_analyze/type_model/data/catalog.php', 'src/01_prepare_inputs/load_runtime/handlers/package_types.php', 'src/01_prepare_inputs/load_runtime/handlers/lifecycle.php', 'src/01_prepare_inputs/load_runtime/handlers/resources.php', 'src/01_prepare_inputs/load_runtime/handlers/type_exposure.php', 'src/04_analyze/type_model/data/generic.php', 'src/01_prepare_inputs/load_runtime/data/family_preparation.php', 'src/01_prepare_inputs/load_runtime/handlers/native_import.php', 'src/01_prepare_inputs/load_runtime/data/package_bindings.php', 'src/01_prepare_inputs/load_runtime/project_import.php', 'src/01_prepare_inputs/load_runtime/handlers/package_type_map.php', 'src/01_prepare_inputs/load_runtime/data/project.php', 'src/01_prepare_inputs/load_runtime/data/package.php', 'src/04_analyze/type_model/callable_contracts.php', 'src/04_analyze/type_model/lifecycle_contracts.php', 'src/04_analyze/type_model/definition_contracts.php']
-DEPENDENCIES += ['src/01_prepare_inputs/load_runtime/data/package_context.php']
+FILES = ['src/01_prepare_inputs/load_runtime/data/package_context.php']
+DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/storage.php', 'src/04_analyze/type_model/data/records.php', 'src/01_prepare_inputs/load_runtime/data/runtime.php', 'src/01_prepare_inputs/load_runtime/handlers/package_syntax.php', 'src/04_analyze/type_model/data/context.php', 'src/compile/data/native_project.php', 'src/04_analyze/resolve_types/data/export_identity.php', 'src/05_generate_code/prepare_backend/data/configuration.php', 'src/05_generate_code/prepare_backend/data/layout.php', 'src/05_generate_code/prepare_backend/data/abi.php', 'src/05_generate_code/prepare_backend/data/source_exports.php', 'src/04_analyze/type_model/data/catalog.php', 'src/01_prepare_inputs/load_runtime/handlers/package_types.php', 'src/01_prepare_inputs/load_runtime/handlers/lifecycle.php', 'src/01_prepare_inputs/load_runtime/handlers/resources.php', 'src/01_prepare_inputs/load_runtime/handlers/type_exposure.php', 'src/04_analyze/type_model/data/generic.php', 'src/01_prepare_inputs/load_runtime/data/family_preparation.php', 'src/01_prepare_inputs/load_runtime/handlers/native_import.php', 'src/01_prepare_inputs/load_runtime/data/package_bindings.php', 'src/01_prepare_inputs/load_runtime/project_import.php', 'src/01_prepare_inputs/load_runtime/handlers/package_type_map.php', 'src/04_analyze/type_model/callable_contracts.php', 'src/01_prepare_inputs/load_runtime/data/project.php', 'src/01_prepare_inputs/load_runtime/data/package.php']
 LOAD_ORDER = DEPENDENCIES + FILES
 
 
@@ -38,13 +37,13 @@ def main():
         assert result.returncode == 0, (label, result.stdout, result.stderr)
         return result.stdout
 
-    spec=importlib.util.spec_from_file_location('type_retention_cases',Path(__file__).parent/'cases.py')
+    spec=importlib.util.spec_from_file_location('package_context_cases',Path(__file__).parent/'cases.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     cases=module.build()
     (out/'cases.json').write_text(json.dumps(cases,indent=2)+'\n')
     expected=[True]*len(cases)
     payload=json.dumps(cases,separators=(',',':')).replace('\\','\\\\').replace("'","\\'")
-    calls=["\\type_retention_test\\Probe::run('"+payload+"');"]
+    calls=["\\package_context_test\\Probe::run('"+payload+"');"]
     for relative in DEPENDENCIES + FILES:
         dest=source/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(ROOT/'compiler'/relative,dest)
@@ -62,9 +61,6 @@ def main():
     report['php_ready_epoch'] = time.time()
     report['php_ready_sha256'] = {f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in FILES}
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    retained=json.loads(run('retained-oracle',['php',Path(__file__).parent/'oracle.php',out/'cases.json']))
-    assert retained==[True for case in cases if case['kind']!='source']
-    report['retained_comparisons']=len(retained)
     generated=out/'phpp';conversion=['php',ROOT/'tools/php_portability/convert.php',source,generated]
     assert json.loads(run('convert',conversion))['converted']==len(DEPENDENCIES+FILES)+2
     assert json.loads(run('reuse',conversion))=={'converted':0,'reused':len(DEPENDENCIES+FILES)+2,'removed':0}
@@ -84,9 +80,9 @@ def main():
         report['target_revision']=revision
         assert run('clean-after',['git','-C',checkout,'status','--porcelain']).strip()==''
     (out/'expected.json').write_text(json.dumps(expected,indent=2)+'\n')
-    report.update(passed=True,native=bool(binary),cases=len(expected),type_retention_outcomes=len(expected),
+    report.update(passed=True,native=bool(binary),cases=len(expected),package_context_outcomes=len(expected),
                   production_files=FILES,source_sha256={f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in DEPENDENCIES+FILES})
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print(f'Type retention: {len(expected)} outcomes passed; native={bool(binary)}')
+    print(f'Package context: {len(expected)} outcomes passed; native={bool(binary)}')
 
 if __name__=='__main__':main()

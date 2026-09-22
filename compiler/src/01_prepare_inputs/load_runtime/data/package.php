@@ -52,4 +52,50 @@ final class Runtime_Package {
     }
     public function protected_paths(): array /** vector<string> */ { return $this->protected_files; }
     public function manifest_text(): string { return $this->manifest_source; }
+    /** Cache eligibility only, after current artifact/receipt validation; never acceptance by itself. */
+    public function matches(Package_Context $current): bool {
+        if (($this->directory !== $current->directory) || ($this->manifest_source !== $current->manifest_source)
+            || ($this->base_catalog !== $current->catalog)) { return false; }
+        $a = $this->bindings; $b = $current->bindings;
+        if ($a === null) { if ($b !== null) { return false; } }
+        else {
+            if ($b === null) { return false; }
+            if (!Runtime_Package::same_bindings($a,$b)) { return false; }
+        }
+        $left = $this->project; $right = $current->project;
+        if ($left === null) { return $right === null; }
+        if ($right === null) { return false; }
+        return ($left->receipt === $right->receipt) && Runtime_Package::same_exports($left->exports,$right->exports);
+    }
+    private static function same_references(array $a /** hash<\type_model\Type_Reference> */, array $b /** hash<\type_model\Type_Reference> */): bool {
+        if (q_count($a) !== q_count($b)) { return false; }
+        foreach ($a as $key => $reference) {
+            if (!isset($b[$key])) { return false; }
+            if (!\type_model\Callable_Contracts::reference($reference,$b[$key])) { return false; }
+        }
+        return true;
+    }
+    private static function same_exports(array $a /** hash<\prepare_backend\Source_Type_Export> */, array $b /** hash<\prepare_backend\Source_Type_Export> */): bool {
+        if (q_count($a) !== q_count($b)) { return false; }
+        foreach ($a as $key => $source_export) {
+            if (!isset($b[$key])) { return false; }
+            if ($source_export !== $b[$key]) { return false; }
+        }
+        return true;
+    }
+    private static function same_bindings(Package_Bindings $a, Package_Bindings $b): bool {
+        if (!Runtime_Package::same_references($a->types,$b->types)) { return false; }
+        if (!Runtime_Package::same_references($a->callables,$b->callables)) { return false; }
+        if (q_count($a->imports) !== q_count($b->imports)) { return false; }
+        foreach ($a->imports as $key => $owner) {
+            if (!isset($b->imports[$key])) { return false; }
+            $other = $b->imports[$key];
+            // Accepted nominal owner identity is stronger than matching physical/semantic fields.
+            if (($owner->provider !== $other->provider) || ($owner->type_id !== $other->type_id)
+                || ($owner->type !== $other->type) || ($owner->target_triple !== $other->target_triple)
+                || ($owner->data_layout !== $other->data_layout)) { return false; }
+        }
+        return Runtime_Package::same_exports($a->sources,$b->sources);
+    }
+
 }

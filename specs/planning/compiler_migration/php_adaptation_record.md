@@ -1617,3 +1617,35 @@ binding cases cover exact identity, equal-but-distinct definitions and missing r
 The first native build passes with zero corrections. One final verification build
 follows fixture consistency improvements (separate old source bindings and matching
 ordinary U row/name metadata); production implementation is unchanged.
+
+
+## Package reuse context and accepted owner identity
+
+Runtime_Package::matches now takes a Package_Context record containing the current
+directory, manifest bytes, base catalog and optional binding/project selection.
+This keeps the complete selection explicit and avoids a loose positional group of
+optional method arguments. It is a cache query, not artifact or receipt acceptance;
+the adapter must revalidate current artifacts and project receipt first, as in the
+prototype. Existing isolated proof closures include the new context and reference
+comparison dependencies.
+
+Ordinary type/callable binding maps compare by exact keys and typed reference value,
+independent of insertion order or wrapper allocation. Imported-owner wrappers may
+be rebuilt, but their provider/type ID/target facts and accepted Runtime_Type object
+must match. Source maps and project export maps require the exact accepted export
+objects; project receipt bytes must also agree. Null selection and an explicit
+selection remain different. The base catalog still uses exact identity.
+
+This intentionally tightens the prototype's recursive PHP == cache heuristic for
+accepted owners. The adapter separately requires current source bindings to be the
+exact current project exports; structural equality must not return an old package
+with different accepted owner associations. A reconstructed accepted native type or
+source export produces a cache miss/re-import, even if its fields compare equal.
+This may reduce cache hits when callers unnecessarily recreate accepted owners;
+sharing immutable accepted owners is the intended optimization, not weakening the
+identity boundary. No new language feature or producer-output change is introduced.
+
+Evidence: results/package-context-01, 33 independently expected PHP/native context
+cases covering changed bytes/catalog, map membership/reference values, each native
+owner fact, exact owner identity, nullable selection pairs and input preservation.
+First native build passes without correction. Full acceptance remains unfinished.

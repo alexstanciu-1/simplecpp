@@ -139,6 +139,8 @@ the field exists. Same-namespace files can split these declarations without alia
   Compare optional states and scalar facts strictly, and retain identity only after
   the complete relevant contract agrees. Use original prototype records as the
   oracle when representation changes affect host equality.
+  Keep accepted nominal-owner identity separate from value-contract equality; equal
+  fields alone do not authorize replacing the current accepted owner with an old one.
 
 The converter does not enforce hot-path policy, ownership intent or array discipline.
 Those are review and behavioral-test responsibilities, not reasons to add inference.
