@@ -1,0 +1,40 @@
+<?php
+declare(strict_types=1);
+
+/* Exact positive decimal range checking; definition validation stays in Integer_Literals. */
+namespace check_bodies;
+
+
+final class Decimal_Range
+{
+    /** Normalized nonzero ASCII decimal input; caller owns validation and zero handling. */
+    public static function fits_positive(string $value, int $bits): bool
+    {
+        // Reject huge source literals before repeated division, without parsing a host integer.
+        if (string_byte_len($value) > $bits) {
+            return false;
+        }
+        $remaining = $value;
+        for ($used = 0; $remaining !== ''; ++$used)
+        {
+            if ($used >= $bits) {
+                return false;
+            }
+            $quotient = '';
+            $carry = 0;
+            $length = string_byte_len($remaining);
+            for ($i = 0; $i < $length; ++$i)
+            {
+                $digit = ($carry * 10) + string_byte_at($remaining, $i) - 48;
+                // The normalized digit/carry domain is 0..19; this division is exact before truncation.
+                $q = (int)($digit / 2);
+                if (($q !== 0) || ($quotient !== '')) {
+                    $quotient .= string_byte_slice('0123456789', $q, 1);
+                }
+                $carry = $digit % 2;
+            }
+            $remaining = $quotient;
+        }
+        return true;
+    }
+}

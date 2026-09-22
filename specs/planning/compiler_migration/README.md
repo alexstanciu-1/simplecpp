@@ -282,4 +282,4 @@ decoder loses object/list identity needed by manifest validation. A lossless inp
 boundary is required before porting Manifest_Syntax; snapshot export is unaffected.
 
 Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
-eight host checks; active coverage is 82 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
+eight host checks; active coverage is 85 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.

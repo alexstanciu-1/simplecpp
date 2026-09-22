@@ -29,7 +29,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('native_record_layout', Path(__file__).parent / 'native_record_layout/run.py'),
           ('resource_obligations', Path(__file__).parent / 'resource_obligations/run.py'),
           ('record_materialization', Path(__file__).parent / 'record_materialization/run.py'),
-          ('definition_view', Path(__file__).parent / 'definition_view/run.py')]
+          ('definition_view', Path(__file__).parent / 'definition_view/run.py'),
+          ('instance_contexts', Path(__file__).parent / 'instance_contexts/run.py')]
 
 
 def main():

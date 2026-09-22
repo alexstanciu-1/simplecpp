@@ -85,3 +85,6 @@ require_once __DIR__ . '/src/04_analyze/resolve_types/lifecycle_composition.php'
 require_once __DIR__ . '/src/04_analyze/type_model/data/records.php';
 require_once __DIR__ . '/src/04_analyze/resolve_types/record_definitions.php';
 require_once __DIR__ . '/src/04_analyze/resolve_types/definition_view.php';
+require_once __DIR__ . '/src/04_analyze/check_bodies/utilities/decimal_range.php';
+require_once __DIR__ . '/src/04_analyze/check_bodies/utilities/literals.php';
+require_once __DIR__ . '/src/04_analyze/instantiate/data/context.php';

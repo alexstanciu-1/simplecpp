@@ -750,3 +750,26 @@ the view is not a mutable-store snapshot. No spelling resolution or generic fall
 resolver's remaining dependencies are Instance_Context, Template_Argument and instance
 bindings/preparation (including integer constant decoding), so it is not claimed complete.
 See results/definition-view-01 for measured effort and source/target hashes.
+
+## Exact integer literals and concrete instance contexts (2026-09-22)
+
+Reused Decimal_Range's exact repeated decimal division; Integer_Literals uses explicit
+ASCII byte validation and leading-zero normalization instead of regex/ltrim. Values
+remain decimal strings, including beyond the PHP/native host integer width. The supplied
+integer definition controls signedness/range; overflow remains RangeException and malformed
+input LogicException. Template_Argument retains exact definition identity and nullable
+value text (null type argument differs from integer zero).
+
+Instance_Context preserves source provenance, ordered immutable argument handles, receiver
+restrictions and disjoint context domains (source ID versus MAX_SYMBOL_ID+instance ID).
+Constructor arguments are explicit; ordinary() provides the empty non-template context.
+Arguments copy the vector but share immutable rows. The internal NUL-prefixed namespace is
+built through string_byte_from_int(0), avoiding unsupported binary source literals.
+
+35 PHP/native outcomes pass; 200 independent Python-bigint-generated host range cases
+cover widths 1..1024. Pre-PHP-ready corrections: binary literal checker rejection and a
+fixture lookup that used function rather than template-function for a template member.
+One --target invocation stopped at that PHP fixture error before building; the next
+invocation's first actual C++ build passed with no native correction. Context allocation,
+instance registry/publication and bindings remain separate dependencies. Evidence/timings:
+results/instance-contexts-01. src-runtime-preparation remains unchanged.

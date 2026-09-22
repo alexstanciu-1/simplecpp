@@ -1,0 +1,79 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-context-native-01/source"
+      ],
+      "seconds": 0.147,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-context-native-01/source"
+      ],
+      "seconds": 1.146,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-context-native-01/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/scpp-context-native-01/source/src/02_tokenize/structures.php",
+        "/tmp/scpp-context-native-01/source/src/02_tokenize/store.php",
+        "/tmp/scpp-context-native-01/source/src/02_tokenize/tokenize.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/data/nodes.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/data/tree.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/utilities/binary_syntax.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/data/expression_state.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/handlers/expressions.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/data/result.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/handlers/statements.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/handlers/control_statements.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/handlers/declarations.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/handlers/metaprogramming.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/parse_file.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/data/role_views.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/utilities/metaprogramming_syntax.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/utilities/struct_member_cursor.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/utilities/syntax_access.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/utilities/syntax_comparer.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/data/store.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/select_tasks.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/join.php",
+        "/tmp/scpp-context-native-01/source/src/03_parse/main_parse.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/collect_symbols/data/structures.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/collect_symbols/data/store.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/collect_symbols/data/result.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/collect_symbols/collect.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/collect_symbols/main_collect_symbols.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/check_bodies/utilities/decimal_range.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/check_bodies/utilities/literals.php",
+        "/tmp/scpp-context-native-01/source/src/04_analyze/instantiate/data/context.php",
+        "/tmp/scpp-context-native-01/source/probe.php",
+        "/tmp/scpp-context-native-01/source/main.php"
+      ],
+      "seconds": 0.074,
+      "exit": 255
+    }
+  ],
+  "native_build_attempts": 0
+}

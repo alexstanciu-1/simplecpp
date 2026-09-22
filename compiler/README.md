@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **82 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **85 production files**
 with PHP/native proofs. Next is source name resolution. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -93,5 +93,6 @@ Native record layout contracts add 18 PHP/native outcomes and 441 retained-contr
 comparisons. Resource-aware definition validation now adds 39 PHP/native checks and 90 retained allocation-effect cases. Record/array materialization adds 27 PHP/native checks. Next: concrete annotation and provider/storage dependencies.
 
 Definition_View adds 14 PHP/native checks for provider/source precedence and accepted
-identity. Annotation resolution still needs instance contexts, typed arguments and
-instance binding/preparation; these remain the next dependency chain.
+identity. Instance contexts, typed arguments and exact integer literals add 35 PHP/native
+outcomes and 200 host range cases. Next: instance allocation, bindings and application
+preparation; annotation resolution remains incomplete.

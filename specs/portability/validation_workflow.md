@@ -192,3 +192,6 @@ existing scalar-catalog native proof is rerun after extending Named_Definition.
 
 Record materialization adds 27 shared PHP/native outcomes covering field recipes,
 canonical arrays, nested ownership, native measurements and malformed inputs.
+
+Instance contexts and integer literals: 35 shared outcomes plus 200 independent host
+range cases (Python arbitrary precision), registered as instance_contexts.

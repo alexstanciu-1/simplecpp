@@ -83,7 +83,10 @@
     "src/04_analyze/type_model/data/resources.php",
     "src/04_analyze/type_model/data/records.php",
     "src/04_analyze/resolve_types/record_definitions.php",
-    "src/04_analyze/resolve_types/definition_view.php"
+    "src/04_analyze/resolve_types/definition_view.php",
+    "src/04_analyze/check_bodies/utilities/decimal_range.php",
+    "src/04_analyze/check_bodies/utilities/literals.php",
+    "src/04_analyze/instantiate/data/context.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

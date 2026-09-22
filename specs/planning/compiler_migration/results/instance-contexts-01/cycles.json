@@ -1,0 +1,8 @@
+{
+  "target_runner_invocations": 2,
+  "native_build_commands": 1,
+  "native_corrections": 0,
+  "checker_corrections": 1,
+  "php_fixture_corrections": 1,
+  "detail": "Internal NUL produced through byte helper; template member fixture uses template-function kind. First target invocation stopped in PHP; first actual native build passed."
+}
