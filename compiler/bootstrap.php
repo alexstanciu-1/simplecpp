@@ -101,3 +101,5 @@ require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/family_adapter.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/callable_modes.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/callables.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/storage.php';
+require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/data/runtime.php';
+require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php';

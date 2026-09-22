@@ -109,3 +109,8 @@ contracts and package ingestion remain dependencies before complete provider imp
 Typed storage-family models and Named_Definition's exact descriptor/ownership
 invariant are now implemented and proved (results/storage-contracts-01). Package
 ingestion/leases and symbol-origin integration remain pending.
+
+Package-local runtime storage/type records and Package_Syntax add 66 PHP/native
+outcomes, with 520 retained-prototype attribute inputs tested through both ABI
+validators. Evidence: `results/package-syntax-01`. Package acceptance, checksum
+verification, leases and provider symbol integration remain incomplete.

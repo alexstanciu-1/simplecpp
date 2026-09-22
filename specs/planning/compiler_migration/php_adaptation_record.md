@@ -972,3 +972,36 @@ Final storage checkpoint: resource native regressions pass all 39 outcomes after
 the harness correction; cumulative fast validation passes at 98 files. A later
 uninitialized-named-property converter enhancement could remove the private
 construction-state guard without changing Storage_Function's non-null API.
+
+## Prepared-package syntax and measured runtime records
+
+The package syntax trait becomes a stateless Package_Syntax helper. It consumes
+lossless Json_View values and returns named Type_Reference / Runtime_Abi_Position
+records rather than anonymous tuples or mixed arrays. Runtime_Type retains the
+exact named definition and optional normalized record; measured storage remains
+package-target data, not proof of semantic permissions or canonical identity.
+String-backed storage/module enums use validated integer tags with exact producer
+spellings. Runtime_Storage validates the tag; the forthcoming package type importer
+still owns category-specific size/alignment validation.
+
+Explicit byte scanning replaces regex splitting for integer ABI attributes. It
+preserves PHP trim's edge-NUL handling and the distinct ASCII whitespace set used
+by the original regex. Repeated noundef remains allowed; conflicting/repeated
+extension attributes remain rejected. Address ABI accepts only ptr with empty or
+noundef attributes, with no inferred aliasing/address-space permissions.
+
+Rows now require an actual JSON array of actual JSON objects. The prototype's
+associative decoding incidentally accepted array rows; rejecting these preserves
+the producer's record schema without modifying preparation output. Positive integer
+reads reject float/exponent tokens and overflow instead of coercing them.
+
+The first native build passes all 66 outcomes with zero native corrective cycles.
+520 retained inputs agree through both ABI validators. The first PHP milestone,
+source hashes, command timings and native evidence are in results/package-syntax-01.
+No converter or preparation implementation changed. This proves metadata syntax,
+not package acceptance: exact SHA-256 verification has no portability binding yet;
+leases, the complete type importer and provider composition remain to migrate.
+
+Final cumulative fast validation passes with 100 registered production files.
+The next coherent dependency is resource-permission ingestion; full package
+acceptance remains gated on checksum/lease and remaining import contracts.

@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790096597.2495208,
+  "php_ready_epoch": 1790096727.1560485,
+  "authoring_to_php_ready_seconds": 129.907,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/data/runtime.php": "2a730bd038a5cf9673883583f51c1a13a5d8692e798e3d9adc09670799a69937",
+    "src/01_prepare_inputs/load_runtime/handlers/package_syntax.php": "8f4c0f16b2b6d719107bccfae1d6b95318c398b6f67aa966dcf3c981df577e2e"
+  },
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "native_build_seconds": 32.326,
+  "native_evidence_completed_epoch": 1790096802.8551104,
+  "consolidation_start_epoch": 1790097121.3814874,
+  "note": "First PHP readiness covers 63 outcomes; final native proof adds three definition/record identity checks (66 total). Retained oracle added after native launch; production hashes unchanged. Wall time to consolidation includes user pause/status interaction and is not authoring effort.",
+  "consolidation_end_epoch": 1790097168.8472137
+}
