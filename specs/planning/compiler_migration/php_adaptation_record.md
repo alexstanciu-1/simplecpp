@@ -1932,3 +1932,42 @@ initial/full/partial reuse, changed configuration and foreign lineage. Void scal
 spelling and explicit invalid storage rejection are included. Three native build
 attempts were needed (STAN rejection, executable bounds failure, pass), with two
 correction cycles; one checker correction removed unsupported decrement syntax.
+
+
+## Native layout witnesses and shared storage traversal
+
+Native_Layout now produces a Layout_Witness containing generated C++ source and
+an explicitly typed primitive-ID-to-LLVM-spelling map. This replaces the prototype's
+nullable string plus by-reference output array with one private result record.
+Empty source means no reachable opaque shell needs a native alignment witness;
+primitive facts are still retained, matching the original traversal's output.
+The record is not a measured layout and grants no publication authority.
+
+Layout_Order owns child-before-parent storage traversal shared by LLVM_Storage and
+Native_Layout. It visits each reachable canonical ID once, preserves declared field
+order, rejects cycles and never follows pointer targets as inline storage. This
+small refactor keeps stack growth/bounds and cycle behavior in one owner. It retains
+full-width IDs and the previously proved explicit append/overwrite discipline.
+
+Generated types preserve the prototype: unsigned _BitInt integer witnesses,
+alignas byte-array opaque shells, fixed-array aliases and field-ordered structs.
+Only sizeof/alignof/offsetof constants are emitted; no instances, special members
+or source lifecycle behavior are introduced. Unsupported constituents, including
+floating fields, still reject in this native-shell path. Ordinary LLVM storage
+spelling supports floats independently; this migration does not widen shell support.
+
+The proof folds witness constants with Clang 18 for x86_64-unknown-linux-gnu and
+compares size/alignment/offsets against independent bounded layout expectations.
+Integer witnesses are also compared with separately folded LLVM GEP constants.
+No target executable is run. These tests exercise tool output in the host harness;
+the migrated compiler's process invocation and measurement-result acceptance remain
+unfinished. The target scope is explicit, not a cross-platform ABI claim.
+Evidence/timing: `results/layout-witness-01`. src-runtime-preparation is unchanged.
+
+Thirty-five PHP/native cases pass on the first native build, including shared
+children, nested arrays/records, empty records, no-opaque results, all five floating
+rejections and a 201-node chain. Twenty-seven generated witnesses have independent
+Clang layout checks; primitive LLVM checks run wherever integers occur. The existing
+42-case layout-selection native regression also passes after the traversal refactor.
+One preflight correction rewrote a computed keyed literal as explicit assignments;
+no native correction cycles were needed.

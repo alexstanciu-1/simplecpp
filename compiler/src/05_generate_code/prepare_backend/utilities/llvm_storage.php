@@ -28,28 +28,10 @@ final class LLVM_Storage {
     }
     /** Iterative postorder avoids host/native recursion limits and shares child spelling work. */
     public static function compound(Layout_Input $input, int $root): string {
-        $pending /** vector<Layout_Visit> */ = []; $first = new Layout_Visit(); $first->id = $root; $pending[] = $first;
-        $depth = 1; $done /** hash<string,int> */ = []; $active /** hash<bool,int> */ = [];
-        while ($depth > 0) {
-            $depth = $depth - 1; $visit = $pending[$depth]; $id = $visit->id;
-            if (isset($done[$id])) { continue; }
+        $done /** hash<string,int> */ = [];
+        foreach (Layout_Order::postorder($input,$root) as $id) {
             $shape = $input->representation_for_type($id); $kind = $shape->kind();
-            $children /** vector<int> */ = [];
-            if ($kind === \type_model\REPRESENTATION_ARRAY) { $children[] = $shape->element(); }
-            elseif ($kind === \type_model\REPRESENTATION_STRUCTURE) {
-                for ($index = 0; $index < $shape->member_count(); $index++) { $children[] = $input->field_for($id,$index)->type_id; }
-            }
-            if (!$visit->ready) {
-                if (isset($active[$id])) { throw new \LogicException('Cyclic inline storage'); }
-                $active[$id] = true; $finish = new Layout_Visit(); $finish->id = $id; $finish->ready = true;
-                if ($depth === q_count($pending)) { $pending[] = $finish; } else { $pending[$depth] = $finish; }
-                $depth = $depth + 1;
-                for ($index = q_count($children); $index > 0; $index = $index - 1) {
-                    $next = new Layout_Visit(); $next->id = $children[$index - 1]; if ($depth === q_count($pending)) { $pending[] = $next; } else { $pending[$depth] = $next; }
-                    $depth = $depth + 1;
-                }
-                continue;
-            }
+            $children = Layout_Order::children($input,$id);
             $text = '';
             if ($kind === \type_model\REPRESENTATION_ARRAY) { $text = '[' . $shape->member_count() . ' x ' . $done[$children[0]] . ']'; }
             elseif ($kind === \type_model\REPRESENTATION_STRUCTURE) {

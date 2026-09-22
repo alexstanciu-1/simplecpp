@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **145 production files**: input preparation (137 outcomes),
+Active readiness is **148 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -329,3 +329,12 @@ arguments. Scalar/floating/opaque/array/record spelling, shared DAGs and a 201-n
 chain pass. Native alignment is requested for reachable opaque storage. Next:
 native witness generation, target layout measurement and result acceptance; source
 identity projection and complete export capture remain incomplete.
+
+
+Native layout witnesses add 35 PHP/native outcomes (`results/layout-witness-01`).
+Generated C++ shells and primitive maps agree, including shared/deep DAGs and
+unsupported floating constituents. Clang 18 folds 27 generated witnesses; independent
+x86_64 size/alignment/offset expectations and LLVM integer GEP facts agree. Shared
+Layout_Order now serves both spellings. Next: compiler-side measurement output
+validation, result acceptance and tool execution; complete export capture remains
+unfinished.

@@ -1,0 +1,3151 @@
+[
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      }
+    ],
+    "root": 1,
+    "expected": {
+      "source": "",
+      "primitives": [
+        [
+          1,
+          "i8"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1
+        ]
+      }
+    ],
+    "root": 2,
+    "expected": {
+      "source": "",
+      "primitives": [
+        [
+          1,
+          "i8"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "record",
+        "children": []
+      }
+    ],
+    "root": 1,
+    "expected": {
+      "source": "",
+      "primitives": []
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      }
+    ],
+    "root": 1,
+    "expected": {
+      "source": "struct alignas(16) t1 { unsigned char bytes[32]; };\nextern \"C\" const unsigned long long size = sizeof(t1);\nextern \"C\" const unsigned long long alignment = alignof(t1);\n",
+      "primitives": []
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(1);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i1"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 7
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(7);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i7"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(8);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i8"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 16
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(16);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i16"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 64
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(64);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i64"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "array",
+        "children": [
+          3
+        ],
+        "count": 3
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3,
+          1
+        ]
+      }
+    ],
+    "root": 5,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(16) t2 { unsigned char bytes[32]; };\nstruct t3 {\nt1 f0;\nt2 f1;\n};\nusing t4 = t3[3];\nstruct t5 {\nt4 f0;\nt3 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t5);\nextern \"C\" const unsigned long long alignment = alignof(t5);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t5, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t5, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t5, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "record",
+        "children": []
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "source": "struct t1 {\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\n",
+      "primitives": []
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "array",
+        "children": [
+          1
+        ],
+        "count": 4
+      }
+    ],
+    "root": 2,
+    "expected": {
+      "source": "struct alignas(16) t1 { unsigned char bytes[32]; };\nusing t2 = t1[4];\nextern \"C\" const unsigned long long size = sizeof(t2);\nextern \"C\" const unsigned long long alignment = alignof(t2);\n",
+      "primitives": []
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "ieee_binary16"
+      },
+      {
+        "kind": "opaque",
+        "size": 8,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "rejected": true
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "bfloat16"
+      },
+      {
+        "kind": "opaque",
+        "size": 8,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "rejected": true
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "ieee_binary32"
+      },
+      {
+        "kind": "opaque",
+        "size": 8,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "rejected": true
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "ieee_binary64"
+      },
+      {
+        "kind": "opaque",
+        "size": 8,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "rejected": true
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "ieee_binary128"
+      },
+      {
+        "kind": "opaque",
+        "size": 8,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "expected": {
+      "rejected": true
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6,
+          6,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct t5 {\nt1 f0;\n};\nstruct t7 {\nt5 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t6 {\nt2 f0;\n};\nstruct t11 {\nt7 f0;\nt6 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          4,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\n};\nstruct t4 {\nt3 f0;\n};\nstruct t8 {\nt1 f0;\nt4 f1;\n};\nstruct t11 {\nt8 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          5,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          7,
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\nt1 f1;\nt1 f2;\n};\nstruct t5 {\nt1 f0;\nt3 f1;\n};\nstruct t8 {\nt5 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t11 {\nt8 f0;\nt2 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          5,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          8,
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          6,
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\n};\nstruct t6 {\nt3 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t7 {\nt2 f0;\nt6 f1;\n};\nstruct t5 {\nt3 f0;\nt3 f1;\n};\nstruct t8 {\nt7 f0;\nt5 f1;\nt6 f2;\n};\nstruct t11 {\nt3 f0;\nt6 f1;\nt8 f2;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          7,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          6,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          5,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\nt1 f1;\nt1 f2;\n};\nstruct t5 {\nt3 f0;\n};\nstruct t6 {\nt3 f0;\nt1 f1;\n};\nstruct t7 {\nt5 f0;\nt6 f1;\nt1 f2;\n};\nstruct t11 {\nt7 f0;\nt5 f1;\nt1 f2;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          5,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt2 f0;\n};\nstruct t5 {\nt3 f0;\n};\nstruct t11 {\nt5 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\n",
+      "primitives": []
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt1 f0;\nt2 f1;\n};\nstruct t6 {\nt4 f0;\nt2 f1;\nt4 f2;\n};\nstruct t11 {\nt6 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          4,
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt2 f0;\nt1 f1;\n};\nstruct t4 {\nt2 f0;\nt3 f1;\nt3 f2;\n};\nstruct t6 {\nt3 f0;\n};\nstruct t11 {\nt4 f0;\nt6 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          2,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          2,
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\nt1 f1;\nt2 f2;\n};\nstruct t4 {\nt3 f0;\nt2 f1;\nt3 f2;\n};\nstruct t11 {\nt2 f0;\nt4 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt2 f0;\n};\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt2 f0;\nt1 f1;\nt2 f2;\n};\nstruct t5 {\nt4 f0;\nt3 f1;\n};\nstruct t6 {\nt5 f0;\n};\nstruct t11 {\nt6 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          1,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt2 f0;\n};\nusing t1 = unsigned _BitInt(32);\nstruct t4 {\nt3 f0;\nt2 f1;\nt1 f2;\n};\nstruct t5 {\nt4 f0;\nt3 f1;\nt4 f2;\n};\nstruct t6 {\nt5 f0;\nt1 f1;\nt4 f2;\n};\nstruct t11 {\nt6 f0;\nt1 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          1,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          4,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt2 f0;\nt2 f1;\nt2 f2;\n};\nstruct t4 {\nt3 f0;\n};\nstruct t5 {\nt4 f0;\n};\nstruct t11 {\nt5 f0;\nt4 f1;\nt2 f2;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\n",
+      "primitives": []
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          10,
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct t7 {\nt1 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt2 f0;\nt1 f1;\nt1 f2;\n};\nstruct t10 {\nt7 f0;\nt4 f1;\n};\nstruct t9 {\nt1 f0;\n};\nstruct t11 {\nt10 f0;\nt9 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct t4 {\nt1 f0;\n};\nstruct t11 {\nt4 f0;\nt1 f1;\nt1 f2;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          2,
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\n};\nstruct t4 {\nt3 f0;\nt1 f1;\n};\nstruct t8 {\nt1 f0;\nt2 f1;\nt4 f2;\n};\nstruct t5 {\nt1 f0;\nt3 f1;\nt4 f2;\n};\nstruct t11 {\nt8 f0;\nt2 f1;\nt5 f2;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          2,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          8,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          10
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "expected": {
+      "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt2 f0;\nt2 f1;\n};\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\n};\nstruct t7 {\nt3 f0;\nt1 f1;\n};\nstruct t8 {\nt4 f0;\nt2 f1;\nt7 f2;\n};\nstruct t10 {\nt8 f0;\nt8 f1;\nt1 f2;\n};\nstruct t11 {\nt10 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+      "primitives": [
+        [
+          1,
+          "i32"
+        ]
+      ]
+    }
+  },
+  {
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          10
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          12
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          13
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          14
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          15
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          16
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          17
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          18
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          19
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          20
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          21
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          22
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          23
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          24
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          25
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          26
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          27
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          28
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          29
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          30
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          31
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          32
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          33
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          34
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          35
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          36
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          37
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          38
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          39
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          40
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          41
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          42
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          43
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          44
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          45
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          46
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          47
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          48
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          49
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          50
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          51
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          52
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          53
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          54
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          55
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          56
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          57
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          58
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          59
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          60
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          61
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          62
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          63
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          64
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          65
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          66
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          67
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          68
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          69
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          70
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          71
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          72
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          73
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          74
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          75
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          76
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          77
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          78
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          79
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          80
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          81
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          82
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          83
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          84
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          85
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          86
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          87
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          88
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          89
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          90
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          91
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          92
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          93
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          94
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          95
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          96
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          97
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          98
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          99
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          100
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          101
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          102
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          103
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          104
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          105
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          106
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          107
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          108
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          109
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          110
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          111
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          112
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          113
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          114
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          115
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          116
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          117
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          118
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          119
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          120
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          121
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          122
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          123
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          124
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          125
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          126
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          127
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          128
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          129
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          130
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          131
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          132
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          133
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          134
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          135
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          136
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          137
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          138
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          139
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          140
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          141
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          142
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          143
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          144
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          145
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          146
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          147
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          148
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          149
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          150
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          151
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          152
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          153
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          154
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          155
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          156
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          157
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          158
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          159
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          160
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          161
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          162
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          163
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          164
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          165
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          166
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          167
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          168
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          169
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          170
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          171
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          172
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          173
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          174
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          175
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          176
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          177
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          178
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          179
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          180
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          181
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          182
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          183
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          184
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          185
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          186
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          187
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          188
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          189
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          190
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          191
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          192
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          193
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          194
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          195
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          196
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          197
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          198
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          199
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          200
+        ]
+      }
+    ],
+    "root": 201,
+    "expected": {
+      "source": "struct alignas(8) t1 { unsigned char bytes[16]; };\nstruct t2 {\nt1 f0;\n};\nstruct t3 {\nt2 f0;\n};\nstruct t4 {\nt3 f0;\n};\nstruct t5 {\nt4 f0;\n};\nstruct t6 {\nt5 f0;\n};\nstruct t7 {\nt6 f0;\n};\nstruct t8 {\nt7 f0;\n};\nstruct t9 {\nt8 f0;\n};\nstruct t10 {\nt9 f0;\n};\nstruct t11 {\nt10 f0;\n};\nstruct t12 {\nt11 f0;\n};\nstruct t13 {\nt12 f0;\n};\nstruct t14 {\nt13 f0;\n};\nstruct t15 {\nt14 f0;\n};\nstruct t16 {\nt15 f0;\n};\nstruct t17 {\nt16 f0;\n};\nstruct t18 {\nt17 f0;\n};\nstruct t19 {\nt18 f0;\n};\nstruct t20 {\nt19 f0;\n};\nstruct t21 {\nt20 f0;\n};\nstruct t22 {\nt21 f0;\n};\nstruct t23 {\nt22 f0;\n};\nstruct t24 {\nt23 f0;\n};\nstruct t25 {\nt24 f0;\n};\nstruct t26 {\nt25 f0;\n};\nstruct t27 {\nt26 f0;\n};\nstruct t28 {\nt27 f0;\n};\nstruct t29 {\nt28 f0;\n};\nstruct t30 {\nt29 f0;\n};\nstruct t31 {\nt30 f0;\n};\nstruct t32 {\nt31 f0;\n};\nstruct t33 {\nt32 f0;\n};\nstruct t34 {\nt33 f0;\n};\nstruct t35 {\nt34 f0;\n};\nstruct t36 {\nt35 f0;\n};\nstruct t37 {\nt36 f0;\n};\nstruct t38 {\nt37 f0;\n};\nstruct t39 {\nt38 f0;\n};\nstruct t40 {\nt39 f0;\n};\nstruct t41 {\nt40 f0;\n};\nstruct t42 {\nt41 f0;\n};\nstruct t43 {\nt42 f0;\n};\nstruct t44 {\nt43 f0;\n};\nstruct t45 {\nt44 f0;\n};\nstruct t46 {\nt45 f0;\n};\nstruct t47 {\nt46 f0;\n};\nstruct t48 {\nt47 f0;\n};\nstruct t49 {\nt48 f0;\n};\nstruct t50 {\nt49 f0;\n};\nstruct t51 {\nt50 f0;\n};\nstruct t52 {\nt51 f0;\n};\nstruct t53 {\nt52 f0;\n};\nstruct t54 {\nt53 f0;\n};\nstruct t55 {\nt54 f0;\n};\nstruct t56 {\nt55 f0;\n};\nstruct t57 {\nt56 f0;\n};\nstruct t58 {\nt57 f0;\n};\nstruct t59 {\nt58 f0;\n};\nstruct t60 {\nt59 f0;\n};\nstruct t61 {\nt60 f0;\n};\nstruct t62 {\nt61 f0;\n};\nstruct t63 {\nt62 f0;\n};\nstruct t64 {\nt63 f0;\n};\nstruct t65 {\nt64 f0;\n};\nstruct t66 {\nt65 f0;\n};\nstruct t67 {\nt66 f0;\n};\nstruct t68 {\nt67 f0;\n};\nstruct t69 {\nt68 f0;\n};\nstruct t70 {\nt69 f0;\n};\nstruct t71 {\nt70 f0;\n};\nstruct t72 {\nt71 f0;\n};\nstruct t73 {\nt72 f0;\n};\nstruct t74 {\nt73 f0;\n};\nstruct t75 {\nt74 f0;\n};\nstruct t76 {\nt75 f0;\n};\nstruct t77 {\nt76 f0;\n};\nstruct t78 {\nt77 f0;\n};\nstruct t79 {\nt78 f0;\n};\nstruct t80 {\nt79 f0;\n};\nstruct t81 {\nt80 f0;\n};\nstruct t82 {\nt81 f0;\n};\nstruct t83 {\nt82 f0;\n};\nstruct t84 {\nt83 f0;\n};\nstruct t85 {\nt84 f0;\n};\nstruct t86 {\nt85 f0;\n};\nstruct t87 {\nt86 f0;\n};\nstruct t88 {\nt87 f0;\n};\nstruct t89 {\nt88 f0;\n};\nstruct t90 {\nt89 f0;\n};\nstruct t91 {\nt90 f0;\n};\nstruct t92 {\nt91 f0;\n};\nstruct t93 {\nt92 f0;\n};\nstruct t94 {\nt93 f0;\n};\nstruct t95 {\nt94 f0;\n};\nstruct t96 {\nt95 f0;\n};\nstruct t97 {\nt96 f0;\n};\nstruct t98 {\nt97 f0;\n};\nstruct t99 {\nt98 f0;\n};\nstruct t100 {\nt99 f0;\n};\nstruct t101 {\nt100 f0;\n};\nstruct t102 {\nt101 f0;\n};\nstruct t103 {\nt102 f0;\n};\nstruct t104 {\nt103 f0;\n};\nstruct t105 {\nt104 f0;\n};\nstruct t106 {\nt105 f0;\n};\nstruct t107 {\nt106 f0;\n};\nstruct t108 {\nt107 f0;\n};\nstruct t109 {\nt108 f0;\n};\nstruct t110 {\nt109 f0;\n};\nstruct t111 {\nt110 f0;\n};\nstruct t112 {\nt111 f0;\n};\nstruct t113 {\nt112 f0;\n};\nstruct t114 {\nt113 f0;\n};\nstruct t115 {\nt114 f0;\n};\nstruct t116 {\nt115 f0;\n};\nstruct t117 {\nt116 f0;\n};\nstruct t118 {\nt117 f0;\n};\nstruct t119 {\nt118 f0;\n};\nstruct t120 {\nt119 f0;\n};\nstruct t121 {\nt120 f0;\n};\nstruct t122 {\nt121 f0;\n};\nstruct t123 {\nt122 f0;\n};\nstruct t124 {\nt123 f0;\n};\nstruct t125 {\nt124 f0;\n};\nstruct t126 {\nt125 f0;\n};\nstruct t127 {\nt126 f0;\n};\nstruct t128 {\nt127 f0;\n};\nstruct t129 {\nt128 f0;\n};\nstruct t130 {\nt129 f0;\n};\nstruct t131 {\nt130 f0;\n};\nstruct t132 {\nt131 f0;\n};\nstruct t133 {\nt132 f0;\n};\nstruct t134 {\nt133 f0;\n};\nstruct t135 {\nt134 f0;\n};\nstruct t136 {\nt135 f0;\n};\nstruct t137 {\nt136 f0;\n};\nstruct t138 {\nt137 f0;\n};\nstruct t139 {\nt138 f0;\n};\nstruct t140 {\nt139 f0;\n};\nstruct t141 {\nt140 f0;\n};\nstruct t142 {\nt141 f0;\n};\nstruct t143 {\nt142 f0;\n};\nstruct t144 {\nt143 f0;\n};\nstruct t145 {\nt144 f0;\n};\nstruct t146 {\nt145 f0;\n};\nstruct t147 {\nt146 f0;\n};\nstruct t148 {\nt147 f0;\n};\nstruct t149 {\nt148 f0;\n};\nstruct t150 {\nt149 f0;\n};\nstruct t151 {\nt150 f0;\n};\nstruct t152 {\nt151 f0;\n};\nstruct t153 {\nt152 f0;\n};\nstruct t154 {\nt153 f0;\n};\nstruct t155 {\nt154 f0;\n};\nstruct t156 {\nt155 f0;\n};\nstruct t157 {\nt156 f0;\n};\nstruct t158 {\nt157 f0;\n};\nstruct t159 {\nt158 f0;\n};\nstruct t160 {\nt159 f0;\n};\nstruct t161 {\nt160 f0;\n};\nstruct t162 {\nt161 f0;\n};\nstruct t163 {\nt162 f0;\n};\nstruct t164 {\nt163 f0;\n};\nstruct t165 {\nt164 f0;\n};\nstruct t166 {\nt165 f0;\n};\nstruct t167 {\nt166 f0;\n};\nstruct t168 {\nt167 f0;\n};\nstruct t169 {\nt168 f0;\n};\nstruct t170 {\nt169 f0;\n};\nstruct t171 {\nt170 f0;\n};\nstruct t172 {\nt171 f0;\n};\nstruct t173 {\nt172 f0;\n};\nstruct t174 {\nt173 f0;\n};\nstruct t175 {\nt174 f0;\n};\nstruct t176 {\nt175 f0;\n};\nstruct t177 {\nt176 f0;\n};\nstruct t178 {\nt177 f0;\n};\nstruct t179 {\nt178 f0;\n};\nstruct t180 {\nt179 f0;\n};\nstruct t181 {\nt180 f0;\n};\nstruct t182 {\nt181 f0;\n};\nstruct t183 {\nt182 f0;\n};\nstruct t184 {\nt183 f0;\n};\nstruct t185 {\nt184 f0;\n};\nstruct t186 {\nt185 f0;\n};\nstruct t187 {\nt186 f0;\n};\nstruct t188 {\nt187 f0;\n};\nstruct t189 {\nt188 f0;\n};\nstruct t190 {\nt189 f0;\n};\nstruct t191 {\nt190 f0;\n};\nstruct t192 {\nt191 f0;\n};\nstruct t193 {\nt192 f0;\n};\nstruct t194 {\nt193 f0;\n};\nstruct t195 {\nt194 f0;\n};\nstruct t196 {\nt195 f0;\n};\nstruct t197 {\nt196 f0;\n};\nstruct t198 {\nt197 f0;\n};\nstruct t199 {\nt198 f0;\n};\nstruct t200 {\nt199 f0;\n};\nstruct t201 {\nt200 f0;\n};\nextern \"C\" const unsigned long long size = sizeof(t201);\nextern \"C\" const unsigned long long alignment = alignof(t201);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t201, f0);\n",
+      "primitives": []
+    }
+  }
+]

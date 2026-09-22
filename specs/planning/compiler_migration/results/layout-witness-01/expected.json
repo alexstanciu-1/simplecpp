@@ -1,0 +1,252 @@
+[
+  {
+    "source": "",
+    "primitives": [
+      [
+        1,
+        "i8"
+      ]
+    ]
+  },
+  {
+    "source": "",
+    "primitives": [
+      [
+        1,
+        "i8"
+      ]
+    ]
+  },
+  {
+    "source": "",
+    "primitives": []
+  },
+  {
+    "source": "struct alignas(16) t1 { unsigned char bytes[32]; };\nextern \"C\" const unsigned long long size = sizeof(t1);\nextern \"C\" const unsigned long long alignment = alignof(t1);\n",
+    "primitives": []
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(1);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i1"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(7);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i7"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(8);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i8"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(16);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i16"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(64);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i64"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(16) t2 { unsigned char bytes[32]; };\nstruct t3 {\nt1 f0;\nt2 f1;\n};\nusing t4 = t3[3];\nstruct t5 {\nt4 f0;\nt3 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t5);\nextern \"C\" const unsigned long long alignment = alignof(t5);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t5, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t5, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t5, f2);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct t1 {\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\nt1 f2;\n};\nextern \"C\" const unsigned long long size = sizeof(t3);\nextern \"C\" const unsigned long long alignment = alignof(t3);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t3, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t3, f1);\nextern \"C\" const unsigned long long field_2 = __builtin_offsetof(t3, f2);\n",
+    "primitives": []
+  },
+  {
+    "source": "struct alignas(16) t1 { unsigned char bytes[32]; };\nusing t2 = t1[4];\nextern \"C\" const unsigned long long size = sizeof(t2);\nextern \"C\" const unsigned long long alignment = alignof(t2);\n",
+    "primitives": []
+  },
+  {
+    "rejected": true
+  },
+  {
+    "rejected": true
+  },
+  {
+    "rejected": true
+  },
+  {
+    "rejected": true
+  },
+  {
+    "rejected": true
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct t5 {\nt1 f0;\n};\nstruct t7 {\nt5 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t6 {\nt2 f0;\n};\nstruct t11 {\nt7 f0;\nt6 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\n};\nstruct t4 {\nt3 f0;\n};\nstruct t8 {\nt1 f0;\nt4 f1;\n};\nstruct t11 {\nt8 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\nt1 f1;\nt1 f2;\n};\nstruct t5 {\nt1 f0;\nt3 f1;\n};\nstruct t8 {\nt5 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t11 {\nt8 f0;\nt2 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\n};\nstruct t6 {\nt3 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t7 {\nt2 f0;\nt6 f1;\n};\nstruct t5 {\nt3 f0;\nt3 f1;\n};\nstruct t8 {\nt7 f0;\nt5 f1;\nt6 f2;\n};\nstruct t11 {\nt3 f0;\nt6 f1;\nt8 f2;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\nt1 f1;\nt1 f2;\n};\nstruct t5 {\nt3 f0;\n};\nstruct t6 {\nt3 f0;\nt1 f1;\n};\nstruct t7 {\nt5 f0;\nt6 f1;\nt1 f2;\n};\nstruct t11 {\nt7 f0;\nt5 f1;\nt1 f2;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt2 f0;\n};\nstruct t5 {\nt3 f0;\n};\nstruct t11 {\nt5 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\n",
+    "primitives": []
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt1 f0;\nt2 f1;\n};\nstruct t6 {\nt4 f0;\nt2 f1;\nt4 f2;\n};\nstruct t11 {\nt6 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt2 f0;\nt1 f1;\n};\nstruct t4 {\nt2 f0;\nt3 f1;\nt3 f2;\n};\nstruct t6 {\nt3 f0;\n};\nstruct t11 {\nt4 f0;\nt6 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\nt1 f1;\nt2 f2;\n};\nstruct t4 {\nt3 f0;\nt2 f1;\nt3 f2;\n};\nstruct t11 {\nt2 f0;\nt4 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt2 f0;\n};\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt2 f0;\nt1 f1;\nt2 f2;\n};\nstruct t5 {\nt4 f0;\nt3 f1;\n};\nstruct t6 {\nt5 f0;\n};\nstruct t11 {\nt6 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt2 f0;\n};\nusing t1 = unsigned _BitInt(32);\nstruct t4 {\nt3 f0;\nt2 f1;\nt1 f2;\n};\nstruct t5 {\nt4 f0;\nt3 f1;\nt4 f2;\n};\nstruct t6 {\nt5 f0;\nt1 f1;\nt4 f2;\n};\nstruct t11 {\nt6 f0;\nt1 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt2 f0;\nt2 f1;\nt2 f2;\n};\nstruct t4 {\nt3 f0;\n};\nstruct t5 {\nt4 f0;\n};\nstruct t11 {\nt5 f0;\nt4 f1;\nt2 f2;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\n",
+    "primitives": []
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct t7 {\nt1 f0;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt2 f0;\nt1 f1;\nt1 f2;\n};\nstruct t10 {\nt7 f0;\nt4 f1;\n};\nstruct t9 {\nt1 f0;\n};\nstruct t11 {\nt10 f0;\nt9 f1;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct t4 {\nt1 f0;\n};\nstruct t11 {\nt4 f0;\nt1 f1;\nt1 f2;\n};\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "using t1 = unsigned _BitInt(32);\nstruct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t3 {\nt1 f0;\nt2 f1;\n};\nstruct t4 {\nt3 f0;\nt1 f1;\n};\nstruct t8 {\nt1 f0;\nt2 f1;\nt4 f2;\n};\nstruct t5 {\nt1 f0;\nt3 f1;\nt4 f2;\n};\nstruct t11 {\nt8 f0;\nt2 f1;\nt5 f2;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t2 { unsigned char bytes[16]; };\nstruct t4 {\nt2 f0;\nt2 f1;\n};\nusing t1 = unsigned _BitInt(32);\nstruct t3 {\nt1 f0;\n};\nstruct t7 {\nt3 f0;\nt1 f1;\n};\nstruct t8 {\nt4 f0;\nt2 f1;\nt7 f2;\n};\nstruct t10 {\nt8 f0;\nt8 f1;\nt1 f2;\n};\nstruct t11 {\nt10 f0;\n};\nstruct t12 {\nt11 f0;\nt2 f1;\n};\nextern \"C\" const unsigned long long size = sizeof(t12);\nextern \"C\" const unsigned long long alignment = alignof(t12);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t12, f0);\nextern \"C\" const unsigned long long field_1 = __builtin_offsetof(t12, f1);\nextern \"C\" const unsigned long long primitive_size_1 = sizeof(t1);\nextern \"C\" const unsigned long long primitive_alignment_1 = alignof(t1);\n",
+    "primitives": [
+      [
+        1,
+        "i32"
+      ]
+    ]
+  },
+  {
+    "source": "struct alignas(8) t1 { unsigned char bytes[16]; };\nstruct t2 {\nt1 f0;\n};\nstruct t3 {\nt2 f0;\n};\nstruct t4 {\nt3 f0;\n};\nstruct t5 {\nt4 f0;\n};\nstruct t6 {\nt5 f0;\n};\nstruct t7 {\nt6 f0;\n};\nstruct t8 {\nt7 f0;\n};\nstruct t9 {\nt8 f0;\n};\nstruct t10 {\nt9 f0;\n};\nstruct t11 {\nt10 f0;\n};\nstruct t12 {\nt11 f0;\n};\nstruct t13 {\nt12 f0;\n};\nstruct t14 {\nt13 f0;\n};\nstruct t15 {\nt14 f0;\n};\nstruct t16 {\nt15 f0;\n};\nstruct t17 {\nt16 f0;\n};\nstruct t18 {\nt17 f0;\n};\nstruct t19 {\nt18 f0;\n};\nstruct t20 {\nt19 f0;\n};\nstruct t21 {\nt20 f0;\n};\nstruct t22 {\nt21 f0;\n};\nstruct t23 {\nt22 f0;\n};\nstruct t24 {\nt23 f0;\n};\nstruct t25 {\nt24 f0;\n};\nstruct t26 {\nt25 f0;\n};\nstruct t27 {\nt26 f0;\n};\nstruct t28 {\nt27 f0;\n};\nstruct t29 {\nt28 f0;\n};\nstruct t30 {\nt29 f0;\n};\nstruct t31 {\nt30 f0;\n};\nstruct t32 {\nt31 f0;\n};\nstruct t33 {\nt32 f0;\n};\nstruct t34 {\nt33 f0;\n};\nstruct t35 {\nt34 f0;\n};\nstruct t36 {\nt35 f0;\n};\nstruct t37 {\nt36 f0;\n};\nstruct t38 {\nt37 f0;\n};\nstruct t39 {\nt38 f0;\n};\nstruct t40 {\nt39 f0;\n};\nstruct t41 {\nt40 f0;\n};\nstruct t42 {\nt41 f0;\n};\nstruct t43 {\nt42 f0;\n};\nstruct t44 {\nt43 f0;\n};\nstruct t45 {\nt44 f0;\n};\nstruct t46 {\nt45 f0;\n};\nstruct t47 {\nt46 f0;\n};\nstruct t48 {\nt47 f0;\n};\nstruct t49 {\nt48 f0;\n};\nstruct t50 {\nt49 f0;\n};\nstruct t51 {\nt50 f0;\n};\nstruct t52 {\nt51 f0;\n};\nstruct t53 {\nt52 f0;\n};\nstruct t54 {\nt53 f0;\n};\nstruct t55 {\nt54 f0;\n};\nstruct t56 {\nt55 f0;\n};\nstruct t57 {\nt56 f0;\n};\nstruct t58 {\nt57 f0;\n};\nstruct t59 {\nt58 f0;\n};\nstruct t60 {\nt59 f0;\n};\nstruct t61 {\nt60 f0;\n};\nstruct t62 {\nt61 f0;\n};\nstruct t63 {\nt62 f0;\n};\nstruct t64 {\nt63 f0;\n};\nstruct t65 {\nt64 f0;\n};\nstruct t66 {\nt65 f0;\n};\nstruct t67 {\nt66 f0;\n};\nstruct t68 {\nt67 f0;\n};\nstruct t69 {\nt68 f0;\n};\nstruct t70 {\nt69 f0;\n};\nstruct t71 {\nt70 f0;\n};\nstruct t72 {\nt71 f0;\n};\nstruct t73 {\nt72 f0;\n};\nstruct t74 {\nt73 f0;\n};\nstruct t75 {\nt74 f0;\n};\nstruct t76 {\nt75 f0;\n};\nstruct t77 {\nt76 f0;\n};\nstruct t78 {\nt77 f0;\n};\nstruct t79 {\nt78 f0;\n};\nstruct t80 {\nt79 f0;\n};\nstruct t81 {\nt80 f0;\n};\nstruct t82 {\nt81 f0;\n};\nstruct t83 {\nt82 f0;\n};\nstruct t84 {\nt83 f0;\n};\nstruct t85 {\nt84 f0;\n};\nstruct t86 {\nt85 f0;\n};\nstruct t87 {\nt86 f0;\n};\nstruct t88 {\nt87 f0;\n};\nstruct t89 {\nt88 f0;\n};\nstruct t90 {\nt89 f0;\n};\nstruct t91 {\nt90 f0;\n};\nstruct t92 {\nt91 f0;\n};\nstruct t93 {\nt92 f0;\n};\nstruct t94 {\nt93 f0;\n};\nstruct t95 {\nt94 f0;\n};\nstruct t96 {\nt95 f0;\n};\nstruct t97 {\nt96 f0;\n};\nstruct t98 {\nt97 f0;\n};\nstruct t99 {\nt98 f0;\n};\nstruct t100 {\nt99 f0;\n};\nstruct t101 {\nt100 f0;\n};\nstruct t102 {\nt101 f0;\n};\nstruct t103 {\nt102 f0;\n};\nstruct t104 {\nt103 f0;\n};\nstruct t105 {\nt104 f0;\n};\nstruct t106 {\nt105 f0;\n};\nstruct t107 {\nt106 f0;\n};\nstruct t108 {\nt107 f0;\n};\nstruct t109 {\nt108 f0;\n};\nstruct t110 {\nt109 f0;\n};\nstruct t111 {\nt110 f0;\n};\nstruct t112 {\nt111 f0;\n};\nstruct t113 {\nt112 f0;\n};\nstruct t114 {\nt113 f0;\n};\nstruct t115 {\nt114 f0;\n};\nstruct t116 {\nt115 f0;\n};\nstruct t117 {\nt116 f0;\n};\nstruct t118 {\nt117 f0;\n};\nstruct t119 {\nt118 f0;\n};\nstruct t120 {\nt119 f0;\n};\nstruct t121 {\nt120 f0;\n};\nstruct t122 {\nt121 f0;\n};\nstruct t123 {\nt122 f0;\n};\nstruct t124 {\nt123 f0;\n};\nstruct t125 {\nt124 f0;\n};\nstruct t126 {\nt125 f0;\n};\nstruct t127 {\nt126 f0;\n};\nstruct t128 {\nt127 f0;\n};\nstruct t129 {\nt128 f0;\n};\nstruct t130 {\nt129 f0;\n};\nstruct t131 {\nt130 f0;\n};\nstruct t132 {\nt131 f0;\n};\nstruct t133 {\nt132 f0;\n};\nstruct t134 {\nt133 f0;\n};\nstruct t135 {\nt134 f0;\n};\nstruct t136 {\nt135 f0;\n};\nstruct t137 {\nt136 f0;\n};\nstruct t138 {\nt137 f0;\n};\nstruct t139 {\nt138 f0;\n};\nstruct t140 {\nt139 f0;\n};\nstruct t141 {\nt140 f0;\n};\nstruct t142 {\nt141 f0;\n};\nstruct t143 {\nt142 f0;\n};\nstruct t144 {\nt143 f0;\n};\nstruct t145 {\nt144 f0;\n};\nstruct t146 {\nt145 f0;\n};\nstruct t147 {\nt146 f0;\n};\nstruct t148 {\nt147 f0;\n};\nstruct t149 {\nt148 f0;\n};\nstruct t150 {\nt149 f0;\n};\nstruct t151 {\nt150 f0;\n};\nstruct t152 {\nt151 f0;\n};\nstruct t153 {\nt152 f0;\n};\nstruct t154 {\nt153 f0;\n};\nstruct t155 {\nt154 f0;\n};\nstruct t156 {\nt155 f0;\n};\nstruct t157 {\nt156 f0;\n};\nstruct t158 {\nt157 f0;\n};\nstruct t159 {\nt158 f0;\n};\nstruct t160 {\nt159 f0;\n};\nstruct t161 {\nt160 f0;\n};\nstruct t162 {\nt161 f0;\n};\nstruct t163 {\nt162 f0;\n};\nstruct t164 {\nt163 f0;\n};\nstruct t165 {\nt164 f0;\n};\nstruct t166 {\nt165 f0;\n};\nstruct t167 {\nt166 f0;\n};\nstruct t168 {\nt167 f0;\n};\nstruct t169 {\nt168 f0;\n};\nstruct t170 {\nt169 f0;\n};\nstruct t171 {\nt170 f0;\n};\nstruct t172 {\nt171 f0;\n};\nstruct t173 {\nt172 f0;\n};\nstruct t174 {\nt173 f0;\n};\nstruct t175 {\nt174 f0;\n};\nstruct t176 {\nt175 f0;\n};\nstruct t177 {\nt176 f0;\n};\nstruct t178 {\nt177 f0;\n};\nstruct t179 {\nt178 f0;\n};\nstruct t180 {\nt179 f0;\n};\nstruct t181 {\nt180 f0;\n};\nstruct t182 {\nt181 f0;\n};\nstruct t183 {\nt182 f0;\n};\nstruct t184 {\nt183 f0;\n};\nstruct t185 {\nt184 f0;\n};\nstruct t186 {\nt185 f0;\n};\nstruct t187 {\nt186 f0;\n};\nstruct t188 {\nt187 f0;\n};\nstruct t189 {\nt188 f0;\n};\nstruct t190 {\nt189 f0;\n};\nstruct t191 {\nt190 f0;\n};\nstruct t192 {\nt191 f0;\n};\nstruct t193 {\nt192 f0;\n};\nstruct t194 {\nt193 f0;\n};\nstruct t195 {\nt194 f0;\n};\nstruct t196 {\nt195 f0;\n};\nstruct t197 {\nt196 f0;\n};\nstruct t198 {\nt197 f0;\n};\nstruct t199 {\nt198 f0;\n};\nstruct t200 {\nt199 f0;\n};\nstruct t201 {\nt200 f0;\n};\nextern \"C\" const unsigned long long size = sizeof(t201);\nextern \"C\" const unsigned long long alignment = alignof(t201);\nextern \"C\" const unsigned long long field_0 = __builtin_offsetof(t201, f0);\n",
+    "primitives": []
+  }
+]
