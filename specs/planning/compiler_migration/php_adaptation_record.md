@@ -1369,3 +1369,30 @@ UTF-8 substitution cannot hide behind comparing equally transformed strings.
 All 279 cases pass PHP/native and retained acceptance checks on first attempts.
 Evidence/timings: `results/export-provenance-01`. These are provenance records, not
 source identity projection or accepted backend layout/export publication.
+
+
+## Tagged export identity keys
+
+`Export_Type_Identity` and `Export_Argument` replace the prototype's heterogeneous
+`parts` arrays with typed construction operations. Factories encode the same complete
+language/provider/family/source/array tags, and argument records distinguish type
+from normalized integer constants. Nested keys are embedded as tagged JSON values,
+not quoted again. Only source roots carry the source flag; an array of a source type
+is not itself a source declaration. Keys remain exact encodings, never hashes,
+display names, path-derived project keys or local canonical IDs.
+
+The shared checked JSON string encoder escapes slashes by default; a byte-level
+post-pass removes only JSON slash escapes to retain the prototype's exact key
+protocol. Unicode/control escaping remains delegated to that encoder. Named factories
+retain only the finished key and source flag, avoiding the duplicate heterogeneous
+parts tree. This does not claim measured memory/performance improvement. Guarded
+accessors reject uninitialized default construction; source identity projection will
+use factories instead of assembling PHP arrays. Public keys cannot be mutated.
+
+The original normalized-integer requirement moves into the argument constructor;
+invalid signs/leading zeroes/fractions are rejected without narrowing large literals.
+Array counts remain nonnegative and serialize exactly through INT64_MAX. Initial
+converter checking rejected `(string)`; supported string concatenation provides
+that local formatting without converter growth. Evidence: `results/export-identity-01`.
+Source symbol/provider selection, lineage validation and accepted layout/export
+ownership are still separate components.

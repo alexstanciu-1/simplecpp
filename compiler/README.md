@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **113 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **114 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -142,3 +142,10 @@ acceptance comparisons (`results/export-provenance-01`). Explicit project identi
 byte-preserving lexical roots and required target/revision keys are retained without
 filesystem access or claims of verified backend support. Next: tagged export type
 identity and accepted layout/dependency provenance, before source-export binding.
+
+
+Typed export identity encoding adds 61 PHP/native outcomes and 215 exact retained
+key comparisons (`results/export-identity-01`). Tagged keys preserve argument order,
+declared constant types, nested structure and source flags without heterogeneous
+parts arrays. Next: accepted layout/dependency provenance and source-export ownership;
+source/provider identity projection itself remains pending.

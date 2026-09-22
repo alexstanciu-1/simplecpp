@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **113 production files**: input preparation (137 outcomes),
+Active readiness is **114 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -176,3 +176,10 @@ acceptance comparisons (`results/export-provenance-01`). Explicit project identi
 byte-preserving lexical roots and required target/revision keys are retained without
 filesystem access or claims of verified backend support. Next: tagged export type
 identity and accepted layout/dependency provenance, before source-export binding.
+
+
+Typed export identity encoding adds 61 PHP/native outcomes and 215 exact retained
+key comparisons (`results/export-identity-01`). Tagged keys preserve argument order,
+declared constant types, nested structure and source flags without heterogeneous
+parts arrays. Next: accepted layout/dependency provenance and source-export ownership;
+source/provider identity projection itself remains pending.

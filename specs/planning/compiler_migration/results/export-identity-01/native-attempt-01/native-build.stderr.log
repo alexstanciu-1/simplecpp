@@ -1,0 +1,2 @@
+Variable $base is not visible in this block at line 40. Safe v1 uses block-local variable visibility; declare $base in the current block or an enclosing block before use.
+Variable $base is not visible in this block at line 43. Safe v1 uses block-local variable visibility; declare $base in the current block or an enclosing block before use.

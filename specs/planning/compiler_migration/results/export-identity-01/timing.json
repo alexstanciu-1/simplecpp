@@ -1,0 +1,18 @@
+{
+  "authoring_start_epoch": 1790102527.0,
+  "php_ready_epoch": 1790102689.1267388,
+  "php_ready_sha256": {
+    "src/04_analyze/resolve_types/data/export_identity.php": "6ce0c3e7ab7620a49cbe8e237cfdedfdc3f2b01e6ff736d0ed7fef4f857b0fbe"
+  },
+  "authoring_to_php_ready_seconds": 162.127,
+  "php_ready_to_native_pass_seconds": 99.889,
+  "native_build_commands_to_first_pass": 2,
+  "actual_cpp_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 1,
+  "native_correction": "Probe baseline was declared in a loop and used afterward; moved to enclosing scope. First build command stopped in STAN, before C++ compilation.",
+  "checker_corrective_cycles": 1,
+  "checker_correction": "Replace unsupported (string) cast with supported string concatenation.",
+  "native_build_seconds": 19.721,
+  "consolidation_start_epoch": 1790102815.1563978,
+  "consolidation_end_epoch": 1790102913.8369474
+}
