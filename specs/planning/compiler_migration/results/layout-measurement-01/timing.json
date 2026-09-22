@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790112981.0,
+  "first_php_ready_epoch": 1790113097.8740885,
+  "authoring_to_php_ready_wall_seconds": 116.874,
+  "first_native_pass_observed_epoch": 1790113190.2842903,
+  "php_ready_to_native_pass_wall_seconds": 92.41,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "checker_correction_cycles": 0,
+  "host_fixture_corrections": 0,
+  "consolidation_start_epoch": 1790113190.2842903,
+  "final_verification_builds": 1,
+  "review_refinement": "Accept valid unquoted addrspace/thread-local prefix punctuation; add three cases",
+  "consolidation_end_epoch": 1790113398.3641205,
+  "regression_and_consolidation_wall_seconds": 208.08,
+  "validation_note": "Cumulative fast validation passed before the final prefix refinement (73 reader cases). Final focused PHP/native validation re-proved the changed reader with 76 cases; unrelated components were unchanged."
+}

@@ -1,0 +1,4873 @@
+[
+  {
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      }
+    ],
+    "root": 1,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-3.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-3.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 16, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "",
+    "facts": {
+      "size": 32,
+      "alignment": 16
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 7
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-5.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-5.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-5.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-5.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-6.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-6.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-6.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-6.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 16
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-7.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-7.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 2, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 2, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-7.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-7.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 2\n@primitive_alignment_1 = local_unnamed_addr constant i64 2\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 2,
+      "primitive_alignment_1": 2
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-8.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-8.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-8.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-8.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 64
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-9.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-9.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 8, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-9.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-9.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 8\n@primitive_alignment_1 = local_unnamed_addr constant i64 8\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 8,
+      "primitive_alignment_1": 8
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "array",
+        "children": [
+          3
+        ],
+        "count": 3
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3,
+          1
+        ]
+      }
+    ],
+    "root": 5,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-10.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-10.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 208, align 8\n@alignment = dso_local local_unnamed_addr constant i64 16, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 144, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 192, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-10.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-10.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 208,
+      "alignment": 16,
+      "field_0": 0,
+      "field_1": 144,
+      "field_2": 192,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[208 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "record",
+        "children": []
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-11.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-11.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "array",
+        "children": [
+          1
+        ],
+        "count": 4
+      }
+    ],
+    "root": 2,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-12.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-12.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 128, align 8\n@alignment = dso_local local_unnamed_addr constant i64 16, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "",
+    "facts": {
+      "size": 128,
+      "alignment": 16
+    },
+    "spelling": "[128 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6,
+          6,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-18.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-18.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 40, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-18.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-18.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 40,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 24,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[40 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          4,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-19.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-19.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 24, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-19.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-19.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 24,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[24 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          5,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          7,
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-20.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-20.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 48, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 32, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-20.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-20.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 48,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 32,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[48 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          5,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          8,
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          6,
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-21.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-21.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 64, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 48, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-21.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-21.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 64,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 48,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[64 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          7,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          6,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          5,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-22.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-22.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 64, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 48, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-22.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-22.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 64,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 48,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[64 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          5,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-23.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-23.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 16, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 16
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-24.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-24.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 80, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 64, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-24.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-24.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 80,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 64,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[80 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          4,
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-25.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-25.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 104, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 88, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-25.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-25.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 104,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 88,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[104 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          2,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          2,
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-26.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-26.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 96, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 80, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-26.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-26.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 96,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 80,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[96 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-27.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-27.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 72, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 56, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-27.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-27.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 72,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 56,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[72 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          1,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-28.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-28.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 168, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 152, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-28.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-28.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 168,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 152,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[168 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          1,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          4,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-29.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-29.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 128, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 112, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "",
+    "facts": {
+      "size": 128,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 112
+    },
+    "spelling": "[128 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          10,
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-30.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-30.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 56, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 40, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-30.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-30.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 56,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 40,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[56 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5,
+          6,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-31.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-31.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 16, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-31.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-31.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 16,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          2,
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-32.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-32.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 152, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 136, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-32.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-32.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 152,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 136,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[152 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2,
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          2,
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3,
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8,
+          8,
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          10
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11,
+          2
+        ]
+      }
+    ],
+    "root": 12,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-33.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-33.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 136, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 120, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 4, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 4, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-33.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-33.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 4\n@primitive_alignment_1 = local_unnamed_addr constant i64 4\n",
+    "facts": {
+      "size": 136,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 120,
+      "primitive_size_1": 4,
+      "primitive_alignment_1": 4
+    },
+    "spelling": "[136 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          2
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          4
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          6
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          7
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          8
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          9
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          10
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          11
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          12
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          13
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          14
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          15
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          16
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          17
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          18
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          19
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          20
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          21
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          22
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          23
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          24
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          25
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          26
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          27
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          28
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          29
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          30
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          31
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          32
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          33
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          34
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          35
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          36
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          37
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          38
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          39
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          40
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          41
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          42
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          43
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          44
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          45
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          46
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          47
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          48
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          49
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          50
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          51
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          52
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          53
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          54
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          55
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          56
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          57
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          58
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          59
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          60
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          61
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          62
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          63
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          64
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          65
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          66
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          67
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          68
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          69
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          70
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          71
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          72
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          73
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          74
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          75
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          76
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          77
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          78
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          79
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          80
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          81
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          82
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          83
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          84
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          85
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          86
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          87
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          88
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          89
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          90
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          91
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          92
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          93
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          94
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          95
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          96
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          97
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          98
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          99
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          100
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          101
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          102
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          103
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          104
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          105
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          106
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          107
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          108
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          109
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          110
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          111
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          112
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          113
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          114
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          115
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          116
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          117
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          118
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          119
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          120
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          121
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          122
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          123
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          124
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          125
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          126
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          127
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          128
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          129
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          130
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          131
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          132
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          133
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          134
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          135
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          136
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          137
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          138
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          139
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          140
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          141
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          142
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          143
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          144
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          145
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          146
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          147
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          148
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          149
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          150
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          151
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          152
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          153
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          154
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          155
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          156
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          157
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          158
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          159
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          160
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          161
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          162
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          163
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          164
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          165
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          166
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          167
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          168
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          169
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          170
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          171
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          172
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          173
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          174
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          175
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          176
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          177
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          178
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          179
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          180
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          181
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          182
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          183
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          184
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          185
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          186
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          187
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          188
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          189
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          190
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          191
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          192
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          193
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          194
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          195
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          196
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          197
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          198
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          199
+        ]
+      },
+      {
+        "kind": "record",
+        "children": [
+          200
+        ]
+      }
+    ],
+    "root": 201,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-34.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-34.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 16, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "",
+    "facts": {
+      "size": 16,
+      "alignment": 8,
+      "field_0": 0
+    },
+    "spelling": "[16 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "target",
+    "layout": "e",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true,
+    "output": "target triple = \"target\"\ntarget datalayout = \"e\"\n@size = constant i64 4\n@alignment = constant i64 4\n"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "missing-size"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "missing-alignment"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "missing-field_0"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "missing-field_1"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "missing-field_2"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\n\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "missing-target triple = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\n; target triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "comment-target triple = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n\ntarget triple = \"x86_64-unknown-linux-gnu\"\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "duplicate-target triple = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"wrong\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "changed-target triple = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\n\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "missing-target datalayout = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\n; target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "comment-target datalayout = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "duplicate-target datalayout = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"wrong\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "changed-target datalayout = "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "duplicate-fact"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 -1\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number--1"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 +1\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-+1"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 01\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-01"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 1.0\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-1.0"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 1e2\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-1e2"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 9223372036854775808\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-9223372036854775808"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 18446744073709551615\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-18446744073709551615"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 999999999999999999999999\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-999999999999999999999999"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 ptrtoint (ptr null to i64)\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-ptrtoint (ptr null to i64)"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i64 4 junk\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-number-4 junk"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = notconstant i64 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-prefix-notconstant i64 "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = ; constant i64 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-prefix-; constant i64 "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = \"constant i64 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-prefix-\"constant i64 "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = constant i32 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "bad-prefix-constant i32 "
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 0, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "invalid-measurement-size0"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 3, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "invalid-measurement-alignment3"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 0, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "invalid-measurement-alignment0"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "invalid-measurement-field_10"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 99999, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "invalid-measurement-field_299999"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 99\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "primitive-mismatch"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "primitive-absent"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"wrongx86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": false,
+    "label": "primitive-target"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\r\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\r\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\r\ntarget triple = \"x86_64-unknown-linux-gnu\"\r\n\r\n@size = dso_local local_unnamed_addr constant i64 32, align 8\r\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\r\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\r\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\r\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\r\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\r\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\r\n\r\n!llvm.linker.options = !{}\r\n!llvm.module.flags = !{!0, !1, !2, !3}\r\n!llvm.ident = !{!4}\r\n\r\n!0 = !{i32 1, !\"wchar_size\", i32 4}\r\n!1 = !{i32 8, !\"PIC Level\", i32 2}\r\n!2 = !{i32 7, !\"PIE Level\", i32 2}\r\n!3 = !{i32 7, !\"uwtable\", i32 2}\r\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}\r\n",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\r\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\r\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\r\ntarget triple = \"x86_64-unknown-linux-gnu\"\r\n\r\n@primitive_size_1 = local_unnamed_addr constant i64 1\r\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\r\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true,
+    "label": "crlf"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 1
+      },
+      {
+        "kind": "opaque",
+        "size": 16,
+        "alignment": 8
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2,
+          1
+        ]
+      }
+    ],
+    "root": 3,
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "output": "; ModuleID = '/tmp/layout-witness-02/witness-4.cpp'\nsource_filename = \"/tmp/layout-witness-02/witness-4.cpp\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@size = dso_local local_unnamed_addr constant i64 32, align 8\n@alignment = dso_local local_unnamed_addr constant i64 8, align 8\n@field_0 = dso_local local_unnamed_addr constant i64 0, align 8\n@field_1 = dso_local local_unnamed_addr constant i64 8, align 8\n@field_2 = dso_local local_unnamed_addr constant i64 24, align 8\n@primitive_size_1 = dso_local local_unnamed_addr constant i64 1, align 8\n@primitive_alignment_1 = dso_local local_unnamed_addr constant i64 1, align 8\n\n!llvm.linker.options = !{}\n!llvm.module.flags = !{!0, !1, !2, !3}\n!llvm.ident = !{!4}\n\n!0 = !{i32 1, !\"wchar_size\", i32 4}\n!1 = !{i32 8, !\"PIC Level\", i32 2}\n!2 = !{i32 7, !\"PIE Level\", i32 2}\n!3 = !{i32 7, !\"uwtable\", i32 2}\n!4 = !{!\"Ubuntu clang version 18.1.3 (1ubuntu1)\"}",
+    "primitive": "; ModuleID = '/tmp/layout-witness-02/primitive-4.ll'\nsource_filename = \"/tmp/layout-witness-02/primitive-4.ll\"\ntarget datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n@primitive_size_1 = local_unnamed_addr constant i64 1\n@primitive_alignment_1 = local_unnamed_addr constant i64 1\n",
+    "facts": {
+      "size": 32,
+      "alignment": 8,
+      "field_0": 0,
+      "field_1": 8,
+      "field_2": 24,
+      "primitive_size_1": 1,
+      "primitive_alignment_1": 1
+    },
+    "spelling": "[32 x i8]",
+    "mode": "measurement",
+    "value": 0,
+    "accept": true,
+    "label": "no-final-newline"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "target",
+    "layout": "e",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "facts",
+    "value": 0,
+    "accept": true,
+    "output": "target triple = \"target\"\ntarget datalayout = \"e\"\n@size = constant i64 0\n"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "target",
+    "layout": "e",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "facts",
+    "value": 1,
+    "accept": true,
+    "output": "target triple = \"target\"\ntarget datalayout = \"e\"\n@size = constant i64 1\n"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "target",
+    "layout": "e",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "facts",
+    "value": 9223372036854775806,
+    "accept": true,
+    "output": "target triple = \"target\"\ntarget datalayout = \"e\"\n@size = constant i64 9223372036854775806\n"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "target",
+    "layout": "e",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "facts",
+    "value": 9223372036854775807,
+    "accept": true,
+    "output": "target triple = \"target\"\ntarget datalayout = \"e\"\n@size = constant i64 9223372036854775807\n"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "quote\"slash\\",
+    "layout": "quote\"slash\\-layout",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "facts",
+    "value": 4,
+    "accept": true,
+    "output": "target triple = \"quote\\22slash\\5C\"\ntarget datalayout = \"quote\\22slash\\5C-layout\"\n@size = constant i64 4"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "nonascii-\u03b1",
+    "layout": "nonascii-\u03b1-layout",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "facts",
+    "value": 4,
+    "accept": true,
+    "output": "target triple = \"nonascii-\\CE\\B1\"\ntarget datalayout = \"nonascii-\\CE\\B1-layout\"\n@size = constant i64 4"
+  },
+  {
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "triple": "control\n\t\u0000",
+    "layout": "control\n\t\u0000-layout",
+    "primitive": "",
+    "facts": {
+      "size": 4,
+      "alignment": 4
+    },
+    "spelling": "i32",
+    "mode": "facts",
+    "value": 4,
+    "accept": true,
+    "output": "target triple = \"control\\0A\\09\\00\"\ntarget datalayout = \"control\\0A\\09\\00-layout\"\n@size = constant i64 4"
+  }
+]

@@ -1971,3 +1971,46 @@ Clang layout checks; primitive LLVM checks run wherever integers occur. The exis
 42-case layout-selection native regression also passes after the traversal refactor.
 One preflight correction rewrote a computed keyed literal as explicit assignments;
 no native correction cycles were needed.
+
+
+## Layout measurement-output boundary
+
+Layout_Facts owns the small protocol reader for folded i64 probe globals.
+Layout_Measurement checks the selected opaque-alignment policy, requests size,
+alignment and ordered field offsets, compares every native integer primitive with
+its LLVM counterpart, then constructs a private Layout_Result with exact task,
+configuration, definition, field, lineage and dependency provenance. Storage_Layout
+continues to own size/alignment/offset invariants. The layout join still owns batch
+acceptance and publication; these records do not bypass it.
+
+The prototype's repeated regex searches and FILTER_VALIDATE_INT become one byte-line
+scan, typed requested/found maps and checked decimal accumulation. Required values
+are canonical nonnegative decimals in 0..9223372036854775807, checked before arithmetic;
+zero remains present and is interpreted by the owning measurement invariant. Digits
+are subtracted from ASCII before adding to the accumulator so the maximum valid
+integer never creates an overflowing intermediate. Unrequested globals are ignored.
+This is deliberately a probe-output reader, not a general LLVM grammar validator.
+It accepts unquoted linkage/visibility/address-space/thread-local prefixes and trailing
+comma metadata/comments.
+
+Target declarations must be exact, unique lines, allowing CRLF. Comment text or a
+matching substring no longer authorizes the selected target. Duplicate requested
+facts, malformed numeric prefixes such as `1.0`, unresolved expressions, negative
+values, and overflowing integers reject explicitly. This is intentional boundary
+hardening; valid observed Clang output is preserved. LLVM_Text::quote centralizes
+byte-preserving LLVM escaping, including quote/backslash, control and non-ASCII bytes.
+It will also serve the forthcoming probe-source producer.
+
+Seventy-six PHP/native outcomes include the 27 actual Clang outputs saved by
+`layout-witness-01`, matching primitive LLVM outputs, ordinary non-opaque storage,
+malformed/missing/duplicate declarations and facts, primitive mismatch, offset and
+alignment rejection, CRLF, missing final newline, integer maxima and escaped target
+identities. Private result identity is checked separately from measured values.
+Negative tests flag unexpected operation success before inspecting expected values.
+First native build passed with no checker, host or native correction cycles. Review
+then added valid addrspace/thread-local prefix cases and a final native verification;
+this preserves valid LLVM declaration forms beyond the captured x86_64 corpus.
+Evidence/timing: `results/layout-measurement-01`.
+
+The compiler does not yet launch its measurement commands or join the resulting
+batch. Those are the next dependencies. src-runtime-preparation remains unchanged.

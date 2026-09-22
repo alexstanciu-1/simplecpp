@@ -68,7 +68,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('source_export_work', Path(__file__).parent / 'source_export_work/run.py'),
           ('layout_capture', Path(__file__).parent / 'layout_capture/run.py'),
           ('layout_selection', Path(__file__).parent / 'layout_selection/run.py'),
-          ('layout_witness', Path(__file__).parent / 'layout_witness/run.py')]
+          ('layout_witness', Path(__file__).parent / 'layout_witness/run.py'),
+          ('layout_measurement', Path(__file__).parent / 'layout_measurement/run.py')]
 
 
 def main():

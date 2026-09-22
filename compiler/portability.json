@@ -149,7 +149,10 @@
     "src/05_generate_code/prepare_backend/layout_selection.php",
     "src/05_generate_code/prepare_backend/utilities/layout_order.php",
     "src/05_generate_code/prepare_backend/data/layout_witness.php",
-    "src/05_generate_code/prepare_backend/native_layout.php"
+    "src/05_generate_code/prepare_backend/native_layout.php",
+    "src/05_generate_code/prepare_backend/utilities/llvm_text.php",
+    "src/05_generate_code/prepare_backend/utilities/layout_facts.php",
+    "src/05_generate_code/prepare_backend/layout_measurement.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
