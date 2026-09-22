@@ -254,6 +254,7 @@
         "sequence_map": "collections::sequence_map",
         "sequence_filter": "collections::sequence_filter",
         "keyed_map": "collections::keyed_map",
-        "keyed_filter": "collections::keyed_filter"
+        "keyed_filter": "collections::keyed_filter",
+        "fs_is_windows": "fs::is_windows"
     }
 }

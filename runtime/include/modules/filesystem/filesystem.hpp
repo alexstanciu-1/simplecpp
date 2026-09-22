@@ -14,6 +14,8 @@
 
 namespace scpp::fs {
 
+[[nodiscard]] bool_t is_windows();
+
 [[nodiscard]] bool_t is_file(const string_t &path);
 [[nodiscard]] bool_t is_dir(const string_t &path);
 [[nodiscard]] bool_t is_link(const string_t &path);

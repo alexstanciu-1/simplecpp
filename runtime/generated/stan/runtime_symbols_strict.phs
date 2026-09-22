@@ -66,6 +66,7 @@ function fs_get(string $path): result<string> {}
 function fs_is_dir(string $path): bool {}
 function fs_is_file(string $path): bool {}
 function fs_is_link(string $path): bool {}
+function fs_is_windows(): bool {}
 function fs_lock_release(file_lock_handle $handle): result<bool> {}
 function fs_lock_transfer(file_lock_handle $handle): result<file_lock_handle> {}
 function fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool> {}

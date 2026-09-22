@@ -1,0 +1,27 @@
+// Test-only policy examples: the product helper reports a fact, not path policy.
+function absolute_for(string $path, bool $windows): bool {
+	if (!$windows) { return str_starts_with($path, "/"); }
+	if (str_starts_with($path, "/") || str_starts_with($path, "\\")) { return true; }
+	return strlen($path) >= 3 && substr($path, 1, 1) === ":"
+		&& (substr($path, 2, 1) === "/" || substr($path, 2, 1) === "\\");
+}
+function normalize_for(string $path, bool $windows): string {
+	if ($windows) { return str_replace("\\", "/", $path); }
+	return $path;
+}
+function policies(): bool {
+	if (!absolute_for("C:\\source", true) || !absolute_for("C:/source", true)) { return false; }
+	if (!absolute_for("\\\\server\\share", true) || !absolute_for("\\rooted", true)) { return false; }
+	if (absolute_for("C:relative", true) || absolute_for("relative", true)) { return false; }
+	if (!absolute_for("/source", false) || absolute_for("C:\\source", false) || absolute_for("\\rooted", false)) { return false; }
+	if (normalize_for("C:\\source\\file", true) !== "C:/source/file") { return false; }
+	if (normalize_for("/source/literal\\name", false) !== "/source/literal\\name") { return false; }
+	return true;
+}
+echo fs_is_windows() ? "windows\n" : "posix\n";
+echo policies() ? "policy-ok\n" : "policy-failed\n";
+$path string;
+$err error;
+if (take($path, $err, fs_realpath(fs_is_windows() ? "native.txt" : "literal\\name"))) {
+	echo str_ends_with($path, fs_is_windows() ? "native.txt" : "literal\\name") ? "realpath-ok\n" : "realpath-failed\n";
+} else { echo "realpath-error\n"; }
