@@ -130,3 +130,22 @@ Implementation owners and proof:
 
 Ordinary `io_*` operations already exist; they do not expose this locking contract.
 Distributed locks and full PHP resource compatibility are outside this item.
+
+
+## Package acceptance dependencies found on the pinned migration target
+
+Target inspected: `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
+The retained package adapter hashes exact manifest/artifact/toolchain bytes with SHA-256,
+checks the canonical driver's executable status, and hashes catalog identity plus raw
+manifest bytes for composition. No exposed SHA-256 or executable-file query was found
+in this target's runtime headers/specs, PHP builtin registry or portability function map.
+This is a pinned-target inspection finding, not a claim about current upstream releases.
+
+Before full acceptance, establish supported byte-string/file SHA-256 and executable-file
+query APIs with target-owned behavior and PHP adapters. Prove empty/binary/NUL input,
+known digest vectors, changed content, missing/unreadable files, executable/non-executable
+files and platform policy. Preserve canonical driver lookup and artifact link checks.
+Do not replace checks with expected digest strings, shell commands or a constant host
+answer. Target implementation belongs to the v0.1 owner. No new GH request has yet been
+sent for these findings. Receipt validation and guaranteed lock cleanup are separate
+compiler/framework work; schema parsing is already independently proved.

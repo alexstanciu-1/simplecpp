@@ -1,0 +1,14 @@
+{
+  "authoring_start_epoch": 1790107814.0,
+  "first_php_ready_epoch": 1790107937.7699692,
+  "authoring_to_php_ready_wall_seconds": 123.77,
+  "first_native_pass_epoch": 1790107969.4795418,
+  "php_ready_to_native_pass_wall_seconds": 31.71,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "final_verification_builds": 1,
+  "final_verification_reason": "Prevent later success-record inspection exceptions from satisfying negative parsing cases. Production unchanged.",
+  "consolidation_start_epoch": 1790108281.5656612,
+  "consolidation_end_epoch": 1790108426.0651033,
+  "regression_and_consolidation_wall_seconds": 144.499
+}

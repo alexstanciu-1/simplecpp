@@ -1649,3 +1649,26 @@ Evidence: results/package-context-01, 33 independently expected PHP/native conte
 cases covering changed bytes/catalog, map membership/reference values, each native
 owner fact, exact owner identity, nullable selection pairs and input preservation.
 First native build passes without correction. Full acceptance remains unfinished.
+
+
+## Runtime publication schema records
+
+`Manifest_Reader` separates producer-schema parsing from filesystem/integrity acceptance.
+`Package_Target`, `Package_Pointer`, `Package_Manifest` and `Package_Metadata` replace
+ad-hoc associative records at this boundary. Expected digests remain unverified strings.
+The unchanged producer defines the target pair (triple/data_layout), input key, known
+module formats and exact driver arguments. We require those facts explicitly; target
+member order is immaterial. Missing input keys no longer match accidentally. Backslash
+artifact names are rejected alongside slash/NUL/dot names for portable basename safety.
+Numeric JSON object names remain strings, including artifact name "0"; no associative
+JSON decode key coercion is used. Extra target fields are rejected by the closed schema.
+Metadata rows remain Json_View objects until their existing typed importers consume them.
+
+Independent schema expectations cover 77 accepted/rejected cases in PHP and native,
+including ordinary/project mode and snapshot membership isolation. Negative cases fail
+immediately if parsing succeeds, so later inspection errors cannot hide acceptance bugs.
+First native build passed; one final test-hardening verification, zero native correction
+cycles. Timings and hashes: `results/package-manifest-01`. No retained adapter parity or
+complete artifact acceptance is claimed. Future optimization can fuse repeated immutable
+JSON member reads; do not remove schema/identity checks or substitute lexical digest
+validation for hashing exact bytes.

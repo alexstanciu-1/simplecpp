@@ -1,0 +1,15 @@
+{
+  "command": [
+    "rg",
+    "-n",
+    "sha256|sha_256|hash_file|is_executable|fs_.*executable",
+    "/tmp/scpp-json-240-probe/runtime/include",
+    "/tmp/scpp-json-240-probe/runtime/specs",
+    "/tmp/scpp-json-240-probe/generators/php/specs/php_builtins.json",
+    "tools/php_portability/function_map.php"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "",
+  "interpretation": "No matching exposed APIs found on the pinned target; search evidence is not an upstream availability claim."
+}

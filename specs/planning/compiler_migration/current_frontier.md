@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **128 production files**: input preparation (137 outcomes),
+Active readiness is **130 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -263,3 +263,11 @@ This deliberately makes reconstructed accepted owners a cache miss instead of
 returning an old package carrying stale owner associations. Artifact/receipt
 validation must still precede the query. Next: package metadata/artifact acceptance
 and source receipt validation; complete adapter integration remains unfinished.
+
+
+Package manifest schema adds 77 PHP/native outcomes (`results/package-manifest-01`).
+Pointer, manifest and metadata normalize into explicitly unverified typed records;
+ordinary/project modes, artifact membership, module variants and link arguments are
+checked. This does not verify file contents, executable status, receipts or leases.
+Next: source receipt validation and artifact acceptance dependencies; full package
+adapter integration remains unfinished.

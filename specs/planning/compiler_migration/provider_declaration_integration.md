@@ -266,3 +266,9 @@ This deliberately makes reconstructed accepted owners a cache miss instead of
 returning an old package carrying stale owner associations. Artifact/receipt
 validation must still precede the query. Next: package metadata/artifact acceptance
 and source receipt validation; complete adapter integration remains unfinished.
+
+
+Package-schema checkpoint: pointer/manifest/metadata parsing now has 77 PHP/native
+outcomes. Records remain explicitly unverified; artifact hashes, executable-file checks,
+source receipt validation and lease ownership still precede complete adapter acceptance.
+See `results/package-manifest-01` and `simple_cpp_batch.md` for pinned-target API gaps.

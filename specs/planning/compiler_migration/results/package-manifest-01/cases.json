@@ -1,0 +1,6083 @@
+[
+  {
+    "name": "ordinary",
+    "project": false,
+    "accept": true,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.schema_version0",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 0,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.schema_version1.0",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1.0,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.schema_version'1'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": "1",
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.manifest'manifest.json'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.manifest'../manifest.json'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "../manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.manifest_sha256'000000000000000000000000000000000000000000000000000000000000000'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.manifest_sha256'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.manifest_sha256'gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.manifest_sha256None",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": null
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.input_key'other'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "other",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.input_key''",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pointer.input_keyNone",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": null,
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.input_key'other'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "other",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.input_keyNone",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": null,
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.schema_version2",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 2,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.schema_version1.0",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1.0,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.provider''",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.providerNone",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": null,
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.validation.defined_abi_signaturesFalse",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": false,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.validation.defined_abi_signatures1",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": 1,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.validation.native_link_no_undefinedFalse",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": false
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.validation.native_link_no_undefined1",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": 1
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.module_kind'project'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": "project"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.module_kind'other'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": "other"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.artifacts{}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {},
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.artifacts[]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": [],
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.artifacts{'metadata.json': 'bad'}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "bad"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.metadata'absent'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "absent",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.metadata'../metadata.json'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "../metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.metadata''",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.modules[]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.modules{}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": {},
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.modules[{'format': 'llvm_text', 'path': 'runtime.ll'}]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.modules[{'format': 'unknown', 'path': 'runtime.bc'}]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "unknown",
+          "path": "runtime.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.modules[{'format': 'llvm_bitcode', 'path': 'absent'}]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "absent"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.target{'triple': '', 'data_layout': 'd'}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.target{'triple': 't', 'data_layout': ''}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": ""
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.target{'triple': 't', 'data_layout': 'd', 'extra': True}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d",
+        "extra": true
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.link_driver.executable''",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.link_driver.executableNone",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": null,
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.link_driver.arguments[]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": []
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.link_driver.arguments['--target=t', '--driver-mode=g++']",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--target=t",
+          "--driver-mode=g++"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.link_driver.arguments['--driver-mode=g++', '--target=other']",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=other"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.link_driver.arguments{}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": {}
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.link_driver.arguments['--driver-mode=g++', '--target=t', 'extra']",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t",
+          "extra"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.inputs.clang{}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {}
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.inputs.clang[]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": []
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.inputs.clang{'/clang': None}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": null
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "manifest.inputs.clang{'': '0000000000000000000000000000000000000000000000000000000000000000'}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.schema_version2",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 2,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.schema_version1.0",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1.0,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.provider'other'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "other",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.target{'triple': 'other', 'data_layout': 'd'}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "other",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.target{'triple': 't', 'data_layout': 'other'}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "other"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.types{}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": {},
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.types[1]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        1
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "metadata.operations{}",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": {}
+    }
+  },
+  {
+    "name": "metadata.operations[None]",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "artifact '../escape'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "../escape": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "artifact 'dir/file'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "dir/file": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "artifact 'dir\\\\file'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "dir\\file": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "artifact '.'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        ".": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "artifact '..'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "..": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "artifact 'bad\\x00file'",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "bad\u0000file": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "artifact ''",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "duplicate module",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        },
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "default module kind null",
+    "project": false,
+    "accept": true,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": null
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "target key order is not semantic",
+    "project": false,
+    "accept": true,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "data_layout": "d",
+        "triple": "t"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "numeric artifact name stays a string",
+    "project": false,
+    "accept": true,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "0": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "project",
+    "project": true,
+    "accept": true,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": false,
+        "source_imports_validated": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "project.json": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": "project"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "project missing receipt",
+    "project": true,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": false,
+        "source_imports_validated": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": "project"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "project missing source validation",
+    "project": true,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": false,
+        "source_imports_validated": false
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "project.json": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": "project"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "project missing link validation",
+    "project": true,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true,
+        "source_imports_validated": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "project.json": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": "project"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "project missing module kind",
+    "project": true,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": false,
+        "source_imports_validated": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "project.json": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "module_kind": "runtime"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "missing pointer.input_key",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "input_key": "key",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  },
+  {
+    "name": "missing manifest.input_key",
+    "project": false,
+    "accept": false,
+    "pointer": {
+      "schema_version": 1,
+      "input_key": "key",
+      "manifest": "package/manifest.json",
+      "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "manifest": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "validation": {
+        "defined_abi_signatures": true,
+        "native_link_no_undefined": true
+      },
+      "artifacts": {
+        "metadata.json": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "runtime.ll": "0000000000000000000000000000000000000000000000000000000000000000",
+        "full.bc": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thin.bc": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "metadata": "metadata.json",
+      "modules": [
+        {
+          "format": "llvm_bitcode",
+          "path": "runtime.bc"
+        },
+        {
+          "format": "llvm_text",
+          "path": "runtime.ll"
+        },
+        {
+          "format": "full_lto_bitcode",
+          "path": "full.bc"
+        },
+        {
+          "format": "thin_lto_bitcode",
+          "path": "thin.bc"
+        }
+      ],
+      "link_driver": {
+        "executable": "/clang",
+        "arguments": [
+          "--driver-mode=g++",
+          "--target=t"
+        ]
+      },
+      "inputs": {
+        "clang": {
+          "/clang": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "metadata": {
+      "schema_version": 1,
+      "provider": "p",
+      "target": {
+        "triple": "t",
+        "data_layout": "d"
+      },
+      "types": [
+        {
+          "id": "T"
+        }
+      ],
+      "operations": [
+        {
+          "id": "op"
+        }
+      ]
+    }
+  }
+]
