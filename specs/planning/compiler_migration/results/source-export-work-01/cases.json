@@ -1,0 +1,98 @@
+[
+  {
+    "mode": "new",
+    "accept": true
+  },
+  {
+    "mode": "full",
+    "accept": true
+  },
+  {
+    "mode": "incremental",
+    "accept": true
+  },
+  {
+    "mode": "removed",
+    "accept": true
+  },
+  {
+    "mode": "reordered",
+    "accept": true
+  },
+  {
+    "mode": "equal_task",
+    "accept": true
+  },
+  {
+    "mode": "project",
+    "accept": true
+  },
+  {
+    "mode": "root",
+    "accept": true
+  },
+  {
+    "mode": "identity",
+    "accept": true
+  },
+  {
+    "mode": "identity_map",
+    "accept": true
+  },
+  {
+    "mode": "reason",
+    "accept": true
+  },
+  {
+    "mode": "state",
+    "accept": true
+  },
+  {
+    "mode": "operation",
+    "accept": true
+  },
+  {
+    "mode": "layout",
+    "accept": true
+  },
+  {
+    "mode": "missing",
+    "accept": false
+  },
+  {
+    "mode": "duplicate",
+    "accept": false
+  },
+  {
+    "mode": "foreign_result",
+    "accept": false
+  },
+  {
+    "mode": "stale_selection",
+    "accept": false
+  },
+  {
+    "mode": "unexpected",
+    "accept": false
+  },
+  {
+    "mode": "duplicate_identity",
+    "accept": false
+  },
+  {
+    "mode": "wrong_id",
+    "accept": false
+  },
+  {
+    "mode": "stale_previous",
+    "accept": false
+  },
+  {
+    "mode": "invalid_abi",
+    "accept": false
+  },
+  {
+    "mode": "nonzero_stack",
+    "accept": false
+  }
+]

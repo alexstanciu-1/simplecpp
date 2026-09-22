@@ -292,3 +292,9 @@ now connect in a pure private composition path, with 26 PHP/native outcomes and 
 record import regression. It consumes a caller-supplied content-derived catalog key;
 actual hash computation and file verification remain missing adapter dependencies.
 The output deliberately carries contracts rather than an accepted package or lease.
+
+
+Source-export fixed-task work/reuse/join now passes 24 PHP/native scenarios, including
+initial/full/incremental selection and stale/foreign batch rejection. This supplies
+the worker/publication half; authoritative capture from current type/layout stores
+and source-body export verification remain dependencies before end-to-end integration.

@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **136 production files**: input preparation (137 outcomes),
+Active readiness is **140 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -304,3 +304,11 @@ record-map publication, storage families, catalog/default identity and callable 
 retention now connect through one pure owner. The contract set does not authorize
 artifacts. Next: artifact verification/adapter integration, or independent source-export
 production while the SHA-256/executable-query target dependencies remain unresolved.
+
+
+Source-export work/reuse/join adds 24 PHP/native scenarios (`results/source-export-work-01`).
+Lifecycle ABI preparation retains accepted operations; stable import creation, full/
+incremental selection and complete private-batch acceptance are proved. Capture from
+current type/layout stores, export-body verification and coordinator integration are
+still absent. Next: source identity/layout capture dependencies. Artifact hashing and
+executable-file verification remain separate package-adapter blockers.

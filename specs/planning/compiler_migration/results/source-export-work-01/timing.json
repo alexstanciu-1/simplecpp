@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790110650.0,
+  "first_php_ready_epoch": 1790110778.7767818,
+  "authoring_to_php_ready_wall_seconds": 128.777,
+  "first_native_pass_epoch": 1790110821.015652,
+  "php_ready_to_native_pass_wall_seconds": 42.239,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "final_verification_builds": 1,
+  "final_verification_reason": "Add explicit first-build/no-previous-exports scenario; production unchanged",
+  "checker_correction_cycles": 1,
+  "checker_correction": "Compute portable identity key before isset instead of using nested method expression",
+  "consolidation_start_epoch": 1790110902.9094172,
+  "consolidation_end_epoch": 1790111066.856598,
+  "regression_and_consolidation_wall_seconds": 163.947
+}

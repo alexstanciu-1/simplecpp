@@ -1,0 +1,218 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/source-export-work-03/source"
+      ],
+      "seconds": 0.121,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/source-export-work-03/source"
+      ],
+      "seconds": 0.87,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/source-export-work-03/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/source-export-work-03/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/source-export-work-03/source/src/compile/data/native_project.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/resolve_types/data/export_identity.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/data/layout.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/data/abi.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/data/source_exports.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/utilities/callable_contract.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/source_export_preparation.php",
+        "/tmp/source-export-work-03/source/src/04_analyze/type_model/lifecycle_contracts.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/data/lifecycle.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/callable.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/source_export_work.php",
+        "/tmp/source-export-work-03/source/src/05_generate_code/prepare_backend/source_export_join.php",
+        "/tmp/source-export-work-03/source/probe.php",
+        "/tmp/source-export-work-03/source/main.php"
+      ],
+      "seconds": 0.195,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/source-export-work-03/source",
+        "/tmp/source-export-work-03/phpp"
+      ],
+      "seconds": 0.362,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/source-export-work-03/source",
+        "/tmp/source-export-work-03/phpp"
+      ],
+      "seconds": 0.056,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/source-export-work-03/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.056,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.007,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.028,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.151,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 42.248,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/source-export-work-03/phpp/.prism/build/main"
+      ],
+      "seconds": 0.128,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.028,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790110828.1286905,
+  "php_ready_sha256": {
+    "src/05_generate_code/prepare_backend/data/lifecycle.php": "85a35bdc13bdaadaa76b7c80a86f6bb389214a021c4e8f4f07abb4090a482114",
+    "src/05_generate_code/prepare_backend/callable.php": "2020802ef2d64c6d977e8f4732e362975efacc6e21348c03a80324e36fb3d1b0",
+    "src/05_generate_code/prepare_backend/source_export_work.php": "b1bd3560cc4db2f1462a01aa5d3f9a62dad663ff23f50dc0fbc659c288f96af8",
+    "src/05_generate_code/prepare_backend/source_export_join.php": "f9a9aade1da0a43624bfe1183c2909ac4ad6684eaea8a88b2c9190e3a9ffebb5"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 24,
+  "source_export_work_outcomes": 24,
+  "production_files": [
+    "src/05_generate_code/prepare_backend/data/lifecycle.php",
+    "src/05_generate_code/prepare_backend/callable.php",
+    "src/05_generate_code/prepare_backend/source_export_work.php",
+    "src/05_generate_code/prepare_backend/source_export_join.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e",
+    "src/04_analyze/type_model/data/type_references.php": "e70468cf04d1f87b34238d90f38ae886c52b9e1ed3f6e3d348c70dc85da639d1",
+    "src/04_analyze/type_model/data/semantic_calls.php": "4e962b92bca91cbb600e18b9d2139f085d4e4b17e1906ac50c3095c3b481b905",
+    "src/04_analyze/type_model/data/callable_modes.php": "49166d285f320e1b8e1c34ee2f9b4150474546dc42ef73366f6ca4ded2622895",
+    "src/04_analyze/type_model/data/callables.php": "2450e8479025d72917f1a8f3b2abe7edcb432c835ed6385fc107b0abdcb9f146",
+    "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f",
+    "src/04_analyze/type_model/data/definitions.php": "6f4ee56c11e634bfdeeeb54a06f4405d35938e877f40f0696d9be599d3ac57df",
+    "src/04_analyze/type_model/data/storage.php": "d95e447a3cf801067b35e06970857b9d79ef3962126dfbcd1a60a00dcc53a4cf",
+    "src/04_analyze/type_model/data/records.php": "9eb9dd43f9e40ec116fee6323da4b67e1ed450a0670f0aa54eedc3d285d24cdd",
+    "src/01_prepare_inputs/load_runtime/data/runtime.php": "2a730bd038a5cf9673883583f51c1a13a5d8692e798e3d9adc09670799a69937",
+    "src/01_prepare_inputs/load_runtime/handlers/package_syntax.php": "4447880a3380a37843f83268d3a0b0fb0bef3a65c9aa2b754540efb0c56f10ad",
+    "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b",
+    "src/compile/data/native_project.php": "db27d493781128731e5a1a13647eff458dfb0106dfcdf5877a4a7804bc654d24",
+    "src/04_analyze/resolve_types/data/export_identity.php": "6ce0c3e7ab7620a49cbe8e237cfdedfdc3f2b01e6ff736d0ed7fef4f857b0fbe",
+    "src/05_generate_code/prepare_backend/data/configuration.php": "cb66a88765b97568568b0e0bea47128a84f611c2eb7a5a50e6585b9efc0d0ab6",
+    "src/05_generate_code/prepare_backend/data/layout.php": "0cb8395f9021055a9fa2b413b91b5b2bcea94cedf2ab53f8f24997aa56f20deb",
+    "src/05_generate_code/prepare_backend/data/abi.php": "a35af4224ecd7c67eb4de0144a0dcc9add66b489ed0a4936b3b3b7bee41c701e",
+    "src/05_generate_code/prepare_backend/data/source_exports.php": "f6ae3afb4376fa8d8fdd3b2c3c136799c673d07efb1615c95b0cbd1ea7e22ddc",
+    "src/05_generate_code/prepare_backend/utilities/callable_contract.php": "1e48be26c419f57b332f5c13034ee629cd6b69f3f4cb59e2b02d137176eef252",
+    "src/05_generate_code/prepare_backend/source_export_preparation.php": "901cf3905b1c1d7010be475066a2b5e0f74b32e7c615becc2c9dbf881c9428b6",
+    "src/04_analyze/type_model/lifecycle_contracts.php": "a6f8dc19ce07f99831eb3248065a217bce625e9abcca7f1e3a18cee6cab26228",
+    "src/05_generate_code/prepare_backend/data/lifecycle.php": "85a35bdc13bdaadaa76b7c80a86f6bb389214a021c4e8f4f07abb4090a482114",
+    "src/05_generate_code/prepare_backend/callable.php": "2020802ef2d64c6d977e8f4732e362975efacc6e21348c03a80324e36fb3d1b0",
+    "src/05_generate_code/prepare_backend/source_export_work.php": "b1bd3560cc4db2f1462a01aa5d3f9a62dad663ff23f50dc0fbc659c288f96af8",
+    "src/05_generate_code/prepare_backend/source_export_join.php": "f9a9aade1da0a43624bfe1183c2909ac4ad6684eaea8a88b2c9190e3a9ffebb5"
+  }
+}

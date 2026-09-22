@@ -137,7 +137,11 @@
     "src/01_prepare_inputs/load_runtime/utilities/project_receipt.php",
     "src/01_prepare_inputs/load_runtime/data/runtime_lease.php",
     "src/01_prepare_inputs/load_runtime/data/package_composition.php",
-    "src/01_prepare_inputs/load_runtime/utilities/package_composition.php"
+    "src/01_prepare_inputs/load_runtime/utilities/package_composition.php",
+    "src/05_generate_code/prepare_backend/data/lifecycle.php",
+    "src/05_generate_code/prepare_backend/callable.php",
+    "src/05_generate_code/prepare_backend/source_export_work.php",
+    "src/05_generate_code/prepare_backend/source_export_join.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

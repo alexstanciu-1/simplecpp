@@ -1812,3 +1812,41 @@ and one constructor-metadata fixture correction preceded PHP readiness. Timings 
 source hashes: `results/package-composition-01`. Optimization follow-up: profile repeated
 metadata indexing across the import owners before sharing an index; preserve validation
 ownership and all duplicate checks. src-runtime-preparation is unchanged.
+
+
+## Source-export work, reuse and batch acceptance
+
+Callable_Preparer::prepare_lifecycle now produces a typed task/result pair and a
+pointer ABI target retaining the exact accepted lifecycle operation. It shares the
+existing Callable_Contract validator for stack/ABI policy. Source_Export_Work prepares
+stable external imports from those targets, without copying lifecycle field algorithms.
+Unavailable roles retain their capabilities and no ABI. The fixed-task worker and
+reuse selection are separated from the existing schema/identity validator; capture
+from type/layout stores is not implemented by this extraction. Ordinary callable
+preparation is also still pending.
+
+Reuse requires the exact accepted layout plus equal project roots/key, portable
+identity keys/source flags, complete dependency identity map and complete capability
+facts. Explicit Lifecycle_Contracts comparison replaces PHP recursive equality for
+operation plans in that same lineage. Map order is immaterial; role, state, reason,
+optional presence and every operation fact remain significant. A full selection
+skips previous-contract inspection explicitly, preserving the original short-circuit
+behavior. Missing prior results select work normally. Removed demands are excluded.
+
+Source_Export_Join accepts arbitrary worker completion order but requires exact
+selected/current task association. It rejects missing, duplicate, foreign, stale or
+ABI-invalid results before returning a private map, rejects duplicate portable keys
+or mismatched local IDs, and preserves unchanged previous result objects. It follows
+the active compiler's concrete typed join style; no callable-polymorphic interface
+or fabricated backend/type state was introduced.
+
+Twenty-four independent PHP/native scenarios cover first/full/incremental builds,
+removed demands, reversed results, reconstructed equal tasks, changes to project/root/
+identity/dependency maps/capability state/reason/operation/layout, invalid selection/
+result batches, stale prior work, malformed ABI and nonzero stack rejection. Produced
+ABIs retain exact operations and pass the existing validator. Prior task snapshots
+remain unchanged. These are worker/join proofs, not source-body execution, layout
+capture or native module publication. First native build passed; one final verification
+added the no-prior-export case, with zero native correction cycles. One preflight fix
+replaced a nested isset key expression with a local. Evidence/timing:
+`results/source-export-work-01`. src-runtime-preparation remains unchanged.
