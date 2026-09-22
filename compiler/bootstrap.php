@@ -74,3 +74,7 @@ require_once __DIR__ . '/src/04_analyze/resolve_symbols/data/store.php';
 require_once __DIR__ . '/src/04_analyze/resolve_symbols/select_tasks.php';
 require_once __DIR__ . '/src/04_analyze/resolve_symbols/join.php';
 require_once __DIR__ . '/src/04_analyze/resolve_symbols/main_resolve_symbols.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/type_record.php';
+require_once __DIR__ . '/src/04_analyze/type_model/result_contracts.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/store.php';
+require_once __DIR__ . '/src/04_analyze/resolve_types/utilities/type_cache.php';

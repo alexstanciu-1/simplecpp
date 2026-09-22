@@ -6,7 +6,7 @@ accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; source collection proved:** input preparation, tokenization,
 parser storage/grammar/queries/project reuse, source symbols, entry selection, representations, lifecycle contracts and scalar catalog/entry binding provide
-seventy-one active production files, including declaration lookup, lexical/body binding and project resolution acceptance/reuse. Source collection adds 97 PHP/native outcomes
+seventy-five active production files, including declaration lookup, lexical/body binding project resolution acceptance/reuse and canonical type storage. Source collection adds 97 PHP/native outcomes
 and nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks; its scalar catalog return-type binding is now proved (116 PHP/native outcomes).
 See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).

@@ -630,3 +630,36 @@ not survive C++ lowering, so the private `selected` map became `selected_ids` al
 method `selected()`. The authoring guide now states that naming rule. No target or
 converter implementation was changed. Timings and separate correction counts are in
 [the proof record](results/resolution-project-01/README.md).
+
+## Rewrite: canonical type storage
+
+Canonical identity, declaration, definition and representation remain separate states.
+The store retains all representation kinds, recursive references, member ranges and
+field/signature ordering. PHP clone becomes explicit `fork()`: container copies share
+immutable rows/payloads, changed rows are replaced, and candidates retain no ancestor
+store chain. Full reconstruction gets a new lineage even with equal context keys.
+Named row constructors keep immutable fields; fresh/fork are the supported creation
+paths. The low-level context/lineage constructor is producer-internal.
+
+Representation variants already share a typed shape owner; its new `same()` operation
+replaces PHP loose object structural comparison. Typed vectors replace dynamic list
+shape tests. Keys preserve byte-based name lengths and incorporate field writability,
+passing modes and result production. Adding production to signature keys fixes a
+retained prototype defect: changing a return type's representation while retaining
+its ID could otherwise reuse the old signature production. The retained oracle
+reproduces that omission separately from preserved storage facts.
+
+`Type_Cache` now owns an optional previous store through its constructor, avoiding an
+unsupported nullable ordinary parameter. It preserves full/context selection and
+materializes scalar authoritative definitions. Array/resource/source definition
+producers and their scans remain explicit dependencies; representation availability
+does not fabricate those semantics. `lifecycle_operations()` keeps source-owned
+operations in type/role order and excludes imported operations.
+
+Final review restored the prototype's early intern-hit checks to avoid temporary
+representation allocation. Both native builds passed; the second validated this
+refinement, not a compiler-failure workaround. One test expected-count correction
+preceded PHP-ready. A preliminary declaration probe confirmed named readonly fields
+must use supported constructor promotion rather than standalone initialization.
+See [timings and proof](results/type-store-01/README.md). Future optimization can measure
+candidate container-copy costs, key construction and hot identity/reference storage.

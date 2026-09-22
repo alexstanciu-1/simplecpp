@@ -3,7 +3,7 @@ Doc Status: supporting
 
 ## Active rewrite proofs
 
-The ready set contains seventy-one input/tokenization/parser/source-symbol production files. The default driver runs their
+The ready set contains seventy-five input/tokenization/parser/source-symbol production files. The default driver runs their
 PHP outcome proof plus independent framework checks. Add `--native compiler
 --target-checkout TARGET` to convert and prove all registered rewrite stages natively.
 `compiler/tests/run.py` requires the ready set to match registered stage sources.
@@ -75,7 +75,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | Selection | Existing owner |
 | --- | --- |
 | `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
-| `compiler` | Registered active rewrite stages: seventy-one production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle), syntax access/comparison 134, project parser 66 (+9 host purity), source collection 97 (+9 host purity), entry selection 44 (+9 host purity), representations 98 (+5 host assertions and retained constructor oracle), lifetimes 154 (+4 host assertions and retained oracle), scalar catalog/entry binding 116 (+8 host assertions and retained parser oracle) |
+| `compiler` | Registered active rewrite stages: seventy-five production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle), syntax access/comparison 134, project parser 66 (+9 host purity), source collection 97 (+9 host purity), entry selection 44 (+9 host purity), representations 98 (+5 host assertions and retained constructor oracle), lifetimes 154 (+4 host assertions and retained oracle), scalar catalog/entry binding 116 (+8 host assertions and retained parser oracle) |
 | `methods` | Named/scalar method boundaries, void, identity and mutation |
 | `returns` | Container return copying and nonpublic scalar state |
 | `iteration` | Typed map presence checks and by-value iteration |
@@ -178,4 +178,6 @@ cost of getting it working natively. It adds no requirement for more frequent bu
 
 [Lexical/body resolution](lexical_resolution.md) adds 320 PHP/native outcomes, 23 host invariants and five retained generic-permission checks.
 
-[Project resolution](resolution_project.md) adds 182 PHP/native outcomes and 25 host snapshot/acceptance checks. Next: canonical type storage and concrete preparation dependencies.
+[Project resolution](resolution_project.md) adds 182 PHP/native outcomes and 25 host snapshot/acceptance checks.
+
+[Canonical type storage](type_store.md) adds 133 PHP/native outcomes, retained store facts and 20 host invariant checks. Next: concrete definition and annotation preparation dependencies.

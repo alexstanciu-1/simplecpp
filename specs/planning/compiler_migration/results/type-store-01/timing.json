@@ -1,0 +1,62 @@
+{
+  "measurement": "Elapsed wall time, includes tests and waits; initial orientation excluded. Milestones recorded immediately after successful commands.",
+  "started": "2026-09-22T12:06:24.270805+00:00",
+  "milestones": [
+    {
+      "name": "authoring-start",
+      "at": "2026-09-22T12:06:24.270805+00:00"
+    },
+    {
+      "name": "php-ready",
+      "at": "2026-09-22T12:11:19.737561+00:00",
+      "evidence": "/tmp/scpp-type-store-php-02/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+        "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+        "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b",
+        "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+        "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+        "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+        "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337",
+        "src/04_analyze/type_model/data/definitions.php": "738c155307e57d0ad7da4fd806383973e208aebf784e6d46c399f3ef03a8268e",
+        "src/04_analyze/type_model/data/catalog.php": "7c3835ff0d68723e9497bf52765af6a72c14d375f4b8a716492644cfed65facd",
+        "src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php": "92d0258c8db3d98a0231241316a03141edca1d6f07def2cfa0a683dca4373f27",
+        "src/04_analyze/type_model/data/type_record.php": "e769dc4c6992ee00266ef37367a3e236fa07d12326cffb63ba83a126762e3808",
+        "src/04_analyze/type_model/result_contracts.php": "a7ef024e42fbc4cbb537a362149d984f818a460001320d912d82558a73e98e8f",
+        "src/04_analyze/type_model/data/store.php": "04b07abcebfbff9651a3116af4026217db564566f116c74ddc0736cbe38fee29",
+        "src/04_analyze/resolve_types/utilities/type_cache.php": "65da628b89978fa0f8d33eaa6248231dea856219324bce1ef4586c171e20c791"
+      }
+    },
+    {
+      "name": "native-ready",
+      "at": "2026-09-22T12:16:07.072212+00:00",
+      "evidence": "/tmp/scpp-type-store-native-02/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+        "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+        "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b",
+        "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+        "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+        "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+        "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337",
+        "src/04_analyze/type_model/data/definitions.php": "738c155307e57d0ad7da4fd806383973e208aebf784e6d46c399f3ef03a8268e",
+        "src/04_analyze/type_model/data/catalog.php": "7c3835ff0d68723e9497bf52765af6a72c14d375f4b8a716492644cfed65facd",
+        "src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php": "92d0258c8db3d98a0231241316a03141edca1d6f07def2cfa0a683dca4373f27",
+        "src/04_analyze/type_model/data/type_record.php": "e769dc4c6992ee00266ef37367a3e236fa07d12326cffb63ba83a126762e3808",
+        "src/04_analyze/type_model/result_contracts.php": "a7ef024e42fbc4cbb537a362149d984f818a460001320d912d82558a73e98e8f",
+        "src/04_analyze/type_model/data/store.php": "e74beda89e5c6800e1f64925a7bb86c4793f39816b6824b48179c83e0653994c",
+        "src/04_analyze/resolve_types/utilities/type_cache.php": "65da628b89978fa0f8d33eaa6248231dea856219324bce1ef4586c171e20c791"
+      }
+    },
+    {
+      "name": "consolidation-start",
+      "at": "2026-09-22T12:16:56.440192+00:00"
+    },
+    {
+      "name": "finish",
+      "at": "2026-09-22T12:17:26.243206+00:00"
+    }
+  ],
+  "finished": "2026-09-22T12:17:26.243206+00:00",
+  "elapsed_seconds": 661.972
+}

@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding and project name resolution cover **71 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **75 production files**
 with PHP/native proofs. Next is source name resolution. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -14,7 +14,7 @@ Bring reusable code in deliberately, applying the portable-PHP and strict skills
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` lists the seventy-one proved source files. `tools/portability_target.json`
+`portability.json` lists the seventy-five proved source files. `tools/portability_target.json`
 pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
@@ -85,4 +85,6 @@ scheduler and later semantic stages remain pending.
 
 [Lexical/body resolution](../specs/portability/lexical_resolution.md) adds 320 PHP/native outcomes, 23 host invariants and five retained generic-permission checks.
 
-[Project resolution](../specs/portability/resolution_project.md) adds 182 PHP/native outcomes and 25 host snapshot/acceptance checks. Next: canonical type storage and concrete preparation dependencies.
+[Project resolution](../specs/portability/resolution_project.md) adds 182 PHP/native outcomes and 25 host snapshot/acceptance checks.
+
+[Canonical type storage](../specs/portability/type_store.md) adds 133 PHP/native outcomes, retained store facts and 20 host invariant checks. Next: concrete definition and annotation preparation dependencies.

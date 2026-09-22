@@ -72,7 +72,11 @@
     "src/04_analyze/resolve_symbols/data/store.php",
     "src/04_analyze/resolve_symbols/select_tasks.php",
     "src/04_analyze/resolve_symbols/join.php",
-    "src/04_analyze/resolve_symbols/main_resolve_symbols.php"
+    "src/04_analyze/resolve_symbols/main_resolve_symbols.php",
+    "src/04_analyze/type_model/data/type_record.php",
+    "src/04_analyze/type_model/result_contracts.php",
+    "src/04_analyze/type_model/data/store.php",
+    "src/04_analyze/resolve_types/utilities/type_cache.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

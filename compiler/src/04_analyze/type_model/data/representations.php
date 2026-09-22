@@ -121,6 +121,23 @@ final class Representation {
         $out = new Representation(); $out->tag = \type_model\REPRESENTATION_OPAQUE;
         $out->size_bytes = $size; $out->alignment_bytes = $alignment; return $out;
     }
+    /** Exact value-shape equality; IDs/ranges are interpreted in their owning store. */
+    public function same(Representation $other): bool {
+        if ($this->tag !== $other->tag) { return false; }
+        if ($this->width !== $other->width) { return false; }
+        if ($this->format !== $other->format) { return false; }
+        if ($this->element_type !== $other->element_type) { return false; }
+        if ($this->address_space !== $other->address_space) { return false; }
+        if ($this->first !== $other->first) { return false; }
+        if ($this->count !== $other->count) { return false; }
+        if ($this->return_type !== $other->return_type) { return false; }
+        if ($this->result !== $other->result) { return false; }
+        if ($this->size_bytes !== $other->size_bytes) { return false; }
+        if ($this->alignment_bytes !== $other->alignment_bytes) { return false; }
+        if (q_count($this->passing) !== q_count($other->passing)) { return false; }
+        foreach ($this->passing as $index => $mode) { if ($mode !== $other->passing[$index]) { return false; } }
+        return true;
+    }
     public function opaque_size(): int { $this->require_kind(\type_model\REPRESENTATION_OPAQUE); return $this->size_bytes; }
     public function opaque_alignment(): int { $this->require_kind(\type_model\REPRESENTATION_OPAQUE); return $this->alignment_bytes; }
 }

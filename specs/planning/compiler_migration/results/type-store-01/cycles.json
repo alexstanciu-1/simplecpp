@@ -1,0 +1,17 @@
+{
+  "php_ready_attempt": 2,
+  "pre_php_ready_source_corrections": 0,
+  "pre_php_ready_harness_corrections": [
+    "Expected main/contract outcome count corrected from 110 to 111."
+  ],
+  "pre_authoring_capability_probe": "Standalone named readonly field rejected; use constructor-promoted immutable lineage and fresh/fork factories.",
+  "native_build_attempts": 2,
+  "successful_native_builds": 2,
+  "native_stabilization_corrections": 0,
+  "post_php_ready_refinement": "Restore early intern-hit checks to avoid temporary representation allocation.",
+  "native_target_changed": false,
+  "converter_changed": false,
+  "host_invariants": 20,
+  "retained_store_facts": 13,
+  "retained_defect_reproduced": "Signature key omitted result production."
+}
