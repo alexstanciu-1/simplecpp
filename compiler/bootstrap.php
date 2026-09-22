@@ -84,3 +84,4 @@ require_once __DIR__ . '/src/04_analyze/resolve_types/data/lifecycle_bodies.php'
 require_once __DIR__ . '/src/04_analyze/resolve_types/lifecycle_composition.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/records.php';
 require_once __DIR__ . '/src/04_analyze/resolve_types/record_definitions.php';
+require_once __DIR__ . '/src/04_analyze/resolve_types/definition_view.php';

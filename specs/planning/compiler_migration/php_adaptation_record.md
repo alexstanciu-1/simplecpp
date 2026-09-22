@@ -738,3 +738,15 @@ outcomes, then 27 after adding nested ownership and rejection coverage. No nativ
 correction, converter change or target change. Retained materialization algorithms were
 inspected; this slice does not claim an executed retained oracle. Timings and hashes are
 under results/record-materialization-01.
+
+## Accepted definition view (2026-09-22)
+
+Migrated Definition_View's provider-first lookup and exact source definition fallback.
+Read-through accessors replace redundant public metadata copies, retaining the exact
+catalog entry definition without unsupported standalone named readonly initialization.
+The catalog/store are shared accepted inputs, immutable by publication convention;
+the view is not a mutable-store snapshot. No spelling resolution or generic fallback.
+14 PHP/native checks pass on the first build; no corrective cycle. The annotation
+resolver's remaining dependencies are Instance_Context, Template_Argument and instance
+bindings/preparation (including integer constant decoding), so it is not claimed complete.
+See results/definition-view-01 for measured effort and source/target hashes.

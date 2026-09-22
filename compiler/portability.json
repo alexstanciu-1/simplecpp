@@ -82,7 +82,8 @@
     "src/04_analyze/type_model/data/native_record_layout.php",
     "src/04_analyze/type_model/data/resources.php",
     "src/04_analyze/type_model/data/records.php",
-    "src/04_analyze/resolve_types/record_definitions.php"
+    "src/04_analyze/resolve_types/record_definitions.php",
+    "src/04_analyze/resolve_types/definition_view.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

@@ -40,3 +40,12 @@ consumers; no empty placeholder implementations are supplied.
 
 The proof covers 133 PHP/native outcomes, retained store facts and 20 host snapshot/
 rejection checks. See [timings and provenance](../planning/compiler_migration/results/type-store-01/README.md).
+
+Definition_View combines an unchanged provider catalog and accepted source store.
+It looks up providers first, then exact source definitions. Missing identities yield
+null; known incomplete source types fail rather than pretending to be absent. Catalog
+keys and entry return definitions are read through accessors, avoiding duplicated
+metadata. The view does not clone/freeze the store: the existing published-read-only
+convention applies, and candidate mutation uses fork(). It never repeats source spelling
+resolution or substitutes for concrete instance preparation. Fourteen PHP/native checks
+cover precedence, namespace separation, exact identity and candidate isolation.
