@@ -195,3 +195,6 @@ canonical arrays, nested ownership, native measurements and malformed inputs.
 
 Instance contexts and integer literals: 35 shared outcomes plus 200 independent host
 range cases (Python arbitrary precision), registered as instance_contexts.
+
+Instance identities: 23 PHP/native outcomes and 60 direct retained allocator calls;
+the native proof also covers framework OverflowException ancestry.

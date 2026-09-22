@@ -1,0 +1,6 @@
+{
+  "native_build_commands": 1,
+  "native_corrections": 0,
+  "checker_framework_extensions": 1,
+  "detail": "Add fixed OverflowException mapping preserving RuntimeException ancestry."
+}

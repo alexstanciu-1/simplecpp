@@ -773,3 +773,23 @@ One --target invocation stopped at that PHP fixture error before building; the n
 invocation's first actual C++ build passed with no native correction. Context allocation,
 instance registry/publication and bindings remain separate dependencies. Evidence/timings:
 results/instance-contexts-01. src-runtime-preparation remains unchanged.
+
+## Exact instance identity allocation (2026-09-22)
+
+Instance_Identities now owns the key map and watermark instead of mutating caller PHP
+arrays/integers by reference. fork() copies its private scalar map; lineage identity is
+fixed and checked before materialization. Exact ordered canonical argument type IDs,
+definition ID, and null-versus-value argument text determine reuse. Byte-length framing
+replaces JSON serialization of ad-hoc tuples; 60 direct calls against the retained JSON
+allocator yield the same allocated IDs, including delimiters, UTF-8 and embedded NUL.
+The history is retained independently of current demands. Exhausted ledgers still return
+known IDs and reject new ones without advancing the watermark. Failed type materialization
+may mutate the private type candidate, which must be discarded as in the prototype.
+
+Added the prototype's OverflowException to the fixed framework map (RuntimeException
+parent) rather than weakening exhaustion to a different exception. The checker exposed
+this missing entry before PHP-ready. 23 PHP/native checks pass on the first native build,
+including specific, parent and unrelated exception catches. No target change. The retained
+allocator oracle was added after the native run without source/probe changes. The instance
+registry still requires real template permission results; no placeholder has been added.
+Evidence/timings: results/instance-identities-01.

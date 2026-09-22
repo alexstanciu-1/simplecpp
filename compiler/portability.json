@@ -86,7 +86,8 @@
     "src/04_analyze/resolve_types/definition_view.php",
     "src/04_analyze/check_bodies/utilities/decimal_range.php",
     "src/04_analyze/check_bodies/utilities/literals.php",
-    "src/04_analyze/instantiate/data/context.php"
+    "src/04_analyze/instantiate/data/context.php",
+    "src/04_analyze/instantiate/identities.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

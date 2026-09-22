@@ -14,6 +14,7 @@ final class Exception_Policy {
         'OutOfBoundsException' => ['out_of_bounds_exception', 'runtime_exception'],
         'RangeException' => ['range_exception', 'runtime_exception'],
         'JsonException' => ['json_exception', 'exception'],
+        'OverflowException' => ['overflow_exception', 'runtime_exception'],
     ];
 
     public static function name(string $name): string {

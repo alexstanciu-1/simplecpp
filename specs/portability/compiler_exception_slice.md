@@ -35,7 +35,7 @@ publication can require restoring the previous owned state before retrying.
 
 Supported explicit root names are `\Exception`, `\LogicException`,
 `\InvalidArgumentException`, `\RuntimeException`, `\OutOfBoundsException`,
-`\RangeException` and `\JsonException`. `\Throwable` is a catch/base spelling for
+`\RangeException`, `\JsonException` and `\OverflowException`. `\Throwable` is a catch/base spelling for
 this supported exception family, not a promise about every PHP engine error.
 The hierarchy is checked against PHP's actual parent classes. Constructors preserve
 message, integer code and optional previous framework exception. Ordinary named
@@ -83,3 +83,6 @@ translation are not implemented. Mapping JsonException's type does not implement
 JSON operations. These limitations remain explicit debt before broader compiler
 entry/error paths can be marked ready. Native readonly enforcement remains advisory,
 as already recorded by the role-view slice.
+
+Instance allocation adds a native proof of OverflowException specificity and its
+RuntimeException/Exception ancestry; it does not match LogicException.
