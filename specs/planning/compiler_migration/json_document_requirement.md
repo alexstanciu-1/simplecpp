@@ -3,7 +3,8 @@ Doc Status: planning
 
 Status: native lossless document API recommendation accepted by the user on
 2026-09-22, with a PHP framework counterpart after native support is available.
-This is not an implemented framework API, a language spec, or a filed public issue.
+Tracked upstream in [Simple C++ #240](https://github.com/alexstanciu-1/simplecpp/issues/240).
+This remains a requirement, not an implemented framework API or language spec.
 
 ## Concrete compiler need
 
