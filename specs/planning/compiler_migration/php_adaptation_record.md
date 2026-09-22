@@ -364,3 +364,29 @@ The first PHP-ready and native-ready commands now carry immediate timestamps and
 source hashes. This slice took about 3m52s to PHP-ready, then 1m20s to native-ready
 (including a 46.1-second build), with zero native corrections. See
 [measured evidence](results/syntax-access-01/README.md).
+
+## Project parser snapshots and joins (2026-09-22)
+
+The parser's store/selection/worker/join responsibilities were rewritten against the
+current fresh lexical snapshots, rather than importing the prototype's persistent-ID
+Source_Set/Step interfaces into unmigrated owners. Exact supplied paths key current
+membership; positions are explicitly not stable identities. Unchanged bytes reuse
+syntax. Fresh tokens get a new Parse_Result wrapper around the retained tree, so
+current input ownership and old snapshot immutability are both preserved. Renames
+remain removal/addition; whitespace changes reparse for correct spans.
+
+The fixed plan partitions current positions into work and reuse. Join preparation
+validates that partition; merge validates complete segments before adoption; finish
+preserves current order and excludes removals. Worker failure returns a diagnostic
+set with no partial files. The sequential entry composes the same plan and join used
+by out-of-order/segmented tests, without introducing a new generic scheduler.
+
+Selection compares source bytes directly and join preparation builds its own validated
+path index; these are local optimization candidates only if measured. Upstream source
+scanning/tokenization remain fresh, so this is parser-level reuse rather than an
+end-to-end incremental compiler. The source correction after the first PHP-ready
+checkpoint splits range rejection from subtraction for safe negative-index handling
+on the current non-short-circuit target. No converter behavior was broadened.
+
+See [project parser contract](../../portability/parser_project.md) and
+[timing/validation record](results/parser-project-01/README.md).

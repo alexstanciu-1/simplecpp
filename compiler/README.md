@@ -2,8 +2,10 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-Input preparation, tokenization, parser storage and file grammar now cover
-**30 production files** with PHP/native proofs. Syntax access/comparison is proved too. Next is project parser selection/join/reuse. No active compiler CLI or complete compilation pipeline exists yet.
+Input preparation, tokenization, parser grammar, structural queries and project parser
+reuse now cover **34 production files** with PHP/native proofs. Next is declaration
+collection and symbol records. No active compiler CLI or complete compilation pipeline
+exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
 stays PHP as-is for now, outside this conversion scope. `tests/` holds registered stage outcome proofs.
@@ -12,7 +14,7 @@ Bring reusable code in deliberately, applying the portable-PHP and strict skills
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` lists the thirty proved source files. `tools/portability_target.json`
+`portability.json` lists the thirty-four proved source files. `tools/portability_target.json`
 pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
@@ -62,6 +64,9 @@ storage and scoped angle matching; it does not imply full parsing support.
 Portable functions use the [global facade](../specs/portability/global_functions.md)
 without imports. [Expression parsing](../specs/portability/expression_parser.md) is
 implemented. [File parsing](../specs/portability/file_parser.md) adds statements and
-declarations; project-level parser scheduling and later semantic stages remain pending.
+declarations. Project parser planning/join/reuse now has its own proof; a general
+scheduler and later semantic stages remain pending.
 
 [Syntax access/comparison](../specs/portability/syntax_access.md) now supplies value role views, lazy struct-member traversal and logical subtree comparison.
+
+[Project parser](../specs/portability/parser_project.md) adds current-path membership, byte-stable syntax reuse, atomic segmented joining and failed-update diagnostics.

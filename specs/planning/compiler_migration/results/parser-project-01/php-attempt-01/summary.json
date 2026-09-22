@@ -1,0 +1,63 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-parser-project-php-01/source"
+      ],
+      "seconds": 0.259,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-parser-project-php-01/source"
+      ],
+      "seconds": 0.842,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-parser-project-php-01/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/scpp-parser-project-php-01/source/src/02_tokenize/structures.php",
+        "/tmp/scpp-parser-project-php-01/source/src/02_tokenize/store.php",
+        "/tmp/scpp-parser-project-php-01/source/src/02_tokenize/tokenize.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/data/nodes.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/data/tree.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/utilities/binary_syntax.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/data/expression_state.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/handlers/expressions.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/data/result.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/handlers/statements.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/handlers/control_statements.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/handlers/declarations.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/handlers/metaprogramming.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/parse_file.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/data/role_views.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/utilities/metaprogramming_syntax.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/utilities/struct_member_cursor.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/utilities/syntax_access.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/utilities/syntax_comparer.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/data/store.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/select_tasks.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/join.php",
+        "/tmp/scpp-parser-project-php-01/source/src/03_parse/main_parse.php",
+        "/tmp/scpp-parser-project-php-01/source/probe.php",
+        "/tmp/scpp-parser-project-php-01/source/main.php"
+      ],
+      "seconds": 0.067,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 0
+}

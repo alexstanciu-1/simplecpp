@@ -61,8 +61,8 @@ determinism and bounded expression continuation slots.
 
 Whole original unit bodies also exercise syntax views, semantic stages and project
 joins; this proof does not claim those full unit bodies pass.
-[Syntax access/comparison](syntax_access.md) now has its own focused proof. Project-wide parser
-selection/join/reuse and the compiler CLI are still pending. src-runtime-preparation
+[Syntax access/comparison](syntax_access.md) now has its own focused proof. [Project-wide parser selection/join/reuse](parser_project.md) now has a focused proof;
+the compiler CLI remains pending. src-runtime-preparation
 remains unchanged PHP.
 
 ```sh

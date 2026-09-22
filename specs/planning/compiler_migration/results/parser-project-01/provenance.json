@@ -1,0 +1,11 @@
+{
+  "compiler/tests/parser_project/probe.php": "7c7deb911f1ba88bee55eac1987d21f1427cda4deac756a07ae8c95ec77414b3",
+  "compiler/tests/parser_project/run.py": "2342f5eeb8d628fd2cf0135f391b5821f3f3be016b0cc1d9c4e8f3dc8012d980",
+  "compiler/tests/parser_project/purity.php": "f86a55934e4b45e03321bf871abd490dcf0d2926dc5871568febc5afcc9e39c0",
+  "compiler/reference/pre-rewrite/src/03_parse/data/store.php": "b861b8e9370ece3461db615406caa17b59996acbe6f04f653e91f508ab4d73f4",
+  "compiler/reference/pre-rewrite/src/03_parse/select_tasks.php": "617c054eb3f5bbeea69f79241fbfa766fc432a21ab1e23676909f51be77269ff",
+  "compiler/reference/pre-rewrite/src/03_parse/join.php": "553379ed54c10268fe45c72a9674ee3f75bd33a3de49d8a3250db97fe56e9707",
+  "compiler/reference/pre-rewrite/src/03_parse/main_parse.php": "3698ceb72c8357c365629d5c9073ab48f76f27fd9433654444a7cd16e1a497da",
+  "compiler/reference/pre-rewrite/tests/03_parse/parse_updates.php": "07dea9a535110bdb6af5776a04d91d3eba95bcbc20e5229abfb7bc2c8be05b1c",
+  "compiler/reference/pre-rewrite/tests/03_parse/step_lifecycle.php": "0a431fbf1db340e26ad574ef95a0fd992b69ed9c92a1442f23df76c5d9cb9f39"
+}

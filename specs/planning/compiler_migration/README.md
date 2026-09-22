@@ -5,8 +5,8 @@ See [the current dependency frontier](current_frontier.md) for next actions and
 accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; file grammar proved:** input preparation and tokenization
-plus parser storage, grammar and syntax access/comparison provide thirty active
-production files. Next: project parser selection/join/reuse.
+plus parser storage, grammar, syntax access/comparison and project parser reuse provide
+thirty-four active production files. Next: declaration collection and symbol records.
 See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).
 `src-runtime-preparation` stays PHP as-is for now; do not convert it.

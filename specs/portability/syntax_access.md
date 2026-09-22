@@ -61,5 +61,5 @@ python3 compiler/tests/syntax_access/run.py --results FRESH_NATIVE --target-chec
 ```
 
 See [checkpoint timing and evidence](../planning/compiler_migration/results/syntax-access-01/README.md).
-Next: project parser selection, joins and reuse. src-runtime-preparation remains PHP
+[Project parser selection, joins and reuse](parser_project.md) now has a focused proof. src-runtime-preparation remains PHP
 as-is, outside this conversion scope.

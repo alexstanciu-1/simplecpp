@@ -33,3 +33,7 @@ require_once __DIR__ . '/src/03_parse/utilities/metaprogramming_syntax.php';
 require_once __DIR__ . '/src/03_parse/utilities/struct_member_cursor.php';
 require_once __DIR__ . '/src/03_parse/utilities/syntax_access.php';
 require_once __DIR__ . '/src/03_parse/utilities/syntax_comparer.php';
+require_once __DIR__ . '/src/03_parse/data/store.php';
+require_once __DIR__ . '/src/03_parse/select_tasks.php';
+require_once __DIR__ . '/src/03_parse/join.php';
+require_once __DIR__ . '/src/03_parse/main_parse.php';

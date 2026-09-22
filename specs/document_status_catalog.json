@@ -4,6 +4,71 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/portability/parser_project.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/README.md",
+                        "kind": "markdown",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/cycles.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/final-fast/outcome_hashes.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/final-fast/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/native-ready/outcome_hashes.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/native-ready/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/php-attempt-01/outcome_hashes.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/php-attempt-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/php-ready/outcome_hashes.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/php-ready/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/provenance.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/parser-project-01/timing.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path": "specs/portability/syntax_access.md",
                         "kind": "markdown",
                         "doc_status": "supporting"

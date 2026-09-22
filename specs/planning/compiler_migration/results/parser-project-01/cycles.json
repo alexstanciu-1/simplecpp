@@ -1,0 +1,23 @@
+{
+  "php_authoring": {
+    "checker_corrections": 1,
+    "checker_reason": "Negative property default moved into constructor assignment.",
+    "behavior_test_corrections": 1,
+    "test_reason": "Fixture EOF is byte 32, not 31; fixed expected offset."
+  },
+  "post_php_ready": {
+    "source_review_corrections": 1,
+    "reason": "Reject invalid index before size-index subtraction.",
+    "changed_sources": [
+      "src/03_parse/join.php"
+    ]
+  },
+  "native_build_attempts": 1,
+  "native_behavior_attempts": 1,
+  "native_failure_corrective_cycles": 0,
+  "converter_changes": false,
+  "target_changes": false,
+  "portable_outcomes": 66,
+  "host_purity_assertions": 9,
+  "final_ready_files": 34
+}
