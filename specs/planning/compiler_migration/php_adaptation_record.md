@@ -1005,3 +1005,37 @@ leases, the complete type importer and provider composition remain to migrate.
 Final cumulative fast validation passes with 100 registered production files.
 The next coherent dependency is resource-permission ingestion; full package
 acceptance remains gated on checksum/lease and remaining import contracts.
+
+## Resource permissions at the package boundary
+
+Resource_Import is a stateless helper over lossless JSON views and the accepted
+Runtime_Type map. It converts the prototype's optional resource enum to optional
+Resource_Obligations with the direct allocation kind and no field paths. Layout,
+copy traits and aggregate owning paths do not imply direct allocation permission.
+The original prohibitions on non-inline resource types and exposed copy operations
+remain; lifecycle completeness belongs to the forthcoming lifecycle importer.
+
+Allocation-effect ingestion keeps semantic parameter positions separate from
+physical ABI slots. An integer-keyed map holds only actual direct owner parameters.
+Required endpoints plus the exact owner count replace sorting a temporary position
+list: every owner must be covered, transfer endpoints must be distinct and name the
+same exact package type ID, and all owners must use the appropriate const/mutable
+borrow mode. Transfer between different IDs is rejected even if definitions are the
+same object. Results carrying allocation ownership require zero-argument construction.
+Only acquire/release/transfer/inspect are allowed at this provider boundary; internal
+mutate/observe contracts do not silently become accepted package effects.
+
+The converter rejected a nullable local annotation before PHP readiness. A concrete
+local destination plus explicit transfer/non-transfer result construction expresses
+the same optional payload using supported forms. No converter change was needed.
+54 independently expected PHP/native outcomes pass on the first native build with
+zero native correction cycles. These cover sparse owner positions, reversed
+transfer direction, missing/extra fields, wrong numeric shapes, ownership coverage,
+borrow modes, different type IDs, missing types and resource results. Evidence and
+phase timings are in results/resource-import-01.
+
+This is a dependency for complete package import, not a substitute for its physical
+ABI validation, lifecycle validation, checksum verification or lease ownership.
+Runtime preparation is unchanged.
+
+Cumulative fast validation passes at 101 registered production files.

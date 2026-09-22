@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **100 production files**: input preparation (137 outcomes),
+Active readiness is **101 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -105,3 +105,8 @@ Package-local runtime storage/type records and Package_Syntax add 66 PHP/native
 outcomes, with 520 retained-prototype attribute inputs tested through both ABI
 validators. Evidence: `results/package-syntax-01`. Package acceptance, checksum
 verification, leases and provider symbol integration remain incomplete.
+
+Resource_Import now has 54 PHP/native outcomes for explicit direct resource
+permissions and complete allocation-effect ownership/borrow validation
+(`results/resource-import-01`). Next: package lifecycle ingestion and the remaining
+package composition dependencies; checksum/lease and shared provider symbols remain.

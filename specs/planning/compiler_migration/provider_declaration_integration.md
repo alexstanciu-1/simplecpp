@@ -114,3 +114,8 @@ Package-local runtime storage/type records and Package_Syntax add 66 PHP/native
 outcomes, with 520 retained-prototype attribute inputs tested through both ABI
 validators. Evidence: `results/package-syntax-01`. Package acceptance, checksum
 verification, leases and provider symbol integration remain incomplete.
+
+Resource_Import now has 54 PHP/native outcomes for explicit direct resource
+permissions and complete allocation-effect ownership/borrow validation
+(`results/resource-import-01`). Next: package lifecycle ingestion and the remaining
+package composition dependencies; checksum/lease and shared provider symbols remain.
