@@ -73,3 +73,13 @@ The user-supplied AGENTS.md operating instructions require confirmation for a wi
 refactor across multiple ownership areas (the global rule is supplied in the task,
 not repeated in this checkout's project-only AGENTS.md).
 This proposal requests that decision before changing the existing shared declaration model.
+
+## Approved scope
+
+The user approved compiler-side integration on 2026-09-22. Keep the existing
+PHP `src-runtime-preparation` implementation and its output contract unchanged;
+adapt only the compiler consumer. The user also requested that the retained
+preparation configuration locate this checkout through relative paths, replacing
+the old external vendor checkout. This permits configuration wiring changes,
+not a rewrite of the preparation tool or its output schema.
+The earlier confirmation requirement is satisfied.

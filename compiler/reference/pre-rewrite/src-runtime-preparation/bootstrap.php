@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 // Standalone tool composition; framework primitives plus the bounded process executor.
-require_once __DIR__ . '/../../tools/php_portability/runtime/bootstrap.php';
+require_once __DIR__ . '/../../../../tools/php_portability/runtime/bootstrap.php';
 require_once __DIR__ . '/../tool_process/process.php';
 require_once __DIR__ . '/files.php';
 require_once __DIR__ . '/definitions.php';

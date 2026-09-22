@@ -4,7 +4,7 @@
   "definitions_directory": "definitions",
   "output_directory": "../generated-runtime",
   "include_directories": [
-    "../../../../simple_cpp_compiler/vendor/simple_cpp/runtime/include",
+    "../../../../runtime/include",
     "include"
   ],
   "clang": "clang++-18",

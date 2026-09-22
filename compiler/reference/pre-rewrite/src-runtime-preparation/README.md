@@ -28,6 +28,10 @@ compiler processes in [src/](../src).
 
 ## Generated output location
 
+The Simple C++ header root in [config.json](config.json) is
+`../../../../runtime/include`, relative to this retained tool directory. It uses
+this repository checkout rather than the former external vendor checkout.
+
 [config.json](config.json) defines `output_directory`, initially
 `../generated-runtime`. Relative paths resolve against the configuration file's
 directory, independent of the working directory; absolute paths are also allowed.
