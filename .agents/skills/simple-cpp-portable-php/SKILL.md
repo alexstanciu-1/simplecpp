@@ -29,7 +29,9 @@ an old slice's limits or a feature-catalog proposal as the current support matri
   for independent values and snapshots; borrow only stable locals, never container
   elements. PHP object sharing must not accidentally define native value behavior.
 - Choose dense vectors versus sparse/keyed hashes by access pattern. Keep stable IDs,
-  storage positions and missing sentinels distinct. Use narrow fields only with known
+  storage positions and missing sentinels distinct. Normalize compact numeric tags to
+  the comparison domain explicitly (for example `(int)` before int-tag `===`); PHP
+  success does not prove native fixed-width strict comparisons. Use narrow fields only with known
   bounds; PHP integer annotations do not enforce native ranges. Measure layout and
   memory natively. PHP readonly alone does not establish native immutability.
 - Distinguish UTF-8 code-point operations from byte operations for source spans,

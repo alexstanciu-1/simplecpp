@@ -17,3 +17,6 @@ require_once __DIR__ . '/src/02_tokenize/structures.php';
 require_once __DIR__ . '/src/02_tokenize/store.php';
 require_once __DIR__ . '/src/02_tokenize/tokenize.php';
 require_once __DIR__ . '/src/02_tokenize/main_tokenize.php';
+require_once __DIR__ . '/src/03_parse/data/nodes.php';
+require_once __DIR__ . '/src/03_parse/data/tree.php';
+require_once __DIR__ . '/src/03_parse/utilities/binary_syntax.php';

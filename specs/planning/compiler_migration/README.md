@@ -5,7 +5,9 @@ See [the current dependency frontier](current_frontier.md) for next actions and
 accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; four stages proved:** input preparation and tokenization
-provide fourteen active production files. Next: parser.
+plus parser foundation provide seventeen active production files.
+Parser grammar is not implemented yet; next is expression parsing.
+See [parser foundation](../../portability/parser_foundation.md).
 `src-runtime-preparation` stays PHP as-is for now; do not convert it.
 See [tokenizer and reused units](../../portability/tokenizer.md).
 See [verified read scope and timings](../../portability/verified_source_reads.md).

@@ -1,6 +1,26 @@
 # PHP adaptation record and optimization follow-up
 Doc Status: planning
 
+## First parser slice: syntax arena and angle matching (2026-09-22)
+
+Three files provide real parser-owned storage/disambiguation dependencies, not grammar
+parsing yet. Compact rows retain the original kind codes and byte spans. Explicit
+copy/read/replace methods prevent PHP object identity from defining native mutation.
+A last-child field replaces reference-parameter bookkeeping for constant-time append;
+measure its memory cost in a later optimization pass. Internal callers own unattached
+subtree/cycle discipline; this is not an arbitrary-graph validation API.
+
+The retained 5,000-stream unit is adapted only for loading/vocabulary and exercises
+the rewrite against the frozen original. Another 414 outcomes pass PHP/native. Native
+build 1 succeeded but behavioral comparison exposed uint32 versus int strict tag
+comparisons; normalize to int at classification, keeping compact stored tags. Build 2
+passes. This lesson updates author guidance, without expanding converter semantics.
+Final cumulative PHP/tool checks accompany the focused native proof; unchanged prior
+stages are not natively rebuilt just to repeat evidence. Grammar units remain pending.
+See [contract](../../portability/parser_foundation.md) and
+[timing/cycles](results/parser-foundation-01/README.md).
+
+
 ## Rewrite stage 4: tokenizer (2026-09-22)
 
 Four files retain lexical vocabulary and algorithms while replacing per-token objects

@@ -2,7 +2,7 @@
 Doc Status: planning
 
 Current compiler status: [rewrite reset](../planning/compiler_migration/rewrite_reset.md),
-fourteen active ready files for input preparation and tokenization; see
+seventeen active ready files for input preparation, tokenization and parser foundation; see
 [its bounded JSON adapter contract](project_manifest_reading.md). Capability support below remains available; prior compiler
 slice statements describe archived implementation/proofs, not active rewrite coverage.
 

@@ -1,0 +1,38 @@
+{
+  "measurement": "Elapsed primary-activity wall time, including waits. Initial repository orientation before recording is excluded. Not CPU time.",
+  "started": "2026-09-22T08:32:26.909626+00:00",
+  "phases": [
+    {
+      "activity": "implementation",
+      "started": "2026-09-22T08:32:26.909626+00:00",
+      "finished": "2026-09-22T08:33:25.857590+00:00",
+      "seconds": 58.948
+    },
+    {
+      "activity": "validation",
+      "started": "2026-09-22T08:33:25.857590+00:00",
+      "finished": "2026-09-22T08:35:40.372561+00:00",
+      "seconds": 134.515
+    },
+    {
+      "activity": "native-debugging",
+      "started": "2026-09-22T08:35:40.372561+00:00",
+      "finished": "2026-09-22T08:36:23.751650+00:00",
+      "seconds": 43.379
+    },
+    {
+      "activity": "cumulative-fast-validation",
+      "started": "2026-09-22T08:36:23.751650+00:00",
+      "finished": "2026-09-22T08:38:21.677142+00:00",
+      "seconds": 117.925
+    },
+    {
+      "activity": "consolidation",
+      "started": "2026-09-22T08:38:21.677142+00:00",
+      "finished": "2026-09-22T08:38:53.388345+00:00",
+      "seconds": 31.711
+    }
+  ],
+  "finished": "2026-09-22T08:38:53.388345+00:00",
+  "elapsed_seconds": 386.479
+}

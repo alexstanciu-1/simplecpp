@@ -1,0 +1,11 @@
+{
+  "attempts_to_first_successful_build": 1,
+  "attempts_to_first_native_behavior_pass": 2,
+  "native_corrective_cycles": 1,
+  "total_native_build_invocations": 2,
+  "both_builds_compiled": true,
+  "final_verification_native_builds": 0,
+  "final_verification": "Cumulative PHP/tool checks; unchanged earlier native proofs retained",
+  "host_only_corrections": 1,
+  "correction": "Explicit int normalization of uint32 token kind before strict comparison with int constants"
+}

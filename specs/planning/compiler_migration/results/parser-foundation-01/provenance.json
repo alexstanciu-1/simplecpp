@@ -1,0 +1,10 @@
+{
+  "sha256": {
+    "tests/portability/reference/pre-rewrite/binary_syntax_oracle.php": "88b38b7342c35373dfb7477af686b0e95aa83d38372fa93ddc2ec94e09224d69",
+    "tests/portability/oracles/binary_syntax_original.php": "19271e0b8bc4ad975c91f7e22467940fa00775ca154aaa7304d88c312842194f",
+    "compiler/tests/parser_foundation/reuse_unit.php": "89b1ab33c0884130fa4553effdcd0fe10219ab7f5bec035f8e5ecc7e733c307d",
+    "compiler/reference/pre-rewrite/src/03_parse/utilities/binary_syntax.php": "3edb940169d17e439e1f634b1b059d8787767a098bb2ddb002cfc99b4c26651b"
+  },
+  "reused_host_streams": 5000,
+  "php_native_outcomes": 414
+}

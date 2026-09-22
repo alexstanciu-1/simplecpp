@@ -3,14 +3,15 @@ Doc Status: supporting
 
 ## Active rewrite proofs
 
-The ready set contains fourteen input/tokenization production files. The default driver runs their
+The ready set contains seventeen input/tokenization/parser-foundation production files. The default driver runs their
 PHP outcome proof plus independent framework checks. Add `--native compiler
 --target-checkout TARGET` to convert and prove all registered rewrite stages natively.
 `compiler/tests/run.py` requires the ready set to match registered stage sources.
 See [manifest reading](project_manifest_reading.md) for 35 outcomes and
 [source discovery](source_discovery.md) for 31 initial + 31 refreshed outcomes, and
 [verified reads](verified_source_reads.md) for 20 initial + 20 refreshed outcomes,
-and [tokenizer](tokenizer.md) for 304 outcomes including retained unit cases.
+[tokenizer](tokenizer.md) for 304 outcomes including retained unit cases, and
+[parser foundation](parser_foundation.md) for 414 outcomes plus the reused 5,000-stream unit.
 
 The old compiler harness/oracles are preserved under
 `tests/portability/reference/pre-rewrite/`; replay them from Git branch
@@ -40,7 +41,7 @@ It runs:
 
 1. The shared read-only checker: PHP lint, imports, declarations/traits and conversion.
 2. Registered compiler stage proofs under `compiler/tests/`, comparing independently
-   specified meaningful outcomes. Currently these are manifest reading, discovery, verified reads and tokenization.
+   specified meaningful outcomes. Currently these are input preparation, tokenization and parser foundation.
 3. Scalar-record framework capability checks.
 4. The host collection helper tests; native parity has its own runner.
 5. Foundation, check-command, prologue and native-framework-installation regressions.
@@ -71,7 +72,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | Selection | Existing owner |
 | --- | --- |
 | `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
-| `compiler` | Registered active rewrite stages: fourteen production files; manifest 35, discovery 62, verified reads 40, tokenizer 304 outcomes |
+| `compiler` | Registered active rewrite stages: seventeen production files; manifest 35, discovery 62, verified reads 40, tokenizer 304, parser foundation 414 outcomes |
 | `methods` | Named/scalar method boundaries, void, identity and mutation |
 | `returns` | Container return copying and nonpublic scalar state |
 | `iteration` | Typed map presence checks and by-value iteration |

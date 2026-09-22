@@ -15,7 +15,10 @@
     "src/02_tokenize/structures.php",
     "src/02_tokenize/store.php",
     "src/02_tokenize/tokenize.php",
-    "src/02_tokenize/main_tokenize.php"
+    "src/02_tokenize/main_tokenize.php",
+    "src/03_parse/data/nodes.php",
+    "src/03_parse/data/tree.php",
+    "src/03_parse/utilities/binary_syntax.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

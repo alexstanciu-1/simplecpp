@@ -2,8 +2,9 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The first four rewrite stages, **input preparation and tokenization (14 production
-files)**, pass PHP/native outcome proofs. Next is the parser. No active compiler CLI or complete compilation pipeline exists yet.
+Input preparation, tokenization and the first parser foundation now cover **17
+production files** with PHP/native proofs. Parser grammar is not implemented yet;
+next is expression parsing. No active compiler CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
 stays PHP as-is for now, outside this conversion scope. `tests/` holds registered stage outcome proofs.
@@ -12,7 +13,7 @@ Bring reusable code in deliberately, applying the portable-PHP and strict skills
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` lists the fourteen proved input/tokenization files. `tools/portability_target.json`
+`portability.json` lists the seventeen proved source files. `tools/portability_target.json`
 pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
@@ -55,3 +56,6 @@ source bytes with explicit version-check limits and PHP/native boundary differen
 
 [Tokenizer](../specs/portability/tokenizer.md) records reused unit cases, compact rows
 and the explicit lexical-failure contract.
+
+[Parser foundation](../specs/portability/parser_foundation.md) owns compact syntax
+storage and scoped angle matching; it does not imply full parsing support.

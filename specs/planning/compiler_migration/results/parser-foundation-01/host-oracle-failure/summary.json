@@ -1,0 +1,16 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "reference-oracle",
+      "command": [
+        "php",
+        "/tmp/scpp-parser-foundation-php-01/oracle.php",
+        "/tmp/scpp-parser-foundation-php-01/oracle-inputs.json"
+      ],
+      "seconds": 0.049,
+      "exit": 255
+    }
+  ],
+  "native_build_attempts": 0
+}
