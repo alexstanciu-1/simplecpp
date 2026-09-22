@@ -1447,3 +1447,32 @@ The final source_linkage record is deferred until its runtime-input and analyzed
 verification owners exist; it is not replaced with mixed containers or fake types.
 Source-export selection/preparation/join validation remain pending. Evidence and
 correction timings: `results/source-export-contracts-01`.
+
+
+## Package type composition and source payload binding
+
+The retained Package_Types trait is composed from typed measurement, ordinary
+exposure and accepted-native-import helpers, with Package_Type_Map owning private
+batch construction and final binding membership checks. Package_Bindings is a
+separate record in the original data folder so native import records do not pull
+in source-export dependencies. Explicit empty maps replace nullable/default binding
+carriers. Callables remain a distinct binding map, consumed by callable ingestion.
+
+Project_Import::source_type consumes real Source_Type_Export records, requiring
+the exact portable identity, measured size/alignment, empty lifecycle metadata and
+absence of competing owners. Source payload storage becomes the record kind while
+retaining the exact existing source definition. Source export generation and receipt
+authorization are not implemented by this helper. Resource metadata is checked even
+for unexposed rows; resource:null remains invalid under the retained resource owner.
+
+For future optimization: opaque exposure currently repeats the pure resource
+validation performed at the batch boundary. Centralizing a normalized resource value
+can remove that duplicate work once complete package normalization is established;
+do not weaken validation for unexposed or source/native rows. Validation order for
+simultaneously malformed metadata may differ, but acceptance, identity and no partial
+publication are the supported behavior.
+
+Evidence: 38 PHP/native cases and retained acceptance comparisons in
+results/package-type-map-01. First native build passed without correction. Two PHP
+proof-authoring rounds corrected fixture/API spellings before the first passing
+checkpoint; no production or converter correction was required.

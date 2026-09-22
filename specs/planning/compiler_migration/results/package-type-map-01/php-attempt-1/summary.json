@@ -1,0 +1,73 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/package-type-map-01/source"
+      ],
+      "seconds": 0.125,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/package-type-map-01/source"
+      ],
+      "seconds": 0.955,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/package-type-map-01/source/src/compile/data/native_project.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/resolve_types/data/export_identity.php",
+        "/tmp/package-type-map-01/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/package-type-map-01/source/src/05_generate_code/prepare_backend/data/layout.php",
+        "/tmp/package-type-map-01/source/src/05_generate_code/prepare_backend/data/abi.php",
+        "/tmp/package-type-map-01/source/src/05_generate_code/prepare_backend/data/source_exports.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/catalog.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/handlers/package_types.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/handlers/lifecycle.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/handlers/resources.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/handlers/type_exposure.php",
+        "/tmp/package-type-map-01/source/src/04_analyze/type_model/data/generic.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/data/family_preparation.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/handlers/native_import.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/data/package_bindings.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/project_import.php",
+        "/tmp/package-type-map-01/source/src/01_prepare_inputs/load_runtime/handlers/package_type_map.php",
+        "/tmp/package-type-map-01/source/probe.php",
+        "/tmp/package-type-map-01/source/main.php"
+      ],
+      "seconds": 0.057,
+      "exit": 255
+    }
+  ],
+  "native_build_attempts": 0
+}

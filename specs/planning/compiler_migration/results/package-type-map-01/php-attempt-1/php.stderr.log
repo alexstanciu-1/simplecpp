@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught Error: Call to undefined method scpp\Json_View::keys() in /tmp/package-type-map-01/source/probe.php:39
+Stack trace:
+#0 /tmp/package-type-map-01/source/main.php(2): package_type_map_test\Probe::run()
+#1 Command line code(1): require('...')
+#2 {main}
+  thrown in /tmp/package-type-map-01/source/probe.php on line 39

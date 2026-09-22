@@ -200,3 +200,13 @@ retained capability/semantic comparisons (`results/source-export-contracts-01`).
 Source-only complete plans, explicit unavailable states and separate import/implementation
 associations are preserved. Next: compiler-side source payload binding and package
 type composition; source export production/join/linkage remain unfinished.
+
+
+Package type composition adds 38 PHP/native outcomes and 38 retained acceptance
+comparisons (`results/package-type-map-01`). Ordinary catalog exposure, accepted
+native imports and exact source payload definitions now compose through one private
+map, with conflict/unknown-binding rejection before publication. Source payloads
+retain their existing definition and measured layout; no adapter definition is
+substituted. Next: accepted package contracts and exact retained-binding comparison;
+receipt validation, source export production/join and complete package acceptance
+remain unfinished.
