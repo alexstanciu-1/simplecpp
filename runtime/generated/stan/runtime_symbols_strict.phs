@@ -73,6 +73,7 @@ function fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false)
 function fs_mkdir(string $path): bool {}
 function fs_mtime(string $path): result<int> {}
 function fs_put(string $path, string $data): result<int> {}
+function fs_read_snapshot(string $path, int $expected_mtime, int $expected_size): result<string> {}
 function fs_realpath(string $path): result<string> {}
 function fs_remove(string $path): bool {}
 function fs_rename(string $from, string $to): bool {}

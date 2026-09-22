@@ -52,3 +52,7 @@ The [family contract](file_locks.md) owns lifecycle and inheritance semantics.
 ## Target path semantics
 
 - [fs_is_windows](fs_is_windows.md) reports the compiled runtime’s native path semantics.
+
+## Checked source reads
+
+- [fs_read_snapshot](fs_read_snapshot.md) preserves checked path/handle identity and version observations with bounded reading and guaranteed cleanup (Linux backend).

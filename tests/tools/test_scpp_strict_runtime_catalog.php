@@ -51,6 +51,8 @@ final class ScppStrictRuntimeCatalogTest
 
 		$this->assertSame('bool', $catalog->returnType('fs_is_windows'), 'fs_is_windows return contract');
 		$this->assertSame('filesystem', $catalog->requiredModule('fs_is_windows'), 'fs_is_windows module ownership');
+		$this->assertSame('result<string>', $catalog->returnType('fs_read_snapshot'), 'fs_read_snapshot return contract');
+		$this->assertSame('filesystem', $catalog->requiredModule('fs_read_snapshot'), 'fs_read_snapshot module ownership');
 
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
@@ -58,6 +60,7 @@ final class ScppStrictRuntimeCatalogTest
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
 		$this->assertContains('function fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool>', $strictRuntimeSymbols, 'normalized contracts should retain reference output and optional shared mode');
 		$this->assertContains('function fs_is_windows(): bool', $strictRuntimeSymbols, 'filesystem concrete signature');
+		$this->assertContains('function fs_read_snapshot(string $path, int $expected_mtime, int $expected_size): result<string>', $strictRuntimeSymbols, 'filesystem concrete signature');
 		$this->assertContains('class file_lock_handle', $strictRuntimeSymbols, 'STAN should know the opaque lock type');
 		$this->assertContains('function layout_sizeof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_sizeof');
 		$this->assertContains('function layout_alignof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_alignof');

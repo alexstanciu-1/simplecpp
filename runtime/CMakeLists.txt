@@ -38,6 +38,7 @@ endif()
 add_library(scpp_filesystem SHARED
 	include/modules/filesystem/filesystem.cpp
 	include/modules/filesystem/file_lock.cpp
+	include/modules/filesystem/snapshot.cpp
 )
 
 target_include_directories(scpp_filesystem

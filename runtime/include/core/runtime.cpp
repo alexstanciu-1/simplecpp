@@ -15,3 +15,4 @@
 // filesystem calls need their implementation units pulled in here as well.
 #include "../modules/filesystem/filesystem.cpp"
 #include "../modules/filesystem/file_lock.cpp"
+#include "../modules/filesystem/snapshot.cpp"

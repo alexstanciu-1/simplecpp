@@ -255,6 +255,7 @@
         "sequence_filter": "collections::sequence_filter",
         "keyed_map": "collections::keyed_map",
         "keyed_filter": "collections::keyed_filter",
-        "fs_is_windows": "fs::is_windows"
+        "fs_is_windows": "fs::is_windows",
+        "fs_read_snapshot": "fs::read_snapshot"
     }
 }

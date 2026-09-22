@@ -52,6 +52,31 @@
 		"contract_authority_source": "default_missing_contract"
 	},
 	"symbol_contracts": {
+		"fs_read_snapshot": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 3,
+			"max_arity": 3,
+			"parameter_type_refs": [
+				"string",
+				"int",
+				"int"
+			],
+			"parameter_names": [
+				"path",
+				"expected_mtime",
+				"expected_size"
+			],
+			"parameter_passing": [
+				"value",
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<string>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/filesystem/fs_read_snapshot.md"
+		},
 		"fs_is_windows": {
 			"contract_status": "complete",
 			"signature_status": "known",
