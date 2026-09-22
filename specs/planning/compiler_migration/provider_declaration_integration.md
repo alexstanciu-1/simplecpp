@@ -246,3 +246,13 @@ alongside names, representations and lifecycle permissions. Empty resource wrapp
 normalize to no obligations; storage map insertion order is ignored while ordered
 paths/fields retain meaning. Next: integrate exact type retention, then package
 binding/project-context comparison; complete package acceptance remains unfinished.
+
+
+Runtime type retention adds 172 PHP/native outcomes, including 169 comparisons
+with the actual retained equality/retention implementation (`results/type-retention-01`).
+Unchanged bindings and complete contracts retain old object identity; changed
+contracts under unchanged bindings require a fresh type context. Missing/changed
+old bindings keep current objects. Source payload bindings require exact export
+definition identity, and late failure leaves both input maps untouched. Next:
+package binding/project-context comparison and adapter acceptance integration;
+the retention helper assumes the caller has established the same package context.

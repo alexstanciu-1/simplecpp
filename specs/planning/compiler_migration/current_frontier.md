@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **126 production files**: input preparation (137 outcomes),
+Active readiness is **127 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -243,3 +243,13 @@ alongside names, representations and lifecycle permissions. Empty resource wrapp
 normalize to no obligations; storage map insertion order is ignored while ordered
 paths/fields retain meaning. Next: integrate exact type retention, then package
 binding/project-context comparison; complete package acceptance remains unfinished.
+
+
+Runtime type retention adds 172 PHP/native outcomes, including 169 comparisons
+with the actual retained equality/retention implementation (`results/type-retention-01`).
+Unchanged bindings and complete contracts retain old object identity; changed
+contracts under unchanged bindings require a fresh type context. Missing/changed
+old bindings keep current objects. Source payload bindings require exact export
+definition identity, and late failure leaves both input maps untouched. Next:
+package binding/project-context comparison and adapter acceptance integration;
+the retention helper assumes the caller has established the same package context.

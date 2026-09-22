@@ -1593,3 +1593,27 @@ normalization/order/identity distinctions; this is not 1,513 retained comparison
 One reserved local in the test fixture was corrected before PHP readiness. The
 first native build passed without correction. Complete Runtime_Type retention and
 package-context reuse are the next consumers, not yet wired by this checkpoint.
+
+
+## Bound runtime type retention
+
+Type_Retention in load_runtime utilities replaces the retained Package_Types trait's
+implicit object ==/!= checks with explicit reference and full Runtime_Type contract
+comparison. Storage kind/size/alignment, optional integer facts, language definition
+and record declaration all participate. This composes Definition_Contracts instead
+of duplicating its semantic field inventory. The private result map copies input
+membership, reuses old objects only under unchanged bindings/contracts, and is
+published only after every source payload binding still points at its exact export
+definition. A late mismatch cannot mutate caller maps or the old package.
+
+As in the prototype, the adapter must first establish matching provider, directory,
+target and base-catalog context. This helper does not establish that boundary or
+accept artifacts. The future complete adapter will own those gates; no permissive
+whole-package reuse path is introduced here.
+
+Evidence: results/type-retention-01. An 11-row comparison matrix and 48 retention
+cases give 169 retained-prototype comparisons; three additional native/PHP source
+binding cases cover exact identity, equal-but-distinct definitions and missing rows.
+The first native build passes with zero corrections. One final verification build
+follows fixture consistency improvements (separate old source bindings and matching
+ordinary U row/name metadata); production implementation is unchanged.

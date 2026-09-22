@@ -6,7 +6,7 @@ accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; source collection proved:** input preparation, tokenization,
 parser storage/grammar/queries/project reuse, source symbols, entry selection, representations, lifecycle contracts and scalar catalog/entry binding provide
-126 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
+127 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
 and nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks; its scalar catalog return-type binding is now proved (116 PHP/native outcomes).
 See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).
@@ -282,7 +282,7 @@ decoder loses object/list identity needed by manifest validation. A lossless inp
 boundary is required before porting Manifest_Syntax; snapshot export is unaffected.
 
 Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
-eight host checks; active coverage is 126 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
+eight host checks; active coverage is 127 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
 
 
 Package type composition adds 38 PHP/native outcomes and 38 retained acceptance
@@ -329,3 +329,13 @@ alongside names, representations and lifecycle permissions. Empty resource wrapp
 normalize to no obligations; storage map insertion order is ignored while ordered
 paths/fields retain meaning. Next: integrate exact type retention, then package
 binding/project-context comparison; complete package acceptance remains unfinished.
+
+
+Runtime type retention adds 172 PHP/native outcomes, including 169 comparisons
+with the actual retained equality/retention implementation (`results/type-retention-01`).
+Unchanged bindings and complete contracts retain old object identity; changed
+contracts under unchanged bindings require a fresh type context. Missing/changed
+old bindings keep current objects. Source payload bindings require exact export
+definition identity, and late failure leaves both input maps untouched. Next:
+package binding/project-context comparison and adapter acceptance integration;
+the retention helper assumes the caller has established the same package context.
