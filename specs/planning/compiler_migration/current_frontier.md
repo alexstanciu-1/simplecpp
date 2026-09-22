@@ -7,7 +7,7 @@ counts in historical slice documents are checkpoints, not the current count.
 
 | Selected area | Concrete dependency | Next action |
 | --- | --- | --- |
-| Structural syntax access and semantic consumers | struct_members is a deferred PHP generator; changing its return contract touches ten consumers | Implement the typed cursor and ten consumer adaptations accepted on 2026-09-22; see struct_member_cursor_decision.md. |
+| Structural syntax access and semantic consumers | Typed cursor and ten consumers now pass PHP proofs; existing Syntax_Access/Metaprogramming_Syntax forms still need conversion | Adapt actual query dependencies (first checker rejection: trait ??), then establish native proof; see struct_member_cursor_decision.md. |
 | Semantic records, lifecycle and backend vocabulary | 41 string-backed enums and seven enum methods exceed the selected native subset | Implement the staged typed-tag/codec plan accepted on 2026-09-22; see enum_portability_decision.md. |
 | Lexical worker and source diagnostics | Explicit global base class resolves inside the derived namespace | #233 fix expected per user update; test an immutable candidate before adoption. |
 | Manifest parsing and runtime metadata ingestion | Native JSON tables erase object/list identity | Native lossless document API with a PHP counterpart accepted on 2026-09-22; json_document_requirement.md defines the requirement. |

@@ -57,7 +57,9 @@ now preserves real discovery/selection behavior through filesystem adapters.
 now preserves complete reversible link identities; its retained preparation suite
 passes 170 checks. Latest cumulative evidence: `results/preparation-symbols-01`.
 The [struct-member cursor decision](struct_member_cursor_decision.md) was accepted
-on 2026-09-22, authorizing the shared query and ten semantic consumer adaptations.
+on 2026-09-22. The typed cursor and ten consumers now pass the focused PHP proof
+and 39 retained fixtures. Native query dependency adaptation remains outstanding;
+see `results/struct-member-cursor-01`. The ready count remains 36.
 [Source diagnostic preflight](source_diagnostic_preflight.md) records the next
 qualified-base target blocker (#233) and a passing typed-dispatch native control.
 It adds no file to the ready set.

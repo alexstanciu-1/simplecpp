@@ -1,0 +1,72 @@
+[
+  {
+    "fixture": "03_parse/frontend_storage.php",
+    "exit": 0,
+    "seconds": 0.10940689296694472,
+    "stdout": "frontend storage ok: record clones, long tokens, independent file tables and linked traversal\nfailed manifest preparation preserves session state\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/struct_parsing.php",
+    "exit": 0,
+    "seconds": 0.10810885601677,
+    "stdout": "struct parsing ok: shared field roles, ordered declarations, logical changes, malformed shapes and snapshot purity\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/struct_member_cursor.php",
+    "exit": 0,
+    "seconds": 0.1100979060283862,
+    "stdout": "struct member cursor ok: lazy roles, wrappers, order, filtering, exhaustion, identity and early stop\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/metaprogramming_parsing.php",
+    "exit": 0,
+    "seconds": 0.6170262729865499,
+    "stdout": "metaprogramming parsing ok: general multi-argument applications, declarations/constants/context syntax, deep/wide inputs, exports, fixed workers, one replacement and semantic rejection\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/collect_symbols/semantic_storage.php",
+    "exit": 0,
+    "seconds": 0.1274560220190324,
+    "stdout": "semantic storage ok: exact syntax references, implicit entry, change/work separation, removal origins, invalid records and root/index consistency; storage contracts verified\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_storage.php",
+    "exit": 0,
+    "seconds": 0.11478935001650825,
+    "stdout": "type storage ok: distinct identities, shared representations, flat fields/parameters, composed recursive graph, immutable candidates, action descriptors and invalid inputs; storage boundary verified\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_reuse.php",
+    "exit": 0,
+    "seconds": 0.1551042590290308,
+    "stdout": "type reuse ok: parsed occurrences share IDs, lazy definition work, warm cache purity, namespaces, candidate invalidation and failure isolation; signature integration is tested separately\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_context.php",
+    "exit": 0,
+    "seconds": 0.10522657498950139,
+    "stdout": "type context ok: pending/declaration/representation separation, fixed cache inputs, conservative full selection, warm sharing and candidate isolation; signature integration is tested separately\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/semantic_calls.php",
+    "exit": 0,
+    "seconds": 0.1133827050216496,
+    "stdout": "semantic call contracts: physical mappings and incompatible passing/results checked\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_definitions.php",
+    "exit": 255,
+    "seconds": 0.12272925302386284,
+    "stdout": "",
+    "stderr": "PHP Fatal error:  Uncaught Exception: Cannot locate project input: ../fixtures/three_files/project.json in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/lock.php:67\nStack trace:\n#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/lock.php(40): compile\\Project_Lock::project_directory()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/compile.php(79): compile\\Project_Lock::acquire()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/04_analyze/type_model/type_definitions.php(113): compile\\Compiler_Session->compile()\n#3 {main}\n  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/lock.php on line 67\n"
+  }
+]

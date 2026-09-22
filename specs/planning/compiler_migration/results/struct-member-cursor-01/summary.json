@@ -1,0 +1,38 @@
+{
+  "status": "php-adaptation-passed-native-dependencies-pending",
+  "checkpoint_commit": "bb2fb053",
+  "retained_fixtures": 39,
+  "retained_passed": true,
+  "source_sha256": {
+    "compiler/bootstrap.php": "1758d89faaa34485abfef41eaf34cba25056eee3cc2ad2de5fb94c6f790a852a",
+    "compiler/src/03_parse/utilities/syntax_access.php": "9686975594f250b6b47669619e2a9b6167490a0a5a783c50f454683cfca88535",
+    "compiler/src/04_analyze/check_templates/body.php": "eb23328827ae2b3619fc1238a7cf1e46ac9aa6ecb1b49c052be5261ff6f4f56c",
+    "compiler/src/04_analyze/check_templates/terms.php": "e0c744a35614a6df69141ee64ec576b54e0600b4b138d178a19fd76b8e20bfd6",
+    "compiler/src/04_analyze/collect_symbols/collect.php": "7cbe3f140b8e827eae2ee08a8d606fe3df93c8434035cb86dcd99bfafea5c87d",
+    "compiler/src/04_analyze/collect_symbols/join.php": "e8cbd883ca22d46f7166b3e9ab1fcacb67f2af603e00309a39142e67d5c168e2",
+    "compiler/src/04_analyze/collect_symbols/utilities/declaration_syntax.php": "4387cfdd07ac4303bffab5f335b74684389bae25f27b5f03cc97ddddbb9065df",
+    "compiler/src/04_analyze/resolve_symbols/handlers/names.php": "664728ee037d3e6a4d094873acbfd9f5bf9e6065f7338c16bc63e0be120bcef1",
+    "compiler/src/04_analyze/resolve_types/main_prepare_concrete.php": "ece9706c90f1f90bf824454963325f2aaa62c83cf94ed3144a06c2554c9ac242",
+    "compiler/src/04_analyze/resolve_types/record_join.php": "4929866308c517c6832e41b555720d98ca08446db3eb5b80789aa98907646495",
+    "compiler/src/04_analyze/resolve_types/records.php": "9e1dc5b11a4dc005b8b37bb07ad0432293be3e554c6e8299da06d8236deacd54",
+    "compiler/src/04_analyze/resolve_types/source_lifecycle.php": "5303445f633436bb2e366083478385b30535228b960921c09d91d26c6c8950f3",
+    "compiler/tests/run.py": "905f1e0ca138f1e631a27fb4691a462c2de3c9c7781ca605d4a8b62b01918ce8",
+    "compiler/src/03_parse/utilities/struct_member_cursor.php": "f98fcabcba7564e3380f0190095c3ae86c02e237a0b17f0e918693529b902dfe",
+    "compiler/tests/03_parse/struct_member_cursor.php": "b7ac1ba1c8702507a53e1839f5a942f110ec7711c3f7dd8cb2f3050ca7efc565"
+  },
+  "checks": {
+    "cursor": {
+      "exit": 0,
+      "stdout": "{\"checked\":1,\"cache\":{\"listed_directories\":1,\"read_sources\":1,\"tokenized\":1,\"loaded_tokens\":0}}\n",
+      "stderr": ""
+    },
+    "query-dependencies": {
+      "exit": 1,
+      "stdout": "",
+      "stderr": "metaprogramming_syntax.php:62: unsupported syntax: ??\n"
+    }
+  },
+  "ready_files": 36,
+  "native_proof": false,
+  "note": "Initial direct test invocation failed due to missing isolated fixture cwd. Corrected run uses compiler/tests/run.py run_fixture. Query dependency check rejects existing ?? in Metaprogramming_Syntax; no dependency stub or partial-file readiness claim."
+}

@@ -50,12 +50,25 @@ tests are behavioral oracles, not another evolving compiler implementation.
   in [the migration overview](README.md). Some files only gained imports/types;
   readiness does not imply every file's algorithm was rewritten.
 
+## Subsequent completed PHP adaptation: struct-member traversal
+
+On 2026-09-22, the [struct-member cursor](struct_member_cursor_decision.md) replaced
+the generator and all ten consumers were adapted. This is a PHP source/algorithm
+checkpoint, not an additional native-ready file. The cursor has constant-size state,
+shares the immutable tree, validates on first advance and traverses the tail only
+on demand. One existing consumer retains explicit materialization; the others stream
+or count. Current-position and terminal failure/exhaustion rules are explicit.
+
+Reason: preserve the existing lazy algorithm in a locally convertible typed form,
+without adding general generator lowering or eager temporary lists. Optimization
+questions: repeated traversal versus indexes, cursor allocation cost and whether
+the existing materializing consumer can later stream without changing validation
+order. No speedup is claimed. Focused oracle/identity tests and 39 retained fixtures
+pass; the actual query/trait dependency still blocks native conversion on `??`.
+Evidence: `results/struct-member-cursor-01/summary.json`.
+
 ## Accepted, not implemented at this checkpoint
 
-- [Struct-member cursor](struct_member_cursor_decision.md): replace yield with an
-  explicit typed streaming cursor; update ten consumers. Keep constant-size state,
-  deferred role validation, ordering and early termination. Future profiling may
-  compare repeated traversal with indexes; eager materialization is not the default.
 - [Semantic enums](enum_portability_decision.md): typed tags plus explicit owned wire
   codecs/operations, one family and consumers at a time. Preserve external values,
   key encodings, enumeration order and failures, including implicit JSON uses.
@@ -74,8 +87,8 @@ tests are behavioral oracles, not another evolving compiler implementation.
 
 The user accepted the cursor and staged enum cross-owner scopes on 2026-09-22.
 Those source adaptations can proceed without waiting for #233 or lossless JSON.
-Start with the cursor and affected PHP consumers, then prove its portable dependency
-boundary. Syntax_Access as a whole also contains other unsupported PHP forms and a
+The cursor and affected PHP consumers are now adapted; next prove its portable
+dependency boundary. Syntax_Access as a whole also contains other unsupported PHP forms and a
 trait dependency: replacing yield alone does not make the whole file ready. Track
 that distinction, preserve whole-file readiness rules, and report any new inseparable
 cross-owner redesign before expanding the approved scope.

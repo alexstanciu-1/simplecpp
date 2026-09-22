@@ -74,3 +74,13 @@ its interpretation. Existing value parameters retain `$name Type` spelling.
 postfix syntax and then binary operators by precedence through `binary_expression()`.
 Balanced name suffixes remain template syntax; ordinary `<` shares the iterative
 expression path with addition. No name resolution runs in parsing.
+
+## Streaming member traversal
+
+Syntax_Access::struct_members() constructs Struct_Member_Cursor in
+utilities/struct_member_cursor.php. First advance() calls underlying_declaration()
+and struct_parts(); subsequent advances follow matching siblings. current() exposes
+only a positioned node ID. Semantic consumers stream via advance/current, except
+record-result validation, which retains its existing materialized field vector.
+Construction does not validate; exhaustion/failure closes traversal. No tree copy
+or mutation occurs.

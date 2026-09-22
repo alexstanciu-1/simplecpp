@@ -64,8 +64,9 @@ proofs; parser workers and structural query owners remain migration work.
 [Binary syntax](compiler_binary_syntax_slice.md) now uses explicit typed scratch
 stacks and passes PHP/native/operator and frozen-prototype angle-pairing proofs.
 The [struct-member cursor decision](../planning/compiler_migration/struct_member_cursor_decision.md)
-was accepted on 2026-09-22; implementation remains outstanding and no generic
-generator conversion is implemented.
+now has a PHP implementation and ten adapted consumers, with 39 retained fixtures
+passing. Real query dependencies still need adaptation before native proof; no
+generic generator conversion is implemented.
 
 [Parser selection](compiler_parser_selection_slice.md) now delegates to a pure
 owner with PHP/native full/incremental, identity and failure proofs. This is not

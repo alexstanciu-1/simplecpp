@@ -4,6 +4,21 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/planning/compiler_migration/results/struct-member-cursor-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/struct-member-cursor-01/retained.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/struct-member-cursor-01/initial-nonisolated-run.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path": "specs/planning/compiler_migration/php_adaptation_record.md",
                         "kind": "markdown",
                         "doc_status": "planning"
