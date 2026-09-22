@@ -1,0 +1,2184 @@
+[
+  {
+    "rows": [],
+    "operations": [],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": true,
+    "bound": true,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": true,
+    "bound": true,
+    "foreign": true,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      }
+    ],
+    "operations": [],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 3,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "span",
+        "kind": "byte_span",
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "language_type": {
+          "name": "Bytes",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 3,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "span",
+        "kind": "byte_span",
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "language_type": {
+          "name": "Bytes",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 4,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "row",
+        "kind": "value_record",
+        "storage": "inline",
+        "construction": "zero",
+        "copy": "value",
+        "cleanup": "none",
+        "validation": {
+          "complete_public_fields": true,
+          "plain_value_record": true
+        },
+        "declaration": {
+          "field_offsets_exported": true
+        },
+        "cpp_traits": {
+          "trivially_copyable": true,
+          "trivially_destructible": true,
+          "copy_constructible": true
+        },
+        "language_type": {
+          "name": "Pair",
+          "namespace": ""
+        },
+        "fields": [
+          {
+            "name": "first",
+            "type": "word",
+            "writable": true,
+            "offset_bytes": 0
+          },
+          {
+            "name": "last",
+            "type": "word",
+            "writable": false,
+            "offset_bytes": 8
+          }
+        ],
+        "size_bytes": 16,
+        "alignment_bytes": 8
+      }
+    ],
+    "operations": [],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 1,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "op",
+        "symbol": "bridge_op",
+        "kind": "free_function",
+        "expose_as": {
+          "name": "run",
+          "namespace": ""
+        },
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [],
+        "result": {
+          "type": "void",
+          "ownership": "value",
+          "passing": "direct"
+        },
+        "abi": {
+          "parameters": [],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      }
+    ],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 1,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "op",
+        "symbol": "bridge_op",
+        "kind": "free_function",
+        "expose_as": {
+          "name": "run",
+          "namespace": ""
+        },
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [],
+        "result": {
+          "type": "void",
+          "ownership": "value",
+          "passing": "direct"
+        },
+        "abi": {
+          "parameters": [],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      }
+    ],
+    "accept": true,
+    "bound": true,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 1,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "row",
+        "kind": "value_record",
+        "storage": "inline",
+        "construction": "zero",
+        "copy": "value",
+        "cleanup": "none",
+        "validation": {
+          "complete_public_fields": true,
+          "plain_value_record": true
+        },
+        "declaration": {
+          "field_offsets_exported": true
+        },
+        "cpp_traits": {
+          "trivially_copyable": true,
+          "trivially_destructible": true,
+          "copy_constructible": true
+        },
+        "language_type": {
+          "name": "Pair",
+          "namespace": ""
+        },
+        "fields": [
+          {
+            "name": "first",
+            "type": "word",
+            "writable": true,
+            "offset_bytes": 0
+          },
+          {
+            "name": "last",
+            "type": "word",
+            "writable": false,
+            "offset_bytes": 8
+          }
+        ],
+        "size_bytes": 16,
+        "alignment_bytes": 8
+      }
+    ],
+    "operations": [
+      {
+        "id": "op",
+        "symbol": "bridge_op",
+        "kind": "free_function",
+        "expose_as": {
+          "name": "run",
+          "namespace": ""
+        },
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [],
+        "result": {
+          "type": "void",
+          "ownership": "value",
+          "passing": "direct"
+        },
+        "abi": {
+          "parameters": [],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      }
+    ],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 3,
+    "records": 1,
+    "families": 0,
+    "calls": 1,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "descriptor",
+        "kind": "runtime_value",
+        "storage_family": {
+          "counter_type": "counter",
+          "primitives": {
+            "allocate": "allocate",
+            "next": "next",
+            "commit": "commit",
+            "at": "at",
+            "pop": "pop",
+            "count": "count",
+            "release": "release",
+            "transfer": "transfer"
+          },
+          "operations": {
+            "allocate": "storage_allocate",
+            "push": "storage_push",
+            "pop": "storage_pop",
+            "count": "storage_count",
+            "release": "storage_release",
+            "transfer": "storage_transfer"
+          }
+        },
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Storage",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "default_construct": "ctor",
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "counter",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "address",
+        "kind": "address",
+        "size_bytes": 8,
+        "alignment_bytes": 8
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "allocate",
+        "symbol": "primitive_allocate",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              1
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              2
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              3
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "next",
+        "symbol": "primitive_next",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "address",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "ptr",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "commit",
+        "symbol": "primitive_commit",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "at",
+        "symbol": "primitive_at",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "const_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              1
+            ]
+          }
+        ],
+        "result": {
+          "type": "address",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            }
+          ],
+          "return_type": "ptr",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "pop",
+        "symbol": "primitive_pop",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "count",
+        "symbol": "primitive_count",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "const_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "counter",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "i64",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "release",
+        "symbol": "primitive_release",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "transfer",
+        "symbol": "primitive_transfer",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          },
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              1
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            },
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "ctor",
+        "symbol": "ctor",
+        "kind": "construct",
+        "type": "descriptor",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "abi": {
+          "return_type": "void",
+          "return_attributes": "",
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ]
+        },
+        "parameters": [],
+        "result": {
+          "type": "descriptor",
+          "ownership": "owned",
+          "passing": "caller_storage",
+          "abi_index": 0
+        },
+        "storage_precondition": "aligned_uninitialized_storage"
+      }
+    ],
+    "accept": true,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 1,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": true,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": true,
+    "foreign": true,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 3,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "span",
+        "kind": "byte_span",
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "language_type": {
+          "name": "Bytes",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "span",
+        "kind": "byte_span",
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "language_type": {
+          "name": "Bytes",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 3,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "span",
+        "kind": "byte_span",
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "language_type": {
+          "name": "Bytes",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 4,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "row",
+        "kind": "value_record",
+        "storage": "inline",
+        "construction": "zero",
+        "copy": "value",
+        "cleanup": "none",
+        "validation": {
+          "complete_public_fields": true,
+          "plain_value_record": true
+        },
+        "declaration": {
+          "field_offsets_exported": true
+        },
+        "cpp_traits": {
+          "trivially_copyable": true,
+          "trivially_destructible": true,
+          "copy_constructible": true
+        },
+        "language_type": {
+          "name": "Pair",
+          "namespace": ""
+        },
+        "fields": [
+          {
+            "name": "first",
+            "type": "word",
+            "writable": true,
+            "offset_bytes": 0
+          },
+          {
+            "name": "last",
+            "type": "word",
+            "writable": false,
+            "offset_bytes": 8
+          }
+        ],
+        "size_bytes": 16,
+        "alignment_bytes": 8
+      },
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 1,
+    "families": 0,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "op",
+        "symbol": "bridge_op",
+        "kind": "free_function",
+        "expose_as": {
+          "name": "run",
+          "namespace": ""
+        },
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [],
+        "result": {
+          "type": "void",
+          "ownership": "value",
+          "passing": "direct"
+        },
+        "abi": {
+          "parameters": [],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      }
+    ],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 1,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "op",
+        "symbol": "bridge_op",
+        "kind": "free_function",
+        "expose_as": {
+          "name": "run",
+          "namespace": ""
+        },
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [],
+        "result": {
+          "type": "void",
+          "ownership": "value",
+          "passing": "direct"
+        },
+        "abi": {
+          "parameters": [],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      }
+    ],
+    "accept": false,
+    "bound": true,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 1,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "row",
+        "kind": "value_record",
+        "storage": "inline",
+        "construction": "zero",
+        "copy": "value",
+        "cleanup": "none",
+        "validation": {
+          "complete_public_fields": true,
+          "plain_value_record": true
+        },
+        "declaration": {
+          "field_offsets_exported": true
+        },
+        "cpp_traits": {
+          "trivially_copyable": true,
+          "trivially_destructible": true,
+          "copy_constructible": true
+        },
+        "language_type": {
+          "name": "Pair",
+          "namespace": ""
+        },
+        "fields": [
+          {
+            "name": "first",
+            "type": "word",
+            "writable": true,
+            "offset_bytes": 0
+          },
+          {
+            "name": "last",
+            "type": "word",
+            "writable": false,
+            "offset_bytes": 8
+          }
+        ],
+        "size_bytes": 16,
+        "alignment_bytes": 8
+      },
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "op",
+        "symbol": "bridge_op",
+        "kind": "free_function",
+        "expose_as": {
+          "name": "run",
+          "namespace": ""
+        },
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [],
+        "result": {
+          "type": "void",
+          "ownership": "value",
+          "passing": "direct"
+        },
+        "abi": {
+          "parameters": [],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      }
+    ],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 3,
+    "records": 1,
+    "families": 0,
+    "calls": 1,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "descriptor",
+        "kind": "runtime_value",
+        "storage_family": {
+          "counter_type": "counter",
+          "primitives": {
+            "allocate": "allocate",
+            "next": "next",
+            "commit": "commit",
+            "at": "at",
+            "pop": "pop",
+            "count": "count",
+            "release": "release",
+            "transfer": "transfer"
+          },
+          "operations": {
+            "allocate": "storage_allocate",
+            "push": "storage_push",
+            "pop": "storage_pop",
+            "count": "storage_count",
+            "release": "storage_release",
+            "transfer": "storage_transfer"
+          }
+        },
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Storage",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "default_construct": "ctor",
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "counter",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "address",
+        "kind": "address",
+        "size_bytes": 8,
+        "alignment_bytes": 8
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "descriptor",
+        "kind": "runtime_value",
+        "storage_family": {
+          "counter_type": "counter",
+          "primitives": {
+            "allocate": "allocate",
+            "next": "next",
+            "commit": "commit",
+            "at": "at",
+            "pop": "pop",
+            "count": "count",
+            "release": "release",
+            "transfer": "transfer"
+          },
+          "operations": {
+            "allocate": "storage_allocate",
+            "push": "storage_push",
+            "pop": "storage_pop",
+            "count": "storage_count",
+            "release": "storage_release",
+            "transfer": "storage_transfer"
+          }
+        },
+        "size_bytes": 16,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Storage",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "default_construct": "ctor",
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "allocate",
+        "symbol": "primitive_allocate",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              1
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              2
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              3
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "next",
+        "symbol": "primitive_next",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "address",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "ptr",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "commit",
+        "symbol": "primitive_commit",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "at",
+        "symbol": "primitive_at",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "const_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          },
+          {
+            "type": "counter",
+            "passing": "direct",
+            "ownership": "value",
+            "borrow_scope": "call",
+            "abi_indices": [
+              1
+            ]
+          }
+        ],
+        "result": {
+          "type": "address",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            },
+            {
+              "type": "i64",
+              "attributes": ""
+            }
+          ],
+          "return_type": "ptr",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "pop",
+        "symbol": "primitive_pop",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "count",
+        "symbol": "primitive_count",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "const_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "counter",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "i64",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "release",
+        "symbol": "primitive_release",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "transfer",
+        "symbol": "primitive_transfer",
+        "kind": "free_function",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              0
+            ]
+          },
+          {
+            "type": "descriptor",
+            "passing": "mutable_address",
+            "ownership": "borrowed",
+            "borrow_scope": "call",
+            "abi_indices": [
+              1
+            ]
+          }
+        ],
+        "result": {
+          "type": "void",
+          "passing": "direct",
+          "ownership": "value"
+        },
+        "abi": {
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            },
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      },
+      {
+        "id": "ctor",
+        "symbol": "ctor",
+        "kind": "construct",
+        "type": "descriptor",
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "abi": {
+          "return_type": "void",
+          "return_attributes": "",
+          "parameters": [
+            {
+              "type": "ptr",
+              "attributes": ""
+            }
+          ]
+        },
+        "parameters": [],
+        "result": {
+          "type": "descriptor",
+          "ownership": "owned",
+          "passing": "caller_storage",
+          "abi_index": 0
+        },
+        "storage_precondition": "aligned_uninitialized_storage"
+      }
+    ],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 1,
+    "calls": 0,
+    "composed": true
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      },
+      {
+        "id": "void",
+        "kind": "void",
+        "size_bytes": 0,
+        "alignment_bytes": 1,
+        "language_type": {
+          "name": "Void",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "op",
+        "symbol": "bridge_op",
+        "kind": "free_function",
+        "expose_as": {
+          "name": "run",
+          "namespace": ""
+        },
+        "calling_convention": "ccc",
+        "error_policy": "terminate",
+        "exception_boundary": "caught_in_bridge",
+        "parameters": [
+          {}
+        ],
+        "result": {
+          "type": "void",
+          "ownership": "value",
+          "passing": "direct"
+        },
+        "abi": {
+          "parameters": [],
+          "return_type": "void",
+          "return_attributes": ""
+        }
+      }
+    ],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "word",
+        "kind": "integer",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "value_bits": 64,
+        "signed": true,
+        "language_type": {
+          "name": "Int",
+          "namespace": ""
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": true,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  },
+  {
+    "rows": [
+      {
+        "id": "opaque",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      },
+      {
+        "id": "second",
+        "kind": "runtime_value",
+        "size_bytes": 8,
+        "alignment_bytes": 8,
+        "storage": "inline",
+        "language_type": {
+          "name": "Opaque",
+          "namespace": ""
+        },
+        "lifecycle": {
+          "cleanup": "none"
+        },
+        "cpp_traits": {
+          "trivially_destructible": true
+        }
+      }
+    ],
+    "operations": [],
+    "accept": false,
+    "bound": false,
+    "foreign": false,
+    "project": false,
+    "definitions": 2,
+    "records": 0,
+    "families": 0,
+    "calls": 0,
+    "composed": false
+  }
+]

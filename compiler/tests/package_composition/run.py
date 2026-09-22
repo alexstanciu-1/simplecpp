@@ -1,8 +1,7 @@
-"""Native record ingestion and owned batch publication."""
+"""Unverified runtime publication/manifest/metadata schema."""
 import argparse
 import hashlib
 import json
-import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -10,9 +9,8 @@ import time
 import importlib.util
 
 ROOT = Path(__file__).resolve().parents[3]
-FILES = ['src/01_prepare_inputs/load_runtime/handlers/records.php']
-DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/storage.php', 'src/04_analyze/type_model/data/records.php', 'src/04_analyze/type_model/data/catalog.php', 'src/01_prepare_inputs/load_runtime/data/runtime.php', 'src/01_prepare_inputs/load_runtime/handlers/package_syntax.php']
-DEPENDENCIES += ['src/01_prepare_inputs/load_runtime/data/package_manifest.php']
+FILES = ['src/01_prepare_inputs/load_runtime/data/package_composition.php','src/01_prepare_inputs/load_runtime/utilities/package_composition.php']
+DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/storage.php', 'src/04_analyze/type_model/data/records.php', 'src/01_prepare_inputs/load_runtime/data/runtime.php', 'src/01_prepare_inputs/load_runtime/handlers/package_syntax.php', 'src/04_analyze/type_model/data/context.php', 'src/compile/data/native_project.php', 'src/04_analyze/resolve_types/data/export_identity.php', 'src/05_generate_code/prepare_backend/data/configuration.php', 'src/05_generate_code/prepare_backend/data/layout.php', 'src/05_generate_code/prepare_backend/data/abi.php', 'src/05_generate_code/prepare_backend/data/source_exports.php', 'src/04_analyze/type_model/data/catalog.php', 'src/01_prepare_inputs/load_runtime/handlers/package_types.php', 'src/01_prepare_inputs/load_runtime/handlers/lifecycle.php', 'src/01_prepare_inputs/load_runtime/handlers/resources.php', 'src/01_prepare_inputs/load_runtime/handlers/type_exposure.php', 'src/04_analyze/type_model/data/generic.php', 'src/01_prepare_inputs/load_runtime/data/family_preparation.php', 'src/01_prepare_inputs/load_runtime/handlers/native_import.php', 'src/01_prepare_inputs/load_runtime/data/package_bindings.php', 'src/01_prepare_inputs/load_runtime/project_import.php', 'src/01_prepare_inputs/load_runtime/handlers/package_type_map.php', 'src/01_prepare_inputs/load_runtime/data/project.php', 'src/01_prepare_inputs/load_runtime/data/package.php', 'src/04_analyze/type_model/callable_contracts.php', 'src/04_analyze/type_model/lifecycle_contracts.php', 'src/04_analyze/type_model/definition_contracts.php', 'src/01_prepare_inputs/load_runtime/data/package_context.php', 'src/01_prepare_inputs/load_runtime/utilities/type_retention.php', 'src/01_prepare_inputs/load_runtime/handlers/bindings.php', 'src/01_prepare_inputs/load_runtime/handlers/callables.php', 'src/01_prepare_inputs/load_runtime/utilities/callable_bindings.php', 'src/01_prepare_inputs/load_runtime/data/package_manifest.php', 'src/01_prepare_inputs/load_runtime/handlers/records.php', 'src/01_prepare_inputs/load_runtime/handlers/storage.php', 'src/01_prepare_inputs/load_runtime/utilities/callable_retention.php']
 LOAD_ORDER = DEPENDENCIES + FILES
 
 
@@ -39,13 +37,13 @@ def main():
         assert result.returncode == 0, (label, result.stdout, result.stderr)
         return result.stdout
 
-    spec=importlib.util.spec_from_file_location('record_cases',Path(__file__).parent/'cases.py')
-    cases_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(cases_module)
-    cases=cases_module.build()
+    spec=importlib.util.spec_from_file_location('package_composition_cases',Path(__file__).parent/'cases.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    cases=module.build()
     (out/'cases.json').write_text(json.dumps(cases,indent=2)+'\n')
-    expected=[True]*(len(cases)+4)
+    expected=[True]*len(cases)
     payload=json.dumps(cases,separators=(',',':')).replace('\\','\\\\').replace("'","\\'")
-    calls=["\\record_import_test\\Probe::run('"+payload+"');"]
+    calls=["\\package_composition_test\\Probe::run('"+payload+"');"]
     for relative in DEPENDENCIES + FILES:
         dest=source/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(ROOT/'compiler'/relative,dest)
@@ -63,9 +61,6 @@ def main():
     report['php_ready_epoch'] = time.time()
     report['php_ready_sha256'] = {f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in FILES}
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    retained=json.loads(run('retained-oracle',['php',Path(__file__).parent/'oracle.php',out/'cases.json']))
-    assert retained==[case['accept'] for case in cases]
-    report['retained_comparisons']=len(cases)
     generated=out/'phpp';conversion=['php',ROOT/'tools/php_portability/convert.php',source,generated]
     assert json.loads(run('convert',conversion))['converted']==len(DEPENDENCIES+FILES)+2
     assert json.loads(run('reuse',conversion))=={'converted':0,'reused':len(DEPENDENCIES+FILES)+2,'removed':0}
@@ -85,9 +80,9 @@ def main():
         report['target_revision']=revision
         assert run('clean-after',['git','-C',checkout,'status','--porcelain']).strip()==''
     (out/'expected.json').write_text(json.dumps(expected,indent=2)+'\n')
-    report.update(passed=True,native=bool(binary),cases=len(expected),record_import_outcomes=len(expected),
+    report.update(passed=True,native=bool(binary),cases=len(expected),package_composition_outcomes=len(expected),
                   production_files=FILES,source_sha256={f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in DEPENDENCIES+FILES})
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print(f'Record import: {len(expected)} outcomes passed; native={bool(binary)}')
+    print(f'Package composition: {len(expected)} outcomes passed; native={bool(binary)}')
 
 if __name__=='__main__':main()

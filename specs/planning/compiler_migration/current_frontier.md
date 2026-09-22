@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **134 production files**: input preparation (137 outcomes),
+Active readiness is **136 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -296,3 +296,11 @@ alias invalidation, exact package retention, idempotent release and scope/except
 cleanup pass. PHP lifetime proof disables Xdebug reference retention; native cleanup
 is separately executed. Next: accepted package composition and artifact-verification
 integration; pinned-target SHA-256/executable-query dependencies remain outstanding.
+
+
+Package semantic composition adds 26 PHP/native outcomes (`results/package-composition-01`)
+and the changed Record_Import's 42-case native regression passes. Type retention,
+record-map publication, storage families, catalog/default identity and callable import/
+retention now connect through one pure owner. The contract set does not authorize
+artifacts. Next: artifact verification/adapter integration, or independent source-export
+production while the SHA-256/executable-query target dependencies remain unresolved.

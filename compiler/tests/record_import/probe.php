@@ -28,7 +28,7 @@ final class Probe {
             $accepted = true; $correct = true;
             try {
                 $rows = \load_runtime\Package_Syntax::rows($fixture->member('rows'), 'type');
-                $batch = \load_runtime\Record_Import::records($rows, $types, $catalog, $fixture->member('target'));
+                $batch = \load_runtime\Record_Import::records($rows, $types, $catalog, new \load_runtime\Package_Target($fixture->member('target')->member('triple')->text(),$fixture->member('target')->member('data_layout')->text()));
                 $correct = $batch->record_count() === 1;
                 $record = $batch->record_at(0); $map = $batch->type_map();
                 $correct = $correct && ($record->name === 'Pair') && ($record->namespace_name === '') && $record->automatic_lifecycle && ($record->layout_policy === 1) && ($record->field_count() === 2);
@@ -49,12 +49,12 @@ final class Probe {
     }
     private static function empty_batches(array $types /** hash<\load_runtime\Runtime_Type> */, \type_model\Type_Catalog $catalog): void {
         $empty_rows /** vector<\scpp\Json_View> */ = [];
-        $empty_batch = \load_runtime\Record_Import::records($empty_rows, $types, $catalog, json_read('{}'));
+        $empty_batch = \load_runtime\Record_Import::records($empty_rows, $types, $catalog, new \load_runtime\Package_Target('',''));
         echo $empty_batch->record_count() === 0 ? "true\n" : "false\n";
         $unchanged = $empty_batch->type_map();
         echo $unchanged['row'] === $types['row'] ? "true\n" : "false\n";
         $skipped = \load_runtime\Package_Syntax::rows(json_read('[{"kind":"integer"},{},{"kind":false}]'), 'type');
-        $skipped_batch = \load_runtime\Record_Import::records($skipped, $types, $catalog, json_read('{}'));
+        $skipped_batch = \load_runtime\Record_Import::records($skipped, $types, $catalog, new \load_runtime\Package_Target('',''));
         echo $skipped_batch->record_count() === 0 ? "true\n" : "false\n";
         $rejected = false;
         try { $missing = $empty_batch->record_at(0); } catch (\InvalidArgumentException $error) { $rejected = true; }

@@ -41,7 +41,7 @@ final class Record_Import {
         }
     }
     public static function records(array $rows /** vector<\scpp\Json_View> */, array $types /** hash<Runtime_Type> */,
-        \type_model\Type_Catalog $catalog, \scpp\Json_View $target): Record_Import_Batch {
+        \type_model\Type_Catalog $catalog, Package_Target $target): Record_Import_Batch {
         $updated /** hash<Runtime_Type> */ = [];
         foreach ($types as $id => $type) { $updated[$id] = $type; }
         $records /** vector<\type_model\Record_Declaration> */ = [];
@@ -88,7 +88,7 @@ final class Record_Import {
                 $fields[] = new \type_model\Field_Declaration($field_name, \type_model\Field_Type::named($definition), $writable);
                 $offsets[] = $offset;
             }
-            $native = new \type_model\Native_Record_Layout($target->member('triple')->text(), $target->member('data_layout')->text(), $runtime->storage->size_bytes, $runtime->storage->alignment_bytes, $offsets);
+            $native = new \type_model\Native_Record_Layout($target->triple, $target->data_layout, $runtime->storage->size_bytes, $runtime->storage->alignment_bytes, $offsets);
             $record = new \type_model\Record_Declaration($name->name(), $name->namespace_name(), $fields, true, \type_model\RECORD_LAYOUT_NATIVE_VERIFIED, $native, 0, 0, 0, 0);
             $updated[$id] = new Runtime_Type($runtime->id, $runtime->storage, null, null, null, $record);
             $records[] = $record;

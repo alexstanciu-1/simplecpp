@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790110124.0,
+  "first_php_ready_epoch": 1790110276.8415194,
+  "authoring_to_php_ready_wall_seconds": 152.842,
+  "first_native_pass_epoch": 1790110335.8676233,
+  "php_ready_to_native_pass_wall_seconds": 59.026,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "native_regression_builds": 1,
+  "checker_correction_cycles": 1,
+  "checker_correction": "Rename test-local void to void_definition",
+  "host_correction": "Storage constructor fixture must update its declared owner type as well as result type to descriptor",
+  "consolidation_start_epoch": 1790110367.5763106,
+  "consolidation_end_epoch": 1790110529.0929577,
+  "regression_and_consolidation_wall_seconds": 161.517
+}

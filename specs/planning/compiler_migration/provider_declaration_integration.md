@@ -285,3 +285,10 @@ Project receipts now have a dedicated compiler-side validator with 122 PHP/nativ
 outcomes, retaining current source operation identity. This completes the standalone
 receipt-consumption dependency; package filesystem/integrity acceptance, lease
 ownership, adapter composition and source export production/join remain unfinished.
+
+
+Package composition checkpoint: normalized types/records/storage/catalog/callables
+now connect in a pure private composition path, with 26 PHP/native outcomes and the
+record import regression. It consumes a caller-supplied content-derived catalog key;
+actual hash computation and file verification remain missing adapter dependencies.
+The output deliberately carries contracts rather than an accepted package or lease.

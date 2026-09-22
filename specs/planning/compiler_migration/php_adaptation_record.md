@@ -1772,3 +1772,43 @@ XDEBUG_MODE=off. The proof records that environment and separately exercises nat
 unwinding. First native build passed; zero native correction cycles. Timings and
 framework fingerprints: `results/runtime-lease-01`. No package artifact acceptance or
 new backend/platform support is claimed; src-runtime-preparation remains unchanged.
+
+
+## Package semantic composition
+
+Package_Composition now connects the proved type map, context-gated bound-type
+retention, record import, storage families, catalog composition, callable import and
+callable retention in the retained adapter's dependency order. Package_Composition_Input
+carries the fixed selection, schema-normalized manifest/metadata, optional previous
+package and catalog content key. Package_Contract_Set contains typed contracts only;
+it is not a Runtime_Package, lease, or artifact verification certificate. The future
+adapter must compute the exact SHA-256 catalog-content-key from base key plus manifest
+bytes after artifact acceptance. A supplied test key proves composition wiring, not
+that missing hash implementation. No weak replacement key/hash was introduced.
+
+Record_Import now consumes the normalized Package_Target directly, avoiding JSON
+re-encoding just to pass two already-typed target facts. Its isolated native closure
+and fixtures were updated; all 42 regression outcomes and retained checks pass.
+Record_Import_Batch's updated type map is consumed explicitly before callable import;
+records are published with that map's exact declarations. Storage-family vectors
+become typed ID-keyed maps, and their descriptor definitions remain excluded from
+ordinary catalog rows. Base catalog/default identity is preserved when no extra
+catalog contracts are required. New catalogs preserve base records and bindings.
+
+Current native imports must match target facts; source payload bindings must refer
+to the exact current project export before composition. Previous bound-type identity
+is reused only for the same directory/base catalog/provider/target; callable reuse
+uses complete contract equality. The result is privately assembled, preserving the
+fixed input catalog. Manifest matching/file rechecking and receipt authorization are
+still adapter responsibilities, not shortcuts inside this pure component.
+
+Twenty-six independent PHP/native composition outcomes cover empty/scalar/opaque/
+byte-span/record/callable packages, full eight-primitive storage-family composition,
+duplicate and malformed rows, project-mode rejection, catalog defaults/record identity,
+matching-versus-foreign bound-type reuse and callable identity retention. These are
+composition outcomes, not a full filesystem/provider pipeline proof. First native build
+passed, plus one native record-import regression. One reserved-local preflight fix
+and one constructor-metadata fixture correction preceded PHP readiness. Timings and
+source hashes: `results/package-composition-01`. Optimization follow-up: profile repeated
+metadata indexing across the import owners before sharing an index; preserve validation
+ownership and all duplicate checks. src-runtime-preparation is unchanged.
