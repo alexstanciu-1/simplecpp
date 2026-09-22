@@ -4,8 +4,9 @@ Doc Status: planning
 See [the current dependency frontier](current_frontier.md) for next actions and
 accepted migration decisions and outstanding target requirements.
 
-**Rewrite reset completed; two stages proved:** manifest reading and source discovery
-provide seven active production files. Next: verified source reads.
+**Rewrite reset completed; three stages proved:** manifest reading, source discovery
+and verified reads provide ten active production files. Next: tokenizer.
+See [verified read scope and timings](../../portability/verified_source_reads.md).
 See [discovery scope and timings](../../portability/source_discovery.md).
 The previous compiler and 39-file proof are preserved reference, not active coverage.
 See [the reset record](rewrite_reset.md) and [manifest stage](../../portability/project_manifest_reading.md).

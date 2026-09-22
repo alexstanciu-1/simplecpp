@@ -4,6 +4,86 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/portability/verified_source_reads.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/combined/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-discovery/expected-refresh.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-discovery/expected.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-discovery/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-read_manifest/expected.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-read_manifest/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-snapshot/expected-refresh.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-snapshot/expected.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/final-snapshot/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/native-attempt-01/expected-refresh.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/native-attempt-01/expected.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/native-attempt-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/native_cycles.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/php-failure/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/snapshot-rewrite-01/timing.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path": "specs/portability/source_discovery.md",
                         "kind": "markdown",
                         "doc_status": "supporting"

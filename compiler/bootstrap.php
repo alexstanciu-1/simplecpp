@@ -10,3 +10,6 @@ require_once __DIR__ . '/src/01_prepare_inputs/read_sources/utilities/paths.php'
 require_once __DIR__ . '/src/01_prepare_inputs/read_sources/data/listing.php';
 require_once __DIR__ . '/src/01_prepare_inputs/read_sources/scan.php';
 require_once __DIR__ . '/src/01_prepare_inputs/read_sources/main_discover_sources.php';
+require_once __DIR__ . '/src/01_prepare_inputs/read_sources/data/buffer.php';
+require_once __DIR__ . '/src/01_prepare_inputs/read_sources/read.php';
+require_once __DIR__ . '/src/01_prepare_inputs/read_sources/main_read_sources.php';

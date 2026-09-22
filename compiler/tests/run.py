@@ -8,7 +8,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
-          ('discovery', Path(__file__).parent / 'discovery/run.py')]
+          ('discovery', Path(__file__).parent / 'discovery/run.py'),
+          ('snapshot', Path(__file__).parent / 'snapshot/run.py')]
 
 
 def main():

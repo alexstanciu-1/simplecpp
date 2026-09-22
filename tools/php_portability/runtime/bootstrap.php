@@ -5,6 +5,7 @@ namespace scpp {
 
 require_once __DIR__ . "/strings.php";
 require_once __DIR__ . "/filesystem.php";
+require_once __DIR__ . "/snapshot.php";
 require_once __DIR__ . "/json_document.php";
 require_once __DIR__ . "/collections.php";
 require_once __DIR__ . "/file_locks.php";

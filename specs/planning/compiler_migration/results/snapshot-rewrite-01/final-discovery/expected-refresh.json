@@ -1,0 +1,467 @@
+[
+  {
+    "entry": 1,
+    "roots": [
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src",
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra"
+    ],
+    "files": [
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/.hidden.phs",
+        "relative": ".hidden.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/a.phs",
+        "relative": "a.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/back\\slash.phs",
+        "relative": "back\\slash.phs",
+        "root": 0,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/new.phs",
+        "relative": "new.phs",
+        "root": 0,
+        "size": 3,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/z.phs",
+        "relative": "z.phs",
+        "root": 0,
+        "size": 8,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/\u00e9 space.phs",
+        "relative": "\u00e9 space.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra/e.phs",
+        "relative": "e.phs",
+        "root": 1,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/sub/deep/c.phs",
+        "relative": "sub/deep/c.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      }
+    ]
+  },
+  {
+    "entry": 1,
+    "roots": [
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src",
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra"
+    ],
+    "files": [
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/.hidden.phs",
+        "relative": ".hidden.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/a.phs",
+        "relative": "a.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/back\\slash.phs",
+        "relative": "back\\slash.phs",
+        "root": 0,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/new.phs",
+        "relative": "new.phs",
+        "root": 0,
+        "size": 3,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/z.phs",
+        "relative": "z.phs",
+        "root": 0,
+        "size": 8,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/\u00e9 space.phs",
+        "relative": "\u00e9 space.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra/e.phs",
+        "relative": "e.phs",
+        "root": 1,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/sub/deep/c.phs",
+        "relative": "sub/deep/c.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      }
+    ]
+  },
+  {
+    "entry": 1,
+    "roots": [
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src",
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra"
+    ],
+    "files": [
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/.hidden.phs",
+        "relative": ".hidden.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/a.phs",
+        "relative": "a.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/back\\slash.phs",
+        "relative": "back\\slash.phs",
+        "root": 0,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/new.phs",
+        "relative": "new.phs",
+        "root": 0,
+        "size": 3,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/z.phs",
+        "relative": "z.phs",
+        "root": 0,
+        "size": 8,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/\u00e9 space.phs",
+        "relative": "\u00e9 space.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra/e.phs",
+        "relative": "e.phs",
+        "root": 1,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/sub/deep/c.phs",
+        "relative": "sub/deep/c.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      }
+    ]
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "entry": 0,
+    "roots": [
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src2",
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra"
+    ],
+    "files": [
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src2/out.phs",
+        "relative": "out.phs",
+        "root": 0,
+        "size": 3,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra/e.phs",
+        "relative": "e.phs",
+        "root": 1,
+        "size": 5,
+        "mtime": 1700000000
+      }
+    ]
+  },
+  {
+    "entry": 1,
+    "roots": [
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src",
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra"
+    ],
+    "files": [
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/.hidden.phs",
+        "relative": ".hidden.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/a.phs",
+        "relative": "a.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/back\\slash.phs",
+        "relative": "back\\slash.phs",
+        "root": 0,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/new.phs",
+        "relative": "new.phs",
+        "root": 0,
+        "size": 3,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/z.phs",
+        "relative": "z.phs",
+        "root": 0,
+        "size": 8,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/\u00e9 space.phs",
+        "relative": "\u00e9 space.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra/e.phs",
+        "relative": "e.phs",
+        "root": 1,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/sub/deep/c.phs",
+        "relative": "sub/deep/c.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      }
+    ]
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "error": true
+  },
+  {
+    "entry": 0,
+    "roots": [
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src"
+    ],
+    "files": [
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/a.phs",
+        "relative": "a.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      }
+    ]
+  },
+  {
+    "posix": false,
+    "windows": false,
+    "normalized": "",
+    "preserved": ""
+  },
+  {
+    "posix": false,
+    "windows": false,
+    "normalized": "x",
+    "preserved": "x"
+  },
+  {
+    "posix": false,
+    "windows": false,
+    "normalized": "C:",
+    "preserved": "C:"
+  },
+  {
+    "posix": false,
+    "windows": false,
+    "normalized": "C:x",
+    "preserved": "C:x"
+  },
+  {
+    "posix": false,
+    "windows": true,
+    "normalized": "C:/x",
+    "preserved": "C:/x"
+  },
+  {
+    "posix": false,
+    "windows": true,
+    "normalized": "C:/x",
+    "preserved": "C:\\x"
+  },
+  {
+    "posix": true,
+    "windows": true,
+    "normalized": "/x",
+    "preserved": "/x"
+  },
+  {
+    "posix": false,
+    "windows": true,
+    "normalized": "/x",
+    "preserved": "\\x"
+  },
+  {
+    "posix": false,
+    "windows": true,
+    "normalized": "//server/share",
+    "preserved": "\\\\server\\share"
+  },
+  {
+    "posix": false,
+    "windows": false,
+    "normalized": "relative/file",
+    "preserved": "relative\\file"
+  },
+  {
+    "windows_host": false
+  },
+  {
+    "entry": 1,
+    "roots": [
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src",
+      "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra"
+    ],
+    "files": [
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/.hidden.phs",
+        "relative": ".hidden.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/a.phs",
+        "relative": "a.phs",
+        "root": 0,
+        "size": 1,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/back\\slash.phs",
+        "relative": "back\\slash.phs",
+        "root": 0,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/new.phs",
+        "relative": "new.phs",
+        "root": 0,
+        "size": 3,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/z.phs",
+        "relative": "z.phs",
+        "root": 0,
+        "size": 8,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/\u00e9 space.phs",
+        "relative": "\u00e9 space.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/extra/e.phs",
+        "relative": "e.phs",
+        "root": 1,
+        "size": 5,
+        "mtime": 1700000000
+      },
+      {
+        "path": "/tmp/scpp-snapshot-final-01/proof-compiler/discovery/inputs/project/src/sub/deep/c.phs",
+        "relative": "sub/deep/c.phs",
+        "root": 0,
+        "size": 4,
+        "mtime": 1700000000
+      }
+    ]
+  }
+]

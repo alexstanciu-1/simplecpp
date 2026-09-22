@@ -31,3 +31,12 @@ function scpp_portability_fs_read_text(string $path): string {
     if (!take($value, $failure, fs_get($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
     return $value;
 }
+
+function scpp_portability_fs_read_snapshot(string $path, int $mtime, int $size): string {
+    $content string = '';
+    $failure error;
+    if (!take($content, $failure, fs_read_snapshot($path, $mtime, $size))) {
+        throw new scpp_portability_runtime_exception($failure->get_message());
+    }
+    return $content;
+}

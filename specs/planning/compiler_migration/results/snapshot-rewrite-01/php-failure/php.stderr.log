@@ -1,0 +1,3 @@
+PHP Fatal error:  No code may exist outside of namespace {} in /home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php on line 66
+PHP Stack trace:
+PHP   1. {main}() Command line code:0

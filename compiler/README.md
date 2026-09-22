@@ -2,8 +2,8 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The first two rewrite stages, **manifest reading and source discovery (7 production
-files)**, pass PHP/native outcome proofs. Next are verified source reads. No active compiler CLI or complete compilation pipeline exists yet.
+The first three rewrite stages, **manifest reading, discovery and verified source
+reads (10 production files)**, pass PHP/native outcome proofs. Next is the tokenizer. No active compiler CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
 is reserved for later continuation. `tests/` holds registered stage outcome proofs.
@@ -12,7 +12,7 @@ Bring reusable code in deliberately, applying the portable-PHP and strict skills
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` lists the seven proved manifest/discovery files. `tools/portability_target.json`
+`portability.json` lists the ten proved input-preparation files. `tools/portability_target.json`
 pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
@@ -49,3 +49,6 @@ needed by a selected component.
 
 See [source discovery](../specs/portability/source_discovery.md) for path policy,
 selection outcomes and native iteration counts.
+
+[Verified source reads](../specs/portability/verified_source_reads.md) supplies owned
+source bytes with explicit version-check limits and PHP/native boundary differences.

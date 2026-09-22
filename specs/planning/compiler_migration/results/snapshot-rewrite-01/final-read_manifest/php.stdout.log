@@ -1,0 +1,35 @@
+{"status":"ok","single":false,"entry":"src\/main.phs","directory":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs","path":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs\/valid.json","content":"{\"source_folders\": [\"src\", \"..\/shared\", \"\u00e9 space\"], \"entry\": \"src\/main.phs\"}","folders":["src","..\/shared","\u00e9 space"],"files":[]}
+{"status":"ok","single":false,"entry":"x","directory":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs","path":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs\/numeric_folder.json","content":"{\"source_folders\": [\"0\", \"01\"], \"entry\": \"x\"}","folders":["0","01"],"files":[]}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"invalid"}
+{"status":"ok","single":false,"entry":"last.phs","directory":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs","path":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs\/duplicate_key.json","content":"{\"source_folders\":[],\"source_folders\":[\"src\"],\"entry\":\"first\",\"entry\":\"last.phs\"}","folders":["src"],"files":[]}
+{"status":"ok","single":false,"entry":"last.phs","directory":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs","path":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs\/whitespace.json","content":" { \"source_folders\" : [\"src\"], \"entry\": \"last.phs\" }\n ","folders":["src"],"files":[]}
+{"status":"ok","single":true,"entry":"single.phs","directory":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs","path":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs\/single.phs","content":"","folders":[],"files":["single.phs"]}
+{"status":"io"}
+{"status":"io"}
+{"status":"ok","single":false,"entry":"src\/main.phs","directory":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs","path":"inputs\/valid.json","content":"{\"source_folders\": [\"src\", \"..\/shared\", \"\u00e9 space\"], \"entry\": \"src\/main.phs\"}","folders":["src","..\/shared","\u00e9 space"],"files":[]}
+{"status":"ok","single":false,"entry":"src\/main.phs","directory":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs","path":"\/tmp\/scpp-snapshot-final-01\/proof-compiler\/read_manifest\/inputs\/linked.json","content":"{\"source_folders\": [\"src\", \"..\/shared\", \"\u00e9 space\"], \"entry\": \"src\/main.phs\"}","folders":["src","..\/shared","\u00e9 space"],"files":[]}
+{"retained":"src\/main.phs"}
+{"key":"0","key2":"01","kind":"boolean","count":3,"missing":true,"retained":"old"}
+{"adapter_error":"index"}
+{"adapter_error":"kind"}
+{"adapter_error":"missing"}

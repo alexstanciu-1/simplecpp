@@ -236,3 +236,8 @@ When a public vector<string> boundary must retain PHP carrier diagnostics,
 `sequence_require_strings` provides an explicit check with caller-owned messages;
 see [runtime-preparation symbols](compiler_preparation_symbols_slice.md). Native
 code relies on the helper's typed vector signature, not dynamic element inspection.
+
+For verified byte ingestion, use [the snapshot facade](verified_source_reads.md).
+Keep OS handles and guaranteed cleanup in the framework/runtime owner. PHP cannot
+model native no-follow/nonblocking open races; state those limits explicitly rather
+than treating ordinary stream reads as full native protocol parity.

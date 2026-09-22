@@ -1,0 +1,182 @@
+[
+  {
+    "status": "ok",
+    "single": false,
+    "path": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs/valid.json",
+    "directory": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs",
+    "content": "{\"source_folders\": [\"src\", \"../shared\", \"é space\"], \"entry\": \"src/main.phs\"}",
+    "entry": "src/main.phs",
+    "folders": [
+      "src",
+      "../shared",
+      "é space"
+    ],
+    "files": []
+  },
+  {
+    "status": "ok",
+    "single": false,
+    "path": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs/numeric_folder.json",
+    "directory": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs",
+    "content": "{\"source_folders\": [\"0\", \"01\"], \"entry\": \"x\"}",
+    "entry": "x",
+    "folders": [
+      "0",
+      "01"
+    ],
+    "files": []
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "invalid"
+  },
+  {
+    "status": "ok",
+    "single": false,
+    "path": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs/duplicate_key.json",
+    "directory": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs",
+    "content": "{\"source_folders\":[],\"source_folders\":[\"src\"],\"entry\":\"first\",\"entry\":\"last.phs\"}",
+    "entry": "last.phs",
+    "folders": [
+      "src"
+    ],
+    "files": []
+  },
+  {
+    "status": "ok",
+    "single": false,
+    "path": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs/whitespace.json",
+    "directory": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs",
+    "content": " { \"source_folders\" : [\"src\"], \"entry\": \"last.phs\" }\n ",
+    "entry": "last.phs",
+    "folders": [
+      "src"
+    ],
+    "files": []
+  },
+  {
+    "status": "ok",
+    "single": true,
+    "path": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs/single.phs",
+    "directory": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs",
+    "content": "",
+    "entry": "single.phs",
+    "folders": [],
+    "files": [
+      "single.phs"
+    ]
+  },
+  {
+    "status": "io"
+  },
+  {
+    "status": "io"
+  },
+  {
+    "status": "ok",
+    "single": false,
+    "path": "inputs/valid.json",
+    "directory": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs",
+    "content": "{\"source_folders\": [\"src\", \"../shared\", \"é space\"], \"entry\": \"src/main.phs\"}",
+    "entry": "src/main.phs",
+    "folders": [
+      "src",
+      "../shared",
+      "é space"
+    ],
+    "files": []
+  },
+  {
+    "status": "ok",
+    "single": false,
+    "path": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs/linked.json",
+    "directory": "/tmp/scpp-snapshot-final-01/proof-compiler/read_manifest/inputs",
+    "content": "{\"source_folders\": [\"src\", \"../shared\", \"é space\"], \"entry\": \"src/main.phs\"}",
+    "entry": "src/main.phs",
+    "folders": [
+      "src",
+      "../shared",
+      "é space"
+    ],
+    "files": []
+  },
+  {
+    "retained": "src/main.phs"
+  },
+  {
+    "key": "0",
+    "key2": "01",
+    "kind": "boolean",
+    "count": 3,
+    "missing": true,
+    "retained": "old"
+  },
+  {
+    "adapter_error": "index"
+  },
+  {
+    "adapter_error": "kind"
+  },
+  {
+    "adapter_error": "missing"
+  }
+]

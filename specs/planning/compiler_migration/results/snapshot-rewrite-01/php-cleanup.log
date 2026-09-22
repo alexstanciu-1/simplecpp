@@ -1,0 +1,3 @@
+Command: php /tmp/scpp-snapshot-cleanup.php
+Exit: 0
+100 successful and 100 rejected PHP reads preserve stream count

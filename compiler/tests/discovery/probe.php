@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace discovery_test;
 // <scpp-imports>
+use function scpp\fs_read_snapshot as fs_read_snapshot;
 use function scpp\fs_is_windows as fs_is_windows;
 use function scpp\fs_basename as fs_basename;
 use function scpp\fs_dirname as fs_dirname;

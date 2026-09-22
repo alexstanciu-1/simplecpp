@@ -1,0 +1,9 @@
+{
+  "attempts_to_first_native_pass": 1,
+  "corrective_cycles_to_first_native_pass": 0,
+  "php_only_corrections": 1,
+  "checker_only_corrections": 0,
+  "final_verification_builds": 3,
+  "total_native_build_invocations": 4,
+  "results": "All native builds passed; PHP bootstrap include initially outside bracketed namespace, fixed before native attempt."
+}

@@ -1,6 +1,24 @@
 # PHP adaptation record and optimization follow-up
 Doc Status: planning
 
+## Rewrite stage 3: verified source reads (2026-09-22)
+
+Three production files turn discovered file observations into owned byte buffers.
+The compiler uses a shared snapshot adapter; lstat/fstat/open/read/finally details
+remain in the host framework and the target-owned native API. Sequential batch reads
+publish only a complete result, preserving source order and entry position without
+reintroducing Step lifecycle, stable IDs or speculative incremental scheduling.
+
+PHP approximates the read protocol but cannot offer native open flags. Its raced-in
+FIFO/open behavior is explicitly outside parity; native handles no-follow/nonblocking
+open and descriptor cleanup. Same-size/whole-second-mtime edits remain undetectable
+and are demonstrated by an outcome test rather than described as safe snapshots.
+Buffers are fresh string-owning objects; compact record layout is not claimed.
+One PHP-only correction placed the new include inside the existing bracketed namespace.
+See [contract](../../portability/verified_source_reads.md) and
+[measured attempts](results/snapshot-rewrite-01/README.md).
+
+
 ## Rewrite stage 2: source paths and discovery (2026-09-22)
 
 Four source files preserve prototype selection rules in a synchronous discovery API.
