@@ -28,7 +28,7 @@ reading is a later owner. It does not claim atomic path/read consistency.
 
 ## Portable framework boundary
 
-`scpp\json_read` returns an immutable `scpp\Json_Node` schema view. Available methods:
+`scpp\json_read` returns an immutable `scpp\Json_View` schema view. Available methods:
 `kind`, `size`, `has`, `key`, `member`, `at`, `text`. Missing members, invalid indices
 and wrong-kind access throw. Null presence, object/list identity, numeric-looking
 keys, duplicate-key ordering and retained child handles are explicit behavior.

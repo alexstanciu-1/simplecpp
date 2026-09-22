@@ -7,7 +7,8 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py')]
+STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
+          ('discovery', Path(__file__).parent / 'discovery/run.py')]
 
 
 def main():

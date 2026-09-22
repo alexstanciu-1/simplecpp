@@ -1,5 +1,6 @@
 <?php
 // <scpp-imports>
+use function scpp\fs_is_windows as fs_is_windows;
 use function scpp\fs_basename as fs_basename;
 use function scpp\fs_dirname as fs_dirname;
 use function scpp\fs_read_text as fs_read_text;

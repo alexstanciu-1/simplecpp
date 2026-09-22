@@ -1,6 +1,27 @@
 # PHP adaptation record and optimization follow-up
 Doc Status: planning
 
+## Rewrite stage 2: source paths and discovery (2026-09-22)
+
+Four source files preserve prototype selection rules in a synchronous discovery API.
+A typed listing owns canonical roots, ordered file observations and an entry position.
+There is no inherited Step lifecycle or speculative ID/change-state machinery. These
+belong to later incremental ownership work; fresh scans provide its clean baseline.
+Keep bytes intact in POSIX filenames; the new host-fact adapter controls Windows-only
+normalization. Metadata is an observation, not a verified content snapshot.
+
+Native attempt 1 stopped in STAN on the JSON wrapper/runtime case-only name collision.
+A distinctive `Json_View` wrapper name cleared attempt 2; no target or generated code
+was patched. The shared manifest proof is included in final verification. One earlier
+checker-only correction moved a negative entry sentinel from a rejected property
+default into explicit owner initialization. No converter grammar expansion was needed.
+
+Optimization follow-ups: directory queue retention and file-row layout, driven by
+measured project size. Do not equate listing indices with future stable IDs. See
+[stage contract](../../portability/source_discovery.md) and
+[elapsed time plus native cycle log](results/discovery-rewrite-01/README.md).
+
+
 ## Rewrite stage 1: project-manifest reading (2026-09-22)
 
 Three active files now implement synchronous reading, schema validation and an owned

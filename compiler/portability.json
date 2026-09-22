@@ -4,7 +4,11 @@
   "files": [
     "src/01_prepare_inputs/read_manifest/data/project_manifest.php",
     "src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
-    "src/01_prepare_inputs/read_manifest/manifest_reader.php"
+    "src/01_prepare_inputs/read_manifest/manifest_reader.php",
+    "src/01_prepare_inputs/read_sources/utilities/paths.php",
+    "src/01_prepare_inputs/read_sources/data/listing.php",
+    "src/01_prepare_inputs/read_sources/scan.php",
+    "src/01_prepare_inputs/read_sources/main_discover_sources.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

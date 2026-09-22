@@ -34,3 +34,6 @@ function fs_read_text(string $path): string {
 }
 function fs_dirname(string $path): string { return \dirname($path); }
 function fs_basename(string $path): string { return \basename($path); }
+
+/** Target-host fact; never a converter-host decision. */
+function fs_is_windows(): bool { return DIRECTORY_SEPARATOR === '\\'; }

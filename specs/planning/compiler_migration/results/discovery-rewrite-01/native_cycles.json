@@ -1,0 +1,29 @@
+{
+  "definition": "Native attempt begins when strict build is invoked; a corrective cycle changes authored code after a failed attempt. Final verification is counted separately.",
+  "attempts_to_first_native_pass": 2,
+  "corrective_cycles_to_first_native_pass": 1,
+  "checker_only_corrections": 1,
+  "final_verification_builds": 2,
+  "total_native_build_invocations": 4,
+  "attempts": [
+    {
+      "attempt": 1,
+      "result": "STAN rejected Json_Node/json_node collision before C++ generation",
+      "correction": "Rename shared schema wrapper to Json_View; preserve API operations"
+    },
+    {
+      "attempt": 2,
+      "result": "Build and 31 initial + 31 refreshed discovery outcomes passed"
+    },
+    {
+      "attempt": 3,
+      "role": "final manifest verification",
+      "result": "Build and 35 outcomes passed"
+    },
+    {
+      "attempt": 4,
+      "role": "final discovery verification",
+      "result": "Build and 62 outcomes passed"
+    }
+  ]
+}

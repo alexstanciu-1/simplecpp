@@ -2,7 +2,7 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs. Active rewrite readiness is now three project-manifest files;
+these capability proofs. Active rewrite readiness is now seven manifest/discovery files;
 see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
@@ -46,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is three manifest files, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is seven manifest/discovery files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
@@ -286,3 +286,6 @@ General PHP conversion, importing the whole prototype, LLVM/native backend work,
 full self-hosting, arbitrary shared-state threads, and converting the existing
 product for backward compatibility. Symbol resolution and whole-program inference
 are excluded from the converter, not deferred converter features.
+
+[Source discovery](source_discovery.md) supplies canonical path policy and fresh
+directory selection, with measured native correction cycles.

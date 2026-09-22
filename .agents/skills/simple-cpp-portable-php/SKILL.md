@@ -62,7 +62,10 @@ proof; a PHP-only pass is not native evidence. After the
 [rewrite reset](../../../specs/planning/compiler_migration/rewrite_reset.md), the active
 ready set grows only with registered stage outcome proofs in `compiler/tests/`.
 Old 39-file coverage is historical. Record elapsed time by activity and command in
-each stage evidence, including failed attempts, to guide workflow optimization. The immutable target lives in
+each stage evidence, including failed attempts, to guide workflow optimization.
+Count native attempts to first pass, corrective cycles, and final verification builds
+separately; keep checker-only fixes separate. Give framework wrapper types distinctive
+names, avoiding case-only variants of target runtime types. The immutable target lives in
 [portability_target.json](../../../compiler/tools/portability_target.json), not in
 this skill. Host loading belongs outside the converted source tree; assemble native
 framework support separately and consume output only after successful conversion.

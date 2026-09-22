@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace scpp;
 
 /** Immutable schema-view subset. Raw numeric tokens and generic JSON roundtripping are not exposed. */
-final class Json_Node {
+final class Json_View {
     private function __construct(private readonly mixed $value) {}
 
     public static function read(string $text): self {
@@ -51,4 +51,4 @@ final class Json_Node {
         if (!$this->value instanceof \stdClass) { throw new \RuntimeException('JSON node is not an object'); }
     }
 }
-function json_read(string $text): Json_Node { return Json_Node::read($text); }
+function json_read(string $text): Json_View { return Json_View::read($text); }

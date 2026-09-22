@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace read_manifest;
 // <scpp-imports>
+use function scpp\fs_is_windows as fs_is_windows;
 use function scpp\fs_basename as fs_basename;
 use function scpp\fs_dirname as fs_dirname;
 use function scpp\fs_read_text as fs_read_text;
@@ -79,7 +80,7 @@ final class Manifest_Syntax {
         return $manifest;
     }
 
-    private static function path(\scpp\Json_Node $node): string {
+    private static function path(\scpp\Json_View $node): string {
         if ($node->kind() !== 'string') { throw new \InvalidArgumentException('Expected a string path'); }
         $value = $node->text();
         if (string_byte_len($value) === 0) { throw new \InvalidArgumentException('Expected a nonempty path'); }

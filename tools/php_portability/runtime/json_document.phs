@@ -1,6 +1,6 @@
 // Schema-view subset over the target-owned immutable JSON arena.
 namespace scpp;
-class Json_Node {
+class Json_View {
     private $node json_node;
     public function __construct(json_node $value) { $this->node = $value; }
     public function kind(): string {
@@ -33,20 +33,20 @@ class Json_Node {
         if (!take($out, $failure, json_node_string($this->node))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
         return $out;
     }
-    public function member(string $key): Json_Node {
+    public function member(string $key): Json_View {
         $out json_node;
         $failure error;
         if (!take($out, $failure, json_node_member($this->node, $key))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
-        return new Json_Node($out);
+        return new Json_View($out);
     }
-    public function at(int $index): Json_Node {
+    public function at(int $index): Json_View {
         $out json_node;
         $failure error;
         if (!take($out, $failure, json_node_at($this->node, $index))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
-        return new Json_Node($out);
+        return new Json_View($out);
     }
 }
-function json_read(string $text): Json_Node {
+function json_read(string $text): Json_View {
     $document json_document;
     $diagnostic json_parse_error = null;
     $failure error;
@@ -57,5 +57,5 @@ function json_read(string $text): Json_Node {
     if (!take($root, $failure, json_document_root($document))) {
         throw new \scpp_portability_runtime_exception($failure->get_message());
     }
-    return new Json_Node($root);
+    return new Json_View($root);
 }

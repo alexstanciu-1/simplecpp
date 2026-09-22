@@ -1,0 +1,35 @@
+STAN pre-build check failed: 10 compile-errors
+
+[compile-error] Missing property write target `scpp\Json_Node::$node` in `scpp\Json_Node::__construct`.
+  at scpp_framework/json_document.phs:5
+
+[compile-error] Missing method `scpp\json_node::kind()` in `read_manifest\Manifest_Syntax::parse`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:56
+
+[compile-error] Missing method `scpp\json_node::has()` in `read_manifest\Manifest_Syntax::parse`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:57
+
+[compile-error] Missing method `scpp\json_node::has()` in `read_manifest\Manifest_Syntax::parse`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:58
+
+[compile-error] Missing method `scpp\json_node::size()` in `read_manifest\Manifest_Syntax::parse`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:59
+
+[compile-error] Missing method `scpp\json_node::key()` in `read_manifest\Manifest_Syntax::parse`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:60
+
+[compile-error] Missing method `scpp\json_node::member()` in `read_manifest\Manifest_Syntax::parse`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:65
+
+[compile-error] Missing method `scpp\json_node::member()` in `read_manifest\Manifest_Syntax::parse`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:78
+
+[compile-error] Missing method `scpp\json_node::kind()` in `read_manifest\Manifest_Syntax::path`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:83
+
+[compile-error] Missing method `scpp\json_node::text()` in `read_manifest\Manifest_Syntax::path`.
+  at src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.phs:84
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

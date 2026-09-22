@@ -1,0 +1,30 @@
+Transpiled PHP files: 14, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/16] PCH app_pch.hpp.gch
+[2/16] CXX src/01_prepare_inputs/read_sources/data/listing.o
+[3/16] CXX scpp_framework/exceptions.o
+[4/16] CXX src/01_prepare_inputs/read_manifest/data/project_manifest.o
+[5/16] CXX src/01_prepare_inputs/read_manifest/manifest_reader.o
+[6/16] CXX src/01_prepare_inputs/read_sources/utilities/paths.o
+[7/16] CXX scpp_framework/collections.o
+[8/16] CXX scpp_framework/json_document.o
+[9/16] CXX probe.o
+[10/16] CXX src/01_prepare_inputs/read_sources/scan.o
+[11/16] CXX scpp_framework/filesystem.o
+[12/16] CXX main.o
+[13/16] CXX scpp_framework/strings.o
+[14/16] CXX src/01_prepare_inputs/read_sources/main_discover_sources.o
+[15/16] CXX src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.o
+[16/16] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/01_prepare_inputs/read_manifest/data/project_manifest.o, .prism/build/src/01_prepare_inputs/read_manifest/manifest_reader.o, .prism/build/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.o, .prism/build/src/01_prepare_inputs/read_sources/data/listing.o, .prism/build/src/01_prepare_inputs/read_sources/main_discover_sources.o, .prism/build/src/01_prepare_inputs/read_sources/scan.o, .prism/build/src/01_prepare_inputs/read_sources/utilities/paths.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main
