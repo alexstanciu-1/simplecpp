@@ -31,6 +31,10 @@ an old slice's limits or a feature-catalog proposal as the current support matri
 - Keep null, false and present empty/zero values distinct. Check the guide for the
   particular declaration, wrapper, callback or exception form being authored;
   related native language support does not establish converter support.
+- On the current target, use nested conditions or early returns when RHS safety,
+  errors or side effects depend on `&&`/`||` skipping evaluation, even for boolean
+  operands. Independent safe comparisons may stay compound. This is source
+  adaptation, not a converter rejection; preserve the algorithm's evaluation order.
 - Select dependency-coherent components, preserve algorithm behavior, and extend
   conversion only for demonstrated needs. Report required cross-owner decisions
   and target defects without silently redesigning contracts or fixing generated C++.
