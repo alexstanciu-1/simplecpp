@@ -1537,3 +1537,32 @@ One reserved test-local checker correction and one oracle correction preceded th
 first native build; production implementation was unchanged. First native build
 passes, zero native correction cycles. Type and package-context comparison remain
 separate unfinished work.
+
+
+## Explicit lifetime and recursive operation comparison
+
+Lifecycle_Contracts owns value comparison for the existing immutable lifetime
+model. Permission scalars compare in a common integer domain. Operation lookup is
+by semantic role, independent of input binding order. Exact imported identity and
+source type/body identity, repeat count, linkage, convention and ordered member
+plans all participate. Primitive-null and implemented member operations stay
+distinct; recursive plans compare structurally without serialization or cloning.
+Derived composition order follows from kind/body and is not compared redundantly.
+
+This helper assumes the same accepted type/symbol lineage, as the retained adapter's
+canonicalization boundary does. It does not make unrelated local IDs portable.
+Shared identity is an early equality result, not a substitute for structural
+comparison. Full definition/resource/storage and package-context comparison is
+still required before integrating type retention.
+
+Evidence: results/lifecycle-contracts-01. 441 all-pairs imported/source-plan cases,
+396 valid-policy self/baseline comparisons, and five changed-role implementation
+cases give 842 PHP/native and retained comparisons. First checker/PHP/oracle/native
+attempts pass with no correction cycles.
+
+Comparison follow-up: the migrated record materializer always creates a
+Resource_Obligations record, including RESOURCE_NONE with no paths. The prototype
+stored a nullable resource enum and a separate path list. Full definition equality
+must compare these normalized facts; an absent wrapper and an explicit empty
+obligation represent the same original resource/path contract. Wrapper allocation
+identity must not introduce a false contract change.

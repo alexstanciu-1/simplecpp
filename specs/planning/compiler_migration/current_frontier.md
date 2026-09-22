@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **124 production files**: input preparation (137 outcomes),
+Active readiness is **125 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -226,3 +226,11 @@ flags all participate. Equal rebuilt contracts retain old object identity; chang
 contracts and new coverage keep their new objects and order. Next: type-definition
 and binding/project comparison before package reuse; complete package acceptance
 and integration of callable retention in the adapter remain pending.
+
+
+Lifecycle equality adds 842 PHP/native and original-prototype comparisons
+(`results/lifecycle-contracts-01`). All five permission categories and exact
+imported/source operation plans participate; source member order matters, while
+role-map insertion order does not. Local type/body IDs are comparable only within
+the same accepted lineage. Next: complete definition/resource/layout/storage
+comparison, then type and package reuse. This helper alone does not authorize reuse.

@@ -1,0 +1,13 @@
+{
+  "authoring_start_epoch": 1790105799.0,
+  "first_php_ready_epoch": 1790105875.8966508,
+  "authoring_to_php_ready_wall_seconds": 76.897,
+  "first_native_pass_epoch": 1790105897.4274614,
+  "php_ready_to_native_pass_wall_seconds": 21.531,
+  "native_build_attempts_to_first_pass": 1,
+  "checker_correction_rounds": 0,
+  "native_correction_cycles": 0,
+  "consolidation_start_epoch": 1790105965.4026732,
+  "consolidation_end_epoch": 1790106078.8747532,
+  "regression_and_consolidation_wall_seconds": 113.472
+}

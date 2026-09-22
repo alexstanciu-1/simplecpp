@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **124 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **125 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -192,3 +192,11 @@ flags all participate. Equal rebuilt contracts retain old object identity; chang
 contracts and new coverage keep their new objects and order. Next: type-definition
 and binding/project comparison before package reuse; complete package acceptance
 and integration of callable retention in the adapter remain pending.
+
+
+Lifecycle equality adds 842 PHP/native and original-prototype comparisons
+(`results/lifecycle-contracts-01`). All five permission categories and exact
+imported/source operation plans participate; source member order matters, while
+role-map insertion order does not. Local type/body IDs are comparable only within
+the same accepted lineage. Next: complete definition/resource/layout/storage
+comparison, then type and package reuse. This helper alone does not authorize reuse.
