@@ -1,0 +1,476 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/structural-queries\/source",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789057,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790051756,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "names": [
+                "main.php",
+                "src"
+            ]
+        },
+        "src": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789058,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "names": [
+                "03_parse"
+            ]
+        },
+        "src\/03_parse": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789059,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "names": [
+                "data",
+                "utilities"
+            ]
+        },
+        "src\/03_parse\/data": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789064,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "names": [
+                "nodes.php",
+                "role_views.php",
+                "tree.php"
+            ]
+        },
+        "src\/03_parse\/utilities": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789060,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "names": [
+                "metaprogramming_syntax.php",
+                "struct_member_cursor.php",
+                "syntax_access.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789068,
+                "mode": 33188,
+                "size": 6342,
+                "mtime": 1790051756,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "hash": "6ae7d5fc26086041f51ed37a62a41544523960aa212c23a3f883080280ad729f",
+            "cache": "2945969b8c2aa38b8cb85946c31d44b91f6aa411e4112cb211d03827347cc4cb",
+            "cache_hash": "54396327279d94d5028aa108c8e4df00f08ad4db0e4befa1c7facafbc70882f1",
+            "declarations": []
+        },
+        "src\/03_parse\/data\/nodes.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789065,
+                "mode": 33188,
+                "size": 4616,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "hash": "7e7ab102a68a68d76aca1481c2e1d4f75a61c197b70e308b4d7cfd1b0806afe1",
+            "cache": "f2e1fc31d6dafc759a7773a710918ea36157e63374b02dabcb98082ac03d7dfd",
+            "cache_hash": "86899ee5aaca03747182265c3c6b932ad1bae4f7f9d0e51f9dacf8a35de1921a",
+            "declarations": {
+                "parse\\syntax_kind": {
+                    "name": "parse\\syntax_kind",
+                    "kind": "enum",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/nodes.php",
+                    "line": 56,
+                    "start": 13,
+                    "open": 20,
+                    "end": 382,
+                    "methods": [],
+                    "uses": []
+                },
+                "parse\\syntax_node": {
+                    "name": "parse\\syntax_node",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/nodes.php",
+                    "line": 107,
+                    "start": 392,
+                    "open": 396,
+                    "end": 455,
+                    "methods": [],
+                    "uses": []
+                },
+                "parse\\syntax_kinds": {
+                    "name": "parse\\Syntax_Kinds",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/nodes.php",
+                    "line": 117,
+                    "start": 459,
+                    "open": 463,
+                    "end": 493,
+                    "methods": {
+                        "name": 119
+                    },
+                    "uses": []
+                }
+            }
+        },
+        "src\/03_parse\/data\/role_views.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789067,
+                "mode": 33188,
+                "size": 6278,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "hash": "96fa787f2f6e0524de9683299d6929ff67a0bfad5993ef0da83d360996cb5e36",
+            "cache": "9ff431d5c6505d861ede79d9e94be287c7be7883cb91ead748cf8f80f9907c0d",
+            "cache_hash": "c702ab71856edba23434f24e57a546e87222d33a2370419dfb0afaf05c48b9bb",
+            "declarations": {
+                "parse\\function_parts": {
+                    "name": "parse\\function_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 54,
+                    "start": 13,
+                    "open": 17,
+                    "end": 69,
+                    "methods": {
+                        "__construct": 57
+                    },
+                    "uses": []
+                },
+                "parse\\local_declaration_parts": {
+                    "name": "parse\\local_declaration_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 72,
+                    "start": 75,
+                    "open": 79,
+                    "end": 123,
+                    "methods": {
+                        "__construct": 75
+                    },
+                    "uses": []
+                },
+                "parse\\parameter_parts": {
+                    "name": "parse\\parameter_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 88,
+                    "start": 127,
+                    "open": 131,
+                    "end": 180,
+                    "methods": {
+                        "__construct": 91
+                    },
+                    "uses": []
+                },
+                "parse\\assignment_parts": {
+                    "name": "parse\\assignment_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 104,
+                    "start": 184,
+                    "open": 188,
+                    "end": 223,
+                    "methods": {
+                        "__construct": 107
+                    },
+                    "uses": []
+                },
+                "parse\\control_parts": {
+                    "name": "parse\\control_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 119,
+                    "start": 229,
+                    "open": 233,
+                    "end": 272,
+                    "methods": {
+                        "__construct": 120
+                    },
+                    "uses": []
+                },
+                "parse\\struct_parts": {
+                    "name": "parse\\struct_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 126,
+                    "start": 278,
+                    "open": 282,
+                    "end": 312,
+                    "methods": {
+                        "__construct": 127
+                    },
+                    "uses": []
+                },
+                "parse\\field_declaration_parts": {
+                    "name": "parse\\field_declaration_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 133,
+                    "start": 318,
+                    "open": 322,
+                    "end": 365,
+                    "methods": {
+                        "__construct": 134
+                    },
+                    "uses": []
+                },
+                "parse\\template_parts": {
+                    "name": "parse\\template_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 141,
+                    "start": 371,
+                    "open": 375,
+                    "end": 405,
+                    "methods": {
+                        "__construct": 142
+                    },
+                    "uses": []
+                },
+                "parse\\template_parameter_parts": {
+                    "name": "parse\\template_parameter_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 148,
+                    "start": 411,
+                    "open": 415,
+                    "end": 445,
+                    "methods": {
+                        "__construct": 149
+                    },
+                    "uses": []
+                },
+                "parse\\template_application_parts": {
+                    "name": "parse\\template_application_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 155,
+                    "start": 451,
+                    "open": 455,
+                    "end": 485,
+                    "methods": {
+                        "__construct": 156
+                    },
+                    "uses": []
+                },
+                "parse\\constant_parts": {
+                    "name": "parse\\constant_parts",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/role_views.php",
+                    "line": 162,
+                    "start": 491,
+                    "open": 495,
+                    "end": 534,
+                    "methods": {
+                        "__construct": 163
+                    },
+                    "uses": []
+                }
+            }
+        },
+        "src\/03_parse\/data\/tree.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789066,
+                "mode": 33188,
+                "size": 3476,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "hash": "d6b65ac7ff61a7a86ef90916c45c2d1092396d082afcbaaefefa91e978fe0991",
+            "cache": "137dfd8f1e5fd8dc87d2b7e700ee08e96e789effa93daa00c991c85446fbe1fb",
+            "cache_hash": "eb419edf510e981e396486e0e3e341d8f43ef9d00b07287d9afc9620cc2bc015",
+            "declarations": {
+                "parse\\syntax_tree": {
+                    "name": "parse\\Syntax_Tree",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/data\/tree.php",
+                    "line": 68,
+                    "start": 11,
+                    "open": 15,
+                    "end": 57,
+                    "methods": [],
+                    "uses": []
+                }
+            }
+        },
+        "src\/03_parse\/utilities\/metaprogramming_syntax.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789062,
+                "mode": 33188,
+                "size": 9668,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "hash": "32e4ce409728fc14ce8b07d1cbeba4860d188e22628f6aab6033fd313a92f451",
+            "cache": "b602b62e639f6288ef7774de73ed820fb2804c84029c6530af513d134979fd8d",
+            "cache_hash": "c89e3fc8f11150c6dcd0427dcbfef2030d4d73e25a068582737651e9ae5484f6",
+            "declarations": {
+                "parse\\metaprogramming_syntax": {
+                    "name": "parse\\Metaprogramming_Syntax",
+                    "kind": "trait",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/utilities\/metaprogramming_syntax.php",
+                    "line": 57,
+                    "start": 11,
+                    "open": 15,
+                    "end": 1347,
+                    "methods": {
+                        "underlying_declaration": 60,
+                        "type_syntax": 75,
+                        "template_application_parts": 89,
+                        "template_parts": 104,
+                        "template_parameter_parts": 125,
+                        "evaluated_function": 145,
+                        "constant_parts": 159
+                    },
+                    "uses": []
+                }
+            }
+        },
+        "src\/03_parse\/utilities\/struct_member_cursor.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789063,
+                "mode": 33188,
+                "size": 4207,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "hash": "f98fcabcba7564e3380f0190095c3ae86c02e237a0b17f0e918693529b902dfe",
+            "cache": "9d03c8a9dbe5db397baef44d5465a3b5c3fda04002ac103a96a4f52495c5dee7",
+            "cache_hash": "f1bd55e1b4d9b3ae526cb1bcb5738221c19d0056c4f188fae955b5d76ec8142c",
+            "declarations": {
+                "parse\\struct_member_cursor": {
+                    "name": "parse\\Struct_Member_Cursor",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/utilities\/struct_member_cursor.php",
+                    "line": 57,
+                    "start": 13,
+                    "open": 17,
+                    "end": 385,
+                    "methods": {
+                        "__construct": 63,
+                        "advance": 72,
+                        "current": 107
+                    },
+                    "uses": []
+                }
+            }
+        },
+        "src\/03_parse\/utilities\/syntax_access.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 789061,
+                "mode": 33188,
+                "size": 18186,
+                "mtime": 1790051755,
+                "ctime": 1790054847
+            },
+            "checked_at": 1790054848,
+            "hash": "55c58c4c9823a928a13bb5e8f488e024b1976d2795ad3474b702b4a24a3d7fc5",
+            "cache": "4faf1c2b471dac7daba693bf48bef9db8e57f0eb7e49d676a7555233bcb41cb4",
+            "cache_hash": "b70f82eca68af0042886ca6a29f88256a3248edf47fade14e0b8619facbc52da",
+            "declarations": {
+                "parse\\syntax_access": {
+                    "name": "parse\\Syntax_Access",
+                    "kind": "class",
+                    "namespace": "parse",
+                    "file": "src\/03_parse\/utilities\/syntax_access.php",
+                    "line": 64,
+                    "start": 15,
+                    "open": 19,
+                    "end": 3107,
+                    "methods": {
+                        "function_parts": 69,
+                        "struct_parts": 90,
+                        "struct_members": 106,
+                        "const_receiver": 112,
+                        "field_declaration_parts": 122,
+                        "call_target": 139,
+                        "first_argument": 154,
+                        "first_parameter": 165,
+                        "parameter_parts": 179,
+                        "local_declaration_parts": 202,
+                        "assignment_parts": 220,
+                        "statement_expression": 238,
+                        "control_parts": 256,
+                        "require_node": 286,
+                        "is_kind": 295,
+                        "leaf": 303,
+                        "expression": 313,
+                        "place_root": 335
+                    },
+                    "uses": [
+                        {
+                            "start": 21,
+                            "end": 24,
+                            "names": [
+                                "parse\\metaprogramming_syntax"
+                            ],
+                            "line": 66
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,111 @@
+
+
+/*
+ * Role: Observe one fixed source selection: directory discovery or explicit files.
+ * Used by: Source_Discovery::run()
+ * Call map:
+ *   Source_Scanner::scan()
+ *     -> [action] inspect entries and return Source_Scan_Result
+ */
+
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @compiler-internal Discovery worker implementation; invoked by Source_Discovery, not other stages.
+ * A scan task is an independently executable source selection; it owns no global IDs.
+ */
+class Source_Scanner {
+    /**
+     * @compiler-internal Observe a fixed file selection or a sorted directory listing, retaining the exact task.
+     * No shared writes or recursive scheduling; filesystem failures throw.
+     */
+    public static function scan(source_scan_task $task): Source_Scan_Result {
+        // A worker can be reused across refreshes. Discard cached metadata.
+        $directory = Source_Path_Syntax::join($task->root, $task->relative_directory);
+
+        // Recheck a queued directory before scanning it, too.
+        if (fs_is_link($directory)) {
+            throw new \scpp_portability_exception("Symbolic links inside source roots are unsupported: " . $directory);
+        }
+        $entries vector<string> = [];
+        $explicit bool = take($entries, $task->file_names);
+        if (!$explicit) {
+            if (!take($entries, scpp_portability_fs_scan($directory))) {
+                throw new \scpp_portability_exception("Cannot scan source directory: " . $directory);
+            }
+        }
+        $files vector<scanned_source_file> = [];
+        $directories vector<string> = [];
+        foreach ($entries  as $name) {
+            if (($name === ".") || ($name === "..")) {
+                continue;
+            }
+            $relative = $task->relative_directory === "" ? $name
+                : Source_Path_Syntax::join($task->relative_directory, $name);
+            $path = Source_Path_Syntax::join($task->root, $relative);
+            if (fs_is_link($path)) {
+                throw new \scpp_portability_exception("Symbolic links inside source roots are unsupported: " . $path);
+            }
+            if ((!$explicit) && fs_is_dir($path)) {
+                $directories[] = $relative;
+            }
+            else if (($explicit) || Source_Path_Syntax::is_source($path))
+            {
+                if (!fs_is_file($path)) {
+                    throw new \scpp_portability_exception("Source path is not a regular file: " . $path);
+                }
+                $mtime int = 0;
+                $size int = 0;
+                $has_mtime bool = take($mtime, scpp_portability_fs_mtime($path));
+                $has_size bool = take($size, scpp_portability_fs_size($path));
+                if (!$has_mtime || !$has_size) {
+                    throw new \scpp_portability_exception("Cannot read source metadata: " . $path);
+                }
+                $files[] = new scanned_source_file($relative, $mtime, $size);
+            }
+        }
+        return new Source_Scan_Result($task, $files, $directories);
+    }
+}

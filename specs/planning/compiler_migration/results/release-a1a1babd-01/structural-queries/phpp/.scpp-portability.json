@@ -1,0 +1,33 @@
+{
+    "version": 1,
+    "files": {
+        "main.php": {
+            "input": "40cf1fab14e51e6f41ec90c016800652dbac58d358b662aed813e4185ab83968",
+            "output": "4ce95d9f5d92206a718c1b78e5ea7e92ae030733e414dfba9365afa9f81dcb23"
+        },
+        "src\/03_parse\/data\/nodes.php": {
+            "input": "a7a0d77ad4a79de4ddce66e769eb71e15d1e1919fca9bb09f096225aa357b5c6",
+            "output": "26d5a24da571c5ca5ec64077a74dfed7cc3a031b427e4b982dd5eee82dcd4ac0"
+        },
+        "src\/03_parse\/data\/role_views.php": {
+            "input": "fa4dc3ce1fba13b749164eb50a679977c300e9c96be4f3194bc485512b28d382",
+            "output": "48fd1d70182fb1976ab5449001836e11b37f3f538325d163d43327699c0d6412"
+        },
+        "src\/03_parse\/data\/tree.php": {
+            "input": "8aa42153df3c2442c285c2dd01a22150bea9da7019aeb10877f17e55c1d6f62b",
+            "output": "9220a6d9727394c636648a15876903c63c24408f1942a331ee649b17c7649620"
+        },
+        "src\/03_parse\/utilities\/metaprogramming_syntax.php": {
+            "input": "f30bcd598cf3cca2dc2352ef869b43aa1388e821397e2e8574d0c66a87858527",
+            "output": "4e7e4fc32cfcfec9b942304f938bfdfbc556640edf2040fbb3b3df226cf3b8fb"
+        },
+        "src\/03_parse\/utilities\/struct_member_cursor.php": {
+            "input": "c139e6a7a9ba2b5a1bb1fa7461b8f6aa2e0f7ff9a431c4f18b540e9e9998f7b5",
+            "output": "a6fc0482442919355f858470e2486db5da58286895ef6b050b30fd016b657acd"
+        },
+        "src\/03_parse\/utilities\/syntax_access.php": {
+            "input": "ecc7ba407f11d3a318c52a85c93dcd857fd412a691b70c427219b639d724ca42",
+            "output": "60ee81871656fde91c9ad368ddba1a293544b484d50501551c13a050e4473919"
+        }
+    }
+}

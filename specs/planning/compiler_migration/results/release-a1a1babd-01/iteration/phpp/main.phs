@@ -1,0 +1,85 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$map hash<int, int> = [];
+$map[12] = 0;
+$map[37] = 5;
+echo isset($map[12]) ? "zero-present" : "bad", ":", isset($map[91]) ? "bad" : "missing", ":", count($map), "\n";
+$sum = 0;
+foreach ($map  as $id => $position) { $sum = $sum + $id + $position; }
+echo $sum, ":", count($map), "\n";
+$paths hash<int> = [];
+$paths["/a"] = 12;
+$paths["/b"] = 37;
+$path_sum = 0;
+foreach ($paths  as $path => $id) {
+    if (isset($paths[$path])) { $path_sum = $path_sum + $id; }
+}
+echo $path_sum, ":", isset($paths["/missing"]) ? "bad" : "missing", ":", count($paths), "\n";
+$values vector<int> = [];
+$values[] = 4;
+$values[] = 7;
+$values[] = 9;
+foreach ($values  as $value) { $value = 100; }
+$weighted = 0;
+foreach ($values  as $index => $value) {
+    if ($index === 1) { continue; }
+    $weighted = $weighted + $value;
+    if ($index === 2) { break; }
+}
+echo $values[0], ":", $values[1], ":", $weighted, "\n";
+$rows vector<\samples\Row> = [];
+$row = new \samples\Row();
+$row->id = 12;
+$rows[] = $row;
+foreach ($rows  as $record) { $record->id = 37; }
+$lookup = new \samples\Lookup();
+$lookup->put(37, 0);
+echo $row->id, ":", $lookup->contains($row) ? "found" : "bad", "\n";
+$flags hash<bool> = [];
+$flags["false"] = false;
+echo isset($flags["false"]) ? "false-present\n" : "bad\n";
+$empty vector<int> = [];
+$visits = 0;
+foreach ($empty  as $item) { $visits = $visits + 1; }
+echo $visits, "\n";
+

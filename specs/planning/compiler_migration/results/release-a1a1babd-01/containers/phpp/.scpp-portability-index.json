@@ -1,0 +1,73 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/containers\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790636,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790055072,
+                "ctime": 1790055072
+            },
+            "checked_at": 1790055072,
+            "names": [
+                "indexes.php",
+                "main.php"
+            ]
+        }
+    },
+    "files": {
+        "indexes.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790638,
+                "mode": 33188,
+                "size": 2940,
+                "mtime": 1790055072,
+                "ctime": 1790055072
+            },
+            "checked_at": 1790055072,
+            "hash": "f68364275fc8de386474a7fc10f87042885e6af4c063bae2ba7d468f3ac22bba",
+            "cache": "1f80e03f41cae01ac89a24f13c13272fb47bb790928d4c2ded3fddcebd1c3e04",
+            "cache_hash": "b640e580d997bd98f94e5ec455c51ad12ac7c266b174cdb902a2421a1812af52",
+            "declarations": {
+                "samples\\indexes": {
+                    "name": "samples\\Indexes",
+                    "kind": "class",
+                    "namespace": "samples",
+                    "file": "indexes.php",
+                    "line": 45,
+                    "start": 6,
+                    "open": 10,
+                    "end": 297,
+                    "methods": {
+                        "initialize": 49,
+                        "row": 58,
+                        "file": 59,
+                        "first": 60,
+                        "copy_edit": 64
+                    },
+                    "uses": []
+                }
+            }
+        },
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790620,
+                "mode": 33188,
+                "size": 2670,
+                "mtime": 1790055072,
+                "ctime": 1790055072
+            },
+            "checked_at": 1790055073,
+            "hash": "0e78300bedec5f31dd4f9e59d6fef353cb0bdb638ae4483ee267228287533b31",
+            "cache": "cc8d10a5bfe05febdf2e852f0c1168feeefbd4f34083f54b5559e6db5c9340c3",
+            "cache_hash": "72341ece4620b1c1d9a67847c2337b3644f6b1dfcf95ddeca4c5510c2c04a7a1",
+            "declarations": []
+        }
+    }
+}

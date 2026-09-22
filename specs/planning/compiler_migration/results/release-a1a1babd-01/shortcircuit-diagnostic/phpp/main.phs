@@ -1,0 +1,52 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Guard_Probe {
+    public static function rhs(): bool {
+        echo "rhs-called\n";
+        return true;
+    }
+}
+$guard int = 0;
+if (($guard !== 0) && Guard_Probe::rhs()) { echo "entered\n"; }
+echo "done\n";

@@ -1,0 +1,17 @@
+check
+php-behavior
+source-set-oracle
+binary-syntax-oracle
+syntax-comparer-oracle
+syntax-access-oracle
+byte-literals-oracle
+native-project-oracle
+project-manifest-oracle
+source-scanner-oracle
+preparation-symbols-oracle
+collections-php
+foundation
+check-regressions
+prologues
+native-framework-install
+Validation passed; native proofs: not requested

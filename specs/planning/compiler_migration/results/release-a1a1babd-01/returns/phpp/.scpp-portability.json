@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "files": {
+        "main.php": {
+            "input": "31a9d4106a867f2f5d4aa312dfd6dd1aee20b5bcecf9c7ee80ab6aae07a8c1ec",
+            "output": "4ab46b32b61a892b80c44e306d941d695433c2e1e73ca10ad2ef1f9b49c2ff46"
+        },
+        "store.php": {
+            "input": "e1378f6f79ec8c34acc9e6dfe8a2279173d50d03812d99a42454c232b1480d6e",
+            "output": "1fcad8bc90340bf9dc3e6c3e36b3361033b0094797f06e5451eb5b62313f1b1a"
+        }
+    }
+}

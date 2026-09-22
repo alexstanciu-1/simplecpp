@@ -1,0 +1,58 @@
+namespace workers;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Worker {
+    
+    public function change(\data\Record $row, int $amount): void {
+        $row->value = $row->value + $amount;
+        return;
+    }
+    public function identity(\data\Record $row): \data\Record { return $row; }
+
+    public static function pass(\data\Record $row): \data\Record { return $row; }
+    public function number(float $value): float { return $value; }
+    private function local(Worker $other): Worker { return $other; }
+    public function same(Worker $other): Worker { return $this->local($other); }
+}
+interface Contract { public function identity(\data\Record $row): \data\Record; public function change(\data\Record $row, int $amount): void; }
+

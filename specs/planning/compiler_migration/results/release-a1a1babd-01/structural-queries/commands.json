@@ -1,0 +1,68 @@
+[
+  {
+    "label": "php",
+    "command": [
+      "php",
+      "-r",
+      "foreach(array_slice($argv,1) as $f) { require $f; }",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source/src/03_parse/data/nodes.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source/src/03_parse/data/tree.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source/src/03_parse/data/role_views.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source/src/03_parse/utilities/metaprogramming_syntax.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source/src/03_parse/utilities/syntax_access.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source/src/03_parse/utilities/struct_member_cursor.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source/main.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "exit": 0,
+    "seconds": 0.107
+  },
+  {
+    "label": "convert",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/source",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/phpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "exit": 0,
+    "seconds": 0.163
+  },
+  {
+    "label": "init",
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "cwd": "/tmp/scpp-a1a1babd-portability/structural-queries/phpp",
+    "exit": 0,
+    "seconds": 0.154
+  },
+  {
+    "label": "framework",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/scpp-a1a1babd-portability/structural-queries/phpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "exit": 0,
+    "seconds": 0.053
+  },
+  {
+    "label": "native",
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "cwd": "/tmp/scpp-a1a1babd-portability/structural-queries/phpp",
+    "exit": 1,
+    "seconds": 26.08
+  }
+]

@@ -118,3 +118,11 @@ measure repeated bounds/kind checks before changing validation placement or cach
 roles, preserving deferred failures and input identity. See the
 [query slice](../../portability/compiler_structural_queries_slice.md) and
 [target handoff](structural_query_target_handoff.md).
+
+## Candidate validation without source adaptation
+
+Candidate a1a1babd clears qualified construction with the existing adapted source,
+but the query proof exposes eager RHS evaluation in a guarded traversal. No source
+workaround was added during release validation. Retain the authored short-circuit
+intent when optimizing guard placement; candidate compilation alone is insufficient
+evidence. See [the proof](../../portability/release_candidate_a1a1babd.md).

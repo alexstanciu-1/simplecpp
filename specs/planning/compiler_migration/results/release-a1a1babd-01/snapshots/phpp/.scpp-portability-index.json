@@ -1,0 +1,101 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/snapshots\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790740,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790055095,
+                "ctime": 1790055095
+            },
+            "checked_at": 1790055095,
+            "names": [
+                "main.php",
+                "row.php",
+                "store.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790742,
+                "mode": 33188,
+                "size": 3267,
+                "mtime": 1790055095,
+                "ctime": 1790055095
+            },
+            "checked_at": 1790055095,
+            "hash": "bcb3bced1b221b2b9d444a009081f27531840e657df9b848c60fafc611fad5c3",
+            "cache": "e97e790823f0c367d0329048cabe6d719af97e2bb0c85f5b2ab5e28af312a32b",
+            "cache_hash": "f015b37cfebba6037c0cdd9af8783a760b0d4e2e9dd1cbd156d37ee47d7c6de5",
+            "declarations": []
+        },
+        "row.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790743,
+                "mode": 33188,
+                "size": 2382,
+                "mtime": 1790055095,
+                "ctime": 1790055095
+            },
+            "checked_at": 1790055095,
+            "hash": "fac7639d9b35a7dc9fb8cc70c24f6e9d970b08e8d06437457ba7c5870425141e",
+            "cache": "f36088a6c9ded2e268f47bb5b2b3004a3625f83ea2ca2a3b26a5a9e6a01737bc",
+            "cache_hash": "64cde26c0223a685f9681773082d882f66880044de3011d5bd5980bc6dd2d645",
+            "declarations": {
+                "snapshots\\row": {
+                    "name": "snapshots\\Row",
+                    "kind": "class",
+                    "namespace": "snapshots",
+                    "file": "row.php",
+                    "line": 45,
+                    "start": 6,
+                    "open": 10,
+                    "end": 112,
+                    "methods": {
+                        "copy_row": 49
+                    },
+                    "uses": []
+                }
+            }
+        },
+        "store.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790726,
+                "mode": 33188,
+                "size": 2505,
+                "mtime": 1790055095,
+                "ctime": 1790055095
+            },
+            "checked_at": 1790055095,
+            "hash": "3337a00884153ae9b8e210d72ba6aea6f59bdc6bd058d62fefbb6c6de7f10063",
+            "cache": "a7912dedfa78cb3d4555ddbdb5a45b4e12aa199a883a46ef99953b94aa86bc67",
+            "cache_hash": "1fa6346dee939cf0a252fd64453b60a3a07e50ffba335a1f2009cebbcc489441",
+            "declarations": {
+                "snapshots\\store": {
+                    "name": "snapshots\\Store",
+                    "kind": "class",
+                    "namespace": "snapshots",
+                    "file": "store.php",
+                    "line": 45,
+                    "start": 6,
+                    "open": 10,
+                    "end": 144,
+                    "methods": {
+                        "shallow_copy": 47,
+                        "with_value": 52
+                    },
+                    "uses": []
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "native": true,
+  "expected": "1:12:3:12\n2:2:8:5\n3:9\n",
+  "target_revision": "a1a1babd07082d9abf7ac885b2328c99368ad4cf"
+}

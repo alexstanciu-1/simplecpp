@@ -1,0 +1,53 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/shortcircuit-diagnostic\/source",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790315,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790055014,
+                "ctime": 1790055014
+            },
+            "checked_at": 1790055014,
+            "names": [
+                "main.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790229,
+                "mode": 33188,
+                "size": 2285,
+                "mtime": 1790055014,
+                "ctime": 1790055014
+            },
+            "checked_at": 1790055014,
+            "hash": "61a92a0d3b582ed23974ff8eb5bd91e7170da08bec2293a9a24c43ab31eb31d1",
+            "cache": "268f17e29e85134a4806ab609aee4253cd852088f775a73ccf384dfc0d93d348",
+            "cache_hash": "307da5517fce1e73b800ed233170ed523a1c573abbe39c0fcce244b696135ff9",
+            "declarations": {
+                "guard_probe": {
+                    "name": "Guard_Probe",
+                    "kind": "class",
+                    "namespace": "",
+                    "file": "main.php",
+                    "line": 45,
+                    "start": 2,
+                    "open": 6,
+                    "end": 35,
+                    "methods": {
+                        "rhs": 46
+                    },
+                    "uses": []
+                }
+            }
+        }
+    }
+}

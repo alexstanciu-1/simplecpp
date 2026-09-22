@@ -1,0 +1,10 @@
+{
+    "version": 2,
+    "files": {
+        "exceptions.phs": "50231ec8778f0ccb88848f14e0e86858161896893e676298b6855afd70481246",
+        "strings.phs": "2bd8c85d0051c3ce9b2e2e8635b47286fa15de06fbbe7f019d3dd355385ff876",
+        "collections.phs": "49e42c2b01269b4b4af88ba7d5122de6564831fc0ef99089ea5fa2b63aed67d8",
+        "file_locks.phs": "6c175c524066d390362a32309577cbd4cae1d0a02f983dbc2b4edc7bd0fa2cad",
+        "processes.phs": "9eaac789e027f3468de2fe2e5d072b6db3240773c729abb067858ffdf8ccebc2"
+    }
+}

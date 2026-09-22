@@ -1,0 +1,159 @@
+{
+  "passed": true,
+  "native": true,
+  "workspace": "/tmp/scpp-utf8-ohsgbuz7",
+  "assertion_lines": 308,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-d",
+        "auto_prepend_file=/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php/main.php"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "reject",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 1
+    },
+    {
+      "label": "reject",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 1
+    },
+    {
+      "label": "reject",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 1
+    },
+    {
+      "label": "reject",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 1
+    },
+    {
+      "label": "reject",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-utf8-ohsgbuz7/php",
+        "/tmp/scpp-utf8-ohsgbuz7/phpp"
+      ],
+      "exit": 1
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-a1a1babd-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "clean-before",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-a1a1babd-probe",
+        "status",
+        "--porcelain"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "php",
+        "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+        "run",
+        "--build-runtime"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-a1a1babd-probe",
+        "status",
+        "--porcelain"
+      ],
+      "exit": 0
+    }
+  ]
+}

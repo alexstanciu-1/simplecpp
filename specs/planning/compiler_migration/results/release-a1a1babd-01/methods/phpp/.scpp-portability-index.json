@@ -1,0 +1,157 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/methods\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790210,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790055002,
+                "ctime": 1790055002
+            },
+            "checked_at": 1790055002,
+            "names": [
+                "main.php",
+                "operations.php",
+                "record.php",
+                "worker.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790214,
+                "mode": 33188,
+                "size": 2454,
+                "mtime": 1790055002,
+                "ctime": 1790055002
+            },
+            "checked_at": 1790055002,
+            "hash": "e659317456a4f5034f6d9183cda12269f26cc82e8fde6a5f59a61b5ffad7a227",
+            "cache": "20e0ebb36ee56f916341d5ae14c2ef1494472e7606289f87120be4f88a5884ac",
+            "cache_hash": "d4de9c3f52cc847c900049d25f99f23c8494b701dab9a0056868842679d4d38b",
+            "declarations": []
+        },
+        "operations.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790212,
+                "mode": 33188,
+                "size": 2292,
+                "mtime": 1790055002,
+                "ctime": 1790055002
+            },
+            "checked_at": 1790055002,
+            "hash": "af88517055b3a6378657a2bba3198c8162eb615718f0d30c15b6b18e2bce6617",
+            "cache": "517fd26d20c23918ecc208d1b800f7a012c1d6aa4c0161309234244595fca1f6",
+            "cache_hash": "c1e04243c338f1a660b206e64c8c16acb6d051f1e866878815f7a320ffafdc83",
+            "declarations": {
+                "workers\\operations": {
+                    "name": "workers\\Operations",
+                    "kind": "trait",
+                    "namespace": "workers",
+                    "file": "operations.php",
+                    "line": 45,
+                    "start": 6,
+                    "open": 10,
+                    "end": 76,
+                    "methods": {
+                        "change": 46,
+                        "identity": 50
+                    },
+                    "uses": []
+                }
+            }
+        },
+        "record.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790215,
+                "mode": 33188,
+                "size": 2095,
+                "mtime": 1790055002,
+                "ctime": 1790055002
+            },
+            "checked_at": 1790055002,
+            "hash": "7cd8c3260b8e063f7780a2021fa0b05c8f77af194bff518a39292653abc0c728",
+            "cache": "16f733bcf4a16f853b5678be0c95ebd86e1472ff1577ed0ca2c399cf535b5e33",
+            "cache_hash": "5da393437970fa3b884759d8aa56cd0667f194e8e311fd2f8377712c89519374",
+            "declarations": {
+                "data\\record": {
+                    "name": "data\\Record",
+                    "kind": "class",
+                    "namespace": "data",
+                    "file": "record.php",
+                    "line": 44,
+                    "start": 6,
+                    "open": 10,
+                    "end": 23,
+                    "methods": [],
+                    "uses": []
+                }
+            }
+        },
+        "worker.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790216,
+                "mode": 33188,
+                "size": 2539,
+                "mtime": 1790055002,
+                "ctime": 1790055002
+            },
+            "checked_at": 1790055002,
+            "hash": "ae057deed7c75d366a3c995b892dd47338fb5a4b70d3fe5c14791e4787ed265b",
+            "cache": "3e16bef605e57aad69a12abe5518aa787e6ebd5a16401f75fab6b6319db07107",
+            "cache_hash": "678b237cc2b0ff4feaeefc3f423e1039dc48b08fb3177978adc5d4c0f3c852ae",
+            "declarations": {
+                "workers\\worker": {
+                    "name": "workers\\Worker",
+                    "kind": "class",
+                    "namespace": "workers",
+                    "file": "worker.php",
+                    "line": 45,
+                    "start": 6,
+                    "open": 10,
+                    "end": 116,
+                    "methods": {
+                        "pass": 47,
+                        "number": 48,
+                        "local": 49,
+                        "same": 50
+                    },
+                    "uses": [
+                        {
+                            "start": 12,
+                            "end": 15,
+                            "names": [
+                                "workers\\operations"
+                            ],
+                            "line": 46
+                        }
+                    ]
+                },
+                "workers\\contract": {
+                    "name": "workers\\Contract",
+                    "kind": "interface",
+                    "namespace": "workers",
+                    "file": "worker.php",
+                    "line": 52,
+                    "start": 118,
+                    "open": 122,
+                    "end": 159,
+                    "methods": {
+                        "identity": 52,
+                        "change": 52
+                    },
+                    "uses": []
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+  "candidate": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+  "php": "done\n",
+  "native_tail": "ld'\n[1/6] PCH app_pch.hpp.gch\n[2/6] CXX scpp_framework/collections.o\n[3/6] CXX scpp_framework/exceptions.o\n[4/6] CXX scpp_framework/strings.o\n[5/6] CXX main.o\n[6/6] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/strings.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\nrhs-called\ndone\n",
+  "unexpected_rhs": true
+}

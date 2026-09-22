@@ -1,0 +1,9 @@
+{
+    "version": 1,
+    "files": {
+        "main.php": {
+            "input": "a1561bdf4421265a08a632944768be1f6b6b7dbdb791b43e6c89fc75cd9f6a28",
+            "output": "ef812153ee82445fed932d4b9f41f204130ea321ef198126e6bc16ec1d2a4662"
+        }
+    }
+}

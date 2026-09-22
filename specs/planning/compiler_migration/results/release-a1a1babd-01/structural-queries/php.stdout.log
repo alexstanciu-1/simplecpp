@@ -1,0 +1,13 @@
+Struct member cursor is not positioned
+member:3:3
+member:12:12
+method:6
+function:8:9:10:11
+field:13:14:0
+root:14:0
+parameter:0
+deferred
+Expected a parsed struct declaration
+Struct member cursor is not positioned
+Expected a parsed function declaration
+query-tree-retained:18:6

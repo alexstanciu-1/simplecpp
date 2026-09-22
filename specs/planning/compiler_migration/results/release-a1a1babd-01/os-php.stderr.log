@@ -1,0 +1,9 @@
+PHP Notice:  fwrite(): Send of 2 bytes failed with errno=1 Operation not permitted in /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/os_php.php on line 46
+PHP Stack trace:
+PHP   1. {main}() /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/os_php.php:0
+PHP   2. fwrite($stream = resource(74) of type (stream), $data = 'ok') /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/os_php.php:46
+PHP Fatal error:  Uncaught RuntimeException: inherited release rejected in /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/os_php.php:4
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/os_php.php(47): verify_os()
+#1 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/os_php.php on line 4

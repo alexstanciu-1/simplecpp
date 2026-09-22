@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "files": {
+        "main.php": {
+            "input": "26c4a0b0a411fccbb734f5589af151ab976c8b96693548839d8157624981759a",
+            "output": "74f25320086dec82c2e00787194bab53c6feada0f07db07a84db676e0a3fd57b"
+        },
+        "operations.php": {
+            "input": "68127dd3021018def07ce27ffc3a58f449ae7f36252a6a66dd919fc0ebdf1d97",
+            "output": "b9811108d4fef500ecee54efc110d1a0393ca768ece72e478b3cf5956b167031"
+        },
+        "record.php": {
+            "input": "26982e0a9e550c28ea727d827675a1b61ae06d89fec674a6ab34161015f0fd9f",
+            "output": "965b1ffac050568092d8e072fe6938de5ed0e37ab26f7735ea61066f478b3bf8"
+        },
+        "worker.php": {
+            "input": "99307e19927df97970262f8c3523bd934530758c9cad7bbebf5c9cc1281a9b00",
+            "output": "e1ab02ecee4e7b96e5c6d980b18588a2cd700655ef9775b64ae0b0d9b3794eb7"
+        }
+    }
+}

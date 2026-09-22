@@ -1,0 +1,80 @@
+
+
+namespace tokenize;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** @compiler-internal Pure tokenization task selection from fixed snapshots. */
+class Token_Selection {
+    /**
+     * @compiler-internal Select all live source buffers on full, otherwise those whose exact buffer identity changed.
+     * Throws on missing source snapshots; does not execute tokenization.
+     * @return list<Source_Buffer> Unchanged snapshots are independent worker inputs.
+     */
+    public static function select(\read_sources\Source_Set $sources, Token_Set $previous, bool $full_rebuild): vector<\read_sources\Source_Buffer> {
+        $tasks vector<\read_sources\Source_Buffer> = [];
+        foreach ($sources->files  as $file) {
+            if ($file->change_state === \read_sources\file_change::deleted) {
+                continue;
+            }
+            $source = $file->buffer;
+            if ($source === null) {
+                throw new \scpp_portability_exception("Missing source snapshot for tokenization");
+            }
+            if ($full_rebuild) {
+                $tasks[] = $source;
+                continue;
+            }
+            $old = $previous->for_file($file->id);
+            if ($old === null) {
+                $tasks[] = $source;
+                continue;
+            }
+            if ($old->source !== $source) {
+                $tasks[] = $source;
+            }
+        }
+        return $tasks;
+    }
+
+}

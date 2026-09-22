@@ -1,0 +1,383 @@
+[
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/methods/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 4\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-a1a1babd-portability/methods/php"
+    ],
+    "exit": 0,
+    "stdout": "{\"checked\":4,\"cache\":{\"listed_directories\":1,\"read_sources\":4,\"tokenized\":4,\"loaded_tokens\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/methods/php",
+      "/tmp/scpp-a1a1babd-portability/methods/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":4,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "-r",
+      "foreach (array_slice($argv,1) as $path) { require $path; }",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+      "/tmp/scpp-a1a1babd-portability/methods/php/record.php",
+      "/tmp/scpp-a1a1babd-portability/methods/php/operations.php",
+      "/tmp/scpp-a1a1babd-portability/methods/php/worker.php",
+      "/tmp/scpp-a1a1babd-portability/methods/php/main.php"
+    ],
+    "exit": 0,
+    "stdout": "5:1:same:same:number\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/scpp-a1a1babd-portability/methods/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"updated\":1}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit": 0,
+    "stdout": "a1a1babd07082d9abf7ac885b2328c99368ad4cf\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "exit": 0,
+    "stdout": "Created prism.json\nProject root: /tmp/scpp-a1a1babd-portability/methods/phpp\nEntrypoint: main.phs\nPHP profile: strict\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "exit": 0,
+    "stdout": "Transpiled PHP files: 7, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/9] PCH app_pch.hpp.gch\n[2/9] CXX record.o\n[3/9] CXX operations.o\n[4/9] CXX scpp_framework/collections.o\n[5/9] CXX worker.o\n[6/9] CXX scpp_framework/exceptions.o\n[7/9] CXX scpp_framework/strings.o\n[8/9] CXX main.o\n[9/9] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/operations.o, .prism/build/record.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/strings.o, .prism/build/worker.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\n5:1:same:same:number\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit container type annotation\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit container type annotation\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected named parameter\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected named parameter\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected named parameter\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected named parameter\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected parameter separator\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected parameter separator\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected named parameter\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected named parameter\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type, or void return\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type, or void return\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type, or void return\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-signature-reject-w76t4rei/php",
+      "/tmp/scpp-signature-reject-w76t4rei/out"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:44: expected explicit scalar or named method type, or void return\n"
+  }
+]

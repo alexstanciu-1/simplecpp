@@ -1,0 +1,3 @@
+// The native signature supplies the shape/element guarantee checked in the PHP carrier.
+function scpp_portability_sequence_require_strings($items vector<string>, string $shape_error, string $element_error): void {
+}

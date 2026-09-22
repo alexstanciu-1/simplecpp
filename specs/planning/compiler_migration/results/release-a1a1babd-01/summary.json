@@ -1,0 +1,254 @@
+{
+  "status": "failed",
+  "candidate": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+  "host": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "migration_commit": "53f168be67d34d16cbcb96e76edb2d7eaaa0034b",
+  "pin_restored": true,
+  "commands": [
+    {
+      "name": "fast",
+      "command": [
+        "python3",
+        "tools/php_portability/validate.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/fast"
+      ],
+      "exit": 0,
+      "seconds": 17.064
+    },
+    {
+      "name": "structural-queries",
+      "command": [
+        "python3",
+        "/tmp/scpp-a1a1babd-query-proof.py"
+      ],
+      "exit": 1,
+      "seconds": 26.893
+    },
+    {
+      "name": "compiler",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/compiler",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 68.919
+    },
+    {
+      "name": "collections",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/collections.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/collections",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe",
+        "--candidate-revision",
+        "a1a1babd07082d9abf7ac885b2328c99368ad4cf"
+      ],
+      "exit": 0,
+      "seconds": 35.546
+    },
+    {
+      "name": "os",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/os_native.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/os",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 22.96
+    },
+    {
+      "name": "methods",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/method_signatures.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/methods",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 24.416
+    },
+    {
+      "name": "returns",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/container_returns.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/returns",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 23.894
+    },
+    {
+      "name": "iteration",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/map_iteration.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/iteration",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 22.245
+    },
+    {
+      "name": "containers",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/container_annotations.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/containers",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 22.514
+    },
+    {
+      "name": "snapshots",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/collection_snapshots.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/snapshots",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 20.773
+    },
+    {
+      "name": "utf8",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/utf8.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/utf8",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 22.537
+    },
+    {
+      "name": "traits",
+      "command": [
+        "python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/traits.py",
+        "--results",
+        "/tmp/scpp-a1a1babd-portability/traits",
+        "--target-checkout",
+        "/tmp/scpp-a1a1babd-probe"
+      ],
+      "exit": 0,
+      "seconds": 25.376
+    },
+    {
+      "name": "os-php",
+      "command": [
+        "php",
+        "tests/portability/os_php.php"
+      ],
+      "exit": 255,
+      "seconds": 60.809
+    },
+    {
+      "name": "nullable-rejections",
+      "command": [
+        "python3",
+        "tests/portability/nullable_fields.py"
+      ],
+      "exit": 0,
+      "seconds": 4.196
+    },
+    {
+      "name": "decimal-oracle",
+      "command": [
+        "python3",
+        "tests/portability/decimal_range.py"
+      ],
+      "exit": 0,
+      "seconds": 2.045
+    },
+    {
+      "name": "return-rejections",
+      "command": [
+        "python3",
+        "tests/portability/container_returns_rejections.py"
+      ],
+      "exit": 0,
+      "seconds": 1.636
+    },
+    {
+      "name": "iteration-rejections",
+      "command": [
+        "python3",
+        "tests/portability/map_iteration_rejections.py"
+      ],
+      "exit": 0,
+      "seconds": 2.354
+    }
+  ],
+  "target_clean": true,
+  "retained_query_fixtures": {
+    "count": 39,
+    "passed": true
+  },
+  "shortcircuit_diagnostic": {
+    "candidate": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+    "php": "done\n",
+    "native_tail": "ld'\n[1/6] PCH app_pch.hpp.gch\n[2/6] CXX scpp_framework/collections.o\n[3/6] CXX scpp_framework/exceptions.o\n[4/6] CXX scpp_framework/strings.o\n[5/6] CXX main.o\n[6/6] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/strings.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\nrhs-called\ndone\n",
+    "unexpected_rhs": true
+  },
+  "implementation_sha256": {
+    "tools/php_portability/check.php": "065776d2af60fd5ba0068fd57ad8eaf8d1955dd827a0934c4d1398376d9c2d32",
+    "tools/php_portability/convert.php": "82f0c3ae4531fbc337bf270f047bd1b2e4a4806441800226669cca04e3df34e2",
+    "tools/php_portability/function_map.php": "02dffe207c2bb6f69632334e27ea8d356854617c3d7d10cc5a40aae965fb2c81",
+    "tools/php_portability/install_native_runtime.php": "85b469190db0f17625b886f7d748c00d347f23ce3d8c345152fbabf11bf6adf0",
+    "tools/php_portability/runtime/bootstrap.php": "8ae503d8149f7bf1bd95527e862e7a49cbd8b0788495bd656f7e15435c17b740",
+    "tools/php_portability/runtime/collections.php": "66024e2513020d6d5a9306cecc50567af5501aa5712cc84eaa7257d089483255",
+    "tools/php_portability/runtime/collections.phs": "49e42c2b01269b4b4af88ba7d5122de6564831fc0ef99089ea5fa2b63aed67d8",
+    "tools/php_portability/runtime/file_locks.php": "3bde579fd7b0ee830829a47f17a6ff281275e31419c0b7f70d8f018ac2fb2935",
+    "tools/php_portability/runtime/file_locks.phs": "6c175c524066d390362a32309577cbd4cae1d0a02f983dbc2b4edc7bd0fa2cad",
+    "tools/php_portability/runtime/filesystem.php": "80befea38076901a631ba5de2c482c68ffb1491fd5a22a9f74ff59aa62f39941",
+    "tools/php_portability/runtime/filesystem.phs": "973710a1a0882e8d19043bf482b62b69106e9e5a9eaadaf36374ee30d0c1407b",
+    "tools/php_portability/runtime/process_launcher.php": "4a750df0a0decb9460f716c007af60946ed06a8fc04a4ee402d7925a0514f2d9",
+    "tools/php_portability/runtime/processes.php": "5bd05077614074d579c8920fddf41c1bfd838e6fa0ed05d20e993a26d348fa22",
+    "tools/php_portability/runtime/processes.phs": "9eaac789e027f3468de2fe2e5d072b6db3240773c729abb067858ffdf8ccebc2",
+    "tools/php_portability/runtime/strings.php": "0339939366960415309e20174d6f56b1c80ea5b1ce92126d478f712449271b8e",
+    "tools/php_portability/runtime/strings.phs": "2bd8c85d0051c3ce9b2e2e8635b47286fa15de06fbbe7f019d3dd355385ff876",
+    "tools/php_portability/src/container_type.php": "a6a8666abfea57f068a710a432ccd19f991c613ce630b0cb5ac4e2ea30d8a09b",
+    "tools/php_portability/src/converter.php": "9e4c70fb40fd25bed67ea9763d77a902ff927acc38cddda82cb8c15338a6505d",
+    "tools/php_portability/src/declaration_index.php": "1137a0b37ba72977a8cb5cc5b5cc33697e4baed61e600919cf35cf17fb27d8dd",
+    "tools/php_portability/src/exception_policy.php": "5f93ea4f918aba7aacc0e2fe5846e5595f2e3a1a7941ef4223ac0b6f75da7b44",
+    "tools/php_portability/src/import_policy.php": "194d6f6a97c216e807234b16eac9be26896e9ece6df24f7528f24085af59c545",
+    "tools/php_portability/src/project_cache.php": "e8c7a09b02c56ac5cd9dea026ea36c3671b026629d045aeceae0c2472a868051",
+    "tools/php_portability/sync_imports.php": "10def354d46cef8ee785c990ba3d5923476ff0c891e4ba16babe9766cceb0b6e"
+  },
+  "source_manifest_sha256": "3a3c1b5e86412786a820f08fd72f9cf05a8c03b8c6901125ded39c8b38b52a6c",
+  "proof_scope": "36-file cumulative ready set; existing native suites; pending structural-query project; focused short-circuit diagnostic",
+  "final_assessment": {
+    "established_native_suites": 10,
+    "established_native_passed": 10,
+    "constructor_rejection_cleared": true,
+    "structural_query_native_behavior": "failed: eager RHS of false && guard",
+    "os_php_unrestricted_retry": "passed unchanged; initial sandbox EPERM retained",
+    "pin_restored": true,
+    "target_clean": true,
+    "issue_comment": "https://github.com/alexstanciu-1/simplecpp/issues/236#issuecomment-5771710352"
+  }
+}

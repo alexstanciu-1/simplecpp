@@ -1,0 +1,66 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/collections\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790026,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790054979,
+                "ctime": 1790054979
+            },
+            "checked_at": 1790054979,
+            "names": [
+                "main.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790037,
+                "mode": 33188,
+                "size": 4780,
+                "mtime": 1790054979,
+                "ctime": 1790054979
+            },
+            "checked_at": 1790054979,
+            "hash": "fbcd4130174be91df9c24871ca348890d7f29be2ade79f1ebca2626710d7afcd",
+            "cache": "1f46d17b1686fb70cdbde69d6e19324cf24c9c473998182e734b0b6a46ae83f4",
+            "cache_hash": "3db94f76600511796cb327b30446647852ece9c4c97231eb6e6ba108e591e104",
+            "declarations": {
+                "groups": {
+                    "name": "Groups",
+                    "kind": "class",
+                    "namespace": "",
+                    "file": "main.php",
+                    "line": 68,
+                    "start": 657,
+                    "open": 661,
+                    "end": 742,
+                    "methods": {
+                        "initialize": 70,
+                        "first": 71
+                    },
+                    "uses": []
+                },
+                "row": {
+                    "name": "Row",
+                    "kind": "class",
+                    "namespace": "",
+                    "file": "main.php",
+                    "line": 74,
+                    "start": 774,
+                    "open": 778,
+                    "end": 791,
+                    "methods": [],
+                    "uses": []
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,82 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/iteration\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790532,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790055050,
+                "ctime": 1790055050
+            },
+            "checked_at": 1790055050,
+            "names": [
+                "main.php",
+                "row.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790527,
+                "mode": 33188,
+                "size": 3451,
+                "mtime": 1790055050,
+                "ctime": 1790055050
+            },
+            "checked_at": 1790055050,
+            "hash": "eea0b44e95253ca54dfe9e96eecef2db46d9c69aa182898350757aabb4b9c4cf",
+            "cache": "148b0b35617d03080b05bbc6b642b802a9e100792ff347ee0d6847512961ce84",
+            "cache_hash": "21db2d0ec6b41f7e1747791f720b513cfce1859b7731aa2744a18ef663670a31",
+            "declarations": []
+        },
+        "row.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790534,
+                "mode": 33188,
+                "size": 2350,
+                "mtime": 1790055050,
+                "ctime": 1790055050
+            },
+            "checked_at": 1790055050,
+            "hash": "8a7d084e3a35dfdfc4d2577041b717288a773386950fc7dd5b2b09e9c5747630",
+            "cache": "4a98179c5473212c696ef704823e54851b6fe5beffe943de8db97756a28e56c9",
+            "cache_hash": "49d114e1a85300046546030a3b2cfa3aa47102a2c17881804b7c665cfeeb667f",
+            "declarations": {
+                "samples\\row": {
+                    "name": "samples\\Row",
+                    "kind": "class",
+                    "namespace": "samples",
+                    "file": "row.php",
+                    "line": 45,
+                    "start": 6,
+                    "open": 10,
+                    "end": 23,
+                    "methods": [],
+                    "uses": []
+                },
+                "samples\\lookup": {
+                    "name": "samples\\Lookup",
+                    "kind": "class",
+                    "namespace": "samples",
+                    "file": "row.php",
+                    "line": 46,
+                    "start": 25,
+                    "open": 29,
+                    "end": 113,
+                    "methods": {
+                        "put": 48,
+                        "contains": 49
+                    },
+                    "uses": []
+                }
+            }
+        }
+    }
+}

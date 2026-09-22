@@ -1,0 +1,111 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/returns\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790419,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790055026,
+                "ctime": 1790055026
+            },
+            "checked_at": 1790055026,
+            "names": [
+                "main.php",
+                "store.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790420,
+                "mode": 33188,
+                "size": 3055,
+                "mtime": 1790055026,
+                "ctime": 1790055026
+            },
+            "checked_at": 1790055026,
+            "hash": "82ed95677158c33e2dee29fbc39243dfe71631576b4c2b995cebf48dd834bebe",
+            "cache": "dc90172f079e44c402a35e35a52e8c91363cdf5ba12e3e3819fb3b541f026319",
+            "cache_hash": "cfbcbefb7e5fd4e8da2b8898de1f5beb6e79f1c807143f011c6545fbdc915e60",
+            "declarations": []
+        },
+        "store.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790416,
+                "mode": 33188,
+                "size": 3436,
+                "mtime": 1790055026,
+                "ctime": 1790055026
+            },
+            "checked_at": 1790055026,
+            "hash": "a1c7398f97f81c40fea3ae6edf6b9182c5b26cb83a6eae01fdb38c9aa2c4411e",
+            "cache": "ddb2a17b33ec047fcd925dbaaa3ff26c5a4a633071760c800967ea7db139561f",
+            "cache_hash": "42dafefda4ed8ce2fe4c1f398d632ebca99443d3a3ba91c994ccb1e9046e516d",
+            "declarations": {
+                "samples\\row": {
+                    "name": "samples\\Row",
+                    "kind": "class",
+                    "namespace": "samples",
+                    "file": "store.php",
+                    "line": 45,
+                    "start": 6,
+                    "open": 10,
+                    "end": 23,
+                    "methods": [],
+                    "uses": []
+                },
+                "samples\\exports": {
+                    "name": "samples\\Exports",
+                    "kind": "trait",
+                    "namespace": "samples",
+                    "file": "store.php",
+                    "line": 46,
+                    "start": 25,
+                    "open": 29,
+                    "end": 127,
+                    "methods": {
+                        "get_ids": 47,
+                        "get_positions": 48,
+                        "get_groups": 49,
+                        "get_rows": 50
+                    },
+                    "uses": []
+                },
+                "samples\\store": {
+                    "name": "samples\\Store",
+                    "kind": "class",
+                    "namespace": "samples",
+                    "file": "store.php",
+                    "line": 52,
+                    "start": 129,
+                    "open": 133,
+                    "end": 432,
+                    "methods": {
+                        "initialize": 61,
+                        "get_entry": 71,
+                        "get_ready": 72,
+                        "get_label": 73,
+                        "empty_ids": 74
+                    },
+                    "uses": [
+                        {
+                            "start": 135,
+                            "end": 138,
+                            "names": [
+                                "samples\\exports"
+                            ],
+                            "line": 53
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

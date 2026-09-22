@@ -1,0 +1,38 @@
+{
+    "schema": 1,
+    "version": "a34e3a643603d2a50a559128cb532eb5c96be659de9b405121068dcc3def15b8",
+    "source": "\/tmp\/scpp-a1a1babd-portability\/os\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790099,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790054979,
+                "ctime": 1790054979
+            },
+            "checked_at": 1790054979,
+            "names": [
+                "main.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 790104,
+                "mode": 33188,
+                "size": 4699,
+                "mtime": 1790054979,
+                "ctime": 1790054979
+            },
+            "checked_at": 1790054979,
+            "hash": "5198dd5563541cdcb678900be9aa521d6a60e8e10364b7409e4e8f0c034741b7",
+            "cache": "3b72dbcc24a0d860a5b69ad31f502f196ef2cc66b7abb92c4fa84fdf68f41c65",
+            "cache_hash": "78ed75cf1f1cc12d7b86e109f410697ec2b9eb3adfd1559cf5a7860a9370d513",
+            "declarations": []
+        }
+    }
+}

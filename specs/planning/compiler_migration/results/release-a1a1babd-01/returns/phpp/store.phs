@@ -1,0 +1,77 @@
+namespace samples;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Row { public int $value = 1; }
+
+class Store {
+    
+    public function get_ids(): vector<int> { return $this->ids; }
+    public function get_positions(): hash<int, int> { return $this->positions; }
+    public function get_groups(): vector<vector<int>> { return $this->groups; }
+    public function get_rows(): vector<Row> { return $this->rows; }
+
+    private int $entry = 0;
+    protected bool $ready = false;
+    private string $label = "initial";
+    private $ids vector<int> = [];
+    private $positions hash<int, int> = [];
+    private $groups vector<vector<int>> = [];
+    private $rows vector<Row> = [];
+    public function initialize(Row $row): void {
+        $this->entry = 37;
+        $this->ready = true;
+        $this->label = "prepared";
+        $this->ids[] = 12;
+        $this->ids[] = 37;
+        $this->positions[37] = 1;
+        $this->groups[] = $this->ids;
+        $this->rows[] = $row;
+    }
+    public function get_entry(): int { return $this->entry; }
+    public function get_ready(): bool { return $this->ready; }
+    public function get_label(): string { return $this->label; }
+    public static function empty_ids(): vector<int> {
+        $empty vector<int> = [];
+        return $empty;
+    }
+}

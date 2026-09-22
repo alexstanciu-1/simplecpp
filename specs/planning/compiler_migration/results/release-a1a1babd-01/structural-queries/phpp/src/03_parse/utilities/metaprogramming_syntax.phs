@@ -1,0 +1,56 @@
+
+
+/*
+ * Role: Expose template and constant syntax roles without binding or evaluation.
+ * Used by: Syntax_Access (static structural query methods composed on this owner)
+ * Call map:
+ *   template_parts(); template_parameter_parts(); template_application_parts(); constant_parts()
+ *     -> type_syntax(); leaf(); expression() [shared structural validation]
+ */
+
+namespace parse;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** @compiler-internal Structural accessors composed by Syntax_Access; inputs remain immutable. */
+

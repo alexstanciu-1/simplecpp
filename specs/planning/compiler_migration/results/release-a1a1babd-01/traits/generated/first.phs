@@ -1,0 +1,51 @@
+
+namespace demo;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class First { 
+    private function adjust(int $amount): int {
+        $this->value = $this->value + $amount;
+        return $this->value;
+    }
+    public function advance(int $amount): int { return $this->adjust($amount); }
+ public int $value = 1; }

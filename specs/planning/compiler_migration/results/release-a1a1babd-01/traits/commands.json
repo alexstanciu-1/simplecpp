@@ -1,0 +1,588 @@
+[
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": "",
+    "seconds": 0.068614
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": "",
+    "seconds": 0.059996
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": "",
+    "seconds": 0.068566
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": "",
+    "seconds": 0.085528
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": "",
+    "seconds": 0.094994
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":5,\"reused\":0,\"removed\":0,\"cache\":{\"listed_directories\":2,\"read_sources\":5,\"tokenized\":5,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.101907
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":0,\"reused\":5,\"removed\":0,\"cache\":{\"listed_directories\":0,\"read_sources\":0,\"tokenized\":0,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.082035
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":0,\"reused\":5,\"removed\":0,\"cache\":{\"listed_directories\":0,\"read_sources\":0,\"tokenized\":0,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.054013
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":0,\"reused\":5,\"removed\":0,\"cache\":{\"listed_directories\":0,\"read_sources\":0,\"tokenized\":0,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.054594
+  },
+  {
+    "command": [
+      "php",
+      "-d",
+      "opcache.enable_cli=1",
+      "-d",
+      "opcache.file_update_protection=0",
+      "-r",
+      "$data = require $argv[1]; echo (int)is_array($data), \":\", (int)opcache_is_script_cached($argv[1]);",
+      "/tmp/scpp-traits-bjwzgd_b/phpp/.scpp-token-cache/4caa9cd1fe7169ccfc58193b830b21c0d1845916cdf254699b17926e2d8b8048.php-cache"
+    ],
+    "exit": 0,
+    "stdout": "1:1",
+    "stderr": "",
+    "seconds": 0.059569
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Invalid portability index fingerprint\n",
+    "seconds": 0.053881
+  },
+  {
+    "command": [
+      "php",
+      "-r",
+      "foreach (array_slice($argv, 1) as $file) { require $file; }",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+      "/tmp/scpp-traits-bjwzgd_b/php/parts/operations.php",
+      "/tmp/scpp-traits-bjwzgd_b/php/first.php",
+      "/tmp/scpp-traits-bjwzgd_b/php/second.php",
+      "/tmp/scpp-traits-bjwzgd_b/php/main.php"
+    ],
+    "exit": 0,
+    "stdout": "3:13:3\n",
+    "stderr": "",
+    "seconds": 0.052747
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit": 0,
+    "stdout": "a1a1babd07082d9abf7ac885b2328c99368ad4cf\n",
+    "stderr": "",
+    "seconds": 0.00474
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.027847
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "exit": 0,
+    "stdout": "Created prism.json\nProject root: /tmp/scpp-traits-bjwzgd_b/phpp\nEntrypoint: main.phs\nPHP profile: strict\n",
+    "stderr": "",
+    "seconds": 0.151106
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "exit": 0,
+    "stdout": "Transpiled PHP files: 5, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/7] PCH app_pch.hpp.gch\n[2/7] CXX parts/operations.o\n[3/7] CXX contract.o\n[4/7] CXX first.o\n[5/7] CXX second.o\n[6/7] CXX main.o\n[7/7] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/contract.o, .prism/build/first.o, .prism/build/main, .prism/build/main.o, .prism/build/parts/operations.o, .prism/build/second.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\n3:13:3\n",
+    "stderr": "",
+    "seconds": 21.241295
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.028817
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":3,\"reused\":2,\"removed\":0,\"cache\":{\"listed_directories\":0,\"read_sources\":1,\"tokenized\":1,\"loaded_tokens\":2}}\n",
+    "stderr": "",
+    "seconds": 0.065132
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": "",
+    "seconds": 0.064612
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":5,\"removed\":0,\"cache\":{\"listed_directories\":3,\"read_sources\":2,\"tokenized\":1,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.066468
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":0,\"reused\":5,\"removed\":1,\"cache\":{\"listed_directories\":1,\"read_sources\":1,\"tokenized\":0,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.062978
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "first.php:46: missing trait declaration demo\\operations\n",
+    "seconds": 0.07057
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":0,\"reused\":5,\"removed\":0,\"cache\":{\"listed_directories\":2,\"read_sources\":1,\"tokenized\":0,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.06415
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: only classes may use traits; traits cannot use traits\n",
+    "seconds": 0.07386
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: traits must be in the consuming class namespace\n",
+    "seconds": 0.063124
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: trait adaptations (as/insteadof) are unsupported\n",
+    "seconds": 0.059812
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: trait adaptations (as/insteadof) are unsupported\n",
+    "seconds": 0.066281
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: trait method collision advance from parts/operations.php:51\n",
+    "seconds": 0.061418
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: duplicate trait use demo\\operations\n",
+    "seconds": 0.061643
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "first.php:46: duplicate declaration demo\\First (also in bad.php:46)\n",
+    "seconds": 0.062349
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: missing trait declaration demo\\contract\n",
+    "seconds": 0.061628
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: traits support explicit methods only\n",
+    "seconds": 0.058091
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: magic methods are unsupported in traits\n",
+    "seconds": 0.062762
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: only unconditional named top-level declarations are supported\n",
+    "seconds": 0.062595
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:46: namespace/declare must form a single leading prologue\n",
+    "seconds": 0.059225
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:1: expected one lowercase semicolon namespace\n",
+    "seconds": 0.076237
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:1: namespace/declare must form a single leading prologue\n",
+    "seconds": 0.063753
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "bad.php:1: namespace/declare must form a single leading prologue\n",
+    "seconds": 0.058213
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "/tmp/scpp-traits-bjwzgd_b/php/bad.php: manual imports/use syntax are unsupported; use the central policy\n",
+    "seconds": 0.065459
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "parts/operations.php:49: unsupported syntax: unknown\n",
+    "seconds": 0.059905
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":0,\"reused\":5,\"removed\":0,\"cache\":{\"listed_directories\":2,\"read_sources\":1,\"tokenized\":0,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.066269
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Missing or modified token cache; remove the portability index to rebuild: first.php\n",
+    "seconds": 0.061221
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":4,\"removed\":0,\"cache\":{\"listed_directories\":1,\"read_sources\":1,\"tokenized\":0,\"loaded_tokens\":2}}\n",
+    "stderr": "",
+    "seconds": 0.063629
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":0,\"reused\":2,\"removed\":3,\"cache\":{\"listed_directories\":2,\"read_sources\":0,\"tokenized\":0,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.061041
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-traits-bjwzgd_b/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": "",
+    "seconds": 0.060561
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-traits-bjwzgd_b/php",
+      "/tmp/scpp-traits-bjwzgd_b/phpp",
+      "--stats"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":2,\"removed\":0,\"cache\":{\"listed_directories\":2,\"read_sources\":1,\"tokenized\":1,\"loaded_tokens\":0}}\n",
+    "stderr": "",
+    "seconds": 0.068267
+  }
+]

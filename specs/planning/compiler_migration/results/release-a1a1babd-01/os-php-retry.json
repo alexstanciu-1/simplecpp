@@ -1,0 +1,10 @@
+{
+  "command": [
+    "php",
+    "tests/portability/os_php.php"
+  ],
+  "sandbox": "require_escalated: local Unix socket-pair write denied in sandbox",
+  "exit": 0,
+  "unchanged_test": true,
+  "initial_exit": 255
+}

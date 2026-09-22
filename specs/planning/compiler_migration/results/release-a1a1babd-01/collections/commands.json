@@ -1,0 +1,378 @@
+[
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit": 0,
+    "stdout": "a1a1babd07082d9abf7ac885b2328c99368ad4cf\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "-r",
+      "require $argv[1]; require $argv[2];",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php/main.php"
+    ],
+    "exit": 0,
+    "stdout": "0:20\n1:30\n1:20\n2:30\nitem!:3\nb:3\n04:4\n0:3:0\n21:31\ncallback error\n42\nshared\n1:2\n0:3:0\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"updated\":1}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "exit": 0,
+    "stdout": "Created prism.json\nProject root: /tmp/scpp-a1a1babd-portability/collections/phpp\nEntrypoint: main.phs\nPHP profile: strict\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "exit": 0,
+    "stdout": "Transpiled PHP files: 4, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/6] PCH app_pch.hpp.gch\n[2/6] CXX scpp_framework/collections.o\n[3/6] CXX scpp_framework/exceptions.o\n[4/6] CXX scpp_framework/strings.o\n[5/6] CXX main.o\n../generated/main.cpp:115:4: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]\n  115 |                         collections::sequence_map(input, [](int_t<> x) -> int_t<> {\n      |                         ^~~~~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n  116 |         throw ::scpp::php::make_thrown(create<::scpp::scpp_portability_exception>(string_t(\"callback error\")));\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n  117 | });\n      | ~\n1 warning generated.\n[6/6] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/strings.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\n0:20\n1:30\n1:20\n2:30\nitem!:3\nb:3\n04:4\n0:3:0\n21:31\ncallback error\n42\nshared\n1:2\n0:3:0\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "build",
+      "--build-runtime"
+    ],
+    "exit": 1,
+    "stdout": "Static Analysis: 12 errors, 0 warnings, 0 notices. Run `scpp stan` for more details.\nRuntime artifact already up to date: .prism/runtime/project/php-strict/20d193eafa25561b/libruntime.so\nTranspiled PHP files: 4, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/5] CXX main.o\nFAILED: main.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-a1a1babd-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/9ee8d21744b15d46.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o\n../generated/main.cpp:11:2: error: no matching function for call to 'sequence_map'\n   11 |         collections::sequence_map(v, [](int_t<> x) -> int_t<> {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:120:20: note: candidate template ignored: constraints not satisfied [with C = hash_t<int_t<>, int_t<>>, F = (lambda at ../generated/main.cpp:11:31)]\n  120 | [[nodiscard]] auto sequence_map(const C &source, F &&callback) {\n      |                    ^\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:118:44: note: because 'detail::carrier_is<scpp::hash_t<scpp::int_t<>, scpp::int_t<> >, detail::carrier_kind::sequence>' evaluated to false\n  118 | template <typename C, typename F> requires detail::carrier_is<C, detail::carrier_kind::sequence>\n      |                                            ^\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:88:42: note: because 'policy<hash_t<int_t<>, int_t<> > >::kind == (scpp::collections::detail::carrier_kind)0' evaluated to false\n   88 | concept carrier_is = requires { requires policy<C>::kind == Kind; };\n      |                                          ^\n1 error generated.\n[2/5] CXX scpp_framework/collections.o\n[3/5] CXX scpp_framework/exceptions.o\n[4/5] CXX scpp_framework/strings.o\nninja: build stopped: subcommand failed.\n",
+    "stderr": "Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.\nCompile error in main.phs:44: no matching function for call to 'sequence_map'\nGenerated location: .prism/generated/main.cpp:11:2\nRaw compiler excerpt:\nmain.cpp:11:2: error: no matching function for call to 'sequence_map'\nRun 'scpp error' for more details.\nRun 'scpp full-error' for the saved JSON report.\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "build",
+      "--build-runtime"
+    ],
+    "exit": 1,
+    "stdout": "Static Analysis: 12 errors, 0 warnings, 0 notices. Run `scpp stan` for more details.\nRuntime artifact already up to date: .prism/runtime/project/php-strict/20d193eafa25561b/libruntime.so\nTranspiled PHP files: 1, skipped unchanged: 3\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/2] CXX main.o\nFAILED: main.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-a1a1babd-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/9ee8d21744b15d46.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o\n../generated/main.cpp:11:2: error: no matching function for call to 'keyed_filter'\n   11 |         collections::keyed_filter(v, [](int_t<> x) -> bool_t {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:135:20: note: candidate template ignored: constraints not satisfied [with C = vector_t<int_t<>>, F = (lambda at ../generated/main.cpp:11:31)]\n  135 | [[nodiscard]] auto keyed_filter(const C &source, F &&predicate) {\n      |                    ^\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:133:44: note: because 'detail::carrier_is<scpp::vector_t<scpp::int_t<> >, detail::carrier_kind::keyed>' evaluated to false\n  133 | template <typename C, typename F> requires detail::carrier_is<C, detail::carrier_kind::keyed>\n      |                                            ^\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:88:42: note: because 'policy<vector_t<int_t<> > >::kind == (scpp::collections::detail::carrier_kind)1' evaluated to false\n   88 | concept carrier_is = requires { requires policy<C>::kind == Kind; };\n      |                                          ^\n1 error generated.\nninja: build stopped: subcommand failed.\n",
+    "stderr": "Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.\nCompile error in main.phs:44: no matching function for call to 'keyed_filter'\nGenerated location: .prism/generated/main.cpp:11:2\nRaw compiler excerpt:\nmain.cpp:11:2: error: no matching function for call to 'keyed_filter'\nRun 'scpp error' for more details.\nRun 'scpp full-error' for the saved JSON report.\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "build",
+      "--build-runtime"
+    ],
+    "exit": 1,
+    "stdout": "Static Analysis: 12 errors, 0 warnings, 0 notices. Run `scpp stan` for more details.\nRuntime artifact already up to date: .prism/runtime/project/php-strict/20d193eafa25561b/libruntime.so\nTranspiled PHP files: 1, skipped unchanged: 3\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/2] CXX main.o\nFAILED: main.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-a1a1babd-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/9ee8d21744b15d46.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o\n../generated/main.cpp:11:2: error: no matching function for call to 'sequence_filter'\n   11 |         collections::sequence_filter(v, [](int_t<> x) -> int_t<> {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:125:20: note: candidate template ignored: constraints not satisfied [with C = vector_t<int_t<>>, F = (lambda at ../generated/main.cpp:11:34)]\n  125 | [[nodiscard]] auto sequence_filter(const C &source, F &&predicate) {\n      |                    ^\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:124:48: note: because 'collections::filter(source, std::forward<F>(predicate))' would be invalid: no matching function for call to 'filter'\n  124 |         && requires(const C &source, F &&predicate) { collections::filter(source, std::forward<F>(predicate)); }\n      |                                                       ^\n1 error generated.\nninja: build stopped: subcommand failed.\n",
+    "stderr": "Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.\nCompile error in main.phs:44: no matching function for call to 'sequence_filter'\nGenerated location: .prism/generated/main.cpp:11:2\nRaw compiler excerpt:\nmain.cpp:11:2: error: no matching function for call to 'sequence_filter'\nRun 'scpp error' for more details.\nRun 'scpp full-error' for the saved JSON report.\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "build",
+      "--build-runtime"
+    ],
+    "exit": 1,
+    "stdout": "Static Analysis: 12 errors, 0 warnings, 0 notices. Run `scpp stan` for more details.\nRuntime artifact already up to date: .prism/runtime/project/php-strict/20d193eafa25561b/libruntime.so\nTranspiled PHP files: 1, skipped unchanged: 3\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/2] CXX main.o\nFAILED: main.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-a1a1babd-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/9ee8d21744b15d46.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o\n../generated/main.cpp:11:2: error: no matching function for call to 'sequence_map'\n   11 |         collections::sequence_map(v, [](const string_t& x) -> string_t {\n      |         ^~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:120:20: note: candidate template ignored: constraints not satisfied [with C = vector_t<int_t<>>, F = (lambda at ../generated/main.cpp:11:31)]\n  120 | [[nodiscard]] auto sequence_map(const C &source, F &&callback) {\n      |                    ^\n/tmp/scpp-a1a1babd-portability/collections/phpp/.prism/build/../../../../../scpp-a1a1babd-probe/runtime/include/scpp/collections.hpp:119:47: note: because 'collections::map(source, std::forward<F>(callback))' would be invalid: no matching function for call to 'map'\n  119 |         && requires(const C &source, F &&callback) { collections::map(source, std::forward<F>(callback)); }\n      |                                                      ^\n1 error generated.\nninja: build stopped: subcommand failed.\n",
+    "stderr": "Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.\nCompile error in main.phs:44: no matching function for call to 'sequence_map'\nGenerated location: .prism/generated/main.cpp:11:2\nRaw compiler excerpt:\nmain.cpp:11:2: error: no matching function for call to 'sequence_map'\nRun 'scpp error' for more details.\nRun 'scpp full-error' for the saved JSON report.\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "main.php:45: expected explicit scalar or named method type\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "main.php:45: callback requires one by-value parameter\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "main.php:45: expected )\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "main.php:45: callback captures must be explicit by-value variables\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "main.php:45: collection callback must return a value\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "main.php:45: unsupported syntax: fn\n"
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/collections/php",
+      "/tmp/scpp-a1a1babd-portability/collections/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

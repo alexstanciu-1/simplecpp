@@ -1,6 +1,10 @@
 # Structural-query construction blocker: v0.1 handoff
 Doc Status: planning
 
+Current update: candidate a1a1babd clears the constructor rejection. The historical
+findings below remain evidence for #235. The new query-runtime short-circuit blocker
+is reported in [the release proof](../../portability/release_candidate_a1a1babd.md).
+
 The PHP query adaptation passes 27,560 frozen-source result/error comparisons and
 39 retained parser/semantic/template/backend-preparation fixtures. Whole-file
 conversion passes with the actual same-namespace trait. Native compilation is

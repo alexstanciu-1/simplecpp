@@ -96,7 +96,9 @@ Candidate target adoption can be proved without editing the selected pin:
 `tests/portability/compiler_context/run.py --candidate-revision FULL_COMMIT`
 accepts an explicit immutable candidate alongside the usual checkout/results flags.
 The focused `tests/portability/collections.py` runner requires checkout/results
-and pins the #231/#232 combined candidate independently.
+and defaults to its historical #231/#232 combined candidate. Its optional
+`--candidate-revision FULL_COMMIT` selects an exact immutable candidate without
+relaxing checkout revision or cleanliness checks.
 
 The fast compiler loop also compares quoted-byte decoding with a frozen original
 on 8,593 deterministic inputs (`tests/portability/byte_literals_oracle.php`). The

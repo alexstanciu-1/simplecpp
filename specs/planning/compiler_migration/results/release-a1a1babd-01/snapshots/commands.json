@@ -1,0 +1,103 @@
+[
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 3\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/php"
+    ],
+    "exit": 0,
+    "stdout": "{\"checked\":3,\"cache\":{\"listed_directories\":1,\"read_sources\":3,\"tokenized\":3,\"loaded_tokens\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":3,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "-r",
+      "foreach (array_slice($argv,1) as $path) { require $path; }",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/php/row.php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/php/store.php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/php/main.php"
+    ],
+    "exit": 0,
+    "stdout": "10:11:12\nowner-distinct:changed-distinct:unchanged-shared\n3:8:3:1:2:original:original\n2:3:2\n99:99\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/scpp-a1a1babd-portability/snapshots/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"updated\":1}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit": 0,
+    "stdout": "a1a1babd07082d9abf7ac885b2328c99368ad4cf\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-a1a1babd-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "exit": 0,
+    "stdout": "Created prism.json\nProject root: /tmp/scpp-a1a1babd-portability/snapshots/phpp\nEntrypoint: main.phs\nPHP profile: strict\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "exit": 0,
+    "stdout": "Transpiled PHP files: 6, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/8] PCH app_pch.hpp.gch\n[2/8] CXX scpp_framework/collections.o\n[3/8] CXX scpp_framework/exceptions.o\n[4/8] CXX row.o\n[5/8] CXX store.o\n[6/8] CXX scpp_framework/strings.o\n[7/8] CXX main.o\n[8/8] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/row.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/strings.o, .prism/build/store.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\n10:11:12\nowner-distinct:changed-distinct:unchanged-shared\n3:8:3:1:2:original:original\n2:3:2\n99:99\n",
+    "stderr": ""
+  }
+]

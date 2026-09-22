@@ -1,0 +1,69 @@
+namespace samples;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Indexes {
+    private $folders vector<vector<int>> = [];
+    private $positions hash<int, int> = [];
+    protected $paths hash<int> = [];
+    public function initialize(): void {
+        $ids vector<int> = [];
+        $ids[] = 12;
+        $ids[] = 37;
+        $this->folders[] = $ids;
+        $this->positions[12] = 0;
+        $this->positions[37] = 1;
+        $this->paths["/root/a.phs"] = 12;
+    }
+    public function row(int $id): int { return $this->positions[$id]; }
+    public function file(string $path): int { return $this->paths[$path]; }
+    public function first(): int {
+        $ids vector<int> = $this->folders[0];
+        return $ids[0];
+    }
+    public function copy_edit(): int {
+        $copy = $this->folders;
+        $copy[0][0] = 99;
+        $copy[0][] = 104;
+        return count($copy[0]);
+    }
+}
