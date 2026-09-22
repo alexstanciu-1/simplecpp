@@ -1,0 +1,4 @@
+$a = \example\Queries::row();
+$b = \example\PlainQueries::ordinary();
+echo $a->value, ":", $b->value, ":";
+\example\Queries::namespaces();
