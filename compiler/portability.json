@@ -66,7 +66,13 @@
     "src/04_analyze/resolve_symbols/handlers/declarations.php",
     "src/04_analyze/resolve_symbols/handlers/statements.php",
     "src/04_analyze/resolve_symbols/handlers/expressions.php",
-    "src/04_analyze/resolve_symbols/body.php"
+    "src/04_analyze/resolve_symbols/body.php",
+    "src/04_analyze/resolve_symbols/utilities/resolution_validity.php",
+    "src/04_analyze/resolve_symbols/utilities/binding_coverage.php",
+    "src/04_analyze/resolve_symbols/data/store.php",
+    "src/04_analyze/resolve_symbols/select_tasks.php",
+    "src/04_analyze/resolve_symbols/join.php",
+    "src/04_analyze/resolve_symbols/main_resolve_symbols.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

@@ -4,6 +4,46 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/portability/resolution_project.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/resolution-project-01/README.md",
+                        "kind": "markdown",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/resolution-project-01/cycles.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/resolution-project-01/expected.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/resolution-project-01/final-fast-summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/resolution-project-01/provenance.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/resolution-project-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/resolution-project-01/timing.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path": "specs/portability/lexical_resolution.md",
                         "kind": "markdown",
                         "doc_status": "supporting"

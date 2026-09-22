@@ -68,3 +68,9 @@ require_once __DIR__ . '/src/04_analyze/resolve_symbols/handlers/declarations.ph
 require_once __DIR__ . '/src/04_analyze/resolve_symbols/handlers/statements.php';
 require_once __DIR__ . '/src/04_analyze/resolve_symbols/handlers/expressions.php';
 require_once __DIR__ . '/src/04_analyze/resolve_symbols/body.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/utilities/resolution_validity.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/utilities/binding_coverage.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/data/store.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/select_tasks.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/join.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/main_resolve_symbols.php';

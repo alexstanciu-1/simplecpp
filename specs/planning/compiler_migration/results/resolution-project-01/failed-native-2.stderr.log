@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in around src/04_analyze/resolve_symbols/select_tasks.phs:1: redefinition of 'selected' as different kind of symbol
+Generated location: .prism/generated/src/04_analyze/resolve_symbols/select_tasks.hpp:30:17
+Compile note in src/04_analyze/resolve_symbols/select_tasks.phs:6: previous definition is here
+Generated location: .prism/generated/src/04_analyze/resolve_symbols/select_tasks.hpp:19:26
+Compile error in probe.phs:54: 'selected' is a private member of 'scpp::resolve_symbols::Resolution_Plan'
+Generated location: .prism/generated/probe.cpp:117:30
+Additional remapped diagnostics: 6
+Raw compiler excerpt:
+select_tasks.hpp:30:17: error: redefinition of 'selected' as different kind of symbol
+select_tasks.hpp:19:26: note: previous definition is here
+probe.cpp:117:30: error: 'selected' is a private member of 'scpp::resolve_symbols::Resolution_Plan'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

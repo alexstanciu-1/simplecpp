@@ -25,6 +25,8 @@ fields is a supported structure; it does not automatically become a native value
 struct. Current ordinary classes use shared object identity. Explicit scalar value
 records and both `&ref` annotations now have a [separate proved contract](value_records.md);
 read it before choosing copy or alias behavior.
+Keep field and method names distinct within a class: PHP permits `$selected` plus
+`selected()`, but both become the same C++ member name.
 
 Use no namespace or one leading lowercase `namespace name;`, optionally preceded
 by `declare(strict_types=1);` and comments. Do not add function imports. The host

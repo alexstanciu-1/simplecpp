@@ -599,3 +599,34 @@ Pre-PHP-ready corrections were test harness count/quoting/argument-name fixes an
 constant-shadowing diagnostic anchor: the constant is visible in its own annotation.
 Project reuse and structural completeness acceptance remain the next coherent owner;
 this worker checkpoint does not claim phase completion.
+
+## Rewrite: project resolution acceptance and reuse
+
+The prototype selection/worker/join process becomes a fixed `Resolution_Plan`, the
+existing worker, atomic `Resolution_Join`, and synchronous `Symbol_Resolver` wrapper.
+Only `Resolution_Set::publish` populates private accepted rows. This avoids treating
+arbitrarily assembled locally valid rows as a previously accepted phase. Warm results
+skip structural revalidation after their current dependencies are checked; selected
+results undergo coverage acceptance. Generic Step/session scaffolding and production
+debug serialization are reserved for their integration steps.
+
+Coverage keeps the original iterative acceptance walk and replaces mixed claim maps
+and unset with typed positive-value indexes/consumption counts. Variable-use coverage
+now checks nearest locals and read/write roles as well as declarations/scopes. An
+explicit continuation publishes a value-template parameter after its annotation,
+so a later parameter cannot capture an earlier annotation. These checks make the
+published result model more truthful within the same name-resolution owner.
+
+Reuse checks now include two negative dependencies required for clean/incremental
+agreement: a new same-name constant blocks an existing function call; a new catalog
+type conflicts with a source struct. Exact owner records also replace same-AST-only
+reuse, preserving current metadata/diagnostics after frontend rebinding. Later
+optimization may share binding storage while explicitly rebinding the owner.
+
+Native stabilization exposed two authoring/tool details: STAN inferred `!` as the
+receiver type after a direct test-local identity comparison; an explicitly typed
+identity helper preserves the assertion. PHP's separate field/method namespaces do
+not survive C++ lowering, so the private `selected` map became `selected_ids` alongside
+method `selected()`. The authoring guide now states that naming rule. No target or
+converter implementation was changed. Timings and separate correction counts are in
+[the proof record](results/resolution-project-01/README.md).

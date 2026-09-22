@@ -1,0 +1,11 @@
+STAN pre-build check failed: 2 compile-errors
+
+[compile-error] Unresolved method call `!::at()` in `resolution_test\Probe::run`.
+  at probe.phs:41
+
+[compile-error] Unresolved method call `!::size()` in `resolution_test\Probe::run`.
+  at probe.phs:41
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

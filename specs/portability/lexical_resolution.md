@@ -38,8 +38,8 @@ limitations retain the prototype's non-template else-if rejection, local-only me
 receivers, no calls through constants/template parameters, and explicit template
 arguments. These are not new converter restrictions.
 
-This component does not yet provide project-level selection, completeness acceptance,
-or retained-result invalidation. Those follow in the resolution coordinator; local
+The worker alone does not establish project-level selection, completeness acceptance,
+or retained-result invalidation. Those are proved in the [project coordinator](resolution_project.md); local
 result validation alone does not establish that a whole phase is complete.
 
 Validation uses independent expected bindings and byte diagnostics, adapted retained

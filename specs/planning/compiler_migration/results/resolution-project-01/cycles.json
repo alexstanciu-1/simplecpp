@@ -1,0 +1,19 @@
+{
+  "first_php_ready_attempt": 2,
+  "pre_php_ready_source_corrections": 0,
+  "pre_php_ready_harness_corrections": [
+    "Initial expected outcome count corrected from 94 to 88 before adding the acceptance cases."
+  ],
+  "post_php_ready_concept_refinement": "Coverage now publishes value-template parameters after their annotations and rejects a global binding that bypasses a visible template parameter.",
+  "native_build_attempts": 3,
+  "cpp_compilation_attempts": 2,
+  "native_harness_corrections": [
+    "Typed identity helper avoids STAN inferring receiver type ! after direct local identity comparison."
+  ],
+  "native_production_corrections": [
+    "Rename selected field to selected_ids to avoid C++ field/method name collision."
+  ],
+  "native_target_changed": false,
+  "converter_changed": false,
+  "host_invariants": 25
+}

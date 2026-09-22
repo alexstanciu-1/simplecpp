@@ -2,7 +2,7 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs. Active rewrite readiness is now sixty-five input/tokenization/parser/source-symbol files;
+these capability proofs. Active rewrite readiness is now seventy-one input/tokenization/parser/source-symbol files;
 see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
@@ -46,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is sixty-five input/tokenization/parser/source-symbol files, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is seventy-one input/tokenization/parser/source-symbol files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
@@ -319,4 +319,6 @@ the file entry below reuses the same expression driver.
 
 [Declaration lookup](name_lookup.md) adds 40 PHP/native outcomes and 15 retained numeric constructor cases.
 
-[Lexical/body resolution](lexical_resolution.md) adds 320 PHP/native outcomes, 23 host invariants and five retained generic-permission checks. Project resolution reuse/acceptance is next.
+[Lexical/body resolution](lexical_resolution.md) adds 320 PHP/native outcomes, 23 host invariants and five retained generic-permission checks.
+
+[Project resolution](resolution_project.md) adds 182 PHP/native outcomes and 25 host snapshot/acceptance checks. Next: canonical type storage and concrete preparation dependencies.
