@@ -104,7 +104,8 @@
     "src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
     "src/01_prepare_inputs/load_runtime/handlers/resources.php",
     "src/01_prepare_inputs/load_runtime/handlers/lifecycle.php",
-    "src/01_prepare_inputs/load_runtime/handlers/records.php"
+    "src/01_prepare_inputs/load_runtime/handlers/records.php",
+    "src/01_prepare_inputs/load_runtime/handlers/bindings.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

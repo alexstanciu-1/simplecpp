@@ -1111,3 +1111,31 @@ catalog publication, package checksums/leases, broader package composition and
 provider symbol integration remain pending. Next: callable bindings and metadata.
 
 Cumulative fast validation passes at 103 registered production files.
+
+## Callable language roles and conversion permissions
+
+Binding_Import consumes lossless metadata and the shared Semantic_Signature model.
+Call_Language_Binding replaces the prototype's anonymous [binding, default_literal]
+tuple with a validated record. Missing or explicit-null optional fields retain the
+prototype defaults; present wrong JSON kinds fail instead of being coerced.
+Byte literals require one span input and an owned result. Echo requires one const
+borrow and no result. Default-literal selection applies only to byte literals.
+These permissions remain separate from provider spelling and ordinary exposure.
+
+Conversion ingestion admits only explicit_cast and text from free functions, with
+one non-span input, a result and no language binding. It compares both names and
+namespaces, rejecting same-identity conversions without confusing same unqualified
+names in distinct namespaces. Ordinary package callables must already have named
+accepted language types; unresolved provider/parameter references are explicitly
+rejected at this boundary rather than accidentally using a wrong tagged accessor.
+This does not implement family specialization or a new implicit conversion policy.
+
+374 independently expected PHP/native outcomes pass, including the role/arity/
+passing/production matrix, optional fields, qualified identities, unresolved-type
+rejections and result-record invariants. 370 applicable cases match the retained
+private helper. First native build passes with no checker or native correction.
+Evidence and phase timings are in results/binding-import-01. Runtime preparation
+and the converter are unchanged. Next: physical result/parameter normalization and
+full callable import, before complete package publication and provider symbols.
+
+Cumulative fast validation passes at 104 registered production files.

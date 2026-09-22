@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **103 production files**: input preparation (137 outcomes),
+Active readiness is **104 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -120,3 +120,8 @@ Record_Import and its explicit batch result add 42 PHP/native outcomes, with 38
 retained acceptance comparisons (`results/record-import-01`). Native scalar fields,
 measured layout and unchanged-input publication are proved. Next: callable bindings
 and metadata ingestion before complete package acceptance/composition.
+
+Binding_Import adds 374 PHP/native outcomes and 370 retained comparisons
+(`results/binding-import-01`) for language roles and explicit/text conversion
+permissions. Next: physical result/parameter normalization and complete callable
+metadata ingestion; package acceptance and provider symbol integration remain.
