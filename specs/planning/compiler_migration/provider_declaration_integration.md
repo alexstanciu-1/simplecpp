@@ -172,3 +172,10 @@ comparisons (`results/native-type-import-01`). Exact definition identity, measur
 storage and semantic copy/assignment permission are checked separately from C++
 traits. Next: source-export ownership and complete package type publication/retention;
 package target/checksum/lease acceptance remains incomplete.
+
+
+Source-export project/backend provenance adds 279 PHP/native outcomes and retained
+acceptance comparisons (`results/export-provenance-01`). Explicit project identity,
+byte-preserving lexical roots and required target/revision keys are retained without
+filesystem access or claims of verified backend support. Next: tagged export type
+identity and accepted layout/dependency provenance, before source-export binding.

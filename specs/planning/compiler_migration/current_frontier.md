@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **111 production files**: input preparation (137 outcomes),
+Active readiness is **113 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -169,3 +169,10 @@ comparisons (`results/native-type-import-01`). Exact definition identity, measur
 storage and semantic copy/assignment permission are checked separately from C++
 traits. Next: source-export ownership and complete package type publication/retention;
 package target/checksum/lease acceptance remains incomplete.
+
+
+Source-export project/backend provenance adds 279 PHP/native outcomes and retained
+acceptance comparisons (`results/export-provenance-01`). Explicit project identity,
+byte-preserving lexical roots and required target/revision keys are retained without
+filesystem access or claims of verified backend support. Next: tagged export type
+identity and accepted layout/dependency provenance, before source-export binding.

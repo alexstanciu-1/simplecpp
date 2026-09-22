@@ -48,7 +48,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('storage_import', Path(__file__).parent / 'storage_import/run.py'),
           ('package_measurements', Path(__file__).parent / 'package_measurements/run.py'),
           ('type_exposure', Path(__file__).parent / 'type_exposure/run.py'),
-          ('native_type_import', Path(__file__).parent / 'native_type_import/run.py')]
+          ('native_type_import', Path(__file__).parent / 'native_type_import/run.py'),
+          ('export_provenance', Path(__file__).parent / 'export_provenance/run.py')]
 
 
 def main():

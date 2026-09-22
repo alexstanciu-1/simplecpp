@@ -1,0 +1,20 @@
+{
+  "php_ready_epoch": 1790102314.9536245,
+  "php_ready_sha256": {
+    "src/compile/data/native_project.php": "db27d493781128731e5a1a13647eff458dfb0106dfcdf5877a4a7804bc654d24",
+    "src/05_generate_code/prepare_backend/data/configuration.php": "cb66a88765b97568568b0e0bea47128a84f611c2eb7a5a50e6585b9efc0d0ab6"
+  },
+  "php_ready_to_native_pass_seconds": 33.326,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "php_behavioral_corrections": 0,
+  "native_build_seconds": 20.057,
+  "consolidation_start_epoch": 1790102382.503619,
+  "file_write_start_epoch": 1790102314.0,
+  "file_write_to_php_ready_seconds": 0.954,
+  "authoring_start_epoch": null,
+  "authoring_to_php_ready_seconds": null,
+  "timing_limit": "The first timestamp was captured by the file-writing command after code/proof drafting. Drafting time was not recorded; the sub-second write/test duration is not an authoring-time measurement.",
+  "consolidation_end_epoch": 1790102499.2770631
+}

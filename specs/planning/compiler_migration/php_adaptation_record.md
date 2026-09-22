@@ -1348,3 +1348,24 @@ markers preserve their existing isset-like behavior.
 Evidence: `results/native-type-import-01`. Remaining source-export binding, full type
 map publication/retention and package checksum/lease validation are still separate
 migration work.
+
+
+## Project/backend provenance for source exports
+
+Two records retain the prototype's owners and folder locations: `compile/data`
+contains `Native_Project`, and `prepare_backend/data` contains `Backend_Configuration`.
+Their original algorithms/contracts were already portable. Adaptation removes obsolete
+function imports and follows current class spelling; it does not change path or
+identity meaning. No filesystem resolution, inferred project key, target default or
+backend verification is added. `src-runtime-preparation` is untouched.
+
+Project roots use the existing lexical POSIX policy: normalize separators/dot
+segments, reject parent traversal and NUL, preserve every other byte. Changing roots
+does not change explicit project identity. Backend, target, layout, ABI and runtime
+keys must be nonempty; CPU/features may remain explicitly empty. The native proof
+checks all 256 appended path bytes and reads accepted bytes back numerically, so
+UTF-8 substitution cannot hide behind comparing equally transformed strings.
+
+All 279 cases pass PHP/native and retained acceptance checks on first attempts.
+Evidence/timings: `results/export-provenance-01`. These are provenance records, not
+source identity projection or accepted backend layout/export publication.
