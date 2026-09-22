@@ -204,6 +204,14 @@ selected target failed the compound null-check/dereference proof in
 [snapshot acceptance](compiler_snapshot_join_slice.md); PHP short-circuit behavior
 must not be assumed for that native expression form.
 
+More generally, use nested `if` statements or early returns whenever the safety,
+errors or side effects of a right-hand expression depend on `&&`/`||` skipping it.
+This includes optional node IDs, bounds-dependent reads and effectful calls, even
+when both expressions return concrete booleans. Independent safe comparisons may
+remain compound. This is a migration authoring constraint, not a new converter
+rejection or a change to Simple C++ operator semantics. See the
+[adaptation record](../planning/compiler_migration/php_adaptation_record.md#explicit-control-flow-for-dependent-guards).
+
 Keep `enum_name($value)` in the enum declaration file, behind a concrete enum-typed
 method when other units need names; cross-unit enum-name generation is not supported
 by the selected target. Fully qualify compiler

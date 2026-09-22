@@ -126,3 +126,30 @@ but the query proof exposes eager RHS evaluation in a guarded traversal. No sour
 workaround was added during release validation. Retain the authored short-circuit
 intent when optimizing guard placement; candidate compilation alone is insufficient
 evidence. See [the proof](../../portability/release_candidate_a1a1babd.md).
+
+## Explicit control flow for dependent guards
+
+On 2026-09-22 the user accepted adapting portable PHP to the current S2S limitation
+instead of requiring a target operator change. Syntax_Access's optional field extent
+and local initializer validators now use nested conditions: validate the expression
+only after its ID is known to be nonzero. This preserves the algorithm's absence,
+validation order and diagnostics on PHP and native targets. Other compound conditions
+in this query owner use independently safe reads or checked optional probes.
+
+Reason: current emitted bool_t logical overloads evaluate the RHS eagerly. Portable
+source must make dependent evaluation explicit; the converter remains structural.
+No runtime/generator changes or broad operator rewrite are part of this slice.
+The original failure evidence and #236 handoff remain historical observations, not
+a requirement to block release on a universal short-circuit implementation.
+
+Future optimization: retain these evaluation boundaries unless a later target
+contract and behavioral proofs establish safe lazy source operators. Do not recombine
+the guards merely to shorten code. This is not a claim about the original S2S design
+rationale or a permanent language policy.
+
+Validation: on unchanged candidate `a1a1babd07082d9abf7ac885b2328c99368ad4cf`,
+the existing complete six-file structural-query/cursor PHP/native proof now passes
+with its unchanged expected output. All 27,560 frozen-original PHP result/error
+comparisons pass. Evidence: `results/explicit-guards-01/`. The target pin and
+36-file ready manifest remain unchanged; this focused proof is not a whole-compiler
+audit of dependent guards.

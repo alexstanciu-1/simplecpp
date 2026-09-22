@@ -1,6 +1,13 @@
 # Release candidate a1a1babd downstream proof
 Doc Status: supporting
 
+Subsequent migration decision (2026-09-22): explicit source guards now clear the
+query failure on this unchanged candidate. The focused PHP/native proof and 27,560
+PHP oracle comparisons pass; see the
+[adaptation record](../planning/compiler_migration/php_adaptation_record.md#explicit-control-flow-for-dependent-guards).
+A target operator change is no longer required for this component. The original
+release-validation observations below remain historical evidence.
+
 Tested exactly `a1a1babd07082d9abf7ac885b2328c99368ad4cf` on Linux x86-64,
 PHP 8.5.7 and clang++ 18.1.3, strict profile with normal STAN. The candidate
 checkout remained clean. The test pin was temporarily set to this revision and

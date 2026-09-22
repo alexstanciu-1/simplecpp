@@ -2,8 +2,11 @@
 Doc Status: planning
 
 Current update: candidate a1a1babd clears the constructor rejection. The historical
-findings below remain evidence for #235. The new query-runtime short-circuit blocker
-is reported in [the release proof](../../portability/release_candidate_a1a1babd.md).
+findings below remain evidence for #235. The subsequent eager-evaluation failure
+now passes through explicit portable source guards on the same candidate; see the
+[adaptation record](php_adaptation_record.md#explicit-control-flow-for-dependent-guards).
+The original [release proof](../../portability/release_candidate_a1a1babd.md) retains
+the failure evidence.
 
 The PHP query adaptation passes 27,560 frozen-source result/error comparisons and
 39 retained parser/semantic/template/backend-preparation fixtures. Whole-file

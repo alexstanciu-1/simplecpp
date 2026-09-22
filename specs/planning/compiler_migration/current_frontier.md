@@ -7,7 +7,7 @@ counts in historical slice documents are checkpoints, not the current count.
 
 | Selected area | Concrete dependency | Next action |
 | --- | --- | --- |
-| Structural syntax access and semantic consumers | Candidate a1a1babd clears #235 and builds the query project, but native execution eagerly evaluates a false guard's RHS | v0.1 short-circuit follow-up is reported on #236; rerun the query behavior proof after a fix. |
+| Structural syntax access and semantic consumers | Explicit source guards now pass the focused query/cursor PHP/native proof on a1a1babd | Consolidate cumulative integration and target adoption; no operator fix is required for this component. |
 | Semantic records, lifecycle and backend vocabulary | 41 string-backed enums and seven enum methods exceed the selected native subset | Implement the staged typed-tag/codec plan accepted on 2026-09-22; see enum_portability_decision.md. |
 | Lexical worker and source diagnostics | Explicit global base class resolves inside the derived namespace | #233 supplies d493525d and combined descendant 361b1e97; validate the diagnostic component before adoption. |
 | Manifest parsing and runtime metadata ingestion | Native JSON tables erase object/list identity | Native lossless document API with a PHP counterpart accepted on 2026-09-22; json_document_requirement.md defines the requirement. |
@@ -53,5 +53,6 @@ See [the PHP adaptation record](php_adaptation_record.md) for completed changes,
 optimization follow-ups and the approved cursor-first resume assessment.
 
 [Candidate a1a1babd proof](../../portability/release_candidate_a1a1babd.md): all ten
-established native suites pass; the pending query component has the runtime blocker
-above. The configured pin and 36-file ready manifest remain unchanged.
+established native suites pass. Subsequent explicit source guards clear the query
+behavior failure; see `results/explicit-guards-01` and the adaptation record. The
+configured pin and 36-file ready manifest remain unchanged.
