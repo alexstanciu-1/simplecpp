@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **105 production files**: input preparation (137 outcomes),
+Active readiness is **106 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -130,3 +130,9 @@ Callable_Abi_Import adds 113 PHP/native outcomes and 112 applicable retained
 comparisons (`results/callable-positions-01`). Result transport and semantic-to-ABI
 position normalization are proved. Next: complete callable identity/exposure and
 binding composition, then package acceptance and shared provider symbols.
+
+Complete callable metadata composition adds 34 PHP/native outcomes and 34 retained
+comparisons (`results/callable-import-01`). Explicit compiler exposure/payload
+projections preserve the original consumer behavior; accepted backend export ownership
+is still a separate dependency. Next: remaining type/storage import and package
+ownership/composition, then provider symbols. No end-to-end provider pipeline yet.

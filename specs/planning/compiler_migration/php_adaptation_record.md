@@ -1177,3 +1177,43 @@ identity/exposure validation, resource effects, language bindings and global cal
 binding validation still need to be composed. Preparation PHP is unchanged.
 
 Cumulative fast validation passes at 105 registered production files.
+
+## Complete callable metadata composition
+
+Callable_Import now composes physical normalization, resource effects, language
+roles and conversion permissions into accepted Runtime_Callable records. It reserves
+IDs and linker symbols for every operation, including unexposed lifecycle helpers;
+compiler-owned exposures can override metadata names, and unknown binding IDs are
+rejected. Source exposure retains the prototype's supported operation kinds, ccc /
+terminate / caught-in-bridge boundary and unqualified exposure-name uniqueness.
+Surplus ABI positions are rejected before any list is returned.
+
+The consumer accepts explicit projections of package bindings: a named exposure map
+and accepted source-payload IDs. It preserves required copy_out results and const
+copy_in parameters. This avoids coupling metadata validation to unmigrated backend
+export implementation types. The future package coordinator must derive these
+projections from its accepted bindings; they are not a replacement for source-export
+ownership or proof that backend preparation is migrated. No fake export classes or
+provider declarations were introduced. The retained oracle uses payload-key
+membership markers solely because this original consumer inspects membership only.
+
+Callable_Bindings is the reusable fixed-set uniqueness owner, also needed later by
+cross-package composition. Exact quoted tuple keys keep language role/type and
+conversion purpose/source/destination identities separate. Default literal selection
+is unique across types. The existing Package_Syntax ASCII spelling check is extracted
+for language names and linker symbols; it remains a local check, not name resolution.
+
+34 whole-callable PHP/native cases pass on the first native build with no correction,
+and all 34 match the retained importer. Cases cover compiler overrides, implicit
+operations, duplicate identities/roles/conversions/defaults, allocation effects,
+source payload crossings and final ABI positions. The moved syntax helper receives
+its focused native regression. Evidence and phase timings are in results/callable-import-01.
+
+Prepared package type/storage import, bindings/export ownership, SHA-256 verification,
+leases and whole-package composition remain. Source-runtime preparation stays PHP
+unchanged. Next: remaining package type/storage and ownership dependencies before
+provider symbol integration; callable-set acceptance is not whole-package acceptance.
+
+Cumulative fast validation passes at 106 registered production files; the final
+host stage includes all 34 retained-importer comparisons. Syntax native regression
+passes all 66 outcomes on the extracted identifier helper.

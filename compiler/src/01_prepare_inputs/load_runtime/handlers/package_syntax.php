@@ -57,6 +57,10 @@ final class Package_Syntax {
         if (($name->kind() !== 'string') || ($namespace->kind() !== 'string')) { throw new \RuntimeException('Unsupported runtime language name'); }
         if ($namespace->text() !== '') { throw new \RuntimeException('Unsupported runtime language name'); }
         $text = $name->text();
+        Package_Syntax::require_identifier_spelling($text);
+        return \type_model\Type_Reference::named($text, '');
+    }
+    public static function require_identifier_spelling(string $text): void {
         if (string_byte_len($text) === 0) { throw new \RuntimeException('Unsupported runtime language name'); }
         for ($index = 0; $index < string_byte_len($text); $index++) {
             $byte = string_byte_at($text, $index);
@@ -65,7 +69,6 @@ final class Package_Syntax {
                 if (($index === 0) || ($byte < 48) || ($byte > 57)) { throw new \RuntimeException('Unsupported runtime language name'); }
             }
         }
-        return \type_model\Type_Reference::named($text, '');
     }
     public static function identifier(\scpp\Json_View $value): string {
         if ($value->kind() !== 'string') { throw new \RuntimeException('Missing runtime identity'); }

@@ -108,3 +108,4 @@ require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/lifecycle.p
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/records.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/bindings.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/callables.php';
+require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/utilities/callable_bindings.php';

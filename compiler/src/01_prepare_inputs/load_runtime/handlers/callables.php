@@ -124,3 +124,74 @@ final class Callable_Abi_Import {
         return new Call_Parameter_Position(new \type_model\Semantic_Parameter($reference, \type_model\PASS_VALUE), $abi, $offset + 1);
     }
 }
+
+/** Whole callable-set acceptance. Compiler names and accepted payload IDs are explicit projections
+ * of compiler-owned package bindings; this consumer does not manufacture backend exports. */
+final class Callable_Import {
+    private static function present(\scpp\Json_View $row, string $key): bool {
+        if (!$row->has($key)) { return false; }
+        return $row->member($key)->kind() !== 'null';
+    }
+    private static function text(\scpp\Json_View $row, string $key, string $expected): void {
+        if ($row->member($key)->text() !== $expected) { throw new \RuntimeException('Unsupported runtime callable ' . $key); }
+    }
+    private static function exposure(\scpp\Json_View $row, array $bindings /** hash<\type_model\Type_Reference> */, string $id): \type_model\Type_Reference {
+        if (isset($bindings[$id])) { return $bindings[$id]; }
+        return Package_Syntax::language_name($row->member('expose_as'));
+    }
+    public static function callables(array $rows /** vector<\scpp\Json_View> */, array $types /** hash<Runtime_Type> */, string $provider,
+        array $bindings /** hash<\type_model\Type_Reference> */, array $source_payload_ids /** vector<string> */): array /** vector<\type_model\Runtime_Callable> */ {
+        $payloads /** hash<bool> */ = [];
+        foreach ($source_payload_ids as $id) { $payloads[$id] = true; }
+        foreach ($bindings as $binding) {
+            if ($binding->kind !== \type_model\TYPE_REFERENCE_NAMED) { throw new \RuntimeException('Compiler callable exposure requires a named binding'); }
+        }
+        $accepted /** vector<\type_model\Runtime_Callable> */ = [];
+        $ids /** hash<bool> */ = []; $links /** hash<bool> */ = []; $names /** hash<bool> */ = [];
+        foreach ($rows as $row) {
+            $id = Package_Syntax::identifier($row->member('id'));
+            $link = $row->member('symbol')->text(); Package_Syntax::require_identifier_spelling($link);
+            if (isset($ids[$id]) || isset($links[$link])) { throw new \RuntimeException('Duplicate runtime operation identity'); }
+            $ids[$id] = true; $links[$link] = true;
+            if (!isset($bindings[$id])) {
+                if (!Callable_Import::present($row, 'expose_as')) { continue; }
+            }
+            $exposure = Callable_Import::exposure($row, $bindings, $id);
+            $name = $exposure->name(); $kind = $row->member('kind')->text();
+            if (isset($names[$name])) { throw new \RuntimeException('Duplicate exposed runtime callable'); }
+            if (($kind !== 'free_function') && ($kind !== 'construct') && ($kind !== 'construct_from_bytes') && ($kind !== 'const_method')) { throw new \RuntimeException('Unsupported exposed runtime callable'); }
+            Callable_Import::text($row, 'calling_convention', 'ccc');
+            Callable_Import::text($row, 'error_policy', 'terminate');
+            Callable_Import::text($row, 'exception_boundary', 'caught_in_bridge');
+            $names[$name] = true;
+            $positions = Package_Syntax::rows($row->member('abi')->member('parameters'), 'ABI parameter');
+            $result = Callable_Abi_Import::call_result($row, $types, $positions);
+            $raw_result = $row->member('result');
+            $result_id = Package_Syntax::identifier($raw_result->member('type'));
+            if (isset($payloads[$result_id])) { Callable_Import::text($raw_result, 'payload_crossing', 'copy_out'); }
+            $parameters /** vector<\type_model\Semantic_Parameter> */ = [];
+            $parameter_abi /** vector<\type_model\Runtime_Abi_Position> */ = [];
+            $offset = $result->next_position;
+            $raw_parameters = Package_Syntax::rows($row->member('parameters'), 'parameter');
+            foreach ($raw_parameters as $parameter) {
+                $type_id = Package_Syntax::identifier($parameter->member('type'));
+                if (isset($payloads[$type_id])) {
+                    Callable_Import::text($parameter, 'payload_crossing', 'copy_in');
+                    Callable_Import::text($parameter, 'passing', 'const_address');
+                }
+                $normalized = Callable_Abi_Import::call_parameter($parameter, $types, $positions, $offset);
+                $parameters[] = $normalized->semantic; $parameter_abi[] = $normalized->abi;
+                $offset = $normalized->next_position;
+            }
+            if (q_count($positions) !== $offset) { throw new \RuntimeException('Runtime semantic/ABI parameter count mismatch'); }
+            $effect = Resource_Import::call_allocation_effect($row, $types);
+            $signature = new \type_model\Semantic_Signature($parameters, $result->semantic, $effect);
+            $physical = new \type_model\Runtime_Callable_Abi($link, 'ccc', $result->abi, $parameter_abi, $result->passing);
+            $binding = Binding_Import::call_language_binding($row, $signature);
+            $accepted[] = new \type_model\Runtime_Callable($provider, $id, $name, $exposure->namespace_name(), $signature, $physical, $binding->binding, $binding->default_literal, Binding_Import::call_conversion($row, $signature));
+        }
+        foreach ($bindings as $id => $binding) { if (!isset($ids[$id])) { throw new \RuntimeException('Unknown compiler callable binding'); } }
+        Callable_Bindings::validate($accepted);
+        return $accepted;
+    }
+}
