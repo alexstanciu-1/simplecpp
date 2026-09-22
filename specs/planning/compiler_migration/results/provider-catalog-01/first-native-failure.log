@@ -1,0 +1,7 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/04_analyze/type_model/data/catalog.phs:18: no matching function for call to 'foreach_range'
+Generated location: .prism/generated/src/04_analyze/type_model/data/catalog.cpp:36:39
+Raw compiler excerpt:
+catalog.cpp:36:39: error: no matching function for call to 'foreach_range'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

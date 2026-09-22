@@ -95,3 +95,8 @@ The earlier confirmation requirement is satisfied.
 These establish ABI-independent semantic inputs. Catalog/import integration,
 source/provider symbol origins, provider-aware lookup, and template workers
 remain to be migrated; these checkpoints do not claim a working provider pipeline.
+
+Normalized record catalog storage and Family_Adapter acceptance/exposure validation
+are also proved (results/provider-catalog-01). This completes record lookup and
+family-to-catalog mapping checks, not prepared-package JSON ingestion/composition.
+Existing scalar and project-resolution native proofs pass on the extended catalog.

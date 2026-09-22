@@ -878,3 +878,33 @@ before vector copying. This preserves the prototype's self-application list
 requirement instead of erasing invalid keys. The added host rejection passes;
 both affected native proofs are rerun on this final source. This is a review
 correction, not a native-build failure; the first passing milestones are retained.
+
+## Normalized provider records and family import acceptance (2026-09-22)
+
+Type_Catalog now retains normalized Record_Declaration rows separately from
+materialized Named_Definition rows. Both share exact qualified-name collision
+checks; record lookup returns the original declaration and does not allocate type
+IDs or infer layout. Existing scalar defaults retain exact definition identity.
+The scalar language JSON schema remains unchanged. Read-only count/index access
+replaces exported mutable arrays. Optional record input uses an explicit nullable
+container unwrap before iteration.
+
+Family_Adapter migrates acceptance, source exposure and catalog mapping validation
+from the prototype. It retains provider identity, rejects duplicate identities and
+source-name collisions across named/record/family declarations, and requires exact
+provider-to-language mappings for every provider reference in parameters/results.
+It consumes semantic records; it does not run preparation, parse package metadata,
+acquire leases or register symbols. Those boundaries remain separate dependencies.
+
+30 PHP/native outcomes pass. The first native attempt rejected foreach on a
+nullable vector; take_nullable into a concrete vector is the corrected source form.
+The second attempt passes, with one source/native correction and no converter or
+v0.1 changes. Existing scalar-catalog (116) and project-resolution (182) native
+proofs also pass on the final source. Their first parallel attempts repeated the
+same failure; incremental rebuilds reuse unchanged units for final verification.
+Future workflow: finish the focused native proof before launching broader native
+regressions, to avoid multiplying one new-shape failure.
+
+Evidence, source hashes, commands and phase timings: results/provider-catalog-01.
+Package ingestion/composition, callable/storage contracts, shared provider symbols
+and name bindings, and full template execution still remain.

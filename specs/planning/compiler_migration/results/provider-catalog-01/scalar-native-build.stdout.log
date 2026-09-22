@@ -1,0 +1,16 @@
+Transpiled PHP files: 1, skipped unchanged: 52
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: reuse existing artifact only
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/2] CXX src/04_analyze/type_model/data/catalog.o
+[2/2] LINK main
+Rebuilt outputs: .prism/build/main, .prism/build/src/04_analyze/type_model/data/catalog.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

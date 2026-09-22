@@ -247,3 +247,8 @@ model native no-follow/nonblocking open races; state those limits explicitly rat
 than treating ordinary stream reads as full native protocol parity.
 
 For scalar schema values, [Json_View integer/boolean access](scalar_catalog.md) rejects wrong kinds, fractions/exponents and integer overflow; do not coerce provider metadata through strings or floating values.
+
+For nullable constructor containers, unwrap into a concrete typed vector with
+`take_nullable` before `foreach`. A null guard alone does not unwrap the native
+nullable container. Normalized record catalog input proves this path in
+`specs/planning/compiler_migration/results/provider-catalog-01`.

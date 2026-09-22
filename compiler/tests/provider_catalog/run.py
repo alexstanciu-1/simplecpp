@@ -1,4 +1,4 @@
-"""Declaration target invariants, lookup roles and exact catalog identity."""
+"""Normalized record catalog and semantic family import acceptance."""
 import argparse
 import hashlib
 import json
@@ -9,8 +9,8 @@ import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
-FILES = ['src/04_analyze/resolve_symbols/data/declarations.php', 'src/04_analyze/resolve_symbols/utilities/declaration_lookup.php', 'src/04_analyze/resolve_symbols/utilities/function_lookup.php']
-DEPENDENCIES = ['src/01_prepare_inputs/read_sources/data/buffer.php', 'src/02_tokenize/structures.php', 'src/02_tokenize/store.php', 'src/02_tokenize/tokenize.php', 'src/03_parse/data/nodes.php', 'src/03_parse/data/tree.php', 'src/03_parse/utilities/binary_syntax.php', 'src/03_parse/data/expression_state.php', 'src/03_parse/handlers/expressions.php', 'src/03_parse/data/result.php', 'src/03_parse/handlers/statements.php', 'src/03_parse/handlers/control_statements.php', 'src/03_parse/handlers/declarations.php', 'src/03_parse/handlers/metaprogramming.php', 'src/03_parse/parse_file.php', 'src/03_parse/data/role_views.php', 'src/03_parse/utilities/metaprogramming_syntax.php', 'src/03_parse/utilities/struct_member_cursor.php', 'src/03_parse/utilities/syntax_access.php', 'src/03_parse/utilities/syntax_comparer.php', 'src/03_parse/data/store.php', 'src/03_parse/select_tasks.php', 'src/03_parse/join.php', 'src/03_parse/main_parse.php', 'src/04_analyze/collect_symbols/data/structures.php', 'src/04_analyze/collect_symbols/data/store.php', 'src/04_analyze/collect_symbols/data/result.php', 'src/04_analyze/collect_symbols/collect.php', 'src/04_analyze/collect_symbols/main_collect_symbols.php', 'src/04_analyze/resolve_types/data/entry_selection.php', 'src/04_analyze/resolve_types/main_prepare_entry.php', 'src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/context.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/lifetime_policy_codec.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/catalog.php', 'src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php', 'src/01_prepare_inputs/load_runtime/main_load_runtime.php', 'src/04_analyze/resolve_types/data/entry_contract.php', 'src/04_analyze/type_model/data/records.php']
+FILES = ['src/01_prepare_inputs/load_runtime/family_adapter.php']
+DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/generic.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/families.php', 'src/04_analyze/type_model/data/source_families.php', 'src/04_analyze/type_model/family_contracts.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/records.php', 'src/04_analyze/type_model/data/catalog.php']
 LOAD_ORDER = DEPENDENCIES + FILES
 
 
@@ -37,14 +37,8 @@ def main():
         assert result.returncode == 0, (label, result.stdout, result.stderr)
         return result.stdout
 
-    oracle=json.loads(run('retained-oracle',['php',Path(__file__).parent/'oracle.php']))
-    assert oracle == [True]*6+[False]*9
-    shutil.copy2(ROOT/'compiler/reference/pre-rewrite/language/named_types.json',inputs/'catalog.json')
-    expected=[True]*26
-    calls=['\\lookup_test\\Probe::run();']
-    invalid=[(0,1,1,1),(1,0,1,1),(1,4,1,1),(1,1,1,0),(1,2,1,1),(1,1,2,0),(1,1,3,1),(1,1,4,1),(1,3,5,0),(1,1,5,-1),(1,1,6,1),(1,1,7,1),(1,2,6,0),(1,2,99,1)]
-    for row in invalid:
-        calls.append('\\lookup_test\\Probe::invalid('+','.join(map(str,row))+');');expected.append(True)
+    expected=[True]*30
+    calls=['\\provider_catalog_test\\Probe::run();']
     for relative in DEPENDENCIES + FILES:
         dest=source/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(ROOT/'compiler'/relative,dest)
@@ -59,6 +53,9 @@ def main():
         actual=[json.loads(line) for line in run(label,command,out).splitlines()]
         assert actual==want,(label,actual,want)
     prove('php',php,expected)
+    report['php_ready_epoch'] = time.time()
+    report['php_ready_sha256'] = {f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in FILES}
+    (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
     generated=out/'phpp';conversion=['php',ROOT/'tools/php_portability/convert.php',source,generated]
     assert json.loads(run('convert',conversion))['converted']==len(DEPENDENCIES+FILES)+2
     assert json.loads(run('reuse',conversion))=={'converted':0,'reused':len(DEPENDENCIES+FILES)+2,'removed':0}
@@ -78,9 +75,9 @@ def main():
         report['target_revision']=revision
         assert run('clean-after',['git','-C',checkout,'status','--porcelain']).strip()==''
     (out/'expected.json').write_text(json.dumps(expected,indent=2)+'\n')
-    report.update(passed=True,native=bool(binary),cases=len(expected),lookup_outcomes=len(expected),
+    report.update(passed=True,native=bool(binary),cases=len(expected),provider_catalog_outcomes=len(expected),
                   production_files=FILES,source_sha256={f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in DEPENDENCIES+FILES})
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print(f'Name lookup: {len(expected)} outcomes passed; native={bool(binary)}')
+    print(f'Provider catalog: {len(expected)} outcomes passed; native={bool(binary)}')
 
 if __name__=='__main__':main()

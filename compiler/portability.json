@@ -95,7 +95,8 @@
     "src/04_analyze/type_model/data/semantic_calls.php",
     "src/04_analyze/type_model/data/families.php",
     "src/04_analyze/type_model/data/source_families.php",
-    "src/04_analyze/type_model/family_contracts.php"
+    "src/04_analyze/type_model/family_contracts.php",
+    "src/01_prepare_inputs/load_runtime/family_adapter.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

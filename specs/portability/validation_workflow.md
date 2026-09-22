@@ -70,6 +70,12 @@ newer workspace target is substituted. After fast checks, the existing native
 runner owns conversion, framework assembly, strict build/run and expected-result
 comparison. The driver verifies target cleanliness again afterwards.
 
+For a newly introduced representation or wrapper path, finish its focused native
+proof before launching broader native regressions. If a shared source correction
+is needed, preserve failed-attempt evidence and reuse unchanged build units for
+final verification; record the final source hashes, PHP/native outcomes and target
+revision. Do not count parallel repetitions of one defect as separate source fixes.
+
 Select proofs relevant to the change; repeat `--native` to request several:
 
 | Selection | Existing owner |

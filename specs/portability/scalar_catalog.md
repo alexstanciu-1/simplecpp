@@ -59,7 +59,14 @@ and is checked against independently expected definition facts. Eight host asser
 prove catalog/policy/list purity, repair reuse and UTF-8-qualified lookup.
 See [timings and provenance](../planning/compiler_migration/results/scalar-catalog-01/README.md).
 
-Next: source name resolution, following the prototype's analysis order. Canonical type
-storage/materialization, provider packages, record/resource extensions, signatures,
-bodies and the compiler session remain future components. src-runtime-preparation stays
-PHP unchanged.
+Source name resolution, canonical type storage and record/resource models have
+subsequent registered proofs. Provider package ingestion, complete body checking
+and the compiler session remain pending. src-runtime-preparation stays PHP.
+
+Type_Catalog also accepts a separate optional vector of normalized Record_Declaration
+inputs. It rejects record/record and record/named-definition qualified-name collisions,
+retains exact declaration identity, and exposes record_count/record_at/find_record.
+These records are not materialized canonical types. The scalar JSON schema remains
+unchanged; provider adapters own the separate import boundary. Family_Adapter now
+validates family exposure and explicit provider mappings against both catalog kinds.
+See the [provider catalog evidence](../planning/compiler_migration/results/provider-catalog-01/summary.json).

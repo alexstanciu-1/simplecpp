@@ -3,8 +3,8 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **94 production files**
-with PHP/native proofs. Next is provider catalog/import and shared symbol integration. No active compiler
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **95 production files**
+with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
@@ -106,4 +106,6 @@ carrier checks. Generic-family contracts/source exposures add 51 PHP/native chec
 and 33 retained-validator cases. Both first native builds passed without native
 corrective cycles. See the [approved provider integration plan](../specs/planning/compiler_migration/provider_declaration_integration.md)
 and [adaptation/timing record](../specs/planning/compiler_migration/php_adaptation_record.md).
-Provider ingestion, catalog composition and shared symbol integration remain pending.
+Normalized record catalog storage and family import acceptance now add 30 PHP/native
+checks, with scalar/catalog and source-resolution native regressions passing.
+Prepared-package ingestion/composition and shared symbol integration remain pending.

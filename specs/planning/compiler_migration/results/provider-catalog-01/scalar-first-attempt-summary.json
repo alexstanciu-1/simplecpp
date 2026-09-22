@@ -1,0 +1,240 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "retained-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/scalar_catalog/oracle.php",
+        "/tmp/provider-catalog-scalar-native-01/inputs/catalog.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/changed.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/no-boolean.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-0.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-1.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-2.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-3.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-4.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-5.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-6.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-7.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-8.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-9.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-10.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-11.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-12.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-13.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-14.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-15.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-16.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-17.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-18.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-19.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-20.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-21.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-22.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-23.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-24.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-25.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-26.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-27.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-28.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-29.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-30.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-31.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-32.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-33.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-34.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-35.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-36.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-37.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-38.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-39.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-40.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-41.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-42.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-43.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-44.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-45.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-46.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-47.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-48.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-49.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-50.json"
+      ],
+      "seconds": 0.062,
+      "exit": 0
+    },
+    {
+      "label": "host-purity",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/scalar_catalog/purity.php",
+        "/tmp/provider-catalog-scalar-native-01/inputs/catalog.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/changed.json",
+        "/tmp/provider-catalog-scalar-native-01/inputs/bad-4.json"
+      ],
+      "seconds": 0.08,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/provider-catalog-scalar-native-01/source"
+      ],
+      "seconds": 0.163,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/provider-catalog-scalar-native-01/source"
+      ],
+      "seconds": 1.454,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/02_tokenize/structures.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/02_tokenize/store.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/02_tokenize/tokenize.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/data/nodes.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/data/tree.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/utilities/binary_syntax.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/data/expression_state.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/handlers/expressions.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/data/result.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/handlers/statements.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/handlers/control_statements.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/handlers/declarations.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/handlers/metaprogramming.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/parse_file.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/data/role_views.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/utilities/metaprogramming_syntax.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/utilities/struct_member_cursor.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/utilities/syntax_access.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/utilities/syntax_comparer.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/data/store.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/select_tasks.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/join.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/03_parse/main_parse.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/collect_symbols/data/structures.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/collect_symbols/data/store.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/collect_symbols/data/result.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/collect_symbols/collect.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/collect_symbols/main_collect_symbols.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/resolve_types/data/entry_selection.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/resolve_types/main_prepare_entry.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/lifetime_policy_codec.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/type_model/data/catalog.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/01_prepare_inputs/load_runtime/main_load_runtime.php",
+        "/tmp/provider-catalog-scalar-native-01/source/src/04_analyze/resolve_types/data/entry_contract.php",
+        "/tmp/provider-catalog-scalar-native-01/source/probe.php",
+        "/tmp/provider-catalog-scalar-native-01/source/main.php"
+      ],
+      "seconds": 0.097,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/provider-catalog-scalar-native-01/source",
+        "/tmp/provider-catalog-scalar-native-01/phpp"
+      ],
+      "seconds": 0.607,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/provider-catalog-scalar-native-01/source",
+        "/tmp/provider-catalog-scalar-native-01/phpp"
+      ],
+      "seconds": 0.067,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/provider-catalog-scalar-native-01/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.059,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.008,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.028,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.156,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 81.037,
+      "exit": 1
+    }
+  ],
+  "native_build_attempts": 1
+}
