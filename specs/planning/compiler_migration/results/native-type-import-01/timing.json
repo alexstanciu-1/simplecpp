@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790101981.0,
+  "initial_expectations_passed_epoch": 1790102008.4049041,
+  "initial_expectations_note": "Retained comparison disproved the initial null-resource expectation; this was not accepted as behavioral readiness.",
+  "php_ready_epoch": 1790102038.4582112,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/data/family_preparation.php": "e35262363bf4b61fb60115b86c5dd435a5d70f05748393d966d0b93c71c6dc50",
+    "src/01_prepare_inputs/load_runtime/handlers/native_import.php": "7b6e7ebfdcaa3e598c1406b23f426399f708bbbff1876f0ccc81f769aaaa9193"
+  },
+  "authoring_to_php_ready_seconds": 57.458,
+  "php_ready_to_native_pass_seconds": 44.721,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "php_behavioral_corrections": 1,
+  "native_build_seconds": 31.68,
+  "consolidation_start_epoch": 1790102114.394664,
+  "consolidation_end_epoch": 1790102220.7095568
+}

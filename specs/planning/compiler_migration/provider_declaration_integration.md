@@ -165,3 +165,10 @@ agreement (`results/type-exposure-01`): exact scalar/void catalog identity, expl
 opaque/span permissions and deferred record materialization. Native/source imports
 cannot use this path. Next: exact accepted native imports and source export ownership,
 then whole-package composition/acceptance.
+
+
+Accepted native type imports add 40 PHP/native outcomes and retained-importer
+comparisons (`results/native-type-import-01`). Exact definition identity, measured
+storage and semantic copy/assignment permission are checked separately from C++
+traits. Next: source-export ownership and complete package type publication/retention;
+package target/checksum/lease acceptance remains incomplete.

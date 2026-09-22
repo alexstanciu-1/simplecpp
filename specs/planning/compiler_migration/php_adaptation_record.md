@@ -1324,3 +1324,27 @@ PHP iteration corrected a mistaken method access to Type_Reference's existing ki
 field. The retained oracle then needed its resource-enum include. Review broadened
 resource rejection tests before native compilation. Evidence/timings are recorded
 in `results/type-exposure-01`; complete package acceptance is not yet claimed.
+
+
+## Accepted native type imports and generic requirements
+
+`Runtime_Type_Import` preserves the prototype's accepted provider/type identity,
+exact runtime type object and target provenance. `Native_Type_Import::definition`
+checks physical metadata against that owner and returns its existing language
+definition, without copying it or deriving capabilities from equal storage.
+The package coordinator still owns target-triple/data-layout acceptance and conflicting
+compiler binding routes; this helper does not claim whole-package acceptance.
+
+The existing `Generic_Contracts` owner now also reports missing value lifetime, copy
+construction or assignment from the accepted definition's lifetime policy. C++ copy
+trait flags remain necessary import evidence but cannot replace semantic permissions.
+Version-1 native-import metadata retains its exact provider/id key protocol, including
+order. Empty object/array lifecycle metadata both match the retained decoded empty
+array contract. A resource key is forbidden even when null: retained-oracle comparison
+caught an initial mistaken expectation that all null markers meant absence. That
+expectation and the helper were corrected before native compilation. Other nullable
+markers preserve their existing isset-like behavior.
+
+Evidence: `results/native-type-import-01`. Remaining source-export binding, full type
+map publication/retention and package checksum/lease validation are still separate
+migration work.

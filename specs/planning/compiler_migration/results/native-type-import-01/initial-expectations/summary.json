@@ -1,0 +1,74 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/native-type-import-php-01/source"
+      ],
+      "seconds": 0.098,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/native-type-import-php-01/source"
+      ],
+      "seconds": 0.604,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/native-type-import-php-01/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/native-type-import-php-01/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/native-type-import-php-01/source/src/04_analyze/type_model/data/generic.php",
+        "/tmp/native-type-import-php-01/source/src/01_prepare_inputs/load_runtime/handlers/package_types.php",
+        "/tmp/native-type-import-php-01/source/src/01_prepare_inputs/load_runtime/data/family_preparation.php",
+        "/tmp/native-type-import-php-01/source/src/01_prepare_inputs/load_runtime/handlers/native_import.php",
+        "/tmp/native-type-import-php-01/source/probe.php",
+        "/tmp/native-type-import-php-01/source/main.php"
+      ],
+      "seconds": 0.065,
+      "exit": 0
+    },
+    {
+      "label": "retained-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/native_type_import/oracle.php",
+        "/tmp/native-type-import-php-01/cases.json"
+      ],
+      "seconds": 0.052,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 0,
+  "php_ready_epoch": 1790102008.4049041,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/data/family_preparation.php": "e35262363bf4b61fb60115b86c5dd435a5d70f05748393d966d0b93c71c6dc50",
+    "src/01_prepare_inputs/load_runtime/handlers/native_import.php": "9aef66daf647852abe3cd832f7a8eb96b69f6cbfe44b84e71758ac7d48e8b6d7"
+  }
+}

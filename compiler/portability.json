@@ -110,7 +110,9 @@
     "src/01_prepare_inputs/load_runtime/utilities/callable_bindings.php",
     "src/01_prepare_inputs/load_runtime/handlers/storage.php",
     "src/01_prepare_inputs/load_runtime/handlers/package_types.php",
-    "src/01_prepare_inputs/load_runtime/handlers/type_exposure.php"
+    "src/01_prepare_inputs/load_runtime/handlers/type_exposure.php",
+    "src/01_prepare_inputs/load_runtime/data/family_preparation.php",
+    "src/01_prepare_inputs/load_runtime/handlers/native_import.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
