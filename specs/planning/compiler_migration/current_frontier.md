@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **79 production files**: input preparation (137 outcomes),
+Active readiness is **81 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -68,4 +68,4 @@ established native suites pass. Subsequent explicit source guards clear the quer
 behavior failure; see `results/explicit-guards-01` and the adaptation record. That historical 39-file validation does not apply to the active rewrite manifest.
 
 Native record layout contracts add 18 PHP/native outcomes and 441 retained-contract
-comparisons. Resource-aware definition validation now adds 39 PHP/native checks and 90 retained allocation-effect cases. Next: normalized field/array recipes and record materialization.
+comparisons. Resource-aware definition validation now adds 39 PHP/native checks and 90 retained allocation-effect cases. Record/array materialization adds 27 PHP/native checks. Next: concrete annotation and provider/storage dependencies.

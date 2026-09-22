@@ -189,3 +189,6 @@ Native record layout stage: 18 shared outcomes and 441 retained-constructor host
 
 Resource obligations: 39 PHP/native outcomes and 90 retained allocation-effect comparisons;
 existing scalar-catalog native proof is rerun after extending Named_Definition.
+
+Record materialization adds 27 shared PHP/native outcomes covering field recipes,
+canonical arrays, nested ownership, native measurements and malformed inputs.

@@ -1,0 +1,43 @@
+Transpiled PHP files: 27, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/29] PCH app_pch.hpp.gch
+[2/29] CXX src/04_analyze/type_model/data/definitions.o
+[3/29] CXX src/04_analyze/type_model/data/context.o
+[4/29] CXX scpp_framework/collections.o
+[5/29] CXX src/04_analyze/resolve_types/data/lifecycle_bodies.o
+[6/29] CXX src/04_analyze/type_model/data/lifecycle.o
+[7/29] CXX scpp_framework/filesystem.o
+[8/29] CXX scpp_framework/exceptions.o
+[9/29] CXX src/04_analyze/resolve_types/utilities/type_cache.o
+[10/29] CXX src/04_analyze/resolve_types/lifecycle_composition.o
+[11/29] CXX scpp_framework/strings.o
+[12/29] CXX scpp_framework/json_document.o
+[13/29] CXX main.o
+[14/29] CXX src/04_analyze/type_model/data/catalog.o
+[15/29] CXX src/04_analyze/resolve_types/record_definitions.o
+[16/29] CXX probe.o
+[17/29] CXX src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o
+[18/29] CXX src/04_analyze/type_model/data/lifetime_policy_codec.o
+[19/29] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[20/29] CXX src/04_analyze/type_model/data/native_record_layout.o
+[21/29] CXX src/04_analyze/type_model/data/records.o
+[22/29] CXX src/04_analyze/type_model/data/representations.o
+[23/29] CXX src/04_analyze/type_model/data/semantic_modes.o
+[24/29] CXX src/04_analyze/type_model/data/type_record.o
+[25/29] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[26/29] CXX src/04_analyze/type_model/result_contracts.o
+[27/29] CXX src/04_analyze/type_model/data/resources.o
+[28/29] CXX src/04_analyze/type_model/data/store.o
+[29/29] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o, .prism/build/src/04_analyze/resolve_types/data/lifecycle_bodies.o, .prism/build/src/04_analyze/resolve_types/lifecycle_composition.o, .prism/build/src/04_analyze/resolve_types/record_definitions.o, .prism/build/src/04_analyze/resolve_types/utilities/type_cache.o, .prism/build/src/04_analyze/type_model/data/catalog.o, .prism/build/src/04_analyze/type_model/data/context.o, .prism/build/src/04_analyze/type_model/data/definitions.o, .prism/build/src/04_analyze/type_model/data/lifecycle.o, .prism/build/src/04_analyze/type_model/data/lifecycle_roles.o, .prism/build/src/04_analyze/type_model/data/lifetime_contract.o, .prism/build/src/04_analyze/type_model/data/lifetime_policy_codec.o, .prism/build/src/04_analyze/type_model/data/native_record_layout.o, .prism/build/src/04_analyze/type_model/data/records.o, .prism/build/src/04_analyze/type_model/data/representations.o, .prism/build/src/04_analyze/type_model/data/resources.o, .prism/build/src/04_analyze/type_model/data/semantic_modes.o, .prism/build/src/04_analyze/type_model/data/store.o, .prism/build/src/04_analyze/type_model/data/type_record.o, .prism/build/src/04_analyze/type_model/result_contracts.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

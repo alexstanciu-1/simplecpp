@@ -1,0 +1,6 @@
+{
+  "php_corrections": 1,
+  "native_commands": 2,
+  "native_corrections": 0,
+  "detail": "Identifier helper corrected to integer byte comparisons before PHP-ready; second successful native build expands meaningful coverage from 15 to 27."
+}

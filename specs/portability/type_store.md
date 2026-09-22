@@ -1,4 +1,4 @@
-# Canonical type storage and scalar materialization
+# Canonical type storage and definition materialization
 Doc Status: supporting
 
 `type_model\Type_Store` owns separate one-based type and representation IDs and
@@ -29,11 +29,12 @@ stale scalar-versus-owned result contract. The retained oracle reproduces the ol
 omission; this is an intentional correction within the store owner.
 
 `resolve_types\Type_Cache` prepares full/retained candidates using all three context
-keys and materializes the current scalar catalog's definitions. It never changes the
-caller's full-rebuild decision. Scalar materialization is not a substitute for the
-remaining array/resource/source-structure definition producers. The store supports
+keys and materializes requested scalar, opaque and byte-span definitions. It never changes the
+caller's full-rebuild decision. Field_Type recipes also materialize canonical element/count array definitions;
+Record_Definitions normalizes fields, ownership paths, layout and lifecycle contracts.
+Provider-specific typed storage remains a separate dependency. The store supports
 structural shapes and general value-definition bindings. Normalized record/array
-producers and their resource/layout metadata remain separate dependencies. Storage/
+producers now bind their resource/layout metadata through Record_Definitions. Storage/
 structure definition scans and production debug serialization will follow their
 consumers; no empty placeholder implementations are supplied.
 

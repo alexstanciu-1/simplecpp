@@ -717,3 +717,24 @@ no algorithm/target/converter fix was made. The guide records the restriction. C
 dependency closures were updated for existing stages. Static paths remain dense typed
 vectors; shape-bound range checking is the responsibility of later concrete producers,
 as in the prototype. Next: array/field recipes and resource-aware record materialization.
+
+## Normalized fields, arrays and record materialization (2026-09-22)
+
+Field_Type replaces the named-definition/array-recipe union with one immutable recipe:
+zero extent means the named value; fixed_array rejects nonpositive counts. Positive
+extent rejects allocation owners and records with owning leaf paths. Field_Declaration
+and Record_Declaration own typed immutable normalized inputs. Record_Definitions validates
+ASCII names, field uniqueness, automatic lifecycle and native measurement coverage,
+materializes fields, prefixes owning paths, and derives complete lifecycle contracts.
+Type_Cache now handles byte-span/opaque named definitions and element/count array identity;
+existing record definitions reuse their already-bound canonical shape. Array plans retain
+a repeat count rather than per-element expansion. Failed private candidates must be
+discarded, as in the prototype. Typed storage-family descriptors still await their owner.
+
+27 integrated PHP/native checks cover scalar/array/nested records, owning paths, native
+measurement identity and malformed record rejection. First PHP attempt corrected the
+identifier helper to compare integer byte values. Both native builds passed: first 15
+outcomes, then 27 after adding nested ownership and rejection coverage. No native source
+correction, converter change or target change. Retained materialization algorithms were
+inspected; this slice does not claim an executed retained oracle. Timings and hashes are
+under results/record-materialization-01.

@@ -80,7 +80,9 @@
     "src/04_analyze/resolve_types/data/lifecycle_bodies.php",
     "src/04_analyze/resolve_types/lifecycle_composition.php",
     "src/04_analyze/type_model/data/native_record_layout.php",
-    "src/04_analyze/type_model/data/resources.php"
+    "src/04_analyze/type_model/data/resources.php",
+    "src/04_analyze/type_model/data/records.php",
+    "src/04_analyze/resolve_types/record_definitions.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

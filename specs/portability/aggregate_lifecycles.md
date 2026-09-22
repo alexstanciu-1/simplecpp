@@ -15,8 +15,9 @@ are available for default/copy/assignment/destruction; no move implementation is
 Imported operations retain their identity and are not exported as source bodies.
 
 Named_Definition represents general values, independently checking lifetime, integer
-capabilities and inline field eligibility. The current JSON catalog and Type_Cache
-materializer remain scalar-only. Normalized record/array producers are still pending.
+capabilities and inline field eligibility. The current JSON catalog remains scalar-only. Type_Cache and Record_Definitions now
+materialize normalized record/array recipes and retain ownership/layout metadata.
+Typed storage-family provider integration remains pending.
 
 Proof: 36 shared PHP/native outcomes and eight PHP-only mutation/domain checks.
 See [evidence](../planning/compiler_migration/results/aggregate-lifecycles-01/README.md).
