@@ -12,6 +12,29 @@ now passes on selected release v0.1.76; the older provider pin remains separate.
 also records a default-concurrency timeout; see the results before treating it as
 a clean gate.
 
+## Saved option: stage-by-stage replacement
+
+On 2026-09-22 the user agreed to retain stage-by-stage reimplementation in portable
+PHP as an alternative to preserving the prototype's internal implementation.
+The immediate next task is discussing lightweight native-aware authoring guidelines,
+not starting that rewrite.
+
+Use the prototype as an algorithm reference and regression corpus. Reuse suitable
+code and replace awkward mechanisms; a one-to-one replica of internal classes,
+APIs, identities and diagnostics is not the objective. Preserve intended language
+behavior, important external protocols and the route to the full compiler; decide
+specific changed stage boundaries before implementation. Prioritize valid-program
+meaning, relevant invalid-program rejection, clean/incremental agreement and
+PHP/native agreement for the new source. Keep identity/error-detail tests where
+an actual algorithm or consumer depends on them.
+
+A measured trial would complete tokenizer and parser workers, followed by a semantic
+vocabulary/consumer family, before estimating the rest of analysis. The earlier
+80–200-hour estimate assumed preservation-led migration and is not a commitment or
+a measured estimate for this alternative. Keep one development home and the
+migration-before-new-functionality objective; no prototype deletion or new parallel
+compiler fork is implied.
+
 ## Current resumed slice
 
 The user resumed bounded portability work after authoring/check/proof preparation.
@@ -19,7 +42,7 @@ The user resumed bounded portability work after authoring/check/proof preparatio
 and [fixed source read tasks](../../portability/compiler_read_tasks_slice.md)
 and [discovery records](../../portability/compiler_discovery_records_slice.md)
 and [Source_Set indexes and snapshots](../../portability/compiler_source_set_slice.md)
-now pass the cumulative PHP/native proof; thirty-six production files are ready.
+now pass the cumulative PHP/native proof; 39 production files are ready.
 The [source-scan result record](../../portability/compiler_scan_result_slice.md)
 and [source-scan reconciliation](../../portability/compiler_scan_join_slice.md)
 are also proved, including the approved marker Join contract. Source reader and
