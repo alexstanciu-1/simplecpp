@@ -341,3 +341,26 @@ claiming their not-yet-migrated semantic/session assertions pass.
 
 See [file parser contract](../../portability/file_parser.md) and
 [measured proof evidence](results/statements-declarations-01/README.md).
+
+## Syntax access and comparison (2026-09-22)
+
+Five prototype-owned files now query the new arena/result directly. Eleven role-view
+classes and comparison frames become explicit scalar value structs. The views retain
+only bounded source-local IDs/tags; parameter reference absence changes from nullable
+enum to zero. Queries construct fresh views explicitly, and comparison push publishes
+a fresh frame value into its vector slot, avoiding dependence on PHP object sharing.
+Compact observations are cast to int at comparison/index boundaries. Raw arena access
+uses the existing explicit row-copy owner; no second tree model was introduced.
+
+The logical comparison algorithm is preserved: spelling plus ordered descendants,
+excluding selected roots' own siblings and ignoring positions/comments. Explicit
+spelling guards avoid the known boolean short-circuit limitation. Nonzero input roots
+are validated before entering unsigned frame storage. Member traversal remains lazy,
+read-only and terminal after failure/exhaustion. No converter support or target fix
+was needed; the first native build and behavior run passed. Aggregate memory and
+optimized performance remain future measurement work, not inferred from PHP behavior.
+
+The first PHP-ready and native-ready commands now carry immediate timestamps and
+source hashes. This slice took about 3m52s to PHP-ready, then 1m20s to native-ready
+(including a 46.1-second build), with zero native corrections. See
+[measured evidence](results/syntax-access-01/README.md).

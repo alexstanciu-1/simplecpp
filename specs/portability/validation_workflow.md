@@ -3,7 +3,7 @@ Doc Status: supporting
 
 ## Active rewrite proofs
 
-The ready set contains twenty-five input/tokenization/parser production files. The default driver runs their
+The ready set contains thirty input/tokenization/parser production files. The default driver runs their
 PHP outcome proof plus independent framework checks. Add `--native compiler
 --target-checkout TARGET` to convert and prove all registered rewrite stages natively.
 `compiler/tests/run.py` requires the ready set to match registered stage sources.
@@ -14,6 +14,7 @@ See [manifest reading](project_manifest_reading.md) for 35 outcomes and
 [parser foundation](parser_foundation.md) for 414 outcomes plus the reused 5,000-stream unit, and
 [expressions](expression_parser.md) for 132 outcomes, and
 [file grammar](file_parser.md) for 82 outcomes plus nine host lifecycle assertions.
+[Syntax access/comparison](syntax_access.md) adds 134 PHP/native outcomes.
 
 The old compiler harness/oracles are preserved under
 `tests/portability/reference/pre-rewrite/`; replay them from Git branch
@@ -73,7 +74,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | Selection | Existing owner |
 | --- | --- |
 | `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
-| `compiler` | Registered active rewrite stages: twenty-five production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle) |
+| `compiler` | Registered active rewrite stages: thirty production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle), syntax access/comparison 134 |
 | `methods` | Named/scalar method boundaries, void, identity and mutation |
 | `returns` | Container return copying and nonpublic scalar state |
 | `iteration` | Typed map presence checks and by-value iteration |

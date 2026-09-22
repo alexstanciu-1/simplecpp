@@ -1,0 +1,9 @@
+{
+  "comparison-inputs.json": "3b5900b9d558a793afd58b32b44ca5fbedc62b7a974fa27095f901cbf8297fdc",
+  "retained-parse.stdout.log": "c5e604d4319e94aa2feb2d9ece02ea0366f2749e6227a7f2c16e1695996b858b",
+  "php.stdout.log": "86511ad06b167329f621181553d6831ede7fd541fb2d4a47ab402459d52cf299",
+  "expected.json": "482ef03f9108a3030f97059866edb715c770bf6eb976acdb65d765b3d4bffc37",
+  "reference-oracle.stdout.log": "26e176dc0bbb8ba15e912302c0e34ff33642e45661c6f90d2f57e29c58ee63e4",
+  "candidate-inputs.json": "7ce3565c377a2e79c3367e1b348611b5557fbc46307baebdb9ecb5d1e219b6b1",
+  "oracle-inputs.json": "2a35a1ca6bb0043a932d6fbe11236d2d27fdd31944657830dee0312e25d278ef"
+}

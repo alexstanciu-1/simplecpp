@@ -28,3 +28,8 @@ require_once __DIR__ . '/src/03_parse/handlers/control_statements.php';
 require_once __DIR__ . '/src/03_parse/handlers/declarations.php';
 require_once __DIR__ . '/src/03_parse/handlers/metaprogramming.php';
 require_once __DIR__ . '/src/03_parse/parse_file.php';
+require_once __DIR__ . '/src/03_parse/data/role_views.php';
+require_once __DIR__ . '/src/03_parse/utilities/metaprogramming_syntax.php';
+require_once __DIR__ . '/src/03_parse/utilities/struct_member_cursor.php';
+require_once __DIR__ . '/src/03_parse/utilities/syntax_access.php';
+require_once __DIR__ . '/src/03_parse/utilities/syntax_comparer.php';

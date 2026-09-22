@@ -60,7 +60,8 @@ checks unchanged token identity, independent arenas, failed-publication cleanup,
 determinism and bounded expression continuation slots.
 
 Whole original unit bodies also exercise syntax views, semantic stages and project
-joins; this proof does not claim those unmigrated paths pass. Project-wide parser
+joins; this proof does not claim those full unit bodies pass.
+[Syntax access/comparison](syntax_access.md) now has its own focused proof. Project-wide parser
 selection/join/reuse and the compiler CLI are still pending. src-runtime-preparation
 remains unchanged PHP.
 

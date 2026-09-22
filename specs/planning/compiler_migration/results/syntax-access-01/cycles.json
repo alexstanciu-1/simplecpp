@@ -1,0 +1,13 @@
+{
+  "native_build_attempts": 1,
+  "native_behavior_attempts": 1,
+  "corrective_cycles_after_php_ready": 0,
+  "php_native_source_hashes_identical": true,
+  "converter_changes": false,
+  "target_changes": false,
+  "outcomes": 134,
+  "role_inputs": 35,
+  "comparisons": 73,
+  "boundary_checks": 26,
+  "final_ready_files": 30
+}

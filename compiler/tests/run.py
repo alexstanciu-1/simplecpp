@@ -13,7 +13,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('tokenizer', Path(__file__).parent / 'tokenizer/run.py'),
           ('parser_foundation', Path(__file__).parent / 'parser_foundation/run.py'),
           ('expressions', Path(__file__).parent / 'expressions/run.py'),
-          ('statements', Path(__file__).parent / 'statements/run.py')]
+          ('statements', Path(__file__).parent / 'statements/run.py'),
+          ('syntax_access', Path(__file__).parent / 'syntax_access/run.py')]
 
 
 def main():

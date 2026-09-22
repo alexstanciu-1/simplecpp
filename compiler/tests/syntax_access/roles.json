@@ -1,0 +1,117 @@
+{
+  "FUNCTION_DECLARATION": [
+    "function_parts",
+    [
+      "name_id",
+      "parameters_id",
+      "return_type_id",
+      "body_id"
+    ]
+  ],
+  "STRUCT_DECLARATION": [
+    "struct_parts",
+    [
+      "name_id",
+      "first_member_id"
+    ]
+  ],
+  "FIELD_DECLARATION": [
+    "field_declaration_parts",
+    [
+      "type_syntax_id",
+      "variable_id",
+      "extent_id"
+    ]
+  ],
+  "PARAMETER_DECLARATION": [
+    "parameter_parts",
+    [
+      "variable_id",
+      "type_syntax_id",
+      "reference"
+    ]
+  ],
+  "LOCAL_DECLARATION": [
+    "local_declaration_parts",
+    [
+      "variable_id",
+      "type_syntax_id",
+      "initializer_id"
+    ]
+  ],
+  "ASSIGNMENT_STATEMENT": [
+    "assignment_parts",
+    [
+      "target_id",
+      "value_id"
+    ]
+  ],
+  "IF_STATEMENT": [
+    "control_parts",
+    [
+      "condition",
+      "body",
+      "alternative"
+    ]
+  ],
+  "WHILE_STATEMENT": [
+    "control_parts",
+    [
+      "condition",
+      "body",
+      "alternative"
+    ]
+  ],
+  "CONSTEXPR_IF_STATEMENT": [
+    "control_parts",
+    [
+      "condition",
+      "body",
+      "alternative"
+    ]
+  ],
+  "CONSTEVAL_IF_STATEMENT": [
+    "control_parts",
+    [
+      "condition",
+      "body",
+      "alternative"
+    ]
+  ],
+  "TEMPLATE_DECLARATION": [
+    "template_parts",
+    [
+      "parameters_id",
+      "declaration_id"
+    ]
+  ],
+  "TYPE_PARAMETER_DECLARATION": [
+    "template_parameter_parts",
+    [
+      "name_id",
+      "type_syntax_id"
+    ]
+  ],
+  "VALUE_PARAMETER_DECLARATION": [
+    "template_parameter_parts",
+    [
+      "name_id",
+      "type_syntax_id"
+    ]
+  ],
+  "TEMPLATE_APPLICATION": [
+    "template_application_parts",
+    [
+      "name_id",
+      "first_argument_id"
+    ]
+  ],
+  "CONSTANT_DECLARATION": [
+    "constant_parts",
+    [
+      "name_id",
+      "type_syntax_id",
+      "initializer_id"
+    ]
+  ]
+}

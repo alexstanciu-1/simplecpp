@@ -1,0 +1,11 @@
+{
+  "compiler/tests/syntax_access/probe.php": "75c3bcc6840a9d839fb89cf30e13f78bc9d3384d613badf3bfbf41af8f1cf361",
+  "compiler/tests/syntax_access/oracle.php": "8326618053d7bd5ed1a9ff9be412f62a323e7ba954f25ce01eba7f05ba60a2bd",
+  "compiler/tests/syntax_access/roles.json": "052d3039f00bfc542dbcd810f491de6964b43aaca197999a0cf84ab2e1c4e623",
+  "compiler/tests/syntax_access/run.py": "759dae1732ccdf88f9b0032e83f017deab53526dd8cf24c96461888032356b1e",
+  "compiler/reference/pre-rewrite/src/03_parse/data/role_views.php": "96fa787f2f6e0524de9683299d6929ff67a0bfad5993ef0da83d360996cb5e36",
+  "compiler/reference/pre-rewrite/src/03_parse/utilities/metaprogramming_syntax.php": "32e4ce409728fc14ce8b07d1cbeba4860d188e22628f6aab6033fd313a92f451",
+  "compiler/reference/pre-rewrite/src/03_parse/utilities/syntax_access.php": "9152a82bba02d2ed36bb8390f520bc0fa96dbaa243461b7b34d6e755fb2a1cf0",
+  "compiler/reference/pre-rewrite/src/03_parse/utilities/struct_member_cursor.php": "f98fcabcba7564e3380f0190095c3ae86c02e237a0b17f0e918693529b902dfe",
+  "compiler/reference/pre-rewrite/src/03_parse/utilities/syntax_comparer.php": "1da60cd94f118f179e8f6777b0edaa274c65aef1fa8354181a795ceac5a7acd5"
+}
