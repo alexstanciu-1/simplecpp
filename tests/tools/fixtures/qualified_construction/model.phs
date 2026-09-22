@@ -1,0 +1,13 @@
+namespace example;
+class row { public int $value = 7; }
+class Queries {
+    public static function row(): row { return new \example\row(); }
+    public static function namespaces(): void {
+        $global = new \row();
+        $cross = new \other\row();
+        echo $global->value, ":", $cross->value, "\n";
+    }
+}
+class PlainQueries {
+    public static function ordinary(): row { return new row(); }
+}

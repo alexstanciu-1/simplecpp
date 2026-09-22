@@ -1,0 +1,2 @@
+namespace other;
+class row { public int $value = 13; }

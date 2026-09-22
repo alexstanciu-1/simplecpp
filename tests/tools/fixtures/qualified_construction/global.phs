@@ -1,0 +1,1 @@
+class row { public int $value = 11; }
