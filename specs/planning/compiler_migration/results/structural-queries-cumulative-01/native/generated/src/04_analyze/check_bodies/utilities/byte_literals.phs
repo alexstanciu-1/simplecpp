@@ -1,0 +1,120 @@
+
+
+/* Decode non-interpolated quoted bytes; runtime constructor selection belongs to body checking. */
+namespace check_bodies;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+final class Byte_Literals {
+    private static function hex_digit(int $byte): int {
+        if (($byte >= 48) && ($byte < 58)) { return $byte - 48; }
+        if (($byte >= 65) && ($byte < 71)) { return $byte - 55; }
+        if (($byte >= 97) && ($byte < 103)) { return $byte - 87; }
+        return -1;
+    }
+
+    public static function decode(string $text): string {
+        $quote int = string_byte_at($text, 0);
+        $end int = string_byte_len($text) - 1;
+        if ((($quote !== 39) && ($quote !== 34)) || ($end < 1) || (string_byte_at($text, $end) !== $quote)) {
+            throw new \scpp_portability_invalid_argument_exception('Malformed quoted literal');
+        }
+        $bytes string = '';
+        for ($index int = 1; $index < $end; ++$index) {
+            $byte int = string_byte_at($text, $index);
+            $following int = string_byte_at($text, $index + 1);
+            if (($quote === 34) && ($byte === 36) &&
+                ((($following >= 65) && ($following < 91)) || (($following >= 97) && ($following < 123)) ||
+                 ($following === 95) || ($following === 123) || ($following >= 128))) {
+                throw new \scpp_portability_invalid_argument_exception('String interpolation is not supported');
+            }
+            if ($byte !== 92) {
+                $bytes = $bytes . string_byte_slice($text, $index, 1);
+                continue;
+            }
+            ++$index;
+            $next int = string_byte_at($text, $index);
+            if (($next === 92) || ($next === $quote)) {
+                $bytes = $bytes . string_byte_slice($text, $index, 1);
+                continue;
+            }
+            if ($quote === 39) {
+                $bytes = $bytes . "\\" . string_byte_slice($text, $index, 1);
+                continue;
+            }
+            $value int = -1;
+            if ($next === 110) { $value = 10; }
+            else if ($next === 114) { $value = 13; }
+            else if ($next === 116) { $value = 9; }
+            else if ($next === 118) { $value = 11; }
+            else if ($next === 102) { $value = 12; }
+            else if ($next === 101) { $value = 27; }
+            else if ($next === 36) { $value = 36; }
+            else if (($next >= 48) && ($next < 56)) {
+                $value = $next - 48;
+                for ($digits int = 1; ($digits < 3) && ($index + 1 < $end); ++$digits) {
+                    $digit int = string_byte_at($text, $index + 1) - 48;
+                    if (($digit < 0) || ($digit > 7)) { break; }
+                    $value = $value * 8 + $digit;
+                    ++$index;
+                }
+                $value = $value % 256;
+            }
+            else if ($next === 120) {
+                for ($digits int = 0; ($digits < 2) && ($index + 1 < $end); ++$digits) {
+                    $digit int = Byte_Literals::hex_digit(string_byte_at($text, $index + 1));
+                    if ($digit < 0) { break; }
+                    if ($value < 0) { $value = 0; }
+                    $value = $value * 16 + $digit;
+                    ++$index;
+                }
+            }
+            else if (($next === 117) && (string_byte_at($text, $index + 1) === 123)) {
+                throw new \scpp_portability_invalid_argument_exception('Unicode escape syntax is not supported; use UTF-8 literal bytes');
+            }
+            if ($value >= 0) { $bytes = $bytes . scpp_portability_byte_from_int($value); }
+            else { $bytes = $bytes . "\\" . string_byte_slice($text, $index, 1); }
+        }
+        return $bytes;
+    }
+}

@@ -1,0 +1,19 @@
+// Filesystem facade: ordinary observation failures become false for caller-owned diagnostics.
+function scpp_portability_fs_scan(string $path): result_or_false<vector<string>> {
+    $entries vector<string> = [];
+    $failure error;
+    if (!take($entries, $failure, fs_scan($path))) { return false; }
+    return $entries;
+}
+function scpp_portability_fs_size(string $path): result_or_false<int> {
+    $value int = 0;
+    $failure error;
+    if (!take($value, $failure, fs_size($path))) { return false; }
+    return $value;
+}
+function scpp_portability_fs_mtime(string $path): result_or_false<int> {
+    $value int = 0;
+    $failure error;
+    if (!take($value, $failure, fs_mtime($path))) { return false; }
+    return $value;
+}

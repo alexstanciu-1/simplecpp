@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "production_files": 39,
+  "retained_php_fixtures": 22,
+  "target_revision": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+  "target_clean": true,
+  "handoff": "https://github.com/alexstanciu-1/simplecpp/issues/236#issuecomment-5772057603",
+  "scope": "Cumulative ready set; not whole-compiler or complete semantic-consumer portability"
+}

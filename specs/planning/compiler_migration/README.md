@@ -58,14 +58,14 @@ now preserves complete reversible link identities; its retained preparation suit
 passes 170 checks. Latest cumulative evidence: `results/preparation-symbols-01`.
 The [struct-member cursor decision](struct_member_cursor_decision.md) was accepted
 on 2026-09-22. The typed cursor and ten consumers now pass the focused PHP proof
-and 39 retained fixtures. Query dependencies now convert and pass 27,560 PHP oracle comparisons, and the focused native query/cursor proof now passes on a1a1babd after explicit
-dependent guards; see [the adaptation record](php_adaptation_record.md#explicit-control-flow-for-dependent-guards).
-see `results/struct-member-cursor-01`. The ready count remains 36.
+and 39 retained fixtures. Query dependencies now convert and pass 27,560 PHP oracle comparisons, and the cumulative native query/cursor proof now passes on adopted a1a1babd after
+explicit dependent guards; see [the adaptation record](php_adaptation_record.md#explicit-control-flow-for-dependent-guards).
+Latest evidence: `results/structural-queries-cumulative-01`. The ready count is 39.
 [Source diagnostic preflight](source_diagnostic_preflight.md) records the next
 qualified-base target blocker (#233) and a passing typed-dispatch native control.
 It adds no file to the ready set.
 Earlier pause and file-count statements below describe their historical checkpoints.
-Process/lock facade parity passes on selected candidate `2f0d667f`; integration
+Process/lock facade parity passes on adopted candidate `a1a1babd`; integration
 into compiler owners still requires component proofs.
 
 The [PHP adaptation record](php_adaptation_record.md) records broad source changes,

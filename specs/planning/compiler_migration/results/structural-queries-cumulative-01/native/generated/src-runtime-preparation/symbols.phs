@@ -1,0 +1,88 @@
+
+
+namespace runtime_preparation;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Readable, reversible symbol spelling from complete identity components. */
+final class Symbols {
+    /**
+     * Encode the complete ordered identity as one reversible LLVM/C link name.
+     * @param list<string> $components
+     */
+    public static function name($components vector<string>): string {
+        if (count($components) === 0) {
+            throw new \scpp_portability_invalid_argument_exception('Symbol identity requires an ordered component list');
+        }
+        scpp_portability_sequence_require_strings($components, 'Symbol identity requires an ordered component list',
+            'Symbol identity components must be strings');
+        $encoded string = 'rp_';
+        $separator string = '';
+        foreach ($components  as $component) {
+            $encoded = $encoded . $separator . Symbols::component($component);
+            $separator = '_X_';
+        }
+        return $encoded;
+    }
+
+    /** Append a fact name to an already encoded type identity. */
+    public static function append(string $prefix, string $component): string {
+        return $prefix . '_X_' . Symbols::component($component);
+    }
+
+    private static function component(string $value): string {
+        $encoded string = '';
+        $hex string = '0123456789ABCDEF';
+        for ($i int = 0; $i < string_byte_len($value); ++$i) {
+            $byte int = string_byte_at($value, $i);
+            if ((($byte >= 65) && ($byte < 91)) || (($byte >= 97) && ($byte < 123)) || (($byte >= 48) && ($byte < 58))) {
+                $encoded = $encoded . string_byte_slice($value, $i, 1);
+            } else if ($byte === 95) { $encoded = $encoded . '__'; }
+            else {
+                $encoded = $encoded . '_x' . string_byte_slice($hex, (int)($byte / 16), 1)
+                    . string_byte_slice($hex, $byte % 16, 1) . '_';
+            }
+        }
+        return $encoded;
+    }
+}

@@ -28,9 +28,10 @@ by same-named query methods in emitted C++. This source disambiguation retains
 the existing PHP meaning; the initial failed native build is retained.
 
 The cursor preserves lazy validation and constant-size traversal state. Current
-requires a positioned cursor; exhaustion or failure closes traversal. The attempted native
+requires a positioned cursor; exhaustion or failure closes traversal. The cumulative PHP/native
 fixture includes template unwrapping, field filtering over interleaved methods,
-repeated current/advance, invalid declarations and shared node identity; these expectations pass in PHP, not yet in native.
+repeated current/advance, invalid declarations and shared node identity; these expectations pass on both PHP and native. Optional local initializers also
+cover absent/present values and unexpected trailing children.
 
 ## Evidence and limits
 
@@ -42,14 +43,21 @@ These cases are not exhaustive arbitrary graph coverage; cyclic graphs remain
 outside the input contract. Existing focused cursor tests separately verify early
 termination before a poisoned tail.
 
-The attempted cumulative native proof converts whole production files and expands
-the real trait, but is blocked by target class-construction handling. No replacement validator, partially extracted production class or edited
-native output is used. The retained parser/semantic/template/backend-preparation
-selection contains 39 passing fixtures. Native proof does not make their full
-consumer files or the whole compiler portable.
+The cumulative proof now includes all three query files alongside the previous
+36 production files. Whole-file conversion, trait expansion, incremental reuse and
+strict native execution pass on exact candidate
+`a1a1babd07082d9abf7ac885b2328c99368ad4cf`, now the configured unreleased target.
+The cumulative harness includes 22 retained PHP fixtures, including the focused
+cursor regression. Its independent expected output covers the existing ready set
+and the query/cursor behavior. Native coverage does not promote the ten semantic
+consumer files or establish whole-compiler portability.
 
-Evidence: `specs/planning/compiler_migration/results/structural-queries-01/`.
-The selected target remains the unreleased tested `2f0d667f` candidate.
+The earlier constructor and eager-evaluation failures remain in
+`results/structural-queries-01/` and `results/release-a1a1babd-01/`. #235 clears
+qualified construction; explicit source guards preserve optional traversal without
+changing target operator semantics. Focused adaptation evidence is in
+`results/explicit-guards-01/`; cumulative evidence is in
+`results/structural-queries-cumulative-01/` under the migration planning directory.
 
 ## Optimization follow-up
 
@@ -60,7 +68,5 @@ work. The shared query owner is the place to optimize; do not scatter unchecked
 special cases through consumers. No measured runtime speedup is claimed here.
 
 See [the target handoff](../planning/compiler_migration/structural_query_target_handoff.md).
-The ready count remains 36; these three query files are not added to the manifest.
-
-The same qualified-construction rejection was subsequently reproduced on combined
-#233 candidate 361b1e97. Its new filesystem APIs are independent of this blocker.
+The ready count is now 39. The selected candidate remains unpublished; target
+adoption here does not merge, tag or publish the v0.1 release.

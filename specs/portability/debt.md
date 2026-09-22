@@ -67,7 +67,7 @@ The [struct-member cursor decision](../planning/compiler_migration/struct_member
 now has a PHP implementation and ten adapted consumers, with 39 retained fixtures
 passing. Real query dependencies now convert and pass PHP oracles; native construction is
 fixed by candidate a1a1babd. Explicit source guards now clear its eager-evaluation
-constraint and the focused query/cursor native proof passes (see the
+constraint and the 39-file cumulative query/cursor native proof passes (see the
 [adaptation record](../planning/compiler_migration/php_adaptation_record.md#explicit-control-flow-for-dependent-guards)); no
 generic generator conversion is implemented.
 

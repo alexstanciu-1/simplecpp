@@ -153,3 +153,21 @@ with its unchanged expected output. All 27,560 frozen-original PHP result/error
 comparisons pass. Evidence: `results/explicit-guards-01/`. The target pin and
 36-file ready manifest remain unchanged; this focused proof is not a whole-compiler
 audit of dependent guards.
+
+## Query/cursor cumulative adoption
+
+The three query owner/trait/cursor files are now included with the prior 36 ready
+files in one cumulative project. The existing focused witness is part of the main
+PHP/native harness, with additional optional local initializer checks. The focused
+retained cursor fixture joins the existing 21 retained compiler fixtures. This
+promotes 39 production files, not the ten complete semantic consumer files.
+
+The configured target advances from 2f0d667f to exact tested candidate
+`a1a1babd07082d9abf7ac885b2328c99368ad4cf`, which supplies qualified construction.
+It remains an unreleased candidate based on v0.1.77. No converter or runtime rule
+changes are needed. The fast suite and expanded cumulative native proof are recorded
+in `results/structural-queries-cumulative-01/`.
+
+The [#236 correction](https://github.com/alexstanciu-1/simplecpp/issues/236#issuecomment-5772057603)
+reports that source guard adaptation clears the previous downstream gate. The v0.1
+owner retains release CI, final-tree reconciliation and publication responsibility.

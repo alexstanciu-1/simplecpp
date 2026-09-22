@@ -57,7 +57,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | Selection | Existing owner |
 | --- | --- |
 | `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
-| `compiler` | Cumulative ready components and seventeen retained compiler fixtures |
+| `compiler` | 39 ready production files and 22 retained compiler fixtures |
 | `methods` | Named/scalar method boundaries, void, identity and mutation |
 | `returns` | Container return copying and nonpublic scalar state |
 | `iteration` | Typed map presence checks and by-value iteration |
@@ -68,7 +68,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 
 The choices are not aliases for a complete compiler migration test. Native-only
 concurrency, lifecycle or API tests still need their own owners as those capabilities
-are added. Issue #231 remains separate work.
+are added. The #231 target features are supplied; full compiler adoption of them remains component work.
 
 ## Evidence and failure handling
 

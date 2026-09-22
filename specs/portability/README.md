@@ -7,7 +7,7 @@ Use the [validation workflow](validation_workflow.md) for the ready-set PHP loop
 and explicitly selected native proofs.
 
 Collection adapters and bounded typed callbacks now have [PHP/native proofs](collection_helpers.md)
-on the prior candidate `08c8206a`; selected unreleased target is now `2f0d667f`. [Process/lock candidates](os_helpers.md)
+on the prior candidate `08c8206a`; selected unreleased target is now `a1a1babd`. [Process/lock candidates](os_helpers.md)
 pass host lifecycle tests and the prepared native facade comparison on `2f0d667f`,
 which fixes the target alias-signature bug.
 
