@@ -9,14 +9,14 @@ suite passes, and the prepared matching PHP/native facade proof now passes on
 `08c8206a` is resolved by the [v0.1 update](https://github.com/alexstanciu-1/simplecpp/issues/231#issuecomment-5765056335).
 This is still an unreleased branch candidate.
 
-No compiler component depending on these operations has yet been migrated; the
+Runtime_Lease now consumes the named Lock_Reservation framework adapter; the
 ready set is tracked in `compiler/portability.json`. The focused facade proof covers the behavior
 listed below, not unrestricted OS/API equivalence or every cross-backend failure
 path. The PHP-specific limits below remain relevant. #231 has not been closed.
 
 ## PHP-facing contract
 
-All functions are under lowercase `scpp` and use the uniform imports. They are
+Authored global helpers follow the current no-import function convention. They are
 thin throwing facades over native result-returning operations, not PHP resource
 compatibility. Operational failures throw the supported RuntimeException family;
 messages are backend-specific, not a stable cross-backend error-code protocol.
@@ -128,3 +128,36 @@ facade and cumulative compiler evidence for the repaired target is under
 `--candidate-revision FULL_COMMIT` to test a clean immutable target before changing
 the selected pin. Extend cross-backend and negative ownership cases when adopting
 real compiler callers; focused success does not close every #231 integration gate.
+
+
+## Named reservations for compiler fields
+
+`scpp\Lock_Reservation` is a framework-owned ordinary shared class with matching
+PHP and native definitions, installed by `--os`. Construct an empty reservation;
+`acquire(path, shared)` returns false only for contention, `active()` observes its
+owned state, `release()` is idempotent, and `transfer()` returns a new reservation
+while invalidating the original and every ordinary alias. Acquiring into an active
+reservation and transferring an inactive reservation reject. Raw handles stay private;
+no generic handle syntax or converter type inference was added. PHP cloning is disabled.
+The underlying token owns final-reference cleanup; the wrapper adds no throwing destructor.
+Explicit release remains appropriate at coordinator boundaries. Existing Linux/fork
+and stable-path limitations apply. This class does not validate package artifacts.
+
+Runtime_Lease transfers an already-acquired reservation on construction, retains the
+exact package object and exposes active/release. Its package is not an integrity
+certificate: successful adapter acceptance must precede lease construction. A final
+lease reference releases through its private reservation; supported exception
+unwinding is proved both before and after ownership transfer.
+
+Evidence: `../planning/compiler_migration/results/runtime-lease-01`. Eighteen
+PHP/native outcomes use an independent Python process for actual flock contention,
+including shared readers, writer exclusion, alias invalidation, repeated release,
+normal-return cleanup, failure cleanup, reacquisition, and rejected empty leases.
+File contents/inode are unchanged. Native target is the current pinned 9b4b33f commit.
+
+PHP lifetime proofs run with `XDEBUG_MODE=off`: on this host PHP 8.5.7 with Xdebug
+3.5.3 develop mode retained exception-frame objects and delayed destructors until a
+later scope ended. A minimal reservation/acquire/throw/reacquire test failed with
+develop mode and passed with Xdebug disabled. This is not simulated cleanup or a
+native guarantee inferred from PHP; native unwinding has separate execution proof.
+Do not rely on immediate final-reference cleanup when a debugger retains references.

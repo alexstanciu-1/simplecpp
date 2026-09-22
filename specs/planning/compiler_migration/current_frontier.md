@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **133 production files**: input preparation (137 outcomes),
+Active readiness is **134 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -288,3 +288,11 @@ identity and stable symbol order. Producer empty-map encoding is accepted explic
 nonempty lists do not substitute for maps. Next: package lease/artifact acceptance and
 adapter composition. SHA-256/executable-query target dependencies and source-export
 production/join remain separate unfinished work.
+
+
+Runtime_Lease and the named framework Lock_Reservation add 18 PHP/native outcomes
+with independent-process lock contention (`results/runtime-lease-01`). Transfer,
+alias invalidation, exact package retention, idempotent release and scope/exception
+cleanup pass. PHP lifetime proof disables Xdebug reference retention; native cleanup
+is separately executed. Next: accepted package composition and artifact-verification
+integration; pinned-target SHA-256/executable-query dependencies remain outstanding.

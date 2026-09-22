@@ -82,7 +82,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-native-runtime-') as temp:
     assert json.loads(run(os_install).stdout) == {'updated': 1}
     assert json.loads(run(os_install).stdout) == {'updated': 0}
     os_files = json.loads(runtime_manifest.read_text())['files']
-    assert 'file_locks.phs' in os_files and 'processes.phs' in os_files and 'filesystem.phs' in os_files
+    assert 'lock_reservation.phs' in os_files and 'file_locks.phs' in os_files and 'processes.phs' in os_files and 'filesystem.phs' in os_files
     assert 'Invalid native runtime manifest' in run(install, False).stderr
     process_file = output / 'scpp_framework/processes.phs'
     process_bytes = process_file.read_bytes()

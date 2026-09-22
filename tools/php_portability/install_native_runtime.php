@@ -29,6 +29,7 @@ try {
     }
     if (in_array('--os', $argv, true)) {
         $artifacts['file_locks.phs'] = file_get_contents(__DIR__ . '/runtime/file_locks.phs');
+        $artifacts['lock_reservation.phs'] = file_get_contents(__DIR__ . '/runtime/lock_reservation.phs');
         $artifacts['processes.phs'] = file_get_contents(__DIR__ . '/runtime/processes.phs');
     }
     foreach ([$directory, $manifest, ...array_map(static fn($name) => $directory . '/' . $name, array_keys($artifacts))] as $path) {

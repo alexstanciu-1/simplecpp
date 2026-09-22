@@ -1,0 +1,6 @@
+{
+  "tools/php_portability/runtime/lock_reservation.php": "2d67d311c3842f79c5f9658517c3fbf5746b30d2ced9abf3f6de042d24df4e4f",
+  "tools/php_portability/runtime/lock_reservation.phs": "611ac1b90f8b6fbec156f22060a11c8e505cab1972974c4010903c1b287824e7",
+  "tools/php_portability/runtime/file_locks.php": "3bde579fd7b0ee830829a47f17a6ff281275e31419c0b7f70d8f018ac2fb2935",
+  "tools/php_portability/runtime/file_locks.phs": "6c175c524066d390362a32309577cbd4cae1d0a02f983dbc2b4edc7bd0fa2cad"
+}

@@ -1749,3 +1749,26 @@ passed with zero native correction cycles. Evidence/timing: `results/project-rec
 
 This does not verify artifact bytes, inspect bitcode, acquire leases, produce exports
 or integrate the complete Package_Adapter. src-runtime-preparation remains unchanged.
+
+
+## Package reservation ownership
+
+Runtime_Lease replaces mixed PHP resources and its explicit resource destructor with
+a private named scpp\Lock_Reservation. The framework owns the PHP File_Lock/native
+file_lock_handle difference; the converter merely preserves a literal named class.
+Construction transfers ownership, invalidating the acquisition token's aliases,
+instead of leaving an external raw resource alias able to unlock the package. The
+lease retains exact Runtime_Package identity and exposes active/idempotent release.
+Underlying token final-reference cleanup covers normal scope exit and exceptions;
+no portable destructor/finally language extension was added. Acquisition/validation
+must stay in a private scope until transfer. Native allocation and handle cleanup
+remain runtime responsibilities, not ad-hoc compiler resource emulation.
+
+Eighteen PHP/native outcomes use independent-process flock attempts and check stable
+lock inode/content. A checker correction switched an unsupported uninitialized named
+field to supported private constructor promotion. PHP's Xdebug develop mode delayed
+exception-frame object destruction; an isolated reproducer confirmed cleanup with
+XDEBUG_MODE=off. The proof records that environment and separately exercises native
+unwinding. First native build passed; zero native correction cycles. Timings and
+framework fingerprints: `results/runtime-lease-01`. No package artifact acceptance or
+new backend/platform support is claimed; src-runtime-preparation remains unchanged.

@@ -134,7 +134,8 @@
     "src/01_prepare_inputs/load_runtime/utilities/manifest_reader.php",
     "src/05_generate_code/prepare_backend/utilities/callable_contract.php",
     "src/05_generate_code/prepare_backend/source_export_preparation.php",
-    "src/01_prepare_inputs/load_runtime/utilities/project_receipt.php"
+    "src/01_prepare_inputs/load_runtime/utilities/project_receipt.php",
+    "src/01_prepare_inputs/load_runtime/data/runtime_lease.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

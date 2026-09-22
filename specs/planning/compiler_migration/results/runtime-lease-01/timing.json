@@ -1,0 +1,15 @@
+{
+  "authoring_start_epoch": 1790109536.0,
+  "first_php_ready_epoch": 1790109747.086445,
+  "authoring_to_php_ready_wall_seconds": 211.086,
+  "first_native_pass_epoch": 1790109797.0635958,
+  "php_ready_to_native_pass_wall_seconds": 49.977,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "checker_correction_cycles": 1,
+  "checker_correction": "Use supported private constructor promotion instead of an uninitialized named field declaration",
+  "host_correction": "Xdebug develop retains exception-frame objects; automatic lifetime proof runs with XDEBUG_MODE=off. Minimal acquisition reproducer confirmed behavior changes with that setting.",
+  "consolidation_start_epoch": 1790109831.6859636,
+  "consolidation_end_epoch": 1790109995.4858706,
+  "regression_and_consolidation_wall_seconds": 163.8
+}
