@@ -1476,3 +1476,36 @@ Evidence: 38 PHP/native cases and retained acceptance comparisons in
 results/package-type-map-01. First native build passed without correction. Two PHP
 proof-authoring rounds corrected fixture/API spellings before the first passing
 checkpoint; no production or converter correction was required.
+
+
+## Runtime package data and queries
+
+Runtime_Package keeps the prototype's normalized dataset and query responsibilities
+in load_runtime/data/package.php. Typed maps/vectors replace untyped collection
+carriers; explicit constructor arguments replace empty-array defaults. Private
+collection fields use distinct names from query methods, and returned containers
+copy membership while sharing immutable semantic records. Project_Binding retains
+exact receipt bytes plus source export membership in the existing data/project.php
+owner. Neither constructor implies verified artifact or receipt acceptance.
+
+Lifecycle enumeration uses the existing tagged lifetime API with explicit null
+guards and the prototype's destroy/copy/move/assign/default order. Bindings to
+accepted native/source owners suppress duplicate operations; ordinary compiler name
+bindings do not. Missing type/module queries retain their exception families.
+
+The prototype's matches() and retain_bound_types() rely on PHP recursive object
+equality. Those methods are intentionally not available yet: the next comparison
+owner must cover names, representations, lifetime policies and operation identities,
+resources, native layouts, record schemas and typed-storage contracts. Package reuse
+also depends on exact manifest bytes, base catalog identity and binding/project
+contracts. Package_Adapter also retains structurally unchanged callable contracts
+by provider-local ID; their semantic signature, ABI, effects and exposure flags must
+be compared before reusing an old callable. Equal byte layout or shared-pointer equality alone is insufficient.
+Runtime_Lease and heterogeneous debug to_array() remain separate migration work;
+there is no stub lease, fallback comparator or permissive reuse implementation.
+
+Evidence: results/runtime-package-01, all 32 lifecycle policy combinations across
+five binding configurations (160 PHP/native and retained comparisons), snapshot
+membership/identity, missing-query errors and module selection. First build passes;
+one final verification build follows a source-fixture consistency improvement.
+Zero native correction cycles.

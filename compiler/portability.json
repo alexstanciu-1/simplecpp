@@ -121,7 +121,9 @@
     "src/05_generate_code/prepare_backend/data/source_exports.php",
     "src/01_prepare_inputs/load_runtime/data/package_bindings.php",
     "src/01_prepare_inputs/load_runtime/project_import.php",
-    "src/01_prepare_inputs/load_runtime/handlers/package_type_map.php"
+    "src/01_prepare_inputs/load_runtime/handlers/package_type_map.php",
+    "src/01_prepare_inputs/load_runtime/data/project.php",
+    "src/01_prepare_inputs/load_runtime/data/package.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

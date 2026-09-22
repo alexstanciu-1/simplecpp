@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **120 production files**: input preparation (137 outcomes),
+Active readiness is **122 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -207,3 +207,13 @@ retain their existing definition and measured layout; no adapter definition is
 substituted. Next: accepted package contracts and exact retained-binding comparison;
 receipt validation, source export production/join and complete package acceptance
 remain unfinished.
+
+
+Runtime package/project records add 160 PHP/native outcomes and retained lifecycle
+enumeration comparisons (`results/runtime-package-01`). Queries preserve exact
+shared type/catalog identity, copied container membership and stable
+destroy/copy/move/assign/default order. Rebound native/source owners are excluded
+from duplicate lifecycle enumeration. Constructor calls do not authorize artifacts
+or receipts. Next: explicit semantic contract comparison for package/type reuse;
+`matches`, retained-type canonicalization, lease ownership and diagnostic projection
+are not yet migrated.

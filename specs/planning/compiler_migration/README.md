@@ -6,7 +6,7 @@ accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; source collection proved:** input preparation, tokenization,
 parser storage/grammar/queries/project reuse, source symbols, entry selection, representations, lifecycle contracts and scalar catalog/entry binding provide
-120 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
+122 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
 and nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks; its scalar catalog return-type binding is now proved (116 PHP/native outcomes).
 See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).
@@ -282,7 +282,7 @@ decoder loses object/list identity needed by manifest validation. A lossless inp
 boundary is required before porting Manifest_Syntax; snapshot export is unaffected.
 
 Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
-eight host checks; active coverage is 120 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
+eight host checks; active coverage is 122 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
 
 
 Package type composition adds 38 PHP/native outcomes and 38 retained acceptance
@@ -293,3 +293,13 @@ retain their existing definition and measured layout; no adapter definition is
 substituted. Next: accepted package contracts and exact retained-binding comparison;
 receipt validation, source export production/join and complete package acceptance
 remain unfinished.
+
+
+Runtime package/project records add 160 PHP/native outcomes and retained lifecycle
+enumeration comparisons (`results/runtime-package-01`). Queries preserve exact
+shared type/catalog identity, copied container membership and stable
+destroy/copy/move/assign/default order. Rebound native/source owners are excluded
+from duplicate lifecycle enumeration. Constructor calls do not authorize artifacts
+or receipts. Next: explicit semantic contract comparison for package/type reuse;
+`matches`, retained-type canonicalization, lease ownership and diagnostic projection
+are not yet migrated.

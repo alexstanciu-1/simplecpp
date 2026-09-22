@@ -1,0 +1,13 @@
+{
+  "authoring_start_epoch": 1790104734.0,
+  "first_php_ready_epoch": 1790104904.0111442,
+  "authoring_to_php_ready_wall_seconds": 170.011,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "final_verification_builds": 1,
+  "final_verification_reason": "Align source-bound fixture type with its export definition and assert optional project/binding identity. Production unchanged.",
+  "native_stabilization_command_seconds": 46.472,
+  "consolidation_start_epoch": 1790105063.4716554,
+  "consolidation_end_epoch": 1790105177.6518354,
+  "regression_and_consolidation_wall_seconds": 114.18
+}

@@ -210,3 +210,13 @@ retain their existing definition and measured layout; no adapter definition is
 substituted. Next: accepted package contracts and exact retained-binding comparison;
 receipt validation, source export production/join and complete package acceptance
 remain unfinished.
+
+
+Runtime package/project records add 160 PHP/native outcomes and retained lifecycle
+enumeration comparisons (`results/runtime-package-01`). Queries preserve exact
+shared type/catalog identity, copied container membership and stable
+destroy/copy/move/assign/default order. Rebound native/source owners are excluded
+from duplicate lifecycle enumeration. Constructor calls do not authorize artifacts
+or receipts. Next: explicit semantic contract comparison for package/type reuse;
+`matches`, retained-type canonicalization, lease ownership and diagnostic projection
+are not yet migrated.
