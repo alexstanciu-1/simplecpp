@@ -1301,3 +1301,26 @@ fixed it after the portable PHP outcomes had already passed. No production corre
 was needed. Review also tightened the rejection probe so fixture-field reads cannot
 mask unexpected acceptance; a final native verification covers that test change.
 Evidence: `results/package-measurements-01`.
+
+
+## Ordinary package language exposure
+
+`Package_Type_Exposure` extracts the ordinary-exposure branch from the retained
+`Package_Types` handler. It consumes validated measurement plus an explicit named
+binding and shared catalog. Matching integer/void bindings return the exact catalog
+object; byte spans and opaque values build the same explicit lifetime/permission
+contracts as the prototype. Records return no named definition yet: their existing
+field normalization/materialization owners remain responsible. Qualified compiler
+bindings stay distinct from producer language-name syntax restrictions.
+
+Native-import and source-payload rows cannot pass through this owner. They require
+their separate accepted native/source identity, still pending. Resource validation
+applies before the kind split, so scalar/span/record exposure cannot acquire an
+allocation marker merely because the opaque branch uses resources. The helper does
+not allocate canonical IDs or publish into the catalog. A focused handler file keeps
+this branch in the prototype's load_runtime/handlers ownership area.
+
+PHP iteration corrected a mistaken method access to Type_Reference's existing kind
+field. The retained oracle then needed its resource-enum include. Review broadened
+resource rejection tests before native compilation. Evidence/timings are recorded
+in `results/type-exposure-01`; complete package acceptance is not yet claimed.

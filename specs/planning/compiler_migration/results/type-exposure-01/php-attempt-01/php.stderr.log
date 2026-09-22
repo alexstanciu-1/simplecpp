@@ -1,0 +1,7 @@
+PHP Fatal error:  Uncaught Error: Call to undefined method type_model\Type_Reference::kind() in /tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/handlers/type_exposure.php:10
+Stack trace:
+#0 /tmp/type-exposure-php-01/source/probe.php(21): load_runtime\Package_Type_Exposure::definition()
+#1 /tmp/type-exposure-php-01/source/main.php(2): type_exposure_test\Probe::run()
+#2 Command line code(1): require('...')
+#3 {main}
+  thrown in /tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/handlers/type_exposure.php on line 10

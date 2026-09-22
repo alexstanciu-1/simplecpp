@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught Error: Class "type_model\resource_kind" not found in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/reference/pre-rewrite/src/01_prepare_inputs/load_runtime/handlers/resources.php:24
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/reference/pre-rewrite/src/01_prepare_inputs/load_runtime/handlers/package_types.php(42): Retained_Types::resource_type()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/type_exposure/oracle.php(13): Retained_Types::import()
+#2 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/reference/pre-rewrite/src/01_prepare_inputs/load_runtime/handlers/resources.php on line 24

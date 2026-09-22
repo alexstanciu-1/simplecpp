@@ -1,0 +1,60 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/type-exposure-php-01/source"
+      ],
+      "seconds": 0.1,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/type-exposure-php-01/source"
+      ],
+      "seconds": 0.665,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/type-exposure-php-01/source/src/04_analyze/type_model/data/catalog.php",
+        "/tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/handlers/package_types.php",
+        "/tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/handlers/lifecycle.php",
+        "/tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/handlers/resources.php",
+        "/tmp/type-exposure-php-01/source/src/01_prepare_inputs/load_runtime/handlers/type_exposure.php",
+        "/tmp/type-exposure-php-01/source/probe.php",
+        "/tmp/type-exposure-php-01/source/main.php"
+      ],
+      "seconds": 0.06,
+      "exit": 255
+    }
+  ],
+  "native_build_attempts": 0
+}

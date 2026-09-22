@@ -1,0 +1,18 @@
+{
+  "authoring_start_epoch": 1790101556.0,
+  "php_ready_epoch": 1790101667.8445034,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/type_exposure.php": "24484dddc712db94e92b2067c38f5d27d0b403d8a8ffaa3e091195727241a151"
+  },
+  "authoring_to_php_ready_seconds": 111.845,
+  "php_ready_to_native_pass_seconds": 70.655,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "php_authoring_corrections": 1,
+  "host_oracle_harness_corrections": 1,
+  "post_php_review": "Moved resource validation before category dispatch; added four rejection cases before first native build.",
+  "native_build_seconds": 33.972,
+  "consolidation_start_epoch": 1790101758.9586182,
+  "consolidation_end_epoch": 1790101862.216845
+}

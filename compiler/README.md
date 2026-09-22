@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **108 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **109 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -121,3 +121,10 @@ acceptance comparisons (`results/package-measurements-01`). All six storage kind
 alignment and integer width/signedness are validated without granting type ownership.
 Next: language exposure and exact accepted native/source owner binding, then complete
 package acceptance; those remain incomplete.
+
+
+Ordinary package type exposure adds 38 PHP/native outcomes with retained importer
+agreement (`results/type-exposure-01`): exact scalar/void catalog identity, explicit
+opaque/span permissions and deferred record materialization. Native/source imports
+cannot use this path. Next: exact accepted native imports and source export ownership,
+then whole-package composition/acceptance.

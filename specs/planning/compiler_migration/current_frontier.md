@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **108 production files**: input preparation (137 outcomes),
+Active readiness is **109 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -155,3 +155,10 @@ acceptance comparisons (`results/package-measurements-01`). All six storage kind
 alignment and integer width/signedness are validated without granting type ownership.
 Next: language exposure and exact accepted native/source owner binding, then complete
 package acceptance; those remain incomplete.
+
+
+Ordinary package type exposure adds 38 PHP/native outcomes with retained importer
+agreement (`results/type-exposure-01`): exact scalar/void catalog identity, explicit
+opaque/span permissions and deferred record materialization. Native/source imports
+cannot use this path. Next: exact accepted native imports and source export ownership,
+then whole-package composition/acceptance.
