@@ -1,14 +1,14 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **41 production files**: input preparation (137 outcomes),
+Active readiness is **44 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 
 The global helper convention is implemented: no imports, q_ for existing PHP names.
 Whole-file grammar is implemented. Syntax access/comparison adds 134 outcomes. Project parser planning/join/reuse adds 66 outcomes plus nine host purity assertions.
-Source declaration collection adds 97 PHP/native outcomes plus nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks. Next: type-model/catalog dependencies for the entry return definition; provider imports and semantic comparison remain separate dependencies. The complete compiler CLI is not implemented.
+Source declaration collection adds 97 PHP/native outcomes plus nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks. Representation vocabulary adds 98 PHP/native outcomes and retained constructor checks. Next: lifetime and named-definition contracts for the catalog/entry return binding; provider imports and semantic comparison remain separate dependencies. The complete compiler CLI is not implemented.
 See [file parsing](../../portability/file_parser.md). src-runtime-preparation remains
 PHP as-is and outside conversion scope. The former 39-file coverage is historical.
 

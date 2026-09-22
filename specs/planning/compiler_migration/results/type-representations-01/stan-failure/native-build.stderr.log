@@ -1,0 +1,17 @@
+STAN pre-build check failed: 4 compile-errors
+
+[compile-error] Function `type_model\Semantic_Modes::passing` declared as `int` may exit without returning a value.
+  at src/04_analyze/type_model/data/semantic_modes.phs:15
+
+[compile-error] Function `type_model\Semantic_Modes::passing_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/type_model/data/semantic_modes.phs:22
+
+[compile-error] Function `type_model\Semantic_Modes::result` declared as `int` may exit without returning a value.
+  at src/04_analyze/type_model/data/semantic_modes.phs:33
+
+[compile-error] Function `type_model\Semantic_Modes::result_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/type_model/data/semantic_modes.phs:40
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

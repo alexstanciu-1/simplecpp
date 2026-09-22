@@ -457,3 +457,35 @@ frontend with a stale path index and shortened file list, plus a 44th regression
 That source-review correction requires a separate final native verification; it is
 not a native-failure cycle. No converter/framework/target change was needed. Timing and provenance:
 [entry preparation evidence](results/entry-preparation-01/README.md).
+
+## Type representation foundation (2026-09-22)
+
+The catalog dependency begins with complete value-shape vocabulary rather than a
+stripped integer type created only to finish entry preparation. Representation's
+private factory-owned state and checked accessors replace the prototype's union of
+nullable unrelated payload classes. All nine shapes and callable passing/result facts
+are preserved. This deliberately postpones native union/layout tuning; no reduced
+memory footprint is claimed. Full-width integer payloads avoid silently narrowing the
+prototype's accepted widths, IDs or counts to uint32.
+
+Shape validity is local; type/member existence remains the future store's concern.
+The writer now rejects negative ranges and zero return IDs at construction. Empty
+passing lists expand explicitly to value modes and provided lists are copied. Context
+keys remain producer-supplied content/version facts, and lineage remains an independent
+shared identity. Signedness, operations and lifecycle permissions are not inferred from
+representation. Their authoritative named definitions are still pending.
+
+The first PHP behavior run passed 98 outcomes. The checker rejected bitwise AND in
+opaque alignment validation; an overflow-guarded integer doubling check preserves the
+power-of-two algorithm without introducing converter support or floating arithmetic.
+STAN then rejected terminal-throw codec forms as possibly missing returns. Explicit
+success branches plus a common return preserve all mode mappings/rejections without
+an unreachable dummy value. The next native build passed. Both costs remain recorded.
+
+The retained representation constructors run directly in a host oracle for widths,
+default passing, borrow classification and result names. Five host assertions additionally
+cover observation purity and large alignment boundaries; the latter are not claimed as
+native cases. The new factory/mode paths have 98 independent native expected outcomes.
+No source-runtime-preparation, converter, framework or target code was changed.
+See [the evidence](results/type-representations-01/README.md). Continue with lifecycle
+operations/contracts, then named definitions and the catalog binding required by entry.

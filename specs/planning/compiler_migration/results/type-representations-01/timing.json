@@ -1,0 +1,55 @@
+{
+  "measurement": "Elapsed wall time, includes tests and waits; initial orientation excluded. Milestones recorded immediately after successful commands.",
+  "started": "2026-09-22T10:44:19.090925+00:00",
+  "milestones": [
+    {
+      "name": "authoring-start",
+      "at": "2026-09-22T10:44:19.090925+00:00"
+    },
+    {
+      "name": "php-ready",
+      "at": "2026-09-22T10:46:05.200403+00:00",
+      "evidence": "/tmp/types-first-php-summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/semantic_modes.php": "9e1e5cc6d6e6906495176c9d9fd530d39c8c51d5392dc9907bf2304660e711a0",
+        "src/04_analyze/type_model/data/representations.php": "be9e509cadd937456cf664a6b816f69254ba706efd54aa8af782f4ef8ef39204",
+        "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b"
+      }
+    },
+    {
+      "name": "regression-start",
+      "at": "2026-09-22T10:48:58.741805+00:00"
+    },
+    {
+      "name": "native-ready",
+      "at": "2026-09-22T10:49:53.082485+00:00",
+      "evidence": "/tmp/scpp-types-native-03/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+        "src/04_analyze/type_model/data/representations.php": "c9f9aa93340fb981ca59fd8cf8990a057c8c5eeb6e14b11d6cff1af912954c0d",
+        "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b"
+      }
+    },
+    {
+      "name": "consolidation-start",
+      "at": "2026-09-22T10:49:53.133401+00:00"
+    },
+    {
+      "name": "regression-passed",
+      "at": "2026-09-22T10:51:22.594156+00:00"
+    },
+    {
+      "name": "finish",
+      "at": "2026-09-22T10:51:22.731338+00:00"
+    }
+  ],
+  "finished": "2026-09-22T10:51:22.731338+00:00",
+  "elapsed_seconds": 423.64,
+  "interval_seconds": {
+    "authoring_to_php_ready": 106.109,
+    "php_to_native_ready": 227.882,
+    "regression_wall": 143.852,
+    "consolidation_wall": 89.598
+  },
+  "overlap_note": "Intervals include overlapping documentation, waits and validation; not additive active-work costs."
+}

@@ -44,3 +44,6 @@ require_once __DIR__ . '/src/04_analyze/collect_symbols/collect.php';
 require_once __DIR__ . '/src/04_analyze/collect_symbols/main_collect_symbols.php';
 require_once __DIR__ . '/src/04_analyze/resolve_types/data/entry_selection.php';
 require_once __DIR__ . '/src/04_analyze/resolve_types/main_prepare_entry.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/semantic_modes.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/representations.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/context.php';

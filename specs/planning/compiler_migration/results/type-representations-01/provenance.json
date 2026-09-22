@@ -1,0 +1,21 @@
+{
+  "base_commit": "9726f472",
+  "production_source_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/representations.php": "c9f9aa93340fb981ca59fd8cf8990a057c8c5eeb6e14b11d6cff1af912954c0d",
+    "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b"
+  },
+  "tests_sha256": {
+    "compiler/tests/type_representations/probe.php": "e5510d04a34e50fa06ece85416758f93807ec2d66c1fbd40793c27ab4b272fe1",
+    "compiler/tests/type_representations/oracle.php": "d8e00a5dc78e42afcb55c3d5f73774c21df65d59e371c2a14808ba22e140c80e",
+    "compiler/tests/type_representations/run.py": "a62de964ce001c4987172b42f7c9b2e6f75f8687085463167066de59e805845b",
+    "compiler/tests/type_representations/purity.php": "4f33433fe1c91ff0e095df568d4c6f1c9e26c11c551dcea434555104aa72c61e"
+  },
+  "reference_sha256": {
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/representations.php": "e42d15746723cb4ec4814c268a35604f498ed4e2c5065df9f333d393b0049304",
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/semantic_calls.php": "ceb7e2c7e75a4ae4814a1f60ebf2c9083a08c72b1420c6e37241390187ed3f06",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/type_storage.php": "7a960c528d7ef5ecbb90f82de5c9d2510bfa6eff9b4463a424abe8d33a311e7c",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/type_context.php": "02479dc7d6384f7b6664dfd5d2cd87191cbad8947db6e052620a3d62787d9ee6"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a"
+}

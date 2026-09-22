@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "cases": 98,
+  "command": [
+    "php",
+    "-r",
+    "require \"compiler/bootstrap.php\"; require \"compiler/tests/type_representations/probe.php\"; \\representation_test\\Probe::run();"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "9e1e5cc6d6e6906495176c9d9fd530d39c8c51d5392dc9907bf2304660e711a0",
+    "src/04_analyze/type_model/data/representations.php": "be9e509cadd937456cf664a6b816f69254ba706efd54aa8af782f4ef8ef39204",
+    "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b"
+  }
+}
