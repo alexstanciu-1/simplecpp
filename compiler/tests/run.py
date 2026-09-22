@@ -20,7 +20,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('entry_preparation', Path(__file__).parent / 'entry_preparation/run.py'),
           ('type_representations', Path(__file__).parent / 'type_representations/run.py'),
           ('type_lifetimes', Path(__file__).parent / 'type_lifetimes/run.py'),
-          ('scalar_catalog', Path(__file__).parent / 'scalar_catalog/run.py')]
+          ('scalar_catalog', Path(__file__).parent / 'scalar_catalog/run.py'),
+          ('name_lookup', Path(__file__).parent / 'name_lookup/run.py')]
 
 
 def main():

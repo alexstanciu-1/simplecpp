@@ -1,0 +1,10 @@
+{
+  "php_ready_attempt": 3,
+  "pre_php_ready_corrections": [
+    "unsupported <= rewritten as < 1",
+    "prototype syntax member corrected to tree"
+  ],
+  "native_build_attempts": 1,
+  "post_php_ready_source_corrections": 0,
+  "retained_oracle": "15 numeric binding cases, run independently after native launch"
+}

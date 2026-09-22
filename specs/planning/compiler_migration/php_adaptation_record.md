@@ -551,3 +551,21 @@ rollback, repair, policy views and qualified UTF-8 names. Entry_Contract now bin
 selected source symbol to the exact catalog-selected integer definition; native exit
 ABI remains outside that contract. See [timing/provenance](results/scalar-catalog-01/README.md).
 Continue with source name resolution in the prototype's analysis order.
+
+## Rewrite: declaration lookup and occurrence targets
+
+The prototype's global name lookup now consumes the migrated source store and scalar
+catalog. `Name_Binding` replaces its int/definition/record union with a validated
+numeric target plus nullable exact scalar definition. This preserves identity and
+zero-based template parameters without dynamic payload dispatch. A later optimization
+may split dense numeric rows from provider references or adopt native unions; no
+memory-layout claim is made for the current ordinary shared class.
+
+Source namespaces are absent from the current grammar, so the unused namespace input
+is removed. Provider records are deferred with their catalog owner, not fabricated.
+Function lookup validates the syntax role and excludes member-only functions. The
+worker/reuse selector will share these lookup rules. The prototype constructor oracle
+covers numeric role/target rules; 40 independent PHP/native outcomes pass, first build.
+Before PHP-ready, `<= 0` became the supported equivalent `< 1`, and a stale prototype
+`syntax` member became the active `tree`. Neither required converter changes.
+See [measurements](results/name-lookup-01/README.md).

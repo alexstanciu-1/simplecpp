@@ -1,0 +1,15 @@
+{
+  "source_and_tests": {
+    "compiler/src/04_analyze/resolve_symbols/utilities/declaration_lookup.php": "9ce8d0dce270b63420e553c1cc08711f3882346d747070da063d44c15ea67466",
+    "compiler/src/04_analyze/resolve_symbols/utilities/function_lookup.php": "ab743c0e5a37906aaaea0325f1c26f723855a51a6f3822f1da90cd05fce7f9d7",
+    "compiler/src/04_analyze/resolve_symbols/data/declarations.php": "40f873df4dab3db6a44669aab81e251c787ef928f7e19676d0fba2a5abe65321",
+    "compiler/tests/name_lookup/probe.php": "1aef8fdfdff7e9bde4bd8ad502e392e4bc422a931285d1226dedf1419b1ca25d",
+    "compiler/tests/name_lookup/oracle.php": "47870b8cf3dbfd090d2ad5228433a2c331f3c20f0be7fcf8d70335dd29568267",
+    "compiler/tests/name_lookup/run.py": "bb41ad90417dc557c36293bb597cb2a174ae83493b260f8cdce21b11da02da6a"
+  },
+  "reference": [
+    "compiler/reference/pre-rewrite/src/04_analyze/resolve_symbols/data/declarations.php",
+    "compiler/reference/pre-rewrite/src/04_analyze/resolve_symbols/utilities/declaration_lookup.php",
+    "compiler/reference/pre-rewrite/src/04_analyze/resolve_symbols/utilities/function_lookup.php"
+  ]
+}

@@ -56,3 +56,6 @@ require_once __DIR__ . '/src/04_analyze/type_model/data/catalog.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/main_load_runtime.php';
 require_once __DIR__ . '/src/04_analyze/resolve_types/data/entry_contract.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/data/declarations.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/utilities/declaration_lookup.php';
+require_once __DIR__ . '/src/04_analyze/resolve_symbols/utilities/function_lookup.php';
