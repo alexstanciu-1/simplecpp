@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 // Generated global facade. Owned by function_map.php; no per-file imports.
+function dt_sleep_ms(int $millis): void { \scpp\dt_sleep_ms($millis); }
 function fs_read_snapshot(string $path, int $expected_mtime, int $expected_size): string { return \scpp\fs_read_snapshot($path, $expected_mtime, $expected_size); }
 function fs_is_windows(): bool { return \scpp\fs_is_windows(); }
 function fs_basename(string $path): string { return \scpp\fs_basename($path); }

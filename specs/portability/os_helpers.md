@@ -161,3 +161,27 @@ later scope ended. A minimal reservation/acquire/throw/reacquire test failed wit
 develop mode and passed with Xdebug disabled. This is not simulated cleanup or a
 native guarantee inferred from PHP; native unwinding has separate execution proof.
 Do not rely on immediate final-reference cleanup when a debugger retains references.
+
+
+## Compiler tool waiting
+
+`dt_sleep_ms(int $millis)` is now mapped to the existing Simple C++ datetime API.
+Enable the `datetime` module where it is used. PHP uses `time_nanosleep`, resumes
+an interrupted wait and avoids milliseconds-to-microseconds overflow; nonpositive
+values return immediately. Precision is scheduler-dependent. This adds one facade,
+not general datetime portability. The global helper has no PHP naming collision.
+
+The compiler's `prepare_backend\Tool_Run::run(command, input, timeout_ms)` uses
+managed process polling with a one-millisecond wait. It requires a nonempty vector
+whose first element is an absolute executable and a positive deadline. Remaining
+arguments are literal; cwd is inherited. Success returns exact stdout bytes after
+explicit close; timeout, signal, stopped or nonzero status throws. Stderr is retained
+in compiler failure diagnostics. Explicit close also runs on supported runtime-error
+paths. Process groups, streams and reap/descendant cleanup belong to the existing
+framework/native token. No `setsid` subprocess is introduced by this caller.
+
+The compiler proof at `compiler/tests/tool_run/run.py` covers real Clang IR folding,
+binary input, large output-before-input, argument spelling, exit/signal/deadline and
+launch errors, plus independent descendant checks after success/failure/timeout.
+It uses Linux and PHP without Xdebug reference retention; scope does not imply new
+platform support or a complete compiler measurement worker.

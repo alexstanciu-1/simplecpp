@@ -70,7 +70,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('layout_selection', Path(__file__).parent / 'layout_selection/run.py'),
           ('layout_witness', Path(__file__).parent / 'layout_witness/run.py'),
           ('layout_measurement', Path(__file__).parent / 'layout_measurement/run.py'),
-          ('layout_join', Path(__file__).parent / 'layout_join/run.py')]
+          ('layout_join', Path(__file__).parent / 'layout_join/run.py'),
+          ('tool_run', Path(__file__).parent / 'tool_run/run.py')]
 
 
 def main():

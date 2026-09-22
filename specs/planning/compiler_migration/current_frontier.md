@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **152 production files**: input preparation (137 outcomes),
+Active readiness is **153 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -355,3 +355,11 @@ provider facts and unchanged inputs on rejection are proved. Completion order do
 not change publication order; removed roots disappear and unselected current owners
 are retained. Next: compiler-side measurement tool execution and coordinator
 integration; no complete backend pipeline or source-export capture is claimed.
+
+
+Compiler tool execution adds 16 PHP/native scenarios (`results/tool-run-01`), including
+real Clang output and independent descendant cleanup checks. One dt_sleep_ms facade
+supports non-busy polling; managed process tokens own resource cleanup. Next: remove
+the obsolete launcher fact from compiler layout selection and connect probe source,
+execution, measurement validation and batch acceptance. The preserved PHP runtime
+preparation/tool service is unchanged.

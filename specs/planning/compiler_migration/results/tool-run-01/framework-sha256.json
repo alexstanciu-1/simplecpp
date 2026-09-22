@@ -1,0 +1,6 @@
+{
+  "tools/php_portability/function_map.php": "8d7b0f5f5e452e2a9fb378a30e8aebb1ce13a10ab734240ae0f9e6746d8db097",
+  "tools/php_portability/runtime/bootstrap.php": "fb0790b0dd6dd6f2e5db24d954219292c69a8133c864c7fbb1f0ccff3dd18107",
+  "tools/php_portability/runtime/global_functions.php": "faa40de3279fd0254a0907749b00e0556c3edefc4b4035e2b8b5bd704c335919",
+  "tools/php_portability/runtime/datetime.php": "6a3ba6261072212bb513bcb6d05a0da4dadb7ede350838f751b578ec1631e2bd"
+}

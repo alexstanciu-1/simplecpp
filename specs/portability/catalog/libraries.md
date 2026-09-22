@@ -268,7 +268,7 @@ the converter emits PHP++, never C++.
 | `dt_now_ms` | `dt_now_ms(args)` | `dt_now_ms(args)` | `dt::now_unix_millis` | proposed; adapter/map not implemented |
 | `dt_parse` | `dt_parse(args)` | `dt_parse(args)` | `dt::parse_common_local` | proposed; adapter/map not implemented |
 | `dt_parse_iso_utc` | `dt_parse_iso_utc(args)` | `dt_parse_iso_utc(args)` | `dt::parse_iso_utc` | proposed; adapter/map not implemented |
-| `dt_sleep_ms` | `dt_sleep_ms(args)` | `dt_sleep_ms(args)` | `dt::sleep_millis` | proposed; adapter/map not implemented |
+| `dt_sleep_ms` | `dt_sleep_ms($millis)` | `dt_sleep_ms($millis)` | `dt::sleep_millis` | implemented; datetime module; nonpositive values return immediately |
 ## Regex (13)
 
 [Contract/reference](../../../specs/builtins/regex/first_pass.md). PHP preg adapter with named/ordered result-shape conversion; optional extension requirements.

@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790113993.0,
+  "first_php_ready_epoch": 1790114105.6009126,
+  "authoring_to_php_ready_wall_seconds": 112.601,
+  "first_native_pass_observed_epoch": 1790114182.3869855,
+  "php_ready_to_native_pass_wall_seconds": 76.786,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "checker_correction_cycles": 0,
+  "host_fixture_correction_cycles": 0,
+  "setup_correction": "Create the missing prepare_backend/tools directory before authoring the file",
+  "final_verification_builds": 1,
+  "consolidation_start_epoch": 1790114182.3869855,
+  "consolidation_end_epoch": 1790114375.2235465,
+  "regression_and_consolidation_wall_seconds": 192.837
+}

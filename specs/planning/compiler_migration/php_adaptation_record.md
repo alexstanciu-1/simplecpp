@@ -2051,3 +2051,40 @@ the existing canonical store. First native build passed with no native correctio
 a final verification expands initial-empty-store and field-type-count coverage.
 Evidence/timing: `results/layout-join-01`. Compiler-side tool execution and complete
 coordinator integration remain unfinished; src-runtime-preparation is unchanged.
+
+
+## Compiler tool execution through the managed process owner
+
+Tool_Run migrates the synchronous run/ready/result/close behavior used by the
+prototype backend. It consumes an explicit command vector, binary input and positive
+integer deadline in milliseconds, then returns exact stdout or throws a diagnostic.
+Executable resolution remains the selecting toolchain's responsibility. The helper
+accepts absolute executables, literal argv and inherited cwd; there is no shell
+interpolation. The prototype's default ten seconds will be supplied explicitly by
+worker callers. Stderr is preserved rather than trimmed.
+
+The already proved process token now owns private streams, process groups, timeout
+tracking, descendant termination and reaping. Reimplementing proc_open/setsid/clock
+logic in compiler PHP would duplicate that owner and obstruct conversion. Compiler
+code closes explicitly after collection and on supported runtime-error paths; status
+snapshots survive close. The original shared tool_process service and PHP runtime
+preparation stay unchanged. Layout_Task still retains its old launcher field for
+now; worker integration must remove that obsolete selected fact rather than silently
+pretend to execute it through this managed runner.
+
+A single dt_sleep_ms framework mapping permits one-millisecond polling waits without
+busy spinning. Its PHP implementation uses bounded quotient/remainder conversion to
+seconds/nanoseconds and resumes interrupted sleep. Native code calls the existing
+datetime module API. No general resource-field support, converter inference or new
+Simple C++ runtime functionality was added.
+
+Sixteen PHP/native scenarios cover exact binary input/output, literal shell-looking
+arguments, large stderr/stdout before input consumption, nonzero status including
+127, signal exit, exec failure, relative/empty command rejection, mandatory deadlines,
+real Clang IR folding, and descendants after success/failure/timeout. An independent
+host process-state check requires each recorded descendant to be gone or non-running
+(zombie awaiting its external reaper); no live child is accepted as cleaned up. The
+first native build passed; final verification tightens unexpected-error rejection
+and saves explicit cleanup observations. Framework source hashes accompany evidence
+because the new helper is outside the production-file count.
+Evidence/timing: `results/tool-run-01`. Measurement-worker integration is next.
