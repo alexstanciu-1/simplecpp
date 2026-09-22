@@ -618,6 +618,13 @@ final class RuntimeShallowSourceGenerator
 		$scppClasses = [];
 		if ($isStrict) {
 			$scppClasses = [
+				$this->renderClassStub('json_document', [], $isStrict),
+				$this->renderClassStub('json_node', [], $isStrict),
+				$this->renderClassStub('json_parse_error', [
+					['kind' => 'property', 'name' => 'category', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'byte_offset', 'type' => 'int'],
+					['kind' => 'property', 'name' => 'message', 'type' => 'string'],
+				], $isStrict),
 				$this->renderClassStub('file_lock_handle', [], $isStrict),
 				$this->renderClassStub('process_handle', [], $isStrict),
 				$this->renderClassStub('process_output', [

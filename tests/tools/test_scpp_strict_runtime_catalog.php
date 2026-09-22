@@ -29,6 +29,15 @@ final class ScppStrictRuntimeCatalogTest
 		$this->assertSame(null, $catalog->returnType('collection_map'), 'polymorphic calls have no fixed return type');
 		$this->assertSame(null, $catalog->requiredModule('collection_map'), 'collection helpers are core');
 
+		foreach (['json_document_parse' => 'result<json_document>', 'json_document_root' => 'result<json_node>',
+			'json_node_kind' => 'result<string>', 'json_node_size' => 'result<int>', 'json_node_at' => 'result<json_node>',
+			'json_node_key' => 'result<string>', 'json_node_has' => 'result<bool>', 'json_node_member' => 'result<json_node>',
+			'json_node_string' => 'result<string>', 'json_node_boolean' => 'result<bool>', 'json_node_number' => 'result<string>',
+			'json_node_int' => 'result<int>'] as $name => $return) {
+			$this->assertSame($return, $catalog->returnType($name), 'JSON document return contract');
+			$this->assertSame('json', $catalog->requiredModule($name), 'JSON document module ownership');
+		}
+
 		$this->assertSame('result<mixed>', $catalog->returnType('json_decode'), 'STAN should expose the checked JSON result');
 		$this->assertSame('result<string>', $catalog->returnType('json_encode'), 'STAN should expose the checked JSON encoding result');
 		foreach (['fs_lock_try' => 'result<bool>', 'fs_lock_release' => 'result<bool>', 'fs_lock_transfer' => 'result<file_lock_handle>'] as $name => $return) {
@@ -61,6 +70,9 @@ final class ScppStrictRuntimeCatalogTest
 		$this->assertContains('function fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool>', $strictRuntimeSymbols, 'normalized contracts should retain reference output and optional shared mode');
 		$this->assertContains('function fs_is_windows(): bool', $strictRuntimeSymbols, 'filesystem concrete signature');
 		$this->assertContains('function fs_read_snapshot(string $path, int $expected_mtime, int $expected_size): result<string>', $strictRuntimeSymbols, 'filesystem concrete signature');
+		$this->assertContains('json_parse_error &$diagnostic', $strictRuntimeSymbols, 'JSON structured diagnostic output reference');
+		$this->assertContains('class json_document', $strictRuntimeSymbols, 'JSON opaque document declaration');
+		$this->assertContains('class json_node', $strictRuntimeSymbols, 'JSON retained node declaration');
 		$this->assertContains('class file_lock_handle', $strictRuntimeSymbols, 'STAN should know the opaque lock type');
 		$this->assertContains('function layout_sizeof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_sizeof');
 		$this->assertContains('function layout_alignof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_alignof');

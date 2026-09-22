@@ -52,6 +52,252 @@
 		"contract_authority_source": "default_missing_contract"
 	},
 	"symbol_contracts": {
+		"json_document_parse": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 3,
+			"parameter_type_refs": [
+				"string",
+				"json_parse_error",
+				"int"
+			],
+			"parameter_names": [
+				"text",
+				"diagnostic",
+				"max_depth"
+			],
+			"parameter_passing": [
+				"value",
+				"reference",
+				"value"
+			],
+			"return_type_ref": "result<json_document>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_document_parse.md"
+		},
+		"json_document_root": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"json_document"
+			],
+			"parameter_names": [
+				"document"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<json_node>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_document_root.md"
+		},
+		"json_node_kind": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"json_node"
+			],
+			"parameter_names": [
+				"node"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<string>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_kind.md"
+		},
+		"json_node_size": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"json_node"
+			],
+			"parameter_names": [
+				"node"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<int>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_size.md"
+		},
+		"json_node_at": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"json_node",
+				"int"
+			],
+			"parameter_names": [
+				"node",
+				"index"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<json_node>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_at.md"
+		},
+		"json_node_key": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"json_node",
+				"int"
+			],
+			"parameter_names": [
+				"node",
+				"index"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<string>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_key.md"
+		},
+		"json_node_has": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"json_node",
+				"string"
+			],
+			"parameter_names": [
+				"node",
+				"key"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<bool>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_has.md"
+		},
+		"json_node_member": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"json_node",
+				"string"
+			],
+			"parameter_names": [
+				"node",
+				"key"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<json_node>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_member.md"
+		},
+		"json_node_string": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"json_node"
+			],
+			"parameter_names": [
+				"node"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<string>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_string.md"
+		},
+		"json_node_boolean": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"json_node"
+			],
+			"parameter_names": [
+				"node"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<bool>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_boolean.md"
+		},
+		"json_node_number": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"json_node"
+			],
+			"parameter_names": [
+				"node"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<string>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_number.md"
+		},
+		"json_node_int": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"json_node"
+			],
+			"parameter_names": [
+				"node"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<int>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_node_int.md"
+		},
 		"fs_read_snapshot": {
 			"contract_status": "complete",
 			"signature_status": "known",

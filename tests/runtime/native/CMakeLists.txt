@@ -197,3 +197,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_test(NAME scpp_test_snapshot COMMAND test_snapshot)
 	set_tests_properties(scpp_test_snapshot PROPERTIES TIMEOUT 30)
 endif()
+
+add_executable(test_json_document test_json_document.cpp)
+target_link_libraries(test_json_document PRIVATE scpp_json scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_json_document COMMAND test_json_document)

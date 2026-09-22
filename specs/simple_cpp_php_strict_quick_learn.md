@@ -1247,6 +1247,11 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 | `json_decode` | `json_decode(string $json)` | `result<mixed>`; unwrap with `take`; malformed JSON returns an error |
 | `json_encode` | `json_encode(mixed $value)` | `result<string>`; unwrap with `take`; unsupported values return an error |
 
+For schema validation requiring distinct JSON objects/arrays or exact numeric-looking
+keys, use the immutable [JSON document API](builtins/json/document.md). Parse with
+`json_document_parse($text, $diagnostic)`, unwrap with `take`, then inspect node kinds
+before converting values. `json_node_int` checks lexical integer form and range.
+
 ### Datetime
 
 Strict datetime code should use the family-prefixed `dt_*` surface. The PHP-shaped `date()` and `strtotime()` names are legacy wrappers; do not use them as the default style in strict projects.

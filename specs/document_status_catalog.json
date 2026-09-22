@@ -4,6 +4,71 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path":  "specs/builtins/json/json_document_parse.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_document_root.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_kind.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_size.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_at.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_key.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_has.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_member.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_string.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_boolean.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_number.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_node_int.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/document.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
                         "path":  "specs/builtins/filesystem/fs_read_snapshot.md",
                         "kind":  "markdown",
                         "doc_status":  "normative"

@@ -103,7 +103,19 @@ function is_int(): mixed {}
 function isset_eval(): bool {}
 function js_plus(): mixed {}
 function json_decode(string $json): result<mixed> {}
+function json_document_parse(string $text, json_parse_error &$diagnostic, int $max_depth = 0): result<json_document> {}
+function json_document_root(json_document $document): result<json_node> {}
 function json_encode(mixed $value): result<string> {}
+function json_node_at(json_node $node, int $index): result<json_node> {}
+function json_node_boolean(json_node $node): result<bool> {}
+function json_node_has(json_node $node, string $key): result<bool> {}
+function json_node_int(json_node $node): result<int> {}
+function json_node_key(json_node $node, int $index): result<string> {}
+function json_node_kind(json_node $node): result<string> {}
+function json_node_member(json_node $node, string $key): result<json_node> {}
+function json_node_number(json_node $node): result<string> {}
+function json_node_size(json_node $node): result<int> {}
+function json_node_string(json_node $node): result<string> {}
 function jss_tokenize(string $source): token_buffer {}
 function jss_tokenize_buffer(string $source): token_buffer {}
 function layout_alignof(mixed $type_name): int {}
@@ -274,6 +286,21 @@ class error
 }
 
 namespace scpp;
+
+class json_document
+{
+}
+
+class json_node
+{
+}
+
+class json_parse_error
+{
+	public string $category;
+	public int $byte_offset;
+	public string $message;
+}
 
 class file_lock_handle
 {
