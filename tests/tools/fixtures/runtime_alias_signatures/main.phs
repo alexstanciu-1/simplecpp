@@ -1,0 +1,33 @@
+function verify_aliases(): bool {
+	$box = new RuntimeBox();
+	$record = new UserRecord();
+	$kept = keep_user($record);
+	if ($kept->value !== 42) { return false; }
+	$lock file_lock_handle;
+	$other file_lock_handle;
+	$err error;
+	$ok bool = false;
+	if (!take($ok, $err, acquire_lock($lock, "alias.lock")) || !$ok) { return false; }
+	$box->set_lock(keep_lock($lock));
+	if (!take($ok, $err, $box->acquire($other, "alias.lock")) || $ok) { return false; }
+	if (!take($ok, $err, release_lock($box->get_lock())) || !$ok) { return false; }
+	if (!take($ok, $err, $box->acquire($other, "alias.lock")) || !$ok) { return false; }
+	if (!take($ok, $err, release_lock($other)) || !$ok) { return false; }
+	$args vector<string> = ["-c", "cat; printf err >&2; exit 7"];
+	$handle process_handle;
+	if (!take($handle, $err, process_start("/bin/sh", $args, "input", 1000))) { return false; }
+	$box->set_process(keep_process($handle));
+	$done bool = false;
+	while (!$done) {
+		if (!take($done, $err, process_poll($box->get_process()))) { return false; }
+	}
+	$out process_output;
+	if (!take($out, $err, process_result($box->get_process()))) { return false; }
+	$box->set_output(keep_output($out));
+	$stored = $box->get_output();
+	if ($stored->stdout_text !== "input" || $stored->stderr_text !== "err" || $box->output->exit_code !== 7) { return false; }
+	if (!take($ok, $err, process_close($box->get_process())) || !$ok) { return false; }
+	if (take($done, $err, process_poll($handle))) { return false; }
+	return true;
+}
+echo verify_aliases() ? "alias-signatures-ok\n" : "alias-signatures-failed\n";

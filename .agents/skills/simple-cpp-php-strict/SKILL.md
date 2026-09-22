@@ -82,6 +82,14 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Use strict profile APIs such as `fs_get`, `fs_put`, `strlen`, `io_open`, `json_encode`, `dt_format`, and strict `curl_*` helpers when the `curl` runtime module is enabled; do not substitute legacy PHP names unless a local strict doc explicitly says the helper remains shared.
 - For datetime work in strict projects, prefer `dt_now`, `dt_format`, `dt_format_now`, `dt_parse`, `dt_format_iso_utc`, and `dt_parse_iso_utc`. Treat PHP-shaped `date()` and `strtotime()` as legacy wrapper names, not the strict authoring style.
 
+## Compiler-portability APIs
+
+- Use `collection_map` / `collection_filter` for vector, fixed-array, hash and table-valued mixed/dynamic inputs. Callbacks have an explicit matching by-value parameter; predicates return bool. Keep input and captured/shared state unchanged. Use `sequence_map` / `sequence_filter` for vector/fixed-array-only boundaries, and `keyed_map` / `keyed_filter` for hash/table-valued mixed boundaries. Dynamic uses the generic surface. See `specs/builtins/collections.md`.
+- Enable `process` for `process_start`, `process_poll`, `process_result`, `process_stop` and `process_close`. This Linux batch API uses absolute executables, literal arguments and file-backed capture. Poll regularly to enforce deadlines; unwrap results with `take`. See `specs/builtins/process.md`.
+- Use `fs_lock_try`, `fs_lock_release` and `fs_lock_transfer` for Linux advisory cross-process locks. Extracted false means contention, not an error. Runtime-owned `file_lock_handle`, `process_handle` and `process_output` types work in signatures and fields; do not redeclare them. See `specs/builtins/filesystem/file_locks.md`.
+- `fs_is_windows(): bool` reports compiled-target path semantics; callers own path policy and must preserve literal POSIX backslashes. `fs_read_snapshot(path, expected_mtime, expected_size): result<string>` verifies fresh path/handle identity and version observations with bounded reads and cleanup on Linux. Empty content is success. Whole-second mtime/size checks do not make snapshots atomic; other targets report unsupported. See the corresponding contracts under `specs/builtins/filesystem/`.
+- Direct chained nested-vector reads from current-class fields preserve their authored element types. Explicitly global PHS base/interface references retain the leading backslash through lowering. Neither fix adds general whole-program inference or changes cross-static-type base/derived `===` identity behavior.
+
 ## Project Workflow
 
 Use the public `scpp` workflow before reaching for lower-level tools.

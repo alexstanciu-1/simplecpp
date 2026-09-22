@@ -7,6 +7,7 @@ final class StanExpressionTypeResolver
 {
 	public function __construct(
 		private readonly StanDependencyResolver $dependencyResolver = new StanDependencyResolver(),
+		private readonly StanRuntimeCallResolver $runtimeCalls = new StanRuntimeCallResolver(),
 	)
 	{
 	}
@@ -1253,7 +1254,8 @@ final class StanExpressionTypeResolver
 
 		$currentTypes = [];
 		if ($rootKind === 'function_call') {
-			$resolved = $functionLookup[strtolower($rootName)] ?? null;
+			$instantiated = $this->instantiateRuntimeCall($rootName, $chain['args'] ?? [], $paramTypes, $selfType, $classLookup, $functionLookup);
+			$resolved = $instantiated !== null ? $instantiated['return_type'] : ($functionLookup[strtolower($rootName)] ?? null);
 			if (is_string($resolved) && $resolved !== '') {
 				$currentTypes = [$resolved];
 			}
@@ -1675,6 +1677,23 @@ final class StanExpressionTypeResolver
 				continue;
 			}
 
+			if ($event['event_kind'] === 'collection_boundary_check') {
+				$assignment = $event['assignment'];
+				$expected = (string) ($assignment['target_type'] ?? '');
+				$targetCarrier = StanRuntimeCallResolver::carrier($expected);
+				$actual = $this->resolveExpressionDescriptorTypes($assignment['descriptor'], $localTypes, $selfType, $classLookup, $functionLookup);
+				foreach ($actual as $type) {
+					$sourceCarrier = StanRuntimeCallResolver::carrier($type);
+					if ($sourceCarrier !== null && $targetCarrier !== null
+						&& $sourceCarrier['policy'] !== 'boxed' && $targetCarrier['policy'] !== 'boxed'
+						&& !$this->typeSetsAreCompatible([$type], [$expected], $classLookup, false)) {
+						$callSiteDiagnostics[] = $this->makeCallDiagnostic('argument_type_mismatch', $context, $path, (int) $event['line'], 'Collection assignment to `$' . $assignment['name'] . '` expects `' . $expected . '`, got `' . $type . '`.');
+						break;
+					}
+				}
+				continue;
+			}
+
 			if ($event['event_kind'] === 'call_site_check') {
 				$callSite = is_array($event['call_site'] ?? null) ? $event['call_site'] : null;
 				$this->checkCallSiteInitialization($diagnostics, $initializationKeys, $callSite, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup, $context, $path);
@@ -1803,6 +1822,17 @@ final class StanExpressionTypeResolver
 				'is_initialized' => (bool) ($typedLocal['is_initialized'] ?? false),
 				'literal_int_value' => $typedLocal['literal_int_value'] ?? null,
 			];
+		}
+		foreach (($ownerNode['typed_boundary_assignments'] ?? []) as $assignment) {
+			$target = is_array($assignment) ? StanRuntimeCallResolver::carrier((string) ($assignment['target_type'] ?? '')) : null;
+			if ($target !== null && $target['policy'] !== 'boxed' && is_array($assignment['descriptor'] ?? null)) {
+				$events[] = [
+					'event_kind' => 'collection_boundary_check',
+					'line' => (int) ($assignment['line'] ?? 0),
+					'priority' => 3,
+					'assignment' => $assignment,
+				];
+			}
 		}
 		foreach (['expression_chains', 'return_chains'] as $field) {
 			foreach (($ownerNode[$field] ?? []) as $chain) {
@@ -2965,7 +2995,7 @@ final class StanExpressionTypeResolver
 			$source = (string) ($descriptor['source'] ?? '');
 			return $source !== '' ? $this->canonicalizeTypeSet($localTypes[$source] ?? [], $classLookup, $selfType) : [];
 		}
-		if ($kind === 'class_constant') {
+		if ($kind === 'class_constant' || $kind === 'callable') {
 			return $this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 		}
 		if ($kind === 'comparison') {
@@ -3652,11 +3682,29 @@ final class StanExpressionTypeResolver
 		return $callName === $shortContext;
 	}
 
+	/** @param list<array<string,mixed>> $args @return array{return_type:string,errors:list<string>}|null */
+	private function instantiateRuntimeCall(string $name, array $args, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): ?array
+	{
+		$contract = $this->runtimeCalls->contract($name);
+		if ($contract === null || !array_key_exists(strtolower($name), $functionLookup)) {
+			return null;
+		}
+		$types = [];
+		foreach ($args as $arg) {
+			$types[] = $this->resolveExpressionDescriptorTypes($arg, $localTypes, $selfType, $classLookup, $functionLookup);
+		}
+		return $this->runtimeCalls->instantiate($contract, $types);
+	}
+
 	/** @param array<string,mixed> $callSite @param array<string,mixed> $signature @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
 	private function checkSignatureCompatibility(array $callSite, array $signature, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, string $targetText): array
 	{
 		$diagnostics = [];
 		$args = is_array($callSite['args'] ?? null) ? $callSite['args'] : [];
+		$instantiated = $this->instantiateRuntimeCall((string) ($callSite['name'] ?? ''), $args, $localTypes, $selfType, $classLookup, $functionLookup);
+		if ($instantiated !== null) {
+			return array_map(fn(string $error): array => $this->makeCallDiagnostic('argument_type_mismatch', $context, $path, (int) ($callSite['line'] ?? 0), $targetText . ': ' . $error), $instantiated['errors']);
+		}
 		$params = is_array($signature['params'] ?? null) ? $signature['params'] : [];
 		$requiredCount = 0;
 		foreach ($params as $param) {
@@ -3714,6 +3762,17 @@ final class StanExpressionTypeResolver
 	private function resolveExpressionDescriptorTypes(array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): array
 	{
 		$kind = (string) ($descriptor['kind'] ?? 'unknown');
+		if ($kind === 'callable') {
+			$return = (string) ($descriptor['return_type'] ?? '');
+			if ($descriptor['returns_reference'] ?? false) { $return .= '&'; }
+			$params = [];
+			foreach ($descriptor['params'] ?? [] as $param) {
+				$type = (string) ($param['type'] ?? '');
+				if ($type === '' || ($param['is_variadic'] ?? false) || ($param['has_default'] ?? false)) { return []; }
+				$params[] = $type . (($param['is_reference'] ?? false) ? '&' : '');
+			}
+			return $return === '' ? [] : ['function<' . $return . '(' . implode(',', $params) . ')>'];
+		}
 		if ($kind === 'type') {
 			$type = (string) ($descriptor['type'] ?? '');
 			return $type !== '' ? [$type] : [];
@@ -3852,21 +3911,9 @@ final class StanExpressionTypeResolver
 		$sourceTypes = $this->resolveExpressionDescriptorTypes($sourceDescriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 		$elementTypes = [];
 		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-			if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$elementTypes[] = trim((string) $matches[1]);
-				continue;
-			}
-			if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-				if (($parts[0] ?? '') !== '') {
-					$elementTypes[] = $parts[0];
-				}
-				continue;
-			}
-			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$inner = trim((string) $matches[1]);
-				$parts = array_map('trim', explode(',', $inner, 2));
-				$elementTypes[] = count($parts) === 2 ? $parts[1] : $parts[0];
+			$carrier = StanRuntimeCallResolver::carrier($sourceType);
+			if ($carrier !== null) {
+				$elementTypes[] = $carrier['value'];
 			}
 		}
 		return $this->canonicalizeTypeSet($elementTypes, $classLookup, $selfType);
@@ -4857,6 +4904,17 @@ final class StanExpressionTypeResolver
 		if ($actual === $expected) {
 			return true;
 		}
+		$actualCarrier = StanRuntimeCallResolver::carrier($actual);
+		$expectedCarrier = StanRuntimeCallResolver::carrier($expected);
+		if ($actualCarrier !== null && $expectedCarrier !== null) {
+			if ($actualCarrier['source'] === $expectedCarrier['source']) {
+				return true;
+			}
+			if (($actualCarrier['family'] ?? '') === 'hash' && ($expectedCarrier['family'] ?? '') === 'hash'
+				&& $actualCarrier['value'] === $expectedCarrier['value'] && $actualCarrier['key'] === $expectedCarrier['key']) {
+				return true;
+			}
+		}
 		if ($this->isFixedWidthIntegerAssignable($actual, $expected)) {
 			return true;
 		}
@@ -5013,46 +5071,13 @@ final class StanExpressionTypeResolver
 		$sourceTypes = $source !== null
 			? $this->resolveExpressionDescriptorTypes($source, $localTypes, $selfType, $classLookup, $functionLookup)
 			: [];
-		if ($role === 'key') {
-			$keyTypes = [];
-			foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-				if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType) === 1) {
-					$keyTypes[] = 'int';
-					continue;
-				}
-				if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType) === 1) {
-					$keyTypes[] = 'int';
-					continue;
-				}
-				if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-					$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-					$keyTypes[] = count($parts) === 2 ? $parts[1] : 'string';
-				}
-			}
-			return $this->normalizeTypeSet($keyTypes !== [] ? $keyTypes : ['mixed']);
-		}
-		$valueTypes = [];
-		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-			if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$valueTypes[] = trim((string) $matches[1]);
-				continue;
-			}
-			if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-				if (($parts[0] ?? '') !== '') {
-					$valueTypes[] = $parts[0];
-				}
-				continue;
-			}
-			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-				if (count($parts) === 2) {
-					$valueTypes[] = $parts[0];
-				} elseif (count($parts) === 1 && $parts[0] !== '') {
-					$valueTypes[] = $parts[0];
-				}
+		$types = [];
+		foreach ($this->normalizeTypeSet($sourceTypes) as $type) {
+			$carrier = StanRuntimeCallResolver::carrier($type);
+			if ($carrier !== null) {
+				$types[] = $carrier[$role === 'key' ? 'key' : 'value'];
 			}
 		}
-		return $this->normalizeTypeSet($valueTypes);
+		return $this->normalizeTypeSet($types !== [] ? $types : ($role === 'key' ? ['mixed'] : []));
 	}
 }

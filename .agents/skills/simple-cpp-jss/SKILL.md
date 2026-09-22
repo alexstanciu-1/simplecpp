@@ -181,6 +181,17 @@ After build, inspect `.prism/jss/main.phs` when needed. It should show reference
 
 In v1 alpha, STAN may still print advisory JSS warnings. Treat `Static Analysis: 0 errors` plus successful build/run and expected stdout as the pass condition.
 
+## Runtime portability surface boundary
+
+The v0.1.77 collection/process/lock/checked-snapshot contracts and regression
+fixtures establish the strict PHS surface. Do not infer new JSS `fs.*` spellings
+or JSS frontend coverage from those PHS names. Check the JSS helper registry and
+lowering rules, then prove the intended JSS build/run path before using them.
+Process, lock and snapshot backends remain Linux-only; `fs_is_windows` is a
+compiled-target fact, not permission to normalize literal POSIX backslashes.
+The shared lowering fixes do not expand JSS syntax or change cross-static-type
+base/derived object identity semantics.
+
 ## Validation
 
 Use the smallest proof that covers the change:

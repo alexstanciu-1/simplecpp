@@ -5,6 +5,9 @@ namespace Scpp\S2S\Analysis;
 
 final class RuntimeShallowSourceGenerator
 {
+	/** @var array<string,array<string,mixed>> */
+	private array $normalizedSignatures = [];
+
 	/** @return array{profile:string,path:string,generated:int,skipped:list<string>} */
 	public function generate(string $repoRoot, string $profile): array
 	{
@@ -20,6 +23,11 @@ final class RuntimeShallowSourceGenerator
 		}
 
 		$data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+		$this->normalizedSignatures = [];
+		if ($profile === 'strict') {
+			$contracts = json_decode((string) file_get_contents($repoRoot . '/generators/php/specs/php_runtime_symbol_contracts_strict.json'), true, 512, JSON_THROW_ON_ERROR);
+			$this->normalizedSignatures = $contracts['symbol_contracts'] ?? [];
+		}
 		$targets = is_array($data['php_runtime_symbol_targets'] ?? null) ? $data['php_runtime_symbol_targets'] : [];
 		$sourcePath = $this->buildOutputPath($repoRoot, $profile);
 		$functions = [];
@@ -95,7 +103,9 @@ final class RuntimeShallowSourceGenerator
 		}
 
 		$returnSuffix = $this->renderReturnSuffix($signature['return'], $isStrict);
-		return 'function ' . $name . '(' . implode(', ', $params) . ')' . $returnSuffix . ' {}';
+		$note = isset($this->normalizedSignatures[$name]['call_contract'])
+			? '/** Polymorphic runtime call: STAN instantiates its metadata contract; this stub is erased. */' . "\n" : '';
+		return $note . 'function ' . $name . '(' . implode(', ', $params) . ')' . $returnSuffix . ' {}';
 	}
 
 	/** @param list<string> $functions @param list<string> $classes @param list<string> $skipped */
@@ -151,10 +161,13 @@ final class RuntimeShallowSourceGenerator
 		return '/** ' . $type . ' */ $' . $name;
 	}
 
-	/** @param array{name:string,type:string,has_default?:bool} $param */
+	/** @param array{name:string,type:string,has_default?:bool,by_ref?:bool} $param */
 	private function renderParamWithMetadata(array $param, bool $strictShorthand): string
 	{
 		$text = $this->renderParam((string) ($param['name'] ?? 'arg'), (string) ($param['type'] ?? 'mixed'), $strictShorthand);
+		if (($param['by_ref'] ?? false) === true) {
+			$text = str_replace('$', '&$', $text);
+		}
 		if ((bool) ($param['has_default'] ?? false)) {
 			$defaultLiteral = $this->defaultLiteralForType((string) ($param['type'] ?? 'mixed'));
 			if ($defaultLiteral !== null) {
@@ -203,9 +216,41 @@ final class RuntimeShallowSourceGenerator
 		};
 	}
 
-	/** @return array{return:string,params:list<array{name:string,type:string,has_default?:bool}>} */
+	/** @return array{return:string,params:list<array{name:string,type:string,has_default?:bool,by_ref?:bool}>} */
 	private function resolveSignature(string $name, string $profile): array
 	{
+		$contract = $this->normalizedSignatures[$name] ?? null;
+		if ($profile === 'strict' && is_array($contract) && isset($contract['parameter_names'])) {
+			$names = $contract['parameter_names'];
+			$types = $contract['parameter_type_refs'] ?? [];
+			$passing = $contract['parameter_passing'] ?? [];
+			$minimum = $contract['min_arity'] ?? -1;
+			if (!is_array($names) || !is_array($types) || !is_array($passing)
+				|| !array_is_list($names) || !array_is_list($types) || !array_is_list($passing)
+				|| count($names) !== count($types) || count($names) !== count($passing)
+				|| ($contract['max_arity'] ?? -1) !== count($names)
+				|| !is_int($minimum) || $minimum < 0 || $minimum > count($names)
+				|| ($contract['signature_status'] ?? '') !== 'known'
+				|| !is_string($contract['return_type_ref'] ?? null)) {
+				throw new \RuntimeException('Invalid normalized shallow signature for ' . $name);
+			}
+			$params = [];
+			foreach ($names as $index => $paramName) {
+				if (!is_string($paramName) || preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $paramName) !== 1
+					|| !is_string($types[$index]) || $types[$index] === ''
+					|| !in_array($passing[$index], ['value', 'reference'], true)
+					|| ($index >= $minimum && $this->defaultLiteralForType($types[$index]) === null)) {
+					throw new \RuntimeException('Invalid normalized shallow parameter for ' . $name);
+				}
+				$params[] = [
+					'name' => $paramName,
+					'type' => $types[$index],
+					'by_ref' => $passing[$index] === 'reference',
+					'has_default' => $index >= $minimum,
+				];
+			}
+			return ['return' => $contract['return_type_ref'], 'params' => $params];
+		}
 		$signatures = $this->signatureMap();
 		$profileMap = $signatures[$profile] ?? [];
 		if (isset($profileMap[$name])) {
@@ -573,6 +618,16 @@ final class RuntimeShallowSourceGenerator
 		$scppClasses = [];
 		if ($isStrict) {
 			$scppClasses = [
+				$this->renderClassStub('file_lock_handle', [], $isStrict),
+				$this->renderClassStub('process_handle', [], $isStrict),
+				$this->renderClassStub('process_output', [
+					['kind' => 'property', 'name' => 'stdout_text', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'stderr_text', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'exit_code', 'type' => 'int'],
+					['kind' => 'property', 'name' => 'signal', 'type' => 'int'],
+					['kind' => 'property', 'name' => 'timed_out', 'type' => 'bool'],
+					['kind' => 'property', 'name' => 'stopped', 'type' => 'bool'],
+				], $isStrict),
 				$this->renderClassStub('token_buffer', [], $isStrict),
 				$this->renderClassStub('string_parts_builder', [], $isStrict),
 				$this->renderClassStub('text_builder', [], $isStrict),

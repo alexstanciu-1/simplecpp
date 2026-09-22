@@ -44,6 +44,10 @@ namespace filesystem_detail {
 
 namespace scpp::fs {
 
+bool_t is_windows() {
+	return bool_t(std::filesystem::path::preferred_separator == '\\');
+}
+
 bool_t is_file(const string_t &path) {
 	std::error_code error;
 	return bool_t(std::filesystem::is_regular_file(scpp::filesystem::filesystem_detail::to_path(path), error));

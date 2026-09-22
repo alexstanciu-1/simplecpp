@@ -38,3 +38,21 @@ This folder contains one contract file per filesystem or stdio builtin in the fi
 - `basename`
 
 See also: `specs/builtins/filesystem/first_pass.md`.
+
+## Strict file locks
+
+Linux cross-process advisory locks use a dedicated `file_lock_handle`:
+
+- [fs_lock_try](fs_lock_try.md)
+- [fs_lock_release](fs_lock_release.md)
+- [fs_lock_transfer](fs_lock_transfer.md)
+
+The [family contract](file_locks.md) owns lifecycle and inheritance semantics.
+
+## Target path semantics
+
+- [fs_is_windows](fs_is_windows.md) reports the compiled runtime’s native path semantics.
+
+## Checked source reads
+
+- [fs_read_snapshot](fs_read_snapshot.md) preserves checked path/handle identity and version observations with bounded reading and guaranteed cleanup (Linux backend).

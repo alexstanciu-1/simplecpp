@@ -131,6 +131,13 @@ final class StanDependencyResolver
 		$matches = [];
 		foreach ($keys as $key) {
 			foreach (($lookup[$key] ?? []) as $symbol) {
+				if (($kind === 'extends' || $kind === 'implements') && str_starts_with($target, '\\')) {
+					$scope = (string) ($symbol['scope'] ?? '');
+					$qualified = ($scope === '' ? '' : $scope . '::') . (string) ($symbol['name'] ?? '');
+					if (strtolower(str_replace('\\', '::', $qualified)) !== $normalizedTarget) {
+						continue;
+					}
+				}
 				$bucketKey = (string) ($symbol['key'] ?? '') . '|' . (string) ($symbol['path'] ?? '') . '|' . (int) ($symbol['line'] ?? 0);
 				$matches[$bucketKey] = $symbol;
 			}

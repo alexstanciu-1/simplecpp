@@ -12743,7 +12743,7 @@ function resolve_runtime_build_config(array $config): array
 	$tasks = is_array($runtime['tasks'] ?? null) ? $runtime['tasks'] : [];
 	$tasksDefaultWorkerPoolSize = normalize_runtime_tasks_default_worker_pool_size($tasks['default_worker_pool_size'] ?? null);
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'ui', 'webview'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'process', 'ui', 'webview'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -16573,6 +16573,8 @@ function compute_stan_implementation_fingerprint(string $repoRoot): string
 		$repoRoot . '/generators/php/src/Stan/StanDiagnosticCollector.php',
 		$repoRoot . '/generators/php/src/Stan/StanDiagnosticEnricher.php',
 		$repoRoot . '/generators/php/src/Stan/StanExpressionTypeResolver.php',
+		$repoRoot . '/generators/php/src/Stan/StanRuntimeCallResolver.php',
+		$repoRoot . '/generators/php/specs/php_runtime_symbol_contracts_strict.json',
 		$repoRoot . '/generators/php/src/Stan/StanFilePass.php',
 		$repoRoot . '/generators/php/src/Stan/StanFrontendClassifier.php',
 		$repoRoot . '/generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php',
@@ -18039,6 +18041,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('curl', $modules, true)) {
 		$lines[] = '#include "modules/curl/curl.cpp"';
 	}
+	if (in_array('process', $modules, true)) {
+		$lines[] = '#include "modules/process/process.cpp"';
+	}
 	if (in_array('tasks', $modules, true)) {
 		$lines[] = '#include "modules/tasks/tasks.cpp"';
 	}
@@ -18112,6 +18117,8 @@ function render_shared_release_module_composition_source(array $runtimeConfig, s
 		}
 	} elseif ($moduleName === 'curl') {
 		$lines[] = '#include "modules/curl/curl.cpp"';
+	} elseif ($moduleName === 'process') {
+		$lines[] = '#include "modules/process/process.cpp"';
 	} elseif ($moduleName === 'tasks') {
 		$lines[] = '#include "modules/tasks/tasks.cpp"';
 	}
@@ -18140,7 +18147,7 @@ function default_runtime_modules(): array
 /** @return list<string> */
 function shared_optional_runtime_modules(): array
 {
-	return ['mysqli', 'regex', 'curl', 'tasks'];
+	return ['mysqli', 'regex', 'curl', 'tasks', 'process'];
 }
 
 function runtime_build_mode_is_shared_release_supported(string $buildMode): bool
@@ -18573,6 +18580,10 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	if (in_array('php', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'], true)) {
 		$extraCxxFlags[] = '-DSCPP_LANGUAGE_TARGET_PHP=1';
 	}
+	if (in_array('process', $modules, true) && PHP_OS_FAMILY === 'Linux') {
+		$extraCxxFlags[] = '-pthread';
+		$extraLinkFlags[] = '-pthread';
+	}
 	if (in_array('mysqli', $modules, true)) {
 		$mysqliBuild = resolve_runtime_mysqli_build_spec();
 		if (!$mysqliBuild['enabled']) {
@@ -18717,6 +18728,10 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 	$extraLinkFlags = [];
 	if (in_array('php', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'], true)) {
 		$extraCxxFlags[] = '-DSCPP_LANGUAGE_TARGET_PHP=1';
+	}
+	if ($moduleName === 'process' && PHP_OS_FAMILY === 'Linux') {
+		$extraCxxFlags[] = '-pthread';
+		$extraLinkFlags[] = '-pthread';
 	}
 	if ($moduleName === 'mysqli') {
 		$mysqliBuild = resolve_runtime_mysqli_build_spec();

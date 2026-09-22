@@ -25,13 +25,43 @@ final class ScppStrictRuntimeCatalogTest
 			$this->assertSame(null, $catalog->requiredModule($name), 'STAN catalog should treat ' . $name . ' as a core helper');
 		}
 
+		$this->assertSame(true, $catalog->hasFunction('collection_map'), 'collection map is registered');
+		$this->assertSame(null, $catalog->returnType('collection_map'), 'polymorphic calls have no fixed return type');
+		$this->assertSame(null, $catalog->requiredModule('collection_map'), 'collection helpers are core');
+
 		$this->assertSame('result<mixed>', $catalog->returnType('json_decode'), 'STAN should expose the checked JSON result');
 		$this->assertSame('result<string>', $catalog->returnType('json_encode'), 'STAN should expose the checked JSON encoding result');
+		foreach (['fs_lock_try' => 'result<bool>', 'fs_lock_release' => 'result<bool>', 'fs_lock_transfer' => 'result<file_lock_handle>'] as $name => $return) {
+			$this->assertSame(true, $catalog->hasFunction($name), 'STAN should recognize lock operation ' . $name);
+			$this->assertSame($return, $catalog->returnType($name), 'STAN should preserve lock result ' . $name);
+			$this->assertSame('filesystem', $catalog->requiredModule($name), 'lock operations require filesystem');
+		}
+
+		foreach (['process_start' => 'result<process_handle>', 'process_poll' => 'result<bool>', 'process_result' => 'result<process_output>', 'process_stop' => 'result<bool>', 'process_close' => 'result<bool>'] as $name => $return) {
+			$this->assertSame(true, $catalog->hasFunction($name), 'STAN recognizes ' . $name);
+			$this->assertSame($return, $catalog->returnType($name), 'typed process result');
+			$this->assertSame('process', $catalog->requiredModule($name), 'process module ownership');
+		}
+
+		foreach (['sequence_map', 'sequence_filter', 'keyed_map', 'keyed_filter'] as $name) {
+			$this->assertSame(true, $catalog->hasFunction($name), 'constrained adapter registered');
+			$this->assertSame(null, $catalog->returnType($name), 'adapter return requires instantiation');
+			$this->assertSame(null, $catalog->requiredModule($name), 'adapters are core');
+		}
+
+		$this->assertSame('bool', $catalog->returnType('fs_is_windows'), 'fs_is_windows return contract');
+		$this->assertSame('filesystem', $catalog->requiredModule('fs_is_windows'), 'fs_is_windows module ownership');
+		$this->assertSame('result<string>', $catalog->returnType('fs_read_snapshot'), 'fs_read_snapshot return contract');
+		$this->assertSame('filesystem', $catalog->requiredModule('fs_read_snapshot'), 'fs_read_snapshot module ownership');
 
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 		$this->assertContains('public function get_message(): string', $strictRuntimeSymbols, 'captured errors should expose their message to STAN');
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
+		$this->assertContains('function fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool>', $strictRuntimeSymbols, 'normalized contracts should retain reference output and optional shared mode');
+		$this->assertContains('function fs_is_windows(): bool', $strictRuntimeSymbols, 'filesystem concrete signature');
+		$this->assertContains('function fs_read_snapshot(string $path, int $expected_mtime, int $expected_size): result<string>', $strictRuntimeSymbols, 'filesystem concrete signature');
+		$this->assertContains('class file_lock_handle', $strictRuntimeSymbols, 'STAN should know the opaque lock type');
 		$this->assertContains('function layout_sizeof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_sizeof');
 		$this->assertContains('function layout_alignof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_alignof');
 		$this->assertContains('function layout_offsetof(mixed $type_name, mixed $field_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_offsetof');

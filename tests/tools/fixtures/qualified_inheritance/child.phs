@@ -1,0 +1,30 @@
+namespace diagnostics;
+// Deliberate same-name declarations must not capture explicitly global bases.
+class Root_Base { public int $value = 99; }
+class Root_Error {}
+class Child extends \Root_Base {
+	public function parent_read(): int { return parent::read(); }
+}
+class Cross extends \models\Base {}
+class Local_Base {
+	public int $local = 13;
+	public function read_local(): int { return $this->local; }
+}
+class Local extends Local_Base {}
+class Contract implements \Root_Contract { public function number(): int { return 17; } }
+class Source_Error extends \Root_Error {
+	public function __construct(string $message) { parent::__construct($message); }
+}
+function error_check(): void {
+	$error = new Source_Error("diagnostic");
+	try { throw $error; }
+	catch (\Root_Error $caught) {
+		echo $caught->getMessage(), ":";
+		$caught->message = "changed";
+		echo $error->getMessage(), "\n";
+	}
+	try { throw $error; }
+	catch (\diagnostics\Source_Error $caught) {
+		echo $caught->getMessage(), ":", $caught === $error ? "same" : "different", "\n";
+	}
+}

@@ -7,6 +7,7 @@ See also:
 - `specs/dynamic_types.md`
 - `specs/native_reference_safety.md`
 - `specs/references.md`
+- `specs/builtins/collections.md` (typed map/filter, key preservation and fresh outputs)
 
 ## 1. Purpose
 

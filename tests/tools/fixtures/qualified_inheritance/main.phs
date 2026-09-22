@@ -1,0 +1,7 @@
+$child = new \diagnostics\Child();
+$cross = new \diagnostics\Cross();
+$local = new \diagnostics\Local();
+$contract = new \diagnostics\Contract();
+echo $child->value, ":", $child->read(), ":", $child->parent_read(), "\n";
+echo $cross->value, ":", $cross->read(), ":", $local->local, ":", $local->read_local(), ":", $contract->number(), "\n";
+\diagnostics\error_check();

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "modules/filesystem/file_lock.hpp"
+
 #include "scpp/bool_t.hpp"
 #include "scpp/error_t.hpp"
 #include "scpp/hash_t.hpp"
@@ -11,6 +13,9 @@
 #include "scpp/vector_t.hpp"
 
 namespace scpp::fs {
+
+[[nodiscard]] bool_t is_windows();
+[[nodiscard]] result<string_t> read_snapshot(const string_t &path, const int_t<> &expected_mtime, const int_t<> &expected_size);
 
 [[nodiscard]] bool_t is_file(const string_t &path);
 [[nodiscard]] bool_t is_dir(const string_t &path);

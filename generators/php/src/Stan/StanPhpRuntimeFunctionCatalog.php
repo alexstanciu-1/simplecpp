@@ -37,6 +37,11 @@ final class StanPhpRuntimeFunctionCatalog
 			$returnTypes = $this->loadReturnTypes();
 			self::$returnTypes = $returnTypes;
 		}
+		static $runtimeCalls = null;
+		$runtimeCalls ??= new StanRuntimeCallResolver();
+		if ($runtimeCalls->contract($normalized) !== null) {
+			return null; // An argument-dependent result has no fixed return type.
+		}
 		return $returnTypes[$normalized] ?? null;
 	}
 
@@ -73,6 +78,9 @@ final class StanPhpRuntimeFunctionCatalog
 		$normalized = strtolower(trim($name));
 		if ($normalized === '') {
 			return null;
+		}
+		if (str_starts_with($normalized, 'process_')) {
+			return 'process';
 		}
 		if (str_starts_with($normalized, 'fs_') || str_starts_with($normalized, 'io_')) {
 			return 'filesystem';

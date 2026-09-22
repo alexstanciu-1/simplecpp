@@ -1,0 +1,25 @@
+// Run by test_scpp_file_locks.py in an isolated Linux project.
+function lock_check(string $path): bool {
+	$lock file_lock_handle;
+	$next file_lock_handle;
+	$other file_lock_handle;
+	$err error;
+	$ok bool = false;
+	if (!take($ok, $err, fs_lock_try($lock, $path)) || !$ok) { return false; }
+	$alias = $lock;
+	if (!take($ok, $err, fs_lock_try($other, $path, true)) || $ok) { return false; }
+	if (!take($next, $err, fs_lock_transfer($lock))) { return false; }
+	if (!take($ok, $err, fs_lock_release($alias)) || !$ok) { return false; }
+	if (!take($ok, $err, fs_lock_try($other, $path)) || $ok) { return false; }
+	if (!take($ok, $err, fs_lock_release($next)) || !$ok) { return false; }
+	if (!take($ok, $err, fs_lock_release($next)) || !$ok) { return false; }
+	if (!take($ok, $err, fs_lock_try($other, $path, true)) || !$ok) { return false; }
+	if (!take($ok, $err, fs_lock_try($lock, $path, true)) || !$ok) { return false; }
+	if (!take($ok, $err, fs_lock_release($other)) || !$ok) { return false; }
+	if (!take($ok, $err, fs_lock_release($lock)) || !$ok) { return false; }
+	if (take($next, $err, fs_lock_transfer($lock))) { return false; }
+	if (take($ok, $err, fs_lock_try($lock, ""))) { return false; }
+	return true;
+}
+
+echo lock_check("strict_file_lock_test.lock") ? "lock-ok\n" : "lock-failed\n";
