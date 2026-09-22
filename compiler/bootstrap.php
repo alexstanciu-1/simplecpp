@@ -78,3 +78,5 @@ require_once __DIR__ . '/src/04_analyze/type_model/data/type_record.php';
 require_once __DIR__ . '/src/04_analyze/type_model/result_contracts.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/store.php';
 require_once __DIR__ . '/src/04_analyze/resolve_types/utilities/type_cache.php';
+require_once __DIR__ . '/src/04_analyze/resolve_types/data/lifecycle_bodies.php';
+require_once __DIR__ . '/src/04_analyze/resolve_types/lifecycle_composition.php';

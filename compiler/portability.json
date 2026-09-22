@@ -76,7 +76,9 @@
     "src/04_analyze/type_model/data/type_record.php",
     "src/04_analyze/type_model/result_contracts.php",
     "src/04_analyze/type_model/data/store.php",
-    "src/04_analyze/resolve_types/utilities/type_cache.php"
+    "src/04_analyze/resolve_types/utilities/type_cache.php",
+    "src/04_analyze/resolve_types/data/lifecycle_bodies.php",
+    "src/04_analyze/resolve_types/lifecycle_composition.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

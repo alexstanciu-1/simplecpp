@@ -32,7 +32,8 @@ omission; this is an intentional correction within the store owner.
 keys and materializes the current scalar catalog's definitions. It never changes the
 caller's full-rebuild decision. Scalar materialization is not a substitute for the
 remaining array/resource/source-structure definition producers. The store supports
-structural shapes, but binding richer definitions awaits that real model. Storage/
+structural shapes and general value-definition bindings. Normalized record/array
+producers and their resource/layout metadata remain separate dependencies. Storage/
 structure definition scans and production debug serialization will follow their
 consumers; no empty placeholder implementations are supplied.
 

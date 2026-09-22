@@ -1,0 +1,10 @@
+{
+  "native_commands": 2,
+  "actual_cpp_builds": 1,
+  "native_source_algorithm_corrections": 0,
+  "fixture_corrections": [
+    "Separate generic type annotation from assignment to avoid >= token in generated PHS."
+  ],
+  "target_changes": 0,
+  "converter_changes": 0
+}

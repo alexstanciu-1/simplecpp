@@ -111,3 +111,6 @@ Current authoring uses [global helpers](../../specs/portability/global_functions
 with q_ for PHP builtin names and no function imports. sync_imports.php only cleans
 old generated import blocks and validates prologues. Regenerate static PHP facade
 with generate_global_functions.php; --check verifies its signatures.
+
+Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
+eight host checks; active coverage is 77 files. See `specs/portability/aggregate_lifecycles.md`.

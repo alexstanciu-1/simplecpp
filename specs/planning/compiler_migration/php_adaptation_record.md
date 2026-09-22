@@ -663,3 +663,22 @@ preceded PHP-ready. A preliminary declaration probe confirmed named readonly fie
 must use supported constructor promotion rather than standalone initialization.
 See [timings and proof](results/type-store-01/README.md). Future optimization can measure
 candidate container-copy costs, key construction and hot identity/reference storage.
+
+## Aggregate lifecycle composition (2026-09-22)
+
+Migrated field-policy folding and complete lifecycle plans into `Lifecycle_Composition`.
+A compact `Lifecycle_Bodies` row replaces several optional body-ID arguments. Member
+plans use typed vectors and explicit reverse traversal; array repetition remains one
+count rather than an expanded element plan. Custom copy initializes fields before its
+body, custom assignment owns updates, and custom copy/assignment/destruction suppress
+implicit move. Unavailable field construction remains unavailable even with a custom
+constructor. General value definitions now permit aggregate shapes; integer capabilities
+and inline-field eligibility remain separately validated. JSON catalog parsing stays
+scalar-only. Resource/layout metadata will follow their actual producers.
+
+36 shared outcomes pass PHP/native; eight host checks cover mutation/rejection boundaries.
+One native command failed before C++ compilation because test annotations touched `=`
+(`vector<T>=`); spacing corrected the fixture. The second command and first actual C++
+build passed. No production algorithm, converter, or target change was needed to stabilize
+native execution. Optimization follow-up: measure repeated member-definition lookups
+before introducing cached projections. See `results/aggregate-lifecycles-01` for timings.

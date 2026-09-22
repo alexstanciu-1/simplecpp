@@ -280,3 +280,6 @@ was accepted at the same time.
 [JSON ingestion preflight](json_ingestion_preflight.md) confirms that the pinned
 decoder loses object/list identity needed by manifest validation. A lossless input
 boundary is required before porting Manifest_Syntax; snapshot export is unaffected.
+
+Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
+eight host checks; active coverage is 77 files. See `specs/portability/aggregate_lifecycles.md`.

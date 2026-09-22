@@ -181,3 +181,6 @@ cost of getting it working natively. It adds no requirement for more frequent bu
 [Project resolution](resolution_project.md) adds 182 PHP/native outcomes and 25 host snapshot/acceptance checks.
 
 [Canonical type storage](type_store.md) adds 133 PHP/native outcomes, retained store facts and 20 host invariant checks. Next: concrete definition and annotation preparation dependencies.
+
+Aggregate lifecycle stage: `compiler/tests/aggregate_lifecycles/run.py` covers 36
+shared outcomes and eight host purity/domain checks; it is registered cumulatively.
