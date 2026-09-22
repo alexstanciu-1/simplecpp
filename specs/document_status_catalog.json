@@ -4,6 +4,11 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/planning/compiler_migration/provider_declaration_integration.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
                         "path": "specs/planning/compiler_migration/results/symbolic-terms-01/host-summary.json",
                         "kind": "json",
                         "doc_status": "derived"
