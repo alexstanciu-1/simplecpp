@@ -820,3 +820,27 @@ then 40 after adding permission containers. No conversion/native correction. 529
 comparisons and 23 dependency flags match direct execution of the retained term model.
 The first PHP-ready milestone is retained; subsequent elapsed time includes the additional
 permission-model authoring, not just native stabilization. Evidence: results/symbolic-terms-01.
+
+## Provider references and semantic signatures (2026-09-22)
+
+The approved compiler-side provider integration starts with ABI-independent records.
+Four prototype reference subclasses become a tagged Type_Reference with guarded
+accessors: named language identity, exact provider/type identity, owner/slot formal,
+and ordered family application. This avoids heterogeneous interface payload casts;
+qualifiers and exact family keys remain unchanged. No type resolution, layout or
+permission is inferred. Private copied argument vectors preserve shared immutable
+child identity without exposing mutable container state.
+
+Semantic_Parameter and Semantic_Result reuse the already-proved passing/production
+tag codecs. Semantic_Signature retains ordered positions, result and optional exact
+allocation-effect identity. Private parameter storage replaces public PHP arrays;
+PHP rejects sparse/keyed lists, while native vectors enforce dense positions.
+Provider adapters still own declaration validation and resolution.
+
+35 shared PHP/native checks plus two PHP carrier rejections pass. One fixture catch
+was corrected before PHP readiness (OutOfBoundsException is not a LogicException).
+The first native build passed, with no converter changes or native corrective cycles.
+Future optimization: measure tagged reference storage before replacing immutable
+handles with an arena; preserve exact identities and ordering.
+Evidence and phase timings: results/provider-semantics-01. Family validation,
+provider import, shared symbol integration and the full template worker remain pending.

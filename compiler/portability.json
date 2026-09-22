@@ -90,7 +90,9 @@
     "src/04_analyze/instantiate/identities.php",
     "src/04_analyze/check_templates/data/terms.php",
     "src/04_analyze/check_templates/data/structures.php",
-    "src/04_analyze/check_templates/data/result.php"
+    "src/04_analyze/check_templates/data/result.php",
+    "src/04_analyze/type_model/data/type_references.php",
+    "src/04_analyze/type_model/data/semantic_calls.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

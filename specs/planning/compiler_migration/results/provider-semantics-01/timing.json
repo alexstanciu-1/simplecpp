@@ -1,0 +1,18 @@
+{
+  "authoring_start_epoch": 1790093584.40961,
+  "php_ready_epoch": 1790093671.3147016,
+  "authoring_to_php_ready_seconds": 86.905,
+  "php_ready_sha256": {
+    "src/04_analyze/type_model/data/type_references.php": "b56b31255ba8488c27ff1479daae23a58f601eabe1031175ec1de221e9d3821e",
+    "src/04_analyze/type_model/data/semantic_calls.php": "4e962b92bca91cbb600e18b9d2139f085d4e4b17e1906ac50c3095c3b481b905"
+  },
+  "native_build_seconds": 28.914,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "php_corrective_cycles": 1,
+  "php_correction": "Fixture must catch OutOfBoundsException separately from LogicException, preserving PHP exception hierarchy.",
+  "consolidation_start_epoch": 1790093742.6197999,
+  "consolidation_end_epoch": 1790093893.1599085,
+  "consolidation_note": "Elapsed includes independent next-family model authoring while cumulative fast validation ran."
+}

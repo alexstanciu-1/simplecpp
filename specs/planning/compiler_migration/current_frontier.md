@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **89 production files**: input preparation (137 outcomes),
+Active readiness is **91 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -77,3 +77,8 @@ Symbolic terms and permission-result containers add 40 PHP/native checks and 529
 retained symbolic comparisons. Next: symbolic declaration interpretation and the
 template-checking worker/joins, then registry publication and instance bindings.
 Annotation resolution remains incomplete.
+
+Provider references and semantic signatures add 35 PHP/native checks and two PHP
+carrier checks. The user approved provider integration, preserving the PHP
+preparation tool and its output contract. Next: generic-family contracts and source
+exposure records, then catalog/import and shared symbol integration.
