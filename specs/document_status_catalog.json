@@ -4,6 +4,11 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/planning/compiler_migration/rewrite_reset.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
                         "path": "specs/planning/compiler_migration/results/value-records-01/summary.json",
                         "kind": "json",
                         "doc_status": "derived"
@@ -364,7 +369,7 @@
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "tests/portability/compiler_context/README.md",
+                        "path": "tests/portability/reference/pre-rewrite/compiler_context/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
@@ -644,632 +649,632 @@
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/README.md",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-baseline.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-baseline.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-clang-driver-children.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-clang-driver-children.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-clang-startup.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-clang-startup.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-file-modules-5mb.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-file-modules-5mb.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-gc-scope.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-gc-scope.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-grouped-stages.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-grouped-stages.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-large-tools.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-large-tools.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-large.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-large.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-linkers.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-linkers.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-native-batches.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-native-batches.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-native-dispatch.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-native-dispatch.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-native-system-samples.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-native-system-samples.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-parallel20-5mb.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-parallel20-5mb.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-parallel20-tools-5mb.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-parallel20-tools-5mb.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-phase-gc.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-phase-gc.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-php-only.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-php-only.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-resident-updates.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-resident-updates.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest20-5mb.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-retest20-5mb.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest20-tools-5mb.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-retest20-tools-5mb.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest40-5mb.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-retest40-5mb.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest40-tools-5mb.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-retest40-tools-5mb.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-reuse-mold-groups.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-reuse-mold-groups.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/benchmarks/scalability/results/2026-09-11-tools.json",
+                        "path": "compiler/reference/pre-rewrite/benchmarks/scalability/results/2026-09-11-tools.json",
                         "kind": "json",
                         "doc_status": "derived"
                     },
                     {
-                        "path": "compiler/docs/README.md",
+                        "path": "compiler/reference/pre-rewrite/docs/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/code_formatting.md",
+                        "path": "compiler/reference/pre-rewrite/docs/code_formatting.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/code_organization.md",
+                        "path": "compiler/reference/pre-rewrite/docs/code_organization.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/compiler_pipeline.md",
+                        "path": "compiler/reference/pre-rewrite/docs/compiler_pipeline.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/allocation_ownership.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/allocation_ownership.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/analysis_cooperation_proposal.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/analysis_cooperation_proposal.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/analysis_handlers.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/analysis_handlers.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/backend_organization_review.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/backend_organization_review.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/backend_preparation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/backend_preparation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/binary_operations.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/binary_operations.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/body_checking.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/body_checking.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/clang_lifecycle_composition.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/clang_lifecycle_composition.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/code_generation_handlers.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/code_generation_handlers.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/compiler_extension_assessment.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/compiler_extension_assessment.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/compiler_pipeline_comparison.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/compiler_pipeline_comparison.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/compiler_pipeline_original.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/compiler_pipeline_original.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/compiler_pipeline_review.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/compiler_pipeline_review.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/conversion_selection.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/conversion_selection.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/core_data_structures.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/core_data_structures.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/custom_source_exports.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/custom_source_exports.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/explicit_instantiation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/explicit_instantiation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/first_slice.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/first_slice.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/fixed_array_list_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/fixed_array_list_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/foundations_consolidation_audit.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/foundations_consolidation_audit.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/generic_contract_implementation_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/generic_contract_implementation_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/generic_type_contract.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/generic_type_contract.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/increment_simulation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/increment_simulation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/incremental_native_investigation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/incremental_native_investigation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/incremental_refresh_rules.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/incremental_refresh_rules.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/inline_runtime_storage.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/inline_runtime_storage.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/input_preparation_organization.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/input_preparation_organization.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/integer_conversions.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/integer_conversions.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/join_organization.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/join_organization.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/lifecycle_contracts.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/lifecycle_contracts.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/lifecycle_preparation_proof.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/lifecycle_preparation_proof.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/lifecycle_probes/README.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/lifecycle_probes/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/lifetime_analysis.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/lifetime_analysis.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/llvm_lto_readiness.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/llvm_lto_readiness.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/local_type_resolution.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/local_type_resolution.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/lowering.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/lowering.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/lowering_inputs.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/lowering_inputs.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/managed_element_storage_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/managed_element_storage_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/metaprogramming_parsing.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/metaprogramming_parsing.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/native_dispatch_investigation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/native_dispatch_investigation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/native_executable.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/native_executable.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/nested_family_consolidation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/nested_family_consolidation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/operations_and_control_flow.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/operations_and_control_flow.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/owned_source_results_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/owned_source_results_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/owning_storage_fields.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/owning_storage_fields.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/parser_scaling_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/parser_scaling_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/parsing.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/parsing.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/performance_watchlist.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/performance_watchlist.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/program_entry.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/program_entry.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/project_manifest.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/project_manifest.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/provider_append_aliasing.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/provider_append_aliasing.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/provider_family_compiler_integration.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/provider_family_compiler_integration.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/provider_family_implementation_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/provider_family_implementation_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/resolved_to_llvm_development_slowdown.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/resolved_to_llvm_development_slowdown.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/return_type_resolution.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/return_type_resolution.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/runtime_cleanup.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/runtime_cleanup.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/runtime_console.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/runtime_console.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/runtime_copy_construction.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/runtime_copy_construction.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/runtime_package_consumption.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/runtime_package_consumption.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/runtime_package_preparation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/runtime_package_preparation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/runtime_string_literals.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/runtime_string_literals.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/scalability_first_run.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/scalability_first_run.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_family_consolidation.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_family_consolidation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_family_integration_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_family_integration_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_list_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_list_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_native_contract.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_native_contract.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_operation_adapter_proof.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_operation_adapter_proof.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_record_borrowing.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_record_borrowing.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_skeleton.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_skeleton.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_specialization_measurements.json",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_specialization_measurements.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/source_specialization_proof.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/source_specialization_proof.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/struct_member_audit.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/struct_member_audit.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/structured_values_layout.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/structured_values_layout.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/symbol_collection.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/symbol_collection.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/symbol_comparison.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/symbol_comparison.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/symbol_resolution.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/symbol_resolution.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/template_bindings.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/template_bindings.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/type_capability_assessment.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/type_capability_assessment.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/type_storage.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/type_storage.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/details/typed_storage_plan.md",
+                        "path": "compiler/reference/pre-rewrite/docs/details/typed_storage_plan.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/planning/compiler_foundations.md",
+                        "path": "compiler/reference/pre-rewrite/docs/planning/compiler_foundations.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/docs/type_model.md",
+                        "path": "compiler/reference/pre-rewrite/docs/type_model.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/function_arguments/README.md",
+                        "path": "compiler/reference/pre-rewrite/examples/function_arguments/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/function_arguments/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/function_arguments/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/runtime_console/README.md",
+                        "path": "compiler/reference/pre-rewrite/examples/runtime_console/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/10mb/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/10mb/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/128kb/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/128kb/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/1mb/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/1mb/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/256kb/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/256kb/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/512kb/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/512kb/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/5mb/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/5mb/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/64kb/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/64kb/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/README.md",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/scalability/inventory.json",
+                        "path": "compiler/reference/pre-rewrite/examples/scalability/inventory.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/examples/three_files/project.json",
+                        "path": "compiler/reference/pre-rewrite/examples/three_files/project.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/language/README.md",
+                        "path": "compiler/reference/pre-rewrite/language/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/language/instantiation_limits.json",
+                        "path": "compiler/reference/pre-rewrite/language/instantiation_limits.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/language/named_types.json",
+                        "path": "compiler/reference/pre-rewrite/language/named_types.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
@@ -1279,247 +1284,247 @@
                         "doc_status": "historical"
                     },
                     {
-                        "path": "compiler/reference/original-phpp/src/README.md",
+                        "path": "compiler/reference/pre-rewrite/reference/original-phpp/src/README.md",
                         "kind": "markdown",
                         "doc_status": "historical"
                     },
                     {
-                        "path": "compiler/reference/original-phpp/src/prism.json",
+                        "path": "compiler/reference/pre-rewrite/reference/original-phpp/src/prism.json",
                         "kind": "json",
                         "doc_status": "historical"
                     },
                     {
-                        "path": "compiler/reference/original-phpp/tests/README.md",
+                        "path": "compiler/reference/pre-rewrite/reference/original-phpp/tests/README.md",
                         "kind": "markdown",
                         "doc_status": "historical"
                     },
                     {
-                        "path": "compiler/reference/source-repository/prototype_readme.md",
+                        "path": "compiler/reference/pre-rewrite/reference/source-repository/prototype_readme.md",
                         "kind": "markdown",
                         "doc_status": "historical"
                     },
                     {
-                        "path": "compiler/reference/source-repository/working_rules.md",
+                        "path": "compiler/reference/pre-rewrite/reference/source-repository/working_rules.md",
                         "kind": "markdown",
                         "doc_status": "historical"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/README.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/config.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/config.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/definitions/README.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/definitions/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/definitions/allocation.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/definitions/allocation.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/definitions/element_storage.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/definitions/element_storage.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/definitions/scalars.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/definitions/scalars.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/definitions/strings.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/definitions/strings.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/families/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/families/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/project/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/project/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/tests/families/README.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/tests/families/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/tests/families/catalog.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/tests/families/catalog.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/tests/lifecycle/README.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/tests/lifecycle/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/tests/sequence_aliasing/README.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/tests/sequence_aliasing/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/tests/source_operations/README.md",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/tests/source_operations/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/tests/specializations/catalog.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/tests/specializations/catalog.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src-runtime-preparation/tests/specializations/request.json",
+                        "path": "compiler/reference/pre-rewrite/src-runtime-preparation/tests/specializations/request.json",
                         "kind": "json",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/01_prepare_inputs/README.md",
+                        "path": "compiler/reference/pre-rewrite/src/01_prepare_inputs/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/01_prepare_inputs/load_runtime/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/01_prepare_inputs/load_runtime/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/01_prepare_inputs/read_manifest/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/01_prepare_inputs/read_manifest/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/01_prepare_inputs/read_sources/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/01_prepare_inputs/read_sources/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/02_tokenize/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/02_tokenize/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/03_parse/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/03_parse/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/README.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/analyze_lifetimes/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/check_bodies/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/check_bodies/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/check_templates/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/check_templates/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/collect_symbols/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/instantiate/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/instantiate/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/resolve_symbols/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/resolve_symbols/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/resolve_types/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/resolve_types/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/04_analyze/type_model/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/04_analyze/type_model/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/05_generate_code/README.md",
+                        "path": "compiler/reference/pre-rewrite/src/05_generate_code/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/05_generate_code/emit_llvm/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/05_generate_code/emit_llvm/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/05_generate_code/lower/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/05_generate_code/lower/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/05_generate_code/prepare_backend/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/05_generate_code/prepare_backend/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/06_build_output/README.md",
+                        "path": "compiler/reference/pre-rewrite/src/06_build_output/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/06_build_output/build_native/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/06_build_output/build_native/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/compile/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/compile/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/compile/steps.md",
+                        "path": "compiler/reference/pre-rewrite/src/compile/steps.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/diagnostics/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/diagnostics/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/src/simulate_increment/calls.md",
+                        "path": "compiler/reference/pre-rewrite/src/simulate_increment/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/tests/README.md",
+                        "path": "compiler/reference/pre-rewrite/tests/README.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },
                     {
-                        "path": "compiler/tool_process/calls.md",
+                        "path": "compiler/reference/pre-rewrite/tool_process/calls.md",
                         "kind": "markdown",
                         "doc_status": "supporting"
                     },

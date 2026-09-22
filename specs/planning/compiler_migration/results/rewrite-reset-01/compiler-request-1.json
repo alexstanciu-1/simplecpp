@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "tests/portability/compiler_context/run.py"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "Compiler rewrite has no ready component. The previous 39-file cumulative proof is archived at tests/portability/reference/pre-rewrite/compiler_context; replay it from Git branch v0.2/pre-rewrite-reference.\n"
+}

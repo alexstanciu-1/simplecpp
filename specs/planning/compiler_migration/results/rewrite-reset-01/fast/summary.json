@@ -1,0 +1,83 @@
+{
+  "status": "passed",
+  "scope": "portability tooling and active rewrite readiness",
+  "native_requested": [],
+  "steps": [
+    {
+      "name": "collections-php",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/collections_php.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.144
+    },
+    {
+      "name": "value-records-php",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/value_records.py",
+        "--results",
+        "/tmp/scpp-rewrite-reset-fast-01/value-records-php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.487
+    },
+    {
+      "name": "foundation",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/run.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 3.551
+    },
+    {
+      "name": "check-regressions",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/check.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 4.842
+    },
+    {
+      "name": "prologues",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/prologues.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.013
+    },
+    {
+      "name": "native-framework-install",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/native_runtime.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.04
+    }
+  ],
+  "configured_target": {
+    "repository": "https://github.com/alexstanciu-1/simplecpp.git",
+    "release": null,
+    "verified_commit": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+    "cli": "bin/scpp.php",
+    "profile": "strict",
+    "purpose": "PHP++ compiler implementation target; separate from the adopted LLVM runtime-provider baseline",
+    "base_release": "v0.1.77",
+    "branch": "feature/qualified-construction-235",
+    "status": "unreleased tested candidate"
+  },
+  "compiler_ready_files": 0,
+  "compiler_status": "not_started",
+  "native_proved": []
+}

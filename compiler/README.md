@@ -1,66 +1,49 @@
-# Simple C++ compiler
+# Simple C++ compiler rewrite
 Doc Status: supporting
 
-This is the sole development home of the adopted compiler, from source revision
-`75e9b0f7c3f6420255b3b126429afbfa0e13ccb1`. The original checkout is preserved as
-reference. Complete implementation portability before adding compiler functionality.
-The implementation is currently PHP. [`portability.json`](portability.json) explicitly
-lists 36 ready production files, proved in PHP and generated PHP++. See the
-[current frontier](../specs/planning/compiler_migration/current_frontier.md) for
-coverage and the remaining migration work.
+This is the single active home for the stage-by-stage convertible-PHP rewrite.
+The reset is complete; **zero production files are currently ready**. The first
+component is project-manifest reading, followed by paths/discovery and verified
+source reads. No active compiler CLI or complete compilation pipeline exists yet.
 
-The complete numbered pipeline, runtime preparation, shared process service, tests,
-benchmarks and examples are retained. Lowering and LLVM emission remain part of this
-compiler. The future C++ backend will consume the same semantic model.
+`src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
+is reserved for later continuation. `tests/` will hold new stage outcome proofs.
+Do not populate these folders by copying the whole old implementation back.
+Bring reusable code in deliberately, applying the portable-PHP and strict skills.
 
-From the repository root:
+The converter, PHP runtime framework and reusable capability tests remain at
+`tools/php_portability/` and `tests/portability/` from the repository root.
+`portability.json` is the empty active ready set. `tools/portability_target.json`
+retains exact tested candidate `a1a1babd07082d9abf7ac885b2328c99368ad4cf`.
+Other retained toolchain configuration is historical provider/tooling input, not
+proof that the rewritten compiler can run it already.
 
-```bash
-php compiler/src/main.php --help
-python3 compiler/tests/run.py --jobs 10 --timeout 180
+Run framework validation from the repository root:
+
+```sh
+python3 tools/php_portability/validate.py --results /tmp/scpp-rewrite-check-NEW
 ```
 
-Commands in imported subsystem documentation are relative to `compiler/` unless
-stated otherwise. Start with [architecture](docs/README.md),
-[current capabilities](docs/planning/compiler_foundations.md), and
-[runtime preparation](src-runtime-preparation/README.md).
-The original [entry guide](reference/source-repository/prototype_readme.md) is
-preserved verbatim as historical context.
+It reports framework results separately from compiler readiness. Requesting a
+compiler native proof fails explicitly until a real component proof is installed.
+Native capability proofs such as `--native records --target-checkout TARGET` remain
+available. No empty compiler build is treated as a successful compilation.
 
-## Dependencies and authority
+## Preserved reference
 
-The baseline uses Clang 18 and the external Simple C++ runtime pinned at
-`fc20d73d040c4e69758bcec0b1caf40c26755f72`. Configuration paths are relative:
-preparation includes resolve from `src-runtime-preparation/`; `tools/toolchain.json`
-selects the historical PHP++ toolchain relative to this compiler directory.
-Do not silently substitute this repository's runtime during migration.
-Generated packages and benchmark build outputs are ignored derived artifacts.
+The previous adopted compiler, its tools, tests, examples and documentation are
+frozen under [reference/pre-rewrite](reference/pre-rewrite/). This is source reference,
+not a second maintained implementation. Its internal relative launch paths are
+historical; replay it from Git branch `v0.2/pre-rewrite-reference` at commit
+`623402d05e066bb5bef12c1439472a0a7f376b10` in an isolated checkout when necessary.
+The external prototype checkout is unchanged.
 
-The PHP++ implementation target is selected separately in
-[`tools/portability_target.json`](tools/portability_target.json): unreleased tested
-candidate `2f0d667f38a35ff02ef77e813f409189cba2d032`, based on v0.1.76. Latest
-cumulative evidence is `specs/planning/compiler_migration/results/preparation-symbols-01/`
-from the repository root. This does not upgrade the LLVM provider baseline above.
+The old 39-file cumulative proof remains historical evidence and reusable test
+material, not coverage of this new source tree. See the
+[reset record](../specs/planning/compiler_migration/rewrite_reset.md) and
+[current methodology](../specs/planning/compiler_migration/README.md#current-methodology-stage-by-stage-rewrite).
 
-Repository `specs/` and root working rules remain authoritative. Imported docs are
-supporting descriptions of the adopted implementation and its research extensions;
-they do not silently change Simple C++ semantics. Preserve process ownership,
-fixed worker inputs/outputs and joins, retained identities and snapshot behavior.
-Use [formatting and navigation guidance](docs/code_formatting.md) for compiler PHP.
-The [original working rules](reference/source-repository/working_rules.md) are
-historical reference, not independently active instructions.
-
-## Preservation and migration
-
-[Migration records](../specs/planning/compiler_migration/README.md) contain file
-provenance, relocation differences and validation. All original tracked files have
-an inventory entry, including historical PHP++ under `reference/original-phpp/`.
-The Git bundle in `reference/history/` preserves all original refs and reachable
-history; it has been restored into a fresh bare repository and checked with fsck.
-Neither the original checkout nor its history was changed.
-
-Before native portability edits, perform the agreed target probes for struct fields
-containing strings, vectors, hashes and class handles, including copy/reference
-behavior. Missing target support is a blocker to discuss, not permission to change
-the compiler data model. The portability converter remains a separate local-syntax
-conversion tool under `tools/php_portability/` in the repository root.
+Root repository specs and working rules remain authoritative. Preserve meaningful
+language/protocol results while allowing better internals; complete migration before
+adding compiler functionality. Unions and deeper layout tuning are deferred unless
+needed by a selected component.

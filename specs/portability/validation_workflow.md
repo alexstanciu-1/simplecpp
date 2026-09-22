@@ -1,6 +1,22 @@
 # Portable-PHP validation workflow
 Doc Status: supporting
 
+## Current reset state
+
+The compiler rewrite starts with zero ready files. The default driver runs independent
+collection/framework, scalar-record, converter/checker, prologue and installation
+checks and explicitly reports no compiler readiness. `--native compiler` and the
+active compiler proof entrypoint fail until a new stage proof is installed. Other
+native capabilities remain selectable. The old compiler harness/oracles are preserved
+under `tests/portability/reference/pre-rewrite/`; replay them from Git branch
+`v0.2/pre-rewrite-reference`, not their relocated paths. See
+[the reset record](../planning/compiler_migration/rewrite_reset.md).
+
+The workflow below describes the pre-reset cumulative harness and its preserved
+evidence. Restore the relevant stage proof deliberately when the first rewrite
+component is ready; a nonempty manifest without that proof currently fails explicitly.
+
+
 The host driver `tools/php_portability/validate.py` consolidates existing checks
 for the current compiler ready set. It adds no conversion rules and does not select
 or migrate new compiler files. Python is host test orchestration; the converter

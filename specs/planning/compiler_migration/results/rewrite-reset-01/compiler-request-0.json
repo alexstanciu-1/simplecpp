@@ -1,0 +1,15 @@
+{
+  "command": [
+    "python3",
+    "tools/php_portability/validate.py",
+    "--results",
+    "/tmp/scpp-rewrite-reset-native-request-01",
+    "--native",
+    "compiler",
+    "--target-checkout",
+    "/tmp/scpp-a1a1babd-probe"
+  ],
+  "exit": 1,
+  "stdout": "target-revision\ntarget-status\n",
+  "stderr": "Compiler rewrite has no ready component; historical 39-file coverage is archived\n"
+}

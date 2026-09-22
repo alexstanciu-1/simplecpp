@@ -1,6 +1,9 @@
 # Portable PHP implementation profile
 Doc Status: planning
 
+The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
+these capability proofs but starts active compiler readiness at zero.
+
 For writing code, start with the [authoring guide](authoring_guide.md) and the
 project-local [portable-PHP skill](../../.agents/skills/simple-cpp-portable-php/SKILL.md).
 Use the [validation workflow](validation_workflow.md) for the ready-set PHP loop
@@ -42,7 +45,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files are ready; the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is zero, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP

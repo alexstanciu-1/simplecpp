@@ -1,6 +1,10 @@
 # Portability consolidation and adoption debt
 Doc Status: planning
 
+Current compiler status: [rewrite reset](../planning/compiler_migration/rewrite_reset.md),
+zero active ready files. Capability support below remains available; prior compiler
+slice statements describe archived implementation/proofs, not active rewrite coverage.
+
 Date: 2026-09-21. This records the converter consolidation checkpoint. The compiler
 has since been [adopted](../planning/compiler_migration/adoption.md); the
 [first component slice](compiler_context_slice.md) now passes PHP/native proofs. The native escape hatch remains documented only. No `SCPP_NATIVE`

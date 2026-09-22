@@ -58,7 +58,10 @@ an old slice's limits or a feature-catalog proposal as the current support matri
 Use the [validation workflow](../../../specs/portability/validation_workflow.md).
 `python3 tools/php_portability/validate.py --results FRESH` runs the ready-set fast
 loop. Add `--native compiler --target-checkout TARGET` for the cumulative native
-proof; a PHP-only pass is not native evidence. The immutable target lives in
+proof; a PHP-only pass is not native evidence. After the
+[rewrite reset](../../../specs/planning/compiler_migration/rewrite_reset.md), the active
+ready set is empty: default checks prove tools, and compiler proof requests fail
+until a real stage harness is installed. Old 39-file coverage is historical. The immutable target lives in
 [portability_target.json](../../../compiler/tools/portability_target.json), not in
 this skill. Host loading belongs outside the converted source tree; assemble native
 framework support separately and consume output only after successful conversion.
