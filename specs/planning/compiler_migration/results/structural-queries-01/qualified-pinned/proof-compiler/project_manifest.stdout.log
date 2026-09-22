@@ -1,0 +1,2 @@
+valid manifest checks passed: disk reads, snapshots, rebuild decisions, and discovery handoff
+project manifest ok: disk reads, validation, exact snapshots, rebuild decisions, and failure isolation

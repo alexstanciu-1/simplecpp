@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile warning in src/02_tokenize/store.phs:99: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+Generated location: .prism/generated/src/02_tokenize/store.cpp:41:2
+Compile warning in src/03_parse/data/store.phs:69: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+Generated location: .prism/generated/src/03_parse/data/store.cpp:16:2
+Compile error in src/03_parse/utilities/syntax_access.phs:103: no matching function for call to 'create'
+Generated location: .prism/generated/src/03_parse/utilities/syntax_access.cpp:51:9
+Additional remapped diagnostics: 11
+Raw compiler excerpt:
+store.cpp:41:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+store.cpp:16:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+syntax_access.cpp:51:9: error: no matching function for call to 'create'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

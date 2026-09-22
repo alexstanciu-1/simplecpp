@@ -4,6 +4,26 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/portability/compiler_structural_queries_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/structural_query_target_handoff.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/structural-queries-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/structural-queries-01/retained.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path": "specs/planning/compiler_migration/results/struct-member-cursor-01/summary.json",
                         "kind": "json",
                         "doc_status": "derived"

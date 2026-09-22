@@ -1,0 +1,48 @@
+{
+  "candidate": "361b1e9752817cd5924a9117fba806c5928bb406",
+  "commands": [
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/compiler_migration/results/structural-queries-01/minimal-source",
+        "/tmp/scpp-query-minimal-361/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-361b1e97-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "cwd": "/tmp/scpp-query-minimal-361/phpp",
+      "exit": 0
+    },
+    {
+      "label": "framework",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-query-minimal-361/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "php",
+        "/tmp/scpp-361b1e97-probe/bin/scpp.php",
+        "run",
+        "--build-runtime"
+      ],
+      "cwd": "/tmp/scpp-query-minimal-361/phpp",
+      "exit": 3
+    }
+  ]
+}

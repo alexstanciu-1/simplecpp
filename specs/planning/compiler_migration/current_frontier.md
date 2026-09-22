@@ -7,12 +7,12 @@ counts in historical slice documents are checkpoints, not the current count.
 
 | Selected area | Concrete dependency | Next action |
 | --- | --- | --- |
-| Structural syntax access and semantic consumers | Typed cursor and ten consumers now pass PHP proofs; existing Syntax_Access/Metaprogramming_Syntax forms still need conversion | Adapt actual query dependencies (first checker rejection: trait ??), then establish native proof; see struct_member_cursor_decision.md. |
+| Structural syntax access and semantic consumers | Cursor, query owner and trait now convert and pass PHP proofs; qualified construction is rejected by pinned target, d493525d and 361b1e97 | Resolve the construction defect described in structural_query_target_handoff.md, then rerun native proof. |
 | Semantic records, lifecycle and backend vocabulary | 41 string-backed enums and seven enum methods exceed the selected native subset | Implement the staged typed-tag/codec plan accepted on 2026-09-22; see enum_portability_decision.md. |
-| Lexical worker and source diagnostics | Explicit global base class resolves inside the derived namespace | #233 fix expected per user update; test an immutable candidate before adoption. |
+| Lexical worker and source diagnostics | Explicit global base class resolves inside the derived namespace | #233 supplies d493525d and combined descendant 361b1e97; validate the diagnostic component before adoption. |
 | Manifest parsing and runtime metadata ingestion | Native JSON tables erase object/list identity | Native lossless document API with a PHP counterpart accepted on 2026-09-22; json_document_requirement.md defines the requirement. |
-| Source path resolution | Existing host-sensitive absolute-path/separator rules | Requested in #233; expose a truthful target-host path/platform fact before porting Source_Paths. |
-| Verified source snapshot reading | Path/open-handle device/inode, regular-file kind and version checks, bounded read and guaranteed close | Requested in #233; preserve the read.php protocol; current scanner APIs do not supply this information. |
+| Source path resolution | Existing host-sensitive absolute-path/separator rules | fs_is_windows is available in 361b1e97; add PHP adapter and prove Source_Paths on the candidate. |
+| Verified source snapshot reading | Path/open-handle device/inode, regular-file kind and version checks, bounded read and guaranteed close | Linux fs_read_snapshot is available in 361b1e97; add PHP/native adapter and compiler proofs; other hosts explicitly unsupported. |
 | Input_Selection as a whole | supports_increment consumes Symbol_Refresh and its semantic catalog | Follow semantic-record dependencies; do not split a tiny select-only fragment merely to increase ready-file counts. |
 
 ## Path resolution finding

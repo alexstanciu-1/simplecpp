@@ -1,0 +1,633 @@
+{
+  "workspace": "/tmp/scpp-context-port-bxp0vtz2",
+  "target_revision": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "--check"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.224
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach (array_slice($argv, 1) as $file) { require $file; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/state.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/02_tokenize/structures.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/step.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/utilities/path_syntax.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/data/nodes.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/data/role_views.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/data/structures.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/data/tree.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/04_analyze/check_bodies/utilities/decimal_range.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/05_generate_code/prepare_backend/data/tools.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/data/read_tasks.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/data/structures.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/data/source_json.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/data/store.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/data/result.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/join.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/scan_join.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/snapshot_join.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/select_reads.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/02_tokenize/store.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/02_tokenize/join.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/02_tokenize/select_tasks.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/data/result.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/data/store.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/join.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/utilities/binary_syntax.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/select_tasks.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/utilities/syntax_comparer.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/04_analyze/check_bodies/utilities/byte_literals.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/04_analyze/type_model/data/type_references.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/data/native_project.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_manifest/data/result.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/01_prepare_inputs/read_sources/scan.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/symbols.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/utilities/metaprogramming_syntax.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/utilities/syntax_access.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/03_parse/utilities/struct_member_cursor.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php/main.php"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.156
+    },
+    {
+      "label": "php-readonly",
+      "command": [
+        "php",
+        "-r",
+        "require $argv[1]; $view = new parse\\function_parts(1,2,3,4); try { $view->name_id=9; } catch (Error $error) { echo \"PHP readonly enforced\"; exit(0); } exit(1);",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/bootstrap.php"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.113
+    },
+    {
+      "label": "step-contract",
+      "command": [
+        "php",
+        "-r",
+        "require $argv[1]; $out = []; foreach ([\"Step_Result\", \"Step_Store\", \"Step\", \"Runnable_Step\", \"Store_Providing_Step\"] as $name) { $r = new ReflectionClass(\"compile\" . chr(92) . $name); $methods = []; foreach ($r->getMethods() as $m) { $methods[$m->getName()] = [(string)$m->getReturnType(), $m->getNumberOfParameters(), $m->isPublic()]; } $out[$name] = [$r->isInterface(), $methods]; } echo json_encode($out);",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/step.php"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.053
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.508
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.067
+    },
+    {
+      "label": "reject-0",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.068
+    },
+    {
+      "label": "reject-1",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.066
+    },
+    {
+      "label": "reject-2",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.067
+    },
+    {
+      "label": "reject-3",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.065
+    },
+    {
+      "label": "reject-4",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.065
+    },
+    {
+      "label": "reject-5",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.065
+    },
+    {
+      "label": "reject-6",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.067
+    },
+    {
+      "label": "reject-7",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.068
+    },
+    {
+      "label": "reject-8",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.068
+    },
+    {
+      "label": "reject-9",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.061
+    },
+    {
+      "label": "reject-10",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.064
+    },
+    {
+      "label": "reject-11",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.067
+    },
+    {
+      "label": "reject-12",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.061
+    },
+    {
+      "label": "reject-13",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.065
+    },
+    {
+      "label": "reject-14",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.063
+    },
+    {
+      "label": "reject-15",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.061
+    },
+    {
+      "label": "reject-16",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.065
+    },
+    {
+      "label": "reject-17",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.068
+    },
+    {
+      "label": "reject-18",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.065
+    },
+    {
+      "label": "reject-19",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.069
+    },
+    {
+      "label": "reject-20",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.071
+    },
+    {
+      "label": "reject-21",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.063
+    },
+    {
+      "label": "reject-22",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.072
+    },
+    {
+      "label": "reject-23",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.066
+    },
+    {
+      "label": "reject-24",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.075
+    },
+    {
+      "label": "reject-25",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.064
+    },
+    {
+      "label": "reject-26",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.069
+    },
+    {
+      "label": "reject-27",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.068
+    },
+    {
+      "label": "reject-28",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.069
+    },
+    {
+      "label": "reject-29",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.068
+    },
+    {
+      "label": "reject-30",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.076
+    },
+    {
+      "label": "reject-31",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.075
+    },
+    {
+      "label": "reject-32",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.082
+    },
+    {
+      "label": "reject-33",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.079
+    },
+    {
+      "label": "reject-34",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.082
+    },
+    {
+      "label": "reject-35",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.076
+    },
+    {
+      "label": "reject-36",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-bxp0vtz2/php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.065
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-2f0d667f-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "cwd": "/tmp/scpp-context-port-bxp0vtz2/phpp",
+      "exit_code": 0,
+      "seconds": 0.155
+    },
+    {
+      "label": "native-runtime-install",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp",
+        "--filesystem"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.059
+    },
+    {
+      "label": "native-runtime-reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-context-port-bxp0vtz2/phpp",
+        "--filesystem"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.056
+    },
+    {
+      "label": "native",
+      "command": [
+        "php",
+        "/tmp/scpp-2f0d667f-probe/bin/scpp.php",
+        "run",
+        "--build-runtime"
+      ],
+      "cwd": "/tmp/scpp-context-port-bxp0vtz2/phpp",
+      "exit_code": 3,
+      "seconds": 4.384
+    }
+  ],
+  "compiler_fixtures": [
+    "compile/join_contracts.php",
+    "compile/compile_driver.php",
+    "compile/incremental_policy.php",
+    "02_tokenize/tokenization.php",
+    "02_tokenize/variable_tokens.php",
+    "02_tokenize/lexical_updates.php",
+    "01_prepare_inputs/read_sources/source_paths.php",
+    "01_prepare_inputs/read_sources/source_discovery.php",
+    "01_prepare_inputs/read_sources/source_scan_tasks.php",
+    "01_prepare_inputs/read_sources/source_snapshots.php",
+    "03_parse/parsing.php",
+    "03_parse/parameter_parsing.php",
+    "03_parse/struct_parsing.php",
+    "03_parse/frontend_storage.php",
+    "03_parse/parse_updates.php",
+    "03_parse/metaprogramming_parsing.php",
+    "features/integer_conversions.php",
+    "04_analyze/type_model/semantic_calls.php",
+    "01_prepare_inputs/read_manifest/manifest_export.php",
+    "01_prepare_inputs/read_manifest/project_manifest.php",
+    "01_prepare_inputs/read_manifest/manifest_recovery.php"
+  ]
+}

@@ -72,3 +72,12 @@ The cursor is not added to the ready manifest before its real dependency proof.
 Evidence: [struct-member-cursor-01](results/struct-member-cursor-01/summary.json).
 Next: adapt the structural query/trait owners, retaining their errors and shape
 validation, then establish the complete PHP/native query proof.
+
+## Query dependency follow-up
+
+The query owner/trait now pass conversion and 27,560 frozen-source comparisons.
+The earlier ?? rejection is resolved through explicit checked node operations;
+no converter rule was added. Native proof now reaches a target construction defect,
+including on candidate d493525d. See [the handoff](structural_query_target_handoff.md)
+and [query slice](../../portability/compiler_structural_queries_slice.md). This
+supersedes the earlier next-action note, not its retained historical evidence.

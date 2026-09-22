@@ -64,7 +64,8 @@ without adding general generator lowering or eager temporary lists. Optimization
 questions: repeated traversal versus indexes, cursor allocation cost and whether
 the existing materializing consumer can later stream without changing validation
 order. No speedup is claimed. Focused oracle/identity tests and 39 retained fixtures
-pass; the actual query/trait dependency still blocks native conversion on `??`.
+pass; the subsequent query/trait adaptation resolves `??`; native proof now encounters
+the separately documented target construction defect.
 Evidence: `results/struct-member-cursor-01/summary.json`.
 
 ## Accepted, not implemented at this checkpoint
@@ -98,3 +99,22 @@ the target pin. No runtime/compiler change or new readiness claim accompanies th
 record. A future optimization pass should start with representative full-pipeline
 CPU/allocation/peak-memory measurements and retained behavioral proofs; native build
 latency is a separate metric from the migrated compiler's execution time.
+
+## Subsequent PHP adaptation: structural query dependencies
+
+Optional node lookups/nullsafe probes now use private checked-node and optional-kind
+operations owned by Syntax_Access. Dense one-based node IDs and existing query-specific
+errors remain explicit. Enum membership arrays become fixed comparisons; alternative
+eligibility becomes a boolean; optional reference/initializer results avoid ambiguous
+nullable intermediate locals. Literal owner calls replace self:: for local conversion.
+Record constructors are explicitly qualified to disambiguate method/type collisions.
+No converter rule or new compiler feature was added.
+
+Reason: express the existing structural validation through typed local operations.
+27,560 frozen-original value/error comparisons and 39 retained fixtures pass. Native
+proof is blocked by target handling of qualified same-namespace constructors, including
+on d493525d; this is not additional native-ready coverage. Future optimization should
+measure repeated bounds/kind checks before changing validation placement or caching
+roles, preserving deferred failures and input identity. See the
+[query slice](../../portability/compiler_structural_queries_slice.md) and
+[target handoff](structural_query_target_handoff.md).

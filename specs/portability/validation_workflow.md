@@ -106,3 +106,7 @@ The cumulative compiler runner now creates isolated filesystem fixtures and sele
 the `--filesystem` native support artifact/module for the production source scanner.
 Its fast loop also checks the frozen scanner oracle, including same-process metadata
 refresh. Host fixture creation remains outside the converted implementation tree.
+
+The fast loop also runs `syntax_access_oracle.php`: 27,560 result/error comparisons
+for the adapted structural query owner/trait, including input purity. This is host
+evidence for a pending component; it does not add files to the native-ready manifest.

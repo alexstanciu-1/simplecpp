@@ -1,0 +1,275 @@
+[
+  {
+    "fixture": "03_parse/frontend_storage.php",
+    "exit": 0,
+    "seconds": 0.11249205499188974,
+    "stdout": "frontend storage ok: record clones, long tokens, independent file tables and linked traversal\nfailed manifest preparation preserves session state\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/struct_parsing.php",
+    "exit": 0,
+    "seconds": 0.11099123500753194,
+    "stdout": "struct parsing ok: shared field roles, ordered declarations, logical changes, malformed shapes and snapshot purity\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/struct_member_cursor.php",
+    "exit": 0,
+    "seconds": 0.11776496795937419,
+    "stdout": "struct member cursor ok: lazy roles, wrappers, order, filtering, exhaustion, identity and early stop\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/metaprogramming_parsing.php",
+    "exit": 0,
+    "seconds": 0.6520938449539244,
+    "stdout": "metaprogramming parsing ok: general multi-argument applications, declarations/constants/context syntax, deep/wide inputs, exports, fixed workers, one replacement and semantic rejection\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/collect_symbols/semantic_storage.php",
+    "exit": 0,
+    "seconds": 0.11323790397727862,
+    "stdout": "semantic storage ok: exact syntax references, implicit entry, change/work separation, removal origins, invalid records and root/index consistency; storage contracts verified\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_storage.php",
+    "exit": 0,
+    "seconds": 0.1193359240423888,
+    "stdout": "type storage ok: distinct identities, shared representations, flat fields/parameters, composed recursive graph, immutable candidates, action descriptors and invalid inputs; storage boundary verified\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_reuse.php",
+    "exit": 0,
+    "seconds": 0.16014593100408092,
+    "stdout": "type reuse ok: parsed occurrences share IDs, lazy definition work, warm cache purity, namespaces, candidate invalidation and failure isolation; signature integration is tested separately\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_context.php",
+    "exit": 0,
+    "seconds": 0.12361190497176722,
+    "stdout": "type context ok: pending/declaration/representation separation, fixed cache inputs, conservative full selection, warm sharing and candidate isolation; signature integration is tested separately\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/semantic_calls.php",
+    "exit": 0,
+    "seconds": 0.12299051095033064,
+    "stdout": "semantic call contracts: physical mappings and incompatible passing/results checked\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/type_model/type_definitions.php",
+    "exit": 0,
+    "seconds": 0.36430114397080615,
+    "stdout": "type definitions ok: signedness by ID, shared shapes and definitions, coherent invalidation, pure candidates, pipeline reuse/provider edits and exports\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_types/return_types.php",
+    "exit": 0,
+    "seconds": 0.8315050789969973,
+    "stdout": "return types ok: authoritative types, cross-file reuse, independent workers, one materialization, joins, edits, source diagnostics, rollback/repair, catalog invalidation, fresh equivalence and separate signature/body ownership\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_types/parameter_types.php",
+    "exit": 0,
+    "seconds": 0.7640350050060079,
+    "stdout": "parameter types ok: ordered/shared signatures and locals, catalog facts, workers/joins, reuse, invalidation, edits, diagnostics, exports and downstream gates\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_types/local_types.php",
+    "exit": 0,
+    "seconds": 0.36959209997439757,
+    "stdout": "local types ok: shared annotation resolution, one materialization, cross-file IDs, fixed workers, joins, reuse, edits, removal, metadata, exports and repair\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/check_bodies/body_checking.php",
+    "exit": 0,
+    "seconds": 1.4791393229970708,
+    "stdout": "body checking ok: real literal/call/return typing, conversion boundary, ranges, fixed workers, reuse, callee contract invalidation, rollback/repair, metadata defaults, large bodies, fresh comparison and debug exports\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/check_bodies/body_tasks.php",
+    "exit": 0,
+    "seconds": 0.6340115939965472,
+    "stdout": "body tasks ok: fixed callable inputs, composed workers, separate joins/reuse, provenance, task release and native update\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/check_bodies/local_bodies.php",
+    "exit": 0,
+    "seconds": 1.1274871969944797,
+    "stdout": "local bodies ok: typed initialization/reads/writes, shared conversions, scope ranges, void/return rules, dependencies, fixed workers, reuse, failure/repair and local lowering\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/check_bodies/parameter_bodies.php",
+    "exit": 0,
+    "seconds": 2.254731605993584,
+    "stdout": "parameter bodies ok: initialized inputs, flat argument plans, left-to-right nesting, conversions, dependencies, workers/joins, reuse, exports, failures and native completion\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/analyze_lifetimes/lifetime_analysis.php",
+    "exit": 0,
+    "seconds": 1.3794093370088376,
+    "stdout": "lifetime analysis ok: reachable temporaries, scalar contracts, copies/discards, void/entry flow, pure workers, joins, reuse, edits, removal, rollback/repair, metadata, large bodies and exports\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/analyze_lifetimes/resource_contracts.php",
+    "exit": 0,
+    "seconds": 0.1215921730035916,
+    "stdout": "Resource contracts: relation algebra, canonical paths, projection and alias endpoints passed\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/analyze_lifetimes/local_lifetimes.php",
+    "exit": 0,
+    "seconds": 0.8046027939999476,
+    "stdout": "local lifetimes ok: initialization, copy reads/writes, lexical exits, return unwind, unreachable exclusion, contracts, fixed workers, reuse, repair and native scalar blocks\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/analyze_lifetimes/parameter_lifetimes.php",
+    "exit": 0,
+    "seconds": 1.4051927520195022,
+    "stdout": "parameter lifetimes ok: entry bindings, call consumption, nested argument retention, scope/return exits, purity/reuse, malformed inputs, exports and lowering handoff\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "05_generate_code/prepare_backend/backend_preparation.php",
+    "exit": 0,
+    "seconds": 2.944528669002466,
+    "stdout": "backend preparation ok: verified Clang target and scalar calls, signature-only inputs, real bindings, fixed workers, reuse, automatic contract refresh, rollback/repair, target edits, removals and exports\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "05_generate_code/prepare_backend/layout_preparation.php",
+    "exit": 0,
+    "seconds": 0.42497323697898537,
+    "stdout": "layout preparation ok: fixed dependency views, subset batches, early/final reuse and provenance rejection\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "05_generate_code/prepare_backend/source_exports.php",
+    "exit": 0,
+    "seconds": 5.301924693980254,
+    "stdout": "source exports ok: exact identities, six-role contracts, private ABI joins, rebuild binding and body reuse\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/collect_symbols/symbol_collection.php",
+    "exit": 0,
+    "seconds": 1.6848320559947751,
+    "stdout": "symbol collection ok: cross-file lookup, implicit entries, independent workers, stable identities, uncompared matches, duplicates, rollback, removals/renames, origin retention, fresh equivalence and ID bounds\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_symbols/symbol_resolution.php",
+    "exit": 0,
+    "seconds": 1.271938482997939,
+    "stdout": "symbol resolution ok: project calls, recursion, body boundaries, independent workers, reuse, stale binding rejection, unknown-name rollback, deletions, fresh equivalence and large bodies\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_symbols/template_bindings.php",
+    "exit": 0,
+    "seconds": 1.0704340690281242,
+    "stdout": "template bindings ok: shared declaration lookup, parameter scopes, source/provider references, formal dependencies, private workers/joins, native coexistence and one-increment proofs\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/instantiate/explicit_instances.php",
+    "exit": 0,
+    "seconds": 2.6184928709990345,
+    "stdout": "explicit instances ok: literal constants, distinct callable identities, shared structural preparation, nested/repeated demands, native execution, recursion, private workers/joins and one incremental demand replacement\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/check_templates/generic_contracts.php",
+    "exit": 0,
+    "seconds": 3.531264330027625,
+    "stdout": "generic contracts: native copy/forwarding, definition restrictions, private joins and one retained increment passed\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_types/concrete_preparation.php",
+    "exit": 0,
+    "seconds": 1.1620946659822948,
+    "stdout": "concrete preparation ok: ordinary diagnostics, deferred dependent methods, indexed readiness, selected reuse and one pure demand replacement\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_symbols/local_resolution.php",
+    "exit": 0,
+    "seconds": 0.4995989329763688,
+    "stdout": "local resolution ok: lexical scopes, declaration identities, read/write bindings, shadowing, diagnostics, fixed workers, joins, reuse, replacement, exports and repair\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_symbols/parameter_binding.php",
+    "exit": 0,
+    "seconds": 0.4471302040037699,
+    "stdout": "parameter binding ok: shared local table, root scope, reads/writes, shadowing, duplicates, ordinal lookup, fixed workers, reuse, edits, exports and explicit next-stage boundary\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/resolve_symbols/argument_resolution.php",
+    "exit": 0,
+    "seconds": 0.8413211969891563,
+    "stdout": "argument resolution ok: nested calls/locals, scopes, dependencies, workers/joins, reuse, exports, deep/wide traversal and downstream gates\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "04_analyze/collect_symbols/symbol_comparison.php",
+    "exit": 0,
+    "seconds": 1.3095116070471704,
+    "stdout": "symbol comparison ok: definition/child distinctions, logical subtree equality, positions and IDs, sparse catalogs, pure workers, join validation, full rebuild, large bodies and old-snapshot release\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/parsing.php",
+    "exit": 0,
+    "seconds": 0.28398775501409546,
+    "stdout": "parsing ok: file definitions/entry bodies, ordered statements, call/return trees, spans, large flat trees, exports, purity and anchored syntax errors\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/step_lifecycle.php",
+    "exit": 0,
+    "seconds": 0.11057271901518106,
+    "stdout": "parsing step lifecycle ok: transitions, typed outputs, failures, purity, reuse, full rebuild and removal\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/variable_parsing.php",
+    "exit": 0,
+    "seconds": 0.3555570220341906,
+    "stdout": "variable parsing ok: flat ASTs, local ownership, fixed workers, joins, reuse, comparison, errors and semantic boundaries\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/parameter_parsing.php",
+    "exit": 0,
+    "seconds": 0.4340615610126406,
+    "stdout": "parameter parsing ok: ordered typed parameters/arguments, nesting, flat storage, roles, spans, comparison, fixed workers, reuse, full selection and honest semantic boundaries\n",
+    "stderr": ""
+  },
+  {
+    "fixture": "03_parse/parse_updates.php",
+    "exit": 0,
+    "seconds": 0.8748433080036193,
+    "stdout": "parse updates ok: snapshot reuse, full/selective equivalence, independent workers, segment joins, completeness, failure/repair, removal and AST release\n",
+    "stderr": ""
+  }
+]

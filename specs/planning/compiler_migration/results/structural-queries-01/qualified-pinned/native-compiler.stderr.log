@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py", line 272, in <module>
+    main()
+  File "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py", line 251, in main
+    native = run('native', ['php', cli, 'run', '--build-runtime'], cwd=output)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py", line 128, in run
+    assert (proc.returncode == 0) == ok, (label, proc.stdout, proc.stderr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('native', '', 'Qualified self-reference construction is rejected at line 103: use template_application_parts or \\parse\\template_application_parts.\nQualified self-reference construction is rejected at line 123: use template_parts or \\parse\\template_parts.\nQualified self-reference construction is rejected at line 142: use template_parameter_parts or \\parse\\template_parameter_parts.\nQualified self-reference construction is rejected at line 179: use constant_parts or \\parse\\constant_parts.\nQualified self-reference construction is rejected at line 199: use function_parts or \\parse\\function_parts.\nQualified self-reference construction is rejected at line 215: use struct_parts or \\parse\\struct_parts.\nQualified self-reference construction is rejected at line 245: use field_declaration_parts or \\parse\\field_declaration_parts.\nQualified self-reference construction is rejected at line 302: use parameter_parts or \\parse\\parameter_parts.\nQualified self-reference construction is rejected at line 304: use parameter_parts or \\parse\\parameter_parts.\nQualified self-reference construction is rejected at line 321: use local_declaration_parts or \\parse\\local_declaration_parts.\nQualified self-reference construction is rejected at line 337: use assignment_parts or \\parse\\assignment_parts.\nQualified self-reference construction is rejected at line 384: use control_parts or \\parse\\control_parts.\n')

@@ -65,7 +65,9 @@ proofs; parser workers and structural query owners remain migration work.
 stacks and passes PHP/native/operator and frozen-prototype angle-pairing proofs.
 The [struct-member cursor decision](../planning/compiler_migration/struct_member_cursor_decision.md)
 now has a PHP implementation and ten adapted consumers, with 39 retained fixtures
-passing. Real query dependencies still need adaptation before native proof; no
+passing. Real query dependencies now convert and pass PHP oracles; native construction is
+blocked on both the pinned target and d493525d (see the
+[handoff](../planning/compiler_migration/structural_query_target_handoff.md)); no
 generic generator conversion is implemented.
 
 [Parser selection](compiler_parser_selection_slice.md) now delegates to a pure

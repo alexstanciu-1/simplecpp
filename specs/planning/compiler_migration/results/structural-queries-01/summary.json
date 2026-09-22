@@ -1,0 +1,24 @@
+{
+  "status": "php-passed-native-target-blocked",
+  "ready_files": 36,
+  "oracle_comparisons": 27560,
+  "retained_fixtures": 39,
+  "source_sha256": {
+    "src/03_parse/data/nodes.php": "7e7ab102a68a68d76aca1481c2e1d4f75a61c197b70e308b4d7cfd1b0806afe1",
+    "src/03_parse/data/tree.php": "d6b65ac7ff61a7a86ef90916c45c2d1092396d082afcbaaefefa91e978fe0991",
+    "src/03_parse/data/role_views.php": "96fa787f2f6e0524de9683299d6929ff67a0bfad5993ef0da83d360996cb5e36",
+    "src/03_parse/utilities/metaprogramming_syntax.php": "32e4ce409728fc14ce8b07d1cbeba4860d188e22628f6aab6033fd313a92f451",
+    "src/03_parse/utilities/syntax_access.php": "55c58c4c9823a928a13bb5e8f488e024b1976d2795ad3474b702b4a24a3d7fc5",
+    "src/03_parse/utilities/struct_member_cursor.php": "f98fcabcba7564e3380f0190095c3ae86c02e237a0b17f0e918693529b902dfe"
+  },
+  "pinned_target": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+  "candidate_target": "d493525d2732e32edaf6b36a251efb05ccb66d6f",
+  "candidate_adopted": false,
+  "failures": [
+    "Unqualified record construction collides with same-named methods in emitted C++.",
+    "Absolute same-namespace construction rejected by target validation on both revisions."
+  ],
+  "converter_changes": false,
+  "latest_candidate_target": "361b1e9752817cd5924a9117fba806c5928bb406",
+  "latest_candidate_construction_rejected": true
+}

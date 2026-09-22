@@ -1,0 +1,140 @@
+Transpiled PHP files: 44, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-2f0d667f-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/46] PCH app_pch.hpp.gch
+[2/46] CXX src/01_prepare_inputs/read_sources/data/source_json.o
+[3/46] CXX src/01_prepare_inputs/read_sources/data/read_tasks.o
+[4/46] CXX scpp_framework/collections.o
+[5/46] CXX src/01_prepare_inputs/read_sources/data/structures.o
+[6/46] CXX scpp_framework/exceptions.o
+[7/46] CXX src-runtime-preparation/symbols.o
+[8/46] CXX src/01_prepare_inputs/read_sources/data/result.o
+[9/46] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[10/46] CXX scpp_framework/filesystem.o
+[11/46] CXX src/01_prepare_inputs/read_manifest/data/result.o
+[12/46] CXX src/01_prepare_inputs/read_sources/select_reads.o
+[13/46] CXX scpp_framework/strings.o
+[14/46] CXX src/01_prepare_inputs/read_sources/scan.o
+[15/46] CXX src/01_prepare_inputs/read_sources/scan_join.o
+[16/46] CXX src/01_prepare_inputs/read_sources/data/store.o
+[17/46] CXX src/01_prepare_inputs/read_sources/utilities/path_syntax.o
+[18/46] CXX src/02_tokenize/select_tasks.o
+[19/46] CXX src/03_parse/data/nodes.o
+[20/46] CXX src/03_parse/data/role_views.o
+[21/46] CXX src/02_tokenize/structures.o
+[22/46] CXX src/02_tokenize/store.o
+../generated/src/02_tokenize/store.cpp:41:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+   41 |         php::take(selected, buffers);
+      |         ^~~~~~~~~ ~~~~~~~~~~~~~~~~~
+1 warning generated.
+[23/46] CXX src/03_parse/data/tree.o
+[24/46] CXX src/01_prepare_inputs/read_sources/snapshot_join.o
+[25/46] CXX src/03_parse/data/structures.o
+[26/46] CXX src/03_parse/data/result.o
+[27/46] CXX src/03_parse/data/store.o
+../generated/src/03_parse/data/store.cpp:16:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+   16 |         php::take(selected, files);
+      |         ^~~~~~~~~ ~~~~~~~~~~~~~~~
+1 warning generated.
+[28/46] CXX src/03_parse/select_tasks.o
+[29/46] CXX src/02_tokenize/join.o
+[30/46] CXX src/03_parse/utilities/syntax_access.o
+FAILED: src/03_parse/utilities/syntax_access.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-2f0d667f-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/d35173086ebbf420.hpp -MMD -MF src/03_parse/utilities/syntax_access.o.d -MT src/03_parse/utilities/syntax_access.o -c ../generated/src/03_parse/utilities/syntax_access.cpp -o src/03_parse/utilities/syntax_access.o
+../generated/src/03_parse/utilities/syntax_access.cpp:51:9: error: no matching function for call to 'create'
+   51 |         return create<template_application_parts>(node->first_child_id, name->next_sibling_id);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:69:9: error: no matching function for call to 'create'
+   69 |         return create<template_parts>(node->first_child_id, parameters->next_sibling_id);
+      |                ^~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:88:9: error: no matching function for call to 'create'
+   88 |         return create<template_parameter_parts>(name_id, type_id);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:124:9: error: no matching function for call to 'create'
+  124 |         return create<constant_parts>(node->first_child_id, type_id, initializer);
+      |                ^~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:143:9: error: no matching function for call to 'create'
+  143 |         return create<function_parts>(node->first_child_id, name->next_sibling_id, parameters->next_sibling_id, type->next_sibling_id);
+      |                ^~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:157:9: error: no matching function for call to 'create'
+  157 |         return create<struct_parts>(node->first_child_id, first);
+      |                ^~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:187:9: error: no matching function for call to 'create'
+  187 |         return create<field_declaration_parts>(node->first_child_id, variable_id, extent);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:240:10: error: no matching function for call to 'create'
+  240 |                 return create<parameter_parts>(variable_id, type_id, modifier->kind);
+      |                        ^~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:242:9: error: no matching function for call to 'create'
+  242 |         return create<parameter_parts>(variable_id, type_id);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:259:9: error: no matching function for call to 'create'
+  259 |         return create<local_declaration_parts>(variable_id, type_id, initializer_id);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:275:9: error: no matching function for call to 'create'
+  275 |         return create<assignment_parts>(target_id, value_id);
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+../generated/src/03_parse/utilities/syntax_access.cpp:318:9: error: no matching function for call to 'create'
+  318 |         return create<control_parts>(condition, body, alternative);
+      |                ^~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-te37y_1c/phpp/.prism/build/../../../../scpp-2f0d667f-probe/runtime/include/scpp/memory.hpp:20:13: note: candidate template ignored: invalid explicitly-specified argument for template parameter 'T'
+   20 | shared_p<T> create(TArgs &&...args) {
+      |             ^
+12 errors generated.
+[31/46] CXX src/03_parse/join.o
+[32/46] CXX src/03_parse/utilities/metaprogramming_syntax.o
+[33/46] CXX src/04_analyze/check_bodies/utilities/byte_literals.o
+[34/46] CXX src/03_parse/utilities/struct_member_cursor.o
+[35/46] CXX src/05_generate_code/prepare_backend/data/tools.o
+[36/46] CXX src/05_generate_code/prepare_backend/data/configuration.o
+[37/46] CXX src/04_analyze/check_bodies/utilities/decimal_range.o
+[38/46] CXX src/03_parse/utilities/binary_syntax.o
+[39/46] CXX src/03_parse/utilities/syntax_comparer.o
+[40/46] CXX src/compile/join.o
+[41/46] CXX src/04_analyze/type_model/data/type_references.o
+[42/46] CXX src/compile/data/native_project.o
+[43/46] CXX src/compile/state.o
+[44/46] CXX src/compile/step.o
+[45/46] CXX main.o
+ninja: build stopped: subcommand failed.
