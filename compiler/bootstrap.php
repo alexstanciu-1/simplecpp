@@ -105,3 +105,4 @@ require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/data/runtime.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/resources.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/lifecycle.php';
+require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/handlers/records.php';

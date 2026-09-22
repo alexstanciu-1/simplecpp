@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790098022.1754453,
+  "php_ready_epoch": 1790098104.7538497,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/records.php": "96ad0572faafe0efef05c643f4f5ad6b0be5b0373e72a0afeef32b2a5cda36c3"
+  },
+  "authoring_to_php_ready_seconds": 82.578,
+  "checker_corrective_cycles": 0,
+  "native_production_corrective_cycles": 0,
+  "native_harness_corrective_cycles": 1,
+  "native_harness_correction": "Added empty-batch tests referenced loop-scoped setup outside its block. Move checks into a typed helper called inside setup scope. First native command stopped at STAN before C++ compilation.",
+  "note": "First PHP milestone has 38 cases; four additional empty/non-record batch checks precede native proof.",
+  "consolidation_start_epoch": 1790098240.7935436,
+  "native_command_attempts_to_first_pass": 2,
+  "native_cpp_build_attempts_to_first_pass": 1,
+  "native_build_seconds": 35.56,
+  "native_evidence_completed_epoch": 1790098250.1471696,
+  "consolidation_end_epoch": 1790098378.5805802
+}

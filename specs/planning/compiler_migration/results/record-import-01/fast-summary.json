@@ -1,0 +1,106 @@
+{
+  "status": "passed",
+  "scope": "portability tooling and active rewrite readiness",
+  "native_requested": [],
+  "steps": [
+    {
+      "name": "compiler-php",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/run.py",
+        "--results",
+        "/tmp/record-import-fast-01/compiler-php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 63.688
+    },
+    {
+      "name": "global-functions",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/generate_global_functions.php",
+        "--check"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.053
+    },
+    {
+      "name": "collections-php",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/collections_php.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.049
+    },
+    {
+      "name": "value-records-php",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/value_records.py",
+        "--results",
+        "/tmp/record-import-fast-01/value-records-php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.545
+    },
+    {
+      "name": "foundation",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/run.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 3.472
+    },
+    {
+      "name": "check-regressions",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/check.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 4.886
+    },
+    {
+      "name": "prologues",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/prologues.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.024
+    },
+    {
+      "name": "native-framework-install",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/native_runtime.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.04
+    }
+  ],
+  "configured_target": {
+    "repository": "https://github.com/alexstanciu-1/simplecpp.git",
+    "release": null,
+    "verified_commit": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+    "cli": "bin/scpp.php",
+    "profile": "strict",
+    "purpose": "PHP++ compiler implementation target; separate from the adopted LLVM runtime-provider baseline",
+    "base_release": "v0.1.77",
+    "branch": "feature/json-document-240",
+    "status": "unreleased tested candidate"
+  },
+  "compiler_ready_files": 103,
+  "compiler_status": "php_proved",
+  "native_proved": []
+}

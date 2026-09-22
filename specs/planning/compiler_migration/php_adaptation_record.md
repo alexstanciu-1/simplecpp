@@ -1077,3 +1077,37 @@ to package acceptance, which is not claimed by these dependency proofs.
 Cumulative fast validation passes at 102 registered production files. Record import
 will use a named batch result for records plus the updated type map, replacing the
 prototype private by-reference array output without mutating accepted input maps.
+
+## Native record metadata and explicit batch ownership
+
+Record_Import preserves the prototype's scalar-only native record contract: inline
+storage, zero construction, value copy, no cleanup, verified complete public fields,
+exported offsets and the three required C++ traits. Each field retains an exact
+eligible named scalar definition; offsets must be nonoverlapping, ordered and fit
+inside measured storage. Native_Record_Layout retains target/layout identities and
+validates whole-record measurements. No canonical IDs or field permissions follow
+from measured layout alone. Nested native records remain outside this original
+import contract; the general record model is broader.
+
+Record_Import_Batch replaces the prototype private by-reference type-array update.
+The importer copies membership, creates only changed Runtime_Type rows, and shares
+unchanged accepted definitions/storage. It publishes records plus a copied type map
+only after complete normalization. A later invalid record cannot mutate the caller's
+original map. Returned map changes cannot alter the batch membership. These setup
+copies are deliberate; a later optimization may consolidate publication ownership
+without changing identity or failure guarantees.
+
+The first PHP milestone passed 38 acceptance/layout cases. Four extra checks cover
+empty and non-record batches plus invalid record indexing; all 42 pass natively.
+The 38 acceptance cases match the retained importer, with PHP warnings promoted to
+exceptions in its oracle for malformed private-helper inputs. Native testing caught
+one test harness scope error at STAN: empty-batch checks used loop-local setup after
+the loop. A typed helper called inside that scope fixed it. The first actual C++
+build passes; no production source correction was needed. Evidence and timings are
+saved in results/record-import-01.
+
+Runtime preparation is unchanged. This normalizes records into a batch; final
+catalog publication, package checksums/leases, broader package composition and
+provider symbol integration remain pending. Next: callable bindings and metadata.
+
+Cumulative fast validation passes at 103 registered production files.

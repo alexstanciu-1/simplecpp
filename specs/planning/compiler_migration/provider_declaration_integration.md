@@ -124,3 +124,8 @@ Lifecycle_Import adds 156 PHP/native outcomes and 151 applicable retained-helper
 comparisons (`results/lifecycle-import-01`). Construction/copy/move/assignment/
 destruction evidence now normalizes to the shared lifetime model. Next: record and
 callable metadata normalization, then complete package acceptance/composition.
+
+Record_Import and its explicit batch result add 42 PHP/native outcomes, with 38
+retained acceptance comparisons (`results/record-import-01`). Native scalar fields,
+measured layout and unchanged-input publication are proved. Next: callable bindings
+and metadata ingestion before complete package acceptance/composition.

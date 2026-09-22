@@ -40,7 +40,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('storage_contracts', Path(__file__).parent / 'storage_contracts/run.py'),
           ('package_syntax', Path(__file__).parent / 'package_syntax/run.py'),
           ('resource_import', Path(__file__).parent / 'resource_import/run.py'),
-          ('lifecycle_import', Path(__file__).parent / 'lifecycle_import/run.py')]
+          ('lifecycle_import', Path(__file__).parent / 'lifecycle_import/run.py'),
+          ('record_import', Path(__file__).parent / 'record_import/run.py')]
 
 
 def main():

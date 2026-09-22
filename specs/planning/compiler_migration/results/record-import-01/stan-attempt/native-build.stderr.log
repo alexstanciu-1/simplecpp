@@ -1,0 +1,5 @@
+Variable $types is not visible in this block at line 47. Safe v1 uses block-local variable visibility; declare $types in the current block or an enclosing block before use.
+Variable $catalog is not visible in this block at line 47. Safe v1 uses block-local variable visibility; declare $catalog in the current block or an enclosing block before use.
+Variable $types is not visible in this block at line 50. Safe v1 uses block-local variable visibility; declare $types in the current block or an enclosing block before use.
+Variable $types is not visible in this block at line 52. Safe v1 uses block-local variable visibility; declare $types in the current block or an enclosing block before use.
+Variable $catalog is not visible in this block at line 52. Safe v1 uses block-local variable visibility; declare $catalog in the current block or an enclosing block before use.
