@@ -1,0 +1,67 @@
+Transpiled PHP files: 24, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/26] PCH app_pch.hpp.gch
+[2/26] CXX scpp_framework/exceptions.o
+[3/26] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[4/26] CXX probe.o
+FAILED: probe.o
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/09510c717ce20be9.hpp -MMD -MF probe.o.d -MT probe.o -c ../generated/probe.cpp -o probe.o
+../generated/probe.cpp:17:8: error: expected unqualified-id
+   17 |                 auto case = cases->at(index);
+      |                      ^
+../generated/probe.cpp:18:15: error: expected expression
+   18 |                 auto role = case->member(string_t("role"))->integer();
+      |                             ^
+../generated/probe.cpp:19:14: error: expected expression
+   19 |                 auto raw = case->member(string_t("operations"));
+      |                            ^
+../generated/probe.cpp:31:71: error: expected expression
+   31 |                                         auto lifetime = ::scpp::load_runtime::Lifecycle_Import::lifetime(case->member(string_t("type")), operations, string_t("provider"));
+      |                                                                                                          ^
+../generated/probe.cpp:34:39: error: expected expression
+   34 |                                         correct = php::identical(actual, case->member(string_t("policy"))->text());
+      |                                                                          ^
+../generated/probe.cpp:37:66: error: expected expression
+   37 |                                         auto op = ::scpp::load_runtime::Lifecycle_Import::operation(case->member(string_t("type")), operations, string_t("provider"), role);
+      |                                                                                                     ^
+../generated/probe.cpp:69:94: error: expected expression
+   69 |                 php::echo_one(php::ternary_eval([&]() -> decltype(auto) { return (php::identical(accepted, case->member(string_t("accept"))->boolean()) && correct); }, [&]() -> decltype(auto) { return string_t("true\n"); }, [&]() -> decltype(auto) { return string_t("false\n"); }));
+      |                                                                                                            ^
+In file included from ../generated/probe.cpp:1:
+In file included from /tmp/lifecycle-import-native-01/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/lifecycle-import-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/lang/php.hpp:6:
+In file included from /tmp/lifecycle-import-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/lifecycle-import-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/lifecycle-import-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/php_value.hpp:7:
+/tmp/lifecycle-import-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:171:7: error: cannot form a reference to 'void'
+  171 |         auto &&cond = cond_fn();
+      |              ^
+../generated/probe.cpp:69:22: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/probe.cpp:69:35), (lambda at ../generated/probe.cpp:69:155), (lambda at ../generated/probe.cpp:69:211)>' requested here
+   69 |                 php::echo_one(php::ternary_eval([&]() -> decltype(auto) { return (php::identical(accepted, case->member(string_t("accept"))->boolean()) && correct); }, [&]() -> decltype(auto) { return string_t("true\n"); }, [&]() -> decltype(auto) { return string_t("false\n"); }));
+      |                                    ^
+8 errors generated.
+[5/26] CXX src/01_prepare_inputs/load_runtime/data/runtime.o
+[6/26] CXX scpp_framework/collections.o
+[7/26] CXX src/04_analyze/type_model/data/definitions.o
+[8/26] CXX scpp_framework/filesystem.o
+[9/26] CXX src/01_prepare_inputs/load_runtime/handlers/package_syntax.o
+[10/26] CXX src/04_analyze/type_model/data/callables.o
+[11/26] CXX scpp_framework/json_document.o
+[12/26] CXX src/01_prepare_inputs/load_runtime/handlers/lifecycle.o
+[13/26] CXX src/04_analyze/type_model/data/callable_modes.o
+[14/26] CXX main.o
+[15/26] CXX src/04_analyze/type_model/data/lifecycle.o
+[16/26] CXX scpp_framework/strings.o
+[17/26] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[18/26] CXX src/04_analyze/type_model/data/native_record_layout.o
+[19/26] CXX src/04_analyze/type_model/data/records.o
+ninja: build stopped: subcommand failed.

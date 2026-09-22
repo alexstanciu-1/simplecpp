@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in probe.phs:7: expected unqualified-id
+Generated location: .prism/generated/probe.cpp:17:8
+Compile error in probe.phs:7: expected expression
+Generated location: .prism/generated/probe.cpp:18:15
+Compile error in probe.phs:8: expected expression
+Generated location: .prism/generated/probe.cpp:19:14
+Additional remapped diagnostics: 5
+Raw compiler excerpt:
+probe.cpp:17:8: error: expected unqualified-id
+probe.cpp:18:15: error: expected expression
+probe.cpp:19:14: error: expected expression
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

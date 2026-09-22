@@ -1,0 +1,151 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/lifecycle-import-native-01/source"
+      ],
+      "seconds": 0.094,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/lifecycle-import-native-01/source"
+      ],
+      "seconds": 0.574,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/lifecycle-import-native-01/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/lifecycle-import-native-01/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/lifecycle-import-native-01/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/lifecycle-import-native-01/source/src/01_prepare_inputs/load_runtime/handlers/lifecycle.php",
+        "/tmp/lifecycle-import-native-01/source/probe.php",
+        "/tmp/lifecycle-import-native-01/source/main.php"
+      ],
+      "seconds": 0.081,
+      "exit": 0
+    },
+    {
+      "label": "retained-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/lifecycle_import/oracle.php",
+        "/tmp/lifecycle-import-native-01/cases.json"
+      ],
+      "seconds": 0.053,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/lifecycle-import-native-01/source",
+        "/tmp/lifecycle-import-native-01/phpp"
+      ],
+      "seconds": 0.301,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/lifecycle-import-native-01/source",
+        "/tmp/lifecycle-import-native-01/phpp"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/lifecycle-import-native-01/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.055,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.006,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.028,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.134,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 31.269,
+      "exit": 1
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790097721.231219,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/lifecycle.php": "8c13137ce94fba03319808e3dd2b1c5c32bfe4f9287c086f915146517743e7c6"
+  },
+  "retained_comparisons": 151
+}

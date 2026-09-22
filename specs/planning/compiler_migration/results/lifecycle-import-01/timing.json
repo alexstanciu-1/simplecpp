@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790097589.4300914,
+  "php_ready_epoch": 1790097670.3676684,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/lifecycle.php": "8c13137ce94fba03319808e3dd2b1c5c32bfe4f9287c086f915146517743e7c6"
+  },
+  "authoring_to_php_ready_seconds": 80.938,
+  "checker_corrective_cycles": 0,
+  "native_production_corrective_cycles": 0,
+  "native_harness_corrective_cycles": 1,
+  "native_harness_correction": "Test local case is a C++ reserved word; rename to fixture. Production importer unchanged.",
+  "consolidation_start_epoch": 1790097782.572695,
+  "native_build_attempts_to_first_pass": 2,
+  "native_build_seconds": 35.335,
+  "native_evidence_completed_epoch": 1790097800.5191517,
+  "consolidation_end_epoch": 1790097913.5722494
+}

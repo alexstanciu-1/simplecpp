@@ -1039,3 +1039,41 @@ ABI validation, lifecycle validation, checksum verification or lease ownership.
 Runtime preparation is unchanged.
 
 Cumulative fast validation passes at 101 registered production files.
+
+## Provider lifecycle ingestion
+
+Lifecycle_Import replaces the private lifecycle trait with a stateless schema
+normalizer. Shared checks own pointer ABI, linkage, error boundaries, exact slots
+and borrowed operands; role branches retain the separate construction, destruction,
+copy/move and assignment storage/source contracts. The output is the already-proved
+Lifecycle_Operation and Lifetime_Contract model, with an explicit permission policy
+and typed operation vector. No layout-derived capability or source symbol is invented.
+
+Copy/move/assignment still require both selected operations and the corresponding
+verified C++ trait. Cleanup none requires verified trivial destruction. Assignment
+keeps both operands live, uses mutable/const borrows, and requires the native-call
+self-assignment contract. Default construction retains the original contract; it
+does not gain speculative new postcondition requirements during migration.
+
+Lossless JSON getters replace mixed arrays, null-coalescing and dependent boolean
+chains. Required shape failures stop before indexed access. The provider operation
+map must already be indexed by validated exact IDs; the new normalized record also
+rejects empty operation IDs itself. Five focused empty-ID cases deliberately have
+no direct private-helper parity assertion: the retained helper assumed the package
+index had performed that check. The other 151 cases match the retained helper.
+
+156 independent PHP/native expected outcomes cover all five roles, individual
+required-field mutations and complete lifetime policy assembly. PHP and conversion
+passed without corrections. The first native build exposed a C++ reserved word in
+the test local case; renaming it to fixture fixes the harness. Production source
+compiled unchanged and the second native build passes. Evidence, first PHP hashes,
+failed attempt and phase/cycle timings are in results/lifecycle-import-01.
+
+Preparation PHP and its output contract remain unchanged. Next dependencies are
+record/callable metadata normalization and complete package composition, followed
+by shared provider symbol integration. SHA-256 and lease ownership still belong
+to package acceptance, which is not claimed by these dependency proofs.
+
+Cumulative fast validation passes at 102 registered production files. Record import
+will use a named batch result for records plus the updated type map, replacing the
+prototype private by-reference array output without mutating accepted input maps.

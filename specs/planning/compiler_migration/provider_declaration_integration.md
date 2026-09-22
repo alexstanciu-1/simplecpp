@@ -119,3 +119,8 @@ Resource_Import now has 54 PHP/native outcomes for explicit direct resource
 permissions and complete allocation-effect ownership/borrow validation
 (`results/resource-import-01`). Next: package lifecycle ingestion and the remaining
 package composition dependencies; checksum/lease and shared provider symbols remain.
+
+Lifecycle_Import adds 156 PHP/native outcomes and 151 applicable retained-helper
+comparisons (`results/lifecycle-import-01`). Construction/copy/move/assignment/
+destruction evidence now normalizes to the shared lifetime model. Next: record and
+callable metadata normalization, then complete package acceptance/composition.
