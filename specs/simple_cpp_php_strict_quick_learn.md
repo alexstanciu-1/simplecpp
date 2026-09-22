@@ -1219,6 +1219,8 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 | `fs_is_file` | `fs_is_file(string $path)` | `bool` |
 | `fs_is_dir` | `fs_is_dir(string $path)` | `bool` |
 | `fs_is_link` | `fs_is_link(string $path)` | `bool` |
+| `fs_is_windows` | `fs_is_windows()` | `bool`; compiled-target path semantics |
+| `fs_read_snapshot` | `fs_read_snapshot(string $path, int $expected_mtime, int $expected_size)` | Linux `result<string>`; checked bounded read, not atomic |
 | `fs_exists` | `fs_exists(string $path)` | `bool` |
 | `fs_get` | `fs_get(string $path)` | wrapper result to `string`; use `take($text, $err, ...)` |
 | `fs_lock_try` | `fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false)` | Linux `result<bool>`; extracted false means contention |

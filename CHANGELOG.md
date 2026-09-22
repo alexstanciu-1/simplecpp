@@ -7,6 +7,35 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
+## 0.1.77 - 2026-09-22
+
+### Additions
+
+- Consolidated compiler-portability support from #231, #232 and #233 into one v0.1 release.
+- Added typed `collection_map` / `collection_filter` for vectors, fixed arrays, hashes and table-valued mixed/dynamic, plus carrier-constrained `sequence_map` / `sequence_filter` and `keyed_map` / `keyed_filter` adapters (#231).
+- Added Linux managed batch child processes with typed handles/output, literal argument passing, captured stdin/stdout/stderr, polling, caller-driven deadlines, group termination and explicit close (#231).
+- Added Linux cross-process advisory file locks with typed handles, explicit contention results, release and ownership transfer (#231).
+- Added `fs_is_windows(): bool`, derived from compiled-target filesystem semantics, and Linux `fs_read_snapshot(string path, int expected_mtime, int expected_size): result<string>` with fresh path/handle observations, identity/version checks, bounded reads and descriptor cleanup (#233).
+
+### Fixes
+
+- Generated declarations now recognize runtime-owned file-lock/process aliases in function/method signatures, typed fields and wrapper/container boundaries, without emitting conflicting class forwards (#231).
+- Chained nested-vector reads from current-class fields retain the declared element types and use the appropriate checked access path (#232).
+- Explicitly global base/interface references retain their rooted identity through inheritance, dependency matching, constructors and qualified class uses. Parent-constructor calls correctly become base initializers (#233).
+
+### Breaking Changes
+
+- No intentional breaking changes to the previously released API. The new runtime APIs require rebuilt runtime artifacts.
+
+### Migration Notes
+
+- Use `v0.1.77` as the single adoption target for all three issues. Refresh shared runtime artifacts with `scpp runtime-build` / `scpp update`, or use `scpp build --build-runtime` for a project-local rebuild.
+- Enable the `process` module for managed processes and the `filesystem` module for filesystem helpers. Unwrap checked results with `take(...)`; successful empty snapshots and lock contention remain distinct from errors.
+- Collection callbacks require an explicit matching by-value parameter and must not mutate input or captured/shared state. Sequence adapters accept vectors/fixed arrays; keyed adapters accept hashes/table-valued mixed; use the generic helpers for dynamic.
+- Process, lock and snapshot backends are Linux-only in this release; unsupported targets return explicit errors. Process capture is file-backed batch I/O, and deadlines require regular polling. Snapshot checks are not atomic: same-inode, same-size, same-whole-second-mtime edits can pass.
+- Windows/POSIX path-policy examples were tested on Linux. Native Windows execution of `fs_is_windows` remains unverified; general hosted Windows smoke CI is not evidence for that helper.
+- Existing cross-static-type base/derived `===` identity behavior is unchanged. Downstream PHP framework parity and compiler adoption remain separate integration work.
+
 ## 0.1.76 - 2026-09-19
 
 ### Fixes
