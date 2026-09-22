@@ -1,0 +1,7 @@
+{
+  "native_commands": 2,
+  "cpp_builds": 2,
+  "production_native_corrections": 0,
+  "fixture_corrections": 1,
+  "detail": "Standalone new expression statements omitted by target lowering; assign rejected constructors to locals."
+}

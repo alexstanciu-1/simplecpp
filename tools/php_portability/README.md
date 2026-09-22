@@ -113,4 +113,4 @@ old generated import blocks and validates prologues. Regenerate static PHP facad
 with generate_global_functions.php; --check verifies its signatures.
 
 Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
-eight host checks; active coverage is 77 files. See `specs/portability/aggregate_lifecycles.md`.
+eight host checks; active coverage is 79 files, including native layout and resource obligations. See `specs/portability/aggregate_lifecycles.md`.

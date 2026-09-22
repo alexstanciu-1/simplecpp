@@ -186,3 +186,6 @@ Aggregate lifecycle stage: `compiler/tests/aggregate_lifecycles/run.py` covers 3
 shared outcomes and eight host purity/domain checks; it is registered cumulatively.
 
 Native record layout stage: 18 shared outcomes and 441 retained-constructor host comparisons.
+
+Resource obligations: 39 PHP/native outcomes and 90 retained allocation-effect comparisons;
+existing scalar-catalog native proof is rerun after extending Named_Definition.

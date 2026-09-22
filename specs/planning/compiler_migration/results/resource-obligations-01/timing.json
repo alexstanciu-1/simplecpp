@@ -1,0 +1,50 @@
+{
+  "measurement": "Elapsed wall time, includes tests and waits; initial orientation excluded. Milestones recorded immediately after successful commands.",
+  "started": "2026-09-22T12:36:44.519165+00:00",
+  "milestones": [
+    {
+      "name": "authoring-start",
+      "at": "2026-09-22T12:36:44.519165+00:00"
+    },
+    {
+      "name": "php-ready",
+      "at": "2026-09-22T12:37:55.195492+00:00",
+      "evidence": "/tmp/scpp-resources-php-01/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+        "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+        "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+        "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+        "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+        "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f",
+        "src/04_analyze/type_model/data/definitions.php": "d277e229ea445f45b2ff71c4a1c60e932802a10e659417cf7651a09e24803593",
+        "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e"
+      }
+    },
+    {
+      "name": "native-ready",
+      "at": "2026-09-22T12:40:14.861521+00:00",
+      "evidence": "/tmp/scpp-resources-native-02/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+        "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+        "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+        "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+        "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+        "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f",
+        "src/04_analyze/type_model/data/definitions.php": "d277e229ea445f45b2ff71c4a1c60e932802a10e659417cf7651a09e24803593",
+        "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e"
+      }
+    },
+    {
+      "name": "consolidation-start",
+      "at": "2026-09-22T12:40:14.907048+00:00"
+    },
+    {
+      "name": "finish",
+      "at": "2026-09-22T12:41:15.160265+00:00"
+    }
+  ],
+  "finished": "2026-09-22T12:41:15.160265+00:00",
+  "elapsed_seconds": 270.641
+}

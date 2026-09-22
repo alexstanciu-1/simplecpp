@@ -2,7 +2,7 @@
 Doc Status: planning
 
 Current compiler status: [rewrite reset](../planning/compiler_migration/rewrite_reset.md),
-seventy-eight active ready files through parser/project reuse, source symbols, entry selection, type representations, lifecycle contracts scalar catalog/entry binding project name resolution canonical type storage and aggregate lifecycle composition; see
+seventy-nine active ready files through parser/project reuse, source symbols, entry selection, type representations, lifecycle contracts scalar catalog/entry binding project name resolution canonical type storage and aggregate lifecycle composition; see
 [its bounded JSON adapter contract](project_manifest_reading.md). Capability support below remains available; prior compiler
 slice statements describe archived implementation/proofs, not active rewrite coverage.
 
@@ -425,3 +425,8 @@ Scalar [value records and explicit local aliases](value_records.md) now have a P
 This adds uint32/bool field records and both `&ref` forms, not general clone, nested
 record copying, container-interior references or ownership inference. Existing
 compiler classes retain their current representation until individually adapted.
+
+Target observation (resource-obligations-01): standalone `new Class(...)` statement
+bodies are omitted on candidate 9b4b33f. Assign constructed objects to locals when
+construction must execute, including rejection tests. No target fix is part of this
+migration checkpoint; see the saved native failure and the authoring guide.

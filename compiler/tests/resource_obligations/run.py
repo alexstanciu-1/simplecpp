@@ -1,4 +1,4 @@
-"""Aggregate lifecycle policies, constituent ordering and source body overrides."""
+"""Resource ownership invariants and allocation effect contracts."""
 import argparse
 import hashlib
 import json
@@ -9,9 +9,9 @@ import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
-FILES = ['src/04_analyze/resolve_types/data/lifecycle_bodies.php', 'src/04_analyze/resolve_types/lifecycle_composition.php']
-DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/context.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/lifetime_policy_codec.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/catalog.php', 'src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php', 'src/04_analyze/type_model/data/type_record.php', 'src/04_analyze/type_model/result_contracts.php', 'src/04_analyze/type_model/data/store.php', 'src/04_analyze/resolve_types/utilities/type_cache.php']
-LOAD_ORDER = DEPENDENCIES + FILES
+FILES = ['src/04_analyze/type_model/data/resources.php']
+DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php','src/04_analyze/type_model/data/representations.php','src/04_analyze/type_model/data/lifecycle_roles.php','src/04_analyze/type_model/data/lifecycle.php','src/04_analyze/type_model/data/lifetime_contract.php','src/04_analyze/type_model/data/native_record_layout.php','src/04_analyze/type_model/data/definitions.php']
+LOAD_ORDER = DEPENDENCIES[:-1] + FILES + DEPENDENCIES[-1:]
 
 
 def main():
@@ -37,8 +37,8 @@ def main():
         assert result.returncode == 0, (label, result.stdout, result.stderr)
         return result.stdout
 
-    expected=[True]*36
-    calls=['\\aggregate_test\\Probe::run();']
+    expected=[True]*39
+    calls=['\\resource_test\\Probe::run();']
     for relative in DEPENDENCIES + FILES:
         dest=source/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(ROOT/'compiler'/relative,dest)
@@ -53,7 +53,9 @@ def main():
         actual=[json.loads(line) for line in run(label,command,out).splitlines()]
         assert actual==want,(label,actual,want)
     prove('php',php,expected)
-    assert json.loads(run('host-purity',php[:-1]+[Path(__file__).parent/'purity.php'],out)) == {'host_checks':8}
+    retained=json.loads(run('retained-oracle',['php',Path(__file__).parent/'oracle.php'],out))
+    migrated=json.loads(run('migrated-oracle',php[:-1]+[Path(__file__).parent/'oracle.php'],out))
+    assert len(retained)==90 and migrated==retained
     generated=out/'phpp';conversion=['php',ROOT/'tools/php_portability/convert.php',source,generated]
     assert json.loads(run('convert',conversion))['converted']==len(DEPENDENCIES+FILES)+2
     assert json.loads(run('reuse',conversion))=={'converted':0,'reused':len(DEPENDENCIES+FILES)+2,'removed':0}
@@ -73,9 +75,9 @@ def main():
         report['target_revision']=revision
         assert run('clean-after',['git','-C',checkout,'status','--porcelain']).strip()==''
     (out/'expected.json').write_text(json.dumps(expected,indent=2)+'\n')
-    report.update(passed=True,native=bool(binary),cases=len(expected),aggregate_lifecycle_outcomes=len(expected),
+    report.update(passed=True,native=bool(binary),cases=len(expected),resource_outcomes=len(expected),
                   production_files=FILES,source_sha256={f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in DEPENDENCIES+FILES})
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print(f'Aggregate lifecycles: {len(expected)} outcomes passed; native={bool(binary)}')
+    print(f'Resource obligations: {len(expected)} outcomes passed; native={bool(binary)}')
 
 if __name__=='__main__':main()

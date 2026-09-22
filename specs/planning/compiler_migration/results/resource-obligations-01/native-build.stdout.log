@@ -1,0 +1,31 @@
+Transpiled PHP files: 15, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/17] PCH app_pch.hpp.gch
+[2/17] CXX scpp_framework/collections.o
+[3/17] CXX scpp_framework/exceptions.o
+[4/17] CXX src/04_analyze/type_model/data/definitions.o
+[5/17] CXX src/04_analyze/type_model/data/semantic_modes.o
+[6/17] CXX src/04_analyze/type_model/data/native_record_layout.o
+[7/17] CXX scpp_framework/filesystem.o
+[8/17] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[9/17] CXX scpp_framework/strings.o
+[10/17] CXX probe.o
+[11/17] CXX src/04_analyze/type_model/data/representations.o
+[12/17] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[13/17] CXX src/04_analyze/type_model/data/lifecycle.o
+[14/17] CXX main.o
+[15/17] CXX scpp_framework/json_document.o
+[16/17] CXX src/04_analyze/type_model/data/resources.o
+[17/17] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/04_analyze/type_model/data/definitions.o, .prism/build/src/04_analyze/type_model/data/lifecycle.o, .prism/build/src/04_analyze/type_model/data/lifecycle_roles.o, .prism/build/src/04_analyze/type_model/data/lifetime_contract.o, .prism/build/src/04_analyze/type_model/data/native_record_layout.o, .prism/build/src/04_analyze/type_model/data/representations.o, .prism/build/src/04_analyze/type_model/data/resources.o, .prism/build/src/04_analyze/type_model/data/semantic_modes.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

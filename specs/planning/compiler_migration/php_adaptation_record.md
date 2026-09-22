@@ -697,3 +697,23 @@ retained constructor. The oracle needed one harness correction: PHP case-insensi
 class names require separate processes for old/new classes. No source/native correction.
 Full field recipes and resource-aware record normalization remain dependencies.
 See `results/native-record-layout-01` for timing, commands and hashes.
+
+## Resource obligations and allocation effects (2026-09-22)
+
+Moved the prototype resource-kind and effect enums to explicit integer tags/codecs.
+Allocation_Effect keeps nullable destination distinct from parameter zero and requires
+transfer to have a distinct nonnegative destination; argument type agreement remains
+with the call checker. Resource_Obligations owns immutable nested field-path vectors,
+validates nonempty/nonnegative/unique paths, and validates storage/copy/assignment
+permissions. Named_Definition optionally holds this shared immutable object plus exact
+native layout metadata. No metadata is fabricated for scalar definitions. Grouping
+resource kind and paths gives ownership checks one reusable owner; typed element-storage
+family identity checks still await their real provider/storage model.
+
+39 shared outcomes and 90 retained allocation-effect combinations pass. Two native
+builds: the first exposed omitted standalone new statements in the fixture, the second
+passed after assigning those objects. Generated C++ inspection confirmed empty branches;
+no algorithm/target/converter fix was made. The guide records the restriction. Constructor
+dependency closures were updated for existing stages. Static paths remain dense typed
+vectors; shape-bound range checking is the responsibility of later concrete producers,
+as in the prototype. Next: array/field recipes and resource-aware record materialization.

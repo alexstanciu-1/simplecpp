@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **78 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **79 production files**
 with PHP/native proofs. Next is source name resolution. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -90,4 +90,4 @@ scheduler and later semantic stages remain pending.
 [Canonical type storage](../specs/portability/type_store.md) adds 133 PHP/native outcomes, retained store facts and 20 host invariant checks. Aggregate lifecycle composition adds 36 PHP/native outcomes and eight host checks. Next: normalized structural definitions and annotation preparation dependencies.
 
 Native record layout contracts add 18 PHP/native outcomes and 441 retained-contract
-comparisons. Record normalization still awaits resource-aware definitions.
+comparisons. Resource-aware definition validation now adds 39 PHP/native checks and 90 retained allocation-effect cases. Next: normalized field/array recipes and record materialization.

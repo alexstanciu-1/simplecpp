@@ -25,6 +25,10 @@ fields is a supported structure; it does not automatically become a native value
 struct. Current ordinary classes use shared object identity. Explicit scalar value
 records and both `&ref` annotations now have a [separate proved contract](value_records.md);
 read it before choosing copy or alias behavior.
+Assign constructed objects to locals (or return/use the expression). On the current
+9b4b33f target, standalone `new Class(...);` statements were observed to disappear
+from generated C++, including constructor validation. Rejection tests must exercise
+the constructor through an assigned object; see `results/resource-obligations-01`.
 Keep field and method names distinct within a class: PHP permits `$selected` plus
 `selected()`, but both become the same C++ member name.
 
