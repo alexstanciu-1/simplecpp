@@ -30,12 +30,11 @@ unchanged. Published results and their retained snapshots are read-only by conve
 The prototype's Entry_Resolver also binds the **exact catalog-selected integer
 named_type_definition**, independently of native exit width/ABI. That definition carries
 lifetime, integer-family and operation capabilities; it is not just a name or bit width.
-The current rewrite has not adopted Type_Catalog, named definitions, or their provider
-loader. `Entry_Selection` intentionally makes no return-type claim and cannot replace
+At the initial selection checkpoint the rewrite had not adopted Type_Catalog, named definitions, or their provider loader. The [scalar catalog component](scalar_catalog.md) now supplies the scalar definition and Entry_Contract binding; extended runtime/package types remain separate. `Entry_Selection` intentionally makes no return-type claim and cannot replace
 the full contract for signature/body analysis. No placeholder definition, default native
 int, fabricated catalog or stripped semantic payload was added.
 
-Next is the type-model/catalog dependency needed for return-type binding. Preserve
+The scalar binding is now implemented by Entry_Contract; the following constraints also govern future extended catalogs. Preserve
 shared definition identity, validation of integer entry type, and independence from
 backend ABI when completing the contract. This splits the original logic at its actual
 source-policy/type-definition boundary rather than reproducing a Step lifecycle shell.

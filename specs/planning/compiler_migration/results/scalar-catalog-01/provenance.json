@@ -1,0 +1,33 @@
+{
+  "base_commit": "58254556",
+  "production_source_sha256": {
+    "src/04_analyze/type_model/data/definitions.php": "738c155307e57d0ad7da4fd806383973e208aebf784e6d46c399f3ef03a8268e",
+    "src/04_analyze/type_model/data/catalog.php": "7c3835ff0d68723e9497bf52765af6a72c14d375f4b8a716492644cfed65facd",
+    "src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php": "92d0258c8db3d98a0231241316a03141edca1d6f07def2cfa0a683dca4373f27",
+    "src/01_prepare_inputs/load_runtime/main_load_runtime.php": "b7b74838e0b8babc32f7fa6dca1ba6678750a35e77efed8730760c326e69ddd1",
+    "src/04_analyze/resolve_types/data/entry_contract.php": "895fd4fa1d013bbd7f7ec4c1d832effc40893b379c6ac65b1a520408c121e69a"
+  },
+  "framework_sha256": {
+    "tools/php_portability/runtime/json_document.php": "4394b125b5aabc22aeec817ab00504cbab76b8a4f62f640fbd4fa66f2926bbbf",
+    "tools/php_portability/runtime/json_document.phs": "8914ce16c5889000d9a2499f86a9fb1779f02c2fc6ae4e6c4d37040544cc3de4"
+  },
+  "tests_sha256": {
+    "compiler/tests/scalar_catalog/probe.php": "eed902e97ecf953bf0dc57d9159eb13cf3beca7d24e07409372964827fd31fe4",
+    "compiler/tests/scalar_catalog/oracle.php": "789dec9773ea72de4b6412881482cd9adb83819906afcff6312ad15d1ac15b9d",
+    "compiler/tests/scalar_catalog/run.py": "b38fa826c22f27271698a6514aa6c4160e35c543dce9349000b2bde88d7df982",
+    "compiler/tests/scalar_catalog/purity.php": "48508b92d80ff113b7ce1dc306365407f5c070f4d1617a8266a756120f86be01",
+    "compiler/tests/scalar_catalog/cases.py": "fcb714aa331bb2d010fc7b8f5d835e997c88a6c90cc7397b7caa7b96310b2879"
+  },
+  "reference_sha256": {
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/definitions.php": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177",
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/catalog.php": "afb0ff63c71a5a0b06ccdd9feb47adc250849f9c990da336c45ab14b526cbe3f",
+    "compiler/reference/pre-rewrite/src/01_prepare_inputs/load_runtime/handlers/type_definitions.php": "ff15a99e01bdddec1d403f88bf92203b8a3e68685aef9572f94b464dd6e5e1be",
+    "compiler/reference/pre-rewrite/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php": "12664aedf13eaa7e33b0610b2280185b61d9e043df5fe2672580c504cf89b564",
+    "compiler/reference/pre-rewrite/src/01_prepare_inputs/load_runtime/main_load_runtime.php": "63bbf4170007439d42e7355dd6a82ca9f3535d54b77ffebf8ea97d45b233119a",
+    "compiler/reference/pre-rewrite/src/04_analyze/resolve_types/data/structures.php": "a2e9393f52f3341ca1dfc251d7fa290bb734fb2d1f85db46f7edba31d0e56aa3",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/type_definitions.php": "6aef17c18976ad4188a1d0da846ac5034cdf62f20a6f1454680a99ae033386a3",
+    "compiler/reference/pre-rewrite/tests/features/program_entry.php": "2288a19f9bcbf76722d63049bb24a1c129e7d05b225733d4c1192aaed6ad3143",
+    "compiler/reference/pre-rewrite/language/named_types.json": "c95a0bfca63e2d52f74021b3bf1ba40cbff834a14b06311b7b6ce078d2adf3cf"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a"
+}

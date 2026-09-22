@@ -239,3 +239,5 @@ For verified byte ingestion, use [the snapshot facade](verified_source_reads.md)
 Keep OS handles and guaranteed cleanup in the framework/runtime owner. PHP cannot
 model native no-follow/nonblocking open races; state those limits explicitly rather
 than treating ordinary stream reads as full native protocol parity.
+
+For scalar schema values, [Json_View integer/boolean access](scalar_catalog.md) rejects wrong kinds, fractions/exponents and integer overflow; do not coerce provider metadata through strings or floating values.

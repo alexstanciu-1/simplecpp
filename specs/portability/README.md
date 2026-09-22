@@ -2,7 +2,7 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs. Active rewrite readiness is now forty-eight input/tokenization/parser/source-symbol files;
+these capability proofs. Active rewrite readiness is now fifty-three input/tokenization/parser/source-symbol files;
 see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
@@ -46,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is forty-eight input/tokenization/parser/source-symbol files, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is fifty-three input/tokenization/parser/source-symbol files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
@@ -309,8 +309,10 @@ the file entry below reuses the same expression driver.
 
 [Source declaration collection](declaration_collection.md) adds compact facts, stable source symbol IDs and atomic candidate updates (97 PHP/native outcomes plus nine host purity assertions).
 
-[Source entry preparation](entry_preparation.md) proves manifest selection and supporting-file execution policy (44 PHP/native outcomes plus nine host purity checks). Catalog return-type binding remains pending.
+[Source entry preparation](entry_preparation.md) proves manifest selection and supporting-file execution policy (44 PHP/native outcomes plus nine host purity checks). The scalar catalog now supplies its authoritative return-type binding.
 
 [Type representations](type_representations.md) adds 98 PHP/native outcomes for all prototype value shapes, passing/result modes and context/lineage records, plus retained-constructor and host purity checks.
 
 [Type lifetimes](type_lifetimes.md) adds 154 PHP/native outcomes for operation composition and capability/binding validation, with retained-prototype and host purity checks.
+
+[Scalar catalog and entry binding](scalar_catalog.md) adds 116 PHP/native outcomes, the retained catalog-parser oracle and eight host purity checks.

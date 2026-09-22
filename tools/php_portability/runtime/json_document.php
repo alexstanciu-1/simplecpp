@@ -47,6 +47,14 @@ final class Json_View {
         if (!\is_string($this->value)) { throw new \RuntimeException('JSON node is not a string'); }
         return $this->value;
     }
+    public function integer(): int {
+        if (!\is_int($this->value)) { throw new \RuntimeException('JSON node is not a signed 64-bit integer'); }
+        return $this->value;
+    }
+    public function boolean(): bool {
+        if (!\is_bool($this->value)) { throw new \RuntimeException('JSON node is not a boolean'); }
+        return $this->value;
+    }
     private function require_object(): void {
         if (!$this->value instanceof \stdClass) { throw new \RuntimeException('JSON node is not an object'); }
     }

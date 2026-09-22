@@ -33,6 +33,18 @@ class Json_View {
         if (!take($out, $failure, json_node_string($this->node))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
         return $out;
     }
+    public function integer(): int {
+        $out int = 0;
+        $failure error;
+        if (!take($out, $failure, json_node_int($this->node))) { throw new \scpp_portability_runtime_exception('JSON node is not a signed 64-bit integer'); }
+        return $out;
+    }
+    public function boolean(): bool {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, json_node_boolean($this->node))) { throw new \scpp_portability_runtime_exception('JSON node is not a boolean'); }
+        return $out;
+    }
     public function member(string $key): Json_View {
         $out json_node;
         $failure error;

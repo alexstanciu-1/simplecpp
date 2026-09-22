@@ -514,3 +514,40 @@ four host serialization assertions prove input-policy/list/order-view independen
 No converter/framework/target changes were required. Timings:
 [type lifetime evidence](results/type-lifetimes-01/README.md). Next is the scalar
 language catalog's named definitions and authoritative entry/default bindings.
+
+## Scalar language catalog and authoritative entry contract (2026-09-22)
+
+The prototype scalar loader's complete void/integer/floating schema is migrated with
+shared Named_Definition/Type_Catalog objects, exact default membership and entry
+binding. Width does not imply signedness or operations; null lifetime belongs only to
+void. Family/addition/comparison/field capabilities remain explicit. The named-definition
+owner currently rejects other shapes instead of accepting incomplete resource/layout
+facts. Extended runtime package/source definitions remain preserved pending their own
+migration; the scalar form is not advertised as that full extended model.
+
+Language_Types now binds its previous snapshot in a constructor and reads an explicit
+path synchronously. Complete source bytes, prefixed by catalog format, replace SHA-256
+as the content identity. Exact same-content reuse and changed-content invalidation are
+preserved without an unproved hash adapter; compact fingerprints are a later optimization
+candidate. Source path defaults and generic Step/session wiring are not copied back.
+
+The fixed schema uses named records plus typed setup vectors/maps. Dynamic PHP array
+shape tests become JSON-view object/list/kind checks. Strict integer/boolean view methods
+were added to both framework runtimes using existing native json_node_int/boolean APIs.
+Integer spelling/range rejects fractions, exponents and decoded-float overflow; false
+and zero remain values. No converter or target implementation changed.
+
+Two authoring/checker adjustments preceded the first PHP-ready checkpoint: nullable
+previous input moved from an unsupported ordinary method parameter to constructor-owned
+state, and a computed isset key became a named local. Optional boolean definition lookup
+uses a supported nullable-return method rather than an unsupported named-wrapper local.
+This keeps the converter structural. The initial --no-imports checker invocation was an
+unsupported tool option and was corrected; it was not a source failure.
+
+116 PHP/native outcomes passed, with the first native build successful. The original
+catalog parser also agrees with independent expected valid-definition facts and the
+invalid-input corpus. Eight host purity checks cover retained membership, failed-read
+rollback, repair, policy views and qualified UTF-8 names. Entry_Contract now binds the
+selected source symbol to the exact catalog-selected integer definition; native exit
+ABI remains outside that contract. See [timing/provenance](results/scalar-catalog-01/README.md).
+Continue with source name resolution in the prototype's analysis order.

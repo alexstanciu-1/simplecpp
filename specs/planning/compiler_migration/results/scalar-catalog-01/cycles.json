@@ -1,0 +1,22 @@
+{
+  "php_outcomes": 116,
+  "native_outcomes": 116,
+  "host_purity_assertions": 8,
+  "checker_corrections_before_php_ready": 2,
+  "checker_reasons": [
+    "Nullable previous method parameter became constructor-owned state",
+    "Computed isset key became an explicit local"
+  ],
+  "tool_invocation_errors": 1,
+  "tool_invocation_reason": "Removed unsupported --no-imports checker argument",
+  "native_build_attempts": 1,
+  "native_failure_corrective_cycles": 0,
+  "native_behavior_attempts": 1,
+  "final_ready_files": 53,
+  "converter_changes": false,
+  "framework_changes": [
+    "Json_View.integer",
+    "Json_View.boolean"
+  ],
+  "target_changes": false
+}

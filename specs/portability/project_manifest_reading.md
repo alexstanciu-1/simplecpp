@@ -29,7 +29,7 @@ reading is a later owner. It does not claim atomic path/read consistency.
 ## Portable framework boundary
 
 `scpp\json_read` returns an immutable `scpp\Json_View` schema view. Available methods:
-`kind`, `size`, `has`, `key`, `member`, `at`, `text`. Missing members, invalid indices
+`kind`, `size`, `has`, `key`, `member`, `at`, `text`; [scalar catalog adoption](scalar_catalog.md) adds strict `integer` and `boolean` accessors. Missing members, invalid indices
 and wrong-kind access throw. Null presence, object/list identity, numeric-looking
 keys, duplicate-key ordering and retained child handles are explicit behavior.
 PHP uses object-mode `json_decode` with exceptions; native wraps the checked #240
@@ -37,11 +37,10 @@ JSON document/node API. The converter adds no type resolution or JSON syntax rul
 Install native support with `--json --filesystem` and enable those modules.
 
 This is a bounded schema adapter, not full lossless JSON interoperability. It exposes
-neither raw number access nor numeric conversion, configurable parse depth, structured
+neither raw number-token access, configurable parse depth, structured
 parse diagnostics or generic serialization. PHP rejects NUL-prefixed object keys
 which native documents can retain; manifests reject such fields in either path.
-The PHP decoder may round numeric values, but this facade exposes only their kind;
-manifest paths must be strings. Do not extend this adapter's claims to arbitrary
+The PHP decoder may round noninteger numeric values; strict integer extraction rejects those carriers rather than exposing rounded integers. Manifest paths must still be strings. Do not extend this adapter's claims to arbitrary
 JSON documents without a concrete contract and proof.
 
 The filesystem facade adds checked realpath/text reads and basename/dirname helpers.

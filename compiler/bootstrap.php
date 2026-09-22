@@ -51,3 +51,8 @@ require_once __DIR__ . '/src/04_analyze/type_model/data/lifecycle_roles.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/lifecycle.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/lifetime_contract.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/lifetime_policy_codec.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/definitions.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/catalog.php';
+require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php';
+require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/main_load_runtime.php';
+require_once __DIR__ . '/src/04_analyze/resolve_types/data/entry_contract.php';
