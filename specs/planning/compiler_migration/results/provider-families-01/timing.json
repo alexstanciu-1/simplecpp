@@ -1,0 +1,23 @@
+{
+  "first_source_write_epoch": 1790093864,
+  "first_php_ready_epoch": 1790094112.815109,
+  "authoring_from_first_write_to_php_ready_seconds": 248.815,
+  "first_php_ready_sha256": {
+    "src/04_analyze/type_model/data/families.php": "3116b1601d88720d5dc0beba1afeccb1c217e3688465245545486639f9760cc7",
+    "src/04_analyze/type_model/data/source_families.php": "6f1fcaf2d3d028c79ba74cb81e6af444c1b27d804a2a86476a411d62e89c605e",
+    "src/04_analyze/type_model/family_contracts.php": "0599bbcfc3c006d0999f33900dbe3a109d8a20137085bf705996d8407fff5cf5"
+  },
+  "first_php_outcomes": 45,
+  "final_php_native_outcomes": 51,
+  "post_php_authoring": "Added six snapshot/key/exposure checks and a retained-validator oracle; not all elapsed time after PHP readiness is native stabilization.",
+  "native_build_seconds": 32.455,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 1,
+  "checker_correction": "Named constant constructor default is unsupported; make generic contract explicit at each construction.",
+  "retained_family_acceptance_cases": 33,
+  "consolidation_start_epoch": 1790094302.2527304,
+  "final_verification_builds": 1,
+  "review_correction": "Dependency Type_Reference rejects sparse family arguments; final native proof and retained oracle pass.",
+  "consolidation_end_epoch": 1790094518.6912394
+}

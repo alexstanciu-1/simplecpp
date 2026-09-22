@@ -1,4 +1,4 @@
-"""Provider declaration references and ABI-independent semantic signatures."""
+"""ABI-independent family permissions, effects and source exposure."""
 import argparse
 import hashlib
 import json
@@ -9,8 +9,8 @@ import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
-FILES = ['src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php']
-DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php']
+FILES = ['src/04_analyze/type_model/data/families.php', 'src/04_analyze/type_model/data/source_families.php', 'src/04_analyze/type_model/family_contracts.php']
+DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/generic.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php']
 LOAD_ORDER = DEPENDENCIES + FILES
 
 
@@ -37,8 +37,8 @@ def main():
         assert result.returncode == 0, (label, result.stdout, result.stderr)
         return result.stdout
 
-    expected=[True]*35
-    calls=['\\provider_test\\Probe::run();']
+    expected=[True]*51
+    calls=['\\family_test\\Probe::run();']
     for relative in DEPENDENCIES + FILES:
         dest=source/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(ROOT/'compiler'/relative,dest)
@@ -56,8 +56,10 @@ def main():
     report['php_ready_epoch'] = time.time()
     report['php_ready_sha256'] = {f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in FILES}
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    host=json.loads(run('host-contract',php[:-1]+[Path(__file__).parent/'host.php'],out))
-    assert host == {'sparse_parameters_rejected': True, 'named_parameters_rejected': True, 'sparse_family_arguments_rejected': True}
+    cases=run('oracle-inputs',php[:-1]+[Path(__file__).parent/'export.php'],out)
+    (inputs/'families.json').write_text(cases)
+    retained=json.loads(run('retained-oracle',['php',Path(__file__).parent/'oracle.php',inputs/'families.json'],out))
+    assert retained == [True]+[False]*32
     generated=out/'phpp';conversion=['php',ROOT/'tools/php_portability/convert.php',source,generated]
     assert json.loads(run('convert',conversion))['converted']==len(DEPENDENCIES+FILES)+2
     assert json.loads(run('reuse',conversion))=={'converted':0,'reused':len(DEPENDENCIES+FILES)+2,'removed':0}
@@ -77,9 +79,9 @@ def main():
         report['target_revision']=revision
         assert run('clean-after',['git','-C',checkout,'status','--porcelain']).strip()==''
     (out/'expected.json').write_text(json.dumps(expected,indent=2)+'\n')
-    report.update(passed=True,native=bool(binary),cases=len(expected),provider_semantic_outcomes=len(expected),
+    report.update(passed=True,native=bool(binary),cases=len(expected),family_contract_outcomes=len(expected),
                   production_files=FILES,source_sha256={f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in DEPENDENCIES+FILES})
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print(f'Provider semantics: {len(expected)} outcomes passed; native={bool(binary)}')
+    print(f'Provider families: {len(expected)} outcomes passed; native={bool(binary)}')
 
 if __name__=='__main__':main()

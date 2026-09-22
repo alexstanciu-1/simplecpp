@@ -83,3 +83,15 @@ preparation configuration locate this checkout through relative paths, replacing
 the old external vendor checkout. This permits configuration wiring changes,
 not a rewrite of the preparation tool or its output schema.
 The earlier confirmation requirement is satisfied.
+
+## Implemented dependency checkpoints
+
+- Provider type references and semantic signatures: 35 PHP/native outcomes, plus
+  PHP list-shape rejections (results/provider-semantics-01).
+- Family declarations, operations/requirements/effects, source exposure and
+  Family_Contracts: 51 PHP/native outcomes and 33 retained-validator cases
+  (results/provider-families-01).
+
+These establish ABI-independent semantic inputs. Catalog/import integration,
+source/provider symbol origins, provider-aware lookup, and template workers
+remain to be migrated; these checkpoints do not claim a working provider pipeline.

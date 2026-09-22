@@ -94,3 +94,6 @@ require_once __DIR__ . '/src/04_analyze/check_templates/data/structures.php';
 require_once __DIR__ . '/src/04_analyze/check_templates/data/result.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/type_references.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/semantic_calls.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/families.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/source_families.php';
+require_once __DIR__ . '/src/04_analyze/type_model/family_contracts.php';

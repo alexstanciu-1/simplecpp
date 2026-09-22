@@ -1,14 +1,14 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **91 production files**: input preparation (137 outcomes),
+Active readiness is **94 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 
 The global helper convention is implemented: no imports, q_ for existing PHP names.
 Whole-file grammar is implemented. Syntax access/comparison adds 134 outcomes. Project parser planning/join/reuse adds 66 outcomes plus nine host purity assertions.
-Source declaration collection adds 97 PHP/native outcomes plus nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks. Representation vocabulary adds 98 PHP/native outcomes and retained constructor checks. Lifecycle contracts add 154 PHP/native outcomes. Scalar catalog and entry binding add 116 PHP/native outcomes. Declaration lookup adds 40 PHP/native outcomes. Lexical/body name resolution adds 320 PHP/native outcomes. Project resolution adds 182 PHP/native outcomes plus 25 host checks. Canonical type storage adds 133 PHP/native outcomes plus 20 host checks. Aggregate lifecycle composition adds 36 PHP/native outcomes and eight host checks. Next: normalized structural definitions and annotation preparation dependencies; provider imports and semantic comparison remain separate dependencies. The complete compiler CLI is not implemented.
+Source declaration collection adds 97 PHP/native outcomes plus nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks. Representation vocabulary adds 98 PHP/native outcomes and retained constructor checks. Lifecycle contracts add 154 PHP/native outcomes. Scalar catalog and entry binding add 116 PHP/native outcomes. Declaration lookup adds 40 PHP/native outcomes. Lexical/body name resolution adds 320 PHP/native outcomes. Project resolution adds 182 PHP/native outcomes plus 25 host checks. Canonical type storage adds 133 PHP/native outcomes plus 20 host checks. Aggregate lifecycle composition adds 36 PHP/native outcomes and eight host checks. Normalized structural definitions are now proved; annotation preparation remains incomplete; provider imports and semantic comparison remain separate dependencies. The complete compiler CLI is not implemented.
 See [file parsing](../../portability/file_parser.md). src-runtime-preparation remains
 PHP as-is and outside conversion scope. The former 39-file coverage is historical.
 
@@ -74,11 +74,16 @@ Definition_View adds 14 PHP/native checks for provider/source precedence and acc
 identity. Instance contexts, typed arguments and exact integer literals add 35 PHP/native
 outcomes and 200 host range cases. Instance allocation now adds 23 PHP/native outcomes and 60 retained allocator calls.
 Symbolic terms and permission-result containers add 40 PHP/native checks and 529
-retained symbolic comparisons. Next: symbolic declaration interpretation and the
-template-checking worker/joins, then registry publication and instance bindings.
+retained symbolic comparisons. Provider integration precedes symbolic declaration
+interpretation and the template-checking worker/joins, then registry publication
+and instance bindings.
 Annotation resolution remains incomplete.
 
 Provider references and semantic signatures add 35 PHP/native checks and two PHP
 carrier checks. The user approved provider integration, preserving the PHP
 preparation tool and its output contract. Next: generic-family contracts and source
 exposure records, then catalog/import and shared symbol integration.
+
+Generic-family contracts and source exposure now add 51 PHP/native outcomes and
+33 retained-validator cases. The declaration model is proved; next is real provider
+import/catalog integration, followed by symbol origins and name bindings.

@@ -28,7 +28,11 @@ final class Type_Reference {
         if ($kind !== \type_model\TYPE_REFERENCE_FAMILY) {
             if (q_count($arguments) !== 0) { throw new \InvalidArgumentException('Only families have arguments'); }
         }
-        foreach ($arguments as $argument) { $this->arguments[] = $argument; }
+        $ordinal = 0;
+        foreach ($arguments as $index => $argument) {
+            if ($index !== $ordinal) { throw new \InvalidArgumentException('Family arguments require an ordered list'); }
+            $this->arguments[] = $argument; $ordinal = $ordinal + 1;
+        }
     }
     public static function named(string $name, string $namespace_name): Type_Reference {
         $empty /** vector<Type_Reference> */ = [];

@@ -3,8 +3,8 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **91 production files**
-with PHP/native proofs. Next is provider-family validation and consumption. No active compiler
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **94 production files**
+with PHP/native proofs. Next is provider catalog/import and shared symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
@@ -87,7 +87,7 @@ scheduler and later semantic stages remain pending.
 
 [Project resolution](../specs/portability/resolution_project.md) adds 182 PHP/native outcomes and 25 host snapshot/acceptance checks.
 
-[Canonical type storage](../specs/portability/type_store.md) adds 133 PHP/native outcomes, retained store facts and 20 host invariant checks. Aggregate lifecycle composition adds 36 PHP/native outcomes and eight host checks. Next: normalized structural definitions and annotation preparation dependencies.
+[Canonical type storage](../specs/portability/type_store.md) adds 133 PHP/native outcomes, retained store facts and 20 host invariant checks. Aggregate lifecycle composition adds 36 PHP/native outcomes and eight host checks. Normalized structural definitions are now proved; annotation preparation remains incomplete.
 
 Native record layout contracts add 18 PHP/native outcomes and 441 retained-contract
 comparisons. Resource-aware definition validation now adds 39 PHP/native checks and 90 retained allocation-effect cases. Record/array materialization adds 27 PHP/native checks. Next: concrete annotation and provider/storage dependencies.
@@ -96,6 +96,14 @@ Definition_View adds 14 PHP/native checks for provider/source precedence and acc
 identity. Instance contexts, typed arguments and exact integer literals add 35 PHP/native
 outcomes and 200 host range cases. Instance allocation now adds 23 PHP/native outcomes and 60 retained allocator calls.
 Symbolic terms and permission-result containers add 40 PHP/native checks and 529
-retained symbolic comparisons. Next: symbolic declaration interpretation and the
-template-checking worker/joins, then registry publication and instance bindings.
+retained symbolic comparisons. Provider integration precedes symbolic declaration
+interpretation and the template-checking worker/joins, then registry publication
+and instance bindings.
 Annotation resolution remains incomplete.
+
+Provider declaration references/signatures add 35 PHP/native checks and three PHP
+carrier checks. Generic-family contracts/source exposures add 51 PHP/native checks
+and 33 retained-validator cases. Both first native builds passed without native
+corrective cycles. See the [approved provider integration plan](../specs/planning/compiler_migration/provider_declaration_integration.md)
+and [adaptation/timing record](../specs/planning/compiler_migration/php_adaptation_record.md).
+Provider ingestion, catalog composition and shared symbol integration remain pending.

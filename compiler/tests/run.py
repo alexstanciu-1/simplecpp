@@ -33,7 +33,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('instance_contexts', Path(__file__).parent / 'instance_contexts/run.py'),
           ('instance_identities', Path(__file__).parent / 'instance_identities/run.py'),
           ('symbolic_terms', Path(__file__).parent / 'symbolic_terms/run.py'),
-          ('provider_semantics', Path(__file__).parent / 'provider_semantics/run.py')]
+          ('provider_semantics', Path(__file__).parent / 'provider_semantics/run.py'),
+          ('provider_families', Path(__file__).parent / 'provider_families/run.py')]
 
 
 def main():

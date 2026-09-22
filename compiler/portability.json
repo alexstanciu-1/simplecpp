@@ -92,7 +92,10 @@
     "src/04_analyze/check_templates/data/structures.php",
     "src/04_analyze/check_templates/data/result.php",
     "src/04_analyze/type_model/data/type_references.php",
-    "src/04_analyze/type_model/data/semantic_calls.php"
+    "src/04_analyze/type_model/data/semantic_calls.php",
+    "src/04_analyze/type_model/data/families.php",
+    "src/04_analyze/type_model/data/source_families.php",
+    "src/04_analyze/type_model/family_contracts.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

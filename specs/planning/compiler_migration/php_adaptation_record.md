@@ -844,3 +844,37 @@ Future optimization: measure tagged reference storage before replacing immutable
 handles with an arena; preserve exact identities and ordering.
 Evidence and phase timings: results/provider-semantics-01. Family validation,
 provider import, shared symbol integration and the full template worker remain pending.
+
+## Generic family contracts and source exposure (2026-09-22)
+
+Migrated Family_Definition, operations, formal requirements, element effects and
+source family/member payloads. Private typed containers retain stable declaration
+identity; an operation hash serves exact ID lookup and a vector preserves order.
+Source exposure remains separate from provider IDs. Exact family keys retain the
+preparation tool's JSON tuple spelling, including escaped slash and Unicode.
+
+Family_Contracts preserves the prototype's provider/formal/self-reference rules,
+copyable-value permissions, lifecycle membership, source exposure uniqueness,
+receiver passing and element overlap/invalidation rules. Nested guards replace
+PHP short-circuit-dependent optional reads. Byte-level ASCII identifier checks
+replace regular expressions for source names/namespaces. Typed tags reuse the
+existing generic/lifecycle vocabulary instead of creating another permission model.
+
+The constructor requires an explicit generic contract because constant defaults
+are outside the converter's current promoted-parameter subset. This required one
+checker correction before PHP readiness; no converter or target change.
+51 PHP/native outcomes pass on the first native build, with zero native corrective
+cycles. The same 33 family declaration cases agree with the retained prototype's
+validator in a separate PHP process. Six proof checks and the oracle were added
+after the first 45-outcome PHP checkpoint; timings identify this additional work.
+
+This remains a semantic model checkpoint: provider JSON ingestion, normalized
+record catalog composition, symbol origin integration and template execution are
+not yet implemented. No synthetic frontend, ABI readiness or generic permission
+is inferred from an available native implementation. Evidence: results/provider-families-01.
+
+Final family review also made Type_Reference reject sparse PHP argument lists
+before vector copying. This preserves the prototype's self-application list
+requirement instead of erasing invalid keys. The added host rejection passes;
+both affected native proofs are rerun on this final source. This is a review
+correction, not a native-build failure; the first passing milestones are retained.

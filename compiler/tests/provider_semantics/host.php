@@ -10,4 +10,7 @@ foreach (['sparse_parameters_rejected' => [1 => $parameter], 'named_parameters_r
     try { $signature = new \type_model\Semantic_Signature($parameters, $result); }
     catch (\InvalidArgumentException $error) { $out[$key] = true; }
 }
+$out['sparse_family_arguments_rejected'] = false;
+try { $family = \type_model\Type_Reference::family('owner', [1 => $type]); }
+catch (\InvalidArgumentException $error) { $out['sparse_family_arguments_rejected'] = true; }
 echo json_encode($out, JSON_THROW_ON_ERROR), "\n";

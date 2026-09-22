@@ -14,5 +14,8 @@
   "php_correction": "Fixture must catch OutOfBoundsException separately from LogicException, preserving PHP exception hierarchy.",
   "consolidation_start_epoch": 1790093742.6197999,
   "consolidation_end_epoch": 1790093893.1599085,
-  "consolidation_note": "Elapsed includes independent next-family model authoring while cumulative fast validation ran."
+  "consolidation_note": "Elapsed includes independent next-family model authoring while cumulative fast validation ran.",
+  "final_verification_builds": 1,
+  "review_corrections_after_first_pass": 1,
+  "review_correction": "Reject sparse family arguments before copying to a typed vector; final native proof passes."
 }
