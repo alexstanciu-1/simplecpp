@@ -1,0 +1,18 @@
+{
+  "php_ready_runner_attempt": 5,
+  "pre_php_ready_source_corrections": 0,
+  "pre_php_ready_harness_corrections": [
+    "initial expected outcome count 101 corrected to 94",
+    "generated PHP string literals quote dollar names literally",
+    "constant shadowing diagnostic occurs in its own annotation",
+    "case arguments no longer shadow argparse result"
+  ],
+  "native_build_attempts": 2,
+  "cpp_compilation_attempts": 1,
+  "post_php_ready_source_corrections": 1,
+  "correction": "place_indices breaks then returns after loop for STAN return analysis",
+  "native_target_changed": false,
+  "converter_changed": false,
+  "host_invariant_checks": 23,
+  "retained_generic_permission_checks": 5
+}

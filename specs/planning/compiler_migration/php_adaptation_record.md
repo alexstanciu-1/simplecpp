@@ -569,3 +569,33 @@ covers numeric role/target rules; 40 independent PHP/native outcomes pass, first
 Before PHP-ready, `<= 0` became the supported equivalent `< 1`, and a stale prototype
 `syntax` member became the active `tree`. Neither required converter changes.
 See [measurements](results/name-lookup-01/README.md).
+
+## Rewrite: lexical and body resolution
+
+The original worker and four same-namespace traits retain their division of work.
+Statement and expression traversal stay iterative. Reference-parameter expression
+stacks become private `Expression_Stack` objects; logical stack size is separate from
+retained capacity. Scope maps move from nested ad-hoc arrays into typed `Scope_Names`
+objects, and only an owning block cursor retires them. These changes make PHP/native
+mutation intent explicit while preserving visibility and scheduling order.
+
+Published numeric facts become compact value records with explicit copies at input
+and read boundaries. Target definitions remain shared objects. The result owns its
+indexes; consumers read named accessors rather than mutate vectors. This intentionally
+replaces prototype shared-row identity with equal value facts. A future optimization
+can measure row widths, allocation of scratch maps/cursors and index storage.
+
+Failures return a typed attempt with the original path and byte diagnostic, without
+partial bindings. One-shot workers reject duplicate execution and stale owners.
+Generic parameter policy now has its actual type-model owner and preserves copy,
+assignment and destruction permissions; this fact is not dropped during binding.
+Source template argument roles use the already-collected parameter-list anchor,
+rather than rediscovering the outer template wrapper.
+
+The first native attempt stopped before C++ at STAN's missing-return advisory for a
+return inside an infinite loop. The index traversal now breaks and returns after the
+loop, preserving the same walk. No no-STAN bypass, converter or target changes.
+Pre-PHP-ready corrections were test harness count/quoting/argument-name fixes and a
+constant-shadowing diagnostic anchor: the constant is visible in its own annotation.
+Project reuse and structural completeness acceptance remain the next coherent owner;
+this worker checkpoint does not claim phase completion.

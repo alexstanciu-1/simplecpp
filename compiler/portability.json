@@ -57,7 +57,16 @@
     "src/04_analyze/resolve_types/data/entry_contract.php",
     "src/04_analyze/resolve_symbols/data/declarations.php",
     "src/04_analyze/resolve_symbols/utilities/declaration_lookup.php",
-    "src/04_analyze/resolve_symbols/utilities/function_lookup.php"
+    "src/04_analyze/resolve_symbols/utilities/function_lookup.php",
+    "src/04_analyze/type_model/data/generic.php",
+    "src/04_analyze/resolve_symbols/data/structures.php",
+    "src/04_analyze/resolve_symbols/data/traversal.php",
+    "src/04_analyze/resolve_symbols/data/result.php",
+    "src/04_analyze/resolve_symbols/handlers/names.php",
+    "src/04_analyze/resolve_symbols/handlers/declarations.php",
+    "src/04_analyze/resolve_symbols/handlers/statements.php",
+    "src/04_analyze/resolve_symbols/handlers/expressions.php",
+    "src/04_analyze/resolve_symbols/body.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

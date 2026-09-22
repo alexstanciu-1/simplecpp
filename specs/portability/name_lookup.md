@@ -16,8 +16,8 @@ are declaration identities, not canonical type IDs. No type inference occurs her
 
 The active source grammar is global, so no unused namespace argument is exposed.
 Provider records/families await their real catalog owner; they are not represented
-by scalar definitions. Lexical resolution, template argument checking and reuse
-selection are subsequent components, not established by this lookup proof.
+by scalar definitions. Lexical resolution and template argument checking are proved separately in the
+[worker component](lexical_resolution.md); project reuse selection remains next.
 
 40 PHP/native outcomes cover lookup separation, absence, method exclusion, exact
 catalog identity, template position zero and invalid target contracts. A retained
