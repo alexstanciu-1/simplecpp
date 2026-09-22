@@ -1,6 +1,29 @@
 # PHP adaptation record and optimization follow-up
 Doc Status: planning
 
+## Rewrite stage 4: tokenizer (2026-09-22)
+
+Four files retain lexical vocabulary and algorithms while replacing per-token objects
+with explicit uint32 scalar rows. Source text is retained once; lexemes remain spans.
+Portable byte loops replace PHP span builtins. File-scope integer constants preserve
+kind numbers; a total debug encoder provides names without enum reflection. Lexical
+errors return invalid buffers with path/span/reason and no partial rows, rather than
+reintroducing the prototype's custom exception/file-ID framework. Batch validity must
+be checked before parsing. No incremental coordinator or selective identity reuse yet.
+
+The retained tokenizer unit body executes through a host-only shim: 41 captured scans
+are replayed against the rewrite. Another 261 oracle cases and two batch cases bring
+the proof to 304 outcomes. Old session-dependent incremental tests remain pending.
+Native attempt 1 found Token_Buffer/runtime-name collision and return-path analysis;
+Lexical_Buffer and an explicit debug fallback clear attempt 2. No converter changes.
+Three earlier checker-only syntax adaptations are detailed in the stage contract.
+
+The user's additional boundary is recorded: src-runtime-preparation stays PHP as-is
+for now. Optimize keyword classification/byte scanning only after measuring; retain
+the compact-row ownership model. See [contract](../../portability/tokenizer.md) and
+[evidence/cycles](results/tokenizer-rewrite-01/README.md).
+
+
 ## Rewrite stage 3: verified source reads (2026-09-22)
 
 Three production files turn discovered file observations into owned byte buffers.

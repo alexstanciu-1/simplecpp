@@ -1,0 +1,9 @@
+{
+  "attempts_to_first_native_pass": 2,
+  "corrective_cycles_to_first_native_pass": 1,
+  "checker_only_source_corrections": 3,
+  "host_import_sync_scope_corrections": 1,
+  "final_verification_builds": 4,
+  "total_native_build_invocations": 6,
+  "results": "Attempt 1: STAN runtime-name collision and terminal-throw advisory. Attempt 2: distinct Lexical_Buffer and explicit unknown debug fallback, plus two batch cases; passed. All four final stage builds passed."
+}

@@ -1,0 +1,38 @@
+STAN pre-build check failed: 11 compile-errors
+
+[compile-error] Missing property read target `->error_length` on receiver type `scpp\token_buffer` in `tokenizer_test\Probe::run` for `$buffer->error_length`.
+  at probe.phs:59
+
+[compile-error] Missing property read target `->error_start` on receiver type `scpp\token_buffer` in `tokenizer_test\Probe::run` for `$buffer->error_start`.
+  at probe.phs:59
+
+[compile-error] Missing property read target `->rows` on receiver type `scpp\token_buffer` in `tokenizer_test\Probe::run` for `$buffer->rows`.
+  at probe.phs:59
+
+[compile-error] Missing property read target `->source` on receiver type `scpp\token_buffer` in `tokenizer_test\Probe::run` for `$buffer->source->path`.
+  at probe.phs:59
+
+[compile-error] Missing property read target `->source` on receiver type `scpp\token_buffer` in `tokenizer_test\Probe::run` for `$buffer->source`.
+  at probe.phs:59
+
+[compile-error] Function `tokenize\Token_Kinds::name` declared as `string` may exit without returning a value.
+  at src/02_tokenize/structures.phs:92
+
+[compile-error] Missing property write target `scpp\token_buffer::$rows` in `tokenize\File_Tokenizer::fail`.
+  at src/02_tokenize/tokenize.phs:61
+
+[compile-error] Missing property write target `scpp\token_buffer::$valid` in `tokenize\File_Tokenizer::fail`.
+  at src/02_tokenize/tokenize.phs:62
+
+[compile-error] Missing property write target `scpp\token_buffer::$error_start` in `tokenize\File_Tokenizer::fail`.
+  at src/02_tokenize/tokenize.phs:63
+
+[compile-error] Missing property write target `scpp\token_buffer::$error_length` in `tokenize\File_Tokenizer::fail`.
+  at src/02_tokenize/tokenize.phs:64
+
+[compile-error] Missing property write target `scpp\token_buffer::$error_reason` in `tokenize\File_Tokenizer::fail`.
+  at src/02_tokenize/tokenize.phs:65
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

@@ -45,6 +45,8 @@ an old slice's limits or a feature-catalog proposal as the current support matri
   [Simple C++ strict skill](../simple-cpp-php-strict/SKILL.md). Follow the
   [stage methodology](../../../specs/planning/compiler_migration/README.md#current-methodology-stage-by-stage-rewrite):
   manifest, paths/discovery, verified reads, tokenizer, parser, then semantic stages.
+  Keep `src-runtime-preparation` PHP as-is for now; it is outside conversion scope.
+  Reuse suitable existing unit cases; adapt their harness and add portability proofs.
   Keep one implementation; reuse tools and suitable code without preserving incidental
   internals. Define stage inputs/outputs, rejection behavior and ownership first.
 - Iterate in PHP with frequent cheap checks/conversion. Prove native behavior for new

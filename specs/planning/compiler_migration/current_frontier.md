@@ -1,14 +1,14 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-The [rewrite reset](rewrite_reset.md) is complete. Active readiness is **10 production
-files**: manifest reading (35 outcomes), source discovery (31 initial + 31 refreshed),
-and verified reads (20 initial + 20 refreshed), proved in PHP/native on exact candidate
+The [rewrite reset](rewrite_reset.md) is complete. Active readiness is **14 production
+files**: manifest reading (35 outcomes), discovery (62), verified reads (40), and
+tokenization (304). Exact PHP/native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`. No complete compiler CLI exists yet.
-See [verified reads and measured iterations](../../portability/verified_source_reads.md).
+See [tokenizer contract and reused tests](../../portability/tokenizer.md).
 
-Next: tokenizer, consuming owned byte buffers. Follow the
-[restart methodology](README.md#current-methodology-stage-by-stage-rewrite).
+Next: parser. `src-runtime-preparation` stays PHP as-is for now; it is outside this
+conversion effort. Follow the [restart methodology](README.md#current-methodology-stage-by-stage-rewrite).
 The former 39-file cumulative proof remains historical coverage.
 
 The table below records pre-reset dependencies and reusable findings, not active

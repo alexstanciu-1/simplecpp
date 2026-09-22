@@ -13,3 +13,7 @@ require_once __DIR__ . '/src/01_prepare_inputs/read_sources/main_discover_source
 require_once __DIR__ . '/src/01_prepare_inputs/read_sources/data/buffer.php';
 require_once __DIR__ . '/src/01_prepare_inputs/read_sources/read.php';
 require_once __DIR__ . '/src/01_prepare_inputs/read_sources/main_read_sources.php';
+require_once __DIR__ . '/src/02_tokenize/structures.php';
+require_once __DIR__ . '/src/02_tokenize/store.php';
+require_once __DIR__ . '/src/02_tokenize/tokenize.php';
+require_once __DIR__ . '/src/02_tokenize/main_tokenize.php';

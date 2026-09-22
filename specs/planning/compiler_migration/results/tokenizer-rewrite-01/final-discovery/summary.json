@@ -1,0 +1,193 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source"
+      ],
+      "seconds": 0.084,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source"
+      ],
+      "seconds": 0.264,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_manifest/data/project_manifest.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_manifest/manifest_reader.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/utilities/paths.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/data/listing.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/scan.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/main_discover_sources.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/probe.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/main.php"
+      ],
+      "seconds": 0.063,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/phpp"
+      ],
+      "seconds": 0.104,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/phpp"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.05,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.005,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.025,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.166,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 20.708,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/phpp/.prism/build/main"
+      ],
+      "seconds": 0.102,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.025,
+      "exit": 0
+    },
+    {
+      "label": "php-refresh",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_manifest/data/project_manifest.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_manifest/manifest_reader.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/utilities/paths.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/data/listing.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/scan.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/src/01_prepare_inputs/read_sources/main_discover_sources.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/probe.php",
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/source/main.php"
+      ],
+      "seconds": 0.059,
+      "exit": 0
+    },
+    {
+      "label": "native-refresh",
+      "command": [
+        "/tmp/scpp-tokenizer-final-01/proof-compiler/discovery/phpp/.prism/build/main"
+      ],
+      "seconds": 0.107,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 31,
+  "refresh_cases": 31,
+  "production_files": [
+    "src/01_prepare_inputs/read_sources/utilities/paths.php",
+    "src/01_prepare_inputs/read_sources/data/listing.php",
+    "src/01_prepare_inputs/read_sources/scan.php",
+    "src/01_prepare_inputs/read_sources/main_discover_sources.php"
+  ],
+  "source_sha256": {
+    "src/01_prepare_inputs/read_manifest/data/project_manifest.php": "6244e0ed53c937289beff6085e9a5c0d20817befce34e5cc46432374b0408d01",
+    "src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php": "43598fdbce319c7980c33968d0a1413cd7137b7d28d60946c319db0dfd8d0f0a",
+    "src/01_prepare_inputs/read_manifest/manifest_reader.php": "e00a7b5fd5f3758063887eafc38befdc073e429a92c0a040b51b3a33b919af6e",
+    "src/01_prepare_inputs/read_sources/utilities/paths.php": "0bd5dba02c880523b4085a97d0a3f6f01940e52e5a24fc96dd17f934020c1e21",
+    "src/01_prepare_inputs/read_sources/data/listing.php": "3e05e336b1803a52187032b68e72bf18bc40658616dd528883f12dc2c19c2df7",
+    "src/01_prepare_inputs/read_sources/scan.php": "ade1986d05a2abd7cf61fe9f9847da311cd92f6fd54e891885a8c84ec37789fd",
+    "src/01_prepare_inputs/read_sources/main_discover_sources.php": "414860610663fc914cca439babdb72961f43e42b38b0f7f1cbcc2bfc882b1809"
+  }
+}

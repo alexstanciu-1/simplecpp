@@ -1,0 +1,28 @@
+Transpiled PHP files: 12, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/14] PCH app_pch.hpp.gch
+[2/14] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[3/14] CXX scpp_framework/collections.o
+[4/14] CXX src/02_tokenize/store.o
+[5/14] CXX src/02_tokenize/structures.o
+[6/14] CXX scpp_framework/exceptions.o
+[7/14] CXX src/02_tokenize/main_tokenize.o
+[8/14] CXX probe.o
+[9/14] CXX scpp_framework/filesystem.o
+[10/14] CXX src/02_tokenize/tokenize.o
+[11/14] CXX scpp_framework/json_document.o
+[12/14] CXX scpp_framework/strings.o
+[13/14] CXX main.o
+[14/14] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/01_prepare_inputs/read_sources/data/buffer.o, .prism/build/src/02_tokenize/main_tokenize.o, .prism/build/src/02_tokenize/store.o, .prism/build/src/02_tokenize/structures.o, .prism/build/src/02_tokenize/tokenize.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

@@ -4,8 +4,10 @@ Doc Status: planning
 See [the current dependency frontier](current_frontier.md) for next actions and
 accepted migration decisions and outstanding target requirements.
 
-**Rewrite reset completed; three stages proved:** manifest reading, source discovery
-and verified reads provide ten active production files. Next: tokenizer.
+**Rewrite reset completed; four stages proved:** input preparation and tokenization
+provide fourteen active production files. Next: parser.
+`src-runtime-preparation` stays PHP as-is for now; do not convert it.
+See [tokenizer and reused units](../../portability/tokenizer.md).
 See [verified read scope and timings](../../portability/verified_source_reads.md).
 See [discovery scope and timings](../../portability/source_discovery.md).
 The previous compiler and 39-file proof are preserved reference, not active coverage.

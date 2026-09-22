@@ -2,7 +2,7 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs. Active rewrite readiness is now ten input-preparation files;
+these capability proofs. Active rewrite readiness is now fourteen input/tokenization files;
 see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
@@ -46,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is ten input-preparation files, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is fourteen input/tokenization files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
@@ -292,3 +292,6 @@ directory selection, with measured native correction cycles.
 
 [Verified source reads](verified_source_reads.md) adds checked snapshot ingestion
 and owned byte buffers, with 40 PHP/native outcomes and native cycle accounting.
+
+[Tokenizer](tokenizer.md) adds 304 PHP/native outcomes, reusing 41 scans from the
+existing tokenizer unit and preserving byte-based compact token rows.

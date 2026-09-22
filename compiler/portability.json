@@ -11,7 +11,11 @@
     "src/01_prepare_inputs/read_sources/main_discover_sources.php",
     "src/01_prepare_inputs/read_sources/data/buffer.php",
     "src/01_prepare_inputs/read_sources/read.php",
-    "src/01_prepare_inputs/read_sources/main_read_sources.php"
+    "src/01_prepare_inputs/read_sources/main_read_sources.php",
+    "src/02_tokenize/structures.php",
+    "src/02_tokenize/store.php",
+    "src/02_tokenize/tokenize.php",
+    "src/02_tokenize/main_tokenize.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
