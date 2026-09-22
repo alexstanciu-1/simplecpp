@@ -36,7 +36,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('provider_semantics', Path(__file__).parent / 'provider_semantics/run.py'),
           ('provider_families', Path(__file__).parent / 'provider_families/run.py'),
           ('provider_catalog', Path(__file__).parent / 'provider_catalog/run.py'),
-          ('callable_abi', Path(__file__).parent / 'callable_abi/run.py')]
+          ('callable_abi', Path(__file__).parent / 'callable_abi/run.py'),
+          ('storage_contracts', Path(__file__).parent / 'storage_contracts/run.py')]
 
 
 def main():

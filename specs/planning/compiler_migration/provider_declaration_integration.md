@@ -105,3 +105,7 @@ Prepared callable ABI records and semantic compatibility checks are now proved
 (results/callable-abi-01). Exact extension/result/binding/conversion spellings,
 borrow modes, span expansion and hidden-result slots are retained. Storage-family
 contracts and package ingestion remain dependencies before complete provider imports.
+
+Typed storage-family models and Named_Definition's exact descriptor/ownership
+invariant are now implemented and proved (results/storage-contracts-01). Package
+ingestion/leases and symbol-origin integration remain pending.

@@ -1,0 +1,20 @@
+{
+  "authoring_start_epoch": 1790095951.495222,
+  "php_ready_epoch": 1790096084.2450733,
+  "authoring_to_php_ready_seconds": 132.75,
+  "php_ready_sha256": {
+    "src/04_analyze/type_model/data/storage.php": "c426bbd122e04418b8fc017194ad03ca5322e2cfcfd6d10d8d42235415993a2d"
+  },
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 1,
+  "checker_correction": "Required named private property declarations need initialization in this converter. Store the constructor-created effect in private nullable initialized storage and expose a guarded non-null accessor.",
+  "regression_harness_corrective_cycles": 1,
+  "regression_harness_correction": "The resource suite uses a custom load order; add storage-related dependencies there as well as in standard stage lists.",
+  "native_build_seconds": 29.439,
+  "native_ready_epoch": 1790096114.2790873,
+  "consolidation_start_epoch": 1790096304.3843863,
+  "resource_native_attempts": 2,
+  "type_store_native_attempts": 1,
+  "consolidation_end_epoch": 1790096394.0946732
+}

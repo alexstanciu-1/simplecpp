@@ -1,0 +1,1 @@
+{"effects":[["allocate","acquire",0,null],["push","mutate",0,null],["pop","mutate",0,null],["count","observe",0,null],["release","release",0,null],["transfer","transfer",0,1]],"definition_acceptance":[true,false,false,false,true]}

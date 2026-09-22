@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[3]
 FILES = ['src/04_analyze/resolve_types/data/lifecycle_bodies.php', 'src/04_analyze/resolve_types/lifecycle_composition.php']
 DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/context.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/lifetime_policy_codec.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/catalog.php', 'src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php', 'src/04_analyze/type_model/data/type_record.php', 'src/04_analyze/type_model/result_contracts.php', 'src/04_analyze/type_model/data/store.php', 'src/04_analyze/resolve_types/utilities/type_cache.php']
 DEPENDENCIES += ['src/04_analyze/type_model/data/records.php']
+DEPENDENCIES += ['src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/storage.php']
 LOAD_ORDER = DEPENDENCIES + FILES
 
 

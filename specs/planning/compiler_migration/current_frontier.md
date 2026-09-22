@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **97 production files**: input preparation (137 outcomes),
+Active readiness is **98 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -96,3 +96,7 @@ and package metadata ingestion/composition, then provider symbol origins and bin
 Prepared callable ABI contracts add 66 PHP/native outcomes, 32 retained compatibility
 comparisons and direct/hidden slot-map agreement. Next: storage-family contracts,
 then package ingestion/composition and shared provider symbol integration.
+
+Typed storage families and exact descriptor/ownership validation add 53 PHP/native
+outcomes. Next: package-local storage records and prepared-package import/lease
+boundaries, before shared provider symbol origins and name bindings.

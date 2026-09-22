@@ -9,7 +9,15 @@ final class Named_Definition {
         public readonly ?bool $signed, public readonly string $integer_family,
         public readonly bool $wrapping_addition, public readonly bool $ordered_comparison,
         public readonly bool $struct_field, public readonly ?Resource_Obligations $ownership = null,
-        public readonly ?Native_Record_Layout $native_layout = null) {
+        public readonly ?Native_Record_Layout $native_layout = null, public readonly ?Element_Storage $element_storage = null) {
+        if ($element_storage !== null) {
+            if ($ownership === null) { throw new \InvalidArgumentException('Typed storage requires its family descriptor and allocation obligation'); }
+            if (($ownership->kind !== \type_model\RESOURCE_ALLOCATION)
+                || ($representation !== $element_storage->family->descriptor->representation)
+                || ($lifetime !== $element_storage->family->descriptor->lifetime)) {
+                throw new \InvalidArgumentException('Typed storage requires its family descriptor and allocation obligation');
+            }
+        }
         if ($name === '') { throw new \InvalidArgumentException('Named definition requires a name'); }
         $kind = $representation->kind();
         if (($kind === \type_model\REPRESENTATION_VOID) !== ($lifetime === null)) { throw new \InvalidArgumentException('Value types require lifetime; void must have none'); }

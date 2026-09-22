@@ -1,0 +1,13 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/04_analyze/type_model/data/definitions.phs:9: member access into incomplete type 'scpp::type_model::Element_Storage'
+Generated location: .prism/generated/src/04_analyze/type_model/data/definitions.cpp:31:149
+Compile note in around src/04_analyze/type_model/data/definitions.phs:1: forward declaration of 'scpp::type_model::Element_Storage'
+Generated location: .prism/generated/src/04_analyze/type_model/data/definitions.hpp:10:7
+Compile error in src/04_analyze/type_model/data/definitions.phs:9: member access into incomplete type 'scpp::type_model::Element_Storage'
+Generated location: .prism/generated/src/04_analyze/type_model/data/definitions.cpp:31:235
+Raw compiler excerpt:
+definitions.cpp:31:149: error: member access into incomplete type 'scpp::type_model::Element_Storage'
+definitions.hpp:10:7: note: forward declaration of 'scpp::type_model::Element_Storage'
+definitions.cpp:31:235: error: member access into incomplete type 'scpp::type_model::Element_Storage'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

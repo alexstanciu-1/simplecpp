@@ -935,3 +935,40 @@ the first actual C++ build. No converter or v0.1 modification.
 
 Timing/evidence: results/callable-abi-01. Next: storage-family contracts and prepared
 package consumption. Shared provider symbol integration remains incomplete.
+
+## Typed storage families and descriptor ownership (2026-09-22)
+
+Migrated storage primitives, family metadata, source operation roles/functions and
+concrete element-storage records. Primitive parameters/results allow only integer
+and borrowed-address ABI positions; byte spans stay a separate callable contract.
+Private copied typed maps/vectors replace mutable PHP arrays. Role codecs preserve
+metadata spellings; configured source names do not determine semantic behavior.
+Allocate/release/transfer/count/push/pop retain acquire/release/transfer/observe/
+mutate/mutate effects, with owner zero and transfer destination one.
+
+Named_Definition now owns optional Element_Storage metadata, restoring the
+prototype's exact descriptor invariant: typed storage requires an allocation
+obligation and the same representation/lifetime objects as its family's descriptor.
+Equal-looking replacement objects are rejected. Canonical element IDs remain local
+to the containing type-store lineage; this record does not create or resolve IDs.
+
+Storage_Function computes one shared effect during construction. A private nullable
+initialized property plus guarded non-null accessor replaces the unsupported
+uninitialized named-property form; no absent effect escapes a completed constructor.
+This was one checker correction before PHP readiness. The focused 53-outcome native
+proof passes on its first build, with no production native correction.
+
+The retained prototype supplies independent role/effect and descriptor-identity
+checks. Type-store native regressions cover 133 outcomes. The resource regression
+required a harness dependency correction: its custom load order did not receive
+the new storage closure with the standard stage lists. Native evidence and actual
+phase/cycle timings are saved under results/storage-contracts-01.
+
+Next: prepared-package storage rows and import/lease/metadata boundaries. The
+preparation PHP implementation and its output contract are unchanged. Shared
+provider symbol origins, name bindings and full template checking remain pending.
+
+Final storage checkpoint: resource native regressions pass all 39 outcomes after
+the harness correction; cumulative fast validation passes at 98 files. A later
+uninitialized-named-property converter enhancement could remove the private
+construction-state guard without changing Storage_Function's non-null API.

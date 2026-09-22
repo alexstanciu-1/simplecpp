@@ -1,4 +1,4 @@
-"""Concrete instance contexts and exact nonnegative integer literals."""
+"""Typed storage families, semantic ownership effects and exact descriptor identity."""
 import argparse
 import hashlib
 import json
@@ -9,9 +9,8 @@ import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
-FILES = ['src/04_analyze/check_bodies/utilities/decimal_range.php', 'src/04_analyze/check_bodies/utilities/literals.php', 'src/04_analyze/instantiate/data/context.php']
-DEPENDENCIES = ['src/01_prepare_inputs/read_sources/data/buffer.php', 'src/02_tokenize/structures.php', 'src/02_tokenize/store.php', 'src/02_tokenize/tokenize.php', 'src/03_parse/data/nodes.php', 'src/03_parse/data/tree.php', 'src/03_parse/utilities/binary_syntax.php', 'src/03_parse/data/expression_state.php', 'src/03_parse/handlers/expressions.php', 'src/03_parse/data/result.php', 'src/03_parse/handlers/statements.php', 'src/03_parse/handlers/control_statements.php', 'src/03_parse/handlers/declarations.php', 'src/03_parse/handlers/metaprogramming.php', 'src/03_parse/parse_file.php', 'src/03_parse/data/role_views.php', 'src/03_parse/utilities/metaprogramming_syntax.php', 'src/03_parse/utilities/struct_member_cursor.php', 'src/03_parse/utilities/syntax_access.php', 'src/03_parse/utilities/syntax_comparer.php', 'src/03_parse/data/store.php', 'src/03_parse/select_tasks.php', 'src/03_parse/join.php', 'src/03_parse/main_parse.php', 'src/04_analyze/collect_symbols/data/structures.php', 'src/04_analyze/collect_symbols/data/store.php', 'src/04_analyze/collect_symbols/data/result.php', 'src/04_analyze/collect_symbols/collect.php', 'src/04_analyze/collect_symbols/main_collect_symbols.php', 'src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/definitions.php']
-DEPENDENCIES += ['src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/storage.php']
+FILES = ['src/04_analyze/type_model/data/storage.php']
+DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php', 'src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/definitions.php']
 LOAD_ORDER = DEPENDENCIES + FILES
 
 
@@ -38,17 +37,8 @@ def main():
         assert result.returncode == 0, (label, result.stdout, result.stderr)
         return result.stdout
 
-    ranges=[]
-    for bits in [1,2,7,8,16,32,64,128,256,1024]:
-        for signed in [False,True]:
-            limit=(1 << (bits-int(signed)))-1
-            for value in [0,1,limit,max(0,limit-1),limit+1]:
-                for zeros in ['', '000']:
-                    ranges.append({'bits':bits,'signed':signed,'digits':zeros+str(value),
-                                   'expected':str(value) if value<=limit else None})
-    (inputs/'ranges.json').write_text(json.dumps(ranges)+'\n')
-    expected=[True]*35
-    calls=['\\context_test\\Probe::run();']
+    expected=[True]*53
+    calls=['\\storage_test\\Probe::run();']
     for relative in DEPENDENCIES + FILES:
         dest=source/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(ROOT/'compiler'/relative,dest)
@@ -63,7 +53,12 @@ def main():
         actual=[json.loads(line) for line in run(label,command,out).splitlines()]
         assert actual==want,(label,actual,want)
     prove('php',php,expected)
-    assert json.loads(run('exact-ranges',php[:-1]+[Path(__file__).parent/'ranges.php'],out)) == {'exact_range_cases':200}
+    report['php_ready_epoch'] = time.time()
+    report['php_ready_sha256'] = {f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in FILES}
+    (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
+    retained=json.loads(run('retained-oracle',['php',Path(__file__).parent/'oracle.php'],out))
+    assert retained == {'effects':[['allocate','acquire',0,None],['push','mutate',0,None],['pop','mutate',0,None],['count','observe',0,None],['release','release',0,None],['transfer','transfer',0,1]],
+        'definition_acceptance':[True,False,False,False,True]}
     generated=out/'phpp';conversion=['php',ROOT/'tools/php_portability/convert.php',source,generated]
     assert json.loads(run('convert',conversion))['converted']==len(DEPENDENCIES+FILES)+2
     assert json.loads(run('reuse',conversion))=={'converted':0,'reused':len(DEPENDENCIES+FILES)+2,'removed':0}
@@ -83,9 +78,9 @@ def main():
         report['target_revision']=revision
         assert run('clean-after',['git','-C',checkout,'status','--porcelain']).strip()==''
     (out/'expected.json').write_text(json.dumps(expected,indent=2)+'\n')
-    report.update(passed=True,native=bool(binary),cases=len(expected),instance_context_outcomes=len(expected),
+    report.update(passed=True,native=bool(binary),cases=len(expected),storage_contract_outcomes=len(expected),
                   production_files=FILES,source_sha256={f:hashlib.sha256((source/f).read_bytes()).hexdigest() for f in DEPENDENCIES+FILES})
     (out/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print(f'Instance contexts: {len(expected)} outcomes passed; native={bool(binary)}')
+    print(f'Storage contracts: {len(expected)} outcomes passed; native={bool(binary)}')
 
 if __name__=='__main__':main()
