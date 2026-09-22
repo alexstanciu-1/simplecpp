@@ -4,10 +4,10 @@ Doc Status: planning
 See [the current dependency frontier](current_frontier.md) for next actions and
 accepted migration decisions and outstanding target requirements.
 
-**Rewrite reset completed:** active source is a clean numbered scaffold and the
-ready set is zero. The previous compiler and 39-file proof are preserved reference,
-not active coverage. See [the reset record](rewrite_reset.md). Start with manifest
-reading; the tooling/runtime framework and tested target pin are retained.
+**Rewrite reset completed; first stage proved:** project-manifest reading adds three
+active production files and 35 PHP/native outcomes. Next: paths/discovery.
+The previous compiler and 39-file proof are preserved reference, not active coverage.
+See [the reset record](rewrite_reset.md) and [manifest stage](../../portability/project_manifest_reading.md).
 
 Pre-reset adoption history follows; its results are reusable evidence.
 

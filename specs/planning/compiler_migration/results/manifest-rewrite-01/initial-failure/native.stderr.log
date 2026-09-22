@@ -1,0 +1,8 @@
+STAN pre-build check failed: 1 compile-errors
+
+[compile-error] Function `read_manifest\Manifest_Reader::read` declared as `Project_Manifest` may exit without returning a value.
+  at src/01_prepare_inputs/read_manifest/manifest_reader.phs:53
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

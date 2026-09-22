@@ -2,7 +2,8 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs but starts active compiler readiness at zero.
+these capability proofs. Active rewrite readiness is now three project-manifest files;
+see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
 project-local [portable-PHP skill](../../.agents/skills/simple-cpp-portable-php/SKILL.md).
@@ -10,7 +11,7 @@ Use the [validation workflow](validation_workflow.md) for the ready-set PHP loop
 and explicitly selected native proofs.
 
 Collection adapters and bounded typed callbacks now have [PHP/native proofs](collection_helpers.md)
-on the prior candidate `08c8206a`; selected unreleased target is now `a1a1babd`. [Process/lock candidates](os_helpers.md)
+on the prior candidate `08c8206a`; selected unreleased target is now `9b4b33f3` (#240). [Process/lock candidates](os_helpers.md)
 pass host lifecycle tests and the prepared native facade comparison on `2f0d667f`,
 which fixes the target alias-signature bug.
 
@@ -45,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is zero, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is three manifest files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP

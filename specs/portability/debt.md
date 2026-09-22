@@ -2,7 +2,8 @@
 Doc Status: planning
 
 Current compiler status: [rewrite reset](../planning/compiler_migration/rewrite_reset.md),
-zero active ready files. Capability support below remains available; prior compiler
+three active ready files for project-manifest reading; see
+[its bounded JSON adapter contract](project_manifest_reading.md). Capability support below remains available; prior compiler
 slice statements describe archived implementation/proofs, not active rewrite coverage.
 
 Date: 2026-09-21. This records the converter consolidation checkpoint. The compiler

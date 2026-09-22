@@ -1,0 +1,4 @@
+Created prism.json
+Project root: /tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/phpp
+Entrypoint: main.phs
+PHP profile: strict

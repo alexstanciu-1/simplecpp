@@ -473,3 +473,6 @@ Role:
 Authority:
 - derived and subordinate to normative specs and runtime contracts
 - must not define new semantics or override `runtime/specs/config.json` for current runtime-supported combinations
+
+Supporting portability stage: [project-manifest reading](portability/project_manifest_reading.md)
+(schema, bounded JSON facade, proof and timing evidence; not language authority).

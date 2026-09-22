@@ -4,7 +4,10 @@ Doc Status: planning
 Status: native lossless document API recommendation accepted by the user on
 2026-09-22, with a PHP framework counterpart after native support is available.
 Tracked upstream in [Simple C++ #240](https://github.com/alexstanciu-1/simplecpp/issues/240).
-This remains a requirement, not an implemented framework API or language spec.
+Native candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a` now supplies the
+document API. The first rewrite stage adopts a bounded PHP/native schema-view
+facade; see [manifest reading](../../portability/project_manifest_reading.md).
+Full raw-number/error/roundtrip parity remains outside this facade.
 
 ## Concrete compiler need
 

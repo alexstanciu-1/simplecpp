@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "source_root": ".",
-  "files": [],
+  "files": [
+    "src/01_prepare_inputs/read_manifest/data/project_manifest.php",
+    "src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
+    "src/01_prepare_inputs/read_manifest/manifest_reader.php"
+  ],
   "implementation_target": "tools/portability_target.json"
 }

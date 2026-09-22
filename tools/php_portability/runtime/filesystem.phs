@@ -17,3 +17,17 @@ function scpp_portability_fs_mtime(string $path): result_or_false<int> {
     if (!take($value, $failure, fs_mtime($path))) { return false; }
     return $value;
 }
+
+function scpp_portability_fs_require_realpath(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, fs_realpath($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+
+function scpp_portability_fs_read_text(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, fs_get($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}

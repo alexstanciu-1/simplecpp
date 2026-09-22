@@ -60,8 +60,9 @@ Use the [validation workflow](../../../specs/portability/validation_workflow.md)
 loop. Add `--native compiler --target-checkout TARGET` for the cumulative native
 proof; a PHP-only pass is not native evidence. After the
 [rewrite reset](../../../specs/planning/compiler_migration/rewrite_reset.md), the active
-ready set is empty: default checks prove tools, and compiler proof requests fail
-until a real stage harness is installed. Old 39-file coverage is historical. The immutable target lives in
+ready set grows only with registered stage outcome proofs in `compiler/tests/`.
+Old 39-file coverage is historical. Record elapsed time by activity and command in
+each stage evidence, including failed attempts, to guide workflow optimization. The immutable target lives in
 [portability_target.json](../../../compiler/tools/portability_target.json), not in
 this skill. Host loading belongs outside the converted source tree; assemble native
 framework support separately and consume output only after successful conversion.

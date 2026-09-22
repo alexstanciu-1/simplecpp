@@ -85,12 +85,13 @@ def main():
         if not isinstance(names, list) or len(names) != len(set(names)):
             raise RuntimeError('Expected a unique source file list')
         report['compiler_ready_files'] = len(names)
-        report['compiler_status'] = 'not_started' if not names else 'proof_not_configured'
+        report['compiler_status'] = 'not_started' if not names else 'proof_pending'
         shutil.copy2(ROOT / 'compiler/portability.json', results / 'source-manifest.json')
         save()
         if names:
-            raise RuntimeError('Configure the new stage behavioral proof before populating the rewrite ready manifest')
-        if 'compiler' in report['native_requested']:
+            run('compiler-php', [sys.executable, ROOT / 'compiler/tests/run.py', '--results', results / 'compiler-php'])
+            report['compiler_status'] = 'php_proved'
+        elif 'compiler' in report['native_requested']:
             raise RuntimeError('Compiler rewrite has no ready component; historical 39-file coverage is archived')
         run('collections-php', ['php', TESTS / 'collections_php.php'])
         run('value-records-php', [sys.executable, TESTS / 'value_records.py', '--results', results / 'value-records-php'])
@@ -103,9 +104,11 @@ def main():
                                   '--results', results / ('proof-' + name)])
         if args.native and run('target-status-after', ['git', '-C', checkout, 'status', '--porcelain']):
             raise RuntimeError('Native target changed during validation')
+        if 'compiler' in report['native_requested']:
+            report['compiler_status'] = 'php_native_proved'
         report.update(status='passed', native_proved=report['native_requested'])
         save()
-        print('Framework validation passed; compiler ready files: 0 (rewrite not started); native capability proofs: ' + (', '.join(report['native_requested']) or 'not requested'))
+        print('Validation passed; compiler ready files: ' + str(len(names)) + '; compiler status: ' + report['compiler_status'] + '; native proofs: ' + (', '.join(report['native_requested']) or 'not requested'))
         return 0
     except (Exception, KeyboardInterrupt) as error:
         report.update(status='failed', error=str(error) or 'interrupted')

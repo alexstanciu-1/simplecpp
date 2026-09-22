@@ -1,13 +1,8 @@
-"""Active rewrite compiler proof entrypoint; no stage has been adopted yet."""
+"""Forward compiler readiness validation to the active rewrite-stage proof owner."""
+from pathlib import Path
+import subprocess
 import sys
 
-
-def main():
-    print('Compiler rewrite has no ready component. The previous 39-file cumulative '
-          'proof is archived at tests/portability/reference/pre-rewrite/compiler_context; '
-          'replay it from Git branch v0.2/pre-rewrite-reference.', file=sys.stderr)
-    return 1
-
-
 if __name__ == '__main__':
-    sys.exit(main())
+    root = Path(__file__).resolve().parents[3]
+    sys.exit(subprocess.call([sys.executable, str(root / 'compiler/tests/run.py'), *sys.argv[1:]], cwd=root))

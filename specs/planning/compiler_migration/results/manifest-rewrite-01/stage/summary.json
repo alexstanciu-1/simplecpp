@@ -1,0 +1,166 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.054,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.156,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source/src/01_prepare_inputs/read_manifest/data/project_manifest.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source/src/01_prepare_inputs/read_manifest/manifest_reader.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source/probe.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source/main.php"
+      ],
+      "cwd": "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest",
+      "seconds": 0.058,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.078,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/source",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.049,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.006,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.022,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "cwd": "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/phpp",
+      "seconds": 0.129,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "cwd": "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/phpp",
+      "seconds": 18.801,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest/phpp/.prism/build/main"
+      ],
+      "cwd": "/tmp/scpp-manifest-stage-final-01/proof-compiler/read_manifest",
+      "seconds": 0.035,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "seconds": 0.023,
+      "exit": 0
+    }
+  ],
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 35,
+  "production_files": [
+    "src/01_prepare_inputs/read_manifest/data/project_manifest.php",
+    "src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
+    "src/01_prepare_inputs/read_manifest/manifest_reader.php"
+  ],
+  "source_sha256": {
+    "src/01_prepare_inputs/read_manifest/data/project_manifest.php": "68e5252a889367f6f1b318bcc13ecee795142d18351180ad9804fe67b1042d3c",
+    "src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php": "aa61169dce0735b352b93fc0ca06c2364d646d34f8076f1102df291656a3e4f4",
+    "src/01_prepare_inputs/read_manifest/manifest_reader.php": "dabfa4f61444876f849e42cbdc81457c27385a829bde07b1da7f29d4978ea506"
+  }
+}

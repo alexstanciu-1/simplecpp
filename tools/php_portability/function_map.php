@@ -3,6 +3,11 @@ declare(strict_types=1);
 
 // Project-wide source bindings. null means use ordinary PHP without an import.
 return [
+	'fs_basename' => ['php' => 'scpp\\fs_basename', 'target' => 'fs_basename', 'arity' => 1],
+	'fs_dirname' => ['php' => 'scpp\\fs_dirname', 'target' => 'fs_dirname', 'arity' => 1],
+	'fs_read_text' => ['php' => 'scpp\\fs_read_text', 'target' => 'scpp_portability_fs_read_text', 'arity' => 1],
+	'fs_require_realpath' => ['php' => 'scpp\\fs_require_realpath', 'target' => 'scpp_portability_fs_require_realpath', 'arity' => 1],
+	'json_read' => ['php' => 'scpp\\json_read', 'target' => '\\scpp\\json_read', 'arity' => 1],
 	'sequence_require_strings' => ['php' => 'scpp\\sequence_require_strings', 'target' => 'scpp_portability_sequence_require_strings', 'arity' => 3],
 	'fs_is_link' => ['php' => 'scpp\\fs_is_link', 'target' => 'fs_is_link', 'arity' => 1],
 	'fs_is_dir' => ['php' => 'scpp\\fs_is_dir', 'target' => 'fs_is_dir', 'arity' => 1],

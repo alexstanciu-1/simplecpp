@@ -2,19 +2,18 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The reset is complete; **zero production files are currently ready**. The first
-component is project-manifest reading, followed by paths/discovery and verified
-source reads. No active compiler CLI or complete compilation pipeline exists yet.
+The first rewrite stage, **project-manifest reading (3 production files)**, passes
+PHP/native outcome proofs. Next are paths/discovery and verified source reads. No active compiler CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
-is reserved for later continuation. `tests/` will hold new stage outcome proofs.
+is reserved for later continuation. `tests/` holds registered stage outcome proofs.
 Do not populate these folders by copying the whole old implementation back.
 Bring reusable code in deliberately, applying the portable-PHP and strict skills.
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` is the empty active ready set. `tools/portability_target.json`
-retains exact tested candidate `a1a1babd07082d9abf7ac885b2328c99368ad4cf`.
+`portability.json` lists the three proved manifest files. `tools/portability_target.json`
+pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
 
@@ -24,8 +23,8 @@ Run framework validation from the repository root:
 python3 tools/php_portability/validate.py --results /tmp/scpp-rewrite-check-NEW
 ```
 
-It reports framework results separately from compiler readiness. Requesting a
-compiler native proof fails explicitly until a real component proof is installed.
+It reports framework results separately from compiler readiness. Add `--native compiler --target-checkout TARGET` for the registered stage native proof.
+See [manifest reading](../specs/portability/project_manifest_reading.md) for the API and scope.
 Native capability proofs such as `--native records --target-checkout TARGET` remain
 available. No empty compiler build is treated as a successful compilation.
 

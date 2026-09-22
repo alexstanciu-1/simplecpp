@@ -4,8 +4,8 @@ require_once __DIR__ . '/src/exception_policy.php';
 
 // Assembly owns framework files; conversion keeps its one-to-one source manifest.
 try {
-    if ($argc < 2 || count(array_unique(array_slice($argv, 2))) !== $argc - 2 || array_diff(array_slice($argv, 2), ['--os', '--filesystem']) !== [] || ($root = realpath($argv[1])) === false || !is_dir($root)) {
-        throw new RuntimeException('Usage: php install_native_runtime.php EXISTING_CONVERTED_DIRECTORY [--os] [--filesystem]');
+    if ($argc < 2 || count(array_unique(array_slice($argv, 2))) !== $argc - 2 || array_diff(array_slice($argv, 2), ['--os', '--filesystem', '--json']) !== [] || ($root = realpath($argv[1])) === false || !is_dir($root)) {
+        throw new RuntimeException('Usage: php install_native_runtime.php EXISTING_CONVERTED_DIRECTORY [--os] [--filesystem] [--json]');
     }
     $conversion = $root . '/.scpp-portability.json';
     if (is_link($conversion) || !is_file($conversion)) { throw new RuntimeException('Expected a regular conversion manifest'); }
@@ -23,6 +23,9 @@ try {
     ];
     if (in_array('--filesystem', $argv, true)) {
         $artifacts['filesystem.phs'] = file_get_contents(__DIR__ . '/runtime/filesystem.phs');
+    }
+    if (in_array('--json', $argv, true)) {
+        $artifacts['json_document.phs'] = file_get_contents(__DIR__ . '/runtime/json_document.phs');
     }
     if (in_array('--os', $argv, true)) {
         $artifacts['file_locks.phs'] = file_get_contents(__DIR__ . '/runtime/file_locks.phs');

@@ -1,14 +1,14 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-The [rewrite reset](rewrite_reset.md) is complete. Active readiness is **0 production
-files**; no compiler stage or CLI is implemented in the new tree. The former
-39-file cumulative proof remains preserved historical coverage.
+The [rewrite reset](rewrite_reset.md) is complete. Active readiness is **3 production
+files**: project-manifest reading, with 35 PHP/native outcomes on exact candidate
+`9b4b33f35f053b487e018c94d6a4a7888d77c64a`. No complete compiler CLI exists yet.
+See [stage scope and proof](../../portability/project_manifest_reading.md).
 
-Next: establish manifest-reading input/output/schema contracts using the original
-implementation as reference, then paths/discovery and verified source reads. Verify
-#240 status for the JSON boundary at that point. Follow the
+Next: paths/discovery, then verified source reads. Follow the
 [restart methodology](README.md#current-methodology-stage-by-stage-rewrite).
+The former 39-file cumulative proof remains historical coverage.
 
 The table below records pre-reset dependencies and reusable findings, not active
 implementation status or a mandatory task sequence. Previously adapted code is
@@ -63,6 +63,4 @@ optimization follow-ups and the approved cursor-first resume assessment.
 
 [Candidate a1a1babd proof](../../portability/release_candidate_a1a1babd.md): all ten
 established native suites pass. Subsequent explicit source guards clear the query
-behavior failure; see `results/explicit-guards-01` and the adaptation record. The
-configured target remains a1a1babd. That historical 39-file validation does not
-apply to the empty active rewrite manifest.
+behavior failure; see `results/explicit-guards-01` and the adaptation record. That historical 39-file validation does not apply to the active rewrite manifest.

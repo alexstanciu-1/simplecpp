@@ -1,6 +1,32 @@
 # PHP adaptation record and optimization follow-up
 Doc Status: planning
 
+## Rewrite stage 1: project-manifest reading (2026-09-22)
+
+Three active files now implement synchronous reading, schema validation and an owned
+result. The prototype's Step lifecycle, shared publication and Step_Result coupling
+are deliberately deferred: no current pipeline owner needs them. Keep meaningful
+input/result/rejection behavior, not the prototype's incidental internal interface.
+The result uses explicit single-source state and typed string vectors. Original JSON
+content is retained for future change detection; declared source paths are validated
+but not scanned here.
+
+A small shared JSON schema view and checked filesystem adapters supply the real
+boundary. Native #240 candidate `9b4b33f3` preserves object/list identity; PHP uses
+object-mode decoding. Full number/diagnostic parity is not claimed. A first native
+attempt exposed a STAN return-path advisory when parsing returned inside try/catch;
+removing unnecessary catch/rethrow context lets the reader return normally while
+preserving schema/I/O rejection outcomes. Caller-owned diagnostics can add context.
+
+Optimization follow-up: measure schema-view allocations only if larger metadata
+loads justify it; do not force one string/vector-owning manifest into a scalar record.
+Avoid inheriting incremental lifecycle machinery before the new pipeline needs it.
+All 35 stage outcomes and combined portability checks pass. See
+[stage contract](../../portability/project_manifest_reading.md) and
+[timings/evidence](results/manifest-rewrite-01/). Native checks were used for the new
+adapter boundary and final stage checkpoint, not each PHP edit.
+
+
 Checkpoint: 2026-09-22; 36 production files proved, latest cumulative evidence
 `results/preparation-symbols-01`. This records broad source changes and their reasons,
 not a complete diff or a claim of whole-compiler portability. Slice documents retain

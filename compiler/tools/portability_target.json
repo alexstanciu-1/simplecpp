@@ -1,11 +1,11 @@
 {
   "repository": "https://github.com/alexstanciu-1/simplecpp.git",
   "release": null,
-  "verified_commit": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+  "verified_commit": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
   "cli": "bin/scpp.php",
   "profile": "strict",
   "purpose": "PHP++ compiler implementation target; separate from the adopted LLVM runtime-provider baseline",
   "base_release": "v0.1.77",
-  "branch": "feature/qualified-construction-235",
+  "branch": "feature/json-document-240",
   "status": "unreleased tested candidate"
 }

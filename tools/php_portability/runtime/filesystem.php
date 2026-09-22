@@ -17,3 +17,20 @@ function fs_scan(string $path): array|false {
     foreach ($entries as $name) { if ($name !== '.' && $name !== '..') { $out[] = $name; } }
     return $out;
 }
+
+/** Required path/read operations throw; source-stage diagnostics own user context. */
+function fs_require_realpath(string $path): string {
+    if (\str_contains($path, "\0")) { throw new \RuntimeException('Invalid input path'); }
+    \clearstatcache(true);
+    $resolved = \realpath($path);
+    if ($resolved === false) { throw new \RuntimeException('Cannot locate project input: ' . $path); }
+    return $resolved;
+}
+function fs_read_text(string $path): string {
+    if (\str_contains($path, "\0")) { throw new \RuntimeException('Invalid input path'); }
+    $content = @\file_get_contents($path);
+    if ($content === false) { throw new \RuntimeException('Cannot read file: ' . $path); }
+    return $content;
+}
+function fs_dirname(string $path): string { return \dirname($path); }
+function fs_basename(string $path): string { return \basename($path); }

@@ -4,6 +4,36 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/portability/project_manifest_reading.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/manifest-rewrite-01/combined/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/manifest-rewrite-01/initial-failure/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/manifest-rewrite-01/stage/expected.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/manifest-rewrite-01/stage/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/manifest-rewrite-01/timing.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path": "specs/planning/compiler_migration/rewrite_reset.md",
                         "kind": "markdown",
                         "doc_status": "supporting"

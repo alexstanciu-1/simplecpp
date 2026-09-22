@@ -1,0 +1,50 @@
+{
+  "measurement": "Elapsed wall time by primary activity, including tool waits; not CPU time or a general productivity rate.",
+  "started": "2026-09-22T07:35:47+00:00",
+  "phases": [
+    {
+      "activity": "inspection/design",
+      "started": "2026-09-22T07:35:47+00:00",
+      "finished": "2026-09-22T07:38:04.270291+00:00",
+      "seconds": 137.27
+    },
+    {
+      "activity": "implementation",
+      "started": "2026-09-22T07:38:04.270291+00:00",
+      "finished": "2026-09-22T07:41:01.562198+00:00",
+      "seconds": 177.29
+    },
+    {
+      "activity": "validation",
+      "started": "2026-09-22T07:41:01.562198+00:00",
+      "finished": "2026-09-22T07:42:13.930082+00:00",
+      "seconds": 72.37
+    },
+    {
+      "activity": "portability-debugging",
+      "started": "2026-09-22T07:42:13.930082+00:00",
+      "finished": "2026-09-22T07:44:03.172505+00:00",
+      "seconds": 109.24
+    },
+    {
+      "activity": "consolidation",
+      "started": "2026-09-22T07:44:03.172505+00:00",
+      "finished": "2026-09-22T07:44:31.793733+00:00",
+      "seconds": 28.62
+    },
+    {
+      "activity": "validation",
+      "started": "2026-09-22T07:44:31.793733+00:00",
+      "finished": "2026-09-22T07:47:31.813072+00:00",
+      "seconds": 180.02
+    },
+    {
+      "activity": "consolidation",
+      "started": "2026-09-22T07:47:31.813072+00:00",
+      "finished": "2026-09-22T07:51:03.338415+00:00",
+      "seconds": 211.53
+    }
+  ],
+  "finished": "2026-09-22T07:51:03.338415+00:00",
+  "elapsed_seconds": 916.34
+}

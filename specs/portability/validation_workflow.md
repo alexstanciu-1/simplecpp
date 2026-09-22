@@ -1,21 +1,18 @@
 # Portable-PHP validation workflow
 Doc Status: supporting
 
-## Current reset state
+## Active rewrite proofs
 
-The compiler rewrite starts with zero ready files. The default driver runs independent
-collection/framework, scalar-record, converter/checker, prologue and installation
-checks and explicitly reports no compiler readiness. `--native compiler` and the
-active compiler proof entrypoint fail until a new stage proof is installed. Other
-native capabilities remain selectable. The old compiler harness/oracles are preserved
-under `tests/portability/reference/pre-rewrite/`; replay them from Git branch
-`v0.2/pre-rewrite-reference`, not their relocated paths. See
-[the reset record](../planning/compiler_migration/rewrite_reset.md).
+The ready set contains three manifest production files. The default driver runs their
+PHP outcome proof plus independent framework checks. Add `--native compiler
+--target-checkout TARGET` to convert and prove all registered rewrite stages natively.
+`compiler/tests/run.py` requires the ready set to match registered stage sources.
+See [manifest reading](project_manifest_reading.md) for the current 35 outcomes.
 
-The workflow below describes the pre-reset cumulative harness and its preserved
-evidence. Restore the relevant stage proof deliberately when the first rewrite
-component is ready; a nonempty manifest without that proof currently fails explicitly.
-
+The old compiler harness/oracles are preserved under
+`tests/portability/reference/pre-rewrite/`; replay them from Git branch
+`v0.2/pre-rewrite-reference`, not relocated paths. Old oracle totals below are
+historical, not active rewrite coverage.
 
 The host driver `tools/php_portability/validate.py` consolidates existing checks
 for the current compiler ready set. It adds no conversion rules and does not select
@@ -39,11 +36,9 @@ behavioral harness. The stage is a disposable copy, not a second implementation.
 It runs:
 
 1. The shared read-only checker: PHP lint, imports, declarations/traits and conversion.
-2. The current compiler component PHP harness against its independently maintained
-   expected results in `tests/portability/compiler_context/run.py`.
-3. Source_Set comparisons against its frozen pre-adaptation PHP oracle and
-   scoped-angle matching against the frozen prototype over 5,000 deterministic streams,
-   plus 1,500 logical syntax comparisons against their frozen oracle.
+2. Registered compiler stage proofs under `compiler/tests/`, comparing independently
+   specified meaningful outcomes. Currently this is manifest reading.
+3. Scalar-record framework capability checks.
 4. The host collection helper tests; native parity has its own runner.
 5. Foundation, check-command, prologue and native-framework-installation regressions.
 
@@ -59,7 +54,7 @@ harness; this driver is deliberately scoped to the ready compiler manifest.
 python3 tools/php_portability/validate.py \
   --results /tmp/scpp-validation-native-NEW \
   --native compiler \
-  --target-checkout /tmp/scpp-v0.1.76-probe
+  --target-checkout /tmp/scpp-json-240-probe
 ```
 
 Both native flags are required together. The target must be a clean checkout at
@@ -73,7 +68,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | Selection | Existing owner |
 | --- | --- |
 | `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
-| `compiler` | 39 ready production files and 22 retained compiler fixtures |
+| `compiler` | Registered active rewrite stages: three manifest production files, 35 outcomes |
 | `methods` | Named/scalar method boundaries, void, identity and mutation |
 | `returns` | Container return copying and nonpublic scalar state |
 | `iteration` | Typed map presence checks and by-value iteration |
@@ -102,6 +97,8 @@ tree or the existing runners' scratch directories, and do not commit binaries.
 There is no concurrent-edit snapshot guarantee, automatic import repair, general
 test-discovery framework or performance threshold in this driver. Use a stable
 working tree while validating; timings are observations, not benchmark claims.
+
+## Historical pre-reset evidence
 
 The [recorded fast run](../planning/compiler_migration/results/validation-workflow-01/fast/summary.json)
 and [cumulative native run](../planning/compiler_migration/results/validation-workflow-01/native/summary.json)

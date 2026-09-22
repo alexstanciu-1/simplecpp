@@ -1,0 +1,61 @@
+// Schema-view subset over the target-owned immutable JSON arena.
+namespace scpp;
+class Json_Node {
+    private $node json_node;
+    public function __construct(json_node $value) { $this->node = $value; }
+    public function kind(): string {
+        $out string = '';
+        $failure error;
+        if (!take($out, $failure, json_node_kind($this->node))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        return $out;
+    }
+    public function size(): int {
+        $out int = 0;
+        $failure error;
+        if (!take($out, $failure, json_node_size($this->node))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        return $out;
+    }
+    public function has(string $key): bool {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, json_node_has($this->node, $key))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        return $out;
+    }
+    public function key(int $index): string {
+        $out string = '';
+        $failure error;
+        if (!take($out, $failure, json_node_key($this->node, $index))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        return $out;
+    }
+    public function text(): string {
+        $out string = '';
+        $failure error;
+        if (!take($out, $failure, json_node_string($this->node))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        return $out;
+    }
+    public function member(string $key): Json_Node {
+        $out json_node;
+        $failure error;
+        if (!take($out, $failure, json_node_member($this->node, $key))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        return new Json_Node($out);
+    }
+    public function at(int $index): Json_Node {
+        $out json_node;
+        $failure error;
+        if (!take($out, $failure, json_node_at($this->node, $index))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        return new Json_Node($out);
+    }
+}
+function json_read(string $text): Json_Node {
+    $document json_document;
+    $diagnostic json_parse_error = null;
+    $failure error;
+    if (!take($document, $failure, json_document_parse($text, $diagnostic, 128))) {
+        throw new \scpp_portability_json_exception('Invalid JSON');
+    }
+    $root json_node;
+    if (!take($root, $failure, json_document_root($document))) {
+        throw new \scpp_portability_runtime_exception($failure->get_message());
+    }
+    return new Json_Node($root);
+}

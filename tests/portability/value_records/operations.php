@@ -2,6 +2,11 @@
 declare(strict_types=1);
 namespace records;
 // <scpp-imports>
+use function scpp\fs_basename as fs_basename;
+use function scpp\fs_dirname as fs_dirname;
+use function scpp\fs_read_text as fs_read_text;
+use function scpp\fs_require_realpath as fs_require_realpath;
+use function scpp\json_read as json_read;
 use function scpp\sequence_require_strings as sequence_require_strings;
 use function scpp\fs_is_link as fs_is_link;
 use function scpp\fs_is_dir as fs_is_dir;
