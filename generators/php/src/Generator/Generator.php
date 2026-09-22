@@ -1906,6 +1906,10 @@ final class Generator
 	/** @param array<string, string> $out */
 	private function collectForwardClassNamesFromType(string $type, array &$out, ?string $namespacePhp): void
 	{
+		// An absolute reference cannot declare a class in the current namespace.
+		if (str_starts_with(trim($type), '\\') && $namespacePhp !== null && $namespacePhp !== '') {
+			return;
+		}
 		$normalized = trim($this->qualifyDeclaredPhpType($type, $namespacePhp) ?? $type);
 		if ($normalized === '') {
 			return;
@@ -2500,10 +2504,10 @@ final class Generator
 		}
 		$extends = [];
 		if ($class->parentClass !== null) {
-			$extends[] = 'public ' . $this->typeMapper->mapClassName($class->parentClass);
+			$extends[] = 'public ' . $this->renderDeclaredClassReference($class->parentClass);
 		}
 		foreach ($class->interfaces as $interface) {
-			$extends[] = 'public ' . $this->typeMapper->mapClassName($interface);
+			$extends[] = 'public ' . $this->renderDeclaredClassReference($interface);
 		}
 		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
 		$this->appendHeaderLines($header, $this->code('public:', $class->line));
@@ -2921,7 +2925,7 @@ final class Generator
 	private function extractParentConstructorArgs(array $statements): ?array
 	{
 		$first = $statements[0] ?? null;
-		if (!$first instanceof Statement || $first->kind !== 'expr' || !is_array($first->payload)) {
+		if (!$first instanceof Statement || $first->kind !== 'expr' || !is_object($first->payload)) {
 			return null;
 		}
 		$expr = $first->payload;
@@ -3267,7 +3271,7 @@ final class Generator
 			if ($class->parentClass !== null) {
 				$parentArgs = $this->extractParentConstructorArgs($statements);
 				if ($parentArgs !== null) {
-					$initializer = ' : ' . $this->typeMapper->mapClassName($class->parentClass) . '(' . $this->renderArgs($parentArgs, $namespacePhp) . ')';
+					$initializer = ' : ' . $this->renderDeclaredClassReference($class->parentClass) . '(' . $this->renderArgs($parentArgs, $namespacePhp) . ')';
 					array_shift($statements);
 				}
 			}
@@ -8530,6 +8534,12 @@ final class Generator
 
 	 */
 
+	private function renderDeclaredClassReference(string $name): string
+	{
+		$mapped = $this->typeMapper->mapClassName($name);
+		return str_starts_with($name, '\\') ? '::scpp::' . $mapped : $mapped;
+	}
+
 	private function renderClassName(mixed $node, ?string $namespacePhp): string
 	{
 		if (!is_object($node)) {
@@ -8545,13 +8555,16 @@ final class Generator
 				$this->errors[] = 'parent:: is not available without a parent class.';
 				return '/* unsupported-parent */';
 			}
-			return $this->typeMapper->mapClassName($this->currentParentClass);
+			return $this->renderDeclaredClassReference($this->currentParentClass);
 		}
 		if ($lowerName === 'static') {
 			$this->errors[] = 'static:: is not supported in the current pass.';
 			return '/* unsupported-static */';
 		}
 		$flags = (int) ($node->flags ?? 0);
+		if ($flags === 0 || str_starts_with($name, '\\')) {
+			return $this->renderDeclaredClassReference('\\' . ltrim($name, '\\'));
+		}
 		return $this->renderSymbolPath($name, $flags, false);
 	}
 

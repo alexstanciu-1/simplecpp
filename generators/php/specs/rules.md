@@ -477,6 +477,9 @@ Known semantic edge:
 - include minimization is not required for the generator
 
 ### Forward Declarations
+- An explicitly absolute base/interface reference must not create a forward
+  declaration inside the derived class's namespace. Its dependency must resolve
+  by the exact qualified identity, without a short-name fallback to another scope.
 - forward declarations may be used only in trivial obvious cases where a class type is referenced through `shared_p<T>` in declarations
 - `TypeMapper` owns classification of atomic runtime-provided type declarations.
   After traversing container/wrapper arguments, the header emitter consults that
@@ -575,6 +578,17 @@ The generator must not emit raw `new` for these supported construction forms.
 ### 15.2 Static Access
 - same-namespace static access remains unqualified, for example `X::make()`
 - fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` â†’ `::scpp::A::X::make()`
+
+### Explicit inheritance references
+- IR parent/interface references retain authored absolute qualification. For
+  example, `namespace diagnostics; class Child extends \Root_Base {}` inherits
+  from `::scpp::Root_Base`, even when `diagnostics::Root_Base` also exists.
+- Base declarations, parent constructor initializers and `parent::` calls use
+  the same preserved reference. A leading `parent::__construct(...)` expression
+  statement is consumed into the C++ base initializer, not emitted as a method call.
+- Explicitly qualified class references in construction and typed catches also
+  retain their source root. Existing unqualified inheritance behavior is unchanged;
+  this rule does not add general inheritance analysis or import resolution.
 
 ### 15.3 Static Access Through Instances
 PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`.
@@ -731,7 +745,7 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;``. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;``. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; rooted runtime/helper occurrences are limited to generated using-directives and explicit import-lowering forms such as `use` declarations. Explicit source class references preserve their root as specified under Explicit inheritance references. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
@@ -918,8 +932,11 @@ php::expect_array_argument(...)
 ::scpp::A::B::LIMIT
 ```
 
-Allowed exception:
+Allowed exceptions:
 - generated using-directives/import-lowering lines may still use rooted forms, for example `using namespace ::scpp;` or `using ::scpp::A::B::f;`
+- Explicit source class qualification is preserved as a rooted class path in
+  inheritance, parent initializers/calls, construction and typed catches. This is
+  user-class identity, not runtime helper qualification.
 
 Example:
 ```cpp

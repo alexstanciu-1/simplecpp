@@ -359,7 +359,7 @@ final class IrBuilder
 
 		$interfaces = [];
 		foreach (($children['implements']->children ?? []) as $interfaceNode) {
-			$name = $this->readNameString($interfaceNode);
+			$name = $this->readInheritanceName($interfaceNode);
 			if ($name !== '') {
 				$interfaces[] = $name;
 			}
@@ -371,7 +371,7 @@ final class IrBuilder
 			constants: $constants,
 			methods: $methods,
 			line: (int) ($node->lineno ?? 0),
-			parentClass: ($name = $this->readNameString($children['extends'] ?? null)) !== '' ? $name : null,
+			parentClass: ($name = $this->readInheritanceName($children['extends'] ?? null)) !== '' ? $name : null,
 			interfaces: $interfaces,
 			isInterface: (((int) ($node->flags ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
 			isAbstract: (((int) ($node->flags ?? 0)) & AstKind::CLASS_ABSTRACT) !== 0,
@@ -742,6 +742,15 @@ final class IrBuilder
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 
 	 */
+
+	/** Preserve authored absolute class references independently of import names. */
+	private function readInheritanceName(mixed $node): string
+	{
+		$name = $this->readNameString($node);
+		$absolute = is_string($node) ? str_starts_with($node, '\\')
+			: (is_object($node) && ($node->kind ?? null) === AstKind::NAME && (int) ($node->flags ?? 0) === 0);
+		return $name !== '' && $absolute ? '\\' . $name : $name;
+	}
 
 	private function readNameString(mixed $node): string
 	{
