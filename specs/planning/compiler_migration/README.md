@@ -15,30 +15,76 @@ a clean gate.
 See the [native-aware convertible-PHP work list](native_aware_portable_php_plan.md)
 for the planned record, alias, storage and skill-guidance slice.
 
-## Saved option: stage-by-stage replacement
+## Current methodology: stage-by-stage rewrite
 
-On 2026-09-22 the user agreed to retain stage-by-stage reimplementation in portable
-PHP as an alternative to preserving the prototype's internal implementation.
-The immediate next task is discussing lightweight native-aware authoring guidelines,
-not starting that rewrite.
+The user confirmed restarting the prototype-to-convertible-PHP rewrite on
+2026-09-22. Preserve the converter, PHP framework, skills, tests, findings and
+original prototype reference at `/home/alexv/__AI/scpp_compiler_3/prototype/src`.
+Reuse suitable adapted components, but do not let the previous implementation or
+39-file readiness checkpoint dictate the new internal design. Restarting is a work
+strategy, not authorization to delete sources/evidence or create a second evolving
+compiler. Keep one maintained development home here and complete migration before
+adding compiler functionality.
 
-Use the prototype as an algorithm reference and regression corpus. Reuse suitable
-code and replace awkward mechanisms; a one-to-one replica of internal classes,
-APIs, identities and diagnostics is not the objective. Preserve intended language
-behavior, important external protocols and the route to the full compiler; decide
-specific changed stage boundaries before implementation. Prioritize valid-program
-meaning, relevant invalid-program rejection, clean/incremental agreement and
-PHP/native agreement for the new source. Keep identity/error-detail tests where
-an actual algorithm or consumer depends on them.
+For each component:
 
-A measured trial would complete tokenizer and parser workers, followed by a semantic
-vocabulary/consumer family, before estimating the rest of analysis. The earlier
-80–200-hour estimate assumed preservation-led migration and is not a commitment or
-a measured estimate for this alternative. Keep one development home and the
-migration-before-new-functionality objective; no prototype deletion or new parallel
-compiler fork is implied.
+1. Read the original implementation and relevant tests. Load both the
+   [portable-PHP skill](../../../.agents/skills/simple-cpp-portable-php/SKILL.md) and
+   [Simple C++ strict skill](../../../.agents/skills/simple-cpp-php-strict/SKILL.md).
+   Write executable PHP for both PHP and converted native execution; target support
+   does not automatically imply converter support.
+2. Define a short contract: inputs, outputs, important rejection behavior, ownership,
+   IDs versus positions, absent sentinels and mutation/deletion policy. Preserve
+   intended language behavior and external protocols; internals need not be replicas.
+3. Implement a complete stage or coherent responsibility. Reuse good algorithms and
+   replace awkward PHP mechanisms with deliberate record/class/vector/hash choices.
+   Report wide cross-owner decisions before implementing them.
+4. Iterate primarily through PHP and frequent cheap checker/converter runs. Compile
+   natively when introducing a new representation/capability and at component
+   completion, rather than after every edit. Do not accumulate unproved native
+   assumptions or call a PHP-only stage native-ready.
+5. Compare meaningful results: valid-program meaning, relevant invalid-program
+   rejection, clean-versus-incremental agreement and PHP/native outcomes. Exact bytes
+   are required only by an actual contract, such as source bytes/spans, binary output
+   or specified serialization. Existing stdout equality is a useful test technique,
+   not a blanket future requirement. Preserve diagnostic details and identity only
+   where algorithms or consumers depend on them; investigate prototype disagreements
+   rather than automatically copying bugs or weakening acceptance.
+6. Consolidate once per component: significant design changes and reasons, validation,
+   remaining limits and a working commit. Update the skill for reusable lessons,
+   linking detailed evidence instead of duplicating it across documents.
+7. Record authoring, portability-debugging and validation effort for initial stages;
+   adjust batch size and estimates from observed work. The earlier 80–200-hour
+   preservation-led estimate is not a commitment or an estimate for this approach.
 
-## Current resumed slice
+### Pipeline order and first milestone
+
+Start with a usable input-preparation path, not the tokenizer:
+
+1. Project manifest reading, schema validation and normalized project records.
+2. Source path resolution and directory/file discovery, including selection rules.
+3. Verified source reads/snapshots and the source-set result consumed downstream.
+4. Tokenization, then parsing.
+5. Semantic analysis by responsibility (collection, resolution, type checking,
+   lifetime analysis), then backend/code generation and build-output integration.
+
+Runtime/package metadata preparation and driver integration join where their
+actual dependencies require them; folder numbering is not a reason to delay an
+independent useful component. If a concrete target capability blocks native proof
+(e.g. the JSON document API tracked in #240), document the boundary and continue
+independent input work. Do not remove schema checks or fabricate successful native
+coverage to force strict sequential progress. Verify issue/candidate status when
+that component is selected.
+
+Keep unions and deeper layout tuning for a later optimization pass unless a concrete
+stage needs them. Explicit kinds/tags can leave that path open without premature
+packing or a union-emulation framework. Small scalar records and stable-local aliases
+already have a [proved contract](../../portability/value_records.md).
+
+The following completed-slice history describes reusable assets from the earlier
+migration approach, not the implementation order for the restart.
+
+## Preserved migration checkpoints
 
 The user resumed bounded portability work after authoring/check/proof preparation.
 [Fixed tool-service request contracts](../../portability/compiler_tool_contracts_slice.md)

@@ -4,7 +4,7 @@ Doc Status: planning
 Status: first scalar record/local-alias slice implemented and proved; remaining
 extensions stay planned. See [the current contract](../../portability/value_records.md).
 This work list is not itself syntax or runtime authority.
-The stage-replacement alternative remains saved in [the migration plan](README.md#saved-option-stage-by-stage-replacement).
+The confirmed stage-rewrite methodology is recorded in [the migration plan](README.md#current-methodology-stage-by-stage-rewrite).
 
 ## Objective and limits
 

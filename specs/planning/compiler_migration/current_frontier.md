@@ -5,6 +5,12 @@ This is a next-action map, not a completion claim. The ready set is 39 productio
 files, with latest cumulative evidence in `results/structural-queries-cumulative-01`. Earlier
 counts in historical slice documents are checkpoints, not the current count.
 
+Current work order is governed by the [restart methodology](README.md#current-methodology-stage-by-stage-rewrite):
+manifest reading, path resolution/discovery, verified reads, then tokenization and
+parsing. The table below inventories dependencies and reusable work; its row order
+is not the implementation sequence. The 39-file checkpoint remains existing proof,
+not a percentage-complete estimate for the rewrite.
+
 | Selected area | Concrete dependency | Next action |
 | --- | --- | --- |
 | Structural syntax access and semantic consumers | Three query files now pass cumulative PHP/native coverage on adopted candidate a1a1babd | Continue dependent semantic components; their ten cursor consumers are not yet native-ready as complete files. |

@@ -8,6 +8,13 @@ target is recorded in [portability_target.json](../../compiler/tools/portability
 Target features do not become portable-PHP features until conversion and framework
 support are proved. The feature catalog includes proposals, not just available forms.
 
+For the compiler rewrite, follow the [stage methodology](../planning/compiler_migration/README.md#current-methodology-stage-by-stage-rewrite).
+Load this profile's skill and the Simple C++ strict skill, read the prototype stage,
+and establish its input/output contract. Iterate through PHP plus cheap conversion;
+prove native behavior at new-capability and component checkpoints. Compare meaningful
+results, using exact bytes only where the contract needs them. Defer unions and
+more elaborate layouts until a concrete need or optimization pass.
+
 ## Start from the right source
 
 Keep `<?php` and ordinary PHP syntax. Type comments are for executable PHP input;
