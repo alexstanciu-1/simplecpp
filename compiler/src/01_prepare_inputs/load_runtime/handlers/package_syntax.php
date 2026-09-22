@@ -7,11 +7,12 @@ final class Package_Syntax {
     public static function address_abi(\scpp\Json_View $position): void {
         if ($position->kind() !== 'object') { throw new \RuntimeException('Expected runtime address ABI object'); }
         if (!$position->has('type')) { throw new \RuntimeException('Runtime address ABI requires a default-address-space pointer'); }
-        $type = $position->member('type');
+        if (!$position->has('attributes')) { throw new \RuntimeException('Unsupported runtime address attributes'); }
+        Package_Syntax::address_parts($position->member('type'), $position->member('attributes'));
+    }
+    public static function address_parts(\scpp\Json_View $type, \scpp\Json_View $attributes): void {
         if ($type->kind() !== 'string') { throw new \RuntimeException('Runtime address ABI requires a default-address-space pointer'); }
         if ($type->text() !== 'ptr') { throw new \RuntimeException('Runtime address ABI requires a default-address-space pointer'); }
-        if (!$position->has('attributes')) { throw new \RuntimeException('Unsupported runtime address attributes'); }
-        $attributes = $position->member('attributes');
         if ($attributes->kind() !== 'string') { throw new \RuntimeException('Unsupported runtime address attributes'); }
         $value = Package_Syntax::trim_attributes($attributes->text());
         if (($value !== '') && ($value !== 'noundef')) { throw new \RuntimeException('Unsupported runtime address attributes'); }

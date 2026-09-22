@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **106 production files**: input preparation (137 outcomes),
+Active readiness is **107 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -136,3 +136,9 @@ comparisons (`results/callable-import-01`). Explicit compiler exposure/payload
 projections preserve the original consumer behavior; accepted backend export ownership
 is still a separate dependency. Next: remaining type/storage import and package
 ownership/composition, then provider symbols. No end-to-end provider pipeline yet.
+
+Storage_Import adds 144 PHP/native outcomes and retained comparisons for the complete
+eight-primitive/six-operation storage protocol (`results/storage-import-01`). The
+shared pointer syntax regression passes 66 native outcomes. Next: a narrow reserved
+local-name preflight to eliminate repeated avoidable native build failures, then
+remaining package type/import ownership and acceptance dependencies.

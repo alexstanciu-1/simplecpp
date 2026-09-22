@@ -1217,3 +1217,43 @@ provider symbol integration; callable-set acceptance is not whole-package accept
 Cumulative fast validation passes at 106 registered production files; the final
 host stage includes all 34 retained-importer comparisons. Syntax native regression
 passes all 66 outcomes on the extracted identifier helper.
+
+## Complete typed storage protocol ingestion
+
+Storage_Import now accepts the prototype's eight primitive roles and six source
+operation names. Storage_Primitive_Schema names result kind, readonly access,
+counter-parameter count and the second-descriptor case, replacing anonymous schema
+tuples and the transfer sentinel -1. The importer validates semantic type/borrow/
+index contracts alongside physical pointer/integer ABI. Count requires the exact
+accepted counter Runtime_Type object, not merely equal measured storage.
+
+Family acceptance retains the descriptor's opaque, noncopyable, cleanup-free,
+explicit-default-construction requirements; the counter must be exposed and signed,
+and an exposed void definition must exist. The complete primitive/name protocol,
+root namespace rule and distinct source operation spellings remain required.
+Descriptor resource ownership is forbidden. No element type, layout, canonical ID
+or permission is inferred from the physical protocol. The operation index preserves
+the prototype's last-entry behavior; whole callable acceptance separately rejects
+duplicate operation identities before publication.
+
+Package_Syntax::address_parts provides the shared pointer validator for separate
+return-type/attribute fields. Existing address_abi delegates to it, avoiding synthetic
+JSON assembly for a return slot. Its existing 66-outcome native proof and retained
+attribute oracle pass after extraction.
+
+144 independent storage-family PHP/native outcomes pass and agree with the retained
+importer. These cover every role plus malformed signatures, incomplete protocols,
+wrong count identity, duplicate source spellings and invalid descriptor/counter/
+void prerequisites. One native cycle renamed the C++ reserved local void to
+void_definition in production and probe; the second build passes. Evidence and
+phase timings are in results/storage-import-01. Runtime preparation is unchanged.
+
+Concrete workflow debt: case, mutable and void local names have each escaped cheap
+PHP/conversion checks and failed native compilation. Before further package work,
+add a narrowly local pre-build diagnostic at the existing converter/checker owner;
+it must distinguish locals from supported promoted/managed fields and must not
+become symbol resolution. This is avoidable feedback latency, not a target-language
+feature request. Remaining migration work includes package types, imports/export
+ownership, checksum/lease acceptance and provider symbol integration.
+
+Cumulative fast validation passes at 107 registered production files.

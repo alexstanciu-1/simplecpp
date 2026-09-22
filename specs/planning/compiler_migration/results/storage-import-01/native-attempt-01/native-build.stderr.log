@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile warning in probe.phs:17: 'auto' storage class specifier is not permitted in C++11, and will not be supported in future releases [-Wauto-storage-class]
+Generated location: .prism/generated/probe.cpp:45:3
+Compile error in probe.phs:17: expected unqualified-id
+Generated location: .prism/generated/probe.cpp:45:13
+Compile error in probe.phs:24: expected '(' for function-style cast or type construction
+Generated location: .prism/generated/probe.cpp:55:248
+Additional remapped diagnostics: 5
+Raw compiler excerpt:
+probe.cpp:45:3: warning: 'auto' storage class specifier is not permitted in C++11, and will not be supported in future releases [-Wauto-storage-class]
+probe.cpp:45:13: error: expected unqualified-id
+probe.cpp:55:248: error: expected '(' for function-style cast or type construction
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

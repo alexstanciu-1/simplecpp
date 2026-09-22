@@ -44,7 +44,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('record_import', Path(__file__).parent / 'record_import/run.py'),
           ('binding_import', Path(__file__).parent / 'binding_import/run.py'),
           ('callable_positions', Path(__file__).parent / 'callable_positions/run.py'),
-          ('callable_import', Path(__file__).parent / 'callable_import/run.py')]
+          ('callable_import', Path(__file__).parent / 'callable_import/run.py'),
+          ('storage_import', Path(__file__).parent / 'storage_import/run.py')]
 
 
 def main():

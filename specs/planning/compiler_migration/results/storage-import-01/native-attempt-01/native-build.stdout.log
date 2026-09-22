@@ -1,0 +1,60 @@
+Transpiled PHP files: 24, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/26] PCH app_pch.hpp.gch
+[2/26] CXX scpp_framework/collections.o
+[3/26] CXX probe.o
+FAILED: probe.o
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/c1495884d151c062.hpp -MMD -MF probe.o.d -MT probe.o -c ../generated/probe.cpp -o probe.o
+../generated/probe.cpp:45:3: warning: 'auto' storage class specifier is not permitted in C++11, and will not be supported in future releases [-Wauto-storage-class]
+   45 |                 auto void = create<::scpp::type_model::Named_Definition>(string_t("Void"), string_t(""), ::scpp::type_model::Representation::void_type(), null, null, string_t(""), static_cast<bool_t>(false), static_cast<bool_t>(false), static_cast<bool_t>(false));
+      |                 ^~~~
+../generated/probe.cpp:45:13: error: expected unqualified-id
+   45 |                 auto void = create<::scpp::type_model::Named_Definition>(string_t("Void"), string_t(""), ::scpp::type_model::Representation::void_type(), null, null, string_t(""), static_cast<bool_t>(false), static_cast<bool_t>(false), static_cast<bool_t>(false));
+      |                           ^
+../generated/probe.cpp:55:248: error: expected '(' for function-style cast or type construction
+   55 |                         types[cast<string_t>(string_t("void"))] = create<::scpp::load_runtime::Runtime_Type>(string_t("void"), create<::scpp::load_runtime::Runtime_Storage>(static_cast<int_t<> >(3), static_cast<int_t<> >(0), static_cast<int_t<> >(1)), null, null, void);
+      |                                                                                                                                                                                                                                                                         ~~~~^
+../generated/probe.cpp:71:166: error: expected '(' for function-style cast or type construction
+   71 |                                         correct = (((((correct && php::identical(family->descriptor, descriptor)) && php::identical(family->counter, counter)) && php::identical(family->void_type, void)) && php::identical(family->provider, string_t("provider"))) && php::identical(family->id, string_t("descriptor")));
+      |                                                                                                                                                                                                     ~~~~^
+1 warning and 3 errors generated.
+[4/26] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[5/26] CXX scpp_framework/exceptions.o
+[6/26] CXX src/04_analyze/type_model/data/callable_modes.o
+[7/26] CXX src/01_prepare_inputs/load_runtime/handlers/package_syntax.o
+[8/26] CXX src/04_analyze/type_model/data/lifecycle.o
+[9/26] CXX src/01_prepare_inputs/load_runtime/data/runtime.o
+[10/26] CXX src/01_prepare_inputs/load_runtime/handlers/storage.o
+FAILED: src/01_prepare_inputs/load_runtime/handlers/storage.o
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/c1495884d151c062.hpp -MMD -MF src/01_prepare_inputs/load_runtime/handlers/storage.o.d -MT src/01_prepare_inputs/load_runtime/handlers/storage.o -c ../generated/src/01_prepare_inputs/load_runtime/handlers/storage.cpp -o src/01_prepare_inputs/load_runtime/handlers/storage.o
+../generated/src/01_prepare_inputs/load_runtime/handlers/storage.cpp:215:3: warning: 'auto' storage class specifier is not permitted in C++11, and will not be supported in future releases [-Wauto-storage-class]
+  215 |                 auto void = Storage_Import::void_type(types);
+      |                 ^~~~
+../generated/src/01_prepare_inputs/load_runtime/handlers/storage.cpp:215:13: error: expected unqualified-id
+  215 |                 auto void = Storage_Import::void_type(types);
+      |                           ^
+../generated/src/01_prepare_inputs/load_runtime/handlers/storage.cpp:216:127: error: expected '(' for function-style cast or type construction
+  216 |                 if (static_cast<bool>(((php::identical(descriptor, null) || php::identical(counter_definition, null)) || php::identical(void, null)))) {
+      |                                                                                                                                         ~~~~^
+../generated/src/01_prepare_inputs/load_runtime/handlers/storage.cpp:264:120: error: expected '(' for function-style cast or type construction
+  264 |                 auto __append_value_3 = create<::scpp::type_model::Storage_Family>(provider, id, descriptor, counter_definition, void, primitives, names, descriptor->name, descriptor->namespace_name);
+      |                                                                                                                                  ~~~~^
+1 warning and 3 errors generated.
+[11/26] CXX scpp_framework/filesystem.o
+[12/26] CXX scpp_framework/json_document.o
+[13/26] CXX src/04_analyze/type_model/data/definitions.o
+[14/26] CXX main.o
+[15/26] CXX scpp_framework/strings.o
+[16/26] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[17/26] CXX src/04_analyze/type_model/data/callables.o
+[18/26] CXX src/04_analyze/type_model/data/native_record_layout.o
+ninja: build stopped: subcommand failed.

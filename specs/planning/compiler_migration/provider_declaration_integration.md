@@ -145,3 +145,9 @@ comparisons (`results/callable-import-01`). Explicit compiler exposure/payload
 projections preserve the original consumer behavior; accepted backend export ownership
 is still a separate dependency. Next: remaining type/storage import and package
 ownership/composition, then provider symbols. No end-to-end provider pipeline yet.
+
+Storage_Import adds 144 PHP/native outcomes and retained comparisons for the complete
+eight-primitive/six-operation storage protocol (`results/storage-import-01`). The
+shared pointer syntax regression passes 66 native outcomes. Next: a narrow reserved
+local-name preflight to eliminate repeated avoidable native build failures, then
+remaining package type/import ownership and acceptance dependencies.

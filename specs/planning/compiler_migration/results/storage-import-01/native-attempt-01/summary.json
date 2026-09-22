@@ -1,0 +1,140 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/storage-import-native-01/source"
+      ],
+      "seconds": 0.105,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/storage-import-native-01/source"
+      ],
+      "seconds": 0.677,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/storage-import-native-01/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/storage-import-native-01/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/storage-import-native-01/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/storage-import-native-01/source/src/01_prepare_inputs/load_runtime/handlers/storage.php",
+        "/tmp/storage-import-native-01/source/probe.php",
+        "/tmp/storage-import-native-01/source/main.php"
+      ],
+      "seconds": 0.165,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/storage-import-native-01/source",
+        "/tmp/storage-import-native-01/phpp"
+      ],
+      "seconds": 0.425,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/storage-import-native-01/source",
+        "/tmp/storage-import-native-01/phpp"
+      ],
+      "seconds": 0.061,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/storage-import-native-01/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.071,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.011,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.04,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.154,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 29.18,
+      "exit": 1
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790100031.932108,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/storage.php": "3f5b67e5f2395c1e68fc2eb50e0757e2f24be7aa458bcea9e3c135a3c887acdf"
+  }
+}
