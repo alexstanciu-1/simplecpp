@@ -131,3 +131,33 @@ refresh. Host fixture creation remains outside the converted implementation tree
 The fast loop also runs `syntax_access_oracle.php`: 27,560 result/error comparisons
 for the adapted structural query owner/trait, including input purity. This is host
 evidence for a pending component; it does not add files to the native-ready manifest.
+
+## Migration timing checkpoints
+
+For each component, record UTC start/end timestamps and elapsed seconds for:
+
+1. **Convertible-PHP authoring and PHP stabilization:** adapting/designing the code,
+   preparing relevant tests and debugging until the agreed component behavior first
+   passes in PHP. Record that passing command, evidence path and source revision or
+   hashes immediately. This is a PHP-behavior milestone, not a claim of convertibility.
+2. **Conversion/native stabilization:** from that PHP-ready milestone until conversion,
+   native build and matching native behavior first pass. Include source/converter
+   corrections, diagnosis, rebuilds and PHP rechecks prompted by native findings.
+   Do not move the original PHP milestone forward after these corrections.
+3. **Regression verification:** checks needed after the first component-native pass.
+4. **Consolidation:** documentation, coverage registration, evidence and commit work.
+
+Record initial orientation separately when measured. Mark significant interruptions,
+user waits and unrelated work; report elapsed wall time, not invented active coding
+time. Keep raw command durations (PHP execution, conversion, compilation and native
+execution) separate from these development durations, and retain build/correction
+counts. Overlapping commands do not add to total wall time. If phases overlap, record
+that fact rather than implying a precise allocation of effort.
+
+If PHP passes but native work is blocked, record the milestone and accumulated
+stabilization time with its blocker; do not claim completion. A material scope change
+gets a separate checkpoint rather than hiding new authoring inside native overhead.
+For old slices without exact pass timestamps, retain raw measurements and label any
+phase-based reconstruction approximate; use unknown where reconstruction is unsupported.
+This accounting measures the cost of reaching working PHP separately from the extra
+cost of getting it working natively. It adds no requirement for more frequent builds.

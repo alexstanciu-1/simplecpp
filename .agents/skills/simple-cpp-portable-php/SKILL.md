@@ -70,6 +70,10 @@ proof; a PHP-only pass is not native evidence. After the
 ready set grows only with registered stage outcome proofs in `compiler/tests/`.
 Old 39-file coverage is historical. Record elapsed time by activity and command in
 each stage evidence, including failed attempts, to guide workflow optimization.
+Record the first passing PHP-behavior checkpoint (command and source revision/hash):
+separate authoring/PHP debugging up to that point from conversion/native stabilization
+after it, then regression verification and consolidation. Keep the original checkpoint
+if native fixes require PHP rechecks. See the validation workflow for timing boundaries.
 Count native attempts to first pass, corrective cycles, and final verification builds
 separately; keep checker-only fixes separate. Give framework wrapper types distinctive
 names, avoiding case-only variants of target runtime types. The immutable target lives in

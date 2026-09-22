@@ -68,6 +68,9 @@ For each component:
    remaining limits and a working commit. Update the skill for reusable lessons,
    linking detailed evidence instead of duplicating it across documents.
 7. Record authoring, portability-debugging and validation effort for initial stages;
+   record the first passing PHP-behavior checkpoint and separate authoring/PHP debugging
+   from subsequent conversion/native stabilization, regression verification and
+   consolidation (see [timing boundaries](../../portability/validation_workflow.md#migration-timing-checkpoints));
    adjust batch size and estimates from observed work. The earlier 80–200-hour
    preservation-led estimate is not a commitment or an estimate for this approach.
 

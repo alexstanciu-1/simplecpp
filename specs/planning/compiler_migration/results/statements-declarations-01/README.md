@@ -68,3 +68,23 @@ nesting retains the prototype design; 128-level cases are proved, not unbounded 
 Frame-slot storage is bounded by expression nesting, but frame objects are still
 allocated on reuse; this is recorded for later measured optimization.
 `src-runtime-preparation` and preserved reference code remain unchanged.
+
+## PHP-ready versus native-ready timing
+
+At the user's request, the existing activity measurements are grouped as follows:
+
+| Development phase | Approximate elapsed time |
+| --- | ---: |
+| Convertible-PHP authoring and PHP stabilization | 4m17s |
+| Conversion/native stabilization after the PHP checkpoint | 2m35s |
+| Regression verification | 1m45s |
+| Consolidation | 1m07s |
+
+Total recorded wall time: 9m45s. These are reconstructed primary-activity buckets,
+not exact first-pass latency: the timer recorded phase transitions rather than the
+first passing PHP/native timestamps. The PHP-proof phase included lifecycle-test
+preparation after the initial 82-case PHP pass; documentation overlapped native work.
+Initial orientation and the final commit are excluded. Raw phases remain unchanged
+in timing.json; checkpoint_accounting records the approximation and evidence links.
+Future slices record the actual first passing PHP command and source snapshot at
+that milestone, following the [timing contract](../../../../portability/validation_workflow.md#migration-timing-checkpoints).

@@ -34,5 +34,23 @@
     }
   ],
   "finished": "2026-09-22T09:29:20.642286+00:00",
-  "elapsed_seconds": 584.653
+  "elapsed_seconds": 584.653,
+  "checkpoint_accounting": {
+    "status": "approximate reconstruction from recorded activity boundaries; exact first-pass timestamps were not captured",
+    "php_ready_at": null,
+    "native_first_pass_at": null,
+    "authoring_and_php_stabilization_seconds": 257.451,
+    "conversion_native_stabilization_seconds": 154.924,
+    "regression_verification_seconds": 105.289,
+    "consolidation_seconds": 66.99,
+    "php_boundary_proxy": "2026-09-22T09:23:53.439721+00:00",
+    "native_boundary_proxy": "2026-09-22T09:26:28.363726+00:00",
+    "limitations": "Initial orientation and final commit excluded. PHP-proof phase includes follow-up lifecycle preparation; documentation overlapped native validation. Values describe primary-activity wall-time buckets, not pure coding effort or exact milestone latency.",
+    "evidence": {
+      "initial_php": "php-first/summary.json",
+      "first_native_success": "native-attempt-02/summary.json",
+      "regression": "expression-regression/summary.json",
+      "final_fast": "final-fast/summary.json"
+    }
+  }
 }
