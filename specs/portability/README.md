@@ -42,11 +42,13 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). Thirty-six production files are ready; the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files are ready; the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
 conversion proposals](catalog/README.md).
+
+Scalar value records and explicit local aliases: [contract and native-aware guidance](value_records.md).
 
 Current adoption assessment: [consolidation and debt](debt.md).
 Start with its [current constraint summary](debt.md#current-constraint-consolidation)

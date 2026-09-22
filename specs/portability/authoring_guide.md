@@ -15,7 +15,9 @@ generated PHS uses native type syntax, not those type comments. Express extra na
 comments, for example `$position /** int */ = 0;`. Do not paste PHP++ declarations
 such as `$position int = 0;` or `struct` into executable PHP. A PHP class with named
 fields is a supported structure; it does not automatically become a native value
-struct. Current ordinary classes use shared object identity.
+struct. Current ordinary classes use shared object identity. Explicit scalar value
+records and both `&ref` annotations now have a [separate proved contract](value_records.md);
+read it before choosing copy or alias behavior.
 
 Use no namespace or one leading lowercase `namespace name;`, optionally preceded
 by `declare(strict_types=1);` and comments. Generate the uniform function imports

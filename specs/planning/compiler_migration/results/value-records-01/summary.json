@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "target_revision": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+  "native_layout": {
+    "size": 8,
+    "alignment": 4,
+    "field_size": 4
+  },
+  "record_proof": true,
+  "cumulative_proof": true,
+  "fast_status": "passed",
+  "production_ready_files": 39,
+  "scope": "Scalar value-record authoring; compiler data model unchanged"
+}

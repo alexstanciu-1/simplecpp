@@ -1,0 +1,65 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$first = new \records\Source_Span();
+$first->offset = 2;
+$first->length = 4;
+$copy = \records\Source_Spans::copy($first);
+$copy->length = 9;
+$second ref \records\Source_Span = &$first;
+$second->length = 10;
+$third = &$first;
+$third->offset = 5;
+echo $first->offset, ':', $first->length, ':', $copy->offset, ':', $copy->length, "\n";
+$rows vector<\records\Source_Span> = [];
+$rows[] = \records\Source_Spans::copy($first);
+$second->length = 12;
+$old = \records\Source_Spans::copy($rows[0]);
+$replacement = \records\Source_Spans::copy($rows[0]);
+$replacement->length = 20;
+$rows[0] = \records\Source_Spans::copy($replacement);
+$replacement->length = 30;
+echo $rows[0]->length, ':', $old->length, ':', $first->length, ':', $replacement->length, "\n";
+$maximum = new \records\Source_Span();
+$maximum->offset = 4294967295;
+echo $maximum->offset, ':', \records\Source_Spans::alias_update(), "\n";

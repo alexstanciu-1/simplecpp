@@ -1,0 +1,125 @@
+
+
+/*
+ * Role: Per-source token buffers and their indexed set.
+ * Used by: Tokenizer; Token_Join; Parser
+ * Flow: Source_Buffer -> Token_Buffer -> Token_Set
+ */
+
+namespace tokenize;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// One owner per file snapshot; rows are token records.
+/**
+ * @compiler-api Readable source and rows produced by Tokenizer; frozen by agreement after handoff.
+ * rows are zero-based lexical order including EOF; source retains exact spelling/version.
+ * Construction makes an empty builder, not a complete tokenization result.
+ */
+class Token_Buffer {
+    // Snapshot identity and token spelling come from this one shared reference.
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly \read_sources\Source_Buffer $source;public function __construct(\read_sources\Source_Buffer $source) {$this->source = $source;
+    }
+
+    /** @var list<token> */
+    public $rows vector<\tokenize\token> = [];
+
+    /** @compiler-api On-demand debug view; not a semantic input or a persisted-cache format. */
+    public function to_json(): string {
+        $json = '{"source_file_id":' . $this->source->source_file_id
+            . ',"path":' . \read_sources\Source_Json::quote($this->source->path) . ',"tokens":[';
+        $separator = '';
+        foreach ($this->rows  as $token) {
+            $json .= $separator . '{"kind":' . \read_sources\Source_Json::quote(\tokenize\Token_Kinds::name($token->kind))
+                . ',"start":' . $token->start . ',"length":' . $token->length
+                . ',"text":' . \read_sources\Source_Json::quote(string_byte_slice($this->source->content, $token->start, $token->length)) . '}';
+            $separator = ',';
+        }
+        return $json . ']}';
+    }
+}
+
+// One live buffer per file. Consumers use lookup rather than storage keys.
+/**
+ * @compiler-api Joined current token buffers consumed by parsing and compile; private file index.
+ * Lookup shares existing buffers; shared rows must not be changed.
+ */
+class Token_Set implements \compile\Step_Result, \compile\Step_Store {
+    /** @var array<int, Token_Buffer> */
+    private $by_file hash<\tokenize\Token_Buffer, int> = [];
+
+    /**
+     * @compiler-api Create an empty baseline; nonempty assembly belongs to the producing join.
+     * Construction checks local invariants, not completeness of a compiler phase.
+     * @param list<Token_Buffer>|null $buffers Null constructs the empty baseline.
+     */
+    public function __construct($buffers nullable<vector<\tokenize\Token_Buffer>> = null) {
+        $selected vector<\tokenize\Token_Buffer> = [];
+        take($selected, $buffers);
+        foreach ($selected  as $buffer) {
+            $id = $buffer->source->source_file_id;
+            if (($id < 1) || (isset($this->by_file[$id]))) {
+                throw new \scpp_portability_exception('Invalid or duplicate token buffer');
+            }
+            $this->by_file[$id] = $buffer;
+        }
+    }
+
+    /** @compiler-api Read the existing buffer by logical file ID, or null if absent. */
+    public function for_file(int $id): nullable<\tokenize\Token_Buffer> {
+        if (!isset($this->by_file[$id])) { return null; }
+        return $this->by_file[$id];
+    }
+
+    /** @compiler-api On-demand debug view; not a semantic input or a persisted-cache format. */
+    public function to_json(): string {
+        $json = '[';
+        $separator = '';
+        foreach ($this->by_file  as $buffer) {
+            $json .= $separator . $buffer->to_json();
+            $separator = ',';
+        }
+        return $json . ']';
+    }
+}

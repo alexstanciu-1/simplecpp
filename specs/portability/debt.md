@@ -415,3 +415,8 @@ remain distinct work.
 ready src-runtime-preparation module. It preserves byte-safe reversible names and
 PHP input diagnostics. Remaining preparation metadata and orchestration are still
 part of the migration, not a separately maintained implementation.
+
+Scalar [value records and explicit local aliases](value_records.md) now have a PHP/native proof.
+This adds uint32/bool field records and both `&ref` forms, not general clone, nested
+record copying, container-interior references or ownership inference. Existing
+compiler classes retain their current representation until individually adapted.

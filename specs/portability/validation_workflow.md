@@ -64,6 +64,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | `containers` | Explicit nested vectors/maps, typed keys and copying |
 | `snapshots` | Owned membership, explicit changed-row copies and shared-row limits |
 | `utf8` | Text/code-point versus byte behavior and malformed inputs |
+| `records` | Scalar value records, local aliases, independent copies, vector replacement and native layout |
 | `traits` | Direct trait expansion, restrictions and incremental cache behavior |
 
 The choices are not aliases for a complete compiler migration test. Native-only

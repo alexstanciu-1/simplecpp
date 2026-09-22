@@ -1,0 +1,428 @@
+Transpiled PHP files: 44, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-a1a1babd-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/46] PCH app_pch.hpp.gch
+[2/46] CXX scpp_framework/collections.o
+[3/46] CXX src/01_prepare_inputs/read_sources/data/read_tasks.o
+[4/46] CXX src/01_prepare_inputs/read_manifest/data/result.o
+[5/46] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[6/46] CXX scpp_framework/filesystem.o
+[7/46] CXX src-runtime-preparation/symbols.o
+[8/46] CXX src/01_prepare_inputs/read_sources/data/structures.o
+[9/46] CXX src/01_prepare_inputs/read_sources/select_reads.o
+[10/46] CXX src/01_prepare_inputs/read_sources/data/source_json.o
+[11/46] CXX src/01_prepare_inputs/read_sources/scan.o
+[12/46] CXX src/01_prepare_inputs/read_sources/data/result.o
+[13/46] CXX scpp_framework/exceptions.o
+[14/46] CXX scpp_framework/strings.o
+[15/46] CXX src/01_prepare_inputs/read_sources/scan_join.o
+[16/46] CXX src/01_prepare_inputs/read_sources/data/store.o
+[17/46] CXX src/03_parse/data/structures.o
+[18/46] CXX src/03_parse/data/nodes.o
+[19/46] CXX src/03_parse/data/role_views.o
+[20/46] CXX src/02_tokenize/structures.o
+[21/46] CXX src/02_tokenize/select_tasks.o
+[22/46] CXX src/03_parse/data/tree.o
+[23/46] CXX src/01_prepare_inputs/read_sources/utilities/path_syntax.o
+[24/46] CXX src/03_parse/data/result.o
+[25/46] CXX src/02_tokenize/join.o
+[26/46] CXX src/03_parse/select_tasks.o
+[27/46] CXX src/03_parse/data/store.o
+../generated/src/03_parse/data/store.cpp:16:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+   16 |         php::take(selected, files);
+      |         ^~~~~~~~~ ~~~~~~~~~~~~~~~
+1 warning generated.
+[28/46] CXX src/01_prepare_inputs/read_sources/snapshot_join.o
+[29/46] CXX src/02_tokenize/store.o
+../generated/src/02_tokenize/store.cpp:41:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+   41 |         php::take(selected, buffers);
+      |         ^~~~~~~~~ ~~~~~~~~~~~~~~~~~
+1 warning generated.
+[30/46] CXX src/03_parse/utilities/struct_member_cursor.o
+[31/46] CXX src/03_parse/utilities/binary_syntax.o
+[32/46] CXX src/03_parse/utilities/metaprogramming_syntax.o
+[33/46] CXX src/03_parse/join.o
+[34/46] CXX src/03_parse/utilities/syntax_comparer.o
+[35/46] CXX src/04_analyze/check_bodies/utilities/byte_literals.o
+[36/46] CXX src/04_analyze/type_model/data/type_references.o
+[37/46] CXX src/03_parse/utilities/syntax_access.o
+[38/46] CXX src/05_generate_code/prepare_backend/data/tools.o
+[39/46] CXX src/05_generate_code/prepare_backend/data/configuration.o
+[40/46] CXX src/04_analyze/check_bodies/utilities/decimal_range.o
+[41/46] CXX src/compile/state.o
+[42/46] CXX src/compile/data/native_project.o
+[43/46] CXX src/compile/join.o
+[44/46] CXX src/compile/step.o
+[45/46] CXX main.o
+[46/46] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/strings.o, .prism/build/src-runtime-preparation/symbols.o, .prism/build/src/01_prepare_inputs/read_manifest/data/result.o, .prism/build/src/01_prepare_inputs/read_sources/data/buffer.o, .prism/build/src/01_prepare_inputs/read_sources/data/read_tasks.o, .prism/build/src/01_prepare_inputs/read_sources/data/result.o, .prism/build/src/01_prepare_inputs/read_sources/data/source_json.o, .prism/build/src/01_prepare_inputs/read_sources/data/store.o, .prism/build/src/01_prepare_inputs/read_sources/data/structures.o, .prism/build/src/01_prepare_inputs/read_sources/scan.o, .prism/build/src/01_prepare_inputs/read_sources/scan_join.o, .prism/build/src/01_prepare_inputs/read_sources/select_reads.o, .prism/build/src/01_prepare_inputs/read_sources/snapshot_join.o, .prism/build/src/01_prepare_inputs/read_sources/utilities/path_syntax.o, .prism/build/src/02_tokenize/join.o, .prism/build/src/02_tokenize/select_tasks.o, .prism/build/src/02_tokenize/store.o, .prism/build/src/02_tokenize/structures.o, .prism/build/src/03_parse/data/nodes.o, .prism/build/src/03_parse/data/result.o, .prism/build/src/03_parse/data/role_views.o, .prism/build/src/03_parse/data/store.o, .prism/build/src/03_parse/data/structures.o, .prism/build/src/03_parse/data/tree.o, .prism/build/src/03_parse/join.o, .prism/build/src/03_parse/select_tasks.o, .prism/build/src/03_parse/utilities/binary_syntax.o, .prism/build/src/03_parse/utilities/metaprogramming_syntax.o, .prism/build/src/03_parse/utilities/struct_member_cursor.o, .prism/build/src/03_parse/utilities/syntax_access.o, .prism/build/src/03_parse/utilities/syntax_comparer.o, .prism/build/src/04_analyze/check_bodies/utilities/byte_literals.o, .prism/build/src/04_analyze/check_bodies/utilities/decimal_range.o, .prism/build/src/04_analyze/type_model/data/type_references.o, .prism/build/src/05_generate_code/prepare_backend/data/configuration.o, .prism/build/src/05_generate_code/prepare_backend/data/tools.o, .prism/build/src/compile/data/native_project.o, .prism/build/src/compile/join.o, .prism/build/src/compile/state.o, .prism/build/src/compile/step.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main
+initial=0
+shared=1
+next=0
+previous=1
+rebound=0
+retained=1
+default=1
+0:0
+token-shared=1
+7:3
+independent=1
+created=1
+finished=1
+a/b
+a/b
+/x
+/x
+a/
+0
+0
+1
+1
+0
+0
+0
+0
+0
+1
+0
+1
+0
+1
+1
+1
+0
+0
+0
+0
+1
+1
+0
+0
+0
+0
+0
+1
+cdef::
+byte=1
+4:2:2
+node-default=1
+0:0:0:0
+12:9:3
+10:2
+node-independent=1
+1:2:3:4
+5:6:7
+8:9
+1:2:0
+2:3
+4:5:0
+6:7
+8:0
+9:10
+11:12:13
+reference-absent=1
+reference-present=1
+6
+reference-taken=1
+reference-kind=1
+cursor-default=1
+0:0:0:0
+21:20:1
+operator=1
+10:90
+30:31:0
+0:2
+1:/source.phs:100:4
+snapshot-shared=1
+snapshot-version=1
+snapshot-bytes=1
+1
+0:0:0
+4:4
+4:9
+1:2
+snapshot-distinct=1
+0
+1
+0
+0
+1
+1
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+0
+0
+195:169:-1:-1
+Backend configuration requires explicit backend, target, layout, ABI and runtime identities
+backend:runtime
+outer:9
+cause-shared=1
+cause:7
+rethrow-shared=1
+handler escape
+range
+0:no-cause
+tool-ir=1
+tool-path=1
+tool-alias=1
+tool-distinct=1
+tool-config=1
+tool-config-version=1
+0:0
+/bin/link tool:link-v1:link-v2
+sub/é file.phs:100:7
+42:/root/sub/é file.phs:100:7
+read-alias=1
+read-distinct=1
+42:101:9:100:7
+0:0:0
+folder-recursive=1
+empty-present=1
+0:recursive
+selected-present=1
+3:4:/root:sub:1:é.phs:2
+folder-selected=1
+1:2
+folder-reset=1
+buffer-absent=1
+state-unchanged=1
+pending=1
+buffer-present=1
+buffer-identity=1
+state-deleted=1
+-1:pending
+37:12:0:0:0
+entry-shared
+tombstone-retained
+owner-new:changed-new:clean-shared
+buffer-present:buffer-shared
+old-pending:accepted-clear:0:100
+old-unchanged
+repeat-shared
+Unknown source file ID
+Invalid source folder index
+Entry file is removed
+Duplicate source path: /src/a.phs
+37
+Invalid or duplicate source file ID
+"\u00e9\ud83d\ude00\/\"\\\n"
+{"folders":[{"path":"src","resolved_path":"\/src"},{"path":"extra","resolved_path":"","file_names":[]}],"files":[{"id":37,"top_folder_index":0,"path":"\/src\/a.phs","relative_path":"a.phs","mtime":0,"size":0,"change_state":"unchanged","needs_recompile":false},{"id":12,"top_folder_index":0,"path":"\/src\/b.phs","relative_path":"","mtime":0,"size":0,"change_state":"unchanged","needs_recompile":false},{"id":99,"top_folder_index":-1,"path":"\/src\/gone.phs","relative_path":"","mtime":0,"size":0,"change_state":"deleted","needs_recompile":false}],"removed_file_ids":[],"entry_file_id":37}
+{"folders":[],"files":[],"removed_file_ids":[],"entry_file_id":0}
+Cannot export sources: Malformed UTF-8 characters, possibly incorrectly encoded
+scan-task-shared
+1:sub/child
+scan-row-shared
+sub/é.phs:101:4
+2:1
+0:0
+5:old.phs
+6:new.phs
+7:sub/child.phs
+8:1:0:next
+scan-copy:cleared:old-retained
+changed:added
+Unexpected or duplicate source scan result: 0
+Incomplete source scan batch
+3
+Unexpected or duplicate source scan result: 0
+unchanged-row-copy:buffer-retained:clean
+Source file ID space exhausted
+0
+snapshot-owner:changed-copy:retained-shared
+buffer-exact:old-clean:deleted-clear:old-retained
+11:12:13:40
+1
+Incomplete source read batch
+Unexpected, duplicate or stale source snapshot
+Unexpected, duplicate or stale source snapshot
+Duplicate source read task
+Stale source read task
+Stale retained source snapshot
+repeat-shared:deleted-shared
+11:3:0
+1:11:/root/change:2:2
+2:11:12
+0:pending-retained:input-unmodified
+2:2
+0
+Unsupported source change: moved
+Unsupported source change: moved
+token-shared:token-absent
+[{"source_file_id":71,"path":"\/tokens","tokens":[{"kind":"variable_name","start":3,"length":1,"text":"x"}]}]
+[]
+Invalid or duplicate token buffer
+Invalid or duplicate token buffer
+{"source_file_id":71,"path":"\/tokens","tokens":[{"kind":"variable_name","start":0,"length":2,"text":"\u00e9"}]}
+Malformed UTF-8 characters, possibly incorrectly encoded
+source-shared:baseline-independent
+join-a:join-b:deleted-absent
+[{"source_file_id":11,"path":"\/root\/change","tokens":[]},{"source_file_id":12,"path":"\/root\/keep","tokens":[]}]
+new-token-set:retained-token:previous-unmodified
+Incomplete tokenization batch
+Unexpected, duplicate or stale tokenization result
+Unexpected, duplicate or stale tokenization result
+Unexpected, duplicate or stale tokenization result
+Duplicate or stale tokenization task
+Missing or stale retained token buffer
+0:2:2
+selected-a:selected-b
+1:new-identity:old-retained
+Missing source snapshot for tokenization
+Missing source snapshot for tokenization
+0
+frontend-token-shared:frontend-tree-shared
+{"source_file_id":91,"path":"\/parse","root_node_id":2,"defined_entities":[3],"entry_body_id":1,"nodes":[{"id":1,"kind":"block","start":0,"length":0,"first_child_id":0,"next_sibling_id":3},{"id":2,"kind":"file_root","start":0,"length":0,"first_child_id":1,"next_sibling_id":0},{"id":3,"kind":"name","start":2,"length":2,"first_child_id":0,"next_sibling_id":0,"text":"\u00e9"}]}
+Invalid file frontend
+Invalid file frontend
+Invalid file frontend
+Invalid file definition index
+Incomplete file definition index
+frontend-recovered
+Invalid frontend result segment
+Incomplete frontend task batch
+Duplicate, removed or stale frontend result
+frontend-one:frontend-two:previous-empty
+repeat-owner:repeat-shared
+retained-frontend
+Unexpected unselected frontend result
+Invalid or duplicate file frontend
+[]
+2:3
+0:5
+6:10
+15:16
+14:17
+23:24
+27:31
+addition-kind:not-operator
+less-than-name:no-operation
+2:1
+Not a binary operator
+0:2:2
+parse-first:parse-second
+1:parse-replaced:previous-retained
+Missing or stale tokens for parsing
+Missing or stale tokens for parsing
+1:live-only
+0
+logical-tree-equal:spelling-equal
+both-absent:one-absent
+length-differs
+kind-differs
+child-membership-differs
+Invalid previous comparison node
+Invalid current comparison node
+Unsupported syntax kind for comparison: invalid
+2:3:99
+paired-stack-branches
+octal-bytes=512
+hex-bytes=256
+10:13:9:11:12:27:36:
+92:110:92:114:92:116:92:118:92:102:92:101:92:36:
+15:122:92:120:71:71:0:55:255:56:
+195:169:240:159:152:128:
+36:49:32:36:45:
+92:113:92:120:
+39:
+34:
+Malformed quoted literal
+Malformed quoted literal
+Malformed quoted literal
+String interpolation is not supported
+String interpolation is not supported
+String interpolation is not supported
+Unicode escape syntax is not supported; use UTF-8 literal bytes
+Byte value must be between 0 and 255
+Byte value must be between 0 and 255
+example:é_name
+provider-v1:native-id
+owner:3
+family-id:4:outer:2:0
+type-references:identity-order-independent-membership
+project-key:/a/é:/out/...
+/:/
+255
+Native project roots must be absolute
+Native project roots must be absolute
+Native project roots must not contain parent traversal
+Native project roots must not contain parent traversal
+Native project roots must be absolute
+Native project requires an explicit project key
+Native project requires an explicit project key
+Native project roots must not contain parent traversal
+{"path":"","content":"","directory":"","source_folder_paths":[],"entry_path":""}
+{"path":"\u00e9\/project.json","content":"{\n\t\"entry\":\"a.phs\"\n}","directory":"\/src","source_folder_paths":["src","\u00e9\ud83d\ude00"],"entry_path":"a.phs"}
+{"path":"\u00e9\/project.json","content":null,"directory":"\/src","source_folder_paths":["src","\u00e9\ud83d\ude00"],"source_file_paths":["a.phs"],"entry_path":"a.phs"}
+Cannot export project manifest: Malformed UTF-8 characters, possibly incorrectly encoded:0
+Malformed UTF-8 characters, possibly incorrectly encoded:5
+"\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f"
+nullable-defaults:0:false:empty
+good/a.phs:1700000000:3
+good/z.phs:1700000000:0
+good/é.phs:1700000000:2
+directory:good/sub
+selected:good/z.phs:0
+selected:good/note.txt:7
+selected:good/a.phs:3
+empty-selection:0:0
+scan-missing
+scan-symlink
+scan-symlink
+missing-size-retained:77
+rp_type_X_simple__cpp_X_size_X_move__constructible
+rp__X___X___X___x2E___X__xC3__xA9_
+rp_type_X_simple__cpp_X_size_X_move__constructible
+rp__x00__x01__x02__x03__x04__x05__x06__x07__x08__x09__x0A__x0B__x0C__x0D__x0E__x0F__x10__x11__x12__x13__x14__x15__x16__x17__x18__x19__x1A__x1B__x1C__x1D__x1E__x1F__x20__x21__x22__x23__x24__x25__x26__x27__x28__x29__x2A__x2B__x2C__x2D__x2E__x2F_0123456789_x3A__x3B__x3C__x3D__x3E__x3F__x40_ABCDEFGHIJKLMNOPQRSTUVWXYZ_x5B__x5C__x5D__x5E____x60_abcdefghijklmnopqrstuvwxyz_x7B__x7C__x7D__x7E__x7F__x80__x81__x82__x83__x84__x85__x86__x87__x88__x89__x8A__x8B__x8C__x8D__x8E__x8F__x90__x91__x92__x93__x94__x95__x96__x97__x98__x99__x9A__x9B__x9C__x9D__x9E__x9F__xA0__xA1__xA2__xA3__xA4__xA5__xA6__xA7__xA8__xA9__xAA__xAB__xAC__xAD__xAE__xAF__xB0__xB1__xB2__xB3__xB4__xB5__xB6__xB7__xB8__xB9__xBA__xBB__xBC__xBD__xBE__xBF__xC0__xC1__xC2__xC3__xC4__xC5__xC6__xC7__xC8__xC9__xCA__xCB__xCC__xCD__xCE__xCF__xD0__xD1__xD2__xD3__xD4__xD5__xD6__xD7__xD8__xD9__xDA__xDB__xDC__xDD__xDE__xDF__xE0__xE1__xE2__xE3__xE4__xE5__xE6__xE7__xE8__xE9__xEA__xEB__xEC__xED__xEE__xEF__xF0__xF1__xF2__xF3__xF4__xF5__xF6__xF7__xF8__xF9__xFA__xFB__xFC__xFD__xFE__xFF_
+Symbol identity requires an ordered component list
+Struct member cursor is not positioned
+member:3:3
+member:12:12
+method:6
+function:8:9:10:11
+field:13:14:0
+root:14:0
+parameter:0
+deferred
+Expected a parsed struct declaration
+Struct member cursor is not positioned
+Expected a parsed function declaration
+query-tree-retained:18:6
+local:14:13:0
+initializer:18
+Unexpected local declaration child

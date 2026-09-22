@@ -23,9 +23,15 @@ an old slice's limits or a feature-catalog proposal as the current support matri
 - Prefer named typed records and explicit vector/map intent. Ordinary arrays are
   for non-hot setup/read-only data. The writer and behavioral tests own discipline;
   the converter does not infer hotness, ownership or PHP copy-on-write intent.
-- Classes share identity. Make record copies and list membership copies visible,
-  and prove retained snapshots and relevant aliases. PHP readonly enforcement does
-  not establish native immutability; follow the initialization-only usage contract.
+- Ordinary classes share identity; explicitly marked scalar value records become
+  inline structs. Read the [record/alias contract](../../../specs/portability/value_records.md)
+  before using `@scpp-struct` or either `&ref` form. Use explicit owner copy operations
+  for independent values and snapshots; borrow only stable locals, never container
+  elements. PHP object sharing must not accidentally define native value behavior.
+- Choose dense vectors versus sparse/keyed hashes by access pattern. Keep stable IDs,
+  storage positions and missing sentinels distinct. Use narrow fields only with known
+  bounds; PHP integer annotations do not enforce native ranges. Measure layout and
+  memory natively. PHP readonly alone does not establish native immutability.
 - Distinguish UTF-8 code-point operations from byte operations for source spans,
   filesystem spelling and binary data. Use explicit JSON schemas at boundaries.
 - Keep null, false and present empty/zero values distinct. Check the guide for the

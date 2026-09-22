@@ -171,3 +171,19 @@ in `results/structural-queries-cumulative-01/`.
 The [#236 correction](https://github.com/alexstanciu-1/simplecpp/issues/236#issuecomment-5772057603)
 reports that source guard adaptation clears the previous downstream gate. The v0.1
 owner retains release CI, final-tree reconciliation and publication responsibility.
+
+## Native-aware scalar record authoring
+
+The portable profile now has an explicit data-only PHP-class marker that emits a
+native struct, plus both accepted `&ref` local annotations. The initial field set is
+uint32/bool. Ordinary owner methods construct independent copies; PHP object aliases
+and native value copies are reconciled through explicit publication/replacement
+boundaries, not inferred ownership or a generic emulation runtime. Existing compiler
+classes and the 39-file ready set are unchanged. A native span witness occupies
+8 bytes with 4-byte alignment on the tested Linux target; this is an observation,
+not an ABI or total-memory guarantee.
+
+A fixture initially returned uint32 directly through an int return boundary; native
+compilation rejected that. An explicit `(int)` in authored PHP supplies the intended
+conversion. Keep this boundary visible when optimizing. No target change was needed.
+See [the contract](../../portability/value_records.md) and `results/value-records-01/`.

@@ -24,6 +24,8 @@ final class Converter {
 	private int $position = 0;
 	private string $path = '';
 	private int $exceptionCounter = 0;
+	private array $seenLocals = [];
+	private array $borrowedLocals = [];
 
 	public function __construct(private array $map) {}
 
@@ -51,6 +53,8 @@ final class Converter {
 	public function convertTokens(array $tokens, string $path): string {
 		$this->path = $path;
 		$this->exceptionCounter = 0;
+		$this->seenLocals = [];
+		$this->borrowedLocals = [];
 		$this->tokens = $tokens;
 		foreach ($tokens as $token) {
 			[$id, $text, $start] = $token;
@@ -251,7 +255,7 @@ final class Converter {
 	private function method(int $line, string $visibility, bool $static): Node {
 		$signature = $this->methodSignature($line, $visibility, $static);
 		$this->expect('{');
-		return new Node('method', $signature, $line, $this->sequence('}'));
+		return new Node('method', $signature, $line, $this->localBody());
 	}
 
 	/** Parse explicit recursive containers once for every supported declaration site. */
@@ -344,9 +348,90 @@ final class Converter {
 		}
 		$this->expect(')');
 		$this->expect('{');
-		$assignments = array_merge($assignments, $this->sequence('}'));
+		$assignments = array_merge($assignments, $this->localBody());
 		$fields[] = new Node('method', 'public function __construct(' . implode(', ', $parameters) . ')', $line, $assignments);
 		return $fields;
+	}
+
+	/** New callable scope; this is lexical bookkeeping, not symbol/type resolution. */
+	private function localBody(): array {
+		$seen = $this->seenLocals;
+		$borrowed = $this->borrowedLocals;
+		$this->seenLocals = [];
+		$this->borrowedLocals = [];
+		try { return $this->sequence('}'); }
+		finally { $this->seenLocals = $seen; $this->borrowedLocals = $borrowed; }
+	}
+
+	/** Explicit scalar value record; PHP remains a final data-only class. */
+	private function valueRecord(int $line): Node {
+		$this->expect('final');
+		$this->expect('class');
+		$name = $this->significant();
+		if ($name[0] !== T_STRING) { $this->fail($line, 'expected value record name'); }
+		if (str_starts_with(strtolower($name[1]), 'scpp_portability_')) { $this->fail($line, 'reserved native framework class prefix'); }
+		$this->expect('{');
+		$fields = [];
+		while (true) {
+			$token = $this->significant();
+			if ($token[1] === '}') { return new Node('struct', $name[1], $line, $fields); }
+			if ($token[0] !== T_PUBLIC) { $this->fail($token[2], 'value records require public initialized scalar fields only'); }
+			$type = $this->significant();
+			if (!in_array($type[1], ['int', 'bool'], true)) { $this->fail($type[2], 'value record fields require int with uint32 annotation, or bool'); }
+			$field = $this->significant();
+			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected value record field'); }
+			$native = $type[1];
+			if ($native === 'int') {
+				$annotation = $this->significant();
+				if ($annotation[0] !== T_DOC_COMMENT || !preg_match('~^/\*\*\s*uint32\s*\*/$~D', $annotation[1])) {
+					$this->fail($annotation[2], 'value record integer fields require an explicit uint32 annotation');
+				}
+				$native = 'uint32';
+			}
+			$this->expect('=');
+			$value = $this->significant();
+			$valid = $native === 'bool'
+				? in_array($value[1], ['true', 'false'], true)
+				: ($value[0] === T_LNUMBER && preg_match('/^(0|[1-9][0-9]*)$/D', $value[1])
+					&& (strlen($value[1]) < 10 || (strlen($value[1]) === 10 && strcmp($value[1], '4294967295') <= 0)));
+			if (!$valid) { $this->fail($value[2], 'value record default must be a matching in-range scalar literal'); }
+			$this->expect(';');
+			$fields[] = new Node('property', $native . ' ' . $field[1] . ' = ' . $value[1] . ';', $field[2]);
+		}
+	}
+
+	/** Recognize two explicit alias placements; initializer must be one stable local. */
+	private function referenceLocal(string $name, int $line, ?string $closing): ?Node {
+		$before = $this->position - 2;
+		while ($before >= 0 && in_array($this->tokens[$before][0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) { --$before; }
+		$previous = $this->tokens[$before] ?? [T_OPEN_TAG, '', $line];
+		$at = $this->nextSignificant($this->position);
+		$token = $this->tokens[$at] ?? [0, '', $line];
+		$type = '';
+		if ($token[0] === T_DOC_COMMENT && str_contains($token[1], '&ref')) {
+			if (!preg_match('~^/\*\*\s*&ref\s+(\\\\?[A-Za-z_][A-Za-z_0-9]*(?:\\\\[A-Za-z_][A-Za-z_0-9]*)*)\s*\*/$~D', $token[1], $match)) {
+				$this->fail($line, 'expected &ref followed by one explicit record type');
+			}
+			$type = $this->localAnnotation([T_DOC_COMMENT, '/** ' . $match[1] . ' */', $line]);
+			if (in_array(strtolower($type), ['int', 'uint32', 'string', 'bool', 'float'], true)) { $this->fail($line, '&ref is limited to record locals in this profile'); }
+			$this->position = $at + 1;
+			$this->expect('=');
+		} elseif ($token[1] === '=') {
+			$annotation = $this->nextSignificant($at + 1);
+			$t = $this->tokens[$annotation] ?? [0, '', $line];
+			if ($t[0] !== T_DOC_COMMENT || !str_contains($t[1], '&ref')) { return null; }
+			if (!preg_match('~^/\*\*\s*&ref\s*\*/$~D', $t[1])) { $this->fail($line, 'expression alias annotation must be exactly &ref'); }
+			$this->position = $annotation + 1;
+		} else { return null; }
+		if (!in_array($closing, [null, '}'], true) || ($previous[0] !== T_OPEN_TAG && !in_array($previous[1], [';', '{', '}'], true))) { $this->fail($line, '&ref requires a standalone local declaration'); }
+		if (isset($this->seenLocals[$name])) { $this->fail($line, '&ref requires a new local; rebinding is unsupported'); }
+		$source = $this->significant();
+		if ($source[0] !== T_VARIABLE || $source[1] === '$this' || $source[1] === $name) { $this->fail($line, '&ref requires a distinct stable local record source'); }
+		$this->expect(';');
+		$this->seenLocals[$name] = true;
+		$this->borrowedLocals[$name] = true;
+		$this->borrowedLocals[$source[1]] = true;
+		return new Node('reference_local', $name . ($type === '' ? '' : ' ref ' . $type) . ' = &' . $source[1] . ';', $line);
 	}
 
 	/** A reference class with explicit initialized public fields; no value-record inference. */
@@ -373,6 +458,7 @@ final class Converter {
 			[$id, $text, $at] = $this->tokens[$this->position++];
 			if ($text === '}') { return new Node($final ? 'final_class' : 'class', $className, $line, $fields); }
 			if (in_array($id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
+				if ($id === T_DOC_COMMENT && (str_contains($text, '@scpp-struct') || str_contains($text, '&ref'))) { $this->fail($at, 'misplaced record/reference metadata'); }
 				$fields[] = new Node('comment', $text, $at);
 				continue;
 			}
@@ -563,7 +649,7 @@ final class Converter {
 		$this->expect('{');
 		$signature = ($static ? 'static ' : '') . 'function (' . $type . ' ' . $parameter[1] . ')'
 			. ($captures === [] ? '' : ' use (' . implode(', ', $captures) . ')') . ': ' . $return;
-		return new Node('method', $signature, $line, $this->sequence('}'));
+		return new Node('method', $signature, $line, $this->localBody());
 	}
 
 	/** @return list<Node> */
@@ -575,6 +661,14 @@ final class Converter {
 			if ($text === $closing) {
 				return $nodes;
 			}
+			if ($id === T_DOC_COMMENT && str_contains($text, '@scpp-struct')) {
+				if ($closing !== null || !preg_match('~^/\*\*\s*@scpp-struct\s*\*/$~D', $text)) {
+					$this->fail($line, '@scpp-struct must immediately mark a top-level final class');
+				}
+				$nodes[] = $this->valueRecord($line);
+				continue;
+			}
+			if ($id === T_DOC_COMMENT && str_contains($text, '&ref')) { $this->fail($line, 'misplaced &ref annotation'); }
 			if ($id === T_FUNCTION) { $nodes[] = $this->closure($line, false); continue; }
 			if ($id === T_STATIC) {
 				$this->expect('function');
@@ -674,7 +768,11 @@ final class Converter {
 				continue;
 			}
 			if ($id === T_VARIABLE) {
+				$reference = $this->referenceLocal($text, $line, $closing);
+				if ($reference !== null) { $nodes[] = $reference; continue; }
+				$this->seenLocals[$text] = true;
 				$at = $this->nextSignificant($this->position);
+				if (isset($this->borrowedLocals[$text]) && (($this->tokens[$at][1] ?? '') === '=' || ($this->tokens[$at][0] ?? null) === T_DOC_COMMENT)) { $this->fail($line, 'borrowed record locals cannot be reassigned'); }
 				if (($this->tokens[$at][1] ?? '') === '(') {
 					$this->fail($line, 'dynamic calls are unsupported');
 				}
@@ -759,6 +857,7 @@ final class Converter {
 			'method' => $node->text . ' {' . $body . '}',
 			'interface' => 'interface ' . $node->text . ' {' . $body . '}',
 			'final_class' => 'final class ' . $node->text . ' {' . $body . '}',
+			'struct' => 'struct ' . $node->text . ' {' . $body . '}',
 			'class' => 'class ' . $node->text . ' {' . $body . '}',
 			'call' => $node->text . '(' . $body . ')',
 			'group' => $node->text . $body . (match ($node->text) { '(' => ')', '[' => ']', default => '}' }),

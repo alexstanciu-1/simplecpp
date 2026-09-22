@@ -1,8 +1,9 @@
 # Native-aware convertible PHP work list
 Doc Status: planning
 
-Status: planning only. The user requested this list before implementation.
-No new syntax, runtime behavior or skill capability is introduced by this document.
+Status: first scalar record/local-alias slice implemented and proved; remaining
+extensions stay planned. See [the current contract](../../portability/value_records.md).
+This work list is not itself syntax or runtime authority.
 The stage-replacement alternative remains saved in [the migration plan](README.md#saved-option-stage-by-stage-replacement).
 
 ## Objective and limits
@@ -37,8 +38,8 @@ $second /** &ref Source_Span */ = $first;
 - Annotations are portable-PHP metadata; emit supported native PHS syntax rather
   than passing `&ref` through unchanged.
 
-The proposed `/** @scpp-struct */` declaration marker and the independent-copy API
-are not yet finalized. Ordinary PHP object assignment shares identity, so those
+The initial slice uses `/** @scpp-struct */` and ordinary owner-defined copy methods
+that construct a fresh record and copy its scalar fields. Ordinary PHP object assignment shares identity, so those
 parts require a clear contract before marking any value-record form supported.
 
 ## Ordered implementation checklist
@@ -162,3 +163,19 @@ Steps 1–3 for a scalar Source_Span-style value record and its direct local ali
 plus only the necessary documentation/skill changes from steps 4–5. This establishes
 an immediately usable pattern. Expand the field and access surface only for concrete
 compiler needs; do not wait for a complete mini-language before resuming development.
+
+## First-slice checkpoint
+
+Completed: uint32/bool scalar record declarations, fresh construction, explicit owner
+copy methods, both local `&ref` placements, directly detectable rejection cases,
+PHP/native vector replacement and retained-copy proofs, incremental conversion,
+observed native layout and concise skill guidance. Existing 39-file cumulative
+coverage still passes; no compiler records were rewritten. Evidence is under
+`results/value-records-01/`.
+
+Still outside the implemented slice: wider/nested field families and their copying
+rules, alias parameters/returns/captures, in-place container-element borrowing,
+generic clone/copy helpers, indirect lifetime/rebinding analysis and a measured
+production-record adoption. These are not prerequisites for using the proved scalar
+pattern. Checklist entries above describe the full work list; this checkpoint
+records the bounded delivery without implying every extension is complete.

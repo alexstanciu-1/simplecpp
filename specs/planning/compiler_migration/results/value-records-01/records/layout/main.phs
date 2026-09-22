@@ -1,0 +1,1 @@
+echo layout_sizeof(\records\Source_Span), ":", layout_alignof(\records\Source_Span), ":", layout_field_sizeof(\records\Source_Span, length), "\n";

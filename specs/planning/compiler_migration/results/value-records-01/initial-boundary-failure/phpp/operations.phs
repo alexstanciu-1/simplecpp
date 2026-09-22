@@ -1,0 +1,59 @@
+
+namespace records;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Source_Spans {
+    public static function copy(Source_Span $source): Source_Span {
+        $copy = new Source_Span();
+        $copy->offset = $source->offset;
+        $copy->length = $source->length;
+        return $copy;
+    }
+    public static function alias_update(): int {
+        $first = new Source_Span();
+        $second ref Source_Span = &$first;
+        $second->length = 7;
+        return $first->length;
+    }
+}

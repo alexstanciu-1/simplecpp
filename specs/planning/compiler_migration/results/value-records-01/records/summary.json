@@ -1,0 +1,390 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-value-records-03/php"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "{\"checked\":3,\"cache\":{\"listed_directories\":1,\"read_sources\":3,\"tokenized\":3,\"loaded_tokens\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-value-records-03/php/span.php",
+        "/tmp/scpp-value-records-03/php/operations.php",
+        "/tmp/scpp-value-records-03/php/main.php"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "5:10:2:9\n20:10:12:30\n4294967295:7\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "{\"converted\":3,\"reused\":0,\"removed\":0}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "{\"converted\":0,\"reused\":3,\"removed\":0}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "{\"converted\":1,\"reused\":2,\"removed\":0}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "{\"converted\":1,\"reused\":2,\"removed\":0}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: expected final\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: value record integer fields require an explicit uint32 annotation\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: value record fields require int with uint32 annotation, or bool\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: value record default must be a matching in-range scalar literal\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: value record default must be a matching in-range scalar literal\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: value record fields require int with uint32 annotation, or bool\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: value records require public initialized scalar fields only\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: expected ;\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: expected ;\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: &ref requires a distinct stable local record source\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: &ref requires a distinct stable local record source\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: &ref is limited to record locals in this profile\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: &ref requires a distinct stable local record source\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: &ref requires a new local; rebinding is unsupported\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: borrowed record locals cannot be reassigned\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: borrowed record locals cannot be reassigned\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: misplaced &ref annotation\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: &ref requires a standalone local declaration\n"
+    },
+    {
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-value-records-03/php",
+        "/tmp/scpp-value-records-03/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "bad.php:45: misplaced record/reference metadata\n"
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-a1a1babd-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "a1a1babd07082d9abf7ac885b2328c99368ad4cf\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-a1a1babd-probe",
+        "status",
+        "--porcelain"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "cwd": "/tmp/scpp-value-records-03/phpp",
+      "exit": 0,
+      "stdout": "Created prism.json\nProject root: /tmp/scpp-value-records-03/phpp\nEntrypoint: main.phs\nPHP profile: strict\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+        "run",
+        "--build-runtime"
+      ],
+      "cwd": "/tmp/scpp-value-records-03/phpp",
+      "exit": 0,
+      "stdout": "Transpiled PHP files: 3, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/5] PCH app_pch.hpp.gch\n[2/5] CXX span.o\n[3/5] CXX operations.o\n[4/5] CXX main.o\n[5/5] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/operations.o, .prism/build/span.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\n5:10:2:9\n20:10:12:30\n4294967295:7\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "php",
+        "/tmp/scpp-a1a1babd-probe/bin/scpp.php",
+        "run",
+        "--build-runtime"
+      ],
+      "cwd": "/tmp/scpp-value-records-03/layout",
+      "exit": 0,
+      "stdout": "Transpiled PHP files: 2, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-a1a1babd-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/4] PCH app_pch.hpp.gch\n[2/4] CXX span.o\n[3/4] CXX main.o\n[4/4] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/span.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\n8:4:4\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-a1a1babd-probe",
+        "status",
+        "--porcelain"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "target_revision": "a1a1babd07082d9abf7ac885b2328c99368ad4cf",
+  "native_layout": {
+    "size": 8,
+    "alignment": 4,
+    "field_size": 4
+  },
+  "expected": "5:10:2:9\n20:10:12:30\n4294967295:7\n",
+  "native": true
+}
