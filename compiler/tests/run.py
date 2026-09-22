@@ -16,7 +16,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('statements', Path(__file__).parent / 'statements/run.py'),
           ('syntax_access', Path(__file__).parent / 'syntax_access/run.py'),
           ('parser_project', Path(__file__).parent / 'parser_project/run.py'),
-          ('collect_symbols', Path(__file__).parent / 'collect_symbols/run.py')]
+          ('collect_symbols', Path(__file__).parent / 'collect_symbols/run.py'),
+          ('entry_preparation', Path(__file__).parent / 'entry_preparation/run.py')]
 
 
 def main():

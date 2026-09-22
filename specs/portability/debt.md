@@ -2,7 +2,7 @@
 Doc Status: planning
 
 Current compiler status: [rewrite reset](../planning/compiler_migration/rewrite_reset.md),
-thirty-nine active ready files through parser/project reuse and source symbol collection; see
+forty-one active ready files through parser/project reuse, source symbols and entry selection; see
 [its bounded JSON adapter contract](project_manifest_reading.md). Capability support below remains available; prior compiler
 slice statements describe archived implementation/proofs, not active rewrite coverage.
 

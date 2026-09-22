@@ -424,3 +424,36 @@ without converter/framework/target edits. Keep these correction costs visible in
 assertions additionally prove candidate/baseline purity. The retained collection and
 storage tests supplied guarantees/fixtures; their full session harness is not runnable
 against this still-partial pipeline. Next is entry-contract preparation.
+
+## Entry selection and top-level execution policy (2026-09-22)
+
+The source half of prototype Entry_Resolver is now a synchronous Entry_Preparation
+owner. It uses the current frontend entry index and exact symbol-store membership,
+then rejects the first top-level statement outside the manifest-selected file. Source
+statements and diagnostics retain byte spans; no AST nodes, symbols or filesystem
+observations are invented. A typed selection result retains the store plus stable ID;
+failures cannot expose a selected callable. Explicit guards validate indexes before
+access, and freshness checks precede source-policy diagnosis.
+
+This is migration of the algorithm and its guarantees, not preservation of the
+prototype's init/run/finalize shell. Nine serialization checks prove input/baseline
+purity; 44 PHP/native outcomes adapt the relevant program_entry.php guarantees.
+Unchanged, rebuilt and reordered snapshots share or refresh selected identities as
+appropriate. Supporting declarations remain allowed, while even empty block statements
+and dead branches are rejected without evaluating their contents.
+
+Inspection exposed the next actual dependency: the original entry contract retains
+an exact catalog integer definition, including lifetime and operation policies. A
+name/bit-width surrogate or hardcoded native int would lose valuable semantics.
+Accordingly the current output is called Entry_Selection, not entry_contract. Return
+binding, type-catalog ingestion and signature/body checking remain pending. This is
+an explicit component boundary, not a claim that the whole Entry_Resolver migrated.
+The next slice must follow type-model/catalog dependencies before completing binding.
+No existing ownership area required a broad refactor, and no type-model stub was added.
+
+The first 43-outcome PHP behavior run and first checker/conversion/native build passed
+without correction. Final review then added an upper-bound guard for a malformed
+frontend with a stale path index and shortened file list, plus a 44th regression case.
+That source-review correction requires a separate final native verification; it is
+not a native-failure cycle. No converter/framework/target change was needed. Timing and provenance:
+[entry preparation evidence](results/entry-preparation-01/README.md).

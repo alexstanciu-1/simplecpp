@@ -1,0 +1,21 @@
+{
+  "base_commit": "837a6435",
+  "production_source_sha256": {
+    "src/04_analyze/resolve_types/data/entry_selection.php": "1f1704dce5be4d049b4dcb0659c5e5e427f420b75ab01995a9a3834b51695741",
+    "src/04_analyze/resolve_types/main_prepare_entry.php": "920e9a8dc623f199ad03c0f7ec00c9138dd2b6e5c7f8e9a0242da95c5324cd8b"
+  },
+  "tests_sha256": {
+    "compiler/tests/entry_preparation/probe.php": "96a4b8b6e089ec79e04176d0cdd32ccba4e6cde77f9b6a528638eb5ebb3a46bc",
+    "compiler/tests/entry_preparation/run.py": "259e9787d93e631c7f632f8235fe42c65a8636b09206778a47cac97e4780bb1a",
+    "compiler/tests/entry_preparation/purity.php": "42da293c2f3c7b9b7af4778a244471e4064e230cb7436f7360e76e4b369a1e1f"
+  },
+  "reference_sha256": {
+    "compiler/reference/pre-rewrite/src/04_analyze/resolve_types/main_prepare_entry.php": "9cd7ad45732b9451deda66b3d0f2eb3b4c7bc4be9a62629b30ed313bdf4a24b0",
+    "compiler/reference/pre-rewrite/src/04_analyze/resolve_types/data/structures.php": "a2e9393f52f3341ca1dfc251d7fa290bb734fb2d1f85db46f7edba31d0e56aa3",
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/catalog.php": "afb0ff63c71a5a0b06ccdd9feb47adc250849f9c990da336c45ab14b526cbe3f",
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/definitions.php": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177",
+    "compiler/reference/pre-rewrite/tests/features/program_entry.php": "2288a19f9bcbf76722d63049bb24a1c129e7d05b225733d4c1192aaed6ad3143"
+  },
+  "reference_use": "Source selection and supporting-statement policy guarantees adapted from program_entry.php; full session/provider/signature/body suite not run.",
+  "native_target": "9b4b33f35f053b487e018c94d6a4a7888d77c64a"
+}

@@ -1,0 +1,19 @@
+{
+  "host_behavior_outcomes": 44,
+  "host_behavior_failures": 0,
+  "checker_corrections": 0,
+  "native_failure_corrective_cycles": 0,
+  "final_verification_native_builds": 1,
+  "host_purity_assertions": 9,
+  "final_ready_files": 41,
+  "converter_changes": false,
+  "framework_changes": false,
+  "target_changes": false,
+  "initial_host_behavior_outcomes": 43,
+  "native_build_attempts_to_first_pass": 1,
+  "total_native_builds": 2,
+  "post_checkpoint_source_review_corrections": 1,
+  "review_reason": "Check upper bound before indexing through a stale frontend path index after malformed membership truncation.",
+  "native_behavior_attempts_to_first_pass": 1,
+  "total_native_behavior_runs": 2
+}

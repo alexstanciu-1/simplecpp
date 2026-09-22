@@ -40,7 +40,9 @@
     "src/04_analyze/collect_symbols/data/store.php",
     "src/04_analyze/collect_symbols/data/result.php",
     "src/04_analyze/collect_symbols/collect.php",
-    "src/04_analyze/collect_symbols/main_collect_symbols.php"
+    "src/04_analyze/collect_symbols/main_collect_symbols.php",
+    "src/04_analyze/resolve_types/data/entry_selection.php",
+    "src/04_analyze/resolve_types/main_prepare_entry.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
