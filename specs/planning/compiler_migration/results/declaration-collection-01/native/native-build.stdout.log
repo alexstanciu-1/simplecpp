@@ -1,0 +1,52 @@
+Transpiled PHP files: 36, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/38] PCH app_pch.hpp.gch
+[2/38] CXX src/03_parse/data/nodes.o
+[3/38] CXX scpp_framework/exceptions.o
+[4/38] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[5/38] CXX src/03_parse/data/role_views.o
+[6/38] CXX src/02_tokenize/structures.o
+[7/38] CXX src/03_parse/data/expression_state.o
+[8/38] CXX src/03_parse/data/result.o
+[9/38] CXX src/02_tokenize/store.o
+[10/38] CXX scpp_framework/collections.o
+[11/38] CXX scpp_framework/filesystem.o
+[12/38] CXX src/02_tokenize/tokenize.o
+[13/38] CXX main.o
+[14/38] CXX probe.o
+[15/38] CXX scpp_framework/json_document.o
+[16/38] CXX scpp_framework/strings.o
+[17/38] CXX src/03_parse/data/store.o
+[18/38] CXX src/03_parse/handlers/statements.o
+[19/38] CXX src/03_parse/handlers/declarations.o
+[20/38] CXX src/03_parse/handlers/metaprogramming.o
+[21/38] CXX src/03_parse/handlers/expressions.o
+[22/38] CXX src/03_parse/handlers/control_statements.o
+[23/38] CXX src/03_parse/data/tree.o
+[24/38] CXX src/03_parse/utilities/struct_member_cursor.o
+[25/38] CXX src/03_parse/utilities/metaprogramming_syntax.o
+[26/38] CXX src/03_parse/main_parse.o
+[27/38] CXX src/03_parse/utilities/syntax_access.o
+[28/38] CXX src/03_parse/utilities/binary_syntax.o
+[29/38] CXX src/03_parse/parse_file.o
+[30/38] CXX src/03_parse/utilities/syntax_comparer.o
+[31/38] CXX src/03_parse/select_tasks.o
+[32/38] CXX src/04_analyze/collect_symbols/data/result.o
+[33/38] CXX src/03_parse/join.o
+[34/38] CXX src/04_analyze/collect_symbols/collect.o
+[35/38] CXX src/04_analyze/collect_symbols/data/structures.o
+[36/38] CXX src/04_analyze/collect_symbols/main_collect_symbols.o
+[37/38] CXX src/04_analyze/collect_symbols/data/store.o
+[38/38] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/01_prepare_inputs/read_sources/data/buffer.o, .prism/build/src/02_tokenize/store.o, .prism/build/src/02_tokenize/structures.o, .prism/build/src/02_tokenize/tokenize.o, .prism/build/src/03_parse/data/expression_state.o, .prism/build/src/03_parse/data/nodes.o, .prism/build/src/03_parse/data/result.o, .prism/build/src/03_parse/data/role_views.o, .prism/build/src/03_parse/data/store.o, .prism/build/src/03_parse/data/tree.o, .prism/build/src/03_parse/handlers/control_statements.o, .prism/build/src/03_parse/handlers/declarations.o, .prism/build/src/03_parse/handlers/expressions.o, .prism/build/src/03_parse/handlers/metaprogramming.o, .prism/build/src/03_parse/handlers/statements.o, .prism/build/src/03_parse/join.o, .prism/build/src/03_parse/main_parse.o, .prism/build/src/03_parse/parse_file.o, .prism/build/src/03_parse/select_tasks.o, .prism/build/src/03_parse/utilities/binary_syntax.o, .prism/build/src/03_parse/utilities/metaprogramming_syntax.o, .prism/build/src/03_parse/utilities/struct_member_cursor.o, .prism/build/src/03_parse/utilities/syntax_access.o, .prism/build/src/03_parse/utilities/syntax_comparer.o, .prism/build/src/04_analyze/collect_symbols/collect.o, .prism/build/src/04_analyze/collect_symbols/data/result.o, .prism/build/src/04_analyze/collect_symbols/data/store.o, .prism/build/src/04_analyze/collect_symbols/data/structures.o, .prism/build/src/04_analyze/collect_symbols/main_collect_symbols.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

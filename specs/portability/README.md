@@ -2,7 +2,7 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs. Active rewrite readiness is now thirty-four input/tokenization/parser files;
+these capability proofs. Active rewrite readiness is now thirty-nine input/tokenization/parser/source-symbol files;
 see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
@@ -46,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is thirty-four input/tokenization/parser files, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is thirty-nine input/tokenization/parser/source-symbol files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
@@ -306,3 +306,5 @@ the file entry below reuses the same expression driver.
 [Syntax access/comparison](syntax_access.md) adds 134 PHP/native outcomes with value role views and comparison frames.
 
 [Project parser](parser_project.md) adds 66 PHP/native update outcomes and nine host purity assertions.
+
+[Source declaration collection](declaration_collection.md) adds compact facts, stable source symbol IDs and atomic candidate updates (97 PHP/native outcomes plus nine host purity assertions).

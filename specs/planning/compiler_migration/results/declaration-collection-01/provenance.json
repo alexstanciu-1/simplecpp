@@ -1,0 +1,33 @@
+{
+  "base_commit": "b7ea647d",
+  "production_source_sha256": {
+    "src/04_analyze/collect_symbols/data/structures.php": "3f96b508304e4bed46a228d046e0caaa73ca39340498157e35ce8fd218364dc6",
+    "src/04_analyze/collect_symbols/data/store.php": "db6d45919a11e385f8740d18d5ce0e4baa62daa7c813aa1b0c23b1026fc8eb24",
+    "src/04_analyze/collect_symbols/data/result.php": "92cf3afd75e93f52b095c79dbc1bfa091d7e98b18044d93c1ee6f23138a9c428",
+    "src/04_analyze/collect_symbols/collect.php": "79b48181374ac672e7b0ed07617486af2704a5aedfdf1a4a03fe395f3083e6e5",
+    "src/04_analyze/collect_symbols/main_collect_symbols.php": "054f93441c5a0205652b4eeee6ad6fbdca4f46c1f0a7fb0f7e420c6e73ed406d"
+  },
+  "tests_sha256": {
+    "compiler/tests/collect_symbols/probe.php": "bd32376a74af4d8632b127ad6ff672e2481aec82766d672b08e661175782c638",
+    "compiler/tests/collect_symbols/run.py": "38f48fa983dcf354c51fc358a28388c71b597396dac11ab91a312efc47bad7a6",
+    "compiler/tests/collect_symbols/purity.php": "b9f579e3787ffe79c97bf0164fb01eead3f2df72ae8e7ef53e8cce28eb63f221"
+  },
+  "reference_sha256": {
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/compare.php": "75189ae4f9562cb478e31a7f85c5d6d70d2aad0c2fcc7561ae8fc91cd8ef8494",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/main_compare_symbols.php": "042d68bab4ca96010d2bda830865af480c98acdd085461eb3cb50436dfb3cf74",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/join.php": "e8cbd883ca22d46f7166b3e9ab1fcacb67f2af603e00309a39142e67d5c168e2",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/collect.php": "7cbe3f140b8e827eae2ee08a8d606fe3df93c8434035cb86dcd99bfafea5c87d",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/comparison_join.php": "96702dce37d6b511e7b80dbc0d999a0dec80a8242b3e40b33613f57a163d0dac",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/main_collect_symbols.php": "d971f1e8a95bc023b39dd8bfff21335f1c3784486b1cc79a0fe4c20aac9aec3e",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/utilities/frontend_validation.php": "147cbc5c1a33b8753b340b1f2ebd1bea7918d595c2d14c15c8bbeeb2837da7f5",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/utilities/declaration_syntax.php": "4387cfdd07ac4303bffab5f335b74684389bae25f27b5f03cc97ddddbb9065df",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/data/store.php": "8fe030c83dc63e8d1dd6e2aaef2d8f8b5e83e877bb12ebefcd8ac424113895c1",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/data/structures.php": "08b6d2285cf9562583215d228715ad3dc9c78878c0882ee4390a0378ce7c7350",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/data/result.php": "c59eb36b968162add543791471689c4439ba5872effeee2a68c978e27ff51cfd",
+    "compiler/reference/pre-rewrite/src/04_analyze/collect_symbols/handlers/declarations.php": "6e78e5883ca7c93e6bb3b773ccdbc41cf6f2da4ca1b4301e14363d5622eb6268",
+    "compiler/reference/pre-rewrite/tests/04_analyze/collect_symbols/symbol_collection.php": "103ba4d6d06201fa8fcb0e406ab244060f6d32c17e847d5854a68257d12a6f96",
+    "compiler/reference/pre-rewrite/tests/04_analyze/collect_symbols/semantic_storage.php": "3af57511cd902395141122ed16b42ac0a5ade9a343155a06b7dd80987de27c2a"
+  },
+  "reference_use": "Collection/storage guarantees and representative source cases adapted; original full-session suites not executed.",
+  "native_target": "9b4b33f35f053b487e018c94d6a4a7888d77c64a"
+}

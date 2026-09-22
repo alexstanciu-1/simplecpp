@@ -37,3 +37,8 @@ require_once __DIR__ . '/src/03_parse/data/store.php';
 require_once __DIR__ . '/src/03_parse/select_tasks.php';
 require_once __DIR__ . '/src/03_parse/join.php';
 require_once __DIR__ . '/src/03_parse/main_parse.php';
+require_once __DIR__ . '/src/04_analyze/collect_symbols/data/structures.php';
+require_once __DIR__ . '/src/04_analyze/collect_symbols/data/store.php';
+require_once __DIR__ . '/src/04_analyze/collect_symbols/data/result.php';
+require_once __DIR__ . '/src/04_analyze/collect_symbols/collect.php';
+require_once __DIR__ . '/src/04_analyze/collect_symbols/main_collect_symbols.php';

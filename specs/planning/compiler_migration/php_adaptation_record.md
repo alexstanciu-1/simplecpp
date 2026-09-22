@@ -390,3 +390,37 @@ on the current non-short-circuit target. No converter behavior was broadened.
 
 See [project parser contract](../../portability/parser_project.md) and
 [timing/validation record](results/parser-project-01/README.md).
+
+## Source declaration collection and symbol records (2026-09-22)
+
+Five source files begin 04_analyze using the prototype's collect_symbols ownership.
+Temporary declarations now carry compact syntax IDs, including the name node, rather
+than copied strings and general PHP records. Names are materialized once per newly
+indexed symbol; source bytes and syntax remain owned by the exact frontend. Symbol
+records share identity, while fact/change rows become inline native value structs.
+The store uses dense rows with separate ID/name/path/owner indexes. This is a clearer
+basis for later memory measurement, not a measured memory saving claim.
+
+The sequential coordinator matches named identities across file moves and preserves
+monotonic allocation, removals, duplicate diagnostics and baseline purity. File entries
+use current exact paths because the rewritten inputs do not yet provide persistent
+source IDs. Same-frontend reuse shares records; rebinding/full extraction yields
+uncompared changes. Change rows reference IDs in retained previous/current stores,
+avoiding nullable previous/current record payloads without inventing comparison facts.
+
+Runtime providers and source namespace metadata have not been fabricated. Provider
+imports, asynchronous collection joining, export formats and semantic comparison stay
+explicitly outstanding; the source-only coordinator is not the prototype's entire
+Step/session contract. Standalone evaluated-function wrapper rejection is retained
+as a known parser/collector mismatch, while templated evaluated functions work.
+Review that behavior separately before widening language support.
+
+The first host proof passed 97 outcomes. Three checker correction rounds followed:
+use the supported RuntimeException for exhaustion; fully qualify named constants;
+use concatenation with explicit compact-int normalization rather than unsupported
+string casts. Native compilation and execution then passed on the first attempt,
+without converter/framework/target edits. Keep these correction costs visible in
+[the timing record](results/declaration-collection-01/README.md). Nine host serialization
+assertions additionally prove candidate/baseline purity. The retained collection and
+storage tests supplied guarantees/fixtures; their full session harness is not runnable
+against this still-partial pipeline. Next is entry-contract preparation.

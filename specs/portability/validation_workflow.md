@@ -3,7 +3,7 @@ Doc Status: supporting
 
 ## Active rewrite proofs
 
-The ready set contains thirty-four input/tokenization/parser production files. The default driver runs their
+The ready set contains thirty-nine input/tokenization/parser/source-symbol production files. The default driver runs their
 PHP outcome proof plus independent framework checks. Add `--native compiler
 --target-checkout TARGET` to convert and prove all registered rewrite stages natively.
 `compiler/tests/run.py` requires the ready set to match registered stage sources.
@@ -75,7 +75,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | Selection | Existing owner |
 | --- | --- |
 | `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
-| `compiler` | Registered active rewrite stages: thirty-four production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle), syntax access/comparison 134, project parser 66 (+9 host purity) |
+| `compiler` | Registered active rewrite stages: thirty-nine production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle), syntax access/comparison 134, project parser 66 (+9 host purity), source collection 97 (+9 host purity) |
 | `methods` | Named/scalar method boundaries, void, identity and mutation |
 | `returns` | Container return copying and nonpublic scalar state |
 | `iteration` | Typed map presence checks and by-value iteration |
@@ -163,3 +163,5 @@ For old slices without exact pass timestamps, retain raw measurements and label 
 phase-based reconstruction approximate; use unknown where reconstruction is unsupported.
 This accounting measures the cost of reaching working PHP separately from the extra
 cost of getting it working natively. It adds no requirement for more frequent builds.
+
+[Source declaration collection](declaration_collection.md) adds compact facts, stable source symbol IDs and atomic candidate updates (97 PHP/native outcomes plus nine host purity assertions).

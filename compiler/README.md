@@ -3,8 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse now cover **34 production files** with PHP/native proofs. Next is declaration
-collection and symbol records. No active compiler CLI or complete compilation pipeline
+reuse plus source declaration collection now cover **39 production files** with PHP/native proofs. Next is entry-contract preparation. No active compiler CLI or complete compilation pipeline
 exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
@@ -14,7 +13,7 @@ Bring reusable code in deliberately, applying the portable-PHP and strict skills
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` lists the thirty-four proved source files. `tools/portability_target.json`
+`portability.json` lists the thirty-nine proved source files. `tools/portability_target.json`
 pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
@@ -70,3 +69,5 @@ scheduler and later semantic stages remain pending.
 [Syntax access/comparison](../specs/portability/syntax_access.md) now supplies value role views, lazy struct-member traversal and logical subtree comparison.
 
 [Project parser](../specs/portability/parser_project.md) adds current-path membership, byte-stable syntax reuse, atomic segmented joining and failed-update diagnostics.
+
+[Source declaration collection](../specs/portability/declaration_collection.md) adds compact facts, stable source symbol IDs and atomic candidate updates (97 PHP/native outcomes plus nine host purity assertions).
