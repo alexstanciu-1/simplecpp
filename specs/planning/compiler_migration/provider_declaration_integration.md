@@ -298,3 +298,9 @@ Source-export fixed-task work/reuse/join now passes 24 PHP/native scenarios, inc
 initial/full/incremental selection and stale/foreign batch rejection. This supplies
 the worker/publication half; authoritative capture from current type/layout stores
 and source-body export verification remain dependencies before end-to-end integration.
+
+
+Layout graph capture/subset/currentness now has 42 PHP/native scenarios against the
+actual Type_Store. This supplies immutable selected dependencies and exact lineage
+checks. Target measurement and source identity projection still precede complete
+source export capture; fixed-task workers and joins are already separately proved.

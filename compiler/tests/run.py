@@ -65,7 +65,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('project_receipt', Path(__file__).parent / 'project_receipt/run.py'),
           ('runtime_lease', Path(__file__).parent / 'runtime_lease/run.py'),
           ('package_composition', Path(__file__).parent / 'package_composition/run.py'),
-          ('source_export_work', Path(__file__).parent / 'source_export_work/run.py')]
+          ('source_export_work', Path(__file__).parent / 'source_export_work/run.py'),
+          ('layout_capture', Path(__file__).parent / 'layout_capture/run.py')]
 
 
 def main():

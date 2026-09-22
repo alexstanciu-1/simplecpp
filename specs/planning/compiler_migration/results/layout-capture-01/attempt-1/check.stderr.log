@@ -1,0 +1,1 @@
+src/05_generate_code/prepare_backend/data/layout_capture.php:7: value record integer fields require an explicit uint32 annotation

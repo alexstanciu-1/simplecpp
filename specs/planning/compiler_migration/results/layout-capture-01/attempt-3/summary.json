@@ -1,0 +1,68 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/layout-capture-03/source"
+      ],
+      "seconds": 0.114,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/layout-capture-03/source"
+      ],
+      "seconds": 0.903,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/lifetime_policy_codec.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/catalog.php",
+        "/tmp/layout-capture-03/source/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/resolve_types/data/lifecycle_bodies.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/resolve_types/lifecycle_composition.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/type_record.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/result_contracts.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/type_model/data/store.php",
+        "/tmp/layout-capture-03/source/src/04_analyze/resolve_types/utilities/type_cache.php",
+        "/tmp/layout-capture-03/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/layout-capture-03/source/src/05_generate_code/prepare_backend/data/layout.php",
+        "/tmp/layout-capture-03/source/src/05_generate_code/prepare_backend/utilities/layout_ids.php",
+        "/tmp/layout-capture-03/source/src/05_generate_code/prepare_backend/data/layout_capture.php",
+        "/tmp/layout-capture-03/source/src/05_generate_code/prepare_backend/layout_capture.php",
+        "/tmp/layout-capture-03/source/probe.php",
+        "/tmp/layout-capture-03/source/main.php"
+      ],
+      "seconds": 0.084,
+      "exit": 255
+    }
+  ],
+  "native_build_attempts": 0
+}

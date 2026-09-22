@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790111192.0,
+  "first_php_ready_epoch": 1790111412.5048413,
+  "authoring_to_php_ready_wall_seconds": 220.505,
+  "first_native_pass_epoch": 1790111455.579679,
+  "php_ready_to_native_pass_wall_seconds": 43.075,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "checker_correction_cycles": 1,
+  "checker_correction": "Keep traversal IDs full-width using ordinary records; compact portable value records require uint32 integer fields",
+  "host_fixture_corrections": [
+    "Supply value lifetimes",
+    "Supply signedness only for integer definitions",
+    "Do not mark pointer definitions as eligible inline struct fields"
+  ],
+  "consolidation_start_epoch": 1790111482.6853256,
+  "consolidation_end_epoch": 1790111658.5574923,
+  "regression_and_consolidation_wall_seconds": 175.872
+}

@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught InvalidArgumentException: Struct field requires eligible inline storage in /tmp/layout-capture-04/source/src/04_analyze/type_model/data/definitions.php:34
+Stack trace:
+#0 /tmp/layout-capture-04/source/probe.php(13): type_model\Named_Definition->__construct()
+#1 /tmp/layout-capture-04/source/probe.php(33): layout_capture_test\Probe::definition()
+#2 /tmp/layout-capture-04/source/main.php(2): layout_capture_test\Probe::run()
+#3 Command line code(1): require('...')
+#4 {main}
+  thrown in /tmp/layout-capture-04/source/src/04_analyze/type_model/data/definitions.php on line 34

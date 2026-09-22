@@ -141,7 +141,10 @@
     "src/05_generate_code/prepare_backend/data/lifecycle.php",
     "src/05_generate_code/prepare_backend/callable.php",
     "src/05_generate_code/prepare_backend/source_export_work.php",
-    "src/05_generate_code/prepare_backend/source_export_join.php"
+    "src/05_generate_code/prepare_backend/source_export_join.php",
+    "src/05_generate_code/prepare_backend/utilities/layout_ids.php",
+    "src/05_generate_code/prepare_backend/data/layout_capture.php",
+    "src/05_generate_code/prepare_backend/layout_capture.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

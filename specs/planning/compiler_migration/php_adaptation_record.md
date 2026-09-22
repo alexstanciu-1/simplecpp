@@ -1850,3 +1850,46 @@ capture or native module publication. First native build passed; one final verif
 added the no-prior-export case, with zero native correction cycles. One preflight fix
 replaced a nested isset key expression with a local. Evidence/timing:
 `results/source-export-work-01`. src-runtime-preparation remains unchanged.
+
+
+## Selected layout dependency capture
+
+Layout_Capture extracts the prototype layout preparer's pure graph capture/subset/
+comparison/currentness responsibilities. It consumes the actual Type_Store; it does
+not fabricate types, measure storage or execute tools. Iterative enter/finish visits
+follow structure fields and fixed-array elements only. Pointer targets and unrelated
+canonical types are not storage edges. Active private rows detect cycles, completed
+nodes deduplicate shared children, and accepted Layout_Dependency rows retain exact
+definition/member/child identity. A logical stack depth replaces PHP array_pop/unset;
+finished scratch rows remain private until capture returns. No recursive traversal
+or dynamic tuple arrays were introduced.
+
+Layout_Ids uses bottom-up merge sorting plus unique filtering, giving deterministic
+numeric root/dependency order without scanning the entire canonical store or adding
+quadratic insertion sorting to capture. Subset preserves requested root membership
+while sharing the selected reachable nodes. Dependency comparison is iterative and
+assumes canonical per-ID nodes within an accepted lineage; fields are ordered and
+exact, child map insertion order is not semantic. Reuse also checks the known node's
+ID, so a malformed reuse hint is rebuilt instead of imported under another ID.
+Current layout reuse requires exact lineage, configuration and definition before
+comparing the complete reachable dependency graph.
+
+Traversal records initially targeted compact inline storage, but the portable value
+record contract currently permits only uint32 integer fields. Keeping full-width
+canonical IDs takes priority over an implicit narrowing assumption: ordinary named
+records are used for visits/pairs. A future optimization can extend/prove full-width
+inline records or introduce an explicitly bounded ID contract. The scratch maps and
+queues are O(V+E) in reachable work; sort cost is O(V log V). No hot-path allocation
+or timing speedup claim is made by the graph correctness proof.
+
+Forty-two PHP/native scenarios use independent expected reachability and affected-
+ancestor sets, including deterministic generated DAGs, shared/repeated children,
+array storage, pointer leaves, reachable cycles, ignored unreachable cycles, bad root
+IDs, empty roots, identity reuse/subsets and a 513-node chain. Replacing one definition
+rebuilds its reachable ancestors while preserving unaffected identities. Measured-layout
+records in the currentness checks are explicit fixtures, not target measurement evidence.
+First native build passed; zero native correction cycles. One preflight correction
+changed the traversal representation; three host fixture corrections supplied valid
+lifetimes, integer signedness and pointer field eligibility. Evidence/timing:
+`results/layout-capture-01`. Layout measurement/selection, source identity projection
+and complete export capture remain unfinished. src-runtime-preparation is unchanged.
