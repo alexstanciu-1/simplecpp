@@ -115,7 +115,8 @@
     "src/01_prepare_inputs/load_runtime/handlers/native_import.php",
     "src/compile/data/native_project.php",
     "src/05_generate_code/prepare_backend/data/configuration.php",
-    "src/04_analyze/resolve_types/data/export_identity.php"
+    "src/04_analyze/resolve_types/data/export_identity.php",
+    "src/05_generate_code/prepare_backend/data/layout.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

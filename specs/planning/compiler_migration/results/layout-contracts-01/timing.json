@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790102948.0,
+  "php_ready_epoch": 1790103086.2434912,
+  "php_ready_sha256": {
+    "src/05_generate_code/prepare_backend/data/layout.php": "afa99bd6e14f7e30a0913055a59d042a1ffbf48816fd5f2ae8caa337038a45de"
+  },
+  "first_php_scope": "30 typed-input outcomes; subsequent review restored explicit integer-carrier rejection with q_is_int and added predicate/carrier tests before native build.",
+  "full_php_ready_epoch": 1790103159.0669637,
+  "authoring_to_php_ready_seconds": 138.243,
+  "php_ready_to_native_pass_seconds": 106.212,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "native_build_seconds": 32.769,
+  "consolidation_start_epoch": 1790103236.7166874,
+  "consolidation_end_epoch": 1790103348.516559
+}

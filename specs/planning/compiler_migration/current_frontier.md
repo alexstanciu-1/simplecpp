@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **114 production files**: input preparation (137 outcomes),
+Active readiness is **115 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -183,3 +183,10 @@ key comparisons (`results/export-identity-01`). Tagged keys preserve argument or
 declared constant types, nested structure and source flags without heterogeneous
 parts arrays. Next: accepted layout/dependency provenance and source-export ownership;
 source/provider identity projection itself remains pending.
+
+
+Accepted layout/dependency records add 34 PHP/native outcomes, 17 retained layout
+comparisons and six PHP carrier rejections (`results/layout-contracts-01`). Copied
+container membership retains exact shared lineage and definition provenance. Native
+measurement/join acceptance remain unimplemented. Next: source export capability
+and task records, then compiler-side source payload binding and package composition.

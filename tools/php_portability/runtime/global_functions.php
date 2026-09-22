@@ -46,6 +46,7 @@ function q_count(\Countable|array $value): int { return \count($value); }
 function take_nullable(mixed &$out, mixed $value): bool { return \scpp\take_nullable($out, $value); }
 function take_false(mixed &$out, mixed $value): bool { return \scpp\take_false($out, $value); }
 function take_bool(mixed &$out, bool &$flag, mixed $value): bool { return \scpp\take_bool($out, $flag, $value); }
+function q_is_int(mixed $value): bool { return \is_int($value); }
 function q_is_bool(mixed $value): bool { return \is_bool($value); }
 function q_str_starts_with(string $text, string $prefix): bool { return \scpp\compat\str_starts_with($text, $prefix); }
 function q_str_ends_with(string $text, string $suffix): bool { return \scpp\compat\str_ends_with($text, $suffix); }

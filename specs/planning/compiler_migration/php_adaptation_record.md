@@ -1396,3 +1396,27 @@ converter checking rejected `(string)`; supported string concatenation provides
 that local formatting without converter growth. Evidence: `results/export-identity-01`.
 Source symbol/provider selection, lineage validation and accepted layout/export
 ownership are still separate components.
+
+
+## Accepted layout and dependency provenance
+
+The prototype's layout dependency, batch input, selected task, measured layout and
+private result records now use explicit member vectors and integer-keyed dependency
+hashes in their original `prepare_backend/data/layout.php` owner. Container membership
+is copied by value while immutable member/definition/configuration/lineage/dependency
+objects retain exact shared identity. No mutable canonical store or AST is retained.
+
+Measured layout validation preserves positive size, power-of-two alignment, aligned
+size, dense equal-length field/offset lists and strictly increasing in-range offsets.
+Bounded doubling replaces the unsupported bitmask without overflow. Unlike provider
+Native_Record_Layout, this contract permits an empty field list; the two owners are
+not collapsed into a misleading shared validator. The existing target `is_int` is
+exposed as `q_is_int` through the function map/global facade to preserve PHP carrier
+rejection of string/float/bool/null offsets. No target runtime change is needed.
+
+Layout tasks now require an explicit native-command vector (empty when unused),
+avoiding an unsupported bare array default. Missing batch dependencies/field indices
+raise the original logical errors through explicit guards. Proofs cover copied
+membership, shared identities, metadata bounds, native predicate behavior and six
+PHP-only malformed carrier cases. Native measuring, join acceptance and source export
+publication remain future components. Evidence: `results/layout-contracts-01`.

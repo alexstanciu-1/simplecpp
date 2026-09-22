@@ -47,6 +47,7 @@ return [
 	'take_nullable' => array ( 'php' => 'scpp\\take_nullable', 'target' => 'take', 'arity' => 2, ),
 	'take_false' => array ( 'php' => 'scpp\\take_false', 'target' => 'take', 'arity' => 2, ),
 	'take_bool' => array ( 'php' => 'scpp\\take_bool', 'target' => 'take', 'arity' => 3, ),
+	'q_is_int' => array ( 'php' => 'is_int', 'target' => 'is_int', 'arity' => 1, ),
 	'q_is_bool' => array ( 'php' => 'is_bool', 'target' => 'is_bool', 'arity' => 1, ),
 	'q_str_starts_with' => array ( 'php' => 'scpp\\compat\\str_starts_with', 'target' => 'scpp_portability_str_starts_with', 'arity' => 2, ),
 	'q_str_ends_with' => array ( 'php' => 'scpp\\compat\\str_ends_with', 'target' => 'scpp_portability_str_ends_with', 'arity' => 2, ),

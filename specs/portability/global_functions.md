@@ -9,7 +9,7 @@ Do not declare/rebind helper names locally or import alternate implementations.
 - A helper with no PHP equivalent keeps its plain global name: `fs_read_snapshot`,
   `json_read`, `take_false`, `string_byte_at`, and the other registered helpers.
 - An existing PHP function uses a `q_` name. The current fixed catalog provides
-  `q_count`, `q_is_bool`, `q_strlen`, `q_substr`, `q_strpos`, `q_strrpos`,
+  `q_count`, `q_is_bool`, `q_is_int`, `q_strlen`, `q_substr`, `q_strpos`, `q_strrpos`,
   `q_str_starts_with` and `q_str_ends_with`.
 
 ```php
