@@ -12,6 +12,9 @@ now passes on selected release v0.1.76; the older provider pin remains separate.
 also records a default-concurrency timeout; see the results before treating it as
 a clean gate.
 
+See the [native-aware convertible-PHP work list](native_aware_portable_php_plan.md)
+for the planned record, alias, storage and skill-guidance slice.
+
 ## Saved option: stage-by-stage replacement
 
 On 2026-09-22 the user agreed to retain stage-by-stage reimplementation in portable
