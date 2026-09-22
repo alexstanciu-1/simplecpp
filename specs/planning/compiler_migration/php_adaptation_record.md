@@ -2014,3 +2014,40 @@ Evidence/timing: `results/layout-measurement-01`.
 
 The compiler does not yet launch its measurement commands or join the resulting
 batch. Those are the next dependencies. src-runtime-preparation remains unchanged.
+
+
+## Layout batch acceptance
+
+Layout_Join migrates the prototype's concrete selected-task/result acceptance owner.
+It builds a private candidate only after checking current root membership, exact
+definition/configuration/input identity, selected field count/order/identity and LLVM
+spelling, and opaque alignment policy. Result membership must match the exact selected
+task object; equal reconstructed tasks, duplicate results and incomplete batches
+reject. Returned layout records must preserve selected definition, target, lineage,
+dependency and field owners and the proper ordinary/aligned storage spelling.
+
+Explicit typed vectors/maps and identity loops replace PHP loose/dynamic container
+operations. Dependent map access uses separate guards. Dense PHP task-field carriers
+are checked by ordinal before indexed access; native vectors already supply this
+shape. The join follows the current concrete typed-join convention, not a new shared
+polymorphic contract. It changes no cross-stage interface.
+
+Candidate membership follows current roots regardless of completion order. Current
+unselected previous layouts retain exact identity; removed roots disappear. Reuse
+requires Layout_Capture's complete currentness check. As in the prototype, previous
+layouts are assumed to have passed their original acceptance; currentness alone is
+not a new measurement certificate. Native provider layout target, size, alignment,
+field count and every offset must agree for selected and reused records alike.
+Failure leaves all input maps/objects unchanged because candidate state stays local.
+
+The proof exercises initial/full, reverse completion, partial selection, reuse,
+removed/empty roots, opaque storage, provider agreement, distinct target/layout/size/
+alignment/count/offset disagreements, selected/result ownership corruption, missing
+and duplicate batches, and stale previous lineage/configuration. Provider-offset
+fixtures hold size equal so the offset check itself is reached. These are explicit
+accepted-measurement fixtures; this join does not itself measure target storage.
+One host fixture correction aligned record names and member field vocabulary with
+the existing canonical store. First native build passed with no native correction;
+a final verification expands initial-empty-store and field-type-count coverage.
+Evidence/timing: `results/layout-join-01`. Compiler-side tool execution and complete
+coordinator integration remain unfinished; src-runtime-preparation is unchanged.

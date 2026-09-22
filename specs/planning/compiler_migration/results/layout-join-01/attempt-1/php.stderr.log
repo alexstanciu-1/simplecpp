@@ -1,0 +1,7 @@
+PHP Fatal error:  Uncaught LogicException: Type definition does not match declared identity in /tmp/layout-join-01/source/src/04_analyze/type_model/data/store.php:60
+Stack trace:
+#0 /tmp/layout-join-01/source/probe.php(68): type_model\Type_Store->bind_definition()
+#1 /tmp/layout-join-01/source/main.php(2): layout_join_test\Probe::run()
+#2 Command line code(1): require('...')
+#3 {main}
+  thrown in /tmp/layout-join-01/source/src/04_analyze/type_model/data/store.php on line 60

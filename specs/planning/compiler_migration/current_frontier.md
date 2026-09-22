@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **151 production files**: input preparation (137 outcomes),
+Active readiness is **152 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -347,3 +347,11 @@ The corpus includes all 27 previously measured Clang witnesses, ordinary LLVM
 storage, malformed/duplicate/missing facts, integer limits and escaped target text.
 Next: layout batch acceptance and compiler-side tool execution. No complete
 measurement worker, export capture or compiler pipeline is claimed.
+
+
+Layout batch acceptance adds 37 PHP/native scenarios (`results/layout-join-01`).
+Exact selected tasks, complete result membership, current layout identity, native
+provider facts and unchanged inputs on rejection are proved. Completion order does
+not change publication order; removed roots disappear and unselected current owners
+are retained. Next: compiler-side measurement tool execution and coordinator
+integration; no complete backend pipeline or source-export capture is claimed.

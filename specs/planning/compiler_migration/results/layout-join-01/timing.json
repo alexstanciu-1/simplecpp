@@ -1,0 +1,18 @@
+{
+  "authoring_start_epoch": 1790113474.0,
+  "first_php_ready_epoch": 1790113617.4076624,
+  "authoring_to_php_ready_wall_seconds": 143.408,
+  "first_native_pass_observed_epoch": 1790113687.9380667,
+  "php_ready_to_native_pass_wall_seconds": 70.53,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "checker_correction_cycles": 0,
+  "host_fixture_correction_cycles": 1,
+  "host_fixture_corrections": [
+    "Align declared record names with their bound definitions; use the existing Type_Member writable field"
+  ],
+  "final_verification_builds": 1,
+  "consolidation_start_epoch": 1790113687.9380667,
+  "consolidation_end_epoch": 1790113879.1455698,
+  "regression_and_consolidation_wall_seconds": 191.208
+}
