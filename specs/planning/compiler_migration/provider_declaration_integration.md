@@ -272,3 +272,10 @@ Package-schema checkpoint: pointer/manifest/metadata parsing now has 77 PHP/nati
 outcomes. Records remain explicitly unverified; artifact hashes, executable-file checks,
 source receipt validation and lease ownership still precede complete adapter acceptance.
 See `results/package-manifest-01` and `simple_cpp_batch.md` for pinned-target API gaps.
+
+
+Source-export validation checkpoint: fixed capability/operation identity, six-role
+coverage and implementation/import ABI association now have 128 PHP/native outcomes.
+Exact symbol bytes agree with the retained implementation. Receipt ingestion can
+consume this validator next; export capture/production/join and full package adapter
+acceptance are still pending.

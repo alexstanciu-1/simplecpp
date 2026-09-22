@@ -1,0 +1,52 @@
+Transpiled PHP files: 32, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/34] PCH app_pch.hpp.gch
+[2/34] CXX scpp_framework/exceptions.o
+[3/34] CXX scpp_framework/collections.o
+[4/34] CXX src/01_prepare_inputs/load_runtime/data/runtime.o
+[5/34] CXX src/04_analyze/type_model/data/context.o
+[6/34] CXX src/04_analyze/type_model/data/definitions.o
+[7/34] CXX scpp_framework/filesystem.o
+[8/34] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[9/34] CXX src/01_prepare_inputs/load_runtime/handlers/package_syntax.o
+[10/34] CXX src/04_analyze/type_model/data/callable_modes.o
+[11/34] CXX src/04_analyze/resolve_types/data/export_identity.o
+[12/34] CXX src/04_analyze/type_model/data/lifecycle.o
+[13/34] CXX probe.o
+FAILED: probe.o
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/64e2a54cbccda48b.hpp -MMD -MF probe.o.d -MT probe.o -c ../generated/probe.cpp -o probe.o
+../generated/probe.cpp:42:10: error: no viable overloaded '='
+   42 |                         roles = mixed_t{shared_table_(table_item_(static_cast<int_t<> >(2)), table_item_(static_cast<int_t<> >(6)), table_item_(static_cast<int_t<> >(5)), table_item_(static_cast<int_t<> >(4)), table_item_(static_cast<int_t<> >(3)), table_item_(static_cast<int_t<> >(1)))};
+      |                         ~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/source-export-validation-04/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit copy assignment operator) not viable: no known conversion from 'mixed_t' to 'const vector_t<int_t<>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+/tmp/source-export-validation-04/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit move assignment operator) not viable: no known conversion from 'mixed_t' to 'vector_t<int_t<>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+1 error generated.
+[14/34] CXX scpp_framework/json_document.o
+[15/34] CXX scpp_framework/strings.o
+[16/34] CXX src/04_analyze/type_model/data/callables.o
+[17/34] CXX main.o
+[18/34] CXX src/04_analyze/type_model/data/native_record_layout.o
+[19/34] CXX src/04_analyze/type_model/data/representations.o
+[20/34] CXX src/05_generate_code/prepare_backend/data/configuration.o
+[21/34] CXX src/04_analyze/type_model/data/records.o
+[22/34] CXX src/04_analyze/type_model/data/semantic_modes.o
+[23/34] CXX src/05_generate_code/prepare_backend/data/abi.o
+[24/34] CXX src/04_analyze/type_model/data/semantic_calls.o
+[25/34] CXX src/04_analyze/type_model/data/type_references.o
+[26/34] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[27/34] CXX src/04_analyze/type_model/data/resources.o
+[28/34] CXX src/04_analyze/type_model/data/storage.o
+ninja: build stopped: subcommand failed.

@@ -1,0 +1,160 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/source-export-validation-04/source"
+      ],
+      "seconds": 0.109,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/source-export-validation-04/source"
+      ],
+      "seconds": 0.758,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/source-export-validation-04/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/source-export-validation-04/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/source-export-validation-04/source/src/compile/data/native_project.php",
+        "/tmp/source-export-validation-04/source/src/04_analyze/resolve_types/data/export_identity.php",
+        "/tmp/source-export-validation-04/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/source-export-validation-04/source/src/05_generate_code/prepare_backend/data/layout.php",
+        "/tmp/source-export-validation-04/source/src/05_generate_code/prepare_backend/data/abi.php",
+        "/tmp/source-export-validation-04/source/src/05_generate_code/prepare_backend/data/source_exports.php",
+        "/tmp/source-export-validation-04/source/src/05_generate_code/prepare_backend/utilities/callable_contract.php",
+        "/tmp/source-export-validation-04/source/src/05_generate_code/prepare_backend/source_export_preparation.php",
+        "/tmp/source-export-validation-04/source/probe.php",
+        "/tmp/source-export-validation-04/source/main.php"
+      ],
+      "seconds": 0.146,
+      "exit": 0
+    },
+    {
+      "label": "retained-symbols",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/source_export_validation/oracle.php",
+        "/tmp/source-export-validation-04/cases.json"
+      ],
+      "seconds": 0.052,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/source-export-validation-04/source",
+        "/tmp/source-export-validation-04/phpp"
+      ],
+      "seconds": 0.362,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/source-export-validation-04/source",
+        "/tmp/source-export-validation-04/phpp"
+      ],
+      "seconds": 0.064,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/source-export-validation-04/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.058,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.006,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.026,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.147,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 33.256,
+      "exit": 1
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790108685.8059683,
+  "php_ready_sha256": {
+    "src/05_generate_code/prepare_backend/utilities/callable_contract.php": "1e48be26c419f57b332f5c13034ee629cd6b69f3f4cb59e2b02d137176eef252",
+    "src/05_generate_code/prepare_backend/source_export_preparation.php": "901cf3905b1c1d7010be475066a2b5e0f74b32e7c615becc2c9dbf881c9428b6"
+  },
+  "retained_symbol_comparisons": 112
+}

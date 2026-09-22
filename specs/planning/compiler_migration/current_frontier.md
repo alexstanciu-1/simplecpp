@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **130 production files**: input preparation (137 outcomes),
+Active readiness is **132 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -271,3 +271,11 @@ ordinary/project modes, artifact membership, module variants and link arguments 
 checked. This does not verify file contents, executable status, receipts or leases.
 Next: source receipt validation and artifact acceptance dependencies; full package
 adapter integration remains unfinished.
+
+
+Source-export validation adds 128 PHP/native outcomes and retained symbol comparisons
+(`results/source-export-validation-01`). Exact capability/operation associations,
+complete role membership, stable external symbols and physical pointer ABI checks
+are proved. Nonzero stack address spaces reject lifecycle use. No export worker/join
+or receipt acceptance is implied. Next: project receipt validation against these
+accepted export facts; package artifact verification remains a separate dependency.

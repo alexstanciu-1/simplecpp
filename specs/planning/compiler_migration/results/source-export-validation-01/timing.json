@@ -1,0 +1,20 @@
+{
+  "authoring_start_epoch": 1790108531.0,
+  "first_php_ready_epoch": 1790108685.8059683,
+  "authoring_to_php_ready_wall_seconds": 154.806,
+  "first_native_pass_epoch": 1790108768.4155707,
+  "php_ready_to_native_pass_wall_seconds": 82.61,
+  "checker_correction_cycles": 3,
+  "checker_corrections": [
+    "Replace unsupported <= comparisons with bounded < comparisons in byte encoder",
+    "Replace unsupported bit shifts/masks with exact small-byte arithmetic",
+    "Replace remaining <= loop bound with < length + 1"
+  ],
+  "native_build_attempts_to_first_pass": 2,
+  "native_correction_cycles": 1,
+  "native_correction": "Test fixture assigns reordered roles through an explicitly typed vector local. Production unchanged after PHP-ready.",
+  "final_verification_builds": 0,
+  "consolidation_start_epoch": 1790108798.6904204,
+  "consolidation_end_epoch": 1790108947.862102,
+  "regression_and_consolidation_wall_seconds": 149.172
+}

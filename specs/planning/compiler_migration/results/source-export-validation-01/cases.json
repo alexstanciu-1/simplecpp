@@ -1,0 +1,1026 @@
+[
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "missing_impl",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "missing_import",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "stale_capability",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "wrong_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "impl_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "impl_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "impl_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "impl_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "impl_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "impl_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "impl_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "import_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "stale_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "unavailable_abi",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "missing_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "extra_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "reordered",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "valid",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "missing_impl",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "missing_import",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "stale_capability",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "wrong_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "impl_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "impl_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "impl_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "impl_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "impl_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "impl_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "impl_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "import_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "stale_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "unavailable_abi",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "missing_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "extra_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 2,
+    "change": "reordered",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_destroy_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "missing_impl",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "missing_import",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "stale_capability",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "wrong_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "impl_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "impl_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "impl_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "impl_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "impl_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "impl_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "impl_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "import_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "stale_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "unavailable_abi",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "missing_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "extra_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "reordered",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "valid",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "missing_impl",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "missing_import",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "stale_capability",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "wrong_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "impl_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "impl_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "impl_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "impl_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "impl_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "impl_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "impl_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_name",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_cc",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_return",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_parameter",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_count",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_param_extension",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "import_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "stale_operation",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "unavailable_abi",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "missing_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "extra_role",
+    "layout": "e-p:64:64",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 5,
+    "change": "reordered",
+    "layout": "e-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__assign_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A0",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e-A00-p:64:64",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e-A1",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A0002",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "Ax-A0",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A-A2",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A0-A1",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A1-A0",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A99999999999999999999999999999999999",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "a1",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A1x",
+    "accept": true,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "A0\n-A2",
+    "accept": false,
+    "text": "R",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_R_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "a_b",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_a__b_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "a_b",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_a__b_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "a-X",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_a_x2D_X_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "a-X",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_a_x2D_X_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "quote\"slash\\",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_quote_x5C__x22_slash_x5C__x5C__x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "quote\"slash\\",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_quote_x5C__x22_slash_x5C__x5C__x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "\u00e9",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22__x5C_u00e9_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "\u00e9",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22__x5C_u00e9_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "\u6f22\u5b57",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22__x5C_u6f22_x5C_u5b57_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "\u6f22\u5b57",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22__x5C_u6f22_x5C_u5b57_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "line\nnext",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_line_x5C_nnext_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "line\nnext",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_line_x5C_nnext_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "AZaz09",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_AZaz09_x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "AZaz09",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22_AZaz09_x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  },
+  {
+    "role": 1,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "_x5F_",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22___x5F___x22__x5D__x2C__x5B__x5D__x5D__X_default__construct_X_ccc_x3A_void_x28_ptr_x29_"
+  },
+  {
+    "role": 3,
+    "change": "valid",
+    "layout": "e",
+    "accept": true,
+    "text": "_x5F_",
+    "symbol": "scpp_source_inline__source__payload__v1_X__x5B__x22_source_x22__x2C__x22_p_x22__x2C__x5B__x22_r_x2E_phs_x22__x2C__x22__x22__x2C__x22___x5F___x22__x5D__x2C__x5B__x5D__x5D__X_copy__construct_X_ccc_x3A_void_x28_ptr_x2C_ptr_x29_"
+  }
+]

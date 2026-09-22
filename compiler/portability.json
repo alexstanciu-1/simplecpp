@@ -131,7 +131,9 @@
     "src/01_prepare_inputs/load_runtime/utilities/type_retention.php",
     "src/01_prepare_inputs/load_runtime/data/package_context.php",
     "src/01_prepare_inputs/load_runtime/data/package_manifest.php",
-    "src/01_prepare_inputs/load_runtime/utilities/manifest_reader.php"
+    "src/01_prepare_inputs/load_runtime/utilities/manifest_reader.php",
+    "src/05_generate_code/prepare_backend/utilities/callable_contract.php",
+    "src/05_generate_code/prepare_backend/source_export_preparation.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

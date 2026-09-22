@@ -1672,3 +1672,41 @@ cycles. Timings and hashes: `results/package-manifest-01`. No retained adapter p
 complete artifact acceptance is claimed. Future optimization can fuse repeated immutable
 JSON member reads; do not remove schema/identity checks or substitute lexical digest
 validation for hashing exact bytes.
+
+
+## Source-export validation and stable linkage
+
+`Source_Export_Preparation::symbol/validate` and
+`Callable_Contract::lifecycle_matches` now operate on the existing typed export/ABI
+records. Exact capability and lifecycle-operation identity remains mandatory; an
+otherwise equal reconstructed object cannot replace an accepted owner. Import ABI
+parameters compare explicit type/extension values instead of PHP object equality.
+Absent implementation/import objects are rejected before dereference. Validation
+reads fixed records and publishes no state. Capture, production, joins and receipt
+ingestion are not claimed by this checkpoint.
+
+Role tables are validated by exact six-name membership, independent of hash insertion
+order; iteration follows the canonical role vocabulary. This deliberately removes
+the prototype's incidental array-key-order dependency while retaining missing/extra
+role rejection. Physical parameter order remains significant. The first well-formed
+LLVM DataLayout A entry determines whether the stack is in address space zero;
+byte scanning replaces regex and avoids integer overflow when only zero/nonzero is
+needed. It preserves malformed-entry skipping and first-valid-entry selection.
+
+Stable export symbol encoding preserves the original bytes: ASCII alphanumeric
+passes through, underscore doubles, other bytes use uppercase _xHH_. Small bounded
+byte arithmetic replaces unsupported bit operators; no Unicode-text transformation
+is used. Independent expected names and actual retained symbol implementation agree
+for all 128 cases, including punctuation and Unicode nominal names. These are symbol
+comparisons, not 128 retained whole-validator comparisons. Independent mutation
+fixtures exercise all four implemented roles, stale identity, missing ABI halves,
+role coverage, parameter count/type/extensions, return/convention/linkage and stack
+layout rules. The retained source_exports unit supplied semantic regression scenarios;
+its end-to-end build/join execution remains outside this component's proof.
+
+Three checker correction cycles preceded PHP readiness. Two native builds reached
+the first pass: one correction to a test's bare vector reassignment; production
+remained unchanged after PHP readiness. Timings/hashes/failure logs live in
+`results/source-export-validation-01`. Optimization follow-up: retain the direct byte
+encoder and fixed role traversal; avoid adding dynamic serialization/equality to
+these validation paths.
