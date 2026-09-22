@@ -44,7 +44,7 @@ def main():
     span.write_text(original)
     assert json.loads(run(convert).stdout)['converted'] == 1
     manifest = (output / '.scpp-portability.json').read_bytes()
-    prefix = (source / 'main.php').read_text().split('// </scpp-imports>')[0] + '// </scpp-imports>\n'
+    prefix = "<?php\n"
     rejects = [
         '/** @scpp-struct */ class Bad { public int $n /** uint32 */ = 0; }',
         '/** @scpp-struct */ final class Bad { public int $n = 0; }',

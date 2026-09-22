@@ -26,7 +26,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-portability-') as tmp:
     source.mkdir()
     fixture = ROOT / 'tests/portability/fixtures/take.php'
     shutil.copy(fixture, source / 'take.php')
-    prologue = fixture.read_text().split('// </scpp-imports>\n', 1)[0] + '// </scpp-imports>\n'
+    prologue = '<?php\n'
     def authored(body):
         return prologue + body + '\n'
     sync = ['php', str(tools / 'sync_imports.php'), str(source)]
@@ -61,7 +61,6 @@ with tempfile.TemporaryDirectory(prefix='scpp-portability-') as tmp:
         'class scpp_portability_exception {}',
         'try {} catch (\\Error $e) {}',
         '$f();',
-        '\\take_false($x, false);',
         'use function scpp\\take_false as custom_take;',
         'unknown();',
         '\\scpp\\unknown();',
@@ -93,8 +92,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-portability-') as tmp:
     run(command)
     # Explicit names and case-insensitive default names use the same local rules.
     qualified = (source / 'take.php').read_text()
-    qualified = qualified.replace('take_nullable(', '\\scpp\\take_nullable(')
-    qualified = qualified.replace('take_false(', '\\scpp\\take_false(')
+    qualified = qualified.replace('take_nullable(', '\\take_nullable(')
+    qualified = qualified.replace('take_false(', '\\take_false(')
     qualified = qualified.replace('take_bool(', 'TAKE_BOOL(')
     (source / 'qualified.php').write_text(qualified)
     run(command)
@@ -104,8 +103,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-portability-') as tmp:
 
     missing = source / 'missing.php'
     missing.write_text('<?php\n$x /** int */ = 1;\n')
-    assert 'managed imports' in run(command, ok=False).stderr
-    run(sync + ['--check'], ok=False)
+    run(command)
+    run(sync + ['--check'])
     run(sync)
     saved = missing.stat().st_mtime_ns
     run(sync)
@@ -116,7 +115,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-portability-') as tmp:
     run(command)
     # Managed block repair must never erase authored executable code.
     malformed = source / 'unsafe.php'
-    malformed.write_text(authored('echo "body";').replace('// </scpp-imports>', 'echo "do not erase";\n// </scpp-imports>'))
+    malformed.write_text('<?php\n// <scpp-imports>\necho "do not erase";\n// </scpp-imports>\n')
     original = malformed.read_bytes()
     assert 'unexpected content' in run(sync, ok=False).stderr
     assert malformed.read_bytes() == original
@@ -166,23 +165,17 @@ with tempfile.TemporaryDirectory(prefix='scpp-portability-') as tmp:
         'foreach ([["abc",-1,1,""],["abc",0,-1,""],["abc",4,1,""],["abc",3,2,""],["abc",1,99,"bc"]] '
         'as [$value,$offset,$length,$expected]) { '
         'if (scpp\\string_byte_slice($value,$offset,$length) !== $expected) exit(1); }', library])
-    # A private policy fixture proves builtin shadowing and bypass rejection.
-    # This is not a shipped count adapter or a native semantic equivalence claim.
-    policy = tools / 'function_map.php'
-    policy.write_text(policy.read_text().replace("\t'count' => ['php' => null, 'target' => 'count', 'arity' => 1],", "\t'count' => ['php' => 'scpp\\\\compat\\\\count', 'target' => 'count', 'arity' => 1],", 1))
-    assert 'managed imports' in run(command, ok=False).stderr
-    run(sync)
-    run(command)
+    # Global facade is explicit, and original PHP names cannot bypass it in converted source.
     owned = source / 'owned.php'
-    owned.write_text('<?php\necho count(9);\n')
-    run(sync)
+    owned.write_text('<?php\necho q_count([1,2]);\n')
+    # Typed containers remain an explicit source requirement.
+    owned.write_text('<?php\n$xs /** vector<int> */ = [1,2]; echo q_count($xs);\n')
     run(command)
-    support = base / 'private_support.php'
-    support.write_text('<?php namespace scpp\\compat; function count(mixed $v): int { return 17; }')
-    observed = run(['php', '-d', 'auto_prepend_file=' + str(support), str(owned)])
-    assert observed.stdout == '17'
-    owned.write_text(owned.read_text().replace('count(9)', '\\count(9)'))
-    assert 'global bypass' in run(command, ok=False).stderr
+    observed = run(['php', '-d', 'auto_prepend_file=' + library, str(owned)])
+    assert observed.stdout == '2'
+    for call in ['count($xs)', '\\count($xs)', '\\scpp\\compat\\strlen("x")']:
+        owned.write_text('<?php\n$xs /** vector<int> */ = [1,2]; echo ' + call + ';\n')
+        run(command, ok=False)
     owned.unlink()
     run(command)
     if '--native' in sys.argv:

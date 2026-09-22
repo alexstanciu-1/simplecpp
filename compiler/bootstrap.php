@@ -20,3 +20,6 @@ require_once __DIR__ . '/src/02_tokenize/main_tokenize.php';
 require_once __DIR__ . '/src/03_parse/data/nodes.php';
 require_once __DIR__ . '/src/03_parse/data/tree.php';
 require_once __DIR__ . '/src/03_parse/utilities/binary_syntax.php';
+require_once __DIR__ . '/src/03_parse/data/expression_state.php';
+require_once __DIR__ . '/src/03_parse/handlers/expressions.php';
+require_once __DIR__ . '/src/03_parse/parse_file.php';

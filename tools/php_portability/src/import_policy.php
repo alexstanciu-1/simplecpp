@@ -3,23 +3,14 @@ declare(strict_types=1);
 
 namespace scpp\portability;
 
-/** One fixed import block for every source file; no project symbol lookup. */
+/** Validate import-free source prologues; remove old generated imports during migration. */
 final class Import_Policy {
 	private const BEGIN = '// <scpp-imports>';
 	private const END = '// </scpp-imports>';
 
 	public function __construct(private array $functions) {}
 
-	public function block(): string {
-		$lines = [self::BEGIN];
-		foreach ($this->functions as $name => $rule) {
-			if ($rule['php'] !== null) {
-				$lines[] = 'use function ' . $rule['php'] . ' as ' . $name . ';';
-			}
-		}
-		$lines[] = self::END;
-		return implode("\n", $lines) . "\n";
-	}
+	public function block(): string { return ''; }
 
 	/** Split a single optional strict declaration/semicolon namespace from the body.
 	 * Comments may precede either declaration. Managed imports belong after the
@@ -142,12 +133,11 @@ final class Import_Policy {
 	}
 
 	public function prepare(string $source, string $path): string {
-		[$opening, $body] = $this->parts($source, $path);
-		$block = $this->block();
-		if (!str_starts_with($body, $block)) {
-			throw new \RuntimeException($path . ':1: missing or stale managed imports; run sync_imports.php');
-		}
-		// Keep original source line numbers while removing PHP-only imports.
-		return $this->nativePrefix($opening) . str_repeat("\n", substr_count($block, "\n")) . substr($body, strlen($block));
-	}
+        $clean = $this->synchronize($source, $path);
+        if ($clean !== $source) {
+            throw new \RuntimeException($path . ':1: legacy managed imports must be removed; run sync_imports.php');
+        }
+        [$opening, $body] = $this->parts($source, $path);
+        return $this->nativePrefix($opening) . $body;
+    }
 }

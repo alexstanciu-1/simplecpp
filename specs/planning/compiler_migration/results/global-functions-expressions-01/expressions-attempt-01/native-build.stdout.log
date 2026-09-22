@@ -1,0 +1,60 @@
+Transpiled PHP files: 17, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/19] PCH app_pch.hpp.gch
+[2/19] CXX src/03_parse/parse_file.o
+FAILED: src/03_parse/parse_file.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/428791f7a08275d1.hpp -MMD -MF src/03_parse/parse_file.o.d -MT src/03_parse/parse_file.o -c ../generated/src/03_parse/parse_file.cpp -o src/03_parse/parse_file.o
+../generated/src/03_parse/parse_file.cpp:63:8: error: 'operator=' cannot be the name of a variable or data member
+   63 |                 auto operator = Binary_Syntax::from_token(this->kind());
+      |                      ^
+../generated/src/03_parse/parse_file.cpp:63:18: error: expected ';' at end of declaration
+   63 |                 auto operator = Binary_Syntax::from_token(this->kind());
+      |                                ^
+      |                                ;
+../generated/src/03_parse/parse_file.cpp:65:67: error: use of undeclared 'operator,'
+   65 |                         if (static_cast<bool>(php::condition_truthy(php::not_identical(operator, static_cast<int_t<> >(0))))) {
+      |                                                                                        ^
+../generated/src/03_parse/parse_file.cpp:66:115: error: expected a type
+   66 |                                 if (static_cast<bool>((Binary_Syntax::precedence(frame->operators->top()) < Binary_Syntax::precedence(operator)))) {
+      |                                                                                                                                               ^
+../generated/src/03_parse/parse_file.cpp:78:66: error: use of undeclared 'operator,'
+   78 |                 if (static_cast<bool>(php::condition_truthy(php::not_identical(operator, static_cast<int_t<> >(0))))) {
+      |                                                                                ^
+../generated/src/03_parse/parse_file.cpp:79:35: error: expected a type
+   79 |                         frame->operators->push(operator);
+      |                                                        ^
+../generated/src/03_parse/parse_file.cpp:162:9: error: expected unqualified-id
+  162 |                         auto template = (type || php::identical(frame->context, parse::EXPR_TEMPLATE));
+      |                              ^
+../generated/src/03_parse/parse_file.cpp:164:5: error: expected expression
+  164 |                                 template = static_cast<bool_t>(true);
+      |                                 ^
+../generated/src/03_parse/parse_file.cpp:166:48: error: expected expression
+  166 |                         if (static_cast<bool>(php::condition_truthy(template))) {
+      |                                                                     ^
+9 errors generated.
+[3/19] CXX src/02_tokenize/structures.o
+[4/19] CXX src/03_parse/data/nodes.o
+[5/19] CXX scpp_framework/collections.o
+[6/19] CXX src/03_parse/handlers/expressions.o
+[7/19] CXX scpp_framework/exceptions.o
+[8/19] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[9/19] CXX src/02_tokenize/store.o
+[10/19] CXX src/03_parse/data/expression_state.o
+[11/19] CXX probe.o
+[12/19] CXX src/03_parse/data/tree.o
+[13/19] CXX src/02_tokenize/tokenize.o
+[14/19] CXX scpp_framework/filesystem.o
+[15/19] CXX scpp_framework/json_document.o
+[16/19] CXX scpp_framework/strings.o
+[17/19] CXX main.o
+ninja: build stopped: subcommand failed.

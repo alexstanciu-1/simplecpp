@@ -27,13 +27,13 @@ records and both `&ref` annotations now have a [separate proved contract](value_
 read it before choosing copy or alias behavior.
 
 Use no namespace or one leading lowercase `namespace name;`, optionally preceded
-by `declare(strict_types=1);` and comments. Generate the uniform function imports
-with `sync_imports.php`; never hand-maintain or rebind them. `scpp` owns target
-facilities; `scpp\compat` owns PHP-like operations with adapted semantics. Write
-ordinary mapped calls such as `strlen($text)` and `is_bool($value)`, not invented
-`compat_*` names. A PHP builtin is not automatically available to the converter.
-The exact available names and arities live in
-[`function_map.php`](../../tools/php_portability/function_map.php).
+by `declare(strict_types=1);` and comments. Do not add function imports. The host
+bootstrap supplies [global portable helpers](global_functions.md): plain names for
+facilities absent from PHP, and `q_` names for existing PHP functions (`q_count`,
+`q_strlen`, `q_is_bool`, etc.). Internal scpp/scpp\compat names are implementation
+details; do not call them directly from portable source. The fixed
+[function map](../../tools/php_portability/function_map.php) owns available names,
+arities and target bindings. Arbitrary q_-prefixed PHP builtins are not supported.
 
 ## Supported forms and their limits
 
@@ -63,8 +63,8 @@ were never restricted to the earlier scalar-only vocabulary. See the
 
 ## Examples anchored in existing proofs
 
-The fragments below belong after the file prologue and generated import block.
-They omit that block for readability; the synchronizer supplies it.
+The fragments below belong after the optional file prologue.
+No import block is required.
 
 From the [wrapper fixture](../../tests/portability/fixtures/take.php):
 
@@ -150,8 +150,6 @@ From the repository root, with a dedicated source directory and a separate outpu
 directory (replace the uppercase paths):
 
 ```bash
-php tools/php_portability/sync_imports.php SOURCE_DIRECTORY
-php tools/php_portability/sync_imports.php SOURCE_DIRECTORY --check
 php tools/php_portability/check.php SOURCE_DIRECTORY
 php tools/php_portability/convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY --stats
 php tools/php_portability/install_native_runtime.php OUTPUT_DIRECTORY

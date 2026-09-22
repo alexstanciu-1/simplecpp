@@ -38,10 +38,10 @@ class Lookup {
         'main.php': r'''$map /** hash<int, int> */ = [];
 $map[12] = 0;
 $map[37] = 5;
-echo isset($map[12]) ? "zero-present" : "bad", ":", isset($map[91]) ? "bad" : "missing", ":", count($map), "\n";
+echo isset($map[12]) ? "zero-present" : "bad", ":", isset($map[91]) ? "bad" : "missing", ":", q_count($map), "\n";
 $sum = 0;
 foreach ($map as $id => $position) { $sum = $sum + $id + $position; }
-echo $sum, ":", count($map), "\n";
+echo $sum, ":", q_count($map), "\n";
 $paths /** hash<int> */ = [];
 $paths["/a"] = 12;
 $paths["/b"] = 37;
@@ -49,7 +49,7 @@ $path_sum = 0;
 foreach ($paths as $path => $id) {
     if (isset($paths[$path])) { $path_sum = $path_sum + $id; }
 }
-echo $path_sum, ":", isset($paths["/missing"]) ? "bad" : "missing", ":", count($paths), "\n";
+echo $path_sum, ":", isset($paths["/missing"]) ? "bad" : "missing", ":", q_count($paths), "\n";
 $values /** vector<int> */ = [];
 $values[] = 4;
 $values[] = 7;

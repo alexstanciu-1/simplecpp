@@ -73,9 +73,9 @@ echo $base !== $next ? "owner-distinct" : "bad", ":", $base->rows[0] !== $next->
 $next->rows[0]->tags[0] = 8;
 $next->rows[0]->tags[] = 9;
 $next->rows[0]->label = "edited";
-echo $base->rows[0]->tags[0], ":", $next->rows[0]->tags[0], ":", $latest->rows[0]->tags[0], ":", count($base->rows[0]->tags), ":", count($next->rows[0]->tags), ":", $base->rows[0]->label, ":", $latest->rows[0]->label, "\n";
+echo $base->rows[0]->tags[0], ":", $next->rows[0]->tags[0], ":", $latest->rows[0]->tags[0], ":", q_count($base->rows[0]->tags), ":", q_count($next->rows[0]->tags), ":", $base->rows[0]->label, ":", $latest->rows[0]->label, "\n";
 $next->rows[] = new \snapshots\Row();
-echo count($base->rows), ":", count($next->rows), ":", count($latest->rows), "\n";
+echo q_count($base->rows), ":", q_count($next->rows), ":", q_count($latest->rows), "\n";
 // Separate witness: shallow membership copies do not freeze shared rows.
 $shallow = $base->shallow_copy();
 $shallow->rows[1]->value = 99;

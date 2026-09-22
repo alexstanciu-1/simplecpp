@@ -135,31 +135,19 @@ The existence of a PHP primitive that can implement part of a library does not
 make that library a compatibility override: a source-buffer/span library still
 belongs to `scpp`, even if internally built from PHP strings.
 
-Use ordinary names with explicit function imports where needed, for example:
-
-```php
-use function scpp\compat\{count, json_decode};
-use function scpp\take_nullable;
-```
-
-One central policy selects functions for the whole project. The tool maintains
-identical marked imports in every authored file; no per-file API choice is allowed.
-The current implementation imports the three `scpp` take helpers and leaves
-`is_bool` as ordinary PHP. The example JSON/count imports illustrate the policy
-once those adapters exist; they are not installed today.
-
-`sync_imports.php` writes/checks the common block. The converter requires it and
-strips it using the local policy; explicit global bypasses of imported names fail.
-Global helper aliases have been removed. The current subset supports global script
-files, rejecting namespace/declare prologues until correct scoped placement exists.
-PHP imports remain lexical: bootstrap loading alone cannot apply them to a file.
+Current authoring uses [global helpers](../global_functions.md), with no imports.
+Helpers absent from PHP keep plain names; existing PHP names use q_ (`q_count`,
+`q_is_bool`, `q_strlen`, etc.). A shared bootstrap provides the fixed facade, and
+function_map.php owns arities and native mappings. sync_imports.php now only removes
+old generated blocks and validates the single optional lowercase namespace prologue.
+Bare original PHP builtins and internal namespace bypasses are rejected by conversion.
 
 For JSON, proposed `scpp\compat\json_decode` must return an explicit PHP Result
 carrier supplied by the `scpp` library, separating decoded null/false from errors.
 This illustrates the distinction: the compatibility function consumes the new
 framework library; it is not itself the whole framework.
 
-Reserved function imports, explicit type annotations and known framework operations
+Reserved global helper names, explicit type annotations and known framework operations
 provide all conversion facts locally. No library import authorizes converter type
 inference. Native-only MT/layout tests run after porting; missing PHP facilities
 need either a useful library approximation or an explicit native-only boundary.

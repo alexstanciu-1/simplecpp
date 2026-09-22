@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/03_parse/parse_file.phs:43: 'operator=' cannot be the name of a variable or data member
+Generated location: .prism/generated/src/03_parse/parse_file.cpp:63:8
+Compile error in src/03_parse/parse_file.phs:43: expected ';' at end of declaration
+Generated location: .prism/generated/src/03_parse/parse_file.cpp:63:18
+Compile error in src/03_parse/parse_file.phs:45: use of undeclared 'operator,'
+Generated location: .prism/generated/src/03_parse/parse_file.cpp:65:67
+Additional remapped diagnostics: 6
+Raw compiler excerpt:
+parse_file.cpp:63:8: error: 'operator=' cannot be the name of a variable or data member
+parse_file.cpp:63:18: error: expected ';' at end of declaration
+parse_file.cpp:65:67: error: use of undeclared 'operator,'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

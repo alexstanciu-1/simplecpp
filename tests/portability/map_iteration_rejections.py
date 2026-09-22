@@ -33,7 +33,7 @@ def main():
             '$xs /** vector<int> */ = []; foreach ($xs as $x): endforeach;',
             '$xs /** vector<int> */ = []; foreach ($xs as $x) { break 2; }',
             '$xs /** hash<int> */ = []; echo isset($xs["a"], $xs["b"]);',
-            '$xs /** hash<int> */ = []; echo isset($xs[strlen("a")]);',
+            '$xs /** hash<int> */ = []; echo isset($xs[q_strlen("a")]);',
             '$xs /** hash<int> */ = []; echo isset($xs[$k++]);',
             '$xs /** hash<int> */ = []; echo isset($xs);',
         ]:

@@ -15,8 +15,6 @@ Add `--native compiler --target-checkout TARGET_CHECKOUT` for the cumulative nat
 proof. See the [workflow and other proof selections](../../specs/portability/validation_workflow.md).
 
 ```bash
-php tools/php_portability/sync_imports.php SOURCE_DIRECTORY
-php tools/php_portability/sync_imports.php SOURCE_DIRECTORY --check
 php tools/php_portability/check.php SOURCE_DIRECTORY
 php tools/php_portability/check.php SOURCE_DIRECTORY --cache EXISTING_OUTPUT_DIRECTORY
 php tools/php_portability/convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY
@@ -24,15 +22,15 @@ php tools/php_portability/convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY --stats
 php tools/php_portability/install_native_runtime.php OUTPUT_DIRECTORY
 php -d auto_prepend_file="$PWD/tools/php_portability/runtime/bootstrap.php" tests/portability/fixtures/take.php
 python3 tests/portability/run.py
-python3 tests/portability/compiler_context/prologues.py
+python3 tests/portability/prologues.py
 python3 tests/portability/native_runtime.py
 python3 tests/portability/check.py
 ```
 
-`function_map.php` is the authoritative function policy: PHP implementation (or
-null for an ordinary PHP builtin), target spelling and arity. Every portable file
-has the same tool-maintained imports. Manual imports, per-file rebinding and global
-bypasses of framework-owned functions are rejected. PHP support is loaded by the
+`function_map.php` is the authoritative function policy: internal PHP implementation,
+native target spelling and arity. Every portable file
+uses the same global helper catalog without imports. Manual imports, per-file rebinding and internal-namespace/original-builtin
+bypasses are rejected. PHP support is loaded by the
 host harness or `auto_prepend_file`; compiler bootstrap loads it explicitly.
 
 `check.php` is read-only: it scans every `.php` using the conversion discovery and
@@ -95,7 +93,7 @@ Owners:
 - `src/declaration_index.php`: declaration locations, direct trait dependencies,
   collision checks and token expansion retaining original source locations.
 - `src/project_cache.php`: incremental membership, metadata and PHP token artifacts.
-- `src/import_policy.php`, `sync_imports.php`: uniform source imports.
+- `src/import_policy.php`, `sync_imports.php`: import-free prologues and old-block cleanup.
 - `function_map.php`: direct function bindings.
 - `src/exception_policy.php`: root exception spellings and native hierarchy.
 - `runtime/bootstrap.php`: PHP approximations of target-specific operations.
@@ -108,3 +106,8 @@ Owners:
 The cumulative compiler proof in `tests/portability/compiler_context/run.py` uses
 the selected clean v0.1.76 checkout. `tests/portability/run.py --native` remains a
 separate foundation test using the current workspace toolchain.
+
+Current authoring uses [global helpers](../../specs/portability/global_functions.md),
+with q_ for PHP builtin names and no function imports. sync_imports.php only cleans
+old generated import blocks and validates prologues. Regenerate static PHP facade
+with generate_global_functions.php; --check verifies its signatures.

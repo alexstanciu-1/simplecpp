@@ -797,16 +797,11 @@ final class Converter {
 			if ($id === T_NAME_FULLY_QUALIFIED || ($id === T_STRING && isset($this->map[strtolower($text)]))) {
 				$name = strtolower($text);
 				$rule = $this->map[$name] ?? null;
-				if ($id === T_NAME_FULLY_QUALIFIED) {
-					foreach ($this->map as $alias => $candidate) {
-						if ($candidate['php'] !== null && $name === '\\' . $alias) {
-							$this->fail($line, 'global bypass of framework-owned name: ' . $alias);
-						}
-						if ($name === '\\' . strtolower($candidate['php'] ?? $alias)) {
-							$rule = $candidate;
-						}
-					}
-				}
+                if ($id === T_NAME_FULLY_QUALIFIED) {
+                    $rule = $this->map[ltrim($name, '\\')] ?? null;
+                    if ($rule === null) { $this->fail($line, 'global bypass or unmapped qualified operation ' . $text); }
+                }
+
 				if ($rule === null) {
 					$this->fail($line, 'unmapped qualified operation ' . $text);
 				}

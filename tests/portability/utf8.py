@@ -42,17 +42,17 @@ def main():
     values = ['', 'ascii', 'é中😀', 'e\u0301', '👩\u200d💻', '\U0010ffff']
     for value in values:
         s = literal(value)
-        echo(f'strlen({s})', len(value))
+        echo(f'q_strlen({s})', len(value))
         echo(f'string_byte_len({s})', len(value.encode()))
         echo(f'string_utf8_is_valid({s}) ? 1 : 0', 1)
         for index in [-1, 0, 1, len(value), len(value) + 1]:
             echo(f'string_codepoint_at({s}, {index})', ord(value[index]) if 0 <= index < len(value) else -1)
         for offset in [-20, -1, 0, 1, 20]:
             start = min(len(value), max(0, offset if offset >= 0 else len(value) + offset))
-            echo(f'substr({s}, {offset})', value[start:])
+            echo(f'q_substr({s}, {offset})', value[start:])
             for length in [-2, 0, 2, 20]:
                 end = min(len(value), start + length) if length >= 0 else max(start, len(value) + length)
-                echo(f'substr({s}, {offset}, {length})', value[start:end])
+                echo(f'q_substr({s}, {offset}, {length})', value[start:end])
 
     for text, needle in [('é中😀é', 'é'), ('é中😀é', '😀'), ('é中😀é', '😀é'), ('é中😀é', 'x'), ('é中😀é', ''), ('', '')]:
         for offset in sorted({-len(text), -min(1, len(text)), 0, min(1, len(text)), len(text)}):
@@ -63,14 +63,14 @@ def main():
                 if name == 'strrpos' and offset < 0:
                     found = text.rfind(needle, 0, min(len(text), start + len(needle)))
                 lines.append('$position = -9;')
-                lines.append(f'if (take_false($position, {name}({literal(text)}, {literal(needle)}, {offset}))) {{ echo $position, "\\n"; }} else {{ echo "F\\n"; }}')
+                lines.append(f'if (take_false($position, q_{name}({literal(text)}, {literal(needle)}, {offset}))) {{ echo $position, "\\n"; }} else {{ echo "F\\n"; }}')
                 expected.append(str(found) if found >= 0 else 'F')
         for name in ['strpos', 'strrpos']:
             found = text.find(needle) if name == 'strpos' else text.rfind(needle)
-            lines.append(f'if (take_false($position, {name}({literal(text)}, {literal(needle)}))) {{ echo $position, "\\n"; }} else {{ echo "F\\n"; }}')
+            lines.append(f'if (take_false($position, q_{name}({literal(text)}, {literal(needle)}))) {{ echo $position, "\\n"; }} else {{ echo "F\\n"; }}')
             expected.append(str(found) if found >= 0 else 'F')
-    echo('str_starts_with("é中", "é") ? 1 : 0', 1)
-    echo('str_ends_with("é中", "中") ? 1 : 0', 1)
+    echo('q_str_starts_with("é中", "é") ? 1 : 0', 1)
+    echo('q_str_ends_with("é中", "中") ? 1 : 0', 1)
     # Runtime malformed data built from valid source literals: continuation,
     # truncation, overlong sequence, surrogate, and a value beyond U+10FFFF.
     bad_values = [
@@ -83,13 +83,13 @@ def main():
     for bad in bad_values:
         lines.append('$bad = ' + bad + ';')
         echo('string_utf8_is_valid($bad) ? 1 : 0', 0)
-        for expression in ['strlen($bad)', 'substr($bad, 0)', 'strpos("ok", $bad)', 'strrpos($bad, "")',
-                           'str_starts_with($bad, "")', 'str_ends_with("ok", $bad)', 'string_codepoint_at($bad, -1)']:
+        for expression in ['q_strlen($bad)', 'q_substr($bad, 0)', 'q_strpos("ok", $bad)', 'q_strrpos($bad, "")',
+                           'q_str_starts_with($bad, "")', 'q_str_ends_with("ok", $bad)', 'string_codepoint_at($bad, -1)']:
             lines.append('try { $ignored = ' + expression + '; echo "BAD\\n"; } catch (\\InvalidArgumentException $error) { echo $error->getMessage(), "\\n"; }')
             expected.append('Text operation requires valid UTF-8')
     echo('string_byte_len(string_byte_slice("é", 1, 1))', 1)
     echo('string_byte_starts_with(string_byte_slice("é", 1, 1), string_byte_slice("é", 1, 1)) ? 1 : 0', 1)
-    for expression in ['strpos("é", "", 2)', 'strrpos("é", "", -2)']:
+    for expression in ['q_strpos("é", "", 2)', 'q_strrpos("é", "", -2)']:
         lines.append('try { $ignored = ' + expression + '; echo "BAD\\n"; } catch (\\OutOfBoundsException $error) { echo $error->getMessage(), "\\n"; }')
         expected.append('Text search offset is out of range')
     expected_text = '\n'.join(expected) + '\n'
@@ -101,8 +101,8 @@ def main():
     run('convert', command)
     run('runtime', ['php', TOOLS / 'install_native_runtime.php', output])
     assert json.loads(run('reuse', command).stdout) == {'converted': 0, 'reused': 1, 'removed': 0}
-    for bad in ['echo \\strlen("é");', 'echo \\substr("é", 0);', 'echo strlen();', 'echo substr("a");', 'echo strpos("a", "a", 0, 1);']:
-        prologue = (source / 'main.php').read_text().split('// </scpp-imports>')[0] + '// </scpp-imports>\n'
+    for bad in ['echo \\strlen("é");', 'echo \\substr("é", 0);', 'echo q_strlen();', 'echo q_substr("a");', 'echo q_strpos("a", "a", 0, 1);']:
+        prologue = "<?php\n"
         (source / 'bad.php').write_text(prologue + bad)
         assert 'bad.php:' in run('reject', command, ok=False).stderr
     (source / 'bad.php').unlink()

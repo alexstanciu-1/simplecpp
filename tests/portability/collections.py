@@ -16,16 +16,16 @@ $kept /** hash<int, int> */ = keyed_filter($keyed, function (int $x): bool { ret
 foreach ($kept as $k => $v) { echo $k, ":", $v, "\n"; }
 $suffix = "!";
 $labels /** vector<string> */ = sequence_map($input, function (int $x) use ($suffix): string { return "item" . $suffix; });
-echo $labels[0], ":", count($labels), "\n";
+echo $labels[0], ":", q_count($labels), "\n";
 $words /** hash<string> */ = [];
 $words["b"] = "two"; $words["04"] = "four";
-$mapped /** hash<int> */ = keyed_map($words, function (string $x): int { return strlen($x); });
+$mapped /** hash<int> */ = keyed_map($words, function (string $x): int { return q_strlen($x); });
 foreach ($mapped as $k => $v) { echo $k, ":", $v, "\n"; }
 $empty /** vector<int> */ = [];
 $none /** vector<int> */ = sequence_filter($input, function (int $x): bool { return false; });
 $all /** vector<int> */ = sequence_filter($input, function (int $x): bool { return true; });
 $zero /** vector<int> */ = sequence_map($empty, function (int $x): int { throw new \Exception("must not run"); });
-echo count($none), ":", count($all), ":", count($zero), "\n";
+echo q_count($none), ":", q_count($all), ":", q_count($zero), "\n";
 $nested /** vector<int> */ = sequence_map(sequence_filter($input, function (int $x): bool { return $x > 10; }), function (int $x): int { return $x + 1; });
 echo $nested[0], ":", $nested[1], "\n";
 try { sequence_map($input, function (int $x): int { throw new \Exception("callback error"); }); }
@@ -41,12 +41,12 @@ $row = new Row();
 $rows /** vector<Row> */ = []; $rows[] = $row;
 $kept_rows /** vector<Row> */ = sequence_filter($rows, function (Row $item): bool { return $item->value > 0; });
 echo $kept_rows[0] === $row ? "shared" : "bad", "\n";
-$kept_rows[] = new Row(); echo count($rows), ":", count($kept_rows), "\n";
+$kept_rows[] = new Row(); echo q_count($rows), ":", q_count($kept_rows), "\n";
 $empty_hash /** hash<int,int> */ = [];
 $empty_mapped /** hash<string,int> */ = keyed_map($empty_hash, function (int $x): string { throw new \Exception("must not run"); });
 $all_keys /** hash<int,int> */ = keyed_filter($keyed, function (int $x): bool { return true; });
 $no_keys /** hash<int,int> */ = keyed_filter($keyed, function (int $x): bool { return false; });
-echo count($empty_mapped), ":", count($all_keys), ":", count($no_keys), "\n";
+echo q_count($empty_mapped), ":", q_count($all_keys), ":", q_count($no_keys), "\n";
 
 '''
 EXPECTED = '0:20\n1:30\n1:20\n2:30\nitem!:3\nb:3\n04:4\n0:3:0\n21:31\ncallback error\n42\nshared\n1:2\n0:3:0\n'

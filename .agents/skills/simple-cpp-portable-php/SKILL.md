@@ -17,9 +17,12 @@ distinguishes authoring rules, converter gaps and target limitations. Do not tre
 an old slice's limits or a feature-catalog proposal as the current support matrix.
 
 - Keep PHP syntax and explicit supported type comments; generated PHS uses native
-  type syntax. Use lowercase namespaces and synchronized uniform imports. `scpp`
-  owns target-specific facilities; `scpp\compat` owns adapted PHP-like operations.
-  Do not invent `compat_*` source calls or bypass managed bindings.
+  type syntax. Use lowercase namespaces and no function imports. The shared bootstrap
+  supplies global helpers: plain names for non-PHP facilities, q_ names for existing
+  PHP functions (`q_count`, `q_strlen`, `q_is_bool`). Use the fixed function map;
+  do not call internal scpp/scpp\compat functions or invent unsupported q_ helpers.
+  Avoid C++ keyword identifiers such as operator/template in local names.
+  See [global convention](../../../specs/portability/global_functions.md).
 - Prefer named typed records and explicit vector/map intent. Ordinary arrays are
   for non-hot setup/read-only data. The writer and behavioral tests own discipline;
   the converter does not infer hotness, ownership or PHP copy-on-write intent.

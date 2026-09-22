@@ -1,0 +1,17 @@
+{
+  "global_convention": {
+    "registered_component_native_builds": 5,
+    "compiler_native_corrections": 0,
+    "utf8_native_builds": 1,
+    "host_test_updates": "Remove obsolete import expectations, preserve namespaces in rejection fixtures, prefix generated dynamic search helper names."
+  },
+  "expressions": {
+    "native_attempts": 2,
+    "native_corrections": 1,
+    "native_failure": "C++ reserved local names operator/template",
+    "fix": "operation_kind/is_template",
+    "checker_correction": "Use constructor-supplied named dependencies instead of uninitialized named properties",
+    "php_native_cases": 132
+  },
+  "final_cumulative": "PHP/tool proof of 20 files; native evidence supplied by global full stage run and expression/UTF8 proofs."
+}

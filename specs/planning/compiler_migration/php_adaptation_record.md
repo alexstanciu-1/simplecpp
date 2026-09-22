@@ -1,6 +1,26 @@
 # PHP adaptation record and optimization follow-up
 Doc Status: planning
 
+## Global function convention and resumed expressions
+
+At the user's request, active portable sources and maintained proof inputs no longer
+carry per-file function imports. Plain global names expose non-PHP facilities; q_
+marks the eight mapped PHP builtin names. One generated static facade preserves
+reference parameters/defaults and delegates to existing internal implementations.
+The fixed catalog owns naming, not host function discovery. Converter mapping and
+prologue validation now own the new authoring surface; old imports are rejected or
+explicitly removed by the migration command. Frozen reference/evidence and
+src-runtime-preparation stay untouched. Compiler/native proofs and the UTF-8 suite
+validate this convention; generated-input stale spellings were corrected in tests.
+
+Expression work then resumed: an iterative continuation owner parses value/type
+expressions on the compact arena. Constructor-supplied named dependencies replace
+unsupported uninitialized named fields. Native attempt 1 exposed C++ keyword locals
+operator/template; semantic local names clear attempt 2. No converter grammar growth
+was needed for the expression algorithm. See [global functions](../../portability/global_functions.md)
+and [expression parser](../../portability/expression_parser.md).
+
+
 ## First parser slice: syntax arena and angle matching (2026-09-22)
 
 Three files provide real parser-owned storage/disambiguation dependencies, not grammar

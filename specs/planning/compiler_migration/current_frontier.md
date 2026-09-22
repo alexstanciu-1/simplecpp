@@ -1,16 +1,16 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-The [rewrite reset](rewrite_reset.md) is complete. Active readiness is **17 production
-files**: input preparation (137 outcomes), tokenizer (304), and parser foundation
-(414 PHP/native outcomes plus a reused 5,000-stream PHP unit). Native target remains
+Active readiness is **20 production files**: input preparation (137 outcomes),
+tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
+unit), and expression grammar (132). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 
-Parser grammar is not implemented yet. Next: expression parsing on the new syntax
-arena, followed by statement/declaration grammar. See
-[foundation scope](../../portability/parser_foundation.md). No complete compiler CLI
-exists. `src-runtime-preparation` stays PHP as-is, outside conversion scope.
-The former 39-file cumulative proof remains historical coverage.
+The global helper convention is implemented: no imports, q_ for existing PHP names.
+Next: statement and declaration grammar on the same parser owner. Whole-file parsing
+and the complete compiler CLI are not implemented yet. See
+[expressions](../../portability/expression_parser.md). src-runtime-preparation remains
+PHP as-is and outside conversion scope. The former 39-file coverage is historical.
 
 The table below records pre-reset dependencies and reusable findings, not active
 implementation status or a mandatory task sequence. Previously adapted code is

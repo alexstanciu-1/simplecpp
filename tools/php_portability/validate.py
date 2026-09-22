@@ -93,6 +93,7 @@ def main():
             report['compiler_status'] = 'php_proved'
         elif 'compiler' in report['native_requested']:
             raise RuntimeError('Compiler rewrite has no ready component; historical 39-file coverage is archived')
+        run('global-functions', ['php', ROOT / 'tools/php_portability/generate_global_functions.php', '--check'])
         run('collections-php', ['php', TESTS / 'collections_php.php'])
         run('value-records-php', [sys.executable, TESTS / 'value_records.py', '--results', results / 'value-records-php'])
         for label, script in [('foundation', 'run.py'), ('check-regressions', 'check.py'),

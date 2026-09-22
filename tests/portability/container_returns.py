@@ -81,7 +81,7 @@ $rows /** vector<\samples\Row> */ = $store->get_rows();
 $rows[0]->value = 9;
 echo $row->value, ":", $store->get_entry(), ":", $store->get_ready() ? "ready" : "bad", ":", $store->get_label(), "\n";
 $empty /** vector<int> */ = \samples\Store::empty_ids();
-echo count($empty), "\n";
+echo q_count($empty), "\n";
 ''',
     }
     for name, body in bodies.items():

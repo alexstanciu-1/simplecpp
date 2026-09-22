@@ -4,6 +4,66 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/portability/global_functions.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/expression_parser.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/cycles.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/expressions-attempt-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/expressions-attempt-02/expected.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/expressions-attempt-02/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/fast/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/global-native/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/provenance.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/timing.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/utf8/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/global-functions-expressions-01/README.md",
+                        "kind": "markdown",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path": "specs/portability/parser_foundation.md",
                         "kind": "markdown",
                         "doc_status": "supporting"

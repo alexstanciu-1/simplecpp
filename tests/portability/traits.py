@@ -141,7 +141,7 @@ def main():
     p.write_text(saved)
     convert()
 
-    prologue = saved.split('// </scpp-imports>')[0] + '// </scpp-imports>\n'
+    prologue = "<?php\nnamespace demo;\n"
     rejects = [
         ('trait Nested { use Operations; }', 'traits cannot use traits'),
         ('class Bad { use \\other\\Operations; }', 'namespace'),

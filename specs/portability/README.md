@@ -2,7 +2,7 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs. Active rewrite readiness is now seventeen input/tokenization/parser-foundation files;
+these capability proofs. Active rewrite readiness is now twenty input/tokenization/parser files;
 see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
@@ -46,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is seventeen input/tokenization/parser-foundation files, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is twenty input/tokenization/parser files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
@@ -129,9 +129,9 @@ spellings remain to be specified; the first slice implements this annotation; br
 
 Local validation checks supported structure and required metadata, not whether a
 value returned from another file really satisfies an annotation. PHP tests, PHP++
-compilation/STAN and native tests supply that evidence. Every portable file uses one central function policy and its tool-maintained import
-block. Bare calls and explicitly selected implementations use that policy; authored
-code cannot rebind names or bypass framework-owned functions through global calls.
+compilation/STAN and native tests supply that evidence. Every portable file uses one central global
+function policy, with no imports: plain helper names for non-PHP facilities and q_
+names for existing PHP functions. See [global functions](global_functions.md).
 Unsupported syntax or missing required information
 receives a source diagnostic rather than a guessed conversion.
 
@@ -182,11 +182,10 @@ enforcement, and does not add work to the target-feature batch by itself.
 
 ## PHP support library and native-only tests
 
-The framework includes libraries missing from PHP, not only compatibility wrappers.
-All namespaces are lowercase: `scpp` owns target-specific facilities and libraries;
-`scpp\compat` owns PHP-like functions requiring different target behavior. Ordinary
-PHP builtins remain in use when sufficient. The same tool-maintained function imports apply to every file; the current global
-script and single-namespace slices implement this policy.
+The framework includes libraries missing from PHP as well as adapted operations.
+Its implementations remain under scpp/scpp\compat, exposed through a single global
+facade. Existing PHP names use q_; no per-file implementation selection or import
+block is needed. See [the global convention](global_functions.md).
 
 The small PHP library makes target-oriented operations executable during PHP
 algorithm development and gives the converter explicit locally recognizable forms.
@@ -298,3 +297,6 @@ existing tokenizer unit and preserving byte-based compact token rows.
 
 [Parser foundation](parser_foundation.md) adds compact syntax storage and angle matching;
 grammar parsing remains pending.
+
+[Expression grammar](expression_parser.md) now passes 132 PHP/native outcomes;
+whole-file statements/declarations remain pending.

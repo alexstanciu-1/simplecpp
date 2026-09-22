@@ -1,0 +1,5 @@
+Manifest stage: 35 structured outcomes passed; native=True
+Discovery: 31 initial + 31 refreshed outcomes passed; native=True
+Snapshot: 20 initial + 20 refreshed outcomes passed; native=True
+Tokenizer: 304 outcomes passed; native=True
+Parser foundation: 414 outcomes passed; native=True

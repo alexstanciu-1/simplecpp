@@ -102,7 +102,7 @@ def main():
         assert 'PHP syntax check failed' in run('check.php', source, ok=False).stderr
         write('owner.php', 'echo "must not execute";')
         before = snapshot(base)
-        assert 'imports' in run('check.php', source, ok=False).stderr.lower()
+        assert 'must not execute' not in run('check.php', source).stdout
         assert snapshot(base) == before
         run('sync_imports.php', source)
         assert 'must not execute' not in run('check.php', source).stdout

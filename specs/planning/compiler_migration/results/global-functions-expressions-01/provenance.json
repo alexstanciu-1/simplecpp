@@ -1,0 +1,7 @@
+{
+  "compiler/tests/expressions/oracle.php": "14553e86010766a0178d5a948b9cb902ea6937354f48394799ea1a95cc905b61",
+  "compiler/reference/pre-rewrite/src/03_parse/handlers/expressions.php": "f0c05f88d1e8d27b6e8cc84738d78bcc4add96ded67c835ccceb3e610e5f22da",
+  "compiler/reference/pre-rewrite/src/03_parse/parse_file.php": "c0f725ed480f7d5c016dc53619e4ded5d3f57f8c23e90e6efff134aae9c82578",
+  "tools/php_portability/function_map.php": "c5e7b98a6e60469a3264ac130c1462f85ec7273f5194e7c9f8ef668b17a2cd58",
+  "tools/php_portability/runtime/global_functions.php": "0d18b17ee580e218c9eea52549e0189ad15f0d5cc2ee0efbeb34e7a3f6bb52da"
+}

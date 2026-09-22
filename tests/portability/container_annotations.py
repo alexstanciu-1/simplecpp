@@ -52,7 +52,7 @@ class Indexes {
         $copy = $this->folders;
         $copy[0][0] = 99;
         $copy[0][] = 104;
-        return count($copy[0]);
+        return q_count($copy[0]);
     }
 }''',
         'main.php': r'''$index = new \samples\Indexes();
@@ -63,7 +63,7 @@ $positions[42] = 2;
 $positions[7] = 5;
 $positions_copy = $positions;
 $positions_copy[42] = 8;
-echo count($positions), ":", $positions[42], ":", $positions_copy[42], ":", $positions[7], "\n";
+echo q_count($positions), ":", $positions[42], ":", $positions_copy[42], ":", $positions[7], "\n";
 $groups /** hash<vector<int>, string> */ = [];
 $ids /** vector<int> */ = [];
 $ids[] = 3;

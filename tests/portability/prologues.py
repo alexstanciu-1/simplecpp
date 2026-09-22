@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-prologues-') as temporary:
         run(sync)
         assert saved == path.read_bytes()
         run(sync + ['--check'])
-        assert saved.index(b'namespace proof\\scope;') < saved.index(b'// <scpp-imports>')
+        assert b'use function' not in saved and b'scpp-imports' not in saved
         php = run(['php', '-d', 'auto_prepend_file=' + str(TOOLS / 'runtime/bootstrap.php'), str(path)])
         assert php.stdout == 'yes'
         run(convert)
