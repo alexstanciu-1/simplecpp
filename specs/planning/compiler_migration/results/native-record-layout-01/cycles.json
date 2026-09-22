@@ -1,0 +1,7 @@
+{
+  "native_commands": 1,
+  "native_corrections": 0,
+  "oracle_harness_corrections": 1,
+  "oracle_cases": 441,
+  "detail": "Retained and migrated PHP classes require separate processes because class names are case-insensitive."
+}

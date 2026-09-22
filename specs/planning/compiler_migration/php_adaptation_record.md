@@ -682,3 +682,18 @@ One native command failed before C++ compilation because test annotations touche
 build passed. No production algorithm, converter, or target change was needed to stabilize
 native execution. Optimization follow-up: measure repeated member-definition lookups
 before introducing cached projections. See `results/aggregate-lifecycles-01` for timings.
+
+## Native record layout contract (2026-09-22)
+
+Preserved exact target triple/data-layout keys, positive aligned size, power-of-two
+alignment and strictly increasing in-range field offsets from the normalized record
+model. The private typed offset vector replaces public PHP array access with field_count
+and field_offset, preserving snapshot ownership on both execution surfaces. Power-of-two
+validation uses overflow-guarded integer doubling, as in Representation, rather than
+unsupported bitwise operators. No inferred target layout or weakened ownership checks.
+
+18 outcomes pass PHP/native on the first build; 441 host combinations agree with the
+retained constructor. The oracle needed one harness correction: PHP case-insensitive
+class names require separate processes for old/new classes. No source/native correction.
+Full field recipes and resource-aware record normalization remain dependencies.
+See `results/native-record-layout-01` for timing, commands and hashes.

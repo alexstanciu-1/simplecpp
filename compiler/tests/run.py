@@ -25,7 +25,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('lexical_resolution', Path(__file__).parent / 'lexical_resolution/run.py'),
           ('resolution_project', Path(__file__).parent / 'resolution_project/run.py'),
           ('type_store', Path(__file__).parent / 'type_store/run.py'),
-          ('aggregate_lifecycles', Path(__file__).parent / 'aggregate_lifecycles/run.py')]
+          ('aggregate_lifecycles', Path(__file__).parent / 'aggregate_lifecycles/run.py'),
+          ('native_record_layout', Path(__file__).parent / 'native_record_layout/run.py')]
 
 
 def main():

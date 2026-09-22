@@ -1,0 +1,36 @@
+{
+  "measurement": "Elapsed wall time, includes tests and waits; initial orientation excluded. Milestones recorded immediately after successful commands.",
+  "started": "2026-09-22T12:31:40.209824+00:00",
+  "milestones": [
+    {
+      "name": "authoring-start",
+      "at": "2026-09-22T12:31:40.209824+00:00"
+    },
+    {
+      "name": "php-ready",
+      "at": "2026-09-22T12:32:28.535909+00:00",
+      "evidence": "/tmp/scpp-native-layout-php-01/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f"
+      }
+    },
+    {
+      "name": "native-ready",
+      "at": "2026-09-22T12:33:52.718026+00:00",
+      "evidence": "/tmp/scpp-native-layout-native-01/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f"
+      }
+    },
+    {
+      "name": "consolidation-start",
+      "at": "2026-09-22T12:33:52.764701+00:00"
+    },
+    {
+      "name": "finish",
+      "at": "2026-09-22T12:34:25.461034+00:00"
+    }
+  ],
+  "finished": "2026-09-22T12:34:25.461034+00:00",
+  "elapsed_seconds": 165.251
+}

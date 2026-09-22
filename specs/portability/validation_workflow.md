@@ -184,3 +184,5 @@ cost of getting it working natively. It adds no requirement for more frequent bu
 
 Aggregate lifecycle stage: `compiler/tests/aggregate_lifecycles/run.py` covers 36
 shared outcomes and eight host purity/domain checks; it is registered cumulatively.
+
+Native record layout stage: 18 shared outcomes and 441 retained-constructor host comparisons.
