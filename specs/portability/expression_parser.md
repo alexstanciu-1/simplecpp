@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 `parse\File_Parser::parse_expression(Lexical_Buffer $tokens, bool $type)` returns an
-`Expression_Result` retaining the tokens/source and a compact Syntax_Arena. Valid
+`Parse_Result` retaining the tokens/source and a compact Syntax_Arena. Valid
 results have one root and consume the final EOF. Rejected lexical/grammar input has
 valid=false, anchored error start/length/reason, root zero and no published partial
 tree. The supported boundary expects complete immutable tokenizer output; this is
@@ -23,8 +23,8 @@ multi-level continue. There is no recursive parser call per nested expression.
 Frames are mutable ordinary owners; syntax rows remain compact values, accessed
 through arena copy/update methods. Logical stack size is distinct from backing storage.
 
-This is expression grammar only. Whole-file statements, functions, structs and
-metaprogramming declarations remain future slices. Public static expression entry
+This entry covers expression grammar. Whole-file statements, functions, structs and
+metaprogramming declarations now use the same owner; see [file parsing](file_parser.md). Public static expression entry
 creates fresh state for each parse; the private driver can later serve statement/
 declaration grammar on the same parser owner. src-runtime-preparation stays PHP as-is.
 

@@ -17,7 +17,7 @@ trait Expression_Parsing {
             $frame = $this->frame();
             $id = $this->application($frame, $id);
             if ($id === 0) { $need_operand = true; continue; }
-            if ($frame->context === \parse\EXPR_TYPE) { return $id; }
+            if ($frame->context === \parse\EXPR_TYPE) { $this->depth = $this->depth - 1; return $id; }
             if ($frame->context === \parse\EXPR_CONSTRUCTED) {
                 $this->result->tree->child($frame->node, $id);
                 $token = $this->expect(\tokenize\TOKEN_LEFT_PARENTHESIS, 'construction opening parenthesis');
@@ -60,7 +60,7 @@ trait Expression_Parsing {
                 continue;
             }
             $id = $frame->operands->pop();
-            if ($frame->context === \parse\EXPR_VALUE) { return $id; }
+            if ($frame->context === \parse\EXPR_VALUE) { $this->depth = $this->depth - 1; return $id; }
             if ($frame->context === \parse\EXPR_GROUP) {
                 $token = $this->expect(\tokenize\TOKEN_RIGHT_PARENTHESIS, 'group closing parenthesis');
             } else {

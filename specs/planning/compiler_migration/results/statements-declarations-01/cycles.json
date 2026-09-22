@@ -1,0 +1,21 @@
+{
+  "file_grammar": {
+    "native_build_attempts": 2,
+    "native_build_failures": 1,
+    "corrective_cycles": 1,
+    "native_behavior_attempts": 1,
+    "native_behavior_failures": 0,
+    "fix": "Typed vector local for chained result->definitions empty reset; existing documented S2S limitation.",
+    "checker_failures": 0,
+    "cases": 82,
+    "accepted": 35,
+    "rejected": 47,
+    "host_lifecycle_assertions": 9
+  },
+  "expression_regression": {
+    "native_builds": 1,
+    "corrective_cycles": 0,
+    "cases": 132
+  },
+  "final_cumulative": "25-file PHP/tool proof; native checkpoint evidence is recorded separately."
+}

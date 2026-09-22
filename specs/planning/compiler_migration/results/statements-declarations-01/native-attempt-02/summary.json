@@ -1,0 +1,202 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "lifecycle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/statements/lifecycle.php"
+      ],
+      "seconds": 0.812,
+      "exit": 0
+    },
+    {
+      "label": "reference-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/statements/oracle.php",
+        "/tmp/scpp-statements-native-02/oracle-inputs.json"
+      ],
+      "seconds": 0.209,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-statements-native-02/source"
+      ],
+      "seconds": 0.081,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-statements-native-02/source"
+      ],
+      "seconds": 0.511,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-statements-native-02/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/scpp-statements-native-02/source/src/02_tokenize/structures.php",
+        "/tmp/scpp-statements-native-02/source/src/02_tokenize/store.php",
+        "/tmp/scpp-statements-native-02/source/src/02_tokenize/tokenize.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/data/nodes.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/data/tree.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/utilities/binary_syntax.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/data/expression_state.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/handlers/expressions.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/data/result.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/handlers/statements.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/handlers/control_statements.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/handlers/declarations.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/handlers/metaprogramming.php",
+        "/tmp/scpp-statements-native-02/source/src/03_parse/parse_file.php",
+        "/tmp/scpp-statements-native-02/source/probe.php",
+        "/tmp/scpp-statements-native-02/source/main.php"
+      ],
+      "seconds": 0.576,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-statements-native-02/source",
+        "/tmp/scpp-statements-native-02/phpp"
+      ],
+      "seconds": 0.242,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-statements-native-02/source",
+        "/tmp/scpp-statements-native-02/phpp"
+      ],
+      "seconds": 0.054,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-statements-native-02/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.055,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.008,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.036,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.141,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 30.828,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/scpp-statements-native-02/phpp/.prism/build/main"
+      ],
+      "seconds": 0.14,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.027,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 82,
+  "grammar_cases": 82,
+  "retained_literal_cases": 35,
+  "production_files": [
+    "src/03_parse/data/result.php",
+    "src/03_parse/handlers/statements.php",
+    "src/03_parse/handlers/control_statements.php",
+    "src/03_parse/handlers/declarations.php",
+    "src/03_parse/handlers/metaprogramming.php"
+  ],
+  "source_sha256": {
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "806840885063fb61bd91700657756bb2e8e84a4f775be18ed866e770db01f583",
+    "src/02_tokenize/structures.php": "0b158c2c15618aecb1a8535a5d73cb7a282c0018995e1acda78282e5ca9a4f34",
+    "src/02_tokenize/store.php": "c4d81f32c641ab04fd75c69c9b782c437357e9df32f953545189ad8f979582a5",
+    "src/02_tokenize/tokenize.php": "de4fdc8891468187882e67b26a889e1e014a289fca9b8962ddd92820cfa96bc9",
+    "src/03_parse/data/nodes.php": "7e2627a4a5d9f9edbd3fc427a45fd3627fc0ef33dfc90894cfa27540873d81ea",
+    "src/03_parse/data/tree.php": "bfc18ac2d7cc0eb8bdbb291943f627cb5636334469b64d7415031f4108274619",
+    "src/03_parse/utilities/binary_syntax.php": "b48266fe3d5a9cd6d0799709f2fad1ff0d3f2de18c4a1ff7bc18798311562920",
+    "src/03_parse/data/expression_state.php": "2ae5aa0d7bf15e1a478a5e7d9ca13b9fbd6e227db18db57307e120567005adc4",
+    "src/03_parse/handlers/expressions.php": "d2aa8696cf698bee1148b7c3a2e79c99419ff49beac7f20ecbd0db7ac3036e10",
+    "src/03_parse/parse_file.php": "59ba771265e6332948922b05e233abc56e686d2070aa616c75d6dd288f326105",
+    "src/03_parse/data/result.php": "de0db476535f0482cb1693fec6dca189d1cfdbe5a19e778bf0caa744375285ee",
+    "src/03_parse/handlers/statements.php": "43ceaac5c482d0bd3378ef935ed72ba41497dae62425f1d613b406c87cd187c6",
+    "src/03_parse/handlers/control_statements.php": "0b8bd2579ebf4bd298b670148113465fdb951ce808740f5b79e893d99ad81354",
+    "src/03_parse/handlers/declarations.php": "f702dae6c9b58d3f24a583dd7b7f7daeee80b424c6a465b25b3cfdda9c7cbea4",
+    "src/03_parse/handlers/metaprogramming.php": "5296084785919d49bd8391cbf33f0ef9c0741c71a79982442d4316c910bab413"
+  }
+}

@@ -4,9 +4,10 @@ Doc Status: planning
 See [the current dependency frontier](current_frontier.md) for next actions and
 accepted migration decisions and outstanding target requirements.
 
-**Rewrite reset completed; four stages proved:** input preparation and tokenization
-plus parser storage and expressions provide twenty active production files.
-Next: statement/declaration grammar.
+**Rewrite reset completed; file grammar proved:** input preparation and tokenization
+plus parser storage, expressions and statements/declarations provide twenty-five active
+production files. Next: syntax access/comparison and project parser selection/join.
+See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).
 `src-runtime-preparation` stays PHP as-is for now; do not convert it.
 See [tokenizer and reused units](../../portability/tokenizer.md).

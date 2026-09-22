@@ -315,3 +315,29 @@ A fixture initially returned uint32 directly through an int return boundary; nat
 compilation rejected that. An explicit `(int)` in authored PHP supplies the intended
 conversion. Keep this boundary visible when optimizing. No target change was needed.
 See [the contract](../../portability/value_records.md) and `results/value-records-01/`.
+
+## File statements and declarations (2026-09-22)
+
+The File_Parser now owns the prototype's complete file grammar through its original
+four handler divisions. Shared Parse_Result replaces the expression-only name and
+separates grammar output from continuation state. The arena owns sibling tails, so
+handlers no longer exchange mutable scalar tail references. Declaration/annotation
+absence uses zero IDs; explicit branches replace enum membership/match, and locals
+that survive branches are initialized in their enclosing scope. No converter feature
+or target-compiler modification was needed.
+
+Repeated file expressions exposed a continuation lifetime omission in the earlier
+expression slice. Successful type/value exits now release the root frame; a 2,000-
+expression host proof checks depth zero and two reusable slots. This bounds retained
+frame storage but still constructs frames on reuse; measure allocation cost before
+a later optimization. Statement recursion remains the prototype's existing approach.
+
+The first native attempt caught an empty container literal assigned through a chained
+result field; the documented typed-local assignment pattern fixes it. This was an
+authoring correction, not new target debt. Failure now clears all published syntax
+and indexes, retaining the diagnostic and exact input snapshot. Tests compare grammar
+results and spans, not node allocation IDs. Retained unit inputs are reused without
+claiming their not-yet-migrated semantic/session assertions pass.
+
+See [file parser contract](../../portability/file_parser.md) and
+[measured proof evidence](results/statements-declarations-01/README.md).

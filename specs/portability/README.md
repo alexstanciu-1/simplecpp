@@ -2,7 +2,7 @@
 Doc Status: planning
 
 The [compiler rewrite reset](../planning/compiler_migration/rewrite_reset.md) preserves
-these capability proofs. Active rewrite readiness is now twenty input/tokenization/parser files;
+these capability proofs. Active rewrite readiness is now twenty-five input/tokenization/parser files;
 see [manifest reading](project_manifest_reading.md).
 
 For writing code, start with the [authoring guide](authoring_guide.md) and the
@@ -46,7 +46,7 @@ Current checkpoints: [converter foundation](first_slice.md),
 [native project identity/roots](compiler_native_project_slice.md), and
 [manifest snapshot export](compiler_manifest_record_slice.md), and
 [source directory scanning](compiler_source_scanner_slice.md), and
-[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is twenty input/tokenization/parser files, and the
+[runtime-preparation symbol spelling](compiler_preparation_symbols_slice.md). 39 production files passed before the rewrite reset; current active readiness is twenty-five input/tokenization/parser files, and the
 concept below includes future work. `compiler/portability.json` is the source set.
 
 Catalog for the next design discussions: [strict features, libraries and PHP
@@ -296,7 +296,9 @@ and owned byte buffers, with 40 PHP/native outcomes and native cycle accounting.
 existing tokenizer unit and preserving byte-based compact token rows.
 
 [Parser foundation](parser_foundation.md) adds compact syntax storage and angle matching;
-grammar parsing remains pending.
+the file grammar builds on this storage.
 
 [Expression grammar](expression_parser.md) now passes 132 PHP/native outcomes;
-whole-file statements/declarations remain pending.
+the file entry below reuses the same expression driver.
+
+[File parser](file_parser.md): statements, control flow, declarations and metaprogramming; 82 PHP/native cases and nine host lifecycle assertions.

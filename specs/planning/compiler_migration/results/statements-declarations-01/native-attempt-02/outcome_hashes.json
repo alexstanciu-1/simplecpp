@@ -1,0 +1,7 @@
+{
+  "native.stdout.log": "f975080d38ab6d117f914998c735e7bd32ba40f1c055d5558e78a8192a4948b3",
+  "php.stdout.log": "f975080d38ab6d117f914998c735e7bd32ba40f1c055d5558e78a8192a4948b3",
+  "expected.json": "b29b3ac75969dea0926f7fad9fff8e0aafaeac142ae98229d1626c437458c870",
+  "reference-oracle.stdout.log": "c5e604d4319e94aa2feb2d9ece02ea0366f2749e6227a7f2c16e1695996b858b",
+  "oracle-inputs.json": "7ce3565c377a2e79c3367e1b348611b5557fbc46307baebdb9ecb5d1e219b6b1"
+}

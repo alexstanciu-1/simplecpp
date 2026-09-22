@@ -2,21 +2,30 @@
 declare(strict_types=1);
 namespace parse;
 
-/** One parser owner; expression entry is the first implemented grammar boundary. */
+/** One parser owner; file and expression entries share the same grammar and arena. */
 final class File_Parser {
     use Expression_Parsing;
+    use Statement_Parsing;
+    use Control_Statement_Parsing;
+    use Declaration_Parsing;
+    use Metaprogramming_Parsing;
     private int $cursor = 0;
     private int $end = 0;
     private array $angle_ends /** hash<int,int> */ = [];
     private array $frames /** vector<Expression_Frame> */ = [];
     private int $depth = 0;
-    public function __construct(private Expression_Result $result) {}
-    public static function parse_expression(\tokenize\Lexical_Buffer $tokens, bool $type): Expression_Result {
-        $result = new Expression_Result($tokens, new Syntax_Arena());
+    public function __construct(private Parse_Result $result) {}
+    public static function parse_expression(\tokenize\Lexical_Buffer $tokens, bool $type): Parse_Result {
+        $result = new Parse_Result($tokens, new Syntax_Arena());
         $parser = new File_Parser($result);
-        return $parser->run_expression($type);
+        return $parser->run(false, $type);
     }
-    private function run_expression(bool $type): Expression_Result {
+    public static function parse(\tokenize\Lexical_Buffer $tokens): Parse_Result {
+        $result = new Parse_Result($tokens, new Syntax_Arena());
+        $parser = new File_Parser($result);
+        return $parser->run(true, false);
+    }
+    private function run(bool $file, bool $type): Parse_Result {
         try {
             if (!$this->result->tokens->valid) {
                 $this->result->error_start = $this->result->tokens->error_start;
@@ -25,15 +34,40 @@ final class File_Parser {
                 throw new \RuntimeException('Invalid lexical input');
             }
             $this->angle_ends = Binary_Syntax::angle_ends($this->result->tokens);
-            $root = $this->expression($type ? \parse\EXPR_TYPE : \parse\EXPR_VALUE);
-            $this->expect(\tokenize\TOKEN_END_OF_FILE, 'end of expression');
+            $root /** int */ = 0;
+            if ($file) { $root = $this->file(); }
+            else { $root = $this->expression($type ? \parse\EXPR_TYPE : \parse\EXPR_VALUE); }
+            $this->expect(\tokenize\TOKEN_END_OF_FILE, 'end of input');
             if ($this->cursor !== q_count($this->result->tokens->rows)) { $this->fail('Tokens after EOF'); }
+            if ($this->depth !== 0) { throw new \LogicException('Unfinished expression continuations'); }
             $this->result->root = $root;
         } catch (\RuntimeException $error) {
             $this->result->valid = false;
+            $this->result->root = 0;
+            $this->result->entry = 0;
+            $no_definitions /** vector<int> */ = [];
+            $this->result->definitions = $no_definitions;
             $this->result->tree = new Syntax_Arena();
         }
         return $this->result;
+    }
+    private function file(): int {
+        $length = string_byte_len($this->result->tokens->source->content);
+        $entry = $this->node(\parse\SYNTAX_BLOCK, 0, $length);
+        $this->statements($entry, \tokenize\TOKEN_END_OF_FILE, true);
+        $root = $this->node(\parse\SYNTAX_FILE_ROOT, 0, $length);
+        $this->result->tree->child($root, $entry);
+        foreach ($this->result->definitions as $definition) { $this->result->tree->child($root, $definition); }
+        $this->result->entry = $entry;
+        return $root;
+    }
+    private function node(int $kind, int $start, int $length): int {
+        return $this->result->tree->add($kind, $start, $length);
+    }
+    private function finish(int $id): void { $this->result->tree->finish($id, $this->end); }
+    private function variable(): int {
+        $token = $this->expect(\tokenize\TOKEN_VARIABLE_NAME, 'variable name');
+        return $this->node(\parse\SYNTAX_VARIABLE_NAME, (int)$token->start, (int)$token->length);
     }
     private function kind(): int {
         $token = $this->peek();

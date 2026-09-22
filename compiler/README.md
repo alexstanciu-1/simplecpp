@@ -2,8 +2,8 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-Input preparation, tokenization, parser storage and expression grammar now cover
-**20 production files** with PHP/native proofs. Next are statements and declarations. No active compiler CLI or complete compilation pipeline exists yet.
+Input preparation, tokenization, parser storage and file grammar now cover
+**25 production files** with PHP/native proofs. Next are syntax access/comparison and project parser selection/join. No active compiler CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
 stays PHP as-is for now, outside this conversion scope. `tests/` holds registered stage outcome proofs.
@@ -12,7 +12,7 @@ Bring reusable code in deliberately, applying the portable-PHP and strict skills
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` lists the twenty proved source files. `tools/portability_target.json`
+`portability.json` lists the twenty-five proved source files. `tools/portability_target.json`
 pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
@@ -61,4 +61,5 @@ storage and scoped angle matching; it does not imply full parsing support.
 
 Portable functions use the [global facade](../specs/portability/global_functions.md)
 without imports. [Expression parsing](../specs/portability/expression_parser.md) is
-implemented; this is not a complete whole-file parser yet.
+implemented. [File parsing](../specs/portability/file_parser.md) adds statements and
+declarations; project-level parser scheduling and later semantic stages remain pending.

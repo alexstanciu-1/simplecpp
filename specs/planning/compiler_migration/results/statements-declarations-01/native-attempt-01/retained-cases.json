@@ -1,0 +1,177 @@
+[
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 84,
+    "text": "return "
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 145,
+    "text": "$x Unknown = $x; $x Different = missing(); { $x int = $not_declared; }"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 152,
+    "text": "return 42"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 153,
+    "text": "return ();"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 154,
+    "text": "return name;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 155,
+    "text": "f(1);"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 156,
+    "text": "function f(x): int {}"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 157,
+    "text": "function f() {}"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 158,
+    "text": "function f(): int {"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 159,
+    "text": "function f(): int { function g(): int {} }"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 160,
+    "text": "return 1; }"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 162,
+    "text": "$x Unknown;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 168,
+    "text": "$x int = ;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 169,
+    "text": "$x = ;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 170,
+    "text": "$x = 42"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 171,
+    "text": "$x int = 42 }"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 172,
+    "text": "$x = $y = 42;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 173,
+    "text": "return $x = 42;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 174,
+    "text": "42 = $x;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 175,
+    "text": "f() = $x;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 176,
+    "text": "{ function f(): int {} }"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 177,
+    "text": "{ $x int = 1;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 178,
+    "text": "$x int float = 1;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 179,
+    "text": "function (): int {}"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parsing.php",
+    "line": 180,
+    "text": "function f(): 42 {}"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parameter_parsing.php",
+    "line": 57,
+    "text": "function empty(): void { empty(); }"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parameter_parsing.php",
+    "line": 99,
+    "text": "function f($x Missing, $x Other): Missing { return missing($unknown); }"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parameter_parsing.php",
+    "line": 100,
+    "text": "function many("
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/parameter_parsing.php",
+    "line": 103,
+    "text": "return "
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/struct_parsing.php",
+    "line": 29,
+    "text": "struct empty {}"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/metaprogramming_parsing.php",
+    "line": 70,
+    "text": "$v another_family<int, 2, true, \"bytes\", compute<Other>(N + 1)>;"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/metaprogramming_parsing.php",
+    "line": 148,
+    "text": "$v "
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/metaprogramming_parsing.php",
+    "line": 150,
+    "text": "$v family<"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/metaprogramming_parsing.php",
+    "line": 44,
+    "text": "struct holder { public hash<T1, list<T2>> $items; }\nfunction select($items hash<T1, T2>): list<hash<T1, T2>>\n{\n    $copy hash<T1, T2> = new hash<T1, T2>();\n    return choose<T1, T2, N + 1>($items, constant_value());\n}"
+  },
+  {
+    "file": "compiler/reference/pre-rewrite/tests/03_parse/metaprogramming_parsing.php",
+    "line": 73,
+    "text": "template<typename T1, typename T2, int N>\nstruct dictionary { public hash<T1, T2> $items; }\ntemplate<typename T, int N>\nconstexpr function choose($value T): T\n{\n    const LOCAL: int = N + 1;\n    if constexpr (N) {\n        return $value;\n    }\n    else if constexpr (false) {\n        return unavailable<T>();\n    }\n    else {\n        return $value;\n    }\n}\nconst COUNT: int = 1 + 2;\nconst ENABLED = true;\nconsteval function compute(): int { return COUNT; }\nconstexpr function context($x int): int\n{\n    if consteval {\n        return compute();\n    }\n    else {\n        return runtime_only($x);\n    }\n}"
+  }
+]

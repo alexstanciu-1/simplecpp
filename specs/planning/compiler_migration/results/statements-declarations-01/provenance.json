@@ -1,0 +1,23 @@
+{
+  "compiler/src/03_parse/parse_file.php": "59ba771265e6332948922b05e233abc56e686d2070aa616c75d6dd288f326105",
+  "compiler/src/03_parse/utilities/binary_syntax.php": "b48266fe3d5a9cd6d0799709f2fad1ff0d3f2de18c4a1ff7bc18798311562920",
+  "compiler/src/03_parse/data/nodes.php": "7e2627a4a5d9f9edbd3fc427a45fd3627fc0ef33dfc90894cfa27540873d81ea",
+  "compiler/src/03_parse/data/tree.php": "bfc18ac2d7cc0eb8bdbb291943f627cb5636334469b64d7415031f4108274619",
+  "compiler/src/03_parse/data/expression_state.php": "2ae5aa0d7bf15e1a478a5e7d9ca13b9fbd6e227db18db57307e120567005adc4",
+  "compiler/src/03_parse/data/result.php": "de0db476535f0482cb1693fec6dca189d1cfdbe5a19e778bf0caa744375285ee",
+  "compiler/src/03_parse/handlers/control_statements.php": "0b8bd2579ebf4bd298b670148113465fdb951ce808740f5b79e893d99ad81354",
+  "compiler/src/03_parse/handlers/expressions.php": "d2aa8696cf698bee1148b7c3a2e79c99419ff49beac7f20ecbd0db7ac3036e10",
+  "compiler/src/03_parse/handlers/declarations.php": "f702dae6c9b58d3f24a583dd7b7f7daeee80b424c6a465b25b3cfdda9c7cbea4",
+  "compiler/src/03_parse/handlers/metaprogramming.php": "5296084785919d49bd8391cbf33f0ef9c0741c71a79982442d4316c910bab413",
+  "compiler/src/03_parse/handlers/statements.php": "43ceaac5c482d0bd3378ef935ed72ba41497dae62425f1d613b406c87cd187c6",
+  "compiler/tests/statements/probe.php": "d74180496f71496573a67d250fac115b197ae88b4865770bc6c8d7f9adee204c",
+  "compiler/tests/statements/oracle.php": "4dba4a8ed5a1b2bf88e6cd656cc14fd7bc3006f79ef58eca45140355eae272f1",
+  "compiler/tests/statements/lifecycle.php": "ab2a692fdcc2d6ff2c9f7d5f65c6290102da0cc7575624835014c111bdd8b8cb",
+  "compiler/tests/statements/run.py": "cb9be7d9aa72c63f5efd954ed6425190f754a113452ba9a9567a451f2486cfd4",
+  "compiler/tests/statements/cases.py": "3b2fe659c51f6bf2512b55cc6221dea4e137cff53bea925a57e948382ffa7bb6",
+  "compiler/reference/pre-rewrite/tests/03_parse/parsing.php": "798a28675b0fbd473f97c5822c588bf7536def34fe95d9db2a6d10aa609a1550",
+  "compiler/reference/pre-rewrite/tests/03_parse/parameter_parsing.php": "2a73a3ff3a6715e87084e4af5d19f07143fbfd331cb461db675e460c3bd91299",
+  "compiler/reference/pre-rewrite/tests/03_parse/variable_parsing.php": "450bcc020ae0c32470d9b1a07aeda348ce4efdcf9f297937b5d1fd7ebbb9d23d",
+  "compiler/reference/pre-rewrite/tests/03_parse/struct_parsing.php": "bf458389fbc1bfe651561ca8bfedd6fce3ad3b813fc866423a6c0ea796a290e8",
+  "compiler/reference/pre-rewrite/tests/03_parse/metaprogramming_parsing.php": "4c7a09a45ebcee944abc7d51019760fe71db6177bb64a3dd96cd90bc8391e34f"
+}

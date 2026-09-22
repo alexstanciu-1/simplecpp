@@ -32,11 +32,3 @@ final class Parse_Int_Stack {
 final class Expression_Frame {
     public function __construct(public int $context, public int $node, public Parse_Int_Stack $operands, public Parse_Int_Stack $operators) {}
 }
-final class Expression_Result {
-    public bool $valid = true;
-    public int $root = 0;
-    public int $error_start = 0;
-    public int $error_length = 0;
-    public string $error_reason = '';
-    public function __construct(public \tokenize\Lexical_Buffer $tokens, public Syntax_Arena $tree) {}
-}

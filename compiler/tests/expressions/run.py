@@ -1,4 +1,4 @@
-"""Parser foundation: retained unit cases plus byte-boundary differential proofs."""
+"""Expression grammar: retained forms and differential outcome proofs."""
 import argparse
 import hashlib
 import json
@@ -10,7 +10,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[3]
 FILES = ['src/03_parse/data/expression_state.php','src/03_parse/handlers/expressions.php','src/03_parse/parse_file.php']
-DEPENDENCIES = ['src/01_prepare_inputs/read_sources/data/buffer.php','src/02_tokenize/structures.php','src/02_tokenize/store.php','src/02_tokenize/tokenize.php','src/03_parse/data/nodes.php','src/03_parse/data/tree.php','src/03_parse/utilities/binary_syntax.php']
+DEPENDENCIES = ['src/03_parse/data/result.php', 'src/03_parse/handlers/statements.php', 'src/03_parse/handlers/control_statements.php', 'src/03_parse/handlers/declarations.php', 'src/03_parse/handlers/metaprogramming.php', 'src/01_prepare_inputs/read_sources/data/buffer.php','src/02_tokenize/structures.php','src/02_tokenize/store.php','src/02_tokenize/tokenize.php','src/03_parse/data/nodes.php','src/03_parse/data/tree.php','src/03_parse/utilities/binary_syntax.php']
 
 
 def main():
@@ -76,8 +76,8 @@ def main():
         assert actual==want,(label,actual,want)
     prove('php',php,expected)
     generated=out/'phpp';conversion=['php',ROOT/'tools/php_portability/convert.php',source,generated]
-    assert json.loads(run('convert',conversion))['converted']==12
-    assert json.loads(run('reuse',conversion))=={'converted':0,'reused':12,'removed':0}
+    assert json.loads(run('convert',conversion))['converted']==len(DEPENDENCIES+FILES)+2
+    assert json.loads(run('reuse',conversion))=={'converted':0,'reused':len(DEPENDENCIES+FILES)+2,'removed':0}
     run('runtime',['php',ROOT/'tools/php_portability/install_native_runtime.php',generated,'--json','--filesystem'])
     binary=None
     if args.target_checkout:

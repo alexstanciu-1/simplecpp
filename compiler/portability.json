@@ -21,7 +21,12 @@
     "src/03_parse/utilities/binary_syntax.php",
     "src/03_parse/data/expression_state.php",
     "src/03_parse/handlers/expressions.php",
-    "src/03_parse/parse_file.php"
+    "src/03_parse/parse_file.php",
+    "src/03_parse/data/result.php",
+    "src/03_parse/handlers/statements.php",
+    "src/03_parse/handlers/control_statements.php",
+    "src/03_parse/handlers/declarations.php",
+    "src/03_parse/handlers/metaprogramming.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

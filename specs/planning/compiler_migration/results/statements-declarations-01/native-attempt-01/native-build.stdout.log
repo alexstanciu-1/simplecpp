@@ -1,0 +1,47 @@
+Transpiled PHP files: 22, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/24] PCH app_pch.hpp.gch
+[2/24] CXX src/03_parse/handlers/control_statements.o
+[3/24] CXX scpp_framework/collections.o
+[4/24] CXX src/03_parse/data/nodes.o
+[5/24] CXX src/03_parse/data/expression_state.o
+[6/24] CXX src/03_parse/data/tree.o
+[7/24] CXX scpp_framework/exceptions.o
+[8/24] CXX src/02_tokenize/structures.o
+[9/24] CXX scpp_framework/filesystem.o
+[10/24] CXX scpp_framework/strings.o
+[11/24] CXX src/02_tokenize/store.o
+[12/24] CXX src/03_parse/data/result.o
+[13/24] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[14/24] CXX src/02_tokenize/tokenize.o
+[15/24] CXX main.o
+[16/24] CXX scpp_framework/json_document.o
+[17/24] CXX probe.o
+[18/24] CXX src/03_parse/handlers/declarations.o
+[19/24] CXX src/03_parse/handlers/expressions.o
+[20/24] CXX src/03_parse/handlers/metaprogramming.o
+[21/24] CXX src/03_parse/handlers/statements.o
+[22/24] CXX src/03_parse/parse_file.o
+FAILED: src/03_parse/parse_file.o
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/5ac7f1ead053bf80.hpp -MMD -MF src/03_parse/parse_file.o.d -MT src/03_parse/parse_file.o -c ../generated/src/03_parse/parse_file.cpp -o src/03_parse/parse_file.o
+../generated/src/03_parse/parse_file.cpp:619:31: error: no viable overloaded '='
+  619 |                                 this->result->definitions = mixed_t{shared_table_()};
+      |                                 ~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-statements-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit copy assignment operator) not viable: no known conversion from 'mixed_t' to 'const vector_t<int_t<>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+/tmp/scpp-statements-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit move assignment operator) not viable: no known conversion from 'mixed_t' to 'vector_t<int_t<>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+1 error generated.
+[23/24] CXX src/03_parse/utilities/binary_syntax.o
+ninja: build stopped: subcommand failed.
