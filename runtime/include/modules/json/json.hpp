@@ -1,5 +1,7 @@
 #pragma once
 
+#include "modules/json/document.hpp"
+
 #include "scpp/dynamic_t.hpp"
 #include "scpp/float_t.hpp"
 #include "scpp/hash_t.hpp"

@@ -256,6 +256,18 @@
         "keyed_map": "collections::keyed_map",
         "keyed_filter": "collections::keyed_filter",
         "fs_is_windows": "fs::is_windows",
-        "fs_read_snapshot": "fs::read_snapshot"
+        "fs_read_snapshot": "fs::read_snapshot",
+        "json_document_parse": "json::document_parse",
+        "json_document_root": "json::document_root",
+        "json_node_kind": "json::node_kind",
+        "json_node_size": "json::node_size",
+        "json_node_at": "json::node_at",
+        "json_node_key": "json::node_key",
+        "json_node_has": "json::node_has",
+        "json_node_member": "json::node_member",
+        "json_node_string": "json::node_string",
+        "json_node_boolean": "json::node_boolean",
+        "json_node_number": "json::node_number",
+        "json_node_int": "json::node_int"
     }
 }

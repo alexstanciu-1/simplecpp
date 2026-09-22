@@ -112,3 +112,37 @@ and [json_encode](../specs/builtins/json/json_encode.md).
 ## More detailed contracts
 
 For one-file-per-builtin contracts, see `specs/builtins/json/`.
+
+## Shape-preserving document reader (strict)
+
+Use `json_document_parse` when a schema needs to distinguish objects from arrays
+and preserve exact object keys before creating typed records. Enable the `json`
+runtime module. The existing `json_decode` still uses its table-oriented mapping.
+
+```php
+$document json_document;
+$diagnostic json_parse_error = null;
+$error error;
+if (!take($document, $error, json_document_parse($text, $diagnostic))) {
+    echo $diagnostic->category, ":", $diagnostic->byte_offset, "\n";
+    return;
+}
+$root json_node;
+if (!take($root, $error, json_document_root($document))) { return; }
+$kind string;
+if (!take($kind, $error, json_node_kind($root))) { return; }
+echo $kind, "\n";
+```
+
+`json_node_size` plus `json_node_at` traverses arrays; size plus `json_node_key`
+and `json_node_member` traverses objects in first-insertion key order. Duplicate
+keys replace the value at that original position. `json_node_has` distinguishes
+a missing member from present null. Keys retain exact decoded bytes. Nodes keep
+the document alive and provide no mutation API.
+
+`json_node_number` returns the JSON token; `json_node_int` checks integer spelling
+and signed 64-bit range. It rejects fractions, exponent spellings and overflow.
+Default maximum nesting is 128 containers, configurable from 1 to 256. UTF-8 and
+surrogates are validated; errors have categories and zero-based byte offsets.
+See [the complete contract](../specs/builtins/json/document.md) and
+`tests/tools/fixtures/json_document/` for manifest validation and lifetime examples.

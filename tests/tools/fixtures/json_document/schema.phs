@@ -1,0 +1,32 @@
+// Schema validation owns list/nonempty/string requirements; parsing keeps shape.
+function manifest_status(string $text): string {
+    $document json_document;
+    $diagnostic json_parse_error = null;
+    $error error;
+    if (!take($document, $error, json_document_parse($text, $diagnostic))) { return "parse"; }
+    $root json_node;
+    if (!take($root, $error, json_document_root($document))) { return "root-error"; }
+    $kind string;
+    if (!take($kind, $error, json_node_kind($root))) { return "kind-error"; }
+    if ($kind !== "object") { return "object"; }
+    $folders json_node;
+    if (!take($folders, $error, json_node_member($root, "source_folders"))) { return "missing"; }
+    if (!take($kind, $error, json_node_kind($folders))) { return "kind-error"; }
+    if ($kind !== "array") { return "list"; }
+    $length int;
+    if (!take($length, $error, json_node_size($folders))) { return "size-error"; }
+    if ($length === 0) { return "nonempty"; }
+    for ($i int = 0; $i < $length; $i++) {
+        $item json_node;
+        if (!take($item, $error, json_node_at($folders, $i))) { return "item-error"; }
+        if (!take($kind, $error, json_node_kind($item))) { return "kind-error"; }
+        if ($kind !== "string") { return "string"; }
+    }
+    return "accept";
+}
+function keep_node(json_node $node): json_node { return $node; }
+function keep_document(json_document $document): json_document { return $document; }
+class Document_Holder {
+    public $document json_document = null;
+    public function retain(json_document $document): void { $this->document = $document; }
+}

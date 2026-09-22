@@ -1,0 +1,51 @@
+echo manifest_status('{"source_folders":["src"],"entry":"src/main.phs"}'), "\n";
+echo manifest_status('{"source_folders":{"0":"src"},"entry":"src/main.phs"}'), "\n";
+echo manifest_status('{"source_folders":{},"entry":"src/main.phs"}'), "\n";
+echo manifest_status('{"source_folders":[],"entry":"src/main.phs"}'), "\n";
+echo manifest_status('{"source_folders":[false]}'), "\n";
+echo manifest_status('[]'), "\n";
+echo manifest_status('{}'), "\n";
+$doc json_document;
+$diag json_parse_error = null;
+$err error;
+if (take($doc, $err, json_document_parse('{"0":null,"01":false,"\u0030":"last","n":9223372036854775808}', $diag))) {
+    $holder = new Document_Holder();
+    $holder->retain(keep_document($doc));
+    $root json_node;
+    if (take($root, $err, json_document_root($holder->document))) {
+        $root = keep_node($root);
+        $doc = null;
+        $holder->document = null;
+        $size int;
+        if (take($size, $err, json_node_size($root))) { echo $size, "\n"; }
+        $key string;
+        if (take($key, $err, json_node_key($root, 0))) { echo $key, "\n"; }
+        $found bool;
+        if (take($found, $err, json_node_has($root, "missing"))) { echo $found ? "bad\n" : "missing\n"; }
+        $node json_node;
+        $value string;
+        if (take($node, $err, json_node_member($root, "0"))) {
+            if (take($value, $err, json_node_string($node))) { echo $value, "\n"; }
+        }
+        if (take($node, $err, json_node_member($root, "01"))) {
+            if (take($found, $err, json_node_boolean($node))) { echo $found ? "bad\n" : "false\n"; }
+        }
+        if (take($node, $err, json_node_member($root, "n"))) {
+            if (take($value, $err, json_node_number($node))) { echo $value, "\n"; }
+            $number int;
+            if (!take($number, $err, json_node_int($node))) { echo "range\n"; }
+        }
+    }
+}
+if (!take($doc, $err, json_document_parse('[', $diag))) {
+    echo $diag->category, ":", $diag->byte_offset, "\n";
+}
+if (take($doc, $err, json_document_parse('null', $diag))) {
+    echo $diag === null ? "reset\n" : "bad\n";
+    $root json_node;
+    $kind string;
+    if (take($root, $err, json_document_root($doc))) {
+        if (take($kind, $err, json_node_kind($root))) { echo $kind, "\n"; }
+    }
+}
+if (!take($doc, $err, json_document_parse('[[]]', $diag, 1))) { echo $diag->category, ":", $diag->byte_offset, "\n"; }
