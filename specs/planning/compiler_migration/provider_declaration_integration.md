@@ -279,3 +279,9 @@ coverage and implementation/import ABI association now have 128 PHP/native outco
 Exact symbol bytes agree with the retained implementation. Receipt ingestion can
 consume this validator next; export capture/production/join and full package adapter
 acceptance are still pending.
+
+
+Project receipts now have a dedicated compiler-side validator with 122 PHP/native
+outcomes, retaining current source operation identity. This completes the standalone
+receipt-consumption dependency; package filesystem/integrity acceptance, lease
+ownership, adapter composition and source export production/join remain unfinished.

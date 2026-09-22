@@ -1,0 +1,68 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/project-receipt-02/source"
+      ],
+      "seconds": 0.168,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/project-receipt-02/source"
+      ],
+      "seconds": 1.39,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/project-receipt-02/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/project-receipt-02/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/project-receipt-02/source/src/compile/data/native_project.php",
+        "/tmp/project-receipt-02/source/src/04_analyze/resolve_types/data/export_identity.php",
+        "/tmp/project-receipt-02/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/project-receipt-02/source/src/05_generate_code/prepare_backend/data/layout.php",
+        "/tmp/project-receipt-02/source/src/05_generate_code/prepare_backend/data/abi.php",
+        "/tmp/project-receipt-02/source/src/05_generate_code/prepare_backend/data/source_exports.php",
+        "/tmp/project-receipt-02/source/src/05_generate_code/prepare_backend/utilities/callable_contract.php",
+        "/tmp/project-receipt-02/source/src/05_generate_code/prepare_backend/source_export_preparation.php",
+        "/tmp/project-receipt-02/source/src/01_prepare_inputs/load_runtime/data/project.php",
+        "/tmp/project-receipt-02/source/src/01_prepare_inputs/load_runtime/data/package_manifest.php",
+        "/tmp/project-receipt-02/source/src/01_prepare_inputs/load_runtime/utilities/manifest_reader.php",
+        "/tmp/project-receipt-02/source/src/01_prepare_inputs/load_runtime/utilities/project_receipt.php",
+        "/tmp/project-receipt-02/source/probe.php",
+        "/tmp/project-receipt-02/source/main.php"
+      ],
+      "seconds": 0.319,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 0
+}

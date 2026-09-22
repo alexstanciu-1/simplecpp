@@ -1710,3 +1710,42 @@ remained unchanged after PHP readiness. Timings/hashes/failure logs live in
 `results/source-export-validation-01`. Optimization follow-up: retain the direct byte
 encoder and fixed role traversal; avoid adding dynamic serialization/equality to
 these validation paths.
+
+
+## Project receipt authorization
+
+`Project_Receipt::validate` migrates the receipt acceptance portion of the retained
+`Project_Import` into a dedicated compiler-side protocol owner. The existing
+`Project_Import::source_type` still owns binding an accepted payload to its exact
+source definition. The receipt owner returns a typed symbol-to-current-operation map;
+it does not reconstruct exported owners from JSON or publish partial authorization.
+Receipt bytes must match the captured Project_Binding before parsing. Each current
+export passes Source_Export_Preparation validation before its receipt row is accepted.
+Source project/key/profile, measured size/alignment, target facts, complete role/state
+coverage, all nine semantic effect facts and ordered physical ABI parameters agree.
+Every required artifact import must be one of those same authorized operations.
+
+JSON member order is not semantic; exact membership and values replace associative
+array strict equality/order checks. Extra operation, semantics, ABI and parameter
+fields are rejected by explicit closed shapes; the prototype was inconsistent about
+extra top-level operation fields. Target uses the already-proved closed target schema.
+PHP producer empty keyed maps may appear as [] or {}; nonempty lists are rejected.
+The four artifact variants remain mandatory. Required imports are deduplicated across
+variants and returned in sorted symbol order, retaining exact current operation
+identity. An explicit insertion ordering pass preserves prototype ksort behavior;
+these names have nonnumeric ASCII prefixes, avoiding PHP numeric-string comparison.
+This boundary is not a hot analysis loop. If import counts become large, replace
+that quadratic ordering pass with a shared proved sorting helper in an optimization
+pass; do not change accepted membership or identity.
+
+122 independently expected PHP/native outcomes prove accepted/rejected receipts,
+including all implemented roles, altered effects and ABIs, unknown imports, source/
+layout mismatch, exact receipt bytes, empty maps, subset union, sorted results and
+current operation identity. Retained producer and ABI declarations were inspected;
+no retained whole-validator execution parity is claimed. Fixtures initially used
+"none" where the existing ABI protocol requires the empty string; corrected before
+PHP readiness. One earlier copied runner path was also corrected. First native build
+passed with zero native correction cycles. Evidence/timing: `results/project-receipt-01`.
+
+This does not verify artifact bytes, inspect bitcode, acquire leases, produce exports
+or integrate the complete Package_Adapter. src-runtime-preparation remains unchanged.

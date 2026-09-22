@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790109075.0,
+  "first_php_ready_epoch": 1790109207.3198545,
+  "authoring_to_php_ready_wall_seconds": 132.32,
+  "first_native_pass_epoch": 1790109249.3715925,
+  "php_ready_to_native_pass_wall_seconds": 42.052,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "final_verification_builds": 0,
+  "host_corrections": [
+    "Correct copied runner dependency filename before checking",
+    "Correct fixture no-extension spelling from none to empty string; retained producer and ABI enum confirm empty string"
+  ],
+  "consolidation_start_epoch": 1790109291.482958,
+  "consolidation_end_epoch": 1790109448.4253697,
+  "regression_and_consolidation_wall_seconds": 156.942
+}
