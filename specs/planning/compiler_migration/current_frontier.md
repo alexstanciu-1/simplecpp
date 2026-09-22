@@ -7,7 +7,7 @@ counts in historical slice documents are checkpoints, not the current count.
 
 | Selected area | Concrete dependency | Next action |
 | --- | --- | --- |
-| Structural syntax access and semantic consumers | Cursor, query owner and trait now convert and pass PHP proofs; qualified construction is rejected by pinned target, d493525d and 361b1e97 | Resolve the construction defect described in structural_query_target_handoff.md, then rerun native proof. |
+| Structural syntax access and semantic consumers | Cursor, query owner and trait now convert and pass PHP proofs; qualified construction is rejected by pinned target, d493525d and 361b1e97 | Await v0.1 fix #235, then rerun native proof; consolidated release is tracked in #236. |
 | Semantic records, lifecycle and backend vocabulary | 41 string-backed enums and seven enum methods exceed the selected native subset | Implement the staged typed-tag/codec plan accepted on 2026-09-22; see enum_portability_decision.md. |
 | Lexical worker and source diagnostics | Explicit global base class resolves inside the derived namespace | #233 supplies d493525d and combined descendant 361b1e97; validate the diagnostic component before adoption. |
 | Manifest parsing and runtime metadata ingestion | Native JSON tables erase object/list identity | Native lossless document API with a PHP counterpart accepted on 2026-09-22; json_document_requirement.md defines the requirement. |

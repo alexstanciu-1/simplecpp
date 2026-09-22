@@ -60,8 +60,12 @@ initialize a strict project with clang++-18 and runtime.modules=[], and run thro
 the candidate CLI. Keep PHP execution/bootstrap outside the converted source tree.
 The cumulative failure logs additionally retain the original scanner-enabled project.
 
-This is a prepared handoff; no new GitHub comment has been posted for this separate
-construction requirement.
+The construction requirement is now tracked in [#235](https://github.com/alexstanciu-1/simplecpp/issues/235).
+The v0.1 regression/release workflow is tracked separately in
+[#236](https://github.com/alexstanciu-1/simplecpp/issues/236).
+By user direction, this workspace owns downstream portability proofs; the v0.1
+workspace owns the fix, release notes, skill review, merges and tagging.
+Public reports omit local workspace paths and internal evidence details.
 
 ## Latest #233 update checked
 
