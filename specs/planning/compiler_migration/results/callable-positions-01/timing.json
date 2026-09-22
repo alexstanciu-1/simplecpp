@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790098831.2340305,
+  "php_ready_epoch": 1790098930.3764899,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/callables.php": "484627b2b1efad3087bfecc5de04dc0591ff0e9b13190f374244cd4400251a52"
+  },
+  "authoring_to_php_ready_seconds": 99.142,
+  "checker_corrective_cycles": 0,
+  "consolidation_start_epoch": 1790099029.875813,
+  "native_corrective_cycles": 1,
+  "native_correction": "Local mutable is a C++ reserved word; rename to is_mutable. ABI algorithms and contracts unchanged.",
+  "native_build_attempts_to_first_pass": 2,
+  "native_build_seconds": 33.28,
+  "native_evidence_completed_epoch": 1790099091.7712002,
+  "consolidation_end_epoch": 1790099207.3368168
+}

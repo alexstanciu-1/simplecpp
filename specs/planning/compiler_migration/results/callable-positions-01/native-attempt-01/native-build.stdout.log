@@ -1,0 +1,41 @@
+Transpiled PHP files: 25, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/27] PCH app_pch.hpp.gch
+[2/27] CXX src/01_prepare_inputs/load_runtime/handlers/callables.o
+FAILED: src/01_prepare_inputs/load_runtime/handlers/callables.o
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/e3fe119f93cf57eb.hpp -MMD -MF src/01_prepare_inputs/load_runtime/handlers/callables.o.d -MT src/01_prepare_inputs/load_runtime/handlers/callables.o -c ../generated/src/01_prepare_inputs/load_runtime/handlers/callables.cpp -o src/01_prepare_inputs/load_runtime/handlers/callables.o
+../generated/src/01_prepare_inputs/load_runtime/handlers/callables.cpp:207:16: error: expected unqualified-id
+  207 |                 auto mutable = php::identical(passing, string_t("mutable_address"));
+      |                              ^
+../generated/src/01_prepare_inputs/load_runtime/handlers/callables.cpp:209:47: error: expected expression
+  209 |                 if (static_cast<bool>(php::condition_truthy(mutable))) {
+      |                                                             ^
+../generated/src/01_prepare_inputs/load_runtime/handlers/callables.cpp:212:156: error: expected expression
+  212 |                 return create<Call_Parameter_Position>(create<::scpp::type_model::Semantic_Parameter>(reference, mode), ::scpp::type_model::Runtime_Abi_Position::borrow(mutable), (offset + static_cast<int_t<> >(1)));
+      |                                                                                                                                                                          ^
+3 errors generated.
+[3/27] CXX scpp_framework/exceptions.o
+[4/27] CXX scpp_framework/collections.o
+[5/27] CXX src/04_analyze/type_model/data/callable_modes.o
+[6/27] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[7/27] CXX src/01_prepare_inputs/load_runtime/data/runtime.o
+[8/27] CXX src/04_analyze/type_model/data/definitions.o
+[9/27] CXX scpp_framework/strings.o
+[10/27] CXX scpp_framework/json_document.o
+[11/27] CXX main.o
+[12/27] CXX src/01_prepare_inputs/load_runtime/handlers/package_syntax.o
+[13/27] CXX src/04_analyze/type_model/data/callables.o
+[14/27] CXX scpp_framework/filesystem.o
+[15/27] CXX src/04_analyze/type_model/data/lifecycle.o
+[16/27] CXX probe.o
+[17/27] CXX src/04_analyze/type_model/data/catalog.o
+ninja: build stopped: subcommand failed.

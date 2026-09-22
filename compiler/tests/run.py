@@ -42,7 +42,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('resource_import', Path(__file__).parent / 'resource_import/run.py'),
           ('lifecycle_import', Path(__file__).parent / 'lifecycle_import/run.py'),
           ('record_import', Path(__file__).parent / 'record_import/run.py'),
-          ('binding_import', Path(__file__).parent / 'binding_import/run.py')]
+          ('binding_import', Path(__file__).parent / 'binding_import/run.py'),
+          ('callable_positions', Path(__file__).parent / 'callable_positions/run.py')]
 
 
 def main():

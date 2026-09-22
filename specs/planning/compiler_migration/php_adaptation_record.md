@@ -1139,3 +1139,41 @@ and the converter are unchanged. Next: physical result/parameter normalization a
 full callable import, before complete package publication and provider symbols.
 
 Cumulative fast validation passes at 104 registered production files.
+
+## Physical callable positions and explicit cursors
+
+Callable_Abi_Import normalizes result/parameter metadata using the shared semantic
+and ABI models. Call_Result_Position and Call_Parameter_Position replace anonymous
+PHP tuples and a by-reference offset. Every successful operation returns its next
+physical position; failures publish no cursor update. Result records retain the
+accepted named definition, semantic production, direct/hidden passing and optional
+integer ABI. Parameter records retain a named semantic reference (including record
+fallback), its ABI and next position. No canonical type IDs are invented.
+
+Caller storage consumes slot zero, requires an owned result and verified uninitialized
+storage, and additionally requires a live-object postcondition for a free-function
+producer. Direct results preserve void versus integer distinction. Borrowed objects
+retain const/mutable access; scalar borrows remain const-only. A semantic byte span
+consumes pointer plus unsigned integer length positions. Exact ABI indices and
+available position counts are checked before indexing. Length attributes preserve
+the original exact empty/noundef contract rather than inheriting integer-attribute
+trimming accidentally.
+
+The byte-span width parser replaces regex capture plus PHP integer casting with
+checked ASCII decimal accumulation. It rejects leading zeros, malformed spelling
+and values beyond signed 64-bit range before arithmetic. One malformed overflow
+case intentionally differs from PHP's saturating cast; accepted widths retain their
+exact value. This does not promise backend support for arbitrarily large widths.
+
+113 independently expected PHP/native outcomes pass; 112 applicable cases match
+the retained private helpers. The first native build found a local named mutable,
+a C++ keyword. Renaming it to is_mutable was the sole production correction; the
+second build passes. First PHP hashes, both attempts and phase/cycle timings are in
+results/callable-positions-01. Authoring must continue to avoid target-reserved local
+names even where PHP and structural conversion accept them.
+
+This proves physical boundaries, not full Callable_Import publication. Operation
+identity/exposure validation, resource effects, language bindings and global callable
+binding validation still need to be composed. Preparation PHP is unchanged.
+
+Cumulative fast validation passes at 105 registered production files.

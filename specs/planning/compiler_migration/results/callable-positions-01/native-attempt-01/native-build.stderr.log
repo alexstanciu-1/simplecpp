@@ -1,0 +1,13 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/01_prepare_inputs/load_runtime/handlers/callables.phs:112: expected unqualified-id
+Generated location: .prism/generated/src/01_prepare_inputs/load_runtime/handlers/callables.cpp:207:16
+Compile error in src/01_prepare_inputs/load_runtime/handlers/callables.phs:114: expected expression
+Generated location: .prism/generated/src/01_prepare_inputs/load_runtime/handlers/callables.cpp:209:47
+Compile error in src/01_prepare_inputs/load_runtime/handlers/callables.phs:115: expected expression
+Generated location: .prism/generated/src/01_prepare_inputs/load_runtime/handlers/callables.cpp:212:156
+Raw compiler excerpt:
+callables.cpp:207:16: error: expected unqualified-id
+callables.cpp:209:47: error: expected expression
+callables.cpp:212:156: error: expected expression
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.
