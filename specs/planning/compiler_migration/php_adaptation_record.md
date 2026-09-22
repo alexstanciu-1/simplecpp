@@ -1893,3 +1893,42 @@ changed the traversal representation; three host fixture corrections supplied va
 lifetimes, integer signedness and pointer field eligibility. Evidence/timing:
 `results/layout-capture-01`. Layout measurement/selection, source identity projection
 and complete export capture remain unfinished. src-runtime-preparation is unchanged.
+
+
+## Layout selection and backend storage spelling
+
+Layout_Selection owns the prototype layout preparer's pure work selection. Its
+input is the captured dependency graph, exact backend configuration, previous
+layouts and explicit tool arguments. Full selection never examines prior layouts;
+incremental selection reuses only Layout_Capture::current-approved layouts. Tasks
+retain exact input/configuration/definition/member owners and caller root order.
+Tool invocation and measurement-result acceptance remain separate unfinished work.
+
+LLVM_Storage separates the existing LLVM scalar/storage/compound vocabulary from
+the larger LLVM_Types utility. It also owns the pure opaque-storage reachability
+query previously on Native_Layout. Void has a scalar spelling but no storage;
+unsupported pointer/span/signature storage must not silently become an LLVM type.
+Opaque bytes preserve size in spelling, while the separate alignment flag requests
+the native witness. No target padding/alignment is computed in PHP.
+
+Compound spelling now uses iterative postorder and typed private maps/visit records
+rather than recursion. It memoizes each child spelling; repeated fields still appear
+in their declared order. A logical stack depth reuses slots. New vector slots must
+append explicitly: native bounds checks exposed PHP indexed-write growth in the
+first executable proof. This is an authoring correction, not converter inference.
+The target STAN also rejected nested early-return scalar branches with a terminal
+throw; exhaustive assignments and one return preserve the same behavior.
+
+The memoized strings can retain substantial intermediate text for deep/expansive
+shapes; a future optimization can use a streamed spelling representation if profiles
+justify it. This slice makes no speed or memory reduction claim. Native layout
+witness generation, command execution and layout joins are not covered here.
+Evidence and correction/timing records: `results/layout-selection-01`.
+
+Forty-two PHP/native outcomes pass: independent expected LLVM text and alignment
+requirements cover all five floating formats, varied integer widths, empty records,
+zero-length arrays, shared generated DAGs and a 201-node chain. Selection checks
+initial/full/partial reuse, changed configuration and foreign lineage. Void scalar
+spelling and explicit invalid storage rejection are included. Three native build
+attempts were needed (STAN rejection, executable bounds failure, pass), with two
+correction cycles; one checker correction removed unsupported decrement syntax.

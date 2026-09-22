@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **143 production files**: input preparation (137 outcomes),
+Active readiness is **145 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -320,3 +320,12 @@ exact node reuse, subsets and lineage/configuration-gated currentness. Shared pa
 cycles, incremental replacement and a 513-node chain pass. No layout measurement is
 claimed. Next: layout selection/measurement dependencies and source identity projection
 before complete export capture; package hash/executable APIs remain separate blockers.
+
+
+Layout selection/storage spelling adds 42 PHP/native outcomes
+(`results/layout-selection-01`). Full, incremental, partial reuse, foreign lineage
+and changed configuration selections preserve exact task provenance and command
+arguments. Scalar/floating/opaque/array/record spelling, shared DAGs and a 201-node
+chain pass. Native alignment is requested for reachable opaque storage. Next:
+native witness generation, target layout measurement and result acceptance; source
+identity projection and complete export capture remain incomplete.

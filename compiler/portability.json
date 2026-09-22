@@ -144,7 +144,9 @@
     "src/05_generate_code/prepare_backend/source_export_join.php",
     "src/05_generate_code/prepare_backend/utilities/layout_ids.php",
     "src/05_generate_code/prepare_backend/data/layout_capture.php",
-    "src/05_generate_code/prepare_backend/layout_capture.php"
+    "src/05_generate_code/prepare_backend/layout_capture.php",
+    "src/05_generate_code/prepare_backend/utilities/llvm_storage.php",
+    "src/05_generate_code/prepare_backend/layout_selection.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

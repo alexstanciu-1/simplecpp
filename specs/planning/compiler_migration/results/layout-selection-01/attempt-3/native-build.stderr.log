@@ -1,0 +1,8 @@
+STAN pre-build check failed: 1 compile-errors
+
+[compile-error] Function `prepare_backend\LLVM_Storage::scalar` declared as `string` may exit without returning a value.
+  at src/05_generate_code/prepare_backend/utilities/llvm_storage.phs:6
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

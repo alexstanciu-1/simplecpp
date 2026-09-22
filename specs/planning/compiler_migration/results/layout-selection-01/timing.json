@@ -1,0 +1,27 @@
+{
+  "authoring_start_epoch": 1790111958.0,
+  "first_php_ready_epoch": 1790112102.1073306,
+  "first_php_ready_sha256": {
+    "src/05_generate_code/prepare_backend/utilities/llvm_storage.php": "a2a30f654b2dfa25019775b2fdca71274e7f8bccf0ff197e99f729a5b2292f0e",
+    "src/05_generate_code/prepare_backend/layout_selection.php": "125ff389e18db01c78233b55601316c4dfd061e141939654efe1cbd9299cf96b"
+  },
+  "checker_correction_cycles": 1,
+  "checker_correction": "Use explicit subtraction in reverse traversal; decrement operator unsupported",
+  "harness_corrections": [
+    "Correct copied runner dependency path before execution"
+  ],
+  "native_correction_cycles": 2,
+  "consolidation_start_epoch": 1790112269.2561598,
+  "authoring_to_php_ready_wall_seconds": 144.107,
+  "first_native_pass_epoch": 1790112269.2561598,
+  "native_build_attempts_to_first_pass": 3,
+  "final_verification_builds": 0,
+  "native_corrections": [
+    "Flatten scalar spelling into exhaustive assignment branches and a common return after target STAN rejected nested early returns plus terminal throw",
+    "Append when traversal depth reaches vector size; indexed writes only replace existing slots"
+  ],
+  "php_ready_to_native_pass_wall_seconds": 167.149,
+  "timing_note": "First native pass timestamp is observed after the completed runner; command durations are in the saved summaries. Draft consolidation performed while native build ran is included in stabilization wall time.",
+  "consolidation_end_epoch": 1790112401.8332918,
+  "regression_and_consolidation_wall_seconds": 132.577
+}
