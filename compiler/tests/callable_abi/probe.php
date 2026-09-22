@@ -75,17 +75,17 @@ final class Probe {
         Probe::check(($callable->language_binding === 0) && ($callable->conversion_purpose === 0) && $callable->default_literal);
         Probe::check($callable->passing_for(2) === \type_model\PASS_BORROW_MUTABLE);
         Probe::check(($span->length === $length) && ($length->bits === 64));
-        for ($case = 0; $case < 9; $case++) {
+        for ($case_index = 0; $case_index < 9; $case_index++) {
             $rejected = false;
             try {
-                if ($case === 0) { $bad = \type_model\Runtime_Abi_Position::integer(0, 0); }
-                elseif ($case === 1) { $bad = \type_model\Runtime_Abi_Position::byte_span($borrow); }
-                elseif ($case === 2) { $bad_abi = new \type_model\Runtime_Callable_Abi('bad', 'c', $span, $empty_physical); }
-                elseif ($case === 3) { $owned->parameter_at(3); }
-                elseif ($case === 4) { $owned->parameter_indices(-1); }
-                elseif ($case === 5) { $callable->passing_for(3); }
-                elseif ($case === 6) { \type_model\Callable_Modes::conversion('unknown'); }
-                elseif ($case === 7) { \type_model\Callable_Modes::extension('unknown'); }
+                if ($case_index === 0) { $bad = \type_model\Runtime_Abi_Position::integer(0, 0); }
+                elseif ($case_index === 1) { $bad = \type_model\Runtime_Abi_Position::byte_span($borrow); }
+                elseif ($case_index === 2) { $bad_abi = new \type_model\Runtime_Callable_Abi('bad', 'c', $span, $empty_physical); }
+                elseif ($case_index === 3) { $owned->parameter_at(3); }
+                elseif ($case_index === 4) { $owned->parameter_indices(-1); }
+                elseif ($case_index === 5) { $callable->passing_for(3); }
+                elseif ($case_index === 6) { \type_model\Callable_Modes::conversion('unknown'); }
+                elseif ($case_index === 7) { \type_model\Callable_Modes::extension('unknown'); }
                 else { $bad_call = new \type_model\Runtime_Callable('p', 'i', 'n', '', $signature, $direct); }
             } catch (\InvalidArgumentException $error) { $rejected = true; }
             catch (\OutOfBoundsException $bounds) { $rejected = true; }

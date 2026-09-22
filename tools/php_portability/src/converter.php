@@ -26,6 +26,7 @@ final class Converter {
 	private int $exceptionCounter = 0;
 	private array $seenLocals = [];
 	private array $borrowedLocals = [];
+	private array $parameterLocals = [];
 
 	public function __construct(private array $map) {}
 
@@ -55,6 +56,7 @@ final class Converter {
 		$this->exceptionCounter = 0;
 		$this->seenLocals = [];
 		$this->borrowedLocals = [];
+		$this->parameterLocals = [];
 		$this->tokens = $tokens;
 		foreach ($tokens as $token) {
 			[$id, $text, $start] = $token;
@@ -220,7 +222,8 @@ final class Converter {
 		return $nullable ? 'nullable<' . $mapped . '>' : $mapped;
 	}
 
-	private function methodSignature(int $line, string $visibility, bool $static, bool $containerReturn = true): string {
+	private function methodSignature(int $line, string $visibility, bool $static, bool $containerReturn = true, array &$parameterNames = []): string {
+		$parameterNames = [];
 		$this->expect('function');
 		$name = $this->significant();
 		if ($name[0] !== T_STRING) { $this->fail($line, 'expected method name'); }
@@ -233,6 +236,7 @@ final class Converter {
 				else { $type = $this->signatureType(false); }
 				$parameter = $this->significant();
 				if ($parameter[0] !== T_VARIABLE) { $this->fail($parameter[2], 'expected named parameter'); }
+				$parameterNames[] = $parameter[1];
 				if ($container) {
 					if (!$containerReturn) { $this->fail($line, 'container interface parameters require a separately proved contract'); }
 					$type = $this->containerAnnotation($this->significant());
@@ -253,9 +257,10 @@ final class Converter {
 	}
 
 	private function method(int $line, string $visibility, bool $static): Node {
-		$signature = $this->methodSignature($line, $visibility, $static);
+		$parameterNames = [];
+		$signature = $this->methodSignature($line, $visibility, $static, true, $parameterNames);
 		$this->expect('{');
-		return new Node('method', $signature, $line, $this->localBody());
+		return new Node('method', $signature, $line, $this->localBody($parameterNames));
 	}
 
 	/** Parse explicit recursive containers once for every supported declaration site. */
@@ -294,6 +299,7 @@ final class Converter {
 		$this->expect('(');
 		$fields = [];
 		$parameters = [];
+		$parameterNames = [];
 		$assignments = [];
 		while (($this->tokens[$this->nextSignificant($this->position)][1] ?? '') !== ')') {
 			while (($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_DOC_COMMENT) { $this->significant(); }
@@ -311,6 +317,7 @@ final class Converter {
 			$mappedType = Exception_Policy::name($type[1]);
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected promoted parameter name'); }
+			$parameterNames[] = $field[1];
 			if ($type[0] === T_ARRAY) {
 				$mappedType = $this->containerAnnotation($this->significant());
 			}
@@ -348,19 +355,21 @@ final class Converter {
 		}
 		$this->expect(')');
 		$this->expect('{');
-		$assignments = array_merge($assignments, $this->localBody());
+		$assignments = array_merge($assignments, $this->localBody($parameterNames));
 		$fields[] = new Node('method', 'public function __construct(' . implode(', ', $parameters) . ')', $line, $assignments);
 		return $fields;
 	}
 
 	/** New callable scope; this is lexical bookkeeping, not symbol/type resolution. */
-	private function localBody(): array {
+	private function localBody(array $parameters = []): array {
+		$outerParameters = $this->parameterLocals;
+		$this->parameterLocals = array_fill_keys($parameters, true);
 		$seen = $this->seenLocals;
 		$borrowed = $this->borrowedLocals;
 		$this->seenLocals = [];
 		$this->borrowedLocals = [];
 		try { return $this->sequence('}'); }
-		finally { $this->seenLocals = $seen; $this->borrowedLocals = $borrowed; }
+		finally { $this->seenLocals = $seen; $this->borrowedLocals = $borrowed; $this->parameterLocals = $outerParameters; }
 	}
 
 	/** Explicit scalar value record; PHP remains a final data-only class. */
@@ -553,6 +562,7 @@ final class Converter {
 			if ($kind === null) { $this->fail($type[2], 'catch requires an explicitly qualified framework exception type'); }
 			$variable = $this->significant();
 			if ($variable[0] !== T_VARIABLE) { $this->fail($line, 'expected catch variable'); }
+			$this->requireLocalName($variable[1], $variable[2]);
 			$this->expect(')');
 			$this->expect('{');
 			$children[] = new Node('catch_clause', $variable[1], $type[2], [
@@ -578,11 +588,13 @@ final class Converter {
 		if (trim($this->emit(new Node('body', '', $line, $iterable))) === '') { $this->fail($line, 'foreach requires an iterable expression'); }
 		$first = $this->significant();
 		if ($first[0] !== T_VARIABLE) { $this->fail($first[2], 'foreach requires a by-value variable binding'); }
+		$this->requireLocalName($first[1], $first[2]);
 		$binding = $first[1];
 		$separator = $this->significant();
 		if ($separator[0] === T_DOUBLE_ARROW) {
 			$value = $this->significant();
 			if ($value[0] !== T_VARIABLE) { $this->fail($value[2], 'foreach requires a by-value variable binding'); }
+			$this->requireLocalName($value[1], $value[2]);
 			$binding .= ' => ' . $value[1];
 			$this->expect(')');
 		} elseif ($separator[1] !== ')') { $this->fail($separator[2], 'expected foreach closing parenthesis'); }
@@ -649,7 +661,34 @@ final class Converter {
 		$this->expect('{');
 		$signature = ($static ? 'static ' : '') . 'function (' . $type . ' ' . $parameter[1] . ')'
 			. ($captures === [] ? '' : ' use (' . implode(', ', $captures) . ')') . ': ' . $return;
-		return new Node('method', $signature, $line, $this->localBody());
+		return new Node('method', $signature, $line, $this->localBody([$parameter[1], ...$captures]));
+	}
+
+	/** Local binding restriction, matching the target keyword vocabulary. No symbol lookup. */
+	private function requireLocalName(string $variable, int $line): void {
+		static $reserved = [
+			'alignas' => true, 'alignof' => true, 'and' => true, 'and_eq' => true, 'asm' => true, 'auto' => true,
+			'bitand' => true, 'bitor' => true, 'bool' => true, 'break' => true, 'case' => true, 'catch' => true,
+			'char' => true, 'char8_t' => true, 'char16_t' => true, 'char32_t' => true, 'class' => true,
+			'compl' => true, 'concept' => true, 'const' => true, 'consteval' => true, 'constexpr' => true,
+			'constinit' => true, 'const_cast' => true, 'continue' => true, 'co_await' => true, 'co_return' => true,
+			'co_yield' => true, 'decltype' => true, 'default' => true, 'delete' => true, 'do' => true,
+			'double' => true, 'dynamic_cast' => true, 'else' => true, 'enum' => true, 'explicit' => true,
+			'export' => true, 'extern' => true, 'false' => true, 'float' => true, 'for' => true, 'friend' => true,
+			'goto' => true, 'if' => true, 'inline' => true, 'int' => true, 'long' => true, 'mutable' => true,
+			'namespace' => true, 'new' => true, 'noexcept' => true, 'not' => true, 'not_eq' => true,
+			'nullptr' => true, 'operator' => true, 'or' => true, 'or_eq' => true, 'private' => true,
+			'protected' => true, 'public' => true, 'register' => true, 'reinterpret_cast' => true,
+			'requires' => true, 'return' => true, 'short' => true, 'signed' => true, 'sizeof' => true,
+			'static' => true, 'static_assert' => true, 'static_cast' => true, 'struct' => true, 'switch' => true,
+			'template' => true, 'this' => true, 'thread_local' => true, 'throw' => true, 'true' => true,
+			'try' => true, 'typedef' => true, 'typeid' => true, 'typename' => true, 'union' => true,
+			'unsigned' => true, 'using' => true, 'virtual' => true, 'void' => true, 'volatile' => true,
+			'wchar_t' => true, 'while' => true, 'xor' => true, 'xor_eq' => true,
+		];
+		if (isset($reserved[substr($variable, 1)])) {
+			$this->fail($line, 'reserved C++ local identifier ' . $variable . '; choose a descriptive non-keyword name');
+		}
 	}
 
 	/** @return list<Node> */
@@ -768,6 +807,10 @@ final class Converter {
 				continue;
 			}
 			if ($id === T_VARIABLE) {
+				$next = $this->tokens[$this->nextSignificant($this->position)] ?? [0, '', $line];
+				if (!isset($this->parameterLocals[$text]) && ($next[1] === '=' || $next[0] === T_DOC_COMMENT)) {
+					$this->requireLocalName($text, $line);
+				}
 				$reference = $this->referenceLocal($text, $line, $closing);
 				if ($reference !== null) { $nodes[] = $reference; continue; }
 				$this->seenLocals[$text] = true;

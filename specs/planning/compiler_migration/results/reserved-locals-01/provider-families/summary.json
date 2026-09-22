@@ -1,0 +1,215 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/reserved-locals-families-native-01/source"
+      ],
+      "seconds": 0.097,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/reserved-locals-families-native-01/source"
+      ],
+      "seconds": 0.513,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/generic.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/families.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/source_families.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/family_contracts.php",
+        "/tmp/reserved-locals-families-native-01/source/probe.php",
+        "/tmp/reserved-locals-families-native-01/source/main.php"
+      ],
+      "seconds": 0.072,
+      "exit": 0
+    },
+    {
+      "label": "oracle-inputs",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/generic.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/families.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/data/source_families.php",
+        "/tmp/reserved-locals-families-native-01/source/src/04_analyze/type_model/family_contracts.php",
+        "/tmp/reserved-locals-families-native-01/source/probe.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/provider_families/export.php"
+      ],
+      "seconds": 0.067,
+      "exit": 0
+    },
+    {
+      "label": "retained-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/provider_families/oracle.php",
+        "/tmp/reserved-locals-families-native-01/inputs/families.json"
+      ],
+      "seconds": 0.064,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/reserved-locals-families-native-01/source",
+        "/tmp/reserved-locals-families-native-01/phpp"
+      ],
+      "seconds": 0.271,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/reserved-locals-families-native-01/source",
+        "/tmp/reserved-locals-families-native-01/phpp"
+      ],
+      "seconds": 0.069,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/reserved-locals-families-native-01/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.07,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.008,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.039,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.205,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 53.273,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/reserved-locals-families-native-01/phpp/.prism/build/main"
+      ],
+      "seconds": 0.015,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.046,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790100894.5012894,
+  "php_ready_sha256": {
+    "src/04_analyze/type_model/data/families.php": "3116b1601d88720d5dc0beba1afeccb1c217e3688465245545486639f9760cc7",
+    "src/04_analyze/type_model/data/source_families.php": "6f1fcaf2d3d028c79ba74cb81e6af444c1b27d804a2a86476a411d62e89c605e",
+    "src/04_analyze/type_model/family_contracts.php": "ebd6cbcbfd38fe4f9a7213c238de999a51efa15eb3038f261075d524cf80e2a0"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 51,
+  "family_contract_outcomes": 51,
+  "production_files": [
+    "src/04_analyze/type_model/data/families.php",
+    "src/04_analyze/type_model/data/source_families.php",
+    "src/04_analyze/type_model/family_contracts.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e",
+    "src/04_analyze/type_model/data/generic.php": "d9881a7f7918d5af737e9091c296893441b00fb56736cae418072680e55c09db",
+    "src/04_analyze/type_model/data/type_references.php": "e70468cf04d1f87b34238d90f38ae886c52b9e1ed3f6e3d348c70dc85da639d1",
+    "src/04_analyze/type_model/data/semantic_calls.php": "4e962b92bca91cbb600e18b9d2139f085d4e4b17e1906ac50c3095c3b481b905",
+    "src/04_analyze/type_model/data/families.php": "3116b1601d88720d5dc0beba1afeccb1c217e3688465245545486639f9760cc7",
+    "src/04_analyze/type_model/data/source_families.php": "6f1fcaf2d3d028c79ba74cb81e6af444c1b27d804a2a86476a411d62e89c605e",
+    "src/04_analyze/type_model/family_contracts.php": "ebd6cbcbfd38fe4f9a7213c238de999a51efa15eb3038f261075d524cf80e2a0"
+  }
+}

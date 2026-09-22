@@ -54,9 +54,9 @@ final class Package_Syntax {
     public static function language_name(\scpp\Json_View $value): \type_model\Type_Reference {
         if ($value->kind() !== 'object') { throw new \RuntimeException('Unsupported runtime language name'); }
         if ((!$value->has('name')) || (!$value->has('namespace'))) { throw new \RuntimeException('Unsupported runtime language name'); }
-        $name = $value->member('name'); $namespace = $value->member('namespace');
-        if (($name->kind() !== 'string') || ($namespace->kind() !== 'string')) { throw new \RuntimeException('Unsupported runtime language name'); }
-        if ($namespace->text() !== '') { throw new \RuntimeException('Unsupported runtime language name'); }
+        $name = $value->member('name'); $namespace_text = $value->member('namespace');
+        if (($name->kind() !== 'string') || ($namespace_text->kind() !== 'string')) { throw new \RuntimeException('Unsupported runtime language name'); }
+        if ($namespace_text->text() !== '') { throw new \RuntimeException('Unsupported runtime language name'); }
         $text = $name->text();
         Package_Syntax::require_identifier_spelling($text);
         return \type_model\Type_Reference::named($text, '');

@@ -1,0 +1,29 @@
+{
+  "authoring_seconds": null,
+  "authoring_note": "Initial work crossed a resumed goal boundary; authoring/PHP-ready interval was not reliably recorded. Do not infer it from command durations.",
+  "fast_validation_seconds": 83.66,
+  "native_regressions": {
+    "package-syntax": {
+      "command_seconds": 57.316,
+      "native_build_attempts": 1,
+      "corrective_cycles": 0
+    },
+    "provider-families": {
+      "command_seconds": 54.809000000000005,
+      "native_build_attempts": 1,
+      "corrective_cycles": 0
+    },
+    "scalar-catalog": {
+      "command_seconds": 92.30799999999999,
+      "native_build_attempts": 1,
+      "corrective_cycles": 0
+    }
+  },
+  "emission_equivalence": {
+    "production_files": 107,
+    "baseline": "57d19e35",
+    "result": "identical for same current source after trait expansion",
+    "harness_corrections": 1,
+    "note": "Initial standalone-file comparison lacked trait index; corrected to existing project expansion. No converter/native correction required."
+  }
+}

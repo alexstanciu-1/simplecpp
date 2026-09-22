@@ -9,14 +9,14 @@ final class Probe {
         $word = new \type_model\Named_Definition('Word', '', \type_model\Representation::integer(32), $life, true, '', false, false, true);
         $object = new \type_model\Named_Definition('Object', '', \type_model\Representation::opaque(8, 8), $life, null, '', false, false, false);
         $span = new \type_model\Named_Definition('Span', '', \type_model\Representation::byte_span(), $life, null, '', false, false, false);
-        $void = new \type_model\Named_Definition('Void', '', \type_model\Representation::void_type(), null, null, '', false, false, false);
+        $void_type = new \type_model\Named_Definition('Void', '', \type_model\Representation::void_type(), null, null, '', false, false, false);
         $fields /** vector<\type_model\Field_Declaration> */ = [];
         $record = new \type_model\Record_Declaration('Row', '', $fields, true, 0, null, 0, 0, 0, 0);
         $types /** hash<\load_runtime\Runtime_Type> */ = [];
         $types['word'] = new \load_runtime\Runtime_Type('word', new \load_runtime\Runtime_Storage(0,4,4),32,true,$word);
         $types['object'] = new \load_runtime\Runtime_Type('object', new \load_runtime\Runtime_Storage(4,8,8),null,null,$object);
         $types['span'] = new \load_runtime\Runtime_Type('span', new \load_runtime\Runtime_Storage(2,16,8),null,null,$span);
-        $types['void'] = new \load_runtime\Runtime_Type('void', new \load_runtime\Runtime_Storage(3,0,1),null,null,$void);
+        $types['void'] = new \load_runtime\Runtime_Type('void', new \load_runtime\Runtime_Storage(3,0,1),null,null,$void_type);
         $types['record'] = new \load_runtime\Runtime_Type('record', new \load_runtime\Runtime_Storage(5,8,8),null,null,null,$record);
         $types['hidden'] = new \load_runtime\Runtime_Type('hidden', new \load_runtime\Runtime_Storage(4,8,8),null,null,null);
         $other = new \type_model\Named_Definition('Other', '', \type_model\Representation::opaque(8,8), $life, null, '', false, false, false);

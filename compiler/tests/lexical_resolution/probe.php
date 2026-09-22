@@ -66,10 +66,10 @@ final class Probe {
         Probe::check($call->members_count() === 1); Probe::check($call->calls_count() === 0);
         Probe::check((int)$call->binding_for((int)$call->members_at(0)->receiver_node_id)->local_id === 1);
         $templates = Probe::store('template<typename T, T N> struct Box { public T $x; } template<typename T> function identity($x T): T { return $x; } $box Box<int, 3> = new Box<int, 3>(); return identity<int>(3);');
-        $template = Probe::bind($templates,$templates->find_symbol('Box',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0));
-        Probe::check($template->parameters_count() === 2); Probe::check((int)$template->parameters_at(0)->contract === \type_model\GENERIC_COPYABLE_VALUE);
-        Probe::check((int)$template->parameters_at(1)->contract === \type_model\GENERIC_NONE);
-        Probe::check($template->names_at(0)->target_id === 0); Probe::check($template->names_at(1)->target_id === 0);
+        $template_binding = Probe::bind($templates,$templates->find_symbol('Box',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0));
+        Probe::check($template_binding->parameters_count() === 2); Probe::check((int)$template_binding->parameters_at(0)->contract === \type_model\GENERIC_COPYABLE_VALUE);
+        Probe::check((int)$template_binding->parameters_at(1)->contract === \type_model\GENERIC_NONE);
+        Probe::check($template_binding->names_at(0)->target_id === 0); Probe::check($template_binding->names_at(1)->target_id === 0);
         $template_entry = Probe::bind($templates,$templates->entry_symbol_id('/names.phs'));
         Probe::check($template_entry->applications_count() === 3);
         Probe::check($template_entry->applications_at(0)->definition === $templates->symbol_by_id($templates->find_symbol('Box',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0)));

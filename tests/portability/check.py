@@ -86,6 +86,17 @@ def main():
              'class Owner { use A { f as g; } }', 'owner.php:'),
             ('class Owner { public function f(int $n): mixed { } }', 'method type'),
         ]
+        cases += [
+            ('$void = 1;', 'reserved C++ local identifier $void'),
+            ('$mutable /** int */ = 1;', 'reserved C++ local identifier $mutable'),
+            ('for ($case = 0; $case < 1; $case++) {}', 'reserved C++ local identifier $case'),
+            ('$rows /** vector<int> */ = []; foreach ($rows as $case) {}', 'reserved C++ local identifier $case'),
+            ('$rows /** hash<int> */ = []; foreach ($rows as $namespace => $value) {}', 'reserved C++ local identifier $namespace'),
+            ('try { throw new \\RuntimeException("x"); } catch (\\RuntimeException $void) {}', 'reserved C++ local identifier $void'),
+            ('class Owner { public function first(int $mutable): void { $mutable = 1; } public function second(): void { $mutable = 2; } }', 'reserved C++ local identifier $mutable'),
+            ('trait Ops { public function work(): void { $case = 0; } } class Owner { use Ops; }', 'reserved C++ local identifier $case'),
+            ('class Owner { public function __construct(public bool $mutable) {} public function work(): void { $mutable = false; } }', 'reserved C++ local identifier $mutable'),
+        ]
         for body, diagnostic in cases:
             write('owner.php', body)
             run('sync_imports.php', source)
@@ -95,6 +106,12 @@ def main():
             assert diagnostic in checked.stderr, checked.stderr
             assert diagnostic in converted.stderr, converted.stderr
             assert snapshot(base) == before
+
+        # Parameters, fields and keyword-looking string contents remain distinct.
+        write('owner.php', "class Owner { public int $case = 0; public function __construct(public bool $mutable) { $mutable = false; $this->mutable = $mutable; } public function change(bool $mutable): void { $mutable = true; $this->mutable = $mutable; $this->case = 2; } } $Case = 1; echo '$void';")
+        run('sync_imports.php', source)
+        run('check.php', source)
+        run('convert.php', source, output)
 
         # Raw PHP compile errors are checked even if token parsing can accept them.
         write('owner.php', 'class Owner { public function f(int $n, int $n): int { return $n; } }')

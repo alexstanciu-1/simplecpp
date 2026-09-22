@@ -29,6 +29,14 @@ Assign constructed objects to locals (or return/use the expression). On the curr
 9b4b33f target, standalone `new Class(...);` statements were observed to disappear
 from generated C++, including constructor validation. Rejection tests must exercise
 the constructor through an assigned object; see `results/resource-obligations-01`.
+Use descriptive local names instead of C++ keywords (`$case_index`,
+`$is_mutable`, `$void_type`). The checker/converter rejects keyword-named local
+assignments, annotated declarations, foreach bindings and catch bindings with
+source attribution. This is a case-sensitive lexical check, not symbol resolution
+or automatic renaming. Declared callable parameters and object fields retain their
+existing supported target handling; a parameter exemption does not leak into another
+method. String contents and differently cased names are unaffected.
+
 Keep field and method names distinct within a class: PHP permits `$selected` plus
 `selected()`, but both become the same C++ member name.
 

@@ -87,17 +87,17 @@ final class Family_Contracts {
     }
     private static function exposure(Type_Reference $name): void {
         if (!Family_Contracts::identifier($name->name())) { throw new \RuntimeException('Invalid family source exposure'); }
-        $namespace = $name->namespace_name();
-        if ($namespace === '') { return; }
+        $namespace_text = $name->namespace_name();
+        if ($namespace_text === '') { return; }
         $start = 0;
-        for ($index = 0; $index < string_byte_len($namespace); $index++) {
-            if (string_byte_at($namespace, $index) === 58) {
-                if (string_byte_at($namespace, $index + 1) !== 58) { throw new \RuntimeException('Invalid family source exposure'); }
-                if (!Family_Contracts::identifier(string_byte_slice($namespace, $start, $index - $start))) { throw new \RuntimeException('Invalid family source exposure'); }
+        for ($index = 0; $index < string_byte_len($namespace_text); $index++) {
+            if (string_byte_at($namespace_text, $index) === 58) {
+                if (string_byte_at($namespace_text, $index + 1) !== 58) { throw new \RuntimeException('Invalid family source exposure'); }
+                if (!Family_Contracts::identifier(string_byte_slice($namespace_text, $start, $index - $start))) { throw new \RuntimeException('Invalid family source exposure'); }
                 $index = $index + 1; $start = $index + 1;
             }
         }
-        if (!Family_Contracts::identifier(string_byte_slice($namespace, $start, string_byte_len($namespace) - $start))) { throw new \RuntimeException('Invalid family source exposure'); }
+        if (!Family_Contracts::identifier(string_byte_slice($namespace_text, $start, string_byte_len($namespace_text) - $start))) { throw new \RuntimeException('Invalid family source exposure'); }
     }
     /** Only provider primitives, this owner's formals, and its exact self application. */
     private static function reference(Type_Reference $reference, Family_Definition $family): void {

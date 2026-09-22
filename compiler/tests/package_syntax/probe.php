@@ -12,10 +12,10 @@ final class Probe {
         for ($kind = 0; $kind < 3; $kind++) { Probe::check((\load_runtime\Runtime_Modes::module_name($kind) === $module_names[$kind]) && (\load_runtime\Runtime_Modes::module_kind($module_names[$kind]) === $kind)); }
         $storage = new \load_runtime\Runtime_Storage(0, 4, 4);
         $integer = new \load_runtime\Runtime_Type('signed32', $storage, 32, true, null);
-        $unsigned = new \load_runtime\Runtime_Type('unsigned32', $storage, 32, false, null);
+        $unsigned_value = new \load_runtime\Runtime_Type('unsigned32', $storage, 32, false, null);
         Probe::check(($integer->id === 'signed32') && ($integer->storage === $storage));
         Probe::check(($storage->size_bytes === 4) && ($storage->alignment_bytes === 4));
-        Probe::check($unsigned->signed === false);
+        Probe::check($unsigned_value->signed === false);
         $void_definition = new \type_model\Named_Definition('void', '', \type_model\Representation::void_type(), null, null, '', false, false, false);
         $void_row = new \load_runtime\Runtime_Type('nothing', new \load_runtime\Runtime_Storage(3, 0, 1), null, null, $void_definition);
         Probe::check($void_row->language_type === $void_definition);
@@ -70,12 +70,12 @@ final class Probe {
             try { $bad = \load_runtime\Package_Syntax::rows(json_read($row), 'type'); } catch (\RuntimeException $error) { $rejected = true; }
             Probe::check($rejected);
         }
-        for ($case = 0; $case < 4; $case++) {
+        for ($case_index = 0; $case_index < 4; $case_index++) {
             $rejected = false;
             try {
-                if ($case === 0) { $bad_abi = \load_runtime\Package_Syntax::integer_abi(json_read('"i64"'), json_read('""'), $integer); }
-                elseif ($case === 1) { $bad_abi = \load_runtime\Package_Syntax::integer_abi(json_read('"i32"'), json_read('false'), $integer); }
-                elseif ($case === 2) { $no_bits = new \load_runtime\Runtime_Type('pointer', new \load_runtime\Runtime_Storage(1, 8, 8), null, null, null); $bad_abi = \load_runtime\Package_Syntax::integer_abi(json_read('"i32"'), json_read('""'), $no_bits); }
+                if ($case_index === 0) { $bad_abi = \load_runtime\Package_Syntax::integer_abi(json_read('"i64"'), json_read('""'), $integer); }
+                elseif ($case_index === 1) { $bad_abi = \load_runtime\Package_Syntax::integer_abi(json_read('"i32"'), json_read('false'), $integer); }
+                elseif ($case_index === 2) { $no_bits = new \load_runtime\Runtime_Type('pointer', new \load_runtime\Runtime_Storage(1, 8, 8), null, null, null); $bad_abi = \load_runtime\Package_Syntax::integer_abi(json_read('"i32"'), json_read('""'), $no_bits); }
                 else { \load_runtime\Package_Syntax::identifier(json_read('""')); }
             } catch (\RuntimeException $error) { $rejected = true; }
             Probe::check($rejected);

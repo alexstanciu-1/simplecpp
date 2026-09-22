@@ -42,15 +42,15 @@ final class Probe {
         Probe::check($instance->argument_at(1)->value==='340282366920938463463374607431768211455');
         $member=new \instantiate\Instance_Context($method,8,$arguments,$u8); Probe::check($member->receiver_type===$u8);
         $empty /** vector<\instantiate\Template_Argument> */ = [];
-        for ($case=0;$case<7;$case++) {
+        for ($case_index=0;$case_index<7;$case_index++) {
             $failed=false;
             try {
-                if ($case===0) { $bad=\instantiate\Instance_Context::ordinary($bag); }
-                elseif ($case===1) { $bad=new \instantiate\Instance_Context($plain,0,$arguments); }
-                elseif ($case===2) { $bad=new \instantiate\Instance_Context($plain,1,$empty); }
-                elseif ($case===3) { $bad=new \instantiate\Instance_Context($bag,-1,$empty); }
-                elseif ($case===4) { $bad=new \instantiate\Instance_Context($bag,4294967296,$empty); }
-                elseif ($case===5) { $bad=new \instantiate\Instance_Context($bag,1,$empty,$u8); }
+                if ($case_index===0) { $bad=\instantiate\Instance_Context::ordinary($bag); }
+                elseif ($case_index===1) { $bad=new \instantiate\Instance_Context($plain,0,$arguments); }
+                elseif ($case_index===2) { $bad=new \instantiate\Instance_Context($plain,1,$empty); }
+                elseif ($case_index===3) { $bad=new \instantiate\Instance_Context($bag,-1,$empty); }
+                elseif ($case_index===4) { $bad=new \instantiate\Instance_Context($bag,4294967296,$empty); }
+                elseif ($case_index===5) { $bad=new \instantiate\Instance_Context($bag,1,$empty,$u8); }
                 else { $instance->argument_at(2); }
             } catch (\LogicException $error) { $failed=true; }
             Probe::check($failed);

@@ -53,18 +53,18 @@ final class Probe {
         Probe::check($definition->representation === $descriptor->representation);
         Probe::check($definition->lifetime === $descriptor->lifetime);
         Probe::check($descriptor->element_storage === null);
-        for ($case = 0; $case < 10; $case++) {
+        for ($case_index = 0; $case_index < 10; $case_index++) {
             $rejected = false;
             try {
-                if ($case === 0) { $bad = new \type_model\Named_Definition('bad', '', $representation, $lifetime, null, '', false, false, true, null, null, $storage); }
-                elseif ($case === 1) { $bad = new \type_model\Named_Definition('bad', '', \type_model\Representation::opaque(16, 8), $lifetime, null, '', false, false, true, $ownership, null, $storage); }
-                elseif ($case === 2) { $bad = new \type_model\Named_Definition('bad', '', $representation, new \type_model\Lifetime_Contract($descriptor_policy, $empty_ops), null, '', false, false, true, $ownership, null, $storage); }
-                elseif ($case === 3) { $bad = new \type_model\Named_Definition('bad', '', $representation, $lifetime, null, '', false, false, true, new \type_model\Resource_Obligations(0, $paths), null, $storage); }
-                elseif ($case === 4) { $bad_storage = new \type_model\Element_Storage($family, 0, $counter); }
-                elseif ($case === 5) { \type_model\Storage_Roles::parse('unknown'); }
-                elseif ($case === 6) { $family->primitive_for('missing'); }
-                elseif ($case === 7) { $primitive->parameter_at(2); }
-                elseif ($case === 8) { $bad_primitive = new \type_model\Storage_Primitive('bad', \type_model\Runtime_Abi_Position::byte_span($integer), $parameters); }
+                if ($case_index === 0) { $bad = new \type_model\Named_Definition('bad', '', $representation, $lifetime, null, '', false, false, true, null, null, $storage); }
+                elseif ($case_index === 1) { $bad = new \type_model\Named_Definition('bad', '', \type_model\Representation::opaque(16, 8), $lifetime, null, '', false, false, true, $ownership, null, $storage); }
+                elseif ($case_index === 2) { $bad = new \type_model\Named_Definition('bad', '', $representation, new \type_model\Lifetime_Contract($descriptor_policy, $empty_ops), null, '', false, false, true, $ownership, null, $storage); }
+                elseif ($case_index === 3) { $bad = new \type_model\Named_Definition('bad', '', $representation, $lifetime, null, '', false, false, true, new \type_model\Resource_Obligations(0, $paths), null, $storage); }
+                elseif ($case_index === 4) { $bad_storage = new \type_model\Element_Storage($family, 0, $counter); }
+                elseif ($case_index === 5) { \type_model\Storage_Roles::parse('unknown'); }
+                elseif ($case_index === 6) { $family->primitive_for('missing'); }
+                elseif ($case_index === 7) { $primitive->parameter_at(2); }
+                elseif ($case_index === 8) { $bad_primitive = new \type_model\Storage_Primitive('bad', \type_model\Runtime_Abi_Position::byte_span($integer), $parameters); }
                 else {
                     $bad_parameters /** vector<\type_model\Runtime_Abi_Position> */ = [\type_model\Runtime_Abi_Position::byte_span($integer)];
                     $bad_primitive = new \type_model\Storage_Primitive('bad', null, $bad_parameters);

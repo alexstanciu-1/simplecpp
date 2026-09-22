@@ -1257,3 +1257,23 @@ feature request. Remaining migration work includes package types, imports/export
 ownership, checksum/lease acceptance and provider symbol integration.
 
 Cumulative fast validation passes at 107 registered production files.
+
+
+## Reserved local names: early portable-source feedback
+
+Repeated native failures on `$case`, `$mutable` and `$void` justified a narrow
+converter preflight. The lexical body owner now distinguishes declared callable
+inputs from new local bindings; it rejects C++ keyword locals without symbol lookup
+or target-side changes. Keyword fields/promoted parameters stay accepted. Method
+scopes restore the input-name set, and trait-expanded methods use the same path.
+
+Three active source files (package syntax, scalar catalog syntax and family
+contracts) and sixteen probe files received descriptive variable-only renames.
+Algorithms, types, properties and retained prototype inputs are unchanged. This
+removes avoidable build cycles rather than changing compiler semantics. Converter
+implementation bytes already participate in the incremental output fingerprint,
+so old converted output cannot bypass the new check after a tool update.
+
+Evidence: `results/reserved-locals-01`. Readiness remains 107 production files.
+Next: measured package type ingestion and its accepted-owner dependencies; complete
+source export ownership remains required before claiming full package acceptance.

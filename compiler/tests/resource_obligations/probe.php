@@ -31,25 +31,25 @@ final class Probe {
         Probe::check(!$none->has_owners()); Probe::check($direct->has_owners());
         $owned=Probe::definition($direct,0,0,0); Probe::check($owned->ownership===$direct);
         $record=Probe::definition($fields,1,2,2); Probe::check($record->ownership===$fields);
-        for ($case=0;$case<17;$case++) {
+        for ($case_index=0;$case_index<17;$case_index++) {
             $rejected=false;
             try {
-                if ($case===0) { $invalid_effect=new \type_model\Allocation_Effect(0,0); }
-                elseif ($case===1) { $invalid_effect=new \type_model\Allocation_Effect(7,0); }
-                elseif ($case===2) { $invalid_effect=new \type_model\Allocation_Effect(1,-1); }
-                elseif ($case===3) { $invalid_effect=new \type_model\Allocation_Effect(3,0); }
-                elseif ($case===4) { $invalid_effect=new \type_model\Allocation_Effect(1,0,1); }
-                elseif ($case===5) { $invalid_effect=new \type_model\Allocation_Effect(3,0,0); }
-                elseif ($case===6) { $invalid_effect=new \type_model\Allocation_Effect(3,0,-1); }
-                elseif ($case===7) { $bad /** vector<vector<int>> */ = [[]]; $invalid_paths=new \type_model\Resource_Obligations(0,$bad); }
-                elseif ($case===8) { $negative /** vector<vector<int>> */ = [[-1]]; $invalid_paths=new \type_model\Resource_Obligations(0,$negative); }
-                elseif ($case===9) { $duplicates /** vector<vector<int>> */ = [[0,1],[0,1]]; $invalid_paths=new \type_model\Resource_Obligations(0,$duplicates); }
-                elseif ($case===10) { $invalid_kind=new \type_model\Resource_Obligations(2,$empty); }
-                elseif ($case===11) { Probe::definition($direct,1,0,0); }
-                elseif ($case===12) { Probe::definition($direct,0,1,0); }
-                elseif ($case===13) { Probe::definition($direct,0,0,1); }
-                elseif ($case===14) { Probe::definition($fields,0,0,0); }
-                elseif ($case===15) { Probe::definition($fields,1,1,0); }
+                if ($case_index===0) { $invalid_effect=new \type_model\Allocation_Effect(0,0); }
+                elseif ($case_index===1) { $invalid_effect=new \type_model\Allocation_Effect(7,0); }
+                elseif ($case_index===2) { $invalid_effect=new \type_model\Allocation_Effect(1,-1); }
+                elseif ($case_index===3) { $invalid_effect=new \type_model\Allocation_Effect(3,0); }
+                elseif ($case_index===4) { $invalid_effect=new \type_model\Allocation_Effect(1,0,1); }
+                elseif ($case_index===5) { $invalid_effect=new \type_model\Allocation_Effect(3,0,0); }
+                elseif ($case_index===6) { $invalid_effect=new \type_model\Allocation_Effect(3,0,-1); }
+                elseif ($case_index===7) { $bad /** vector<vector<int>> */ = [[]]; $invalid_paths=new \type_model\Resource_Obligations(0,$bad); }
+                elseif ($case_index===8) { $negative /** vector<vector<int>> */ = [[-1]]; $invalid_paths=new \type_model\Resource_Obligations(0,$negative); }
+                elseif ($case_index===9) { $duplicates /** vector<vector<int>> */ = [[0,1],[0,1]]; $invalid_paths=new \type_model\Resource_Obligations(0,$duplicates); }
+                elseif ($case_index===10) { $invalid_kind=new \type_model\Resource_Obligations(2,$empty); }
+                elseif ($case_index===11) { Probe::definition($direct,1,0,0); }
+                elseif ($case_index===12) { Probe::definition($direct,0,1,0); }
+                elseif ($case_index===13) { Probe::definition($direct,0,0,1); }
+                elseif ($case_index===14) { Probe::definition($fields,0,0,0); }
+                elseif ($case_index===15) { Probe::definition($fields,1,1,0); }
                 else { Probe::definition($fields,1,0,1); }
             } catch (\InvalidArgumentException $error) { $rejected=true; }
             Probe::check($rejected);

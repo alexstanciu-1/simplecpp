@@ -44,14 +44,14 @@ final class Probe {
         Probe::check(($catalog->size() === 1) && ($catalog->entry_return_type === $word));
         $empty = new \type_model\Type_Catalog('language', 'base', 'language_values', $rows, $word, $word, null);
         Probe::check($empty->record_count() === 0);
-        for ($case = 0; $case < 4; $case++) {
+        for ($case_index = 0; $case_index < 4; $case_index++) {
             $rejected = false;
             try {
-                if ($case === 0) { $catalog->record_at(-1); }
-                elseif ($case === 1) { $catalog->record_at(2); }
+                if ($case_index === 0) { $catalog->record_at(-1); }
+                elseif ($case_index === 1) { $catalog->record_at(2); }
                 else {
                     $bad_records /** vector<\type_model\Record_Declaration> */ = [$record, $record];
-                    if ($case === 3) { $bad_records = [Probe::record('word', '', $word)]; }
+                    if ($case_index === 3) { $bad_records = [Probe::record('word', '', $word)]; }
                     $bad = new \type_model\Type_Catalog('language', 'bad', 'language_values', $rows, $word, $word, null, $bad_records);
                 }
             } catch (\InvalidArgumentException $error) { $rejected = true; }
@@ -71,22 +71,22 @@ final class Probe {
         Probe::check($declarations[0]->definition === $family);
         \load_runtime\Family_Adapter::validate_exposures($declarations, $catalog);
         Probe::check($catalog->find_record('Row', 'provider') === $record);
-        for ($case = 0; $case < 9; $case++) {
+        for ($case_index = 0; $case_index < 9; $case_index++) {
             $rejected = false;
             $selected /** vector<\type_model\Family_Definition> */ = [$family];
             $mapping /** hash<\type_model\Type_Reference> */ = [];
             foreach ($mappings as $key => $value) { $mapping[$key] = $value; }
-            if ($case === 0) { $selected[] = $family; }
-            elseif ($case === 1) { $selected = [Probe::family('word', '', 'runtime', 'bag', true)]; }
-            elseif ($case === 2) { $selected = [Probe::family('Row', 'provider', 'runtime', 'bag', true)]; }
-            elseif ($case === 3) { $selected[] = Probe::family('Bag', 'library', 'runtime', 'other', true); }
-            elseif ($case === 4) { $mapping = []; }
-            elseif ($case === 5) { $mapping['["runtime","input"]'] = \type_model\Type_Reference::named('missing', ''); }
-            elseif ($case === 6) { $mapping['["runtime","output"]'] = \type_model\Type_Reference::named('Row', 'wrong'); }
-            elseif ($case === 7) { $selected = [Probe::family('Bag', 'library', 'other_provider', 'bag', true)]; }
+            if ($case_index === 0) { $selected[] = $family; }
+            elseif ($case_index === 1) { $selected = [Probe::family('word', '', 'runtime', 'bag', true)]; }
+            elseif ($case_index === 2) { $selected = [Probe::family('Row', 'provider', 'runtime', 'bag', true)]; }
+            elseif ($case_index === 3) { $selected[] = Probe::family('Bag', 'library', 'runtime', 'other', true); }
+            elseif ($case_index === 4) { $mapping = []; }
+            elseif ($case_index === 5) { $mapping['["runtime","input"]'] = \type_model\Type_Reference::named('missing', ''); }
+            elseif ($case_index === 6) { $mapping['["runtime","output"]'] = \type_model\Type_Reference::named('Row', 'wrong'); }
+            elseif ($case_index === 7) { $selected = [Probe::family('Bag', 'library', 'other_provider', 'bag', true)]; }
             try {
                 $exposed = \load_runtime\Family_Adapter::expose($selected, $mapping);
-                if ($case === 8) { $exposed[] = $exposed[0]; }
+                if ($case_index === 8) { $exposed[] = $exposed[0]; }
                 \load_runtime\Family_Adapter::validate_exposures($exposed, $catalog);
             } catch (\RuntimeException $error) { $rejected = true; }
             Probe::check($rejected);

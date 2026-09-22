@@ -50,7 +50,7 @@ final class Catalog_Syntax {
         $name = Catalog_Syntax::text($node->member('name')); $namespace_name = Catalog_Syntax::text($node->member('namespace'));
         $kind = Catalog_Syntax::text($node->member('kind'));
         $shape = \type_model\Representation::void_type();
-        $signed /** nullable<bool> */ = null;
+        $signed_value /** nullable<bool> */ = null;
         $family = ''; $addition = false; $comparison = false; $field = false;
         $optional /** vector<string> */ = [];
         if ($kind === 'integer') {
@@ -58,7 +58,7 @@ final class Catalog_Syntax {
             $optional = ['integer_family','addition','comparison','struct_field'];
             Catalog_Syntax::fields($node,$common,$optional);
             $shape = \type_model\Representation::integer(Catalog_Syntax::integer($node->member('bit_width')));
-            $signed = Catalog_Syntax::boolean($node->member('signed'));
+            $signed_value = Catalog_Syntax::boolean($node->member('signed'));
             if ($node->has('integer_family')) {
                 $family = Catalog_Syntax::text($node->member('integer_family'));
                 if ($family === '') { throw new \InvalidArgumentException('Integer family must be nonempty'); }
@@ -77,7 +77,7 @@ final class Catalog_Syntax {
             $shape = \type_model\Representation::floating(Catalog_Syntax::text($node->member('format')));
         } else if ($kind === 'void') { Catalog_Syntax::fields($node,$common,$optional); }
         else { throw new \InvalidArgumentException('Unsupported named type representation'); }
-        return new \type_model\Named_Definition($name,$namespace_name,$shape,Catalog_Syntax::lifetime($node->member('lifetime'),$kind === 'integer'),$signed,$family,$addition,$comparison,$field);
+        return new \type_model\Named_Definition($name,$namespace_name,$shape,Catalog_Syntax::lifetime($node->member('lifetime'),$kind === 'integer'),$signed_value,$family,$addition,$comparison,$field);
     }
     private static function binding(array $definitions /** vector<\type_model\Named_Definition> */, \scpp\Json_View $node): \type_model\Named_Definition {
         $fields /** vector<string> */ = ['name','namespace']; $none /** vector<string> */ = [];

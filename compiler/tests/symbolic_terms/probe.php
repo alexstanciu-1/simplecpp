@@ -39,15 +39,15 @@ final class Probe {
         $expression=new \check_templates\Expression_Type($formal,true); Probe::check($expression->readonly);
         $void_expression=new \check_templates\Expression_Type(null,false); Probe::check($void_expression->type===null);
         $none /** vector<\check_templates\Type_Term> */ = [];
-        for ($case=0;$case<7;$case++) {
+        for ($case_index=0;$case_index<7;$case_index++) {
             $failed=false;
             try {
-                if ($case===0) { $bad=\check_templates\Type_Term::source(0); }
-                elseif ($case===1) { $bad=\check_templates\Type_Term::parameter(1,-1); }
-                elseif ($case===2) { $bad=\check_templates\Type_Term::constant(''); }
-                elseif ($case===3) { $application->argument_at(2); }
-                elseif ($case===4) { $bad=new \check_templates\Type_Term(99,0,0,'',null,null,$none); }
-                elseif ($case===5) { $bad=new \check_templates\Type_Term(1,1,0,'',$word,null,$none); }
+                if ($case_index===0) { $bad=\check_templates\Type_Term::source(0); }
+                elseif ($case_index===1) { $bad=\check_templates\Type_Term::parameter(1,-1); }
+                elseif ($case_index===2) { $bad=\check_templates\Type_Term::constant(''); }
+                elseif ($case_index===3) { $application->argument_at(2); }
+                elseif ($case_index===4) { $bad=new \check_templates\Type_Term(99,0,0,'',null,null,$none); }
+                elseif ($case_index===5) { $bad=new \check_templates\Type_Term(1,1,0,'',$word,null,$none); }
                 else { $bad=new \check_templates\Type_Term(5,0,0,'',null,null,$none); }
             } catch (\InvalidArgumentException $error) { $failed=true; } Probe::check($failed);
         }

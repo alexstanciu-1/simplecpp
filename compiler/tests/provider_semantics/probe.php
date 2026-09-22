@@ -45,19 +45,19 @@ final class Probe {
         $empty_parameters /** vector<\type_model\Semantic_Parameter> */ = [];
         $empty = new \type_model\Semantic_Signature($empty_parameters, $result);
         Probe::check(($empty->parameter_count() === 0) && ($empty->allocation_effect === null));
-        for ($case = 0; $case < 11; $case++) {
+        for ($case_index = 0; $case_index < 11; $case_index++) {
             $rejected = false;
             try {
-                if ($case === 0) { $named->provider(); }
-                elseif ($case === 1) { $provided->name(); }
-                elseif ($case === 2) { $family->parameter_slot(); }
-                elseif ($case === 3) { $formal->argument_count(); }
-                elseif ($case === 4) { $family->argument_at(2); }
-                elseif ($case === 5) { $family->argument_at(-1); }
-                elseif ($case === 6) { $signature->parameter_at(4); }
-                elseif ($case === 7) { $signature->parameter_at(-1); }
-                elseif ($case === 8) { $bad = new \type_model\Semantic_Parameter($named, 4); }
-                elseif ($case === 9) { $bad_result = new \type_model\Semantic_Result($named, -1); }
+                if ($case_index === 0) { $named->provider(); }
+                elseif ($case_index === 1) { $provided->name(); }
+                elseif ($case_index === 2) { $family->parameter_slot(); }
+                elseif ($case_index === 3) { $formal->argument_count(); }
+                elseif ($case_index === 4) { $family->argument_at(2); }
+                elseif ($case_index === 5) { $family->argument_at(-1); }
+                elseif ($case_index === 6) { $signature->parameter_at(4); }
+                elseif ($case_index === 7) { $signature->parameter_at(-1); }
+                elseif ($case_index === 8) { $bad = new \type_model\Semantic_Parameter($named, 4); }
+                elseif ($case_index === 9) { $bad_result = new \type_model\Semantic_Result($named, -1); }
                 else { $bad_formal = \type_model\Type_Reference::parameter('family', -1); }
             } catch (\LogicException $error) { $rejected = true; }
             catch (\OutOfBoundsException $bounds) { $rejected = true; }

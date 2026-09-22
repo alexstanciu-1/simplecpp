@@ -142,3 +142,9 @@ eight-primitive/six-operation storage protocol (`results/storage-import-01`). Th
 shared pointer syntax regression passes 66 native outcomes. Next: a narrow reserved
 local-name preflight to eliminate repeated avoidable native build failures, then
 remaining package type/import ownership and acceptance dependencies.
+
+
+The reserved-local preflight is implemented. Cumulative PHP/tool checks pass for
+107 ready files; keyword locals now fail before native build, while declared
+parameters and fields retain their supported behavior. Evidence and focused native
+regressions: `results/reserved-locals-01`. Next: package type/import ownership.

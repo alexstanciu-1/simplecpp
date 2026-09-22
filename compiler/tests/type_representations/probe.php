@@ -35,8 +35,8 @@ final class Probe {
         return false;
     }
     public static function run(): void {
-        $void = \type_model\Representation::void_type();
-        Probe::check($void->kind() === 0);
+        $void_type = \type_model\Representation::void_type();
+        Probe::check($void_type->kind() === 0);
         Probe::check(\type_model\Representation::byte_span()->kind() === 8);
         $integer = \type_model\Representation::integer(37);
         Probe::check($integer->kind() === 1);
@@ -72,12 +72,12 @@ final class Probe {
         Probe::check($signature->parameter_passing(1) === \type_model\PASS_VALUE);
         Probe::check($signature->result_production() === \type_model\RESULT_VALUE);
         $passing /** vector<int> */ = [\type_model\PASS_VALUE,\type_model\PASS_BORROW_CONST,\type_model\PASS_BORROW_MUTABLE,\type_model\PASS_BYTE_SPAN];
-        $explicit = \type_model\Representation::signature(1, 0, 4, $passing, \type_model\RESULT_OWNED);
+        $explicit_value = \type_model\Representation::signature(1, 0, 4, $passing, \type_model\RESULT_OWNED);
         $passing[1] = \type_model\PASS_VALUE;
-        Probe::check($explicit->parameter_passing(1) === \type_model\PASS_BORROW_CONST);
-        Probe::check($explicit->parameter_passing(2) === \type_model\PASS_BORROW_MUTABLE);
-        Probe::check($explicit->parameter_passing(3) === \type_model\PASS_BYTE_SPAN);
-        Probe::check($explicit->result_production() === \type_model\RESULT_OWNED);
+        Probe::check($explicit_value->parameter_passing(1) === \type_model\PASS_BORROW_CONST);
+        Probe::check($explicit_value->parameter_passing(2) === \type_model\PASS_BORROW_MUTABLE);
+        Probe::check($explicit_value->parameter_passing(3) === \type_model\PASS_BYTE_SPAN);
+        Probe::check($explicit_value->result_production() === \type_model\RESULT_OWNED);
         $opaque = \type_model\Representation::opaque(32, 16);
         Probe::check($opaque->kind() === 7);
         Probe::check($opaque->opaque_size() === 32);
@@ -107,7 +107,7 @@ final class Probe {
         Probe::check(!$member->writable);
         for ($i /** int */ = 0; $i < 25; ++$i) { Probe::check(Probe::invalid($i)); }
         $wrong = false;
-        try { $void->bit_width(); } catch (\LogicException $error) { $wrong = true; }
+        try { $void_type->bit_width(); } catch (\LogicException $error) { $wrong = true; }
         Probe::check($wrong);
         $wrong = false;
         try { $integer->signature_return(); } catch (\LogicException $error) { $wrong = true; }

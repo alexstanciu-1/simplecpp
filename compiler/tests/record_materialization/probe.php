@@ -43,12 +43,12 @@ final class Probe {
         $nested_path=$types->definition_for_type($nested_id)->ownership->path_at(0);
         Probe::check(q_count($nested_path)===2); Probe::check($nested_path[0]===0); Probe::check($nested_path[1]===0);
         $rejected=false; try { $bad_nested=\type_model\Field_Type::fixed_array($owned_definition,2); } catch (\InvalidArgumentException $error) { $rejected=true; } Probe::check($rejected);
-        for ($case=0;$case<8;$case++) {
+        for ($case_index=0;$case_index<8;$case_index++) {
             $name='Bad'; $automatic=true; $policy=0; $candidate_fields=$fields;
-            if ($case===0) { $name=''; } elseif ($case===1) { $name='0bad'; } elseif ($case===2) { $name='é'; }
-            elseif ($case===3) { $automatic=false; } elseif ($case===4) { $candidate_fields=[]; }
-            elseif ($case===5) { $candidate_fields[1]=$candidate_fields[0]; }
-            elseif ($case===6) { $policy=1; }
+            if ($case_index===0) { $name=''; } elseif ($case_index===1) { $name='0bad'; } elseif ($case_index===2) { $name='é'; }
+            elseif ($case_index===3) { $automatic=false; } elseif ($case_index===4) { $candidate_fields=[]; }
+            elseif ($case_index===5) { $candidate_fields[1]=$candidate_fields[0]; }
+            elseif ($case_index===6) { $policy=1; }
             else { $candidate_fields[0]=new \type_model\Field_Declaration('bad-name',\type_model\Field_Type::named($word),true); }
             $candidate=new \type_model\Record_Declaration($name,'',$candidate_fields,$automatic,$policy,null,0,0,0,0);
             $rejected=false;
