@@ -220,3 +220,12 @@ from duplicate lifecycle enumeration. Constructor calls do not authorize artifac
 or receipts. Next: explicit semantic contract comparison for package/type reuse;
 `matches`, retained-type canonicalization, lease ownership and diagnostic projection
 are not yet migrated.
+
+
+Explicit callable comparison and retention add 925 PHP/native outcomes and original
+prototype equality comparisons (`results/callable-contracts-01`). Nested reference
+identity, ordered semantic parameters, result/effects, physical ABI and exposure
+flags all participate. Equal rebuilt contracts retain old object identity; changed
+contracts and new coverage keep their new objects and order. Next: type-definition
+and binding/project comparison before package reuse; complete package acceptance
+and integration of callable retention in the adapter remain pending.

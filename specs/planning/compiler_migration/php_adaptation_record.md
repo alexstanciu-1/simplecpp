@@ -1509,3 +1509,31 @@ five binding configurations (160 PHP/native and retained comparisons), snapshot
 membership/identity, missing-query errors and module selection. First build passes;
 one final verification build follows a source-fixture consistency improvement.
 Zero native correction cycles.
+
+
+## Explicit callable equality and retention
+
+Callable_Contracts in type_model owns immutable callable comparison: tagged nested
+type references, semantic positions/results/allocation effects, ABI linkage and
+transport/shapes, provider identity and source exposure flags. It compares facts
+strictly, with explicit optional-state guards. Derived physical slot indices need
+no separate comparison because parameter shapes and result transport determine them.
+Shared object identity is only a safe early success, never the sole equality test.
+Callable_Retention in the load_runtime utilities folder reproduces the adapter's
+old-ID lookup and exact-contract reuse while preserving current order and coverage.
+Its inputs are already validated callable lists; it does not authorize imports.
+The full Package_Adapter is not yet migrated/integrated with this helper.
+
+The first oracle used PHP == on migrated records and exposed why that is unsafe:
+nullable integer tag zero compares loosely equal to null, unlike the prototype's
+nullable enum object. The oracle now constructs actual retained prototype records
+and applies their existing PHP structural comparison. Explicit target comparison
+preserves the original distinction. This learning is also in the authoring guide.
+
+Evidence: results/callable-contracts-01. The 14-reference and 27-callable all-pairs
+matrices yield 925 PHP/native and retained comparisons. Each callable case also
+checks selected object identity, unchanged inputs, added coverage and result order.
+One reserved test-local checker correction and one oracle correction preceded the
+first native build; production implementation was unchanged. First native build
+passes, zero native correction cycles. Type and package-context comparison remain
+separate unfinished work.

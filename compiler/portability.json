@@ -123,7 +123,9 @@
     "src/01_prepare_inputs/load_runtime/project_import.php",
     "src/01_prepare_inputs/load_runtime/handlers/package_type_map.php",
     "src/01_prepare_inputs/load_runtime/data/project.php",
-    "src/01_prepare_inputs/load_runtime/data/package.php"
+    "src/01_prepare_inputs/load_runtime/data/package.php",
+    "src/04_analyze/type_model/callable_contracts.php",
+    "src/01_prepare_inputs/load_runtime/utilities/callable_retention.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

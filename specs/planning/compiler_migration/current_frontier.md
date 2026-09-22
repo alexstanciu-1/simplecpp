@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **122 production files**: input preparation (137 outcomes),
+Active readiness is **124 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -217,3 +217,12 @@ from duplicate lifecycle enumeration. Constructor calls do not authorize artifac
 or receipts. Next: explicit semantic contract comparison for package/type reuse;
 `matches`, retained-type canonicalization, lease ownership and diagnostic projection
 are not yet migrated.
+
+
+Explicit callable comparison and retention add 925 PHP/native outcomes and original
+prototype equality comparisons (`results/callable-contracts-01`). Nested reference
+identity, ordered semantic parameters, result/effects, physical ABI and exposure
+flags all participate. Equal rebuilt contracts retain old object identity; changed
+contracts and new coverage keep their new objects and order. Next: type-definition
+and binding/project comparison before package reuse; complete package acceptance
+and integration of callable retention in the adapter remain pending.

@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790105260.0,
+  "first_php_ready_epoch": 1790105372.4496732,
+  "authoring_to_php_ready_wall_seconds": 112.45,
+  "checker_correction_rounds": 1,
+  "oracle_correction_rounds": 1,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "native_stabilization_command_seconds": 28.08,
+  "timing_note": "First passing PHP checkpoint retained from attempt 2; subsequent oracle correction is stabilization work, not reclassified authoring. Command timings exclude oracle-authoring wall time.",
+  "consolidation_start_epoch": 1790105551.1560645,
+  "first_native_pass_epoch": 1790105486.071447,
+  "php_ready_to_native_pass_wall_seconds": 113.622,
+  "consolidation_end_epoch": 1790105666.183658,
+  "regression_and_consolidation_wall_seconds": 115.028
+}

@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **122 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **124 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -183,3 +183,12 @@ from duplicate lifecycle enumeration. Constructor calls do not authorize artifac
 or receipts. Next: explicit semantic contract comparison for package/type reuse;
 `matches`, retained-type canonicalization, lease ownership and diagnostic projection
 are not yet migrated.
+
+
+Explicit callable comparison and retention add 925 PHP/native outcomes and original
+prototype equality comparisons (`results/callable-contracts-01`). Nested reference
+identity, ordered semantic parameters, result/effects, physical ABI and exposure
+flags all participate. Equal rebuilt contracts retain old object identity; changed
+contracts and new coverage keep their new objects and order. Next: type-definition
+and binding/project comparison before package reuse; complete package acceptance
+and integration of callable retention in the adapter remain pending.

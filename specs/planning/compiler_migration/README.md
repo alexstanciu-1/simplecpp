@@ -6,7 +6,7 @@ accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; source collection proved:** input preparation, tokenization,
 parser storage/grammar/queries/project reuse, source symbols, entry selection, representations, lifecycle contracts and scalar catalog/entry binding provide
-122 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
+124 active production files, including declaration lookup, lexical/body binding, project resolution acceptance/reuse, canonical type storage, symbolic terms and provider-family semantic contracts. Source collection adds 97 PHP/native outcomes
 and nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks; its scalar catalog return-type binding is now proved (116 PHP/native outcomes).
 See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).
@@ -282,7 +282,7 @@ decoder loses object/list identity needed by manifest validation. A lossless inp
 boundary is required before porting Manifest_Syntax; snapshot export is unaffected.
 
 Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
-eight host checks; active coverage is 122 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
+eight host checks; active coverage is 124 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
 
 
 Package type composition adds 38 PHP/native outcomes and 38 retained acceptance
@@ -303,3 +303,12 @@ from duplicate lifecycle enumeration. Constructor calls do not authorize artifac
 or receipts. Next: explicit semantic contract comparison for package/type reuse;
 `matches`, retained-type canonicalization, lease ownership and diagnostic projection
 are not yet migrated.
+
+
+Explicit callable comparison and retention add 925 PHP/native outcomes and original
+prototype equality comparisons (`results/callable-contracts-01`). Nested reference
+identity, ordered semantic parameters, result/effects, physical ABI and exposure
+flags all participate. Equal rebuilt contracts retain old object identity; changed
+contracts and new coverage keep their new objects and order. Next: type-definition
+and binding/project comparison before package reuse; complete package acceptance
+and integration of callable retention in the adapter remain pending.

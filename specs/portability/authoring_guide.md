@@ -133,6 +133,12 @@ the field exists. Same-namespace files can split these declarations without alia
   one-byte PHP string. Code-point counts do not count graphemes or normalize text.
 - Keep null, false and errors distinct. Test numeric limits and lifetime behavior
   on the native target when PHP cannot model them faithfully.
+- Use explicit typed contract comparison when migrating PHP object equality. A
+  prototype enum object and its integer-tag replacement do not have identical PHP
+  `==` behavior: a nullable tag can collapse null with zero under loose comparison.
+  Compare optional states and scalar facts strictly, and retain identity only after
+  the complete relevant contract agrees. Use original prototype records as the
+  oracle when representation changes affect host equality.
 
 The converter does not enforce hot-path policy, ownership intent or array discipline.
 Those are review and behavioral-test responsibilities, not reasons to add inference.
