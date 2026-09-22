@@ -1,0 +1,67 @@
+Transpiled PHP files: 51, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/53] PCH app_pch.hpp.gch
+[2/53] CXX scpp_framework/collections.o
+[3/53] CXX scpp_framework/file_locks.o
+[4/53] CXX scpp_framework/processes.o
+[5/53] CXX src/04_analyze/type_model/data/callable_modes.o
+[6/53] CXX scpp_framework/strings.o
+[7/53] CXX scpp_framework/lock_reservation.o
+[8/53] CXX src/04_analyze/resolve_types/data/lifecycle_bodies.o
+[9/53] CXX scpp_framework/exceptions.o
+[10/53] CXX src/04_analyze/resolve_types/utilities/type_cache.o
+[11/53] CXX main.o
+[12/53] CXX src/04_analyze/type_model/data/callables.o
+[13/53] CXX scpp_framework/filesystem.o
+[14/53] CXX probe.o
+[15/53] CXX scpp_framework/json_document.o
+[16/53] CXX src/04_analyze/resolve_types/lifecycle_composition.o
+[17/53] CXX src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o
+[18/53] CXX src/04_analyze/type_model/data/context.o
+[19/53] CXX src/04_analyze/type_model/data/lifetime_policy_codec.o
+[20/53] CXX src/04_analyze/type_model/data/catalog.o
+[21/53] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[22/53] CXX src/04_analyze/type_model/data/lifecycle.o
+[23/53] CXX src/04_analyze/type_model/data/representations.o
+[24/53] CXX src/04_analyze/type_model/data/native_record_layout.o
+[25/53] CXX src/04_analyze/type_model/data/definitions.o
+[26/53] CXX src/04_analyze/type_model/data/records.o
+[27/53] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[28/53] CXX src/04_analyze/type_model/data/semantic_modes.o
+[29/53] CXX src/04_analyze/type_model/data/semantic_calls.o
+[30/53] CXX src/04_analyze/type_model/data/resources.o
+[31/53] CXX src/04_analyze/type_model/data/type_record.o
+[32/53] CXX src/04_analyze/type_model/result_contracts.o
+[33/53] CXX src/05_generate_code/prepare_backend/data/configuration.o
+[34/53] CXX src/05_generate_code/prepare_backend/data/layout_capture.o
+[35/53] CXX src/05_generate_code/prepare_backend/layout_probe.o
+[36/53] CXX src/04_analyze/type_model/data/storage.o
+[37/53] CXX src/05_generate_code/prepare_backend/data/layout_witness.o
+[38/53] CXX src/05_generate_code/prepare_backend/layout_selection.o
+[39/53] CXX src/04_analyze/type_model/data/type_references.o
+[40/53] CXX src/04_analyze/type_model/data/store.o
+[41/53] CXX src/05_generate_code/prepare_backend/data/layout.o
+[42/53] CXX src/05_generate_code/prepare_backend/layout_worker.o
+[43/53] CXX src/05_generate_code/prepare_backend/native_layout.o
+[44/53] CXX src/05_generate_code/prepare_backend/tools/tool_run.o
+[45/53] CXX src/05_generate_code/prepare_backend/layout_join.o
+[46/53] CXX src/05_generate_code/prepare_backend/layout_measurement.o
+[47/53] CXX src/05_generate_code/prepare_backend/layout_capture.o
+[48/53] CXX src/05_generate_code/prepare_backend/utilities/layout_ids.o
+[49/53] CXX src/05_generate_code/prepare_backend/utilities/llvm_text.o
+[50/53] CXX src/05_generate_code/prepare_backend/utilities/layout_facts.o
+[51/53] CXX src/05_generate_code/prepare_backend/utilities/layout_order.o
+[52/53] CXX src/05_generate_code/prepare_backend/utilities/llvm_storage.o
+[53/53] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/file_locks.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/lock_reservation.o, .prism/build/scpp_framework/processes.o, .prism/build/scpp_framework/strings.o, .prism/build/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o, .prism/build/src/04_analyze/resolve_types/data/lifecycle_bodies.o, .prism/build/src/04_analyze/resolve_types/lifecycle_composition.o, .prism/build/src/04_analyze/resolve_types/utilities/type_cache.o, .prism/build/src/04_analyze/type_model/data/callable_modes.o, .prism/build/src/04_analyze/type_model/data/callables.o, .prism/build/src/04_analyze/type_model/data/catalog.o, .prism/build/src/04_analyze/type_model/data/context.o, .prism/build/src/04_analyze/type_model/data/definitions.o, .prism/build/src/04_analyze/type_model/data/lifecycle.o, .prism/build/src/04_analyze/type_model/data/lifecycle_roles.o, .prism/build/src/04_analyze/type_model/data/lifetime_contract.o, .prism/build/src/04_analyze/type_model/data/lifetime_policy_codec.o, .prism/build/src/04_analyze/type_model/data/native_record_layout.o, .prism/build/src/04_analyze/type_model/data/records.o, .prism/build/src/04_analyze/type_model/data/representations.o, .prism/build/src/04_analyze/type_model/data/resources.o, .prism/build/src/04_analyze/type_model/data/semantic_calls.o, .prism/build/src/04_analyze/type_model/data/semantic_modes.o, .prism/build/src/04_analyze/type_model/data/storage.o, .prism/build/src/04_analyze/type_model/data/store.o, .prism/build/src/04_analyze/type_model/data/type_record.o, .prism/build/src/04_analyze/type_model/data/type_references.o, .prism/build/src/04_analyze/type_model/result_contracts.o, .prism/build/src/05_generate_code/prepare_backend/data/configuration.o, .prism/build/src/05_generate_code/prepare_backend/data/layout.o, .prism/build/src/05_generate_code/prepare_backend/data/layout_capture.o, .prism/build/src/05_generate_code/prepare_backend/data/layout_witness.o, .prism/build/src/05_generate_code/prepare_backend/layout_capture.o, .prism/build/src/05_generate_code/prepare_backend/layout_join.o, .prism/build/src/05_generate_code/prepare_backend/layout_measurement.o, .prism/build/src/05_generate_code/prepare_backend/layout_probe.o, .prism/build/src/05_generate_code/prepare_backend/layout_selection.o, .prism/build/src/05_generate_code/prepare_backend/layout_worker.o, .prism/build/src/05_generate_code/prepare_backend/native_layout.o, .prism/build/src/05_generate_code/prepare_backend/tools/tool_run.o, .prism/build/src/05_generate_code/prepare_backend/utilities/layout_facts.o, .prism/build/src/05_generate_code/prepare_backend/utilities/layout_ids.o, .prism/build/src/05_generate_code/prepare_backend/utilities/layout_order.o, .prism/build/src/05_generate_code/prepare_backend/utilities/llvm_storage.o, .prism/build/src/05_generate_code/prepare_backend/utilities/llvm_text.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

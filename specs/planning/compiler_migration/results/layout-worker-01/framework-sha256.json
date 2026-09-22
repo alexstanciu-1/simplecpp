@@ -1,0 +1,6 @@
+{
+  "tools/php_portability/runtime/processes.php": "2c37d19ef15e2e622df92820d65cd091cd742eef4583a85e5c772ae7a9634b74",
+  "tools/php_portability/runtime/process_launcher.php": "4a750df0a0decb9460f716c007af60946ed06a8fc04a4ee402d7925a0514f2d9",
+  "tests/portability/process_launch_ack.py": "5096774904a671859f68f5c37deeb0cb10a95ed0e0b163e6114c2581104023d8",
+  "tools/php_portability/validate.py": "71a88e91b1e6aa075af65284b28ce94457bb2d92b8747174e3fb0c551c0680b5"
+}

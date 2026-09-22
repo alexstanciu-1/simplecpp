@@ -37,7 +37,7 @@ final class Probe {
             $input = \prepare_backend\Layout_Capture::capture($types,$roots,$known);
             $config = new \prepare_backend\Backend_Configuration('b',$fixture->member('triple')->text(),$fixture->member('layout')->text(),'','','a','r');
             $commands /** vector<string> */ = []; $previous /** hash<\prepare_backend\Storage_Layout,int> */ = [];
-            $tasks = \prepare_backend\Layout_Selection::select($input,$config,$previous,true,$commands,'',$commands);
+            $tasks = \prepare_backend\Layout_Selection::select($input,$config,$previous,true,$commands,$commands);
             $task = $tasks[0]; $accepted = true; $matches = true;
             try {
                 if ($fixture->member('mode')->text() === 'facts') {

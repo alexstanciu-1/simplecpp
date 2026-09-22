@@ -1,0 +1,10 @@
+{
+  "phase": "php",
+  "outer_timeout_seconds": 240,
+  "native_build_attempts": 0,
+  "changed_leaf_calls": 2,
+  "timeout_test_tool_started": false,
+  "launch_directory": "/tmp/scpp-launch-6e96f57c9802ddfadb14732a03577e70",
+  "finding": "Parent closed acknowledgement FIFO before child opened its reader; fixed in PHP process protocol",
+  "evidence": "Forced READY/ack-open interleaving reproduces old timeout and passes after retaining writer until exec confirmation"
+}

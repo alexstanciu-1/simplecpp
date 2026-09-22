@@ -19,7 +19,7 @@ final class Probe {
         elseif ($mode === 'task_field_identity') { $fields[0] = new \type_model\Type_Member($fields[0]->type_id,$fields[0]->name,$fields[0]->writable); }
         elseif ($mode === 'task_field_spelling') { $spellings[0] = 'wrong'; }
         elseif ($mode === 'task_policy') { $aligned = !$aligned; }
-        return new \prepare_backend\Layout_Task($id,$definition,$fields,$spellings,$config,$task->command,$task->launcher,$input,$task->native_command,$aligned);
+        return new \prepare_backend\Layout_Task($id,$definition,$fields,$spellings,$config,$task->command,$input,$task->native_command,$aligned);
     }
     private static function layout(\prepare_backend\Layout_Task $task, string $mode): \prepare_backend\Storage_Layout {
         $definition = $task->definition; $config = $task->configuration; $fields = $task->fields;
@@ -72,7 +72,7 @@ final class Probe {
             $roots /** vector<int> */ = [2,3]; $known /** hash<\prepare_backend\Layout_Dependency,int> */ = [];
             $input = \prepare_backend\Layout_Capture::capture($types,$roots,$known); $config = Probe::other_config();
             $commands /** vector<string> */ = []; $previous /** hash<\prepare_backend\Storage_Layout,int> */ = [];
-            $all = \prepare_backend\Layout_Selection::select($input,$config,$previous,true,$commands,'',$commands);
+            $all = \prepare_backend\Layout_Selection::select($input,$config,$previous,true,$commands,$commands);
             foreach ($all as $task) { $previous[$task->type_id] = Probe::layout($task,''); }
             if (($mode === 'removed') || ($mode === 'empty')) {
                 $current_roots /** vector<int> */ = []; if ($mode === 'removed') { $current_roots[] = 2; }

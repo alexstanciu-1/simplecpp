@@ -41,12 +41,12 @@ final class Probe {
             $config = new \prepare_backend\Backend_Configuration('b','t','e','','','a','r');
             $command /** vector<string> */ = ['clang','-target','t']; $native_command /** vector<string> */ = ['clang++','-S'];
             $previous /** hash<\prepare_backend\Storage_Layout,int> */ = [];
-            $tasks = \prepare_backend\Layout_Selection::select($input,$config,$previous,false,$command,'launcher',$native_command);
+            $tasks = \prepare_backend\Layout_Selection::select($input,$config,$previous,false,$command,$native_command);
             $ok = q_count($tasks) === q_count($roots);
             foreach ($tasks as $index => $task) {
                 $id = $roots[$index]; $node = $input->dependencies[$id];
                 if (($task->type_id !== $id) || ($task->definition !== $node->definition) || ($task->configuration !== $config) || ($task->input !== $input)) { $ok = false; }
-                if (($task->launcher !== 'launcher') || ($task->command[2] !== 't') || ($task->native_command[1] !== '-S')) { $ok = false; }
+                if (($task->command[2] !== 't') || ($task->native_command[1] !== '-S')) { $ok = false; }
                 if ($task->aligned !== $fixture->member('aligned')->at($index)->boolean()) { $ok = false; }
                 if (\prepare_backend\LLVM_Storage::compound($input,$id) !== $fixture->member('texts')->at($index)->text()) { $ok = false; }
                 foreach ($task->fields as $j => $field) {
@@ -56,19 +56,19 @@ final class Probe {
                 $offsets /** vector<int> */ = []; foreach ($node->fields as $j => $field) { $offsets[] = $j; }
                 $previous[$id] = new \prepare_backend\Storage_Layout($node->definition,$config,$node->fields,'fixture',q_count($node->fields)+1,1,$offsets,$input->lineage,$node);
             }
-            $reuse = \prepare_backend\Layout_Selection::select($input,$config,$previous,false,$command,'launcher',$native_command);
-            $full = \prepare_backend\Layout_Selection::select($input,$config,$previous,true,$command,'launcher',$native_command);
+            $reuse = \prepare_backend\Layout_Selection::select($input,$config,$previous,false,$command,$native_command);
+            $full = \prepare_backend\Layout_Selection::select($input,$config,$previous,true,$command,$native_command);
             $other = new \prepare_backend\Backend_Configuration('b','t','e','','','a','r');
-            $changed = \prepare_backend\Layout_Selection::select($input,$other,$previous,false,$command,'launcher',$native_command);
+            $changed = \prepare_backend\Layout_Selection::select($input,$other,$previous,false,$command,$native_command);
             if ((q_count($reuse) !== 0) || (q_count($full) !== q_count($roots)) || (q_count($changed) !== q_count($roots))) { $ok = false; }
             $partial /** hash<\prepare_backend\Storage_Layout,int> */ = [];
             if (q_count($roots) > 0) { $partial[$roots[0]] = $previous[$roots[0]]; }
-            $remaining = \prepare_backend\Layout_Selection::select($input,$config,$partial,false,$command,'launcher',$native_command);
+            $remaining = \prepare_backend\Layout_Selection::select($input,$config,$partial,false,$command,$native_command);
             $expected_remaining = q_count($roots); if ($expected_remaining > 0) { $expected_remaining = $expected_remaining - 1; }
             if (q_count($remaining) !== $expected_remaining) { $ok = false; }
             foreach ($remaining as $j => $task) { if ($task->type_id !== $roots[$j+1]) { $ok = false; } }
             $foreign = new \prepare_backend\Layout_Input(new \type_model\Type_Lineage(),$roots,$input->dependencies);
-            $foreign_tasks = \prepare_backend\Layout_Selection::select($foreign,$config,$previous,false,$command,'launcher',$native_command);
+            $foreign_tasks = \prepare_backend\Layout_Selection::select($foreign,$config,$previous,false,$command,$native_command);
             if (q_count($foreign_tasks) !== q_count($roots)) { $ok = false; }
             echo $ok ? "true\n" : "false\n";
         }

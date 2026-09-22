@@ -1,0 +1,12 @@
+{
+  "command": [
+    "timeout",
+    "90",
+    "php",
+    "tests/portability/os_php.php"
+  ],
+  "exit": 0,
+  "tool_session": 71882,
+  "execution": "escalated: local fork/socket IPC is blocked in sandbox",
+  "stdout": "locks: contention, transfer, inheritance, identity and cleanup passed\nprocesses: descendant cleanup, inherited tokens, SIGCHLD and descriptor stability passed\nprocesses: handshake, exec errors, binary IO, snapshots, timeout, stop and cleanup passed\n"
+}

@@ -1,0 +1,1137 @@
+[
+  {
+    "name": "integer8",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 1,
+      "alignment": 1,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/integer8.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/integer8.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/integer8.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "integer32",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 4,
+      "alignment": 4,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/integer32.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/integer32.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/integer32.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "integer64",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 64
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 8,
+      "alignment": 8,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/integer64.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/integer64.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/integer64.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "ieee_binary16",
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "ieee_binary16"
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 2,
+      "alignment": 2,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/ieee_binary16.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/ieee_binary16.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/ieee_binary16.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "ieee_binary32",
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "ieee_binary32"
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 4,
+      "alignment": 4,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/ieee_binary32.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/ieee_binary32.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/ieee_binary32.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "ieee_binary64",
+    "nodes": [
+      {
+        "kind": "float",
+        "format": "ieee_binary64"
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 8,
+      "alignment": 8,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/ieee_binary64.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/ieee_binary64.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/ieee_binary64.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "array",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "array",
+        "children": [
+          1
+        ],
+        "count": 3
+      }
+    ],
+    "root": 2,
+    "facts": {
+      "size": 12,
+      "alignment": 4,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/array.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/array.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/array.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "record",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 8,
+      "alignment": 4,
+      "offsets": [
+        0,
+        4
+      ]
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/record.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/record.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/record.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "changed_leaf",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 8,
+      "alignment": 4,
+      "offsets": [
+        0,
+        4
+      ]
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/changed_leaf.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/changed_leaf.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": true,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/changed_leaf.calls",
+    "expected_calls": [
+      "ir",
+      "ir"
+    ]
+  },
+  {
+    "name": "nested",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "integer",
+        "width": 32
+      },
+      {
+        "kind": "array",
+        "children": [
+          2
+        ],
+        "count": 3
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          3
+        ]
+      }
+    ],
+    "root": 4,
+    "facts": {
+      "size": 16,
+      "alignment": 4,
+      "offsets": [
+        0,
+        4
+      ]
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/nested.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/nested.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/nested.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "opaque",
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 32,
+      "alignment": 16,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/opaque.calls",
+    "expected_calls": [
+      "c++"
+    ]
+  },
+  {
+    "name": "opaque_array",
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "array",
+        "children": [
+          1
+        ],
+        "count": 2
+      }
+    ],
+    "root": 2,
+    "facts": {
+      "size": 64,
+      "alignment": 16,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque_array.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque_array.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/opaque_array.calls",
+    "expected_calls": [
+      "c++"
+    ]
+  },
+  {
+    "name": "opaque_record",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 48,
+      "alignment": 16,
+      "offsets": [
+        0,
+        16
+      ]
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque_record.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque_record.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/opaque_record.calls",
+    "expected_calls": [
+      "c++",
+      "ir"
+    ]
+  },
+  {
+    "name": "opaque_nested",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      },
+      {
+        "kind": "array",
+        "children": [
+          3
+        ],
+        "count": 2
+      },
+      {
+        "kind": "record",
+        "children": [
+          4,
+          1
+        ]
+      }
+    ],
+    "root": 5,
+    "facts": {
+      "size": 112,
+      "alignment": 16,
+      "offsets": [
+        0,
+        96
+      ]
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque_nested.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/opaque_nested.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/opaque_nested.calls",
+    "expected_calls": [
+      "c++",
+      "ir"
+    ]
+  },
+  {
+    "name": "no_ir_needed",
+    "nodes": [
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 32,
+      "alignment": 16,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/no_ir_needed.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": true,
+    "log": "/tmp/layout-worker-03/no_ir_needed.calls",
+    "expected_calls": [
+      "c++"
+    ]
+  },
+  {
+    "name": "missing_native",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/missing_native.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/missing_native.calls",
+    "expected_calls": []
+  },
+  {
+    "name": "missing_ir",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/missing_ir.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/missing_ir.calls",
+    "expected_calls": [
+      "c++"
+    ]
+  },
+  {
+    "name": "bad_policy",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/bad_policy.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/bad_policy.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": true,
+    "changed": false,
+    "timeout": 10000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/bad_policy.calls",
+    "expected_calls": []
+  },
+  {
+    "name": "wrong_native_target",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/wrong_native_target.calls",
+      "ir",
+      "bad_header",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/wrong_native_target.calls",
+      "c++",
+      "bad_header",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/wrong_native_target.calls",
+    "expected_calls": [
+      "c++"
+    ]
+  },
+  {
+    "name": "wrong_ordinary_target",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "wrong-target",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/wrong_ordinary_target.calls",
+      "ir",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/wrong_ordinary_target.calls",
+      "c++",
+      "pass",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/wrong_ordinary_target.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "primitive_mismatch",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 8
+      },
+      {
+        "kind": "opaque",
+        "size": 32,
+        "alignment": 16
+      },
+      {
+        "kind": "record",
+        "children": [
+          1,
+          2
+        ]
+      }
+    ],
+    "root": 3,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/primitive_mismatch.calls",
+      "ir",
+      "mismatch",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/primitive_mismatch.calls",
+      "c++",
+      "mismatch",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/primitive_mismatch.calls",
+    "expected_calls": [
+      "c++",
+      "ir"
+    ]
+  },
+  {
+    "name": "tool_failure",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/tool_failure.calls",
+      "ir",
+      "fail",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/tool_failure.calls",
+      "c++",
+      "fail",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 10000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/tool_failure.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  },
+  {
+    "name": "tool_timeout",
+    "nodes": [
+      {
+        "kind": "integer",
+        "width": 32
+      }
+    ],
+    "root": 1,
+    "facts": {
+      "size": 0,
+      "alignment": 0,
+      "offsets": []
+    },
+    "triple": "x86_64-unknown-linux-gnu",
+    "layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/tool_timeout.calls",
+      "ir",
+      "timeout",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "native_command": [
+      "/usr/bin/python3.12",
+      "/tmp/layout-worker-03/selected_tool.py",
+      "/tmp/layout-worker-03/tool_timeout.calls",
+      "c++",
+      "timeout",
+      "/usr/lib/llvm-18/bin/clang",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "policy_flip": false,
+    "changed": false,
+    "timeout": 1000,
+    "accept": false,
+    "log": "/tmp/layout-worker-03/tool_timeout.calls",
+    "expected_calls": [
+      "ir"
+    ]
+  }
+]

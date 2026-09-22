@@ -2088,3 +2088,65 @@ first native build passed; final verification tightens unexpected-error rejectio
 and saves explicit cleanup observations. Framework source hashes accompany evidence
 because the new helper is outside the production-file count.
 Evidence/timing: `results/tool-run-01`. Measurement-worker integration is next.
+
+
+## Complete selected layout-measurement worker
+
+Layout_Probe produces LLVM size/alignment/offset constants and separate integer
+primitive queries from the selected snapshot and exact backend configuration.
+Layout_Worker composes that source with Tool_Run, Native_Layout and
+Layout_Measurement. Ordinary storage invokes the LLVM command once. Aligned storage
+invokes the native shell command and invokes LLVM primitive verification only when
+integer constituents are present. Each invocation receives an explicit positive
+millisecond deadline; this preserves the prototype's per-command timeout boundary,
+not a new aggregate deadline. No target machine code is executed.
+
+Native output target headers are checked before launching the optional second tool,
+retaining the prototype's early failure behavior. Missing native commands and stale
+alignment policy reject before spawning. Private measured results still require
+Layout_Join acceptance; the worker does not publish a global store or bypass provider
+layout compatibility. Discovery of canonical executables, toolchain configuration
+fingerprints and coordinator scheduling are separate unfinished work.
+
+Layout_Task and Layout_Selection no longer carry a setsid launcher string. Process
+group/session ownership now truthfully belongs to the managed process API; retaining
+or silently ignoring that field would describe an operation the worker no longer
+performs. This local prepare_backend model change updates its existing contract,
+selection, measurement and join proof call sites. Preserved prototype code and the
+PHP runtime-preparation service are unchanged.
+
+Twenty-three PHP/native scenarios run real Clang on x86_64 for integer/floating,
+array/record/nested and opaque layouts, then join the measured result and prove
+incremental selection performs no new work and retains exact identity. Fixed expected
+size/alignment/offsets are independent of Clang output. A transparent exec wrapper
+records the actual selected tool order. Failure cases cover missing commands, policy
+mismatch, target changes, primitive disagreement, tool failure and timeout. Opaque-only
+storage proves the LLVM command is unnecessary. The native target header failure
+proves no second command is launched. First native build passed with no correction
+cycles; evidence/timing: `results/layout-worker-01`.
+
+Witness rendering is currently repeated when measurement validation derives its
+required primitive facts. This is correct and bounded by the selected graph, but an
+optimization pass may retain one explicit probe plan across execution/validation if
+profiling shows it matters. It is not a reason to loosen validation or claim the full
+compiler pipeline is ready.
+
+
+The final worker integration proof additionally changes an integer leaf from 8 to
+64 bits in a forked canonical store. It remeasures the containing record from size 8,
+alignment 4, offsets [0,4] to size 16, alignment 8, offsets [0,8], while retaining the
+old snapshot unchanged. This exposed a separate intermittent PHP launch handshake
+race later in the fixture sequence: READY was written before the child opened the
+ack FIFO, and the parent could write G and close the final reader/writer before that
+open. The acknowledgement vanished and both processes waited indefinitely. The
+runner's 240-second outer deadline caught it; it was not a native build failure or
+an incremental-layout defect.
+
+The PHP framework now flushes G and retains its ack writer until control EOF confirms
+exec. A forced interleaving reproduces the old hang and passes after the fix. The
+permanent process_launch_ack regression holds the child before its ack-reader open
+until the parent reaches exec-confirmation reading; success, exit 127 and exec failure
+all pass. It is registered in the cumulative fast loop. The existing PHP process/lock
+suite also passes with the required local IPC sandbox exception. No Simple C++ target
+code, protocol surface or runtime-preparation code changed. Native correction cycles
+remain zero; this is a recorded PHP framework correction during final integration.

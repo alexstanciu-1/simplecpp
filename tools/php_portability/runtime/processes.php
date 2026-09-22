@@ -99,10 +99,12 @@ final class Process_Handle {
             $handle->group_ready = true;
             fclose($sentinel); $sentinel = null;
             stream_set_blocking($control, true);
-            if ($ack === false || fwrite($ack, 'G') !== 1) { throw new \RuntimeException('Cannot acknowledge launch'); }
-            fclose($ack); $ack = null;
+            if ($ack === false || fwrite($ack, 'G') !== 1 || !fflush($ack)) { throw new \RuntimeException('Cannot acknowledge launch'); }
+            // Keep the writer alive until exec closes control. READY precedes the child's
+            // ack-reader open; closing here can discard G and leave that open blocked.
             $tail = stream_get_contents($control, 4096);
             if ($tail === false || $tail !== '') { throw new \RuntimeException('Process setup/exec failed'); }
+            fclose($ack); $ack = null;
             $handle->started = hrtime(true);
             return $handle;
         } catch (\Throwable $error) {

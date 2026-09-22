@@ -185,3 +185,11 @@ binary input, large output-before-input, argument spelling, exit/signal/deadline
 launch errors, plus independent descendant checks after success/failure/timeout.
 It uses Linux and PHP without Xdebug reference retention; scope does not imply new
 platform support or a complete compiler measurement worker.
+
+
+The PHP launch handshake keeps its acknowledgement FIFO writer open until the child
+executes (control EOF). READY precedes the child's reader open; closing the final
+writer/read handle earlier can discard the queued acknowledgement and deadlock.
+`tests/portability/process_launch_ack.py` forces that ordering on private instrumented
+copies, covering successful exec, exit 127 and exec failure. It runs in the fast loop;
+production code has no scheduling test hook.

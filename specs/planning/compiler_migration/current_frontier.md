@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **153 production files**: input preparation (137 outcomes),
+Active readiness is **155 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -363,3 +363,13 @@ supports non-busy polling; managed process tokens own resource cleanup. Next: re
 the obsolete launcher fact from compiler layout selection and connect probe source,
 execution, measurement validation and batch acceptance. The preserved PHP runtime
 preparation/tool service is unchanged.
+
+
+Complete selected layout-worker execution adds 23 PHP/native scenarios
+(`results/layout-worker-01`). Capture/selection, real Clang folding, primitive ABI
+verification, measurement validation, batch join and incremental identity reuse now
+compose. Instrumented command counts prove branch selection and early target failure.
+The obsolete layout launcher field is removed; managed processes own isolation.
+Toolchain discovery/coordinator integration and source-export identity/capture remain
+unfinished. Next: source identity/provider symbol dependencies; package artifact
+hashing/executable verification remain separate target API dependencies.

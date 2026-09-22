@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790114448.0,
+  "first_php_ready_epoch": 1790114678.7963197,
+  "authoring_to_php_ready_wall_seconds": 230.796,
+  "first_native_pass_observed_epoch": 1790114789.5192554,
+  "php_ready_to_native_pass_wall_seconds": 110.723,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "checker_correction_cycles": 0,
+  "host_fixture_correction_cycles": 0,
+  "consolidation_start_epoch": 1790114789.5192554,
+  "final_verification_builds": 1,
+  "host_framework_correction_cycles": 1,
+  "host_framework_correction": "Retain and flush acknowledgement FIFO writer until exec confirmation; pre-reader-open close could lose acknowledgement",
+  "failed_final_php_attempts": 1,
+  "outer_timeout_seconds": 240,
+  "consolidation_end_epoch": 1790115491.4834936,
+  "regression_and_consolidation_wall_seconds": 701.964
+}

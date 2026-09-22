@@ -32,7 +32,7 @@ final class Layout_Task {
     public function __construct(public readonly int $type_id, public readonly \type_model\Named_Definition $definition,
         public readonly array $fields /** vector<\type_model\Type_Member> */, public readonly array $field_types /** vector<string> */,
         public readonly Backend_Configuration $configuration, public readonly array $command /** vector<string> */,
-        public readonly string $launcher, public readonly Layout_Input $input,
+        public readonly Layout_Input $input,
         public readonly array $native_command /** vector<string> */, public readonly bool $aligned = false) {}
 }
 

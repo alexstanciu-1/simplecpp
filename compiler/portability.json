@@ -154,7 +154,9 @@
     "src/05_generate_code/prepare_backend/utilities/layout_facts.php",
     "src/05_generate_code/prepare_backend/layout_measurement.php",
     "src/05_generate_code/prepare_backend/layout_join.php",
-    "src/05_generate_code/prepare_backend/tools/tool_run.php"
+    "src/05_generate_code/prepare_backend/tools/tool_run.php",
+    "src/05_generate_code/prepare_backend/layout_probe.php",
+    "src/05_generate_code/prepare_backend/layout_worker.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

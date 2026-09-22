@@ -42,7 +42,7 @@ final class Probe {
         try { $bad_field_end = $input->field_for(2,1); } catch (\LogicException $error) { $bad_end = true; }
         Probe::check($bad_end);
         $field_types /** vector<string> */ = ['i32']; $command /** vector<string> */ = ['clang','-c']; $native_command /** vector<string> */ = [];
-        $task = new \prepare_backend\Layout_Task(2,$definition,$input->fields_for(2),$field_types,$config,$command,'launcher',$input,$native_command,true);
+        $task = new \prepare_backend\Layout_Task(2,$definition,$input->fields_for(2),$field_types,$config,$command,$input,$native_command,true);
         $command[] = 'changed';
         Probe::check(($task->input === $input) && ($task->configuration === $config) && $task->aligned && (q_count($task->command) === 2));
         Probe::check(q_is_int(1));
