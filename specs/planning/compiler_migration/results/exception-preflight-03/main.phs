@@ -1,0 +1,8 @@
+class scpp_invalid_argument extends Exception {
+    public function __construct(string $message) { parent::__construct($message); }
+}
+try {
+    throw new scpp_invalid_argument("bad input");
+} catch (scpp_invalid_argument $error) {
+    echo $error->getMessage(), "\n";
+}

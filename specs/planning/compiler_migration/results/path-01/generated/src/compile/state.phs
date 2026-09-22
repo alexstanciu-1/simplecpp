@@ -1,0 +1,28 @@
+
+
+/*
+ * Role: Per-update work-control state owned by the coordinator.
+ * Used by: Compiler_Session; Input_Selection; Phases
+ * Flow: input/change decisions -> fixed phase full_rebuild flag
+ */
+
+namespace compile;
+
+
+
+
+
+
+// Per-update control state, separate from the published session.
+
+/**
+ * @compiler-api Per-update selection decision shared with stage coordinators.
+ * Readable field: full_rebuild. Only the coordinator changes it at phase boundaries;
+ * Type_Resolver reports cache invalidity; Compiler_Session decides escalation. Once true it remains
+ * true for this update. Workers read a fixed decision and never mutate it.
+ */
+class Update_Context {
+    // Coordinator writes between phases; phase tasks only read this decision.
+    // Once enabled, it stays enabled until this update ends.
+    public bool $full_rebuild = false;
+}

@@ -1,0 +1,2 @@
+["php", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/tests/specializations/prepare.php", "/tmp/scpp-adoption-preparation-29v8zist/specializations", "/tmp/scpp-adoption-preparation-29v8zist/specializations/changed-request.json"]
+{"status":"built","input_key":"a1864b43b2861b477cfbe51babe18886117787bc452da520866b20b81210cb51","manifest":"\/tmp\/scpp-adoption-preparation-29v8zist\/specializations\/output\/package\/manifest.json","clang_commands":16}

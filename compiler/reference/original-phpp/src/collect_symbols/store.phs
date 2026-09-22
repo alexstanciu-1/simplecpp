@@ -1,0 +1,21 @@
+namespace collect_symbols;
+
+class Symbol_Store {
+    // Private physical storage; callers use the symbol API below.
+    private $rows vector<symbol_record> = [];
+    private $names vector<string> = [];
+    private $by_qualified_name hash<uint32> = [];
+    private $by_source_file hash<vector<uint32>, uint32> = [];
+    private $row_by_symbol_id vector<uint32> = [];
+
+    public function find_symbol(string $name, string $namespace_name, symbol_kind $kind): uint32 {
+        // TODO: lookup by kind/namespace/name; logical ID, zero if absent.
+        // Duplicate definitions are diagnostics, never an arbitrary winning row.
+        throw new \Exception("Not implemented: Symbol_Store.find_symbol");
+    }
+
+    public function symbol_by_id(uint32 $symbol_id): symbol_record {
+        // TODO: validate the ID and resolve its private physical location.
+        throw new \Exception("Not implemented: Symbol_Store.symbol_by_id");
+    }
+}

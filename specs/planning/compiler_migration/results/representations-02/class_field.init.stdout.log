@@ -1,0 +1,5 @@
+Created prism.json
+Project root: /tmp/scpp-representation-probes-xfytrm5m/class_field
+Entrypoint: main.phs
+PHP profile: strict
+Note: no common entrypoint was found; edit prism.json before running scpp build.

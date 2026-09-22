@@ -1,0 +1,8 @@
+
+Runtime error in src/01_prepare_inputs/read_sources/snapshot_join.phs:105
+Cannot convert value at this typed boundary.
+Source:
+> 105 |                 if (($buffer === null) || ($buffer->source_file_id !== $old->id) || ($buffer->mtime !== $old->mtime)
+Operation: operator->()
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

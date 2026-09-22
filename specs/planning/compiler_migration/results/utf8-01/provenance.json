@@ -1,0 +1,23 @@
+{
+  "sha256": {
+    "tools/php_portability/function_map.php": "00e789696256d10f982b4186537514277e146346ed0743dbfe9f1c3abe03feae",
+    "tools/php_portability/runtime/bootstrap.php": "c4fc563399929c3cc7c1c9cd4b625a09cef082f261c82ef781932450a1d4ed75",
+    "tools/php_portability/runtime/strings.php": "b62ffefe06e81e951e528b23245eb85ffd0785d0410f3bc9854222a82c151f2f",
+    "tools/php_portability/runtime/strings.phs": "2518dd938580cc90a41b6ba2849ab6518b96c7fb74b07501c9a4af3c5449edc0",
+    "tools/php_portability/install_native_runtime.php": "236539aaf89cdf0dad98faa10fcce3567c12b0876fc919c63f360686c959d97c",
+    "tools/php_portability/src/converter.php": "1dd061276f9da594a1b2dbdf4f551800cdd9d48586daa6267311d5012823a3b9"
+  },
+  "ready_set": [
+    "src/compile/state.php",
+    "src/02_tokenize/structures.php",
+    "src/compile/step.php",
+    "src/01_prepare_inputs/read_sources/utilities/path_syntax.php",
+    "src/03_parse/data/nodes.php",
+    "src/03_parse/data/role_views.php",
+    "src/03_parse/data/structures.php",
+    "src/01_prepare_inputs/read_sources/data/buffer.php",
+    "src/03_parse/data/tree.php",
+    "src/04_analyze/check_bodies/utilities/decimal_range.php",
+    "src/05_generate_code/prepare_backend/data/configuration.php"
+  ]
+}

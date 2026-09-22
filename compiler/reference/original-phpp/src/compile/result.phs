@@ -1,0 +1,30 @@
+namespace compile;
+
+// Observed input state only; this is not a published compiler generation.
+class Input_Snapshot {
+    public $context Update_Context;
+    public $manifest \read_manifest\Project_Manifest;
+    public $sources \read_sources\Source_Set;
+
+    public function to_json(): string {
+        $full string = "false";
+        if ($this->context->full_rebuild) { $full = "true"; }
+        return "{\"full_rebuild\":" . $full . ",\"manifest\":" . $this->manifest->to_json()
+            . ",\"sources\":" . $this->sources->to_json() . "}";
+    }
+}
+
+// Candidate frontend/symbol state. This is not a completed compiler result.
+class Prepared_Update {
+    public $context Update_Context;
+    public $manifest \read_manifest\Project_Manifest;
+    public $sources \read_sources\Source_Set;
+    public $frontends vector<\parse\File_Frontend> = [];
+    public $symbols \collect_symbols\Symbol_Refresh;
+    public $resolutions vector<\resolve_symbols\Symbol_Resolution> = [];
+}
+
+class Frontend_Phase_Result {
+    public $sources vector<\read_sources\Source_Buffer> = [];
+    public $frontends vector<\parse\File_Frontend> = [];
+}

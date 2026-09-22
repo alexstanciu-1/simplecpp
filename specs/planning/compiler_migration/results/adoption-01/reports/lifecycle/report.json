@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin",
+  "target": {
+    "triple": "x86_64-pc-linux-gnu",
+    "data_layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+  },
+  "modes": [
+    {
+      "mode": "O0",
+      "body_revisions": 2,
+      "events_per_run": 61,
+      "shell_reused": true
+    },
+    {
+      "mode": "O1",
+      "body_revisions": 2,
+      "events_per_run": 61,
+      "shell_reused": true
+    },
+    {
+      "mode": "O1-full",
+      "body_revisions": 2,
+      "events_per_run": 61,
+      "shell_reused": true
+    },
+    {
+      "mode": "O1-thin",
+      "body_revisions": 2,
+      "events_per_run": 61,
+      "shell_reused": true
+    }
+  ],
+  "package_rejected": true,
+  "missing_bodies_rejected": true,
+  "mismatched_body_abi_rejected": true,
+  "wall_seconds": 19.107,
+  "scope": "Native fixture + hand-authored LLVM; no source compiler or published-package integration"
+}

@@ -1,0 +1,8 @@
+STAN pre-build check failed: 1 compile-errors
+
+[compile-error] Missing property read target `->id` on receiver type `Role` in `__scpp_main` for `$r->id`.
+  at main.phs:5
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

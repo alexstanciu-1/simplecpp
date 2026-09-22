@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in main.phs:2: base class has incomplete type
+Generated location: .prism/generated/main.hpp:13:33
+Compile note in around main.phs:1: forward declaration of 'scpp::scpp::compat::Exception'
+Generated location: .prism/generated/main.hpp:10:7
+Compile error in main.phs:3: incomplete type 'scpp::scpp::compat::Exception' named in nested name specifier
+Generated location: .prism/generated/main.cpp:15:2
+Additional remapped diagnostics: 2
+Raw compiler excerpt:
+main.hpp:13:33: error: base class has incomplete type
+main.hpp:10:7: note: forward declaration of 'scpp::scpp::compat::Exception'
+main.cpp:15:2: error: incomplete type 'scpp::scpp::compat::Exception' named in nested name specifier
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

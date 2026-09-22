@@ -1,0 +1,8 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Required runtime artifact is missing.
+Expected runtime artifact: /tmp/scpp-representation-probes-oy_6amdl/scalar_control/.prism/runtime/project/php-strict/20d193eafa25561b/libruntime.so
+Next: This build is reusing runtime artifacts by default.
+Next: Run 'scpp runtime-build --debug' to rebuild the reusable debug runtime artifact.
+Next: Retry with 'scpp build --build-runtime' if you want the build command to refresh the runtime now.
+Next: Run 'scpp error' for the saved summary.
+Next: Run 'scpp full-error' for the full saved report.

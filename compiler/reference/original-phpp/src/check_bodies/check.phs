@@ -1,0 +1,5 @@
+namespace check_bodies;
+
+// Check operations, calls, and conversions while constructing typed bodies.
+
+// Own typed values, places, blocks, instructions, and body structural invariants.

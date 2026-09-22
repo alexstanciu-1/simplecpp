@@ -1,0 +1,17 @@
+class Shared_Value {
+    public int $value = 0;
+}
+
+struct handle_row {
+    Shared_Value $object;
+}
+
+$original handle_row = [];
+$original->object = new Shared_Value();
+$original->object->value = 7;
+$copy handle_row = $original;
+$copy->object->value = 9;
+echo $original->object->value, ":", $copy->object->value, "\n";
+$copy->object = new Shared_Value();
+$copy->object->value = 11;
+echo $original->object->value, ":", $copy->object->value, "\n";

@@ -1,0 +1,111 @@
+Transpiled PHP files: 10, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-v0.1.76-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/12] PCH app_pch.hpp.gch
+[2/12] CXX src/02_tokenize/structures.o
+[3/12] CXX src/compile/state.o
+[4/12] CXX src/03_parse/data/nodes.o
+[5/12] CXX src/03_parse/data/tree.o
+[6/12] CXX src/compile/step.o
+[7/12] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[8/12] CXX src/03_parse/data/role_views.o
+[9/12] CXX src/03_parse/data/structures.o
+[10/12] CXX src/01_prepare_inputs/read_sources/utilities/path_syntax.o
+[11/12] CXX main.o
+[12/12] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/src/01_prepare_inputs/read_sources/data/buffer.o, .prism/build/src/01_prepare_inputs/read_sources/utilities/path_syntax.o, .prism/build/src/02_tokenize/structures.o, .prism/build/src/03_parse/data/nodes.o, .prism/build/src/03_parse/data/role_views.o, .prism/build/src/03_parse/data/structures.o, .prism/build/src/03_parse/data/tree.o, .prism/build/src/compile/state.o, .prism/build/src/compile/step.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main
+initial=0
+shared=1
+next=0
+previous=1
+rebound=0
+retained=1
+default=1
+0:0
+token-shared=1
+7:3
+independent=1
+created=1
+finished=1
+a/b
+a/b
+/x
+/x
+a/
+0
+0
+1
+1
+0
+0
+0
+0
+0
+1
+0
+1
+0
+1
+1
+1
+0
+0
+0
+0
+1
+1
+0
+0
+0
+0
+0
+1
+cdef::
+byte=1
+4:2:2
+node-default=1
+0:0:0:0
+12:9:3
+10:2
+node-independent=1
+1:2:3:4
+5:6:7
+8:9
+1:2:0
+2:3
+4:5:0
+6:7
+8:0
+9:10
+11:12:13
+reference-absent=1
+reference-present=1
+6
+reference-taken=1
+reference-kind=1
+cursor-default=1
+0:0:0:0
+21:20:1
+operator=1
+10:90
+30:31:0
+0:2
+1:/source.phs:100:4
+snapshot-shared=1
+snapshot-version=1
+snapshot-bytes=1
+1
+0:0:0
+4:4
+4:9
+1:2

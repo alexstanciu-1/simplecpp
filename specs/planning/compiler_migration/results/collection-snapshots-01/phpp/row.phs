@@ -1,0 +1,32 @@
+namespace snapshots;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Row {
+    public int $value = 0;
+    public string $label = "";
+    public $tags /** vector<int> */ = [];
+    public function copy_row(): Row {
+        $copy = new Row();
+        $copy->value = $this->value;
+        $copy->label = $this->label;
+        $copy->tags = $this->tags;
+        return $copy;
+    }
+}

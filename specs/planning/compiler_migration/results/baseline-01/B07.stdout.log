@@ -1,0 +1,10 @@
+{
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "config": "/tmp/scpp-migration-baseline-d3bpetju/source/prototype/src-runtime-preparation/config.json",
+  "leak_sanitizer": "disabled (ptrace sandbox)",
+  "results": {
+    "O0": "growth=0 source=0 copies=1 moves=0\ngrowth=0 source=1 copies=1 moves=0\ngrowth=0 source=2 copies=1 moves=0\ngrowth=1 source=0 copies=1 moves=4\ngrowth=1 source=1 copies=1 moves=4\ngrowth=1 source=2 copies=1 moves=4\n12 cases passed; all tracked lifetimes balanced\n",
+    "O1": "growth=0 source=0 copies=1 moves=0\ngrowth=0 source=1 copies=1 moves=0\ngrowth=0 source=2 copies=1 moves=0\ngrowth=1 source=0 copies=1 moves=4\ngrowth=1 source=1 copies=1 moves=4\ngrowth=1 source=2 copies=1 moves=4\n12 cases passed; all tracked lifetimes balanced\n",
+    "sanitized": "growth=0 source=0 copies=1 moves=0\ngrowth=0 source=1 copies=1 moves=0\ngrowth=0 source=2 copies=1 moves=0\ngrowth=1 source=0 copies=1 moves=4\ngrowth=1 source=1 copies=1 moves=4\ngrowth=1 source=2 copies=1 moves=4\n12 cases passed; all tracked lifetimes balanced\n"
+  }
+}

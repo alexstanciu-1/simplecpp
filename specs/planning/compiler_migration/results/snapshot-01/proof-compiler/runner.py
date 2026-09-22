@@ -1,0 +1,229 @@
+"""Prove the adopted update context through PHP, local conversion and native PHP++."""
+import argparse
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import time
+
+ROOT = Path(__file__).resolve().parents[3]
+EXPECTED = 'initial=0\nshared=1\nnext=0\nprevious=1\nrebound=0\nretained=1\ndefault=1\n0:0\ntoken-shared=1\n7:3\nindependent=1\ncreated=1\nfinished=1\n'
+
+EXPECTED += 'a/b\na/b\n/x\n/x\na/\n0\n0\n1\n1\n0\n0\n0\n0\n0\n1\n0\n1\n0\n1\n1\n1\n0\n0\n0\n0\n1\n1\n0\n0\n0\n0\n'
+
+EXPECTED += '0\n1\ncdef::\nbyte=1\n'
+
+EXPECTED += '4:2:2\n'
+
+EXPECTED += 'node-default=1\n0:0:0:0\n12:9:3\n10:2\nnode-independent=1\n'
+
+EXPECTED += '1:2:3:4\n5:6:7\n8:9\n1:2:0\n2:3\n4:5:0\n6:7\n8:0\n9:10\n11:12:13\nreference-absent=1\nreference-present=1\n6\n'
+
+EXPECTED += 'reference-taken=1\nreference-kind=1\n'
+
+EXPECTED += 'cursor-default=1\n0:0:0:0\n21:20:1\noperator=1\n10:90\n30:31:0\n0:2\n'
+
+EXPECTED += '1:/source.phs:100:4\nsnapshot-shared=1\nsnapshot-version=1\nsnapshot-bytes=1\n1\n0:0:0\n4:4\n4:9\n1:2\n'
+
+EXPECTED += 'snapshot-distinct=1\n'
+
+EXPECTED += '0\n1\n0\n0\n1\n1\n0\n0\n1\n0\n0\n1\n0\n0\n1\n0\n0\n1\n0\n0\n1\n0\n0\n1\n0\n0\n1\n0\n0\n1\n0\n0\n1\n0\n0\n0\n195:169:-1:-1\n'
+
+EXPECTED += 'Backend configuration requires explicit backend, target, layout, ABI and runtime identities\nbackend:runtime\nouter:9\ncause-shared=1\ncause:7\nrethrow-shared=1\n'
+
+EXPECTED += 'handler escape\nrange\n0:no-cause\n'
+
+EXPECTED += 'tool-ir=1\ntool-path=1\ntool-alias=1\ntool-distinct=1\ntool-config=1\ntool-config-version=1\n0:0\n/bin/link tool:link-v1:link-v2\n'
+
+EXPECTED += 'sub/é file.phs:100:7\n42:/root/sub/é file.phs:100:7\nread-alias=1\nread-distinct=1\n42:101:9:100:7\n0:0:0\n'
+
+EXPECTED += 'folder-recursive=1\nempty-present=1\n0:recursive\nselected-present=1\n3:4:/root:sub:1:é.phs:2\nfolder-selected=1\n1:2\nfolder-reset=1\nbuffer-absent=1\nstate-unchanged=1\npending=1\nbuffer-present=1\nbuffer-identity=1\nstate-deleted=1\n-1:pending\n'
+
+EXPECTED += '37:12:0:0:0\nentry-shared\ntombstone-retained\nowner-new:changed-new:clean-shared\nbuffer-present:buffer-shared\nold-pending:accepted-clear:0:100\nold-unchanged\nrepeat-shared\nUnknown source file ID\nInvalid source folder index\nEntry file is removed\nDuplicate source path: /src/a.phs\n37\nInvalid or duplicate source file ID\n"\\u00e9\\ud83d\\ude00\\/\\"\\\\\\n"\nCannot export sources: Malformed UTF-8 characters, possibly incorrectly encoded\n'
+EXPECTED = EXPECTED.replace("Cannot export sources:", '{"folders":[{"path":"src","resolved_path":"\\/src"},{"path":"extra","resolved_path":"","file_names":[]}],"files":[{"id":37,"top_folder_index":0,"path":"\\/src\\/a.phs","relative_path":"a.phs","mtime":0,"size":0,"change_state":"unchanged","needs_recompile":false},{"id":12,"top_folder_index":0,"path":"\\/src\\/b.phs","relative_path":"","mtime":0,"size":0,"change_state":"unchanged","needs_recompile":false},{"id":99,"top_folder_index":-1,"path":"\\/src\\/gone.phs","relative_path":"","mtime":0,"size":0,"change_state":"deleted","needs_recompile":false}],"removed_file_ids":[],"entry_file_id":37}\n{"folders":[],"files":[],"removed_file_ids":[],"entry_file_id":0}\n' + "Cannot export sources:")
+
+
+EXPECTED += 'scan-task-shared\n1:sub/child\nscan-row-shared\nsub/é.phs:101:4\n2:1\n0:0\n'
+
+EXPECTED += '5:old.phs\n6:new.phs\n7:sub/child.phs\n8:1:0:next\nscan-copy:cleared:old-retained\nchanged:added\nUnexpected or duplicate source scan result: 0\nIncomplete source scan batch\n3\n'
+
+EXPECTED += 'Unexpected or duplicate source scan result: 0\nunchanged-row-copy:buffer-retained:clean\nSource file ID space exhausted\n0\n'
+
+EXPECTED += 'snapshot-owner:changed-copy:retained-shared\nbuffer-exact:old-clean:deleted-clear:old-retained\n11:12:13:40\n1\nIncomplete source read batch\nUnexpected, duplicate or stale source snapshot\nUnexpected, duplicate or stale source snapshot\nDuplicate source read task\nStale source read task\nStale retained source snapshot\n'
+
+EXPECTED += 'repeat-shared:deleted-shared\n11:3:0\n'
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--target-checkout', type=Path, required=True)
+    parser.add_argument('--results', type=Path, required=True)
+    parser.add_argument('--candidate-revision', help='Explicit full candidate commit for pre-adoption proof; does not change the target pin')
+    args = parser.parse_args()
+    results = args.results.resolve()
+    if results.exists():
+        raise SystemExit('Use a fresh evidence directory.')
+    target = json.loads((ROOT / 'compiler/tools/portability_target.json').read_text())
+    if args.candidate_revision:
+        if len(args.candidate_revision) != 40 or any(c not in '0123456789abcdef' for c in args.candidate_revision):
+            parser.error('Candidate revision must be a full lowercase commit hash')
+        target['verified_commit'] = args.candidate_revision
+    checkout = args.target_checkout.resolve()
+    def git(*parts):
+        return subprocess.check_output(['git', *parts], cwd=checkout, text=True).strip()
+    assert git('rev-parse', 'HEAD') == target['verified_commit']
+    assert git('status', '--porcelain') == ''
+    results.mkdir(parents=True)
+    work = Path(tempfile.mkdtemp(prefix='scpp-context-port-'))
+    source, output = work / 'php', work / 'phpp'
+    source.mkdir()
+    report = {'workspace': str(work), 'target_revision': target['verified_commit'], 'commands': []}
+
+    def run(label, cmd, cwd=ROOT, ok=True):
+        started = time.monotonic()
+        proc = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
+        (results / (label + '.stdout.log')).write_text(proc.stdout)
+        (results / (label + '.stderr.log')).write_text(proc.stderr)
+        report['commands'].append({'label': label, 'command': [str(x) for x in cmd], 'cwd': str(cwd), 'exit_code': proc.returncode, 'seconds': round(time.monotonic() - started, 3)})
+        (results / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
+        assert (proc.returncode == 0) == ok, (label, proc.stdout, proc.stderr)
+        return proc
+
+    # The component stays owned in compiler/; staging is a disposable source set,
+    # not a parallel maintained implementation or an expansion of directory CLI scope.
+    selection = json.loads((ROOT / 'compiler/portability.json').read_text())
+    assert selection['schema_version'] == 1 and selection['source_root'] == '.'
+    for relative in selection['files']:
+        p = Path(relative)
+        assert not p.is_absolute() and '..' not in p.parts and p.suffix == '.php'
+        dst = source / p
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / 'compiler' / p, dst)
+    shutil.copy2(Path(__file__).parent / 'main.php', source / 'main.php')
+    tools = ROOT / 'tools/php_portability'
+    run('imports', ['php', str(tools / 'sync_imports.php'), str(source), '--check'])
+    php = run('php', ['php', '-r', 'foreach (array_slice($argv, 1) as $file) { require $file; }',
+        str(tools / 'runtime/bootstrap.php'),
+        *[str(ROOT / 'compiler' / relative) for relative in selection['files']], str(source / 'main.php')])
+    assert php.stdout == EXPECTED
+    readonly = run('php-readonly', ['php', '-r',
+        'require $argv[1]; $view = new parse\\function_parts(1,2,3,4); '
+        'try { $view->name_id=9; } catch (Error $error) { echo "PHP readonly enforced"; exit(0); } exit(1);',
+        str(ROOT / 'compiler/bootstrap.php')])
+    assert readonly.stdout == 'PHP readonly enforced'
+    contract = run('step-contract', ['php', '-r',
+        'require $argv[1]; $out = []; foreach (["Step_Result", "Step_Store", "Step", "Runnable_Step", "Store_Providing_Step"] as $name) { '
+        '$r = new ReflectionClass("compile" . chr(92) . $name); $methods = []; foreach ($r->getMethods() as $m) { '
+        '$methods[$m->getName()] = [(string)$m->getReturnType(), $m->getNumberOfParameters(), $m->isPublic()]; } '
+        '$out[$name] = [$r->isInterface(), $methods]; } echo json_encode($out);',
+        str(ROOT / 'compiler/src/compile/step.php')])
+    actual = json.loads(contract.stdout)
+    expected_methods = {
+        'Step_Result': [], 'Step_Store': [],
+        'Step': {'init': ['void', 0, True], 'finalize': ['void', 0, True],
+                 'result': ['compile\\Step_Result', 0, True], 'status': ['compile\\step_status', 0, True],
+                 'supports_run': ['bool', 0, True]},
+        'Runnable_Step': {'run': ['void', 0, True]},
+        'Store_Providing_Step': {'store': ['compile\\Step_Store', 0, True]},
+    }
+    assert actual == {name: [True, methods] for name, methods in expected_methods.items()}, actual
+    convert = ['php', str(tools / 'convert.php'), str(source), str(output)]
+    assert json.loads(run('convert', convert).stdout)['converted'] == len(selection['files']) + 1
+    generated = output / 'src/compile/state.phs'
+    stamp = generated.stat().st_mtime_ns
+    assert json.loads(run('reuse', convert).stdout) == {'converted': 0, 'reused': len(selection['files']) + 1, 'removed': 0}
+    assert generated.stat().st_mtime_ns == stamp
+    assert 'namespace compile;' in generated.read_text() and 'declare(' not in generated.read_text()
+    before = (output / '.scpp-portability.json').read_bytes()
+    rejects = [
+        'class Bad { public function __construct(public readonly array $items) {} }',
+        'class Bad { public function __construct(int $n) {} }',
+        'class Bad { public array $values = []; }',
+        'class Bad { public array $values /** vector<mixed> */ = []; }',
+        'class Bad { public array $values /** vector<int> */ = [1]; }',
+        r'echo "\xA9";',
+        r'echo "\251";',
+        r'echo "a\0b";',
+        r'echo "\u{e9}";',
+        r'class Bad { public string $bytes = "\xA9"; }',
+        'class Bad { public static function f($x): bool { return true; } }',
+        'class Bad { public static function f(string $x = "x"): bool { return true; } }',
+        'class Bad { public static function f(string &$x): bool { return true; } }',
+        'class Bad { public static function f(): mixed { return true; } }',
+        '$x = str_starts_with("x");',
+        'interface Bad { public function f($arg): bool; }',
+        'interface Bad { public function f(): bool {} }',
+        'interface Bad extends Other {}',
+        'interface Bad { public function f(): mixed; }',
+        'enum Bad { case a = 1; }',
+        'enum Bad: int { case a; }',
+        'enum Bad: string { case a = "a"; }',
+        'enum Bad: int { case a = 1 + 2; }',
+        'enum Bad: int { case a = -1; }',
+        'enum Bad: int { public function f(): bool { return true; } }',
+        '$a = Kind::$dynamic;',
+        'class Bad { public Kind $kind = Kind::method(); }',
+        'class Bad { public function method(): float { return 1.0; } }',
+        'class Bad { public static bool $value = false; }',
+        'class Bad { private bool $value = 1; }',
+        'class Bad { public ?bool $value = true; }',
+        'class Bad { public bool $value; }',
+        'class Bad extends Other {}',
+        '$name = "x"; $object->$name = true;',
+        '$object->$method();',
+        'try {} catch (\\Exception|\\Error $error) {}',
+        '$object = new $name();',
+    ]
+    block = (source / 'main.php').read_text().split('// </scpp-imports>')[0] + '// </scpp-imports>\n'
+    for i, body in enumerate(rejects):
+        (source / 'bad.php').write_text(block + body + '\n')
+        failure = run('reject-' + str(i), convert, ok=False)
+        assert 'bad.php:' in failure.stderr
+        assert (output / '.scpp-portability.json').read_bytes() == before
+    (source / 'bad.php').unlink()
+    # Existing compiler proof exercises real request decisions after the import edit.
+    spec = importlib.util.spec_from_file_location('compiler_tests', ROOT / 'compiler/tests/run.py')
+    compiler_tests = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(compiler_tests)
+    for name in ['compile/join_contracts.php', 'compile/compile_driver.php', 'compile/incremental_policy.php', '02_tokenize/tokenization.php', '02_tokenize/variable_tokens.php', '02_tokenize/lexical_updates.php', '01_prepare_inputs/read_sources/source_paths.php', '01_prepare_inputs/read_sources/source_discovery.php', '01_prepare_inputs/read_sources/source_scan_tasks.php', '01_prepare_inputs/read_sources/source_snapshots.php', '03_parse/parsing.php', '03_parse/parameter_parsing.php', '03_parse/struct_parsing.php', '03_parse/frontend_storage.php', '03_parse/parse_updates.php', '03_parse/metaprogramming_parsing.php', 'features/integer_conversions.php']:
+        result = compiler_tests.run_fixture(name, 180)
+        label = Path(name).stem
+        (results / (label + '.stdout.log')).write_text(result.stdout)
+        (results / (label + '.stderr.log')).write_text(result.stderr)
+        assert result.returncode == 0, (name, result.stderr)
+    report['compiler_fixtures'] = ['compile/join_contracts.php', 'compile/compile_driver.php', 'compile/incremental_policy.php', '02_tokenize/tokenization.php', '02_tokenize/variable_tokens.php', '02_tokenize/lexical_updates.php', '01_prepare_inputs/read_sources/source_paths.php', '01_prepare_inputs/read_sources/source_discovery.php', '01_prepare_inputs/read_sources/source_scan_tasks.php', '01_prepare_inputs/read_sources/source_snapshots.php', '03_parse/parsing.php', '03_parse/parameter_parsing.php', '03_parse/struct_parsing.php', '03_parse/frontend_storage.php', '03_parse/parse_updates.php', '03_parse/metaprogramming_parsing.php', 'features/integer_conversions.php']
+    cli = str(checkout / target['cli'])
+    run('init', ['php', cli, 'init', '--php-profile=strict'], cwd=output)
+    config = json.loads((output / 'prism.json').read_text())
+    config['build']['cxx'] = 'clang++-18'
+    config['runtime']['modules'] = []
+    (output / 'prism.json').write_text(json.dumps(config, indent=2) + '\n')
+    # init creates main.phs only if absent; verify converter-owned entry survives.
+    assert (output / 'main.phs').read_text().find('new \\compile\\Update_Context()') >= 0
+    install = ['php', str(tools / 'install_native_runtime.php'), str(output)]
+    assert json.loads(run('native-runtime-install', install).stdout) == {'updated': 1}
+    runtime_stamp = (output / 'scpp_framework/exceptions.phs').stat().st_mtime_ns
+    assert json.loads(run('native-runtime-reuse', install).stdout) == {'updated': 0}
+    assert (output / 'scpp_framework/exceptions.phs').stat().st_mtime_ns == runtime_stamp
+    native = run('native', ['php', cli, 'run', '--build-runtime'], cwd=output)
+    assert native.stdout.endswith(EXPECTED), native.stdout
+    report.update(passed=True, expected_stdout=EXPECTED, target_clean=git('status', '--porcelain') == '')
+    assert report['target_clean']
+    (results / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
+    shutil.copy2(generated, results / 'state.phs')
+    for relative in selection['files']:
+        generated_path = Path(relative).with_suffix('.phs')
+        saved = results / 'generated' / generated_path
+        saved.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(output / generated_path, saved)
+    (results / 'scpp_framework').mkdir(exist_ok=True)
+    shutil.copy2(output / 'scpp_framework/exceptions.phs', results / 'scpp_framework/exceptions.phs')
+    shutil.copy2(output / '.scpp-native-runtime.json', results / 'native-runtime-manifest.json')
+    shutil.copy2(__file__, results / 'runner.py')
+    shutil.copy2(source / 'main.php', results / 'main.php')
+    print('Adopted compiler components: PHP/native identity and independent-update behavior passed; compiler fixtures and rejection checks passed.')
+
+
+if __name__ == '__main__':
+    main()

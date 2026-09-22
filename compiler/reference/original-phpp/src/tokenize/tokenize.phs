@@ -1,0 +1,8 @@
+namespace tokenize;
+
+// Turn source bytes into tokens with source spans.
+
+function tokenize_source(\read_sources\Source_Buffer $source): Token_Buffer {
+    // TODO: read an unchanged snapshot and build a separate token vector.
+    throw new \Exception("Not implemented: tokenize_source");
+}

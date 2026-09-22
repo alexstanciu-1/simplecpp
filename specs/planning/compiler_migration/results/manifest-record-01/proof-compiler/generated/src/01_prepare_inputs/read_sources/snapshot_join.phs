@@ -1,0 +1,133 @@
+
+
+/*
+ * Role: Accept snapshots into replacement source state.
+ * Used by: Source_Reader::finalize()
+ * Call map:
+ *   Snapshot_Join::join()
+ *     -> [action] validate membership and copy changed source rows
+ */
+
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** @compiler-internal Accept source-read results and retain current source snapshots. */
+class Snapshot_Join implements \compile\Join {
+    /**
+     * Capture the fixed context and selected tasks; validation belongs to join().
+     * @param list<source_read_task> $tasks
+     */
+    private readonly Source_Set $current;/** PHP readonly; native usage contract. */ private $tasks vector<source_read_task>;public function __construct(Source_Set $current, $tasks vector<source_read_task>) {$this->current = $current;$this->tasks = $tasks;
+    }
+
+    /**
+     * @compiler-api Accept one matching buffer per selected file and validate retained live buffers.
+     * Return a separate Source_Set; preserve shared rows unless their buffer changes.
+     * Reject duplicate, missing or stale input/result batches before returning a set.
+     * Coordinator only. Join the complete selected batch in any arrival order.
+     * File records hold immutable buffers directly. Earlier snapshots retain
+     * their own references when the candidate replaces or removes a buffer.
+     * @param list<Source_Buffer> $results
+     */
+    public function join($results vector<Source_Buffer>): Source_Set {
+        // Validate task versions against the discovered source candidate.
+        $selected hash<source_read_task, int> = [];
+        foreach ($this->tasks  as $task) {
+            if (isset($selected[$task->source_file_id])) {
+                throw new \scpp_portability_exception("Duplicate source read task");
+            }
+            $file = $this->current->file_by_id($task->source_file_id);
+            if (($file->change_state === file_change::deleted) || ($task->mtime !== $file->mtime)
+                || ($task->size !== $file->size) || ($task->path !== $file->full_path)) {
+                throw new \scpp_portability_exception("Stale source read task");
+            }
+            $selected[$task->source_file_id] = $task;
+        }
+
+        // Accept exactly one matching immutable snapshot for every selected read.
+        $by_file hash<Source_Buffer, int> = [];
+        foreach ($results  as $buffer) {
+            $id = $buffer->source_file_id;
+            if (!isset($selected[$id])) {
+                throw new \scpp_portability_exception("Unexpected, duplicate or stale source snapshot");
+            }
+            $task = $selected[$id];
+            if ((isset($by_file[$id])) || ($buffer->path !== $task->path)
+                || ($buffer->mtime !== $task->mtime) || (string_byte_len($buffer->content) !== $task->size)) {
+                throw new \scpp_portability_exception("Unexpected, duplicate or stale source snapshot");
+            }
+            $by_file[$id] = $buffer;
+        }
+        if (count($by_file) !== count($selected)) {
+            throw new \scpp_portability_exception("Incomplete source read batch");
+        }
+
+        // Replace or clear buffers in a private candidate while retained rows remain untouched.
+        $joined = $this->current->copy();
+        $empty_files vector<source_file> = [];
+        $joined->files = $empty_files;
+        foreach ($this->current->files  as $old) {
+            $buffer = $old->buffer;
+            if ($old->change_state !== file_change::deleted)
+            {
+                if (isset($by_file[$old->id])) { $buffer = $by_file[$old->id]; }
+                if ($buffer === null) {
+                    throw new \scpp_portability_exception("Stale retained source snapshot");
+                }
+                if (($buffer->source_file_id !== $old->id) || ($buffer->mtime !== $old->mtime)
+                    || (string_byte_len($buffer->content) !== $old->size)
+                    || ($buffer->path !== $old->full_path)) {
+                    throw new \scpp_portability_exception("Stale retained source snapshot");
+                }
+            }
+            else {
+                $buffer = null;
+            }
+
+            // Share retained rows; only buffer replacement requires a private record.
+            $file = $old;
+            if ($old->buffer !== $buffer) {
+                $file = $old->copy();
+                $file->buffer = $buffer;
+            }
+            $joined->files[] = $file;
+        }
+
+        // File IDs, row positions and membership are unchanged; indexes remain valid.
+        return $joined;
+    }
+}

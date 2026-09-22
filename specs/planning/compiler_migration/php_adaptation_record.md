@@ -1,0 +1,87 @@
+# PHP adaptation record and optimization follow-up
+Doc Status: planning
+
+Checkpoint: 2026-09-22; 36 production files proved, latest cumulative evidence
+`results/preparation-symbols-01`. This records broad source changes and their reasons,
+not a complete diff or a claim of whole-compiler portability. Slice documents retain
+exact contracts, test cases and evidence. Future slices must extend this record when
+they introduce a materially different representation, algorithm shape or workaround.
+
+## How to maintain this record
+
+For each material adaptation record the original shape, new owner/shape, reason,
+behavior that must survive, evidence link and any optimization question. Distinguish
+necessary portable design from a workaround for the tested converter/native target.
+Do not present an optimization hypothesis as a measured improvement. Keep accepted
+but unimplemented changes separate from completed changes. Frozen originals under
+tests are behavioral oracles, not another evolving compiler implementation.
+
+## Completed adaptations
+
+| Area / original PHP shape | Portable PHP shape and reason | Future optimization questions and invariants |
+| --- | --- | --- |
+| Implicit array element types and PHP-wide local scope | Explicit vector/hash/named type comments, typed method boundaries, enclosing-block initialization, uniform managed imports. The converter can emit locally visible types without resolving the program. | Measure representation and copy costs before replacing containers. Preserve dense membership, key types, null/false distinctions and initialization order. Annotations themselves are not optimizations. |
+| Record construction and implicit copying | Named records; explicit shallow copy operations for source rows and snapshot acknowledgment; File_Frontend binds token/tree inputs in its constructor. Initialization and sharing are visible rather than relying on clone or uninitialized managed fields. | Consider allocation reduction and packed/indexed records only after measuring. Preserve shared buffer/tree identity, independent list membership, old snapshots and validation timing. PHP readonly is not native deep immutability. |
+| Source_Set membership and lookup | Typed vectors plus ID/row and path/ID hashes; candidate indexes are validated before adoption. Logical IDs remain distinct from row positions; tombstones remain addressable. | Profile index rebuilding, snapshot copying and sparse rows. Do not replace stable logical IDs with row offsets without an explicit model change. |
+| Generic cross-stage Join callable contract | User-approved marker interface; each concrete join owns its typed input/output batch. Avoids a fabricated common payload model. | Concrete dispatch is intentional; revisit only for a demonstrated scheduling/polymorphism requirement. Keep batch provenance, completion order versus acceptance order, duplicate rejection and retained identities. |
+| Worker/coordinator selection mixed with larger phase dependencies | Pure selection and path-spelling owners are called by existing coordinators; coherent selection components can be proved separately. | Preserve one implementation of each policy. Assess repeated selection scans when full pipeline timings exist; splitting files is not a speedup. |
+| Binary_Syntax dynamic nested scratch stacks and match expressions | Angle_Scope records with integer stacks, logical sizes and reusable storage; explicit fixed operator comparisons. Keeps existing scoped pairing and reset algorithm within supported source forms. | Measure object overhead and high-water memory retention versus contiguous scratch storage. Preserve pair insertion order, unmatched openings and scope/reset behavior; no speedup claimed. |
+| Syntax_Comparer heterogeneous stack triples | Typed Comparison_Frame rows in a reusable Comparison_Stack. Copy popped scalar fields before reuse; explicit iterative loop and byte slices. | Profile frame allocation, retained capacity and traversal locality. Preserve sibling-before-child scheduling, root-sibling exclusion and error order; no speedup claimed. |
+| Implicit object/array JSON export | Explicit owned schemas in Source_Set, File_Frontend and Project_Manifest; shared scpp JSON string quoting. Keeps exact fields, order, optional values and wrapped errors without reflection. | The string encoder's repeated code-point indexing may be quadratic; measure long-string export and consider linear traversal/native quoting. Avoid repeated concatenation if profiling warrants it. Keep escaping, malformed UTF-8 rejection, null versus empty and wire bytes exact. |
+| PHP byte/string convenience operations | Explicit byte slicing/classification and checked byte construction; Byte_Literals retains its decoding algorithm. Native-project roots and runtime-preparation symbol spelling use explicit scanners. | Profile per-byte helper calls and concatenation; consider builder/bulk primitives where useful. Source offsets and binary identity use bytes, not Unicode character counts. Preserve non-UTF-8 bytes where the boundary permits them. |
+| Runtime-preparation symbol component arrays | Explicit vector<string> contract plus dense-list/exact-string validation in PHP; native helper accepts an already typed vector. One component encoder is reused by name and append. | The native validation helper is empty because the representation supplies those properties. This does not establish arbitrary PHP/native coercion parity. Preserve separators, escaping, empty components and rejection of an empty component list. |
+| Direct PHP filesystem scanning | Small scpp filesystem adapters with fresh metadata observations, explicit false extraction and native result adaptation. Source_Scanner retains sorting, selection order, duplicates, symlink rejection and task identity. | Metadata calls are observable correctness checks; profile before batching/caching. Scanner parity does not establish the stronger snapshot-read protocol. |
+| Target-specific expression/control-flow limitations | Explicit null rejection before dereference, initialized result returned after try/catch where STAN required it, schema methods retained on owners where passing this to a static helper failed, local vocabulary helpers for enum names. | These are candidates for simplification after a tested target fixes the exact form. Keep error order and shared-reference semantics; do not treat historical failures as permanent language restrictions. |
+
+## Evidence routes
+
+- Records, ownership and indexes: [Source_Set](../../portability/compiler_source_set_slice.md),
+  [scan joins](../../portability/compiler_scan_join_slice.md),
+  [frontend construction](../../portability/compiler_frontend_record_slice.md),
+  [type references](../../portability/compiler_type_references_slice.md).
+- Algorithm reshaping: [binary syntax](../../portability/compiler_binary_syntax_slice.md),
+  [syntax comparison](../../portability/compiler_syntax_comparer_slice.md),
+  [byte literals](../../portability/compiler_byte_literals_slice.md).
+- Boundaries: [manifest export](../../portability/compiler_manifest_record_slice.md),
+  [native project paths](../../portability/compiler_native_project_slice.md),
+  [source scanning](../../portability/compiler_source_scanner_slice.md),
+  [runtime-preparation symbols](../../portability/compiler_preparation_symbols_slice.md).
+- Selection and storage proofs, plus earlier declaration-only slices, are indexed
+  in [the migration overview](README.md). Some files only gained imports/types;
+  readiness does not imply every file's algorithm was rewritten.
+
+## Accepted, not implemented at this checkpoint
+
+- [Struct-member cursor](struct_member_cursor_decision.md): replace yield with an
+  explicit typed streaming cursor; update ten consumers. Keep constant-size state,
+  deferred role validation, ordering and early termination. Future profiling may
+  compare repeated traversal with indexes; eager materialization is not the default.
+- [Semantic enums](enum_portability_decision.md): typed tags plus explicit owned wire
+  codecs/operations, one family and consumers at a time. Preserve external values,
+  key encodings, enumeration order and failures, including implicit JSON uses.
+  Optimize codec dispatch only with evidence; strings must not leak back into the
+  algorithm as untyped substitutes for tags.
+- [Lossless JSON](json_document_requirement.md): native typed document API with a
+  PHP counterpart; retain object/list identity and exact keys before schema mapping.
+  Future questions include document lifetime, node storage and parse allocation;
+  no API or implementation has yet been proved.
+- Filesystem snapshot operations and host-platform facts are requested in
+  [#233](https://github.com/alexstanciu-1/simplecpp/issues/233#issuecomment-5771113976).
+  Preserve the existing read protocol and host path policy; these are requirements,
+  not completed source adaptations.
+
+## Resume assessment
+
+The user accepted the cursor and staged enum cross-owner scopes on 2026-09-22.
+Those source adaptations can proceed without waiting for #233 or lossless JSON.
+Start with the cursor and affected PHP consumers, then prove its portable dependency
+boundary. Syntax_Access as a whole also contains other unsupported PHP forms and a
+trait dependency: replacing yield alone does not make the whole file ready. Track
+that distinction, preserve whole-file readiness rules, and report any new inseparable
+cross-owner redesign before expanding the approved scope.
+
+The qualified-base fix must be validated on an immutable candidate before changing
+the target pin. No runtime/compiler change or new readiness claim accompanies this
+record. A future optimization pass should start with representative full-pipeline
+CPU/allocation/peak-memory measurements and retained behavioral proofs; native build
+latency is a separate metric from the migrated compiler's execution time.

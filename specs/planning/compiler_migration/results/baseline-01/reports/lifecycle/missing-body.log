@@ -1,0 +1,7 @@
+["/usr/bin/clang++-18", "--target=x86_64-pc-linux-gnu", "/tmp/scpp-migration-baseline-d3bpetju/source/prototype/src-runtime-preparation/tests/lifecycle/harness.cpp", "/tmp/scpp-migration-baseline-d3bpetju/lifecycle/missing-main.cpp", "/tmp/scpp-migration-baseline-d3bpetju/lifecycle/O0/shell.bc", "-o", "/tmp/scpp-migration-baseline-d3bpetju/lifecycle/missing-body"]
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/shell-eee807.o: in function `lifecycle_probe::custom_record::custom_record(int)':
+shell.cpp:(.text._ZN15lifecycle_probe13custom_recordC2Ei[_ZN15lifecycle_probe13custom_recordC2Ei]+0x1f): undefined reference to `proof_initializer'
+/usr/bin/ld: shell.cpp:(.text._ZN15lifecycle_probe13custom_recordC2Ei[_ZN15lifecycle_probe13custom_recordC2Ei]+0x61): undefined reference to `proof_constructor_body'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/shell-eee807.o: in function `lifecycle_probe::custom_record::~custom_record()':
+shell.cpp:(.text._ZN15lifecycle_probe13custom_recordD2Ev[_ZN15lifecycle_probe13custom_recordD2Ev]+0x15): undefined reference to `proof_destructor_body'
+clang++-18: error: linker command failed with exit code 1 (use -v to see invocation)

@@ -1,0 +1,2 @@
+{"path":"..\/fixtures\/three_files\/project.json","content":"{\n  \"source_folders\": [\"src\"],\n  \"entry\": \"src\/main.phs\"\n}\n","directory":"\/tmp\/scpp_check_35wrfpvj\/fixtures\/three_files","source_folder_paths":["src"],"entry_path":"src\/main.phs"}
+manifest JSON export ok: actual reader output, escaping, root order, empty snapshot, and repeatability

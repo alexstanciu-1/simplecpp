@@ -1,0 +1,108 @@
+# Portable-PHP validation workflow
+Doc Status: supporting
+
+The host driver `tools/php_portability/validate.py` consolidates existing checks
+for the current compiler ready set. It adds no conversion rules and does not select
+or migrate new compiler files. Python is host test orchestration; the converter
+and executable framework remain PHP.
+
+## Fast authoring loop
+
+After editing an authorized portable component, synchronize imports if necessary,
+then run from repository root:
+
+```bash
+python3 tools/php_portability/validate.py --results /tmp/scpp-validation-NEW
+```
+
+The results directory must be fresh and outside compiler/tools/tests/.agents source
+trees. Nothing is fixed automatically. The driver stages exactly the files in
+`compiler/portability.json`, retaining their relative paths, plus the existing
+behavioral harness. The stage is a disposable copy, not a second implementation.
+
+It runs:
+
+1. The shared read-only checker: PHP lint, imports, declarations/traits and conversion.
+2. The current compiler component PHP harness against its independently maintained
+   expected results in `tests/portability/compiler_context/run.py`.
+3. Source_Set comparisons against its frozen pre-adaptation PHP oracle and
+   scoped-angle matching against the frozen prototype over 5,000 deterministic streams,
+   plus 1,500 logical syntax comparisons against their frozen oracle.
+4. The host collection helper tests; native parity has its own runner.
+5. Foundation, check-command, prologue and native-framework-installation regressions.
+
+The framework-installation test is a host test; it does not compile native code.
+A fast pass is explicitly reported as having no native proofs requested. This is
+not the full adopted compiler test suite or proof that all prototype PHP converts.
+For arbitrary new source folders, use `check.php SOURCE` and their own behavioral
+harness; this driver is deliberately scoped to the ready compiler manifest.
+
+## Selected native proofs
+
+```bash
+python3 tools/php_portability/validate.py \
+  --results /tmp/scpp-validation-native-NEW \
+  --native compiler \
+  --target-checkout /tmp/scpp-v0.1.76-probe
+```
+
+Both native flags are required together. The target must be a clean checkout at
+the exact revision in `compiler/tools/portability_target.json`; no global CLI or
+newer workspace target is substituted. After fast checks, the existing native
+runner owns conversion, framework assembly, strict build/run and expected-result
+comparison. The driver verifies target cleanliness again afterwards.
+
+Select proofs relevant to the change; repeat `--native` to request several:
+
+| Selection | Existing owner |
+| --- | --- |
+| `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
+| `compiler` | Cumulative ready components and seventeen retained compiler fixtures |
+| `methods` | Named/scalar method boundaries, void, identity and mutation |
+| `returns` | Container return copying and nonpublic scalar state |
+| `iteration` | Typed map presence checks and by-value iteration |
+| `containers` | Explicit nested vectors/maps, typed keys and copying |
+| `snapshots` | Owned membership, explicit changed-row copies and shared-row limits |
+| `utf8` | Text/code-point versus byte behavior and malformed inputs |
+| `traits` | Direct trait expansion, restrictions and incremental cache behavior |
+
+The choices are not aliases for a complete compiler migration test. Native-only
+concurrency, lifecycle or API tests still need their own owners as those capabilities
+are added. Issue #231 remains separate work.
+
+## Evidence and failure handling
+
+`summary.json` records running/passed/failed state, selected native proofs, target
+configuration, staged source hashes, command exits and durations. Per-stage stdout
+and stderr remain alongside staged sources, expected PHP output and a copy of the
+driver. Native runners retain their detailed results in `proof-NAME/`.
+
+The first failed gate stops the workflow and returns nonzero. An interrupted process
+may leave a running step; only a final passed summary denotes success. Existing
+results are never overwritten. Keep build outputs under the disposable evidence
+tree or the existing runners' scratch directories, and do not commit binaries.
+
+There is no concurrent-edit snapshot guarantee, automatic import repair, general
+test-discovery framework or performance threshold in this driver. Use a stable
+working tree while validating; timings are observations, not benchmark claims.
+
+The [recorded fast run](../planning/compiler_migration/results/validation-workflow-01/fast/summary.json)
+and [cumulative native run](../planning/compiler_migration/results/validation-workflow-01/native/summary.json)
+passed against the current eleven-file ready set. The native run also passed the
+sixteen retained compiler fixtures. Failure-path checks confirmed that an invalid
+target stops downstream work and existing evidence cannot be overwritten.
+
+Candidate target adoption can be proved without editing the selected pin:
+`tests/portability/compiler_context/run.py --candidate-revision FULL_COMMIT`
+accepts an explicit immutable candidate alongside the usual checkout/results flags.
+The focused `tests/portability/collections.py` runner requires checkout/results
+and pins the #231/#232 combined candidate independently.
+
+The fast compiler loop also compares quoted-byte decoding with a frozen original
+on 8,593 deterministic inputs (`tests/portability/byte_literals_oracle.php`). The
+cumulative native witness checks all byte values and numeric escape truncation.
+
+The cumulative compiler runner now creates isolated filesystem fixtures and selects
+the `--filesystem` native support artifact/module for the production source scanner.
+Its fast loop also checks the frozen scanner oracle, including same-process metadata
+refresh. Host fixture creation remains outside the converted implementation tree.

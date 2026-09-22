@@ -1,0 +1,4 @@
+function keep_lock(file_lock_handle $handle): file_lock_handle { return $handle; }
+function keep_process(process_handle $handle): process_handle { return $handle; }
+function keep_output(process_output $output): process_output { return $output; }
+echo "alias signatures\n";

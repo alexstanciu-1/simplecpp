@@ -1,0 +1,26 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$row = new \data\Record();
+$other = new \data\Record();
+$worker = new \workers\Worker();
+$alias = $worker->identity($row);
+$worker->change($alias, 4);
+$returned = \workers\Worker::pass($row);
+echo $row->value, ":", $other->value, ":", $returned === $row ? "same" : "different", ":", $worker->same($worker) === $worker ? "same" : "different", ":", $worker->number(2) === $worker->number(2) ? "number" : "bad", "\n";

@@ -1,0 +1,1 @@
+bad.php:25: static calls are unsupported in field defaults

@@ -1,0 +1,6 @@
+{
+  "source_folders": [
+    "src"
+  ],
+  "entry": "src/main.phs"
+}

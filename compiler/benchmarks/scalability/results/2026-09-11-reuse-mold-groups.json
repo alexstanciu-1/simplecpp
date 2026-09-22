@@ -1,0 +1,1347 @@
+{
+    "method": "Three fresh PHP processes; temporary compiler copy with guarded hrtime\/gc_status stage timers. No Python or per-Clang wrappers. 20 jobs. Seven disjoint groups; native excludes nested link, final group includes link\/publication and untimed coordination residual. GC stays in the executing stage. Table uses arithmetic means so groups sum to mean request time.",
+    "fixture": {
+        "project": "5mb",
+        "target_bytes": 5242880,
+        "source_bytes": 5243107,
+        "files": 669,
+        "functions": 21315,
+        "generated_functions": 21313,
+        "functions_per_file": 32,
+        "edit_file": "src\/group_0666.phs",
+        "edited_function": "sample_021313",
+        "source_sha256": "b85eb10336118d6ac1b50cdb44ef20f7ac0c648dc25bbff297693233214a7317"
+    },
+    "backend": {
+        "clang": "clang",
+        "target": null,
+        "compile_jobs": 20,
+        "linker": "mold"
+    },
+    "groups": {
+        "Inputs, scan and tokenization": [
+            "manifest",
+            "catalog",
+            "discovery",
+            "tokenize"
+        ],
+        "Parsing and symbols": [
+            "parse",
+            "collect",
+            "entry",
+            "resolve",
+            "compare"
+        ],
+        "Types, body checks and lifetimes": [
+            "type_prepare",
+            "types",
+            "bodies",
+            "lifetimes"
+        ],
+        "Backend preparation and lowering": [
+            "backend",
+            "lower"
+        ],
+        "LLVM emission and entry adapter": [
+            "entry_adapter",
+            "emit"
+        ]
+    },
+    "trials": [
+        {
+            "trial": 1,
+            "measurements": [
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.6432e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 0.000148555,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003966125,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.786714759,
+                            "gc_seconds": 0.07678718200000001,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.979710992,
+                            "gc_seconds": 0.189804517,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.094030358,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001583289,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 1.454005111,
+                            "gc_seconds": 0.6730383529999999,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.003264051,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 7.91e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 1.183158729,
+                            "gc_seconds": 0.6234379320000001,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 1.814244323,
+                            "gc_seconds": 0.7325063410000001,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.791949505,
+                            "gc_seconds": 0.3626145489999999,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.228068945,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 1.518148869,
+                            "gc_seconds": 0.8010501130000001,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 0.042740845,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.799664263,
+                            "gc_seconds": 0.31649908699999996,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 2.4271e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_objects": {
+                            "seconds": 4.740121891,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_join": {
+                            "seconds": 0.016342947,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_paths": {
+                            "seconds": 2.6201e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.108699214,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_hash": {
+                            "seconds": 0.003374625,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 4.869465335,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 0.000151045,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.00030592,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "cold",
+                    "seconds": 14.572127564,
+                    "php_peak_bytes": 738180192,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 3.775738074,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 734978384,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343416,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.790895871,
+                        "Parsing and symbols": 2.532593801,
+                        "Types, body checks and lifetimes": 3.789360467,
+                        "Backend preparation and lowering": 1.746217814,
+                        "LLVM emission and entry adapter": 0.842405108,
+                        "Native cache checks and object compilation": 4.7607661210000005,
+                        "Linking, publication and coordination": 0.1098883819999994
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.6532e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.8511e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003612044,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 0.01441986,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.017420575,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 2.42e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 9.9193e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "unchanged",
+                    "seconds": 0.023758604,
+                    "php_peak_bytes": 732435160,
+                    "gc_runs": 0,
+                    "gc_collected": 0,
+                    "gc_seconds": 0,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 732166984,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343416,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.003717087,
+                        "Parsing and symbols": 0,
+                        "Types, body checks and lifetimes": 0,
+                        "Backend preparation and lowering": 0,
+                        "LLVM emission and entry adapter": 0,
+                        "Native cache checks and object compilation": 0.017420575,
+                        "Linking, publication and coordination": 0.0026209419999999976
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.3662e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.4021e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003459037,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.000449484,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.00537734,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.028367647,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001152577,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.110853574,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 8.5483e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 5.72e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.163436481,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.062961392,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.015848055,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.042263415,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.342729791,
+                            "gc_seconds": 0.32202045500000054,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 1.366e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.026477554,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 0.014734559,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_objects": {
+                            "seconds": 0.037458804,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_join": {
+                            "seconds": 0.000118033,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_paths": {
+                            "seconds": 2.236e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.104792207,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_hash": {
+                            "seconds": 0.003450963,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.161494963,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 0.00182786,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.001898632,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "body_edit",
+                    "seconds": 0.967550564,
+                    "php_peak_bytes": 743506184,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.32202045500000054,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740961648,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343432,
+                    "exit_code": 43,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.004006203999999999,
+                        "Parsing and symbols": 0.145836621,
+                        "Types, body checks and lifetimes": 0.24225164799999999,
+                        "Backend preparation and lowering": 0.384993206,
+                        "LLVM emission and entry adapter": 0.026491214,
+                        "Native cache checks and object compilation": 0.05670275599999999,
+                        "Linking, publication and coordination": 0.10726891500000002
+                    }
+                }
+            ]
+        },
+        {
+            "trial": 2,
+            "measurements": [
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 4.6651e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 9.1663e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003478364,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.623762426,
+                            "gc_seconds": 0.06346541300000001,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.880795726,
+                            "gc_seconds": 0.17808715799999997,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.082756795,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001666416,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 1.408605646,
+                            "gc_seconds": 0.674056967,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.003219918,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 8.27e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 1.173512849,
+                            "gc_seconds": 0.6242023190000001,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 1.832025122,
+                            "gc_seconds": 0.7764784529999997,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.725392954,
+                            "gc_seconds": 0.3366559320000002,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.211395726,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 1.617080901,
+                            "gc_seconds": 0.91259574,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 0.046447182,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.817365275,
+                            "gc_seconds": 0.32850215699999996,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 2.4321e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_objects": {
+                            "seconds": 4.701018625,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_join": {
+                            "seconds": 0.015946489,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_paths": {
+                            "seconds": 2.7921e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.102951083,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_hash": {
+                            "seconds": 0.003337525,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 4.824211035,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 0.000171806,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000455684,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "cold",
+                    "seconds": 14.253226388,
+                    "php_peak_bytes": 738180192,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 3.894044139,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 734978384,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343416,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.627379104,
+                        "Parsing and symbols": 2.3770445010000003,
+                        "Types, body checks and lifetimes": 3.730939195,
+                        "Backend preparation and lowering": 1.8284766270000001,
+                        "LLVM emission and entry adapter": 0.863812457,
+                        "Native cache checks and object compilation": 4.7212599520000005,
+                        "Linking, publication and coordination": 0.10431455199999817
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 0.000158185,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 4.7711e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003621314,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 0.014449464,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.017519052,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 2.98e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000101383,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "unchanged",
+                    "seconds": 0.024025256,
+                    "php_peak_bytes": 732435160,
+                    "gc_runs": 0,
+                    "gc_collected": 0,
+                    "gc_seconds": 0,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 732166984,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343416,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.00382721,
+                        "Parsing and symbols": 0,
+                        "Types, body checks and lifetimes": 0,
+                        "Backend preparation and lowering": 0,
+                        "LLVM emission and entry adapter": 0,
+                        "Native cache checks and object compilation": 0.017519052,
+                        "Linking, publication and coordination": 0.002678993999999997
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.2772e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.5911e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003420028,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.001844408,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.005212514,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.0289188,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001162186,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.112521988,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.000144004,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 6.28e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.164031716,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.061102063,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.015861929,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.043051327,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.332916716,
+                            "gc_seconds": 0.3125302630000002,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 1.2661e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.027776196,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 0.014544098,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_objects": {
+                            "seconds": 0.037369676,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_join": {
+                            "seconds": 0.000107554,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_paths": {
+                            "seconds": 3.7081e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.10510545,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_hash": {
+                            "seconds": 0.003457628,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.161503695,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 0.001611031,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.001650442,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "body_edit",
+                    "seconds": 0.961839834,
+                    "php_peak_bytes": 743506184,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.3125302630000002,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740961648,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343432,
+                    "exit_code": 43,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.0053631189999999995,
+                        "Parsing and symbols": 0.147959492,
+                        "Types, body checks and lifetimes": 0.241001988,
+                        "Backend preparation and lowering": 0.375968043,
+                        "LLVM emission and entry adapter": 0.027788857,
+                        "Native cache checks and object compilation": 0.056398245,
+                        "Linking, publication and coordination": 0.10736008999999991
+                    }
+                }
+            ]
+        },
+        {
+            "trial": 3,
+            "measurements": [
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 4.8521e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 9.4773e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003768179,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.627230403,
+                            "gc_seconds": 0.063657682,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.874108722,
+                            "gc_seconds": 0.17557607800000002,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.086203645,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001298651,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 1.40122784,
+                            "gc_seconds": 0.673813198,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.003278233,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 8.38e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 1.195719108,
+                            "gc_seconds": 0.646598394,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 1.905437274,
+                            "gc_seconds": 0.818859097,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.715905737,
+                            "gc_seconds": 0.3266426899999999,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.214291278,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 1.555625785,
+                            "gc_seconds": 0.8012950660000002,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 0.052141766,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.83308634,
+                            "gc_seconds": 0.31763498599999984,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 2.4271e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_objects": {
+                            "seconds": 4.69969026,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_join": {
+                            "seconds": 0.016242027,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_paths": {
+                            "seconds": 2.4231e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.105108986,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_hash": {
+                            "seconds": 0.003365339,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 4.825407833,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 0.000170595,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.00032275,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "cold",
+                    "seconds": 14.295915343,
+                    "php_peak_bytes": 738180192,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 3.8240771909999998,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 734978384,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343416,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.631141876,
+                        "Parsing and symbols": 2.366117091,
+                        "Types, body checks and lifetimes": 3.8170704989999997,
+                        "Backend preparation and lowering": 1.7699170629999998,
+                        "LLVM emission and entry adapter": 0.885228106,
+                        "Native cache checks and object compilation": 4.720298847,
+                        "Linking, publication and coordination": 0.10614186100000111
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 9.9653e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.9281e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003459192,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 0.014679307,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.017628382,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 3.1e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000104963,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "unchanged",
+                    "seconds": 0.024145013,
+                    "php_peak_bytes": 732435160,
+                    "gc_runs": 0,
+                    "gc_collected": 0,
+                    "gc_seconds": 0,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 732166984,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343416,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.0035981259999999997,
+                        "Parsing and symbols": 0,
+                        "Types, body checks and lifetimes": 0,
+                        "Backend preparation and lowering": 0,
+                        "LLVM emission and entry adapter": 0,
+                        "Native cache checks and object compilation": 0.017628382,
+                        "Linking, publication and coordination": 0.0029185049999999983
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.0612e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.5981e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003375579,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.000532017,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.006062197,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.029230748,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001193639,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.111045808,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 8.3993e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 5.92e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.1629452,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.061969951,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.015494133,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.042986343,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.334700588,
+                            "gc_seconds": 0.3141478419999997,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 1.163e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.026480249,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_select": {
+                            "seconds": 0.014921534,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_objects": {
+                            "seconds": 0.03698748,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_join": {
+                            "seconds": 0.000119354,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_paths": {
+                            "seconds": 2.291e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.104077396,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_hash": {
+                            "seconds": 0.003392961,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.160393494,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native_publication": {
+                            "seconds": 0.001788199,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.00183746,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "body_edit",
+                    "seconds": 0.959041061,
+                    "php_peak_bytes": 743506184,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.3141478419999997,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740961648,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343432,
+                    "exit_code": 43,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.004004189,
+                        "Parsing and symbols": 0.14761638500000002,
+                        "Types, body checks and lifetimes": 0.240415204,
+                        "Backend preparation and lowering": 0.377686931,
+                        "LLVM emission and entry adapter": 0.026491879,
+                        "Native cache checks and object compilation": 0.056316097999999995,
+                        "Linking, publication and coordination": 0.10651037499999982
+                    }
+                }
+            ]
+        }
+    ],
+    "means": {
+        "cold": {
+            "seconds": 14.373756431666669,
+            "gc_seconds": 3.8312864679999996,
+            "groups": {
+                "Inputs, scan and tokenization": 0.6831389503333334,
+                "Parsing and symbols": 2.4252517976666668,
+                "Types, body checks and lifetimes": 3.779123387,
+                "Backend preparation and lowering": 1.7815371679999998,
+                "LLVM emission and entry adapter": 0.8638152236666666,
+                "Native cache checks and object compilation": 4.734108306666666,
+                "Linking, publication and coordination": 0.1067815983333329
+            },
+            "native_parts": {
+                "native_select": 2.4287666666666664e-5,
+                "native_objects": 4.713610258666667,
+                "native_join": 0.016177154333333336,
+                "native_paths": 2.6117666666666666e-5,
+                "link": 0.10558642766666666,
+                "native_hash": 0.003359163,
+                "native_publication": 0.000164482,
+                "publish": 0.00036145133333333337
+            }
+        },
+        "unchanged": {
+            "seconds": 0.023976291,
+            "gc_seconds": 0,
+            "groups": {
+                "Inputs, scan and tokenization": 0.0037141410000000002,
+                "Parsing and symbols": 0,
+                "Types, body checks and lifetimes": 0,
+                "Backend preparation and lowering": 0,
+                "LLVM emission and entry adapter": 0,
+                "Native cache checks and object compilation": 0.017522669666666667,
+                "Linking, publication and coordination": 0.002739480333333331
+            },
+            "native_parts": {
+                "native_select": 0.014516210333333335,
+                "native_objects": 0,
+                "native_join": 0,
+                "native_paths": 0,
+                "link": 0,
+                "native_hash": 0,
+                "native_publication": 2.8333333333333335e-6,
+                "publish": 0.00010184633333333333
+            }
+        },
+        "body_edit": {
+            "seconds": 0.9628104863333332,
+            "gc_seconds": 0.31623285333333345,
+            "groups": {
+                "Inputs, scan and tokenization": 0.004457837333333333,
+                "Parsing and symbols": 0.14713749933333334,
+                "Types, body checks and lifetimes": 0.24122294666666666,
+                "Backend preparation and lowering": 0.3795493933333333,
+                "LLVM emission and entry adapter": 0.02692398333333333,
+                "Native cache checks and object compilation": 0.05647236633333333,
+                "Linking, publication and coordination": 0.10704645999999991
+            },
+            "native_parts": {
+                "native_select": 0.014733397,
+                "native_objects": 0.037271986666666666,
+                "native_join": 0.00011498033333333332,
+                "native_paths": 2.7450333333333334e-5,
+                "link": 0.104658351,
+                "native_hash": 0.0034338506666666668,
+                "native_publication": 0.0017423633333333334,
+                "publish": 0.0017955113333333334
+            }
+        }
+    }
+}

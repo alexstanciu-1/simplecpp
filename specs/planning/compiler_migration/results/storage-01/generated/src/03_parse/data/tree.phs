@@ -1,0 +1,39 @@
+
+
+/* Flat syntax tree storage; indexed frontend sets remain in store.php. */
+namespace parse;
+
+
+
+
+
+
+
+/**
+ * @compiler-api Readable flat AST: source_file_id, root_node_id and nodes, built only by parse.
+ * Node IDs are one-based positions in this exact tree; zero is absent. Consumers may
+ * read rows/links directly; use Syntax_Access for named structural roles. Treat rows
+ * as immutable after handoff.
+ *
+ * Child order:
+ * file_root: implicit entry block, then top-level definitions in source order
+ * block: statements in source order
+ * function_declaration: name, parameter_list, return-type syntax (name), block
+ * parameter_list: parameter declarations in source order
+ * parameter_declaration: variable name, type syntax, optional const/mutable reference annotation
+ * return_statement: optional value expression
+ * expression_statement: value expression
+ * local_declaration: variable name, type name, initializer expression
+ * assignment_statement: target variable, value expression
+ * call_expression: callee name, then argument expressions in source order
+ * name/variable_name/integer_literal: leaves; spelling stays in source spans
+ */
+class Syntax_Tree {
+    public int $source_file_id = 0;
+    public int $root_node_id = 0;
+
+    // Flat syntax storage. File_Frontend's entity/body IDs index this same tree.
+    /** @var list<syntax_node> */
+    public $nodes /** vector<syntax_node> */ = [];
+}
+

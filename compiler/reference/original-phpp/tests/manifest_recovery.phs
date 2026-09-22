@@ -1,0 +1,35 @@
+// Prove malformed-JSON recovery through the real reader and retained input state.
+function check_recovery(bool $condition, string $message): void {
+    if (!$condition) { throw new Exception($message); }
+}
+
+function write_recovery_fixture(string $path, string $text): void {
+    $written int = 0;
+    $error error;
+    check_recovery(take($written, $error, fs_put($path, $text)) && $written === strlen($text), "Fixture write failed");
+}
+
+$path string = "../fixtures/three_files/project.json";
+$empty_manifest \read_manifest\Project_Manifest = new \read_manifest\Project_Manifest();
+$empty_sources \read_sources\Source_Set = new \read_sources\Source_Set();
+$baseline \compile\Input_Snapshot = \compile\refresh_compiler_inputs($path, $empty_manifest, $empty_sources, true);
+$before string = $baseline->to_json();
+$original string = $baseline->manifest->content;
+$invalid vector<string> = ["", "{", '{"entry":"\q"}', "null trailing"];
+$rejected bool = false;
+foreach ($invalid as $text) {
+    write_recovery_fixture($path, $text);
+    $rejected = false;
+    try {
+        \compile\refresh_compiler_inputs($path, $baseline->manifest, $baseline->sources, false);
+    } catch (Exception $exception) {
+        $rejected = str_contains($exception->message_string(), $path . ": json error at byte");
+    }
+    check_recovery($rejected, "Malformed manifest must be a catchable path/byte diagnostic");
+    check_recovery($baseline->to_json() === $before, "Rejected input must not mutate retained state");
+    write_recovery_fixture($path, $original);
+    $repaired \compile\Input_Snapshot = \compile\refresh_compiler_inputs($path, $baseline->manifest, $baseline->sources, false);
+    check_recovery(!$repaired->context->full_rebuild, "Repaired manifest must use the retained baseline");
+    check_recovery(count($repaired->sources->files) === 3, "Source discovery must work after JSON failure");
+}
+echo "manifest recovery ok: malformed input, source-position diagnostics, retained-state purity, and repaired refreshes in one process\n";

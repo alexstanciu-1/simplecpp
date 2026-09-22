@@ -1,0 +1,43 @@
+compiler/src/04_analyze/analyze_lifetimes/ownership_worker.php:29:        $construct = $subject->kind->creates_destination();
+compiler/src/04_analyze/analyze_lifetimes/ownership_worker.php:30:        $has_source = $subject->kind->has_source();
+compiler/src/04_analyze/analyze_lifetimes/data/result.php:91:            if (!$body->local_passing($local->local_id)->is_borrow()
+compiler/src/05_generate_code/emit_llvm/handlers/calls.php:98:            if ($parameter->passing->is_borrow() !== ($value->storage_slot_id !== 0)) {
+compiler/src/05_generate_code/lower/handlers/locals.php:65:        $borrow = $this->input->analysis->body->local_passing($local_id)->is_borrow();
+compiler/src/05_generate_code/lower/handlers/locals.php:88:            $borrow = $parameter->passing->is_borrow();
+compiler/src/04_analyze/analyze_lifetimes/ownership_join.php:41:            if (($body === null) && $result->task->subject->kind->has_source()) {
+compiler/src/04_analyze/check_bodies/handlers/expressions.php:319:        if (($object) && !$passing->is_borrow()) {
+compiler/src/04_analyze/check_bodies/handlers/expressions.php:324:        if ($passing->is_borrow() && (($shape === representation_kind::structure)
+compiler/src/04_analyze/check_bodies/handlers/expressions.php:335:        $this->select_place_access($id, $passing->is_borrow());
+compiler/src/05_generate_code/lower/handlers/expressions.php:126:        if (!$parameter->passing->is_borrow() || ($this->values[$id - 1]->storage_slot_id !== 0)) {
+compiler/src/01_prepare_inputs/load_runtime/project_import.php:60:                    || (($row['semantics'] ?? null) !== $operation->capability->role->semantics())
+compiler/src/05_generate_code/emit_llvm/handlers/instructions.php:137:        if ($parameter->passing->is_borrow()
+compiler/src/04_analyze/analyze_lifetimes/data/ownership.php:100:        $this->order = $kind->composition($body_id !== null);
+compiler/src-runtime-preparation/families/catalog.php:183:            || ($parameters[$receiver]->type !== $names['self']) || !$parameters[$receiver]->passing->is_borrow())) {
+compiler/src-runtime-preparation/families/catalog.php:214:                if ($passing->is_borrow())
+compiler/src-runtime-preparation/families/catalog.php:256:                || ($role === null) || !model\generic_contract::copyable_value->permits($role)) {
+compiler/src/04_analyze/analyze_lifetimes/export_worker.php:29:            $incoming = ($position === 0) && $role->creates_destination() ? Resource_States::EMPTY : Resource_States::EITHER;
+compiler/src/04_analyze/analyze_lifetimes/export_worker.php:52:            if ((!$role->creates_destination()) || ($a === $b)) {
+compiler/src-runtime-preparation/families/requests.php:93:                    if ($parameter->passing->is_borrow())
+compiler/src/04_analyze/analyze_lifetimes/allocation_flow.php:61:                if (!$this->body->local_passing($location->local)->is_borrow() || ($location->path === [])) {
+compiler/src/04_analyze/analyze_lifetimes/handlers/locals.php:49:        if (!$this->body->local_passing($local->local_id)->is_borrow()
+compiler/src/05_generate_code/emit_llvm/handlers/locations.php:61:        if (($parameter === null) || !$parameter->passing->is_borrow() || ($parameter->type_id !== $slot->type_id)
+compiler/src/04_analyze/analyze_lifetimes/ownership_preparation.php:125:                $order = $operation instanceof \type_model\source_lifecycle_operation ? $operation->order : $kind->composition(false);
+compiler/src/05_generate_code/emit_llvm/lifecycle.php:25:        $has_source = $operation->kind->has_source();
+compiler/src/05_generate_code/emit_llvm/lifecycle.php:44:            $member_source = $member->kind->has_source();
+compiler/src-runtime-preparation/project/source_adapter.php:26:                    'return_extension' => $abi->return_extension->value], $operation->capability->role->semantics());
+compiler/src/04_analyze/check_templates/body.php:58:                || ($role?->composition(true)->member_kind === \type_model\lifecycle_operation_kind::default_construct);
+compiler/src/04_analyze/resolve_types/source_lifecycle.php:52:            $has_source = $role->has_source();
+compiler/src/04_analyze/resolve_types/source_lifecycle.php:80:        $has_source = $role->has_source();
+compiler/src/04_analyze/resolve_types/lifecycle_composition.php:149:        $order = $role->composition($body !== 0);
+compiler/src/04_analyze/resolve_types/utilities/parameter_contracts.php:31:        if ($passing->is_borrow())
+compiler/src/04_analyze/type_model/family_contracts.php:57:                if (($contract === null) || !$contract->permits($requirement->operation)) {
+compiler/src/04_analyze/type_model/family_contracts.php:63:                if (($receiver === null) || (!($receiver->type instanceof family_type_reference)) || !$receiver->passing->is_borrow()) {
+compiler/src/04_analyze/type_model/data/lifecycle.php:99:        $this->order = $kind->composition($body_symbol_id !== 0);
+compiler/src/05_generate_code/prepare_backend/utilities/llvm_types.php:25:        return $kind->has_source() ? 2 : 1;
+compiler/src/05_generate_code/prepare_backend/utilities/llvm_types.php:142:        return $parameter->passing->is_borrow()
+compiler/src/05_generate_code/prepare_backend/backend_join.php:100:                || ($operation->kind->has_source()
+compiler/src/05_generate_code/prepare_backend/source_export_preparation.php:44:                $kind = $role->implemented_kind();
+compiler/src/05_generate_code/prepare_backend/source_export_preparation.php:99:        $kind = $role->implemented_kind() ?? throw new \LogicException('Unsupported export role has no link symbol');
+compiler/src/05_generate_code/prepare_backend/source_export_preparation.php:100:        $signature = $kind->has_source() ? 'ccc:void(ptr,ptr)' : 'ccc:void(ptr)';
+compiler/src/05_generate_code/prepare_backend/callable.php:39:                || (array_filter($signature->parameter_passing, static fn($passing) => $passing->is_borrow()) !== []))) {
+compiler/src/05_generate_code/prepare_backend/data/source_exports.php:61:            || (($operation !== null) && ($operation->kind !== $role->implemented_kind()))) {

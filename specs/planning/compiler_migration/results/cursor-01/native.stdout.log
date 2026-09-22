@@ -1,0 +1,33 @@
+Transpiled PHP files: 8, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-v0.1.76-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/10] PCH app_pch.hpp.gch
+[2/10] CXX src/compile/step.o
+[3/10] CXX src/compile/state.o
+[4/10] CXX src/02_tokenize/structures.o
+[5/10] CXX src/03_parse/data/nodes.o
+[6/10] CXX src/03_parse/data/structures.o
+[7/10] CXX src/03_parse/data/role_views.o
+[8/10] CXX src/01_prepare_inputs/read_sources/utilities/path_syntax.o
+[9/10] CXX main.o
+FAILED: main.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/22998b04b9c5bbe5.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o
+../generated/main.cpp:230:19: error: no viable overloaded '='
+  230 |         cursor->operands = mixed_t{shared_table_()};
+      |         ~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-context-port-_kn0em55/phpp/.prism/build/../../../../scpp-v0.1.76-probe/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit copy assignment operator) not viable: no known conversion from 'mixed_t' to 'const vector_t<int_t<>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+/tmp/scpp-context-port-_kn0em55/phpp/.prism/build/../../../../scpp-v0.1.76-probe/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit move assignment operator) not viable: no known conversion from 'mixed_t' to 'vector_t<int_t<>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.

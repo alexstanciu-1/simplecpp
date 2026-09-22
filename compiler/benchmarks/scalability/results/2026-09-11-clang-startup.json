@@ -1,0 +1,48 @@
+[
+  {
+    "trial": 1,
+    "operation": "version_only",
+    "invocations": 669,
+    "seconds": 4.178988497005776,
+    "user_seconds": 15.92906,
+    "system_seconds": 29.10343,
+    "minor_faults": 2234639,
+    "inblock": 0
+  },
+  {
+    "trial": 2,
+    "operation": "version_only",
+    "invocations": 669,
+    "seconds": 4.200531059002969,
+    "user_seconds": 16.663812,
+    "system_seconds": 29.230684,
+    "minor_faults": 2233534,
+    "inblock": 0
+  },
+  {
+    "trial": 3,
+    "operation": "version_only",
+    "invocations": 669,
+    "seconds": 4.2884098759968765,
+    "user_seconds": 16.621692000000003,
+    "system_seconds": 29.853179999999995,
+    "minor_faults": 2234471,
+    "inblock": 0
+  },
+  {
+    "operation": "one_module_pass_times",
+    "module": "669.ll",
+    "llvm_bytes": 2407882,
+    "seconds": 0.7200596859911457,
+    "user_seconds": 0.45882599999999485,
+    "system_seconds": 0.25534700000000043
+  },
+  {
+    "operation": "typical_module_pass_times",
+    "module": "599.ll",
+    "llvm_bytes": 21233,
+    "seconds": 0.058281945006456226,
+    "user_seconds": 0.013089,
+    "system_seconds": 0.04161
+  }
+]

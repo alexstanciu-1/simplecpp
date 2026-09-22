@@ -1,0 +1,9 @@
+namespace scpp\compat;
+class invalid_argument extends \Exception {
+    public function __construct(string $message) { parent::__construct($message); }
+}
+try {
+    throw new invalid_argument("bad input");
+} catch (invalid_argument $error) {
+    echo $error->getMessage(), "\n";
+}

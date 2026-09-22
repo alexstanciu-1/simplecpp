@@ -1,0 +1,109 @@
+
+
+/*
+ * Role: Accept token buffers against their exact source snapshots.
+ * Used by: Tokenizer::finalize()
+ * Call map:
+ *   Token_Join::join()
+ *     -> [action] validate selected results and assemble Token_Set
+ */
+
+namespace tokenize;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** @compiler-internal Accept tokenization results and retain current token buffers. */
+class Token_Join implements \compile\Join {
+    /**
+     * Capture the fixed context and selected tasks; validation belongs to join().
+     * @param list<Source_Buffer> $tasks
+     */
+    private readonly \read_sources\Source_Set $sources;private readonly Token_Set $previous;/** PHP readonly; native usage contract. */ private $tasks vector<\read_sources\Source_Buffer>;public function __construct(\read_sources\Source_Set $sources, Token_Set $previous, $tasks vector<\read_sources\Source_Buffer>) {$this->sources = $sources;$this->previous = $previous;$this->tasks = $tasks;
+    }
+
+    /**
+     * @compiler-api Accept one result per selected exact source buffer in any arrival order.
+     * Require complete current live membership, exclude removed files, and retain unchanged
+     * buffers. Missing, duplicate or stale batches throw; previous sets remain intact.
+     * Coordinator only. Validate completeness before retaining a new token set.
+     * @param list<Token_Buffer> $results
+     */
+    public function join($results vector<\tokenize\Token_Buffer>): Token_Set {
+        // Validate selected snapshots before accepting worker results.
+        $selected hash<\read_sources\Source_Buffer, int> = [];
+        foreach ($this->tasks  as $source) {
+            $id = $source->source_file_id;
+            $file = $this->sources->file_by_id($id);
+            if ((isset($selected[$id])) || ($file->change_state === \read_sources\file_change::deleted)
+                || ($file->buffer !== $source)) {
+                throw new \scpp_portability_exception('Duplicate or stale tokenization task');
+            }
+            $selected[$id] = $source;
+        }
+
+        // Index exactly one result per selected source, regardless of completion order.
+        $by_file hash<\tokenize\Token_Buffer, int> = [];
+        foreach ($results  as $buffer) {
+            $id = $buffer->source->source_file_id;
+            if (!isset($selected[$id])) {
+                throw new \scpp_portability_exception('Unexpected, duplicate or stale tokenization result');
+            }
+            if ((isset($by_file[$id])) || ($buffer->source !== $selected[$id])) {
+                throw new \scpp_portability_exception('Unexpected, duplicate or stale tokenization result');
+            }
+            $by_file[$id] = $buffer;
+        }
+        if (count($by_file) !== count($selected)) {
+            throw new \scpp_portability_exception('Incomplete tokenization batch');
+        }
+
+        // Rebuild live membership from replacements and unchanged snapshots; deleted files drop out.
+        $buffers vector<\tokenize\Token_Buffer> = [];
+        foreach ($this->sources->files  as $file) {
+            if ($file->change_state === \read_sources\file_change::deleted) {
+                continue;
+            }
+            $buffer = isset($by_file[$file->id]) ? $by_file[$file->id] : $this->previous->for_file($file->id);
+            if ($buffer === null) {
+                throw new \scpp_portability_exception('Missing or stale retained token buffer');
+            }
+            if ($buffer->source !== $file->buffer) {
+                throw new \scpp_portability_exception('Missing or stale retained token buffer');
+            }
+            $buffers[] = $buffer;
+        }
+        return new Token_Set($buffers);
+    }
+}

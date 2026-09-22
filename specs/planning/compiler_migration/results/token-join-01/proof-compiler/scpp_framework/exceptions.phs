@@ -1,0 +1,56 @@
+// Owned by the PHP portability framework. Regenerate with install_native_runtime.php.
+// Global implementation names avoid a v0.1.76 namespaced runtime-base lookup gap.
+class scpp_portability_exception extends Exception {
+    protected int $kind_mask = 1;
+    public function matches(int $kind): bool { return ($this->kind_mask & $kind) !== 0; }
+    protected string $detail = "";
+    protected int $error_code = 0;
+    protected ?scpp_portability_exception $cause = null;
+    public function __construct(string $message = "", int $code = 0, ?scpp_portability_exception $previous = null) {
+        $this->detail = $message;
+        $this->error_code = $code;
+        $this->cause = $previous;
+    }
+    public function getMessage(): string { return $this->detail; }
+    public function getCode(): int { return $this->error_code; }
+    public function getPrevious(): ?scpp_portability_exception { return $this->cause; }
+}
+class scpp_portability_logic_exception extends scpp_portability_exception {
+    public function __construct(string $message = "", int $code = 0, ?scpp_portability_exception $previous = null) {
+        $this->kind_mask = 3;
+        $this->detail = $message; $this->error_code = $code; $this->cause = $previous;
+    }
+}
+class scpp_portability_invalid_argument_exception extends scpp_portability_logic_exception {
+    public function __construct(string $message = "", int $code = 0, ?scpp_portability_exception $previous = null) {
+        $this->kind_mask = 7;
+        $this->detail = $message; $this->error_code = $code; $this->cause = $previous;
+    }
+}
+class scpp_portability_runtime_exception extends scpp_portability_exception {
+    public function __construct(string $message = "", int $code = 0, ?scpp_portability_exception $previous = null) {
+        $this->kind_mask = 9;
+        $this->detail = $message; $this->error_code = $code; $this->cause = $previous;
+    }
+}
+class scpp_portability_out_of_bounds_exception extends scpp_portability_runtime_exception {
+    public function __construct(string $message = "", int $code = 0, ?scpp_portability_exception $previous = null) {
+        $this->kind_mask = 25;
+        $this->detail = $message; $this->error_code = $code; $this->cause = $previous;
+    }
+}
+class scpp_portability_range_exception extends scpp_portability_runtime_exception {
+    public function __construct(string $message = "", int $code = 0, ?scpp_portability_exception $previous = null) {
+        $this->kind_mask = 41;
+        $this->detail = $message; $this->error_code = $code; $this->cause = $previous;
+    }
+}
+class scpp_portability_json_exception extends scpp_portability_exception {
+    public function __construct(string $message = "", int $code = 0, ?scpp_portability_exception $previous = null) {
+        $this->kind_mask = 65;
+        $this->detail = $message; $this->error_code = $code; $this->cause = $previous;
+    }
+}
+function scpp_portability_same_exception(scpp_portability_exception $left, scpp_portability_exception $right): bool {
+    return $left === $right;
+}

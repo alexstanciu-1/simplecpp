@@ -1,0 +1,1 @@
+Struct field vector_row::$items uses unsupported first-slice field type vector<string> at line 2.

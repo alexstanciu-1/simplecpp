@@ -1,0 +1,10 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in main.phs:2: use of undeclared identifier 'InvalidArgumentException'
+Generated location: .prism/generated/main.cpp:13:42
+Compile error in main.phs:3: use of undeclared identifier 'InvalidArgumentException'
+Generated location: .prism/generated/main.cpp:16:53
+Raw compiler excerpt:
+main.cpp:13:42: error: use of undeclared identifier 'InvalidArgumentException'
+main.cpp:16:53: error: use of undeclared identifier 'InvalidArgumentException'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "types": [
+    {
+      "id": "signed32",
+      "cpp_name": "std::int32_t",
+      "header": "cstdint",
+      "kind": "integer",
+      "language_type": {
+        "name": "int32",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "signed64",
+      "cpp_name": "std::int64_t",
+      "header": "cstdint",
+      "kind": "integer",
+      "language_type": {
+        "name": "int64",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "byte",
+      "cpp_name": "std::uint8_t",
+      "header": "cstdint",
+      "kind": "integer",
+      "language_type": {
+        "name": "byte",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "size",
+      "cpp_name": "std::size_t",
+      "header": "cstddef",
+      "kind": "integer"
+    },
+    {
+      "id": "nothing",
+      "cpp_name": "void",
+      "header": "cstddef",
+      "kind": "void"
+    }
+  ],
+  "families": [
+    {
+      "id": "sequence",
+      "cpp_name": "scpp::vector_t",
+      "header": "scpp/vector_t.hpp",
+      "parameters": [
+        {
+          "name": "element",
+          "contract": "copyable_value"
+        }
+      ],
+      "lifecycle": {
+        "construct": "construct",
+        "destroy": "destroy"
+      },
+      "operations": [
+        {
+          "id": "construct",
+          "kind": "construct",
+          "error_policy": "terminate",
+          "type": "$self",
+          "parameters": []
+        },
+        {
+          "id": "destroy",
+          "kind": "destroy",
+          "error_policy": "terminate",
+          "type": "$self"
+        },
+        {
+          "id": "append_copy",
+          "kind": "free_function",
+          "error_policy": "terminate",
+          "cpp_name": "scpp_provider::sequence_append",
+          "header": "scpp_provider/sequence.hpp",
+          "cpp_template_arguments": [
+            "$self",
+            "$element"
+          ],
+          "parameters": [
+            {
+              "type": "$self",
+              "passing": "mutable_address",
+              "borrow_scope": "call"
+            },
+            {
+              "type": "$element",
+              "passing": "const_address",
+              "borrow_scope": "call"
+            }
+          ],
+          "result_type": "nothing",
+          "requires": [
+            {
+              "parameter": "element",
+              "operation": "copy_construct"
+            }
+          ],
+          "receiver": 0,
+          "effects": [
+            {
+              "kind": "invalidate_elements",
+              "receiver": 0
+            }
+          ]
+        },
+        {
+          "id": "length",
+          "kind": "free_function",
+          "error_policy": "terminate",
+          "cpp_name": "scpp_provider::sequence_length",
+          "header": "scpp_provider/sequence.hpp",
+          "cpp_template_arguments": [
+            "$self"
+          ],
+          "parameters": [
+            {
+              "type": "$self",
+              "passing": "const_address",
+              "borrow_scope": "call"
+            }
+          ],
+          "result_type": "size",
+          "receiver": 0
+        },
+        {
+          "id": "read_copy",
+          "kind": "free_function",
+          "error_policy": "terminate",
+          "cpp_name": "scpp_provider::sequence_read",
+          "header": "scpp_provider/sequence.hpp",
+          "cpp_template_arguments": [
+            "$self",
+            "$element"
+          ],
+          "parameters": [
+            {
+              "type": "$self",
+              "passing": "const_address",
+              "borrow_scope": "call"
+            },
+            "size"
+          ],
+          "result_type": "$element",
+          "requires": [
+            {
+              "parameter": "element",
+              "operation": "copy_construct"
+            }
+          ],
+          "receiver": 0
+        }
+      ]
+    },
+    {
+      "id": "holder",
+      "cpp_name": "fixture::holder",
+      "header": "holder.hpp",
+      "parameters": [
+        {
+          "name": "first",
+          "contract": "copyable_value"
+        },
+        {
+          "name": "second",
+          "contract": "copyable_value"
+        }
+      ],
+      "lifecycle": {
+        "construct": "initialize",
+        "destroy": "release"
+      },
+      "operations": [
+        {
+          "id": "initialize",
+          "kind": "construct",
+          "error_policy": "terminate",
+          "type": "$self",
+          "parameters": [
+            "$first",
+            "$second"
+          ],
+          "requires": [
+            {
+              "parameter": "first",
+              "operation": "copy_construct"
+            },
+            {
+              "parameter": "second",
+              "operation": "copy_construct"
+            }
+          ]
+        },
+        {
+          "id": "release",
+          "kind": "destroy",
+          "error_policy": "terminate",
+          "type": "$self"
+        },
+        {
+          "id": "difference",
+          "kind": "free_function",
+          "error_policy": "terminate",
+          "cpp_name": "fixture::difference",
+          "header": "holder.hpp",
+          "cpp_template_arguments": [
+            "$self"
+          ],
+          "parameters": [
+            {
+              "type": "$self",
+              "passing": "const_address",
+              "borrow_scope": "call"
+            }
+          ],
+          "result_type": "signed64",
+          "receiver": 0
+        }
+      ]
+    }
+  ]
+}

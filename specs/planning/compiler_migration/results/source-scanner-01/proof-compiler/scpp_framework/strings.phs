@@ -1,0 +1,133 @@
+// Owned by the portability framework. Text means valid UTF-8, indexed by code point.
+// Byte validation prevents the selected target's invalid-UTF8 byte fallback.
+function scpp_portability_utf8_valid(string $text): bool {
+    $size int = string_byte_len($text);
+    for ($i int = 0; $i < $size; ++$i) {
+        $head int = string_byte_at($text, $i);
+        if ($head < 128) { continue; }
+        $tail int = 0;
+        $low int = 128;
+        $high int = 191;
+        if ($head >= 194 && $head <= 223) { $tail = 1; }
+        else if ($head >= 224 && $head <= 239) {
+            $tail = 2;
+            if ($head === 224) { $low = 160; }
+            if ($head === 237) { $high = 159; }
+        }
+        else if ($head >= 240 && $head <= 244) {
+            $tail = 3;
+            if ($head === 240) { $low = 144; }
+            if ($head === 244) { $high = 143; }
+        }
+        else { return false; }
+        if ($tail >= $size - $i) { return false; }
+        ++$i;
+        $first int = string_byte_at($text, $i);
+        if ($first < $low || $first > $high) { return false; }
+        for ($j int = 1; $j < $tail; ++$j) {
+            ++$i;
+            $byte int = string_byte_at($text, $i);
+            if ($byte < 128 || $byte > 191) { return false; }
+        }
+    }
+    return true;
+}
+function scpp_portability_require_utf8(string $text): void {
+    if (!scpp_portability_utf8_valid($text)) {
+        throw new scpp_portability_invalid_argument_exception("Text operation requires valid UTF-8");
+    }
+}
+function scpp_portability_strlen(string $text): int {
+    scpp_portability_require_utf8($text);
+    return string_utf8_codepoint_count($text);
+}
+function scpp_portability_substr(string $text, int $offset, int $length): string {
+    scpp_portability_require_utf8($text);
+    return substr($text, $offset, $length);
+}
+function scpp_portability_substr_to_end(string $text, int $offset): string {
+    scpp_portability_require_utf8($text);
+    return substr($text, $offset);
+}
+function scpp_portability_search_inputs(string $text, string $needle, int $offset): void {
+    scpp_portability_require_utf8($text);
+    scpp_portability_require_utf8($needle);
+    $size int = string_utf8_codepoint_count($text);
+    if ($offset < -$size || $offset > $size) {
+        throw new scpp_portability_out_of_bounds_exception("Text search offset is out of range");
+    }
+}
+function scpp_portability_strpos(string $text, string $needle, int $offset = 0): result_or_false<int> {
+    scpp_portability_search_inputs($text, $needle, $offset);
+    return strpos($text, $needle, $offset);
+}
+function scpp_portability_strrpos(string $text, string $needle, int $offset = 0): result_or_false<int> {
+    scpp_portability_search_inputs($text, $needle, $offset);
+    return strrpos($text, $needle, $offset);
+}
+function scpp_portability_str_starts_with(string $text, string $prefix): bool {
+    scpp_portability_require_utf8($text);
+    scpp_portability_require_utf8($prefix);
+    return str_starts_with($text, $prefix);
+}
+function scpp_portability_str_ends_with(string $text, string $suffix): bool {
+    scpp_portability_require_utf8($text);
+    scpp_portability_require_utf8($suffix);
+    return str_ends_with($text, $suffix);
+}
+function scpp_portability_codepoint_at(string $text, int $index): int {
+    scpp_portability_require_utf8($text);
+    return string_utf8_codepoint_at($text, $index);
+}
+
+// A bounded adapter over the target's existing binary decoder, not a UTF-8 operation.
+function scpp_portability_byte_from_int(int $value): string {
+    if ($value < 0 || $value > 255) {
+        throw new scpp_portability_invalid_argument_exception("Byte value must be between 0 and 255");
+    }
+    $digits string = "0123456789abcdef";
+    $hex string = string_byte_slice($digits, $value >> 4, 1) . string_byte_slice($digits, $value & 15, 1);
+    $byte string = "";
+    if (!take($byte, hex2bin($hex))) {
+        throw new scpp_portability_logic_exception("Byte construction failed");
+    }
+    return $byte;
+}
+
+// Exact JSON scalar string spelling used by explicit compiler schemas.
+    function scpp_portability_json_hex4(int $value): string {
+        $digits = '0123456789abcdef';
+        return string_byte_slice($digits, (int)($value / 4096) % 16, 1)
+            . string_byte_slice($digits, (int)($value / 256) % 16, 1)
+            . string_byte_slice($digits, (int)($value / 16) % 16, 1)
+            . string_byte_slice($digits, $value % 16, 1);
+    }
+
+    /** Preserve JSON_THROW_ON_ERROR's default string spelling for this schema. */
+    function scpp_portability_json_quote(string $value): string {
+        if (!scpp_portability_utf8_valid($value)) {
+            throw new scpp_portability_json_exception('Malformed UTF-8 characters, possibly incorrectly encoded', 5);
+        }
+        $out = '"';
+        $length = scpp_portability_strlen($value);
+        for ($i = 0; $i < $length; $i++) {
+            $code = scpp_portability_codepoint_at($value, $i);
+            if ($code === 34) { $out .= '\"'; }
+            elseif ($code === 92) { $out .= '\\\\'; }
+            elseif ($code === 47) { $out .= '\/'; }
+            elseif ($code === 8) { $out .= '\b'; }
+            elseif ($code === 9) { $out .= '\t'; }
+            elseif ($code === 10) { $out .= '\n'; }
+            elseif ($code === 12) { $out .= '\f'; }
+            elseif ($code === 13) { $out .= '\r'; }
+            elseif (($code < 32) || ($code >= 128)) {
+                if ($code > 65535) {
+                    $scalar = $code - 65536;
+                    $out .= '\u' . scpp_portability_json_hex4(55296 + (int)($scalar / 1024));
+                    $out .= '\u' . scpp_portability_json_hex4(56320 + $scalar % 1024);
+                } else { $out .= '\u' . scpp_portability_json_hex4($code); }
+            } else { $out .= scpp_portability_substr($value, $i, 1); }
+        }
+        return $out . '"';
+    }
+

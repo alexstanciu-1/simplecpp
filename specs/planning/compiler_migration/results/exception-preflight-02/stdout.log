@@ -1,0 +1,48 @@
+Transpiled PHP files: 1, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-v0.1.76-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: reuse existing artifact only
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/2] CXX main.o
+FAILED: main.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/9d15d9d7a1707eb0.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/9d15d9d7a1707eb0.hpp:4:
+./../generated/__project_units/../main.hpp:13:33: error: base class has incomplete type
+   13 | class invalid_argument : public Exception {
+      |                          ~~~~~~~^~~~~~~~~
+./../generated/__project_units/../main.hpp:10:7: note: forward declaration of 'scpp::scpp::compat::Exception'
+   10 | class Exception;
+      |       ^
+../generated/main.cpp:15:2: error: incomplete type 'scpp::scpp::compat::Exception' named in nested name specifier
+   15 |         Exception::__construct(message);
+      |         ^~~~~~~~~~~
+./../generated/__project_units/../main.hpp:10:7: note: forward declaration of 'scpp::scpp::compat::Exception'
+   10 | class Exception;
+      |       ^
+../generated/main.cpp:25:10: error: no matching function for call to 'make_thrown'
+   25 |                         throw ::scpp::php::make_thrown(create<invalid_argument>(string_t("bad input")));
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-exception-probe-_g58r282/.prism/build/../../../scpp-v0.1.76-probe/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compat::invalid_argument]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-exception-probe-_g58r282/.prism/build/../../../scpp-v0.1.76-probe/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compat::invalid_argument>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/main.cpp:28:31: error: no matching function for call to 'catch_as'
+   28 |                         if (auto __scpp_caught_3 = ::scpp::php::catch_as<invalid_argument>(__scpp_thrown_2); static_cast<bool>(__scpp_caught_3)) {
+      |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-exception-probe-_g58r282/.prism/build/../../../scpp-v0.1.76-probe/runtime/include/lang/php/php_exceptions.hpp:68:27: note: candidate template ignored: constraints not satisfied [with T = invalid_argument]
+   68 | [[nodiscard]] shared_p<T> catch_as(const thrown_object &thrown) noexcept
+      |                           ^
+/tmp/scpp-exception-probe-_g58r282/.prism/build/../../../scpp-v0.1.76-probe/runtime/include/lang/php/php_exceptions.hpp:69:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compat::invalid_argument>' evaluated to false
+   69 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+4 errors generated.
+ninja: build stopped: subcommand failed.

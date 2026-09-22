@@ -1,0 +1,18 @@
+["/usr/bin/clang++-18", "-std=c++23", "-I/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/runtime/include", "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/include", "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/tests/source_operations", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/tests/source_operations/harness.cpp", "/tmp/scpp-adoption-preparation-29v8zist/source-operations/O0/native.bc", "/tmp/scpp-adoption-preparation-29v8zist/source-operations/O0/compiler-1.bc", "/tmp/scpp-adoption-preparation-29v8zist/source-operations/O0/compiler-1.bc", "-o", "/tmp/scpp-adoption-preparation-29v8zist/source-operations/duplicate"]
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `source_construct':
+compiler-1.ll:(.text+0x0): multiple definition of `source_construct'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0x0): first defined here
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `source_copy':
+compiler-1.ll:(.text+0x50): multiple definition of `source_copy'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0x50): first defined here
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `source_move':
+compiler-1.ll:(.text+0xb0): multiple definition of `source_move'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0xb0): first defined here
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `source_assign':
+compiler-1.ll:(.text+0x120): multiple definition of `source_assign'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0x120): first defined here
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `source_move_assign':
+compiler-1.ll:(.text+0x190): multiple definition of `source_move_assign'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0x190): first defined here
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `source_destroy':
+compiler-1.ll:(.text+0x200): multiple definition of `source_destroy'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0x200): first defined here
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `compiler_check_payload':
+compiler-1.ll:(.text+0x240): multiple definition of `compiler_check_payload'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0x240): first defined here
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-83b66a.o: in function `compiler_entry':
+compiler-1.ll:(.text+0x250): multiple definition of `compiler_entry'; /tmp/scpp-adoption-preparation-29v8zist/tmp/compiler-1-daf394.o:compiler-1.ll:(.text+0x250): first defined here
+clang++-18: error: linker command failed with exit code 1 (use -v to see invocation)

@@ -1,0 +1,11 @@
+struct constructed_row {
+    string $text;
+}
+
+$original = new constructed_row();
+$original->text = "before";
+$copy = $original;
+$copy->text = "after";
+$typed constructed_row = new constructed_row();
+$typed->text = "typed";
+echo $original->text, ":", $copy->text, ":", $typed->text, "\n";

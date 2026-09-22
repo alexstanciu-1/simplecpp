@@ -1,0 +1,10 @@
+{
+  "command": [
+    "php",
+    "-r",
+    "require $argv[1]; $view = new parse\\function_parts(1,2,3,4); try { $view->name_id=9; } catch (Error $error) { echo \"PHP readonly enforced\"; exit(0); } exit(1);",
+    "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/bootstrap.php"
+  ],
+  "exit_code": 0,
+  "stdout": "PHP readonly enforced"
+}

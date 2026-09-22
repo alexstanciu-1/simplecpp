@@ -1,0 +1,18 @@
+class scpp_error extends Exception {
+    public string $detail = "";
+    public function __construct(string $message) { $this->detail = $message; }
+    public function getMessage(): string { return $this->detail; }
+}
+class scpp_invalid_argument extends scpp_error {
+    public function __construct(string $message) { $this->detail = $message; }
+}
+try {
+    throw new scpp_invalid_argument("bad input");
+} catch (scpp_invalid_argument $error) {
+    echo $error->getMessage(), "\n";
+}
+try {
+    throw new scpp_invalid_argument("base catch");
+} catch (scpp_error $error) {
+    echo $error->getMessage(), "\n";
+}

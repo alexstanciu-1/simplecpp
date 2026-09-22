@@ -1,0 +1,281 @@
+{
+  "status": "passed",
+  "scope": "portability-ready source set",
+  "native_requested": [
+    "compiler"
+  ],
+  "steps": [
+    {
+      "name": "target-revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-2f0d667f-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.006
+    },
+    {
+      "name": "target-status",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-2f0d667f-probe",
+        "status",
+        "--porcelain"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.023
+    },
+    {
+      "name": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-manifest-record-04/source"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.82
+    },
+    {
+      "name": "php-behavior",
+      "command": [
+        "php",
+        "-r",
+        "foreach (array_slice($argv, 1) as $file) { require $file; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-manifest-record-04/source/src/compile/state.php",
+        "/tmp/scpp-manifest-record-04/source/src/02_tokenize/structures.php",
+        "/tmp/scpp-manifest-record-04/source/src/compile/step.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/utilities/path_syntax.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/data/nodes.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/data/role_views.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/data/structures.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/data/tree.php",
+        "/tmp/scpp-manifest-record-04/source/src/04_analyze/check_bodies/utilities/decimal_range.php",
+        "/tmp/scpp-manifest-record-04/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/scpp-manifest-record-04/source/src/05_generate_code/prepare_backend/data/tools.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/data/read_tasks.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/data/structures.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/data/source_json.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/data/store.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/data/result.php",
+        "/tmp/scpp-manifest-record-04/source/src/compile/join.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/scan_join.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/snapshot_join.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_sources/select_reads.php",
+        "/tmp/scpp-manifest-record-04/source/src/02_tokenize/store.php",
+        "/tmp/scpp-manifest-record-04/source/src/02_tokenize/join.php",
+        "/tmp/scpp-manifest-record-04/source/src/02_tokenize/select_tasks.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/data/result.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/data/store.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/join.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/utilities/binary_syntax.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/select_tasks.php",
+        "/tmp/scpp-manifest-record-04/source/src/03_parse/utilities/syntax_comparer.php",
+        "/tmp/scpp-manifest-record-04/source/src/04_analyze/check_bodies/utilities/byte_literals.php",
+        "/tmp/scpp-manifest-record-04/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/scpp-manifest-record-04/source/src/compile/data/native_project.php",
+        "/tmp/scpp-manifest-record-04/source/src/01_prepare_inputs/read_manifest/data/result.php",
+        "/tmp/scpp-manifest-record-04/source/main.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.128
+    },
+    {
+      "name": "source-set-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/source_set_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.088
+    },
+    {
+      "name": "binary-syntax-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/binary_syntax_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.785
+    },
+    {
+      "name": "syntax-comparer-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/syntax_comparer_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.162
+    },
+    {
+      "name": "byte-literals-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/byte_literals_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.434
+    },
+    {
+      "name": "native-project-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/native_project_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.173
+    },
+    {
+      "name": "project-manifest-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/project_manifest_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.088
+    },
+    {
+      "name": "collections-php",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/collections_php.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.042
+    },
+    {
+      "name": "foundation",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/run.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 3.083
+    },
+    {
+      "name": "check-regressions",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/check.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 4.254
+    },
+    {
+      "name": "prologues",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/prologues.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.836
+    },
+    {
+      "name": "native-framework-install",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/native_runtime.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.871
+    },
+    {
+      "name": "native-compiler",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py",
+        "--target-checkout",
+        "/tmp/scpp-2f0d667f-probe",
+        "--results",
+        "/tmp/scpp-manifest-record-04/proof-compiler"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 46.043
+    },
+    {
+      "name": "target-status-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-2f0d667f-probe",
+        "status",
+        "--porcelain"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.023
+    }
+  ],
+  "configured_target": {
+    "repository": "https://github.com/alexstanciu-1/simplecpp.git",
+    "release": null,
+    "verified_commit": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+    "cli": "bin/scpp.php",
+    "profile": "strict",
+    "purpose": "PHP++ compiler implementation target; separate from the adopted LLVM runtime-provider baseline",
+    "base_release": "v0.1.76",
+    "branch": "codex/file-lock-runtime",
+    "status": "unreleased tested candidate"
+  },
+  "verified_target_revision": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+  "source_sha256": {
+    "src/compile/state.php": "e14fabe353a5951ca2f465675740376aae481eec3776d1b53a7cc92ce8e5d407",
+    "src/02_tokenize/structures.php": "cd2b4f10ac0adfafdec67ec1b5e8e481a969313d8ea1b18a56c605bdef8c025c",
+    "src/compile/step.php": "04f2c62efc4e32abb9e19268ea7a35a7e0a11e2acb000df25c28ada23c761d3e",
+    "src/01_prepare_inputs/read_sources/utilities/path_syntax.php": "a69ff273e357d0d45969e31afa61bf6b25156d31cc2caa7db4ae05994bfaa44f",
+    "src/03_parse/data/nodes.php": "3f82b6eaa496283ad0a9fc6ffff505e752b51d3c5af5a31374b9239865499824",
+    "src/03_parse/data/role_views.php": "53b9aa75e7bf8b1e10915bcd0cb07ca9c5cdde6722f8ff699e21a1d569db0347",
+    "src/03_parse/data/structures.php": "908d392cc31eb96c535f45d403b308a2a6dff6f239f2ac461648f0da546179cc",
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "cc5e726e6cc90c7422e5e5f6b3cc2a271bdfe2d2dfc73c74f4dc913d20575706",
+    "src/03_parse/data/tree.php": "2994f86915c3c5faa9be4994424d8fe4678d88a3a913560c82b199e9aad30e59",
+    "src/04_analyze/check_bodies/utilities/decimal_range.php": "bb857bbc9f8058fd41302945237d6909d2f0b1655ac838933d802339fa106964",
+    "src/05_generate_code/prepare_backend/data/configuration.php": "dc30963cd0ba145b5462ddd1a75e468e92f25fcbf14060405b7276399ab89bc3",
+    "src/05_generate_code/prepare_backend/data/tools.php": "b653d3615fc27e156a7aff8e47a97a63ffe08b12a59d8cdfff975c68cefb6fb1",
+    "src/01_prepare_inputs/read_sources/data/read_tasks.php": "6c3540b7af426cd7f74c72a5fb5eccd4125353387530a5fea64590d38a03c482",
+    "src/01_prepare_inputs/read_sources/data/structures.php": "fe3648b10ea7bf311d833ff6ab2052cdd42660ea26ebe7f87ca047df56d20d01",
+    "src/01_prepare_inputs/read_sources/data/source_json.php": "8f72b680120f79be323c99099b41793dcfda23c632e2594e17b9e8519467992d",
+    "src/01_prepare_inputs/read_sources/data/store.php": "176f714d9b01380b822d1faf67ead4c68b54e3fd4cbfebc381cfa6ce30b735ba",
+    "src/01_prepare_inputs/read_sources/data/result.php": "62542c22bddeb7f60da084634f7dd787d33aabe4473cf12b275c413a79763dec",
+    "src/compile/join.php": "f8be5d950f1e734f1ca2415e287b52d6a03da93cc885574dce6bfddedae9f642",
+    "src/01_prepare_inputs/read_sources/scan_join.php": "bbdb3eef0bafdba8c566883214c207bad581dff94b06c41adae362ade0470bf4",
+    "src/01_prepare_inputs/read_sources/snapshot_join.php": "62a13ea226f2326d381d3a2b1a0a5f11f59b598edc308cf6c1b87ec2292007b1",
+    "src/01_prepare_inputs/read_sources/select_reads.php": "cdfd3090c1cb0d2510ce74d11d5705405adfac895bb2cd64f740e7b870199cc1",
+    "src/02_tokenize/store.php": "5dbb3a9ca650e1295224580f97ad5d9780bb36886cc89463a1a5a3fd7870586d",
+    "src/02_tokenize/join.php": "dbecc4c66961d13d67c9850f5cae9d0ff7e195f505bd01d4cb85ad1f4f3c5a9f",
+    "src/02_tokenize/select_tasks.php": "519be946cee780f491c12ab81a2f2a7a6bfdcb55f8e70895bf01365cb440f9e6",
+    "src/03_parse/data/result.php": "501ba32577da4c82877cbc611a02520d2fd0f08b4526483e961ac52246a05157",
+    "src/03_parse/data/store.php": "fca50eaebec2f5ea8c3e31bb05203937c5932d80379205c701f90f635838679e",
+    "src/03_parse/join.php": "e32adf350e6a2fd95b59c7b6c3326a8e041f78c2abc1da1e205e88603d1fb8c2",
+    "src/03_parse/utilities/binary_syntax.php": "e139e9852eb0cc244d1d442f0e2f3474072cd998e388e96a9e4d58e185389c38",
+    "src/03_parse/select_tasks.php": "2397ba23340bd8d93503c9cfd9908aa052d24c748b49de4b738f46e9d9a8d590",
+    "src/03_parse/utilities/syntax_comparer.php": "eeb35f15fa81b8f022731316061f0f98432567411b5dd49f6daf835f651ad534",
+    "src/04_analyze/check_bodies/utilities/byte_literals.php": "cb9bdbb750388edc263e0c78c880b5dbf0ece6e9171fe3bc8f72873857c23d08",
+    "src/04_analyze/type_model/data/type_references.php": "54196ebac9c3613fa80e865fc3ed1cf9d293ea1dcc62c0e27397da2a47b34024",
+    "src/compile/data/native_project.php": "64d7ae562420d66e5f1ec99154a50584c541a13807e27b976b753855f8caaef9",
+    "src/01_prepare_inputs/read_manifest/data/result.php": "ad41348f1a9f0ad9808bf3dbdd78a1e7b1abe56a07e89de353f5cb866057b471"
+  },
+  "native_proved": [
+    "compiler"
+  ]
+}

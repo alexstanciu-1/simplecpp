@@ -1,0 +1,107 @@
+{
+  "method": "5 MiB resident session, six body edits alternating ordinary GC and gc_disable during compile with original enabled state restored afterward. Pre-compile collection matches baseline benchmark and is reported separately; explicit post-compile drain exposes deferred cost. Synthetic diagnostic, not a production GC policy. Native exit values verified. PHP 8.5.7; Xdebug/CLI OPcache disabled; 2 GiB limit.",
+  "measurements": [
+    {
+      "phase": "cold",
+      "seconds": 51.646936539,
+      "exit_code": 42
+    },
+    {
+      "mode": "normal",
+      "iteration": 1,
+      "compile_seconds": 1.590379128,
+      "pre_collect_seconds": 0.693690361,
+      "post_collect_seconds": 0.746545029,
+      "compile_plus_post_seconds": 2.336924157,
+      "compile_gc_runs": 1,
+      "compile_gc_seconds": 0.49286045499999975,
+      "post_gc_seconds": 0.7465381889999998,
+      "collected": 0,
+      "retained_bytes": 731667560,
+      "exit_code": 43
+    },
+    {
+      "mode": "suspend",
+      "iteration": 2,
+      "compile_seconds": 1.09307244,
+      "pre_collect_seconds": 0.620288668,
+      "post_collect_seconds": 0.66386963,
+      "compile_plus_post_seconds": 1.75694207,
+      "compile_gc_runs": 0,
+      "compile_gc_seconds": 0,
+      "post_gc_seconds": 0.6638631799999999,
+      "collected": 0,
+      "retained_bytes": 731668424,
+      "exit_code": 44
+    },
+    {
+      "mode": "normal",
+      "iteration": 3,
+      "compile_seconds": 1.397661613,
+      "pre_collect_seconds": 0.433619842,
+      "post_collect_seconds": 0.600573652,
+      "compile_plus_post_seconds": 1.998235265,
+      "compile_gc_runs": 1,
+      "compile_gc_seconds": 0.4244409460000007,
+      "post_gc_seconds": 0.6005691720000002,
+      "collected": 0,
+      "retained_bytes": 731668424,
+      "exit_code": 45
+    },
+    {
+      "mode": "suspend",
+      "iteration": 4,
+      "compile_seconds": 0.997803961,
+      "pre_collect_seconds": 0.437660214,
+      "post_collect_seconds": 0.692064401,
+      "compile_plus_post_seconds": 1.689868362,
+      "compile_gc_runs": 0,
+      "compile_gc_seconds": 0,
+      "post_gc_seconds": 0.6920590309999994,
+      "collected": 0,
+      "retained_bytes": 731668424,
+      "exit_code": 46
+    },
+    {
+      "mode": "normal",
+      "iteration": 5,
+      "compile_seconds": 1.819836471,
+      "pre_collect_seconds": 0.517279543,
+      "post_collect_seconds": 0.689340028,
+      "compile_plus_post_seconds": 2.509176499,
+      "compile_gc_runs": 1,
+      "compile_gc_seconds": 0.6366097439999994,
+      "post_gc_seconds": 0.6893351380000006,
+      "collected": 0,
+      "retained_bytes": 731668424,
+      "exit_code": 47
+    },
+    {
+      "mode": "suspend",
+      "iteration": 6,
+      "compile_seconds": 1.1102225,
+      "pre_collect_seconds": 0.479980398,
+      "post_collect_seconds": 0.77118722,
+      "compile_plus_post_seconds": 1.8814097199999997,
+      "compile_gc_runs": 0,
+      "compile_gc_seconds": 0,
+      "post_gc_seconds": 0.77118295,
+      "collected": 0,
+      "retained_bytes": 731668424,
+      "exit_code": 48
+    }
+  ],
+  "source": {
+    "project": "5mb",
+    "target_bytes": 5242880,
+    "source_bytes": 5243107,
+    "files": 669,
+    "functions": 21315,
+    "generated_functions": 21313,
+    "functions_per_file": 32,
+    "edit_file": "src/group_0666.phs",
+    "edited_function": "sample_021313",
+    "source_sha256": "b85eb10336118d6ac1b50cdb44ef20f7ac0c648dc25bbff297693233214a7317"
+  },
+  "interpretation": "The forced post-compile collection is an experimental drain, not existing production behavior. Compile-plus-drain comparisons show the cost of extra collection passes under this protocol; they do not establish a production scheduling win. No GC policy change was adopted. Instrumentation recipes remain local under build/scalability/investigation/gc_scope.php and gc_scope.py."
+}

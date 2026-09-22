@@ -1,0 +1,17 @@
+Clang backend operation failed: /usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/runtime-581afb.o: in function `lifecycle_probe::custom_record::custom_record(int)':
+-:(.text._ZN15lifecycle_probe13custom_recordC2Ei[_ZN15lifecycle_probe13custom_recordC2Ei]+0x1f): undefined reference to `proof_initializer'
+/usr/bin/ld: -:(.text._ZN15lifecycle_probe13custom_recordC2Ei[_ZN15lifecycle_probe13custom_recordC2Ei]+0x61): undefined reference to `proof_constructor_body'
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/runtime-581afb.o: in function `lifecycle_probe::custom_record::~custom_record()':
+-:(.text._ZN15lifecycle_probe13custom_recordD2Ev[_ZN15lifecycle_probe13custom_recordD2Ev]+0x15): undefined reference to `proof_destructor_body'
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/runtime-581afb.o: in function `lifecycle_probe::shared_lifetime(int)':
+-:(.text._ZN15lifecycle_probe15shared_lifetimeEi[_ZN15lifecycle_probe15shared_lifetimeEi]+0x55): undefined reference to `proof_equal'
+/usr/bin/ld: -:(.text._ZN15lifecycle_probe15shared_lifetimeEi[_ZN15lifecycle_probe15shared_lifetimeEi]+0x62): undefined reference to `proof_event'
+/usr/bin/ld: -:(.text._ZN15lifecycle_probe15shared_lifetimeEi[_ZN15lifecycle_probe15shared_lifetimeEi]+0x78): undefined reference to `proof_event'
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/runtime-581afb.o: in function `lifecycle_probe::traced::traced(int)':
+-:(.text._ZN15lifecycle_probe6tracedC2Ei[_ZN15lifecycle_probe6tracedC2Ei]+0x20): undefined reference to `proof_event'
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/runtime-581afb.o: in function `lifecycle_probe::traced::~traced()':
+-:(.text._ZN15lifecycle_probe6tracedD2Ev[_ZN15lifecycle_probe6tracedD2Ev]+0x18): undefined reference to `proof_event'
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/runtime-581afb.o: in function `lifecycle_probe::traced::traced(lifecycle_probe::traced const&)':
+-:(.text._ZN15lifecycle_probe6tracedC2ERKS0_[_ZN15lifecycle_probe6tracedC2ERKS0_]+0x24): undefined reference to `proof_event'
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/runtime-581afb.o:-:(.text._ZN15lifecycle_probe6tracedaSERKS0_[_ZN15lifecycle_probe6tracedaSERKS0_]+0x28): more undefined references to `proof_event' follow
+clang++-18: error: linker command failed with exit code 1 (use -v to see invocation)

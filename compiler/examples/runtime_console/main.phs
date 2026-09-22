@@ -1,0 +1,5 @@
+$line string = input_line();
+$value int = int_from_string($line);
+$message string = string_concat("answer=", string_from_int($value + 1));
+echo $message, ";bytes=", string_from_int(string_byte_length($message)), "\n";
+return 0;

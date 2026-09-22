@@ -1,0 +1,74 @@
+{
+  "utc": "2026-09-21T09:44:12.543982+00:00",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": "AMD Ryzen 5 PRO 4650G with Radeon Graphics",
+  "php": {
+    "version": "8.5.7",
+    "memory_limit": "2048M",
+    "opcache_cli": "0",
+    "jit": "disable",
+    "xdebug_mode_env": "off"
+  },
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin",
+  "backend": {
+    "clang": "clang",
+    "target": null,
+    "compile_jobs": 20,
+    "linker": "mold"
+  },
+  "compiler_sha256": "56d5c1af36fd796fcb5668c4655f8fac0fde445ffac5aeccbaf13fa5c9c9a0bd",
+  "trials_per_size": 1,
+  "trace_tools": false,
+  "timing": "hrtime around Compiler_Session::compile; includes tool probes, native object compilation and linking; excludes bootstrap, fixture copies, counters, exports and executable verification",
+  "memory": "PHP allocator peak per phase, reset before compile; includes live resident snapshots, excludes external Clang/linker memory",
+  "timeout_seconds_per_trial": 180,
+  "projects": [
+    {
+      "project": "64kb",
+      "target_bytes": 65536,
+      "source_bytes": 65545,
+      "files": 11,
+      "functions": 268,
+      "generated_functions": 266,
+      "functions_per_file": 32,
+      "edit_file": "src/group_0008.phs",
+      "edited_function": "sample_000266",
+      "source_sha256": "587f651fbfe7737a95e18b9909cb05e67a0e6d16971a8c774272c420f63387ab",
+      "trials": [
+        {
+          "trial": 1,
+          "ok": false,
+          "measurements": [
+            {
+              "phase": "cold",
+              "seconds": 0.632863755,
+              "php_peak_bytes": 18113136,
+              "gc_runs": 4,
+              "gc_collected": 0,
+              "gc_seconds": 0.015174758,
+              "php_peak_allocated_bytes": 18874368,
+              "php_retained_bytes": 18055912,
+              "full_rebuild": true,
+              "tokens": 13874,
+              "ast_nodes": 9884,
+              "checked_statements": 2398,
+              "lowered_instructions": 4260,
+              "lowered_bodies": 269,
+              "replaced_frontends": 11,
+              "replaced_bodies": 269,
+              "replaced_lowered": 269,
+              "artifact_reused": false,
+              "emitted_modules": 11,
+              "replaced_objects": 11,
+              "llvm_bytes": 203993,
+              "executable_bytes": 49152,
+              "exit_code": 42
+            }
+          ],
+          "stderr": "PHP Warning:  Undefined property: prepare_backend\\callable_binding::$symbol_id in /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php on line 73\nTypeError: lower\\Lowered_Set::for_symbol(): Argument #1 ($id) must be of type int, null given, called in /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php on line 73 and defined in /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/src/05_generate_code/lower/data/store.php:39\nStack trace:\n#0 /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php(73): lower\\Lowered_Set->for_symbol()\n#1 /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php(112): Scalability_Run::measure()\n#2 /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php(127): Scalability_Run::run()\n#3 {main}\n"
+        }
+      ],
+      "summary": {}
+    }
+  ]
+}

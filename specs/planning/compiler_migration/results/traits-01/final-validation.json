@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "workspace": "/tmp/scpp-traits-6et8ou3m",
+  "warm": {
+    "converted": 0,
+    "reused": 5,
+    "removed": 0,
+    "cache": {
+      "listed_directories": 0,
+      "read_sources": 0,
+      "tokenized": 0,
+      "loaded_tokens": 0
+    }
+  },
+  "trait_edit": {
+    "converted": 3,
+    "reused": 2,
+    "removed": 0,
+    "cache": {
+      "listed_directories": 0,
+      "read_sources": 1,
+      "tokenized": 1,
+      "loaded_tokens": 2
+    }
+  },
+  "added": {
+    "converted": 1,
+    "reused": 5,
+    "removed": 0,
+    "cache": {
+      "listed_directories": 3,
+      "read_sources": 2,
+      "tokenized": 1,
+      "loaded_tokens": 0
+    }
+  },
+  "removed": {
+    "converted": 0,
+    "reused": 5,
+    "removed": 1,
+    "cache": {
+      "listed_directories": 1,
+      "read_sources": 1,
+      "tokenized": 0,
+      "loaded_tokens": 0
+    }
+  },
+  "php_stdout": "3:13:3\n",
+  "native_verified": false
+}

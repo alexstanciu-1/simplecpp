@@ -1,0 +1,30 @@
+// Crash probe: use the production swap owner, pause at a real rename boundary.
+// The Python test kills this process or releases it to exercise failed cleanup.
+function pause_swap(\simulate_increment\Folder_Swap $swap, string $stage, string $requested): void {
+    if ($stage === $requested) {
+        $swap->record("test_paused");
+        while (!fs_exists($swap->journal . ".continue")) {
+            dt_sleep_ms(20);
+        }
+        if (!fs_remove($swap->journal . ".continue")) {
+            throw new Exception("Cannot remove test continuation marker");
+        }
+    }
+}
+
+$arguments = cli_argv();
+$manifest string = $arguments[1];
+$edited string = $arguments[2];
+$stage string = $arguments[3];
+$swap \simulate_increment\Folder_Swap = \simulate_increment\prepare_folder_swap($manifest, $edited);
+$swap->begin();
+pause_swap($swap, "prepared", $stage);
+$swap->park_original();
+pause_swap($swap, "original_parked", $stage);
+$swap->install_edited();
+pause_swap($swap, "edited_installed", $stage);
+$swap->return_edited();
+pause_swap($swap, "edited_returned", $stage);
+$swap->restore_original();
+pause_swap($swap, "original_restored", $stage);
+$swap->finish();

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "php",
+    "compiler/src-runtime-preparation/tests/run.php"
+  ],
+  "returncode": 0,
+  "report": {
+    "status": "passed",
+    "checks": 170,
+    "workspace": "/tmp/runtime-preparation-test-00c1d359d938"
+  },
+  "bootstrap_sha256": "548cf5a7ef43be4d16cec27bd1de896b2a6f931fa3fb82fce586199ba333e671",
+  "test_sha256": "3229cbc0517a20659f905a2a9a8ed191ab491e557c6acd263d5229f4153c8f83"
+}

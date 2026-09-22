@@ -1,0 +1,132 @@
+namespace read_sources;
+
+function discover_project_sources(
+    \read_manifest\Project_Manifest $manifest,
+    Source_Set $previous
+): Source_Set {
+    $current Source_Set = new Source_Set();
+    $current->next_file_id = $previous->next_file_id;
+    $current->buffers = $previous->buffers;
+    $current->removed_file_ids = $previous->removed_file_ids;
+    foreach ($manifest->source_folder_paths as $configured) {
+        $root string = resolve_path($manifest->directory, $configured);
+        if (!fs_is_dir($root)) {
+            throw new \Exception("Source root is not a directory: " . $root);
+        }
+        foreach ($current->folders as $folder) {
+            $other string = $current->path_by_id($folder->resolved_path_id);
+            if ($root === $other || str_starts_with($root, join_path($other, ""))
+                || str_starts_with($other, join_path($root, ""))) {
+                throw new \Exception("Overlapping source roots: " . $root . " and " . $other);
+            }
+        }
+        $folder source_folder = [];
+        $folder->path_id = $current->add_path($configured);
+        $folder->resolved_path_id = $current->add_path($root);
+        $current->folders[] = $folder;
+    }
+
+    $seen hash<bool, uint32> = [];
+    foreach ($current->folders as $folder_index => $folder) {
+        $root string = $current->path_by_id($folder->resolved_path_id);
+        // Explicit directory work list; all descendants retain this module owner.
+        $directories vector<string> = [""];
+        $cursor int = 0;
+        while ($cursor < count($directories)) {
+            $relative_directory string = $directories[$cursor];
+            $directory string = join_path($root, $relative_directory);
+            $entries vector<string> = [];
+            $error error;
+            if (!take($entries, $error, fs_scan($directory))) {
+                throw new \Exception("Cannot scan source directory: " . $directory);
+            }
+            foreach ($entries as $name) {
+                $relative string = $name;
+                if ($relative_directory !== "") {
+                    $relative = join_path($relative_directory, $name);
+                }
+                $path string = join_path($root, $relative);
+                if (fs_is_link($path)) {
+                    throw new \Exception("Symbolic links inside source roots are unsupported: " . $path);
+                }
+                if (fs_is_dir($path)) {
+                    $directories[] = $relative;
+                } else if (is_source_path($path)) {
+                    if (!fs_is_file($path)) {
+                        throw new \Exception("Source path is not a regular file: " . $path);
+                    }
+                    $mtime int = 0;
+                    $size int = 0;
+                    if (!take($mtime, $error, fs_mtime($path)) || !take($size, $error, fs_size($path))) {
+                        throw new \Exception("Cannot read source metadata: " . $path);
+                    }
+                    $file source_file = [];
+                    $old_id uint32 = $previous->find_file_id($path);
+                    if ((int)$old_id !== 0) {
+                        $file = $previous->file_by_id($old_id);
+                        $file->change_state = file_change::unchanged;
+                        if ((int)$file->mtime !== $mtime || (int)$file->size !== $size) {
+                            $file->change_state = file_change::changed;
+                            $file->needs_recompile = true;
+                        }
+                    } else {
+                        if ((int)$current->next_file_id === 0) {
+                            throw new \Exception("Source file ID space exhausted");
+                        }
+                        $file->id = $current->next_file_id;
+                        $current->next_file_id = (int)$current->next_file_id + 1;
+                        $file->change_state = file_change::added;
+                    }
+                    $file->top_folder_index = $folder_index;
+                    $file->full_path_id = $current->add_path($path);
+                    $file->relative_path_id = $current->add_path($relative);
+                    $file->mtime = $mtime;
+                    $file->size = $size;
+                    $current->files[] = $file;
+                    $seen[$file->id] = true;
+                }
+            }
+            $cursor = $cursor + 1;
+        }
+    }
+    // Logical removal now; physical reclamation is deferred. Old inputs stay intact.
+    foreach ($previous->files as $old_file) {
+        if (!isset($seen[$old_file->id])) {
+            $file source_file = $old_file;
+            if ($old_file->change_state !== file_change::deleted) {
+                $current->removed_file_ids[] = $old_file->id;
+            }
+            $file->change_state = file_change::deleted;
+            $file->needs_recompile = false;
+            $file->top_folder_index = -1;
+            $file->full_path_id = $current->add_path($previous->path_by_id($old_file->full_path_id));
+            $file->relative_path_id = $current->add_path($previous->path_by_id($old_file->relative_path_id));
+            $current->files[] = $file;
+        }
+    }
+    $current->refresh_indexes();
+    $entry string = resolve_path($manifest->directory, $manifest->entry_path);
+    if ((int)$current->find_file_id($entry) === 0) {
+        throw new \Exception("Entry is not a participating source file: " . $entry);
+    }
+    return $current;
+}
+
+function read_source_snapshot(Source_Set $sources, source_file $file): Source_Buffer {
+    // TODO: obtain the folder and paths through Source_Set's lookup methods.
+    // Read its resolved root + the file's relative path into a new Source_Buffer.
+    // Return source_file_id + bytes; do not append to shared payload tables.
+    // Phase input remains unchanged; read failure must not become empty source.
+    // Detect input edits during preparation and retry the update on a coherent
+    // snapshot rather than publishing a mixture of file versions.
+    throw new \Exception("Not implemented: read_source_snapshot");
+}
+
+function join_source_snapshots(Source_Set $current, vector<Source_Buffer> $results): Source_Set {
+    // TODO: adopt read snapshots by file ID in deterministic file order.
+    // Keep unchanged snapshots and exclude removed files. Refresh indexes together.
+    // Retain removed IDs for downstream cleanup of previous contributions.
+    // Adopt new buffers and set file buffer IDs only in the replacement dataset.
+    // Coordinator only; tasks never append to the shared tables or indexes.
+    throw new \Exception("Not implemented: join_source_snapshots");
+}

@@ -1,0 +1,42 @@
+// Checked JSON contract: failures preserve outputs and allow the next request.
+function check_json(bool $condition, string $message): void {
+    if (!$condition) { throw new Exception($message); }
+}
+
+$decoded mixed = "sentinel";
+$error error;
+$invalid vector<string> = ["", "{", '{"value":"\q"}', "null trailing"];
+foreach ($invalid as $text) {
+    check_json(!take($decoded, $error, json_decode($text)), "Malformed JSON must return an error");
+    check_json($decoded === "sentinel", "Failed decoding must preserve its output");
+    check_json(str_contains($error->get_message(), "json error at byte"), "Decode error must contain byte position");
+}
+// Successful decoding after failures, including successful null and false values.
+check_json(take($decoded, $error, json_decode("null")) && $decoded === null, "JSON null is success");
+check_json(take($decoded, $error, json_decode("false")) && $decoded === false, "JSON false is success");
+check_json(take($decoded, $error, json_decode('{"source_folders":["src"],"entry":"src/main.phs"}')), "Repaired JSON must decode");
+$roots vector<string> = [];
+foreach ($decoded["source_folders"] as $root) {
+    $roots[] = $root;
+}
+$entry string = $decoded["entry"];
+check_json(count($roots) === 1 && $roots[0] === "src" && $entry === "src/main.phs", "Successful values must stabilize into typed fields");
+
+// Generate a non-finite float through real arithmetic, as in the upstream probe.
+$number float = 10.0;
+$index int = 0;
+while ($index < 9) {
+    $number = $number * $number;
+    $index = $index + 1;
+}
+$encoded string = "sentinel";
+check_json(!take($encoded, $error, json_encode($number)), "Non-finite encoding must return an error");
+check_json($encoded === "sentinel", "Failed encoding must not publish partial output");
+check_json(str_contains($error->get_message(), "non-finite"), "Encode error must name the rejected category");
+check_json(take($encoded, $error, json_encode($decoded)), "Encoding must recover after failure");
+$roundtrip mixed;
+check_json(take($roundtrip, $error, json_decode($encoded)), "Encoded object must decode again");
+check_json($roundtrip["entry"] === $entry, "Roundtrip must preserve fields");
+check_json(take($encoded, $error, json_encode(null)) && $encoded === "null", "Encoding null is success");
+check_json(take($encoded, $error, json_encode(false)) && $encoded === "false", "Encoding false is success");
+echo "checked JSON ok: malformed input, byte diagnostics, unchanged outputs, repaired requests, encoding failure/recovery, null and false\n";

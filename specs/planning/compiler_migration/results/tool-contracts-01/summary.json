@@ -1,0 +1,164 @@
+{
+  "status": "passed",
+  "scope": "portability-ready source set",
+  "native_requested": [
+    "compiler"
+  ],
+  "steps": [
+    {
+      "name": "target-revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-v0.1.76-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.006
+    },
+    {
+      "name": "target-status",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-v0.1.76-probe",
+        "status",
+        "--porcelain"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.025
+    },
+    {
+      "name": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-tool-contracts-01/source"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.308
+    },
+    {
+      "name": "php-behavior",
+      "command": [
+        "php",
+        "-r",
+        "foreach (array_slice($argv, 1) as $file) { require $file; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-tool-contracts-01/source/src/compile/state.php",
+        "/tmp/scpp-tool-contracts-01/source/src/02_tokenize/structures.php",
+        "/tmp/scpp-tool-contracts-01/source/src/compile/step.php",
+        "/tmp/scpp-tool-contracts-01/source/src/01_prepare_inputs/read_sources/utilities/path_syntax.php",
+        "/tmp/scpp-tool-contracts-01/source/src/03_parse/data/nodes.php",
+        "/tmp/scpp-tool-contracts-01/source/src/03_parse/data/role_views.php",
+        "/tmp/scpp-tool-contracts-01/source/src/03_parse/data/structures.php",
+        "/tmp/scpp-tool-contracts-01/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/scpp-tool-contracts-01/source/src/03_parse/data/tree.php",
+        "/tmp/scpp-tool-contracts-01/source/src/04_analyze/check_bodies/utilities/decimal_range.php",
+        "/tmp/scpp-tool-contracts-01/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/scpp-tool-contracts-01/source/src/05_generate_code/prepare_backend/data/tools.php",
+        "/tmp/scpp-tool-contracts-01/source/main.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.124
+    },
+    {
+      "name": "foundation",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/run.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 2.775
+    },
+    {
+      "name": "check-regressions",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/check.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.836
+    },
+    {
+      "name": "prologues",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/prologues.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.892
+    },
+    {
+      "name": "native-framework-install",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/native_runtime.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.757
+    },
+    {
+      "name": "native-compiler",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py",
+        "--target-checkout",
+        "/tmp/scpp-v0.1.76-probe",
+        "--results",
+        "/tmp/scpp-tool-contracts-01/proof-compiler"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 34.741
+    },
+    {
+      "name": "target-status-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-v0.1.76-probe",
+        "status",
+        "--porcelain"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.026
+    }
+  ],
+  "configured_target": {
+    "repository": "https://github.com/alexstanciu-1/simplecpp.git",
+    "release": "v0.1.76",
+    "verified_commit": "8cc4d8ff7eb395c6cc69219f25bef960323bce45",
+    "cli": "bin/scpp.php",
+    "profile": "strict",
+    "purpose": "PHP++ compiler implementation target; separate from the adopted LLVM runtime-provider baseline"
+  },
+  "verified_target_revision": "8cc4d8ff7eb395c6cc69219f25bef960323bce45",
+  "source_sha256": {
+    "src/compile/state.php": "79a217ca7b775ef4f0f76588d3dbffd1392096abed4ab19ac3a95c2d459f476f",
+    "src/02_tokenize/structures.php": "ca59f44ffe540a25f4b06a8d934c81ed68f8c8475d2947138cd40da4045deeb1",
+    "src/compile/step.php": "0e0a2b810eed57ca72248e08c6f71e3e13347f2094fa7ee2db0d55da7660b63c",
+    "src/01_prepare_inputs/read_sources/utilities/path_syntax.php": "1bb441c853b4f86b6b94dafb2bb03b591886667b1a97f1ac13c2192cac181154",
+    "src/03_parse/data/nodes.php": "713fdde713a179bfaaf18f238fc8dcf1d7fd4d83144a1451c65b29190498c76c",
+    "src/03_parse/data/role_views.php": "f3dad16921d6fecf96444a3d66f6affe5de50783ca331d821ecded3885ec371e",
+    "src/03_parse/data/structures.php": "698fa85829355947608877a8f2b0f6b3454e1caf3bd69b7cce3bd68f04b428bb",
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "757bf329304625c63f65bb9dc4ba37f050d19272fea75a6bf3aa247ae70a42bd",
+    "src/03_parse/data/tree.php": "d2133879991ed9fdea012fd706d07d0337c42ece9480dbdcfe3a3c65d7059541",
+    "src/04_analyze/check_bodies/utilities/decimal_range.php": "7158512ead1b2a9645f12dce4718c00c500991419313b6524a29a866d1351889",
+    "src/05_generate_code/prepare_backend/data/configuration.php": "92ee70eabf872fb5d2e386f0b7e661832b10e8e2c4bb24027e8d35d8db37ceb4",
+    "src/05_generate_code/prepare_backend/data/tools.php": "20414aa34abde757e6af6fa62ed68c0f6a5773e598ad0b58191129a3768e77f2"
+  },
+  "native_proved": [
+    "compiler"
+  ]
+}

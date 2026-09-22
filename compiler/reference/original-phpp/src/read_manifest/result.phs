@@ -1,0 +1,33 @@
+namespace read_manifest;
+
+// Read and validate project configuration, source roots, entry policy, and dependencies.
+
+class Project_Manifest {
+    public string $path = "";
+    public string $content = "";
+    // Absolute directory of the manifest, used as the base for relative paths.
+    public string $directory = "";
+    public $source_folder_paths vector<string> = [];
+    public string $entry_path = "";
+
+    // Debug snapshot of this result, including the exact input and path context.
+    public function to_json(): string {
+        // Dynamic values stay local to the serialization boundary.
+        $roots dynamic = [];
+        foreach ($this->source_folder_paths as $index => $root) {
+            $roots[$index] = $root;
+        }
+        $fields dynamic = [];
+        $fields["path"] = $this->path;
+        $fields["content"] = $this->content;
+        $fields["directory"] = $this->directory;
+        $fields["source_folder_paths"] = $roots;
+        $fields["entry_path"] = $this->entry_path;
+        $text string = "";
+        $error error;
+        if (!take($text, $error, json_encode($fields))) {
+            throw new \Exception("Cannot export project manifest: " . $error->get_message());
+        }
+        return $text;
+    }
+}

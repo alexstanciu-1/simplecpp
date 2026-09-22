@@ -1,0 +1,36 @@
+
+
+/* One immutable source-byte snapshot; shared by tokens and frontends. */
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Own source bytes separately from the file metadata rows.
+/**
+ * @compiler-api Immutable bytes produced by Source_Reader and retained by tokens/frontends.
+ * All readonly fields are readable; byte offsets belong to content in this exact
+ * object. File ID alone does not identify a version. Token reuse uses object identity.
+ */
+class Source_Buffer {
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly int $source_file_id;public readonly string $path;public readonly int $mtime;public readonly string $content;public function __construct(int $source_file_id, string $path, int $mtime, string $content) {$this->source_file_id = $source_file_id;$this->path = $path;$this->mtime = $mtime;$this->content = $content;
+    }
+}
+

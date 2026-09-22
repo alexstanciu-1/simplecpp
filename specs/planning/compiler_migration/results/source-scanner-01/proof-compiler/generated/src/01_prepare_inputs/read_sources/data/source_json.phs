@@ -1,0 +1,61 @@
+
+
+/* Exact source-debug schema export; no object reflection or JSON roundtrip state. */
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+final class Source_Json {
+    /** Shared scalar encoding; this owner retains source-specific schema vocabulary. */
+    public static function quote(string $value): string {
+        return scpp_portability_json_quote($value);
+    }
+
+    public static function change_name(file_change $change): string {
+        if ($change === file_change::unchanged) { return 'unchanged'; }
+        if ($change === file_change::added) { return 'added'; }
+        if ($change === file_change::changed) { return 'changed'; }
+        if ($change === file_change::deleted) { return 'deleted'; }
+        return 'moved';
+    }
+
+}

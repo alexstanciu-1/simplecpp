@@ -1,0 +1,35 @@
+namespace snapshots;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Store {
+    public $rows /** vector<Row> */ = [];
+    public function shallow_copy(): Store {
+        $next = new Store();
+        $next->rows = $this->rows;
+        return $next;
+    }
+    public function with_value(int $index, int $value): Store {
+        $next = $this->shallow_copy();
+        $row = $this->rows[$index]->copy_row();
+        $row->value = $value;
+        $next->rows[$index] = $row;
+        return $next;
+    }
+}

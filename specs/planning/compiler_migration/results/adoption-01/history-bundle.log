@@ -1,0 +1,9 @@
+/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/reference/history/scpp_compiler_3.bundle is okay
+The bundle contains these 5 refs:
+3c8d4ff123797ee5a0310f132304fad3600eacbe refs/codex/turn-diffs/checkpoints/a5f5286e5830ac7c1fd6286d2b9eba7a/84fe0aaa8d8e44d0066608fb0f2917e2/1789711836273/4f5f176c-4cea-45f5-9ff0-8b2f9f195bac
+bc123280de0b014a2498bc8c0bcb7a9310216e81 refs/codex/turn-diffs/checkpoints/cc9c727a398dcf740d611abce8502c02e6d3fd6bd0b4fd15dd2da525b343d531/1a1dcaaffdcedbde352e0df859ba7e46ade7762e533ce0493da2ccec0521d7d1/1789365240435/6e0a116c-63d5-488c-b057-0e40e0deceb1
+75e9b0f7c3f6420255b3b126429afbfa0e13ccb1 refs/heads/codex/metaprogramming-parsing
+e6279128cabe6af54d05955e48e4bbb8b558eafa refs/heads/main
+75e9b0f7c3f6420255b3b126429afbfa0e13ccb1 HEAD
+The bundle records a complete history.
+The bundle uses this hash algorithm: sha1

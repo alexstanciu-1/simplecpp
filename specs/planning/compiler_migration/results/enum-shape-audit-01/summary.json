@@ -1,0 +1,11 @@
+{
+  "factories_textual_sites": 19,
+  "operations_textual_sites": 43,
+  "enum_declarations": 54,
+  "string_backed_enums": 41,
+  "string_enum_cases": 167,
+  "string_enum_files": 17,
+  "enums_with_methods": 4,
+  "enum_methods": 7,
+  "consumer_search_limit": "Textual candidates, not resolved symbols; unrelated similarly named methods can match."
+}

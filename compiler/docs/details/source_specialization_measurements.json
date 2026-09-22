@@ -1,0 +1,637 @@
+{
+  "status": "passed",
+  "rejection_checks": 7,
+  "machine": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "toolchain": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin",
+  "target": {
+    "triple": "x86_64-pc-linux-gnu",
+    "data_layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+  },
+  "repetitions": 5,
+  "measurements": [
+    {
+      "type": "points",
+      "mode": "O0",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          186307152,
+          187950007,
+          185527487,
+          187239615,
+          187777212
+        ],
+        "native": [
+          117852235,
+          118455566,
+          117135806,
+          117753486,
+          117975799
+        ]
+      },
+      "medians_ns": {
+        "bridge": 187239615,
+        "native": 117852235
+      },
+      "ratio": 1.5887659237009804
+    },
+    {
+      "type": "points",
+      "mode": "O0",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          320185827,
+          371019620,
+          305495708,
+          342880456,
+          302086719
+        ],
+        "native": [
+          271206007,
+          255332037,
+          257755294,
+          287144953,
+          265987694
+        ]
+      },
+      "medians_ns": {
+        "bridge": 320185827,
+        "native": 265987694
+      },
+      "ratio": 1.2037618063638689
+    },
+    {
+      "type": "points",
+      "mode": "O1",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          50941409,
+          51564145,
+          50864716,
+          51076102,
+          51535910
+        ],
+        "native": [
+          51354201,
+          52762575,
+          50906543,
+          51988555,
+          50969070
+        ]
+      },
+      "medians_ns": {
+        "bridge": 51076102,
+        "native": 51354201
+      },
+      "ratio": 0.994584688407478
+    },
+    {
+      "type": "points",
+      "mode": "O1",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          49953406,
+          48968013,
+          48428645,
+          49089174,
+          49454219
+        ],
+        "native": [
+          40713346,
+          39517522,
+          51504946,
+          38758367,
+          38947443
+        ]
+      },
+      "medians_ns": {
+        "bridge": 49089174,
+        "native": 39517522
+      },
+      "ratio": 1.242212859399433
+    },
+    {
+      "type": "points",
+      "mode": "O1-full",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          50892988,
+          61537638,
+          60926647,
+          50989130,
+          50713560
+        ],
+        "native": [
+          50705800,
+          60091441,
+          50843657,
+          51211357,
+          50831925
+        ]
+      },
+      "medians_ns": {
+        "bridge": 50989130,
+        "native": 50843657
+      },
+      "ratio": 1.0028611828610203
+    },
+    {
+      "type": "points",
+      "mode": "O1-full",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          51558198,
+          50388581,
+          51555193,
+          50825319,
+          51034658
+        ],
+        "native": [
+          39034837,
+          40143093,
+          38537581,
+          40820546,
+          38286432
+        ]
+      },
+      "medians_ns": {
+        "bridge": 51034658,
+        "native": 39034837
+      },
+      "ratio": 1.3074131192093872
+    },
+    {
+      "type": "points",
+      "mode": "O1-thin",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          51652231,
+          50772594,
+          51518097,
+          50769999,
+          50961709
+        ],
+        "native": [
+          50621209,
+          51129095,
+          50991267,
+          51179856,
+          51477732
+        ]
+      },
+      "medians_ns": {
+        "bridge": 50961709,
+        "native": 51129095
+      },
+      "ratio": 0.9967262084337695
+    },
+    {
+      "type": "points",
+      "mode": "O1-thin",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          49814271,
+          48243109,
+          47897160,
+          49155901,
+          54619120
+        ],
+        "native": [
+          41033622,
+          39978937,
+          40380521,
+          50238255,
+          46328043
+        ]
+      },
+      "medians_ns": {
+        "bridge": 49155901,
+        "native": 41033622
+      },
+      "ratio": 1.197942043722097
+    },
+    {
+      "type": "samples",
+      "mode": "O0",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          207621221,
+          205655506,
+          205031877,
+          217863135,
+          260317375
+        ],
+        "native": [
+          151715910,
+          175003168,
+          164267880,
+          175224084,
+          203767080
+        ]
+      },
+      "medians_ns": {
+        "bridge": 207621221,
+        "native": 175003168
+      },
+      "ratio": 1.1863855001756312
+    },
+    {
+      "type": "samples",
+      "mode": "O0",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          335029631,
+          320746660,
+          330755010,
+          362417609,
+          383193512
+        ],
+        "native": [
+          272462310,
+          295077695,
+          280969900,
+          270262778,
+          277439179
+        ]
+      },
+      "medians_ns": {
+        "bridge": 335029631,
+        "native": 277439179
+      },
+      "ratio": 1.2075786563656175
+    },
+    {
+      "type": "samples",
+      "mode": "O1",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          51323347,
+          50895046,
+          53915222,
+          65226838,
+          57569707
+        ],
+        "native": [
+          50700990,
+          50727064,
+          50849884,
+          60106164,
+          51194326
+        ]
+      },
+      "medians_ns": {
+        "bridge": 53915222,
+        "native": 50849884
+      },
+      "ratio": 1.0602821040850359
+    },
+    {
+      "type": "samples",
+      "mode": "O1",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          55144481,
+          56311694,
+          58017490,
+          54559353,
+          56543531
+        ],
+        "native": [
+          43420170,
+          43337381,
+          43866558,
+          42913454,
+          43077749
+        ]
+      },
+      "medians_ns": {
+        "bridge": 56311694,
+        "native": 43337381
+      },
+      "ratio": 1.2993792587512383
+    },
+    {
+      "type": "samples",
+      "mode": "O1-full",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          51026481,
+          50929466,
+          51251142,
+          50679089,
+          50798367
+        ],
+        "native": [
+          51075487,
+          50832362,
+          50764366,
+          50744022,
+          50890716
+        ]
+      },
+      "medians_ns": {
+        "bridge": 50929466,
+        "native": 50832362
+      },
+      "ratio": 1.0019102791249401
+    },
+    {
+      "type": "samples",
+      "mode": "O1-full",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          58425893,
+          54045820,
+          54192040,
+          62420966,
+          58217118
+        ],
+        "native": [
+          44632741,
+          43362877,
+          44162728,
+          45477223,
+          45013001
+        ]
+      },
+      "medians_ns": {
+        "bridge": 58217118,
+        "native": 44632741
+      },
+      "ratio": 1.3043590130393292
+    },
+    {
+      "type": "samples",
+      "mode": "O1-thin",
+      "workload": "access",
+      "arguments": [
+        257,
+        5000000,
+        2,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          50765950,
+          51123508,
+          50770102,
+          51288409,
+          50661844
+        ],
+        "native": [
+          51019905,
+          50700460,
+          50794888,
+          50885098,
+          51169974
+        ]
+      },
+      "medians_ns": {
+        "bridge": 50770102,
+        "native": 50885098
+      },
+      "ratio": 0.9977400849262391
+    },
+    {
+      "type": "samples",
+      "mode": "O1-thin",
+      "workload": "lifecycle",
+      "arguments": [
+        8,
+        8,
+        500000,
+        17
+      ],
+      "samples_ns": {
+        "bridge": [
+          55495546,
+          54860125,
+          54704732,
+          55557040,
+          61065006
+        ],
+        "native": [
+          42882401,
+          43663595,
+          43814605,
+          44549050,
+          43019987
+        ]
+      },
+      "medians_ns": {
+        "bridge": 55495546,
+        "native": 43663595
+      },
+      "ratio": 1.2709797715923299
+    }
+  ],
+  "allocation_checks": [
+    {
+      "type": "points",
+      "results": {
+        "bridge": {
+          "checksum": 5829236,
+          "nanoseconds": 87463,
+          "allocations": 20,
+          "releases": 20,
+          "allocated_bytes": 16368
+        },
+        "native": {
+          "checksum": 5829236,
+          "nanoseconds": 86533,
+          "allocations": 20,
+          "releases": 20,
+          "allocated_bytes": 16368
+        }
+      }
+    },
+    {
+      "type": "samples",
+      "results": {
+        "bridge": {
+          "checksum": 8413918,
+          "nanoseconds": 95573,
+          "allocations": 20,
+          "releases": 20,
+          "allocated_bytes": 49104
+        },
+        "native": {
+          "checksum": 8413918,
+          "nanoseconds": 92683,
+          "allocations": 20,
+          "releases": 20,
+          "allocated_bytes": 49104
+        }
+      }
+    }
+  ],
+  "code_evidence": [
+    {
+      "type": "points",
+      "mode": "O0",
+      "inspected_modules": [
+        "bridge.bc"
+      ],
+      "remaining_bridge_calls": 15
+    },
+    {
+      "type": "points",
+      "mode": "O1",
+      "inspected_modules": [
+        "bridge.bc"
+      ],
+      "remaining_bridge_calls": 15
+    },
+    {
+      "type": "points",
+      "mode": "O1-full",
+      "inspected_modules": [
+        "bridge.0.4.opt.bc"
+      ],
+      "remaining_bridge_calls": 15
+    },
+    {
+      "type": "points",
+      "mode": "O1-thin",
+      "inspected_modules": [
+        "bridge.bc.4.opt.bc"
+      ],
+      "remaining_bridge_calls": 4
+    },
+    {
+      "type": "samples",
+      "mode": "O0",
+      "inspected_modules": [
+        "bridge.bc"
+      ],
+      "remaining_bridge_calls": 15
+    },
+    {
+      "type": "samples",
+      "mode": "O1",
+      "inspected_modules": [
+        "bridge.bc"
+      ],
+      "remaining_bridge_calls": 15
+    },
+    {
+      "type": "samples",
+      "mode": "O1-full",
+      "inspected_modules": [
+        "bridge.0.4.opt.bc"
+      ],
+      "remaining_bridge_calls": 15
+    },
+    {
+      "type": "samples",
+      "mode": "O1-thin",
+      "inspected_modules": [
+        "bridge.bc.4.opt.bc"
+      ],
+      "remaining_bridge_calls": 5
+    }
+  ],
+  "reuse": [
+    "unchanged package",
+    "changed caller reuses package",
+    "changed record rebuilds package with stable identities"
+  ],
+  "elapsed_seconds": 68.54683528002352
+}

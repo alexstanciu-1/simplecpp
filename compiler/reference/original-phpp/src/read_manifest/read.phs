@@ -1,0 +1,81 @@
+namespace read_manifest;
+
+function read_project_manifest(string $path): Project_Manifest {
+    $resolved string = "";
+    $content string = "";
+    $error error;
+    if (!take($resolved, $error, fs_realpath($path))) {
+        throw new \Exception("Cannot locate project manifest: " . $path);
+    }
+    if (!fs_is_file($resolved) || !take($content, $error, fs_get($resolved))) {
+        throw new \Exception("Cannot read project manifest: " . $path);
+    }
+
+    $manifest Project_Manifest;
+    try {
+        $manifest = parse_project_manifest($path, $content);
+    } catch (\Exception $exception) {
+        throw new \Exception($path . ": " . $exception->message_string());
+    }
+    $manifest->directory = fs_dirname($resolved);
+    return $manifest;
+}
+
+// Decode only configuration. Filesystem membership belongs to read_sources.
+function parse_project_manifest(string $path, string $content): Project_Manifest {
+    $manifest Project_Manifest = new Project_Manifest();
+    $manifest->path = $path;
+    $manifest->content = $content;
+    // Decoded JSON shape: source_folders: vector<string>, entry: string.
+    // Only typed settings leave this runtime-owned ingestion boundary.
+    $decoded mixed;
+    $error error;
+    if (!take($decoded, $error, json_decode($content))) {
+        throw new \Exception($error->get_message());
+    }
+    if (!isset($decoded["source_folders"]) || !isset($decoded["entry"])) {
+        throw new \Exception("Required settings: source_folders and entry");
+    }
+    foreach ($decoded as $key => $setting) {
+        if ($key !== "source_folders" && $key !== "entry") {
+            throw new \Exception("Unknown manifest setting: " . (string)$key);
+        }
+    }
+    // Normalize into the owned typed list. Full schema/type rejection remains
+    // a separate toolchain boundary: mixed-to-vector extraction is unavailable.
+    $roots mixed = $decoded["source_folders"];
+    $position int = 0;
+    foreach ($roots as $index => $value) {
+        if ($index !== $position) {
+            throw new \Exception("source_folders must be a list");
+        }
+        $root string = $value;
+        validate_manifest_path($root);
+        foreach ($manifest->source_folder_paths as $existing) {
+            if ($existing === $root) {
+                throw new \Exception("Duplicate source folder: " . $root);
+            }
+        }
+        $manifest->source_folder_paths[] = $root;
+        $position = $position + 1;
+    }
+    if (count($manifest->source_folder_paths) === 0) {
+        throw new \Exception("source_folders must be a nonempty list of paths");
+    }
+    $manifest->entry_path = $decoded["entry"];
+    validate_manifest_path($manifest->entry_path);
+    return $manifest;
+}
+
+function validate_manifest_path(string $path): void {
+    if ($path === "") {
+        throw new \Exception("Expected a nonempty string path");
+    }
+    $index int = 0;
+    while ($index < string_byte_len($path)) {
+        if (string_byte_at($path, $index) === 0) {
+            throw new \Exception("Path must not contain NUL bytes");
+        }
+        $index = $index + 1;
+    }
+}

@@ -1,0 +1,988 @@
+{
+  "utc": "2026-09-11T05:29:47.705012+00:00",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": "AMD Ryzen 5 PRO 4650G with Radeon Graphics",
+  "php": {
+    "version": "8.5.7",
+    "memory_limit": "2048M",
+    "opcache_cli": "0",
+    "jit": "disable",
+    "xdebug_mode_env": "off"
+  },
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin",
+  "backend": {
+    "clang": "clang",
+    "target": null
+  },
+  "compiler_sha256": "91fadef04f236785e39b47e875e92234b2e2f129e9d0ee30f4b42f3e7250100e",
+  "trials_per_size": 3,
+  "trace_tools": true,
+  "timing": "hrtime around Compiler_Session::compile; includes tool probes, native object compilation and linking; excludes bootstrap, fixture copies, counters, exports and executable verification",
+  "memory": "PHP allocator peak per phase, reset before compile; includes live resident snapshots, excludes external Clang/linker memory",
+  "timeout_seconds_per_trial": 180,
+  "projects": [
+    {
+      "project": "5mb",
+      "target_bytes": 5242880,
+      "source_bytes": 5243107,
+      "files": 669,
+      "functions": 21315,
+      "generated_functions": 21313,
+      "functions_per_file": 32,
+      "edit_file": "src/group_0666.phs",
+      "edited_function": "sample_021313",
+      "source_sha256": "b85eb10336118d6ac1b50cdb44ef20f7ac0c648dc25bbff297693233214a7317",
+      "trials": [
+        {
+          "trial": 1,
+          "ok": true,
+          "measurements": [
+            {
+              "phase": "cold",
+              "seconds": 14.381678576,
+              "php_peak_bytes": 723714712,
+              "php_peak_allocated_bytes": 740306944,
+              "php_retained_bytes": 721600480,
+              "full_rebuild": true,
+              "tokens": 1108976,
+              "ast_nodes": 789939,
+              "checked_statements": 191821,
+              "lowered_instructions": 341012,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 669,
+              "replaced_bodies": 21316,
+              "replaced_lowered": 21316,
+              "artifact_reused": false,
+              "llvm_bytes": 15664663,
+              "executable_bytes": 3327520,
+              "exit_code": 42,
+              "tool_calls": [
+                {
+                  "operation": "version",
+                  "seconds": 0.03580935799982399,
+                  "cpu_user_seconds": 0.015802,
+                  "cpu_system_seconds": 0.019753,
+                  "peak_rss_bytes": 69861376,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.03734727099072188,
+                  "cpu_user_seconds": 0.008244,
+                  "cpu_system_seconds": 0.028856,
+                  "peak_rss_bytes": 82313216,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.03598050799337216,
+                  "cpu_user_seconds": 0.011875,
+                  "cpu_system_seconds": 0.023750999999999998,
+                  "peak_rss_bytes": 78249984,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.037544937018537894,
+                  "cpu_user_seconds": 0.004103,
+                  "cpu_system_seconds": 0.032827999999999996,
+                  "peak_rss_bytes": 77987840,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.07486806699307635,
+                  "cpu_user_seconds": 0.023533,
+                  "cpu_system_seconds": 0.050989,
+                  "peak_rss_bytes": 83361792,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "compile_module",
+                  "seconds": 3.2530603329942096,
+                  "cpu_user_seconds": 2.836252,
+                  "cpu_system_seconds": 0.416037,
+                  "peak_rss_bytes": 280584192,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.10598550000577234,
+                  "cpu_user_seconds": 0.043342,
+                  "cpu_system_seconds": 0.059463999999999996,
+                  "peak_rss_bytes": 70123520,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 3.580595973995514
+            },
+            {
+              "phase": "unchanged",
+              "seconds": 0.971851556,
+              "php_peak_bytes": 730164064,
+              "php_peak_allocated_bytes": 745484288,
+              "php_retained_bytes": 726843904,
+              "full_rebuild": false,
+              "tokens": 1108976,
+              "ast_nodes": 789939,
+              "checked_statements": 191821,
+              "lowered_instructions": 341012,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 0,
+              "replaced_bodies": 0,
+              "replaced_lowered": 0,
+              "artifact_reused": true,
+              "llvm_bytes": 15664663,
+              "executable_bytes": 3327520,
+              "exit_code": 42,
+              "tool_calls": [],
+              "tool_seconds": 0
+            },
+            {
+              "phase": "body_edit",
+              "seconds": 4.277856366,
+              "php_peak_bytes": 743700296,
+              "php_peak_allocated_bytes": 762265600,
+              "php_retained_bytes": 743675552,
+              "full_rebuild": false,
+              "tokens": 1108980,
+              "ast_nodes": 789942,
+              "checked_statements": 191822,
+              "lowered_instructions": 341014,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 1,
+              "replaced_bodies": 1,
+              "replaced_lowered": 1,
+              "artifact_reused": false,
+              "llvm_bytes": 15664700,
+              "executable_bytes": 3327520,
+              "exit_code": 43,
+              "tool_calls": [
+                {
+                  "operation": "compile_module",
+                  "seconds": 3.0449920409882907,
+                  "cpu_user_seconds": 2.64838,
+                  "cpu_system_seconds": 0.39605599999999996,
+                  "peak_rss_bytes": 280584192,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.08444569498533383,
+                  "cpu_user_seconds": 0.020366,
+                  "cpu_system_seconds": 0.061099999999999995,
+                  "peak_rss_bytes": 70254592,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 3.1294377359736245
+            }
+          ],
+          "stderr": ""
+        },
+        {
+          "trial": 2,
+          "ok": true,
+          "measurements": [
+            {
+              "phase": "cold",
+              "seconds": 13.803921587,
+              "php_peak_bytes": 723714712,
+              "php_peak_allocated_bytes": 740306944,
+              "php_retained_bytes": 721600480,
+              "full_rebuild": true,
+              "tokens": 1108976,
+              "ast_nodes": 789939,
+              "checked_statements": 191821,
+              "lowered_instructions": 341012,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 669,
+              "replaced_bodies": 21316,
+              "replaced_lowered": 21316,
+              "artifact_reused": false,
+              "llvm_bytes": 15664663,
+              "executable_bytes": 3327520,
+              "exit_code": 42,
+              "tool_calls": [
+                {
+                  "operation": "version",
+                  "seconds": 0.03781169399735518,
+                  "cpu_user_seconds": 0.007499,
+                  "cpu_system_seconds": 0.029998999999999998,
+                  "peak_rss_bytes": 69861376,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.03819803800433874,
+                  "cpu_user_seconds": 0.015144,
+                  "cpu_system_seconds": 0.022716,
+                  "peak_rss_bytes": 82313216,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.036228655022569,
+                  "cpu_user_seconds": 0.013318,
+                  "cpu_system_seconds": 0.022198,
+                  "peak_rss_bytes": 78249984,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.03606243000831455,
+                  "cpu_user_seconds": 0.007947,
+                  "cpu_system_seconds": 0.027814,
+                  "peak_rss_bytes": 78118912,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.04648427799111232,
+                  "cpu_user_seconds": 0.0038439999999999998,
+                  "cpu_system_seconds": 0.042287,
+                  "peak_rss_bytes": 83623936,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "compile_module",
+                  "seconds": 3.0063010869780555,
+                  "cpu_user_seconds": 2.608845,
+                  "cpu_system_seconds": 0.396128,
+                  "peak_rss_bytes": 280584192,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.08088858702103607,
+                  "cpu_user_seconds": 0.027587999999999998,
+                  "cpu_system_seconds": 0.051821,
+                  "peak_rss_bytes": 70123520,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 3.2819747690227814
+            },
+            {
+              "phase": "unchanged",
+              "seconds": 0.890038805,
+              "php_peak_bytes": 730164064,
+              "php_peak_allocated_bytes": 745484288,
+              "php_retained_bytes": 726843904,
+              "full_rebuild": false,
+              "tokens": 1108976,
+              "ast_nodes": 789939,
+              "checked_statements": 191821,
+              "lowered_instructions": 341012,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 0,
+              "replaced_bodies": 0,
+              "replaced_lowered": 0,
+              "artifact_reused": true,
+              "llvm_bytes": 15664663,
+              "executable_bytes": 3327520,
+              "exit_code": 42,
+              "tool_calls": [],
+              "tool_seconds": 0
+            },
+            {
+              "phase": "body_edit",
+              "seconds": 4.110031154,
+              "php_peak_bytes": 743700296,
+              "php_peak_allocated_bytes": 762265600,
+              "php_retained_bytes": 743675552,
+              "full_rebuild": false,
+              "tokens": 1108980,
+              "ast_nodes": 789942,
+              "checked_statements": 191822,
+              "lowered_instructions": 341014,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 1,
+              "replaced_bodies": 1,
+              "replaced_lowered": 1,
+              "artifact_reused": false,
+              "llvm_bytes": 15664700,
+              "executable_bytes": 3327520,
+              "exit_code": 43,
+              "tool_calls": [
+                {
+                  "operation": "compile_module",
+                  "seconds": 2.97034305499983,
+                  "cpu_user_seconds": 2.618197,
+                  "cpu_system_seconds": 0.351757,
+                  "peak_rss_bytes": 280453120,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.0894817869993858,
+                  "cpu_user_seconds": 0.022819,
+                  "cpu_system_seconds": 0.064636,
+                  "peak_rss_bytes": 70254592,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 3.059824841999216
+            }
+          ],
+          "stderr": ""
+        },
+        {
+          "trial": 3,
+          "ok": true,
+          "measurements": [
+            {
+              "phase": "cold",
+              "seconds": 13.695803005,
+              "php_peak_bytes": 723714712,
+              "php_peak_allocated_bytes": 740306944,
+              "php_retained_bytes": 721600480,
+              "full_rebuild": true,
+              "tokens": 1108976,
+              "ast_nodes": 789939,
+              "checked_statements": 191821,
+              "lowered_instructions": 341012,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 669,
+              "replaced_bodies": 21316,
+              "replaced_lowered": 21316,
+              "artifact_reused": false,
+              "llvm_bytes": 15664663,
+              "executable_bytes": 3327520,
+              "exit_code": 42,
+              "tool_calls": [
+                {
+                  "operation": "version",
+                  "seconds": 0.037912924017291516,
+                  "cpu_user_seconds": 0,
+                  "cpu_system_seconds": 0.037619,
+                  "peak_rss_bytes": 69861376,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.03761714501888491,
+                  "cpu_user_seconds": 0.008291999999999999,
+                  "cpu_system_seconds": 0.029022,
+                  "peak_rss_bytes": 82182144,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.05101404199376702,
+                  "cpu_user_seconds": 0.011557,
+                  "cpu_system_seconds": 0.038525,
+                  "peak_rss_bytes": 78249984,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.03688520300784148,
+                  "cpu_user_seconds": 0.012183999999999999,
+                  "cpu_system_seconds": 0.024369,
+                  "peak_rss_bytes": 78118912,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.043827550020068884,
+                  "cpu_user_seconds": 0.011866999999999999,
+                  "cpu_system_seconds": 0.031645,
+                  "peak_rss_bytes": 83492864,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "compile_module",
+                  "seconds": 2.9764125109941233,
+                  "cpu_user_seconds": 2.583417,
+                  "cpu_system_seconds": 0.391911,
+                  "peak_rss_bytes": 280584192,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.09708902399870567,
+                  "cpu_user_seconds": 0.031606999999999996,
+                  "cpu_system_seconds": 0.063668,
+                  "peak_rss_bytes": 70254592,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 3.280758399050683
+            },
+            {
+              "phase": "unchanged",
+              "seconds": 0.869919517,
+              "php_peak_bytes": 730164064,
+              "php_peak_allocated_bytes": 745484288,
+              "php_retained_bytes": 726843904,
+              "full_rebuild": false,
+              "tokens": 1108976,
+              "ast_nodes": 789939,
+              "checked_statements": 191821,
+              "lowered_instructions": 341012,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 0,
+              "replaced_bodies": 0,
+              "replaced_lowered": 0,
+              "artifact_reused": true,
+              "llvm_bytes": 15664663,
+              "executable_bytes": 3327520,
+              "exit_code": 42,
+              "tool_calls": [],
+              "tool_seconds": 0
+            },
+            {
+              "phase": "body_edit",
+              "seconds": 4.162975771,
+              "php_peak_bytes": 743700296,
+              "php_peak_allocated_bytes": 762265600,
+              "php_retained_bytes": 743675552,
+              "full_rebuild": false,
+              "tokens": 1108980,
+              "ast_nodes": 789942,
+              "checked_statements": 191822,
+              "lowered_instructions": 341014,
+              "lowered_bodies": 21316,
+              "replaced_frontends": 1,
+              "replaced_bodies": 1,
+              "replaced_lowered": 1,
+              "artifact_reused": false,
+              "llvm_bytes": 15664700,
+              "executable_bytes": 3327520,
+              "exit_code": 43,
+              "tool_calls": [
+                {
+                  "operation": "compile_module",
+                  "seconds": 2.9761217170162126,
+                  "cpu_user_seconds": 2.62752,
+                  "cpu_system_seconds": 0.34793599999999997,
+                  "peak_rss_bytes": 280584192,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.08231996197719127,
+                  "cpu_user_seconds": 0.020288,
+                  "cpu_system_seconds": 0.060342999999999994,
+                  "peak_rss_bytes": 70123520,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 3.058441678993404
+            }
+          ],
+          "stderr": ""
+        }
+      ],
+      "summary": {
+        "cold": {
+          "median_seconds": 13.803921587,
+          "min_seconds": 13.695803005,
+          "max_seconds": 14.381678576,
+          "max_php_peak_bytes": 723714712,
+          "max_php_peak_allocated_bytes": 740306944
+        },
+        "unchanged": {
+          "median_seconds": 0.890038805,
+          "min_seconds": 0.869919517,
+          "max_seconds": 0.971851556,
+          "max_php_peak_bytes": 730164064,
+          "max_php_peak_allocated_bytes": 745484288
+        },
+        "body_edit": {
+          "median_seconds": 4.162975771,
+          "min_seconds": 4.110031154,
+          "max_seconds": 4.277856366,
+          "max_php_peak_bytes": 743700296,
+          "max_php_peak_allocated_bytes": 762265600
+        }
+      }
+    },
+    {
+      "project": "10mb",
+      "target_bytes": 10485760,
+      "source_bytes": 10485859,
+      "files": 1335,
+      "functions": 42627,
+      "generated_functions": 42625,
+      "functions_per_file": 32,
+      "edit_file": "src/group_1332.phs",
+      "edited_function": "sample_042625",
+      "source_sha256": "b8037e8ebd8d56bec1c2bbcd6d44dab23592e3e60fd507137a3343084b9c5773",
+      "trials": [
+        {
+          "trial": 1,
+          "ok": true,
+          "measurements": [
+            {
+              "phase": "cold",
+              "seconds": 28.701456828,
+              "php_peak_bytes": 1445085136,
+              "php_peak_allocated_bytes": 1467772928,
+              "php_retained_bytes": 1440873752,
+              "full_rebuild": true,
+              "tokens": 2217866,
+              "ast_nodes": 1579815,
+              "checked_statements": 383629,
+              "lowered_instructions": 682004,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 1335,
+              "replaced_bodies": 42628,
+              "replaced_lowered": 42628,
+              "artifact_reused": false,
+              "llvm_bytes": 31371607,
+              "executable_bytes": 6653920,
+              "exit_code": 42,
+              "tool_calls": [
+                {
+                  "operation": "version",
+                  "seconds": 0.036146164988167584,
+                  "cpu_user_seconds": 0.007961,
+                  "cpu_system_seconds": 0.027864,
+                  "peak_rss_bytes": 69861376,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.0381195520167239,
+                  "cpu_user_seconds": 0.015137,
+                  "cpu_system_seconds": 0.022706,
+                  "peak_rss_bytes": 82051072,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.03738611898734234,
+                  "cpu_user_seconds": 0.01223,
+                  "cpu_system_seconds": 0.02446,
+                  "peak_rss_bytes": 78249984,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.03646601998480037,
+                  "cpu_user_seconds": 0.015917,
+                  "cpu_system_seconds": 0.019896999999999998,
+                  "peak_rss_bytes": 78118912,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.04261218599276617,
+                  "cpu_user_seconds": 0.011379,
+                  "cpu_system_seconds": 0.030344,
+                  "peak_rss_bytes": 83492864,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "compile_module",
+                  "seconds": 6.275785187026486,
+                  "cpu_user_seconds": 5.4906559999999995,
+                  "cpu_system_seconds": 0.783808,
+                  "peak_rss_bytes": 480129024,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.11100589999114163,
+                  "cpu_user_seconds": 0.048711,
+                  "cpu_system_seconds": 0.06073,
+                  "peak_rss_bytes": 70123520,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 6.577521128987428
+            },
+            {
+              "phase": "unchanged",
+              "seconds": 1.608225566,
+              "php_peak_bytes": 1457919200,
+              "php_peak_allocated_bytes": 1488220160,
+              "php_retained_bytes": 1451292624,
+              "full_rebuild": false,
+              "tokens": 2217866,
+              "ast_nodes": 1579815,
+              "checked_statements": 383629,
+              "lowered_instructions": 682004,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 0,
+              "replaced_bodies": 0,
+              "replaced_lowered": 0,
+              "artifact_reused": true,
+              "llvm_bytes": 31371607,
+              "executable_bytes": 6653920,
+              "exit_code": 42,
+              "tool_calls": [],
+              "tool_seconds": 0
+            },
+            {
+              "phase": "body_edit",
+              "seconds": 8.434757671,
+              "php_peak_bytes": 1484989920,
+              "php_peak_allocated_bytes": 1516449792,
+              "php_retained_bytes": 1484950672,
+              "full_rebuild": false,
+              "tokens": 2217870,
+              "ast_nodes": 1579818,
+              "checked_statements": 383630,
+              "lowered_instructions": 682006,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 1,
+              "replaced_bodies": 1,
+              "replaced_lowered": 1,
+              "artifact_reused": false,
+              "llvm_bytes": 31371644,
+              "executable_bytes": 6653920,
+              "exit_code": 43,
+              "tool_calls": [
+                {
+                  "operation": "compile_module",
+                  "seconds": 6.445130822015926,
+                  "cpu_user_seconds": 5.615648,
+                  "cpu_system_seconds": 0.828538,
+                  "peak_rss_bytes": 480002048,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.19111010400229134,
+                  "cpu_user_seconds": 0.072515,
+                  "cpu_system_seconds": 0.11693999999999999,
+                  "peak_rss_bytes": 70254592,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 6.636240926018218
+            }
+          ],
+          "stderr": ""
+        },
+        {
+          "trial": 2,
+          "ok": true,
+          "measurements": [
+            {
+              "phase": "cold",
+              "seconds": 29.113866848,
+              "php_peak_bytes": 1445085136,
+              "php_peak_allocated_bytes": 1467772928,
+              "php_retained_bytes": 1440873752,
+              "full_rebuild": true,
+              "tokens": 2217866,
+              "ast_nodes": 1579815,
+              "checked_statements": 383629,
+              "lowered_instructions": 682004,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 1335,
+              "replaced_bodies": 42628,
+              "replaced_lowered": 42628,
+              "artifact_reused": false,
+              "llvm_bytes": 31371607,
+              "executable_bytes": 6653920,
+              "exit_code": 42,
+              "tool_calls": [
+                {
+                  "operation": "version",
+                  "seconds": 0.034661567013245076,
+                  "cpu_user_seconds": 0.003822,
+                  "cpu_system_seconds": 0.030580999999999997,
+                  "peak_rss_bytes": 69730304,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.03818574800970964,
+                  "cpu_user_seconds": 0.011321,
+                  "cpu_system_seconds": 0.026417,
+                  "peak_rss_bytes": 82313216,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.035982732981210575,
+                  "cpu_user_seconds": 0.011916,
+                  "cpu_system_seconds": 0.023833,
+                  "peak_rss_bytes": 78249984,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.03659649900509976,
+                  "cpu_user_seconds": 0.008973,
+                  "cpu_system_seconds": 0.026919,
+                  "peak_rss_bytes": 77987840,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.042678218975197524,
+                  "cpu_user_seconds": 0.011549,
+                  "cpu_system_seconds": 0.030799,
+                  "peak_rss_bytes": 83492864,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "compile_module",
+                  "seconds": 6.375342794985045,
+                  "cpu_user_seconds": 5.498812,
+                  "cpu_system_seconds": 0.87581,
+                  "peak_rss_bytes": 479997952,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.11739938298705965,
+                  "cpu_user_seconds": 0.059877,
+                  "cpu_system_seconds": 0.055817,
+                  "peak_rss_bytes": 70123520,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 6.680846943956567
+            },
+            {
+              "phase": "unchanged",
+              "seconds": 2.354724769,
+              "php_peak_bytes": 1457919200,
+              "php_peak_allocated_bytes": 1488220160,
+              "php_retained_bytes": 1451292624,
+              "full_rebuild": false,
+              "tokens": 2217866,
+              "ast_nodes": 1579815,
+              "checked_statements": 383629,
+              "lowered_instructions": 682004,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 0,
+              "replaced_bodies": 0,
+              "replaced_lowered": 0,
+              "artifact_reused": true,
+              "llvm_bytes": 31371607,
+              "executable_bytes": 6653920,
+              "exit_code": 42,
+              "tool_calls": [],
+              "tool_seconds": 0
+            },
+            {
+              "phase": "body_edit",
+              "seconds": 8.295985791,
+              "php_peak_bytes": 1484989920,
+              "php_peak_allocated_bytes": 1516449792,
+              "php_retained_bytes": 1484950672,
+              "full_rebuild": false,
+              "tokens": 2217870,
+              "ast_nodes": 1579818,
+              "checked_statements": 383630,
+              "lowered_instructions": 682006,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 1,
+              "replaced_bodies": 1,
+              "replaced_lowered": 1,
+              "artifact_reused": false,
+              "llvm_bytes": 31371644,
+              "executable_bytes": 6653920,
+              "exit_code": 43,
+              "tool_calls": [
+                {
+                  "operation": "compile_module",
+                  "seconds": 6.269754190027015,
+                  "cpu_user_seconds": 5.463934,
+                  "cpu_system_seconds": 0.80399,
+                  "peak_rss_bytes": 479969280,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.11847915497492068,
+                  "cpu_user_seconds": 0.048295,
+                  "cpu_system_seconds": 0.068234,
+                  "peak_rss_bytes": 70254592,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 6.388233345001936
+            }
+          ],
+          "stderr": ""
+        },
+        {
+          "trial": 3,
+          "ok": true,
+          "measurements": [
+            {
+              "phase": "cold",
+              "seconds": 36.265053131,
+              "php_peak_bytes": 1445085136,
+              "php_peak_allocated_bytes": 1467772928,
+              "php_retained_bytes": 1440873752,
+              "full_rebuild": true,
+              "tokens": 2217866,
+              "ast_nodes": 1579815,
+              "checked_statements": 383629,
+              "lowered_instructions": 682004,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 1335,
+              "replaced_bodies": 42628,
+              "replaced_lowered": 42628,
+              "artifact_reused": false,
+              "llvm_bytes": 31371607,
+              "executable_bytes": 6653920,
+              "exit_code": 42,
+              "tool_calls": [
+                {
+                  "operation": "version",
+                  "seconds": 0.04480716600664891,
+                  "cpu_user_seconds": 0.012143,
+                  "cpu_system_seconds": 0.032382999999999995,
+                  "peak_rss_bytes": 69861376,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.042470091982977465,
+                  "cpu_user_seconds": 0.007645,
+                  "cpu_system_seconds": 0.034402999999999996,
+                  "peak_rss_bytes": 82313216,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.04182964900974184,
+                  "cpu_user_seconds": 0.011214,
+                  "cpu_system_seconds": 0.029906,
+                  "peak_rss_bytes": 78118912,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "return_probe",
+                  "seconds": 0.035979536012746394,
+                  "cpu_user_seconds": 0.007864,
+                  "cpu_system_seconds": 0.027524999999999997,
+                  "peak_rss_bytes": 78118912,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "target_or_entry_probe",
+                  "seconds": 0.05440421399543993,
+                  "cpu_user_seconds": 0.011581,
+                  "cpu_system_seconds": 0.042467,
+                  "peak_rss_bytes": 83492864,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "compile_module",
+                  "seconds": 8.325736143975519,
+                  "cpu_user_seconds": 7.398946,
+                  "cpu_system_seconds": 0.925874,
+                  "peak_rss_bytes": 480006144,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.17076250599347986,
+                  "cpu_user_seconds": 0.083951,
+                  "cpu_system_seconds": 0.085143,
+                  "peak_rss_bytes": 70254592,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 8.715989306976553
+            },
+            {
+              "phase": "unchanged",
+              "seconds": 2.379825541,
+              "php_peak_bytes": 1457919200,
+              "php_peak_allocated_bytes": 1488220160,
+              "php_retained_bytes": 1451292624,
+              "full_rebuild": false,
+              "tokens": 2217866,
+              "ast_nodes": 1579815,
+              "checked_statements": 383629,
+              "lowered_instructions": 682004,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 0,
+              "replaced_bodies": 0,
+              "replaced_lowered": 0,
+              "artifact_reused": true,
+              "llvm_bytes": 31371607,
+              "executable_bytes": 6653920,
+              "exit_code": 42,
+              "tool_calls": [],
+              "tool_seconds": 0
+            },
+            {
+              "phase": "body_edit",
+              "seconds": 10.879339251,
+              "php_peak_bytes": 1484989920,
+              "php_peak_allocated_bytes": 1516449792,
+              "php_retained_bytes": 1484950672,
+              "full_rebuild": false,
+              "tokens": 2217870,
+              "ast_nodes": 1579818,
+              "checked_statements": 383630,
+              "lowered_instructions": 682006,
+              "lowered_bodies": 42628,
+              "replaced_frontends": 1,
+              "replaced_bodies": 1,
+              "replaced_lowered": 1,
+              "artifact_reused": false,
+              "llvm_bytes": 31371644,
+              "executable_bytes": 6653920,
+              "exit_code": 43,
+              "tool_calls": [
+                {
+                  "operation": "compile_module",
+                  "seconds": 7.090583661978599,
+                  "cpu_user_seconds": 6.121385,
+                  "cpu_system_seconds": 0.967586,
+                  "peak_rss_bytes": 479870976,
+                  "exit_code": 0
+                },
+                {
+                  "operation": "link",
+                  "seconds": 0.12744373799068853,
+                  "cpu_user_seconds": 0.054355,
+                  "cpu_system_seconds": 0.070977,
+                  "peak_rss_bytes": 70123520,
+                  "exit_code": 0
+                }
+              ],
+              "tool_seconds": 7.218027399969287
+            }
+          ],
+          "stderr": ""
+        }
+      ],
+      "summary": {
+        "cold": {
+          "median_seconds": 29.113866848,
+          "min_seconds": 28.701456828,
+          "max_seconds": 36.265053131,
+          "max_php_peak_bytes": 1445085136,
+          "max_php_peak_allocated_bytes": 1467772928
+        },
+        "unchanged": {
+          "median_seconds": 2.354724769,
+          "min_seconds": 1.608225566,
+          "max_seconds": 2.379825541,
+          "max_php_peak_bytes": 1457919200,
+          "max_php_peak_allocated_bytes": 1488220160
+        },
+        "body_edit": {
+          "median_seconds": 8.434757671,
+          "min_seconds": 8.295985791,
+          "max_seconds": 10.879339251,
+          "max_php_peak_bytes": 1484989920,
+          "max_php_peak_allocated_bytes": 1516449792
+        }
+      }
+    }
+  ],
+  "tool_measurement": {
+    "wall_time": "perf_counter around each real Clang invocation, excluding Python wrapper startup",
+    "cpu_time": "Linux RUSAGE_CHILDREN user/system CPU for the single invocation and waited descendants",
+    "memory": "Linux RUSAGE_CHILDREN ru_maxrss * 1024 bytes: largest process RSS high-water within an invocation, including waited descendants; not simultaneous process-tree total",
+    "link_scope": "Clang link-driver invocation including the real linker; not linker-only isolation",
+    "wrapper": "fresh Python process per invocation; wrapper/PHP RSS excluded"
+  }
+}

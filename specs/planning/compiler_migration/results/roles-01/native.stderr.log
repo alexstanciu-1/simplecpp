@@ -1,0 +1,10 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/03_parse/data/role_views.phs:38: argument 1 passed to __construct expects syntax_kind, got null
+Generated location: .prism/generated/src/03_parse/data/role_views.hpp:50:75
+Compile note in src/03_parse/data/role_views.phs:38: passing argument to parameter 'reference' here
+Generated location: .prism/generated/src/03_parse/data/role_views.hpp:50:75
+Raw compiler excerpt:
+role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

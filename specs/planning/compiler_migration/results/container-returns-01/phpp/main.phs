@@ -1,0 +1,39 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$store = new \samples\Store();
+echo $store->get_entry(), ":", $store->get_ready() ? "ready" : "pending", ":", $store->get_label(), "\n";
+$row = new \samples\Row();
+$store->initialize($row);
+$ids vector<int> = $store->get_ids();
+$ids[0] = 99;
+$original vector<int> = $store->get_ids();
+$positions hash<int, int> = $store->get_positions();
+$positions[37] = 8;
+$original_positions hash<int, int> = $store->get_positions();
+$groups vector<vector<int>> = $store->get_groups();
+$groups[0][0] = 104;
+$original_groups vector<vector<int>> = $store->get_groups();
+echo $original[0], ":", $ids[0], ":", $original_positions[37], ":", $positions[37], ":", $original_groups[0][0], ":", $groups[0][0], "\n";
+$rows vector<\samples\Row> = $store->get_rows();
+$rows[0]->value = 9;
+echo $row->value, ":", $store->get_entry(), ":", $store->get_ready() ? "ready" : "bad", ":", $store->get_label(), "\n";
+$empty vector<int> = \samples\Store::empty_ids();
+echo count($empty), "\n";
+

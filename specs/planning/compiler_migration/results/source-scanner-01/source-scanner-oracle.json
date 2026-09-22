@@ -1,0 +1,8 @@
+{
+  "command": [
+    "php",
+    "tests/portability/source_scanner_oracle.php"
+  ],
+  "returncode": 0,
+  "source_sha256": "34a5fd664c4589eafcbb5cecb72a63aad738c4cb37348a3b2fc6a0c0cd990cb2"
+}

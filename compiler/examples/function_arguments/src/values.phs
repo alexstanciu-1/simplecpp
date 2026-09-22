@@ -1,0 +1,7 @@
+function identity($value int): int {
+    return $value;
+}
+
+function choose($first int, $second int): int {
+    return $second;
+}

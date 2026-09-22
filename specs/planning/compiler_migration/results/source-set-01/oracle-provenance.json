@@ -1,0 +1,5 @@
+{
+  "baseline": "tests/portability/reference/source_set_before.php",
+  "role": "Frozen Source_Set immediately before this adaptation; test-only, not a maintained implementation",
+  "sha256": "8d320706436101b405d8689a7a3995c9191e015119a62cd9ecaecb994e75e1ea"
+}

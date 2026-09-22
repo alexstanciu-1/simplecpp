@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "types": [
+    {
+      "id": "element_storage",
+      "cpp_name": "scpp_provider::element_storage",
+      "header": "scpp_provider/element_storage.hpp",
+      "kind": "runtime_value",
+      "storage": "inline",
+      "lifecycle": {
+        "default_construct": "element_storage.default",
+        "cleanup": "none"
+      },
+      "language_type": {
+        "name": "storage",
+        "namespace": ""
+      },
+      "storage_family": {
+        "counter_type": "native_int",
+        "primitives": {
+          "allocate": "element_storage.allocate",
+          "next": "element_storage.next",
+          "commit": "element_storage.commit",
+          "at": "element_storage.at",
+          "pop": "element_storage.pop",
+          "count": "element_storage.count",
+          "release": "element_storage.release",
+          "transfer": "element_storage.transfer"
+        },
+        "operations": {
+          "allocate": "storage_allocate",
+          "push": "storage_push",
+          "pop": "storage_pop",
+          "count": "storage_count",
+          "release": "storage_release",
+          "transfer": "storage_transfer"
+        }
+      },
+      "struct_field": true
+    },
+    {
+      "id": "native_address",
+      "kind": "address",
+      "cpp_name": "scpp_provider::storage_address",
+      "header": "scpp_provider/element_storage.hpp"
+    }
+  ],
+  "operations": [
+    {
+      "id": "element_storage.default",
+      "kind": "construct",
+      "type": "element_storage",
+      "parameters": [],
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.allocate",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_allocate",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        },
+        "native_int",
+        "native_int",
+        "native_int"
+      ],
+      "result_type": "void",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.next",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_next",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "native_address",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.commit",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_commit",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "void",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.at",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_at",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        },
+        "native_int"
+      ],
+      "result_type": "native_address",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.pop",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_pop",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "void",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.count",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_count",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "native_int",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.release",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_release",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "void",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "element_storage.transfer",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::storage_transfer",
+      "header": "scpp_provider/element_storage.hpp",
+      "parameters": [
+        {
+          "type": "element_storage",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        },
+        {
+          "type": "element_storage",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "void",
+      "error_policy": "terminate"
+    }
+  ]
+}

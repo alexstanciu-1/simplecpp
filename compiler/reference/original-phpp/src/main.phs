@@ -1,0 +1,55 @@
+use function compile\refresh_compiler_inputs;
+use function read_sources\change_detection_limitation;
+
+// Current command: read the manifest and discover its sources.
+// TODO: extend this driver to resident updates as the remaining stages land.
+$arguments = cli_argv();
+$manifest_path string = "";
+$debug_json bool = false;
+$show_help bool = false;
+$simulate_path string = "";
+$index int = 1;
+while ($index < cli_argc()) {
+    $argument string = $arguments[$index];
+    if ($argument === "--debug=json") {
+        $debug_json = true;
+    } else if ($argument === "--help") {
+        $show_help = true;
+    } else if ($argument === "--simulate-increment") {
+        $index = $index + 1;
+        if ($simulate_path !== "" || $index >= cli_argc()) {
+            throw new Exception("Expected one folder after --simulate-increment");
+        }
+        $simulate_path = $arguments[$index];
+        if ($simulate_path === "" || str_starts_with($simulate_path, "-")) {
+            throw new Exception("Expected a folder after --simulate-increment");
+        }
+    } else if (str_starts_with($argument, "-")) {
+        throw new Exception("Unsupported option: " . $argument);
+    } else if ($manifest_path !== "") {
+        throw new Exception("Expected exactly one project manifest path");
+    } else {
+        $manifest_path = $argument;
+    }
+    $index = $index + 1;
+}
+if ($show_help) {
+    echo "Usage: scpp_compiler [--debug=json] [--simulate-increment <edited-project-folder>] <project.json>\n";
+    echo change_detection_limitation(), "\n";
+    echo "Simulation swaps the manifest directory with the edited folder for a second input refresh, then restores both. Recovery journal: <project-folder>.scpp-simulation/journal.jsonl. Preserve unchanged timestamps in the edited copy.\n";
+} else {
+    if ($manifest_path === "") {
+        throw new Exception("Usage: scpp_compiler [--debug=json] <project.json>; use --help for current limitations");
+    }
+    if ($simulate_path !== "") {
+        \simulate_increment\run_simulation($manifest_path, $simulate_path, $debug_json);
+    } else {
+        \simulate_increment\check_pending_simulation($manifest_path);
+        $previous_manifest \read_manifest\Project_Manifest = new \read_manifest\Project_Manifest();
+        $previous_sources \read_sources\Source_Set = new \read_sources\Source_Set();
+        $inputs \compile\Input_Snapshot = refresh_compiler_inputs($manifest_path, $previous_manifest, $previous_sources, true);
+        if ($debug_json) {
+            echo "{\"manifest\":", $inputs->manifest->to_json(), ",\"sources\":", $inputs->sources->to_json(), "}\n";
+        }
+    }
+}

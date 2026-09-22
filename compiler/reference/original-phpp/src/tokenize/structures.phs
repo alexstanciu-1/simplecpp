@@ -1,0 +1,28 @@
+namespace tokenize;
+
+// Own compact token representations and token-list operations.
+
+// Initial syntax vocabulary for integer returns and parameterless functions/calls.
+enum token_kind : uint16 {
+    case invalid = 0;
+    case end_of_file = 1;
+    case identifier = 2;
+    case integer_literal = 3;
+    case function_keyword = 4;
+    case return_keyword = 5;
+    case left_parenthesis = 6;
+    case right_parenthesis = 7;
+    case left_brace = 8;
+    case right_brace = 9;
+    case colon = 10;
+    case comma = 11;
+    case semicolon = 12;
+}
+
+// Byte offset and length in the token buffer's source file snapshot.
+// Text stays in the source buffer. Length is not restricted to a uint16 slot.
+struct token {
+    public uint32 $start = 0;
+    public uint32 $length = 0;
+    public token_kind $kind = token_kind::invalid;
+}

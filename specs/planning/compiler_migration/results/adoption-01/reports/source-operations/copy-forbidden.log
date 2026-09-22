@@ -1,0 +1,27 @@
+["/usr/bin/clang++-18", "-std=c++23", "-I/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/runtime/include", "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/include", "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/tests/source_operations", "-fsyntax-only", "/tmp/scpp-adoption-preparation-29v8zist/source-operations/copy-forbidden.cpp"]
+In file included from /tmp/scpp-adoption-preparation-29v8zist/source-operations/copy-forbidden.cpp:1:
+In file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/tests/source_operations/native.hpp:3:
+In file included from /home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/runtime/include/scpp/vector_t.hpp:3:
+In file included from /home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/runtime/include/scpp/detail.hpp:5:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/memory:69:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_uninitialized.h:64:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:34:
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/alloc_traits.h:540:4: error: no matching function for call to 'construct_at'
+  540 |           std::construct_at(__p, std::forward<_Args>(__args)...);
+      |           ^~~~~~~~~~~~~~~~~
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_vector.h:1286:21: note: in instantiation of function template specialization 'std::allocator_traits<std::allocator<source_operations_probe::element_adapter<false>>>::construct<source_operations_probe::element_adapter<false>, const source_operations_probe::element_adapter<false> &>' requested here
+ 1286 |             _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+      |                            ^
+/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/runtime/include/scpp/vector_t.hpp:218:10: note: in instantiation of member function 'std::vector<source_operations_probe::element_adapter<false>>::push_back' requested here
+  218 |                 value_.push_back(value);
+      |                        ^
+/tmp/scpp-adoption-preparation-29v8zist/source-operations/copy-forbidden.cpp:4:45: note: in instantiation of member function 'scpp::vector_t<source_operations_probe::element_adapter<false>>::append' requested here
+    4 |   T value; scpp::vector_t<T> values; values.append(value);
+      |                                             ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_construct.h:94:5: note: candidate template ignored: substitution failure [with _Tp = source_operations_probe::element_adapter<false>, _Args = <const source_operations_probe::element_adapter<false> &>]: call to deleted constructor of 'source_operations_probe::element_adapter<false>'
+   94 |     construct_at(_Tp* __location, _Args&&... __args)
+      |     ^
+   95 |     noexcept(noexcept(::new((void*)0) _Tp(std::declval<_Args>()...)))
+   96 |     -> decltype(::new((void*)0) _Tp(std::declval<_Args>()...))
+      |                                 ~~~
+1 error generated.

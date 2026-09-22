@@ -1,0 +1,123 @@
+
+
+/* Structural role views: read-only node IDs into one supplied syntax tree. */
+namespace parse;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Temporary structural view: IDs into the supplied tree, no retained dataset.
+/**
+ * @compiler-api Read-only structural view returned by Syntax_Access; all fields are AST node IDs
+ * in the supplied tree, not semantic type/local IDs. No syntax is copied.
+ */
+class function_parts {
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly int $name_id;public readonly int $parameters_id;public readonly int $return_type_id;public readonly int $body_id;public function __construct(int $name_id, int $parameters_id, int $return_type_id, int $body_id) {$this->name_id = $name_id;$this->parameters_id = $parameters_id;$this->return_type_id = $return_type_id;$this->body_id = $body_id;
+    }
+}
+
+// Temporary structural views; all fields are node IDs in the same syntax tree.
+/**
+ * @compiler-api Read-only structural view returned by Syntax_Access; all fields are AST node IDs
+ * in the supplied tree, not semantic type/local IDs. No syntax is copied.
+ */
+class local_declaration_parts {
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly int $variable_id;public readonly int $type_syntax_id;public readonly int $initializer_id;public function __construct(int $variable_id, int $type_syntax_id, int $initializer_id) {$this->variable_id = $variable_id;$this->type_syntax_id = $type_syntax_id;$this->initializer_id = $initializer_id;
+    }
+}
+
+/**
+ * @compiler-api Read-only structural view returned by Syntax_Access; all fields are AST node IDs
+ * in the supplied tree, not semantic type/local IDs. No syntax is copied.
+ */
+class parameter_parts {
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly int $variable_id;public readonly int $type_syntax_id;/** PHP readonly; native usage contract. */ public $reference nullable<syntax_kind>;public function __construct(int $variable_id, int $type_syntax_id, $reference nullable<syntax_kind> = null) {$this->variable_id = $variable_id;$this->type_syntax_id = $type_syntax_id;$this->reference = $reference;
+    }
+}
+
+/**
+ * @compiler-api Read-only structural view returned by Syntax_Access; all fields are AST node IDs
+ * in the supplied tree, not semantic type/local IDs. No syntax is copied.
+ */
+class assignment_parts {
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly int $target_id;public readonly int $value_id;public function __construct(int $target_id, int $value_id) {$this->target_id = $target_id;$this->value_id = $value_id;
+    }
+}
+
+/**
+ * @compiler-api Control roles in one tree: condition=0 for consteval, alternative=0 when absent.
+ * Body is a block; an alternative can be a block or a nested conditional where permitted.
+ */
+final class control_parts {
+    public readonly int $condition;public readonly int $body;public readonly int $alternative;public function __construct(int $condition, int $body, int $alternative) {$this->condition = $condition;$this->body = $body;$this->alternative = $alternative;
+    }
+}
+
+/** @compiler-api Struct syntax roles; first_member_id is zero for an empty parsed declaration. */
+final class struct_parts {
+    public readonly int $name_id;public readonly int $first_member_id;public function __construct(int $name_id, int $first_member_id) {$this->name_id = $name_id;$this->first_member_id = $first_member_id;
+    }
+}
+
+/** @compiler-api Field declaration roles; IDs refer to one fixed syntax tree, never canonical types. */
+final class field_declaration_parts {
+    public readonly int $type_syntax_id;public readonly int $variable_id;public readonly int $extent_id;public function __construct(int $type_syntax_id, int $variable_id, int $extent_id = 0) {$this->type_syntax_id = $type_syntax_id;$this->variable_id = $variable_id;$this->extent_id = $extent_id;
+    }
+}
+
+/** @compiler-api Ordered template parameters and wrapped declaration, all IDs in the same source tree. */
+final class template_parts {
+    public readonly int $parameters_id;public readonly int $declaration_id;public function __construct(int $parameters_id, int $declaration_id) {$this->parameters_id = $parameters_id;$this->declaration_id = $declaration_id;
+    }
+}
+
+/** @compiler-api A parameter's name and optional value-type syntax; zero means a type parameter. */
+final class template_parameter_parts {
+    public readonly int $name_id;public readonly int $type_syntax_id;public function __construct(int $name_id, int $type_syntax_id) {$this->name_id = $name_id;$this->type_syntax_id = $type_syntax_id;
+    }
+}
+
+/** @compiler-api A template application keeps its target name and nonempty ordered argument chain. */
+final class template_application_parts {
+    public readonly int $name_id;public readonly int $first_argument_id;public function __construct(int $name_id, int $first_argument_id) {$this->name_id = $name_id;$this->first_argument_id = $first_argument_id;
+    }
+}
+
+/** @compiler-api A constant's name, optional type syntax and required initializer; no computed value. */
+final class constant_parts {
+    public readonly int $name_id;public readonly int $type_syntax_id;public readonly int $initializer_id;public function __construct(int $name_id, int $type_syntax_id, int $initializer_id) {$this->name_id = $name_id;$this->type_syntax_id = $type_syntax_id;$this->initializer_id = $initializer_id;
+    }
+}

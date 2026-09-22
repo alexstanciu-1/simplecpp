@@ -1,0 +1,362 @@
+{
+  "toolchain": "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp",
+  "revision": "fc20d73d040c4e69758bcec0b1caf40c26755f72",
+  "workspace": "/tmp/scpp-representation-probes-xfytrm5m",
+  "cxx": "clang++-18",
+  "profile": "strict",
+  "probes": [
+    {
+      "name": "scalar_control",
+      "fixture": "tests/portability/native_representation/scalar_control.phs",
+      "sha256": "91dc57f164eec4a2eba02deeb9a0c6c6c0923585c2531dab57d8060a4e931839",
+      "expected_stdout": "7:9\n",
+      "status": "passed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/scalar_control",
+          "exit_code": 0,
+          "elapsed_seconds": 0.14,
+          "stdout": "scalar_control.init.stdout.log",
+          "stderr": "scalar_control.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/scalar_control",
+          "exit_code": 0,
+          "elapsed_seconds": 14.005,
+          "stdout": "scalar_control.run.stdout.log",
+          "stderr": "scalar_control.run.stderr.log"
+        }
+      ]
+    },
+    {
+      "name": "vector_record_field",
+      "fixture": "tests/portability/native_representation/vector_record_field.phs",
+      "sha256": "7b51e5a78e0cbcca551b705fbcdb2d6836a4312d2f9fe6c524ac52ae3f44c2c7",
+      "expected_stdout": "7:9\n",
+      "status": "passed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/vector_record_field",
+          "exit_code": 0,
+          "elapsed_seconds": 0.125,
+          "stdout": "vector_record_field.init.stdout.log",
+          "stderr": "vector_record_field.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/vector_record_field",
+          "exit_code": 0,
+          "elapsed_seconds": 13.601,
+          "stdout": "vector_record_field.run.stdout.log",
+          "stderr": "vector_record_field.run.stderr.log"
+        }
+      ]
+    },
+    {
+      "name": "hash_record_field",
+      "fixture": "tests/portability/native_representation/hash_record_field.phs",
+      "sha256": "ab6594a1039f831833aa779716f685e2249e449b02ebd3d7d8e96209998efdf1",
+      "expected_stdout": "7:9\n",
+      "status": "passed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_record_field",
+          "exit_code": 0,
+          "elapsed_seconds": 0.125,
+          "stdout": "hash_record_field.init.stdout.log",
+          "stderr": "hash_record_field.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_record_field",
+          "exit_code": 0,
+          "elapsed_seconds": 13.565,
+          "stdout": "hash_record_field.run.stdout.log",
+          "stderr": "hash_record_field.run.stderr.log"
+        }
+      ]
+    },
+    {
+      "name": "string_field",
+      "fixture": "tests/portability/native_representation/string_field.phs",
+      "sha256": "e140e9cf56f84a05d1589a8b65aa920822937ba20155ef1c45c575c84346c530",
+      "expected_stdout": "before:after\n",
+      "status": "failed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/string_field",
+          "exit_code": 0,
+          "elapsed_seconds": 0.122,
+          "stdout": "string_field.init.stdout.log",
+          "stderr": "string_field.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/string_field",
+          "exit_code": 1,
+          "elapsed_seconds": 0.233,
+          "stdout": "string_field.run.stdout.log",
+          "stderr": "string_field.run.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime",
+            "--no-stan"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/string_field",
+          "exit_code": 3,
+          "elapsed_seconds": 0.156,
+          "stdout": "string_field.no-stan.stdout.log",
+          "stderr": "string_field.no-stan.stderr.log"
+        }
+      ]
+    },
+    {
+      "name": "vector_string_field",
+      "fixture": "tests/portability/native_representation/vector_string_field.phs",
+      "sha256": "e7432994578415e1ec450b4ed04863e37e723a34ca8843271cf5d9498465aec0",
+      "expected_stdout": "before:after\n",
+      "status": "failed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/vector_string_field",
+          "exit_code": 0,
+          "elapsed_seconds": 0.12,
+          "stdout": "vector_string_field.init.stdout.log",
+          "stderr": "vector_string_field.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/vector_string_field",
+          "exit_code": 1,
+          "elapsed_seconds": 0.234,
+          "stdout": "vector_string_field.run.stdout.log",
+          "stderr": "vector_string_field.run.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime",
+            "--no-stan"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/vector_string_field",
+          "exit_code": 3,
+          "elapsed_seconds": 0.156,
+          "stdout": "vector_string_field.no-stan.stdout.log",
+          "stderr": "vector_string_field.no-stan.stderr.log"
+        }
+      ]
+    },
+    {
+      "name": "hash_string_field",
+      "fixture": "tests/portability/native_representation/hash_string_field.phs",
+      "sha256": "f3d60471b1b24452d718b5307def3871f573a6b4d42209f872bd427f1280dfc7",
+      "expected_stdout": "before:after\n",
+      "status": "failed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_string_field",
+          "exit_code": 0,
+          "elapsed_seconds": 0.123,
+          "stdout": "hash_string_field.init.stdout.log",
+          "stderr": "hash_string_field.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_string_field",
+          "exit_code": 1,
+          "elapsed_seconds": 0.295,
+          "stdout": "hash_string_field.run.stdout.log",
+          "stderr": "hash_string_field.run.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime",
+            "--no-stan"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_string_field",
+          "exit_code": 3,
+          "elapsed_seconds": 0.177,
+          "stdout": "hash_string_field.no-stan.stdout.log",
+          "stderr": "hash_string_field.no-stan.stderr.log"
+        }
+      ]
+    },
+    {
+      "name": "hash_keyed_field",
+      "fixture": "tests/portability/native_representation/hash_keyed_field.phs",
+      "sha256": "87f65fbd2f89ee60affab9857d8f9df79e915c8baac5a6445b2f5ee2669d9c98",
+      "expected_stdout": "before:after\n",
+      "status": "failed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_keyed_field",
+          "exit_code": 0,
+          "elapsed_seconds": 0.131,
+          "stdout": "hash_keyed_field.init.stdout.log",
+          "stderr": "hash_keyed_field.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_keyed_field",
+          "exit_code": 1,
+          "elapsed_seconds": 0.344,
+          "stdout": "hash_keyed_field.run.stdout.log",
+          "stderr": "hash_keyed_field.run.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime",
+            "--no-stan"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/hash_keyed_field",
+          "exit_code": 3,
+          "elapsed_seconds": 0.494,
+          "stdout": "hash_keyed_field.no-stan.stdout.log",
+          "stderr": "hash_keyed_field.no-stan.stderr.log"
+        }
+      ]
+    },
+    {
+      "name": "class_field",
+      "fixture": "tests/portability/native_representation/class_field.phs",
+      "sha256": "7f0bfbd8198c01d45590bcedc91ba661e0fcc09dbe11933ac7f887ef989d0846",
+      "expected_stdout": "9:9\n9:11\n",
+      "status": "failed",
+      "commands": [
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "init",
+            "--php-profile=strict"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/class_field",
+          "exit_code": 0,
+          "elapsed_seconds": 0.303,
+          "stdout": "class_field.init.stdout.log",
+          "stderr": "class_field.init.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/class_field",
+          "exit_code": 1,
+          "elapsed_seconds": 0.383,
+          "stdout": "class_field.run.stdout.log",
+          "stderr": "class_field.run.stderr.log"
+        },
+        {
+          "command": [
+            "php",
+            "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+            "run",
+            "--build-runtime",
+            "--no-stan"
+          ],
+          "cwd": "/tmp/scpp-representation-probes-xfytrm5m/class_field",
+          "exit_code": 3,
+          "elapsed_seconds": 0.247,
+          "stdout": "class_field.no-stan.stdout.log",
+          "stderr": "class_field.no-stan.stderr.log"
+        }
+      ]
+    }
+  ],
+  "toolchain_status_after": "",
+  "toolchain_revision_after": "fc20d73d040c4e69758bcec0b1caf40c26755f72",
+  "passed": false
+}

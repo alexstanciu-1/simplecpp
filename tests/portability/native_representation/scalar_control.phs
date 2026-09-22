@@ -1,0 +1,9 @@
+struct scalar_row {
+    uint32 $value = 0;
+}
+
+$original scalar_row = [];
+$original->value = 7;
+$copy scalar_row = $original;
+$copy->value = 9;
+echo $original->value, ":", $copy->value, "\n";

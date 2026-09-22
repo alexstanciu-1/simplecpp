@@ -1,0 +1,19 @@
+compiler/src/01_prepare_inputs/load_runtime/handlers/storage.php:60:            $roles = array_map(static fn($role) => $role->value, \type_model\storage_role::cases());
+compiler/src/01_prepare_inputs/load_runtime/handlers/bindings.php:21:        $binding = isset($row['language_binding']) ? language_binding::tryFrom($row['language_binding']) : null;
+compiler/src/01_prepare_inputs/load_runtime/handlers/bindings.php:50:        $purpose = is_string($row['conversion_purpose']) ? conversion_purpose::tryFrom($row['conversion_purpose']) : null;
+compiler/src-runtime-preparation/families/catalog.php:254:            $role = model\lifecycle_operation_kind::tryFrom($requirement['operation']);
+compiler/src-runtime-preparation/families/catalog.php:289:            $effects[] = new model\element_effect(model\element_effect_kind::from($row['kind']), $receiver, $input);
+compiler/src/05_generate_code/lower/binary_operations.php:17:        $native = binary_operation::tryFrom($binding->entry);
+compiler/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php:96:        $copy = is_string($data['copy']) ? copy_kind::tryFrom($data['copy']) : null;
+compiler/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php:97:        $cleanup = is_string($data['cleanup']) ? cleanup_kind::tryFrom($data['cleanup']) : null;
+compiler/src/01_prepare_inputs/load_runtime/handlers/type_definitions.php:91:        $format = is_string($row['format'] ?? null) ? floating_format::tryFrom($row['format']) : null;
+compiler/src/01_prepare_inputs/load_runtime/handlers/type_definitions.php:102:            isset($row['addition']) ? integer_addition::from($row['addition']) : null, $row['struct_field'] ?? false, comparison: isset($row['comparison']) ? \type_model\integer_comparison::from($row['comparison']) : null);
+compiler/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php:45:            $candidate = abi_extension::tryFrom($attribute);
+compiler/src/01_prepare_inputs/load_runtime/handlers/resources.php:53:            ? \type_model\allocation_effect_kind::tryFrom($raw['kind']) : null;
+compiler/src/01_prepare_inputs/load_runtime/handlers/callables.php:121:        $mode = result_passing::tryFrom($result['passing'] ?? '');
+compiler/src/05_generate_code/prepare_backend/source_export_preparation.php:42:            foreach (source_export_role::cases() as $role)
+compiler/src/05_generate_code/prepare_backend/source_export_preparation.php:111:        $roles = array_map(static fn($role) => $role->value, source_export_role::cases());
+compiler/src/05_generate_code/prepare_backend/data/source_exports.php:33:            default => \type_model\lifecycle_operation_kind::from($this->value),
+compiler/src-runtime-preparation/project/source_adapter.php:41:            foreach (\type_model\lifecycle_operation_kind::cases() as $role)
+compiler/src/04_analyze/analyze_lifetimes/ownership_preparation.php:106:            foreach (\type_model\lifecycle_operation_kind::cases() as $kind)
+compiler/src/04_analyze/collect_symbols/join.php:129:                $declarations[] = new \type_model\storage_function($family, \type_model\storage_role::from($role),

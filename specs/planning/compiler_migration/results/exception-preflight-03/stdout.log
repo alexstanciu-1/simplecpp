@@ -1,0 +1,22 @@
+Transpiled PHP files: 1, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-v0.1.76-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: reuse existing artifact only
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/2] CXX main.o
+FAILED: main.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/9d15d9d7a1707eb0.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o
+../generated/main.cpp:15:13: error: no type named '__construct' in 'scpp::Exception'
+   15 |         Exception::__construct(message);
+      |         ~~~~~~~~~~~^
+../generated/main.cpp:30:25: error: no member named 'getMessage' in 'scpp::scpp_invalid_argument'
+   30 |                         php::echo_one(error->getMessage());
+      |                                       ~~~~~~~^
+2 errors generated.
+ninja: build stopped: subcommand failed.

@@ -1,0 +1,375 @@
+{
+    "method": "Shell launches PHP directly; no Python process or Clang measurement wrapper. Three disposable fixture copies; existing measure.php verifies cold\/unchanged\/body edit. Object microbenchmarks use production Tool_Process at 20 jobs and pre-exported LLVM.",
+    "backend": {
+        "clang": "clang",
+        "target": null,
+        "compile_jobs": 20
+    },
+    "process_probe": {
+        "method": "PHP only: proc_open\/proc_get_status\/proc_close via production Tool_Process and setsid; no Python process or per-tool wrapper. 20 active handles maximum. IR read before timing; link and exit-42 verification after object timer.",
+        "php": "8.5.7",
+        "clang": "\/usr\/lib\/llvm-18\/bin\/clang",
+        "trials": [
+            {
+                "operation": "one_version_direct",
+                "trial": 1,
+                "seconds": 0.073510318
+            },
+            {
+                "operation": "one_version_direct",
+                "trial": 2,
+                "seconds": 0.061672599
+            },
+            {
+                "operation": "one_version_direct",
+                "trial": 3,
+                "seconds": 0.06045493
+            },
+            {
+                "operation": "one_version_direct",
+                "trial": 4,
+                "seconds": 0.043777378
+            },
+            {
+                "operation": "one_version_direct",
+                "trial": 5,
+                "seconds": 0.074143987
+            },
+            {
+                "operation": "version_only",
+                "trial": 1,
+                "seconds": 7.972987864,
+                "invocations": 669,
+                "peak_active_handles": 20,
+                "child_user_seconds": 27.271923,
+                "child_system_seconds": 58.745276,
+                "cpu_equivalents": 10.788577690979412
+            },
+            {
+                "operation": "version_only",
+                "trial": 2,
+                "seconds": 6.610198858,
+                "invocations": 669,
+                "peak_active_handles": 20,
+                "child_user_seconds": 24.143132,
+                "child_system_seconds": 49.696027,
+                "cpu_equivalents": 11.17048981221436
+            },
+            {
+                "operation": "version_only",
+                "trial": 3,
+                "seconds": 6.133965612,
+                "invocations": 669,
+                "peak_active_handles": 20,
+                "child_user_seconds": 22.708888,
+                "child_system_seconds": 46.022208,
+                "cpu_equivalents": 11.205001845060883
+            },
+            {
+                "operation": "compile_objects",
+                "trial": 1,
+                "seconds": 6.818926857,
+                "invocations": 669,
+                "peak_active_handles": 20,
+                "child_user_seconds": 30.661547,
+                "child_system_seconds": 41.715108,
+                "cpu_equivalents": 10.614082907444802,
+                "exit_code": 42
+            },
+            {
+                "operation": "compile_objects",
+                "trial": 2,
+                "seconds": 7.669651682,
+                "invocations": 669,
+                "peak_active_handles": 20,
+                "child_user_seconds": 34.197318,
+                "child_system_seconds": 46.908447,
+                "cpu_equivalents": 10.574895492366117,
+                "exit_code": 42
+            },
+            {
+                "operation": "compile_objects",
+                "trial": 3,
+                "seconds": 6.80477846,
+                "invocations": 669,
+                "peak_active_handles": 20,
+                "child_user_seconds": 30.947187,
+                "child_system_seconds": 41.155816,
+                "cpu_equivalents": 10.59593687345407,
+                "exit_code": 42
+            }
+        ]
+    },
+    "shell_comparison": "shell 0.04 0.00 0.02\nphp 0.04661126\nshell 0.04 0.01 0.02\nphp 0.040943337\nshell 0.04 0.00 0.02\nphp 0.039672927\nshell 0.03 0.00 0.03\nphp 0.041123573\nshell 0.04 0.00 0.03\nphp 0.041855969\n",
+    "compiler_trials": [
+        {
+            "trial": 1,
+            "measurements": [
+                {
+                    "phase": "cold",
+                    "seconds": 19.538742498,
+                    "php_peak_bytes": 738050344,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 5.097879214,
+                    "php_peak_allocated_bytes": 751099904,
+                    "php_retained_bytes": 734932696,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42
+                },
+                {
+                    "phase": "unchanged",
+                    "seconds": 1.227192333,
+                    "php_peak_bytes": 743500760,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.5401264569999995,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740181744,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42
+                },
+                {
+                    "phase": "body_edit",
+                    "seconds": 1.614935369,
+                    "php_peak_bytes": 743443784,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.5701608429999991,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740912872,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343552,
+                    "exit_code": 43
+                }
+            ]
+        },
+        {
+            "trial": 2,
+            "measurements": [
+                {
+                    "phase": "cold",
+                    "seconds": 18.16663005,
+                    "php_peak_bytes": 738050344,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 5.015478256000001,
+                    "php_peak_allocated_bytes": 751099904,
+                    "php_retained_bytes": 734932696,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42
+                },
+                {
+                    "phase": "unchanged",
+                    "seconds": 1.076553305,
+                    "php_peak_bytes": 743500760,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.44978233800000034,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740181744,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42
+                },
+                {
+                    "phase": "body_edit",
+                    "seconds": 1.188742528,
+                    "php_peak_bytes": 743443784,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.3519675160000002,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740912872,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343552,
+                    "exit_code": 43
+                }
+            ]
+        },
+        {
+            "trial": 3,
+            "measurements": [
+                {
+                    "phase": "cold",
+                    "seconds": 15.376110875,
+                    "php_peak_bytes": 738050344,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 4.012537565,
+                    "php_peak_allocated_bytes": 751099904,
+                    "php_retained_bytes": 734932696,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42
+                },
+                {
+                    "phase": "unchanged",
+                    "seconds": 0.860708066,
+                    "php_peak_bytes": 743500760,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.34215275000000034,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740181744,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42
+                },
+                {
+                    "phase": "body_edit",
+                    "seconds": 1.184449048,
+                    "php_peak_bytes": 743443784,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.3434429190000001,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740912872,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343552,
+                    "exit_code": 43
+                }
+            ]
+        }
+    ],
+    "summary": {
+        "cold": {
+            "median_seconds": 18.16663005,
+            "min_seconds": 15.376110875,
+            "max_seconds": 19.538742498
+        },
+        "unchanged": {
+            "median_seconds": 1.076553305,
+            "min_seconds": 0.860708066,
+            "max_seconds": 1.227192333
+        },
+        "body_edit": {
+            "median_seconds": 1.188742528,
+            "min_seconds": 1.184449048,
+            "max_seconds": 1.614935369
+        },
+        "version_only": {
+            "median_seconds": 6.610198858,
+            "min_seconds": 6.133965612,
+            "max_seconds": 7.972987864,
+            "median_cpu_equivalents": 11.17048981221436
+        },
+        "compile_objects": {
+            "median_seconds": 6.818926857,
+            "min_seconds": 6.80477846,
+            "max_seconds": 7.669651682,
+            "median_cpu_equivalents": 10.59593687345407
+        }
+    }
+}

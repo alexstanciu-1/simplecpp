@@ -1,0 +1,14 @@
+namespace parse;
+
+// Child order:
+// block: statements in source order
+// function_declaration: name, parameter_list, return-type syntax (name), block
+// return_statement: optional value expression
+// call_expression: callee expression, followed by argument expressions
+// name/integer_literal: leaves; spelling is retained through span, not copied
+// The initial parameter_list is empty; parameter syntax is not implemented yet.
+class Syntax_Tree {
+    public uint32 $source_file_id = 0;
+    // Flat syntax storage. File_Frontend owns the entity and entry-body roots.
+    public $nodes vector<syntax_node> = [];
+}

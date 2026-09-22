@@ -1,0 +1,1 @@
+PHP bootstrap-loaded object_compilation output write and link_configuration key write both throw Error. Native enforcement is not claimed.

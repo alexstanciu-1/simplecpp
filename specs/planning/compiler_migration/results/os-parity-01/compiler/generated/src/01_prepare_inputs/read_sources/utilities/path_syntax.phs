@@ -1,0 +1,65 @@
+
+
+/* Pure source-path spelling rules; filesystem and host selection stay in Source_Paths. */
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Source_Path_Syntax {
+    /** @compiler-api Join path spellings without canonicalization or checking existence; relative must be relative. */
+    public static function join(string $base, string $relative): string {
+        if (str_ends_with($base, "/")) {
+            return $base . $relative;
+        }
+        return $base . "/" . $relative;
+    }
+
+    // Interpret path syntax on the host that will resolve and read it.
+    /** @compiler-internal Host-specific path syntax check used by resolve; does not access the filesystem. */
+    public static function is_absolute(string $path, bool $windows): bool {
+        if (!$windows) {
+            return str_starts_with($path, "/");
+        }
+        if (str_starts_with($path, "/") || str_starts_with($path, "\\")) {
+            return true;
+        }
+        return (string_byte_len($path) >= 3) && (string_byte_slice($path, 1, 1) === ":")
+            && ((string_byte_slice($path, 2, 1) === "/") || (string_byte_slice($path, 2, 1) === "\\"));
+    }
+
+    // Source-language membership policy for the current PHP++ frontend.
+    /** @compiler-internal Source membership predicate for discovery; suffix recognition does not parse a file. */
+    public static function is_source(string $path): bool {
+        return str_ends_with($path, ".phs");
+    }
+}

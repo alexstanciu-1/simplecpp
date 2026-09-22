@@ -1,0 +1,72 @@
+
+
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** @compiler-internal Pure selection of fixed read tasks from a discovered snapshot. */
+class Source_Read_Selection {
+    /**
+     * @compiler-api Select immutable file/version tasks: all live files on full, otherwise missing buffers.
+     * Selection reads metadata only; it does not establish that filesystem bytes are still current.
+     * @return list<source_read_task>
+     */
+    public static function select(Source_Set $sources, bool $full_rebuild): vector<source_read_task> {
+        $tasks vector<source_read_task> = [];
+        foreach ($sources->files  as $file) {
+            if ($file->change_state === file_change::deleted) {
+                continue;
+            }
+            if ($file->change_state === file_change::moved) {
+                throw new \scpp_portability_exception("Unsupported source change: moved");
+            }
+
+            // Source validity is independent of unfinished semantic/backend work.
+            if (($full_rebuild) || ($file->buffer === null)) {
+                $tasks[] = new source_read_task($file->id,
+                    $file->full_path, $file->mtime, $file->size);
+            }
+        }
+        return $tasks;
+    }
+
+}

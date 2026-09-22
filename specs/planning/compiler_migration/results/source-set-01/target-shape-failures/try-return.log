@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py", line 213, in <module>
+    main()
+  File "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py", line 193, in main
+    native = run('native', ['php', cli, 'run', '--build-runtime'], cwd=output)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py", line 74, in run
+    assert (proc.returncode == 0) == ok, (label, proc.stdout, proc.stderr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('native', '', 'STAN pre-build check failed: 1 compile-errors\n\n[compile-error] Function `read_sources\\Source_Set::to_json` declared as `string` may exit without returning a value.\n  at src/01_prepare_inputs/read_sources/data/store.phs:205\n\nBuild stopped before C++ generation/compilation.\nTo build without STAN, run `scpp build --no-stan`.\nRun `scpp stan` for the full static-analysis report.\n')

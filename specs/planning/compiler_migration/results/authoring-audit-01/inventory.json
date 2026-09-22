@@ -1,0 +1,4903 @@
+{
+    "scope": [
+        "compiler/src",
+        "compiler/src-runtime-preparation",
+        "compiler/tool_process"
+    ],
+    "excluded": "tests subdirectories; external bootstrap/composition files; historical sources",
+    "php_version": "8.5.7",
+    "file_count": 301,
+    "converter_owners": {
+        "tools/php_portability/src/converter.php": "4e3c84778b22212fe44d9fc95522768b6129e489d340fa1dc3cd13f470e961b3",
+        "tools/php_portability/src/import_policy.php": "9810a3e3e72cb8f2adc470eb2f7f772acb332dbccc67ab867dda995c07be8680",
+        "tools/php_portability/src/exception_policy.php": "5f93ea4f918aba7aacc0e2fe5846e5595f2e3a1a7941ef4223ac0b6f75da7b44",
+        "tools/php_portability/function_map.php": "3961cabc0f66e0c7092ae81194abf80f3d83f1499a02f18cbe9e97de1f0b037f"
+    },
+    "accepted_syntax_only": 11,
+    "token_counts": {
+        "T_CLONE": {
+            "files": 8,
+            "occurrences": 12
+        },
+        "T_ELLIPSIS": {
+            "files": 43,
+            "occurrences": 97
+        },
+        "T_FINALLY": {
+            "files": 14,
+            "occurrences": 21
+        },
+        "T_FN": {
+            "files": 43,
+            "occurrences": 69
+        },
+        "T_INSTANCEOF": {
+            "files": 55,
+            "occurrences": 164
+        },
+        "T_MATCH": {
+            "files": 46,
+            "occurrences": 63
+        },
+        "T_NULLSAFE_OBJECT_OPERATOR": {
+            "files": 109,
+            "occurrences": 373
+        },
+        "T_READONLY": {
+            "files": 144,
+            "occurrences": 1236
+        },
+        "T_TRAIT": {
+            "files": 41,
+            "occurrences": 41
+        }
+    },
+    "files": {
+        "compiler/src-runtime-preparation/bootstrap.php": {
+            "sha256": "d92094bd8cf9b214ec5ef5af5d4396e70e7f1157c4413525d0bab8be0b53d261",
+            "features": [],
+            "conversion": "compiler/src-runtime-preparation/bootstrap.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/bridge.php": {
+            "sha256": "e44381b07da4ca379b7c8e7d5e9cae77c982e4287560aa24fbb12e3e4d8fb711",
+            "features": {
+                "T_READONLY": [
+                    9,
+                    10,
+                    12,
+                    14,
+                    17,
+                    17
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    23,
+                    320,
+                    363
+                ],
+                "T_FN": [
+                    341
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/bridge.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/candidate.php": {
+            "sha256": "d809d9e5c0a96b051d74db26d4ec0b975581b63b1957404a3fa72f571827ed96",
+            "features": {
+                "T_READONLY": [
+                    9,
+                    10,
+                    13,
+                    13,
+                    14,
+                    14,
+                    15,
+                    15,
+                    16,
+                    16,
+                    17,
+                    17,
+                    17,
+                    17
+                ],
+                "T_FINALLY": [
+                    69
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/candidate.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/clang.php": {
+            "sha256": "dc38439c656ff57b6ca12a52bfdba8f569608aa0c2623d06e84b09d9b256f57a",
+            "features": {
+                "T_READONLY": [
+                    10,
+                    11,
+                    12,
+                    13,
+                    14
+                ],
+                "T_ELLIPSIS": [
+                    52,
+                    90,
+                    100,
+                    117
+                ],
+                "T_FINALLY": [
+                    135
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/clang.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/definitions.php": {
+            "sha256": "557338df3d764f5b9ce0dfe8f2efa9a166dae4e19427ca32fa6baed1f11dfdf9",
+            "features": {
+                "T_READONLY": [
+                    10,
+                    12,
+                    14,
+                    16
+                ],
+                "T_ELLIPSIS": [
+                    117,
+                    117,
+                    155,
+                    226,
+                    227,
+                    228,
+                    229
+                ],
+                "T_MATCH": [
+                    150,
+                    220
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/definitions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/arguments.php": {
+            "sha256": "041ed487d6fcfe7e1d263bef07228356c2b144c42efffe4ce3f5d1ec350fcda5",
+            "features": {
+                "T_INSTANCEOF": [
+                    21
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/arguments.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/catalog.php": {
+            "sha256": "7e4150f1d5ee320fafbcd28a06de127707fea5c8b880a985967b959ab6a57ab1",
+            "features": {
+                "T_FN": [
+                    153,
+                    189
+                ],
+                "T_INSTANCEOF": [
+                    162,
+                    165,
+                    191,
+                    255
+                ],
+                "T_MATCH": [
+                    208
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/catalog.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/compiler_bridge.php": {
+            "sha256": "0a2cf6cf746000b8a2e28f212455b4db05f9e73f460752b4a9bccc327ac2eab3",
+            "features": {
+                "T_READONLY": [
+                    10,
+                    10,
+                    11,
+                    11,
+                    18,
+                    18,
+                    27
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    52,
+                    59,
+                    80,
+                    80,
+                    128,
+                    209,
+                    294
+                ],
+                "T_FINALLY": [
+                    104,
+                    110,
+                    319
+                ],
+                "T_ELLIPSIS": [
+                    128
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/compiler_bridge.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/join.php": {
+            "sha256": "28cfe6a7278625e294707d72a7719bc8bc16abb3aa57dd10310905df4362a577",
+            "features": {
+                "T_READONLY": [
+                    11
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/prepare.php": {
+            "sha256": "be42b5f475a33fc8f343b19dbe276f6746b391e6f5b493fb336f79b32d97a0f5",
+            "features": {
+                "T_READONLY": [
+                    10
+                ],
+                "T_FINALLY": [
+                    23
+                ],
+                "T_FN": [
+                    53,
+                    56,
+                    75
+                ],
+                "T_ELLIPSIS": [
+                    66,
+                    66,
+                    76,
+                    80,
+                    80,
+                    85,
+                    85,
+                    98,
+                    99,
+                    105,
+                    105
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/prepare.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/requests.php": {
+            "sha256": "f2cbdec8f8fb3411786cd77da01ce95117a732161d5cccf9f92d6ccb1205877b",
+            "features": {
+                "T_ELLIPSIS": [
+                    38,
+                    38,
+                    108
+                ],
+                "T_FN": [
+                    65,
+                    116
+                ],
+                "T_INSTANCEOF": [
+                    120,
+                    137,
+                    143,
+                    149
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/requests.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/store.php": {
+            "sha256": "43c15e2501483b24ac111aec1b40f8d04a0c35a8dfa904cacc674684dc40ebcd",
+            "features": {
+                "T_READONLY": [
+                    10
+                ],
+                "T_FINALLY": [
+                    51
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/families/structures.php": {
+            "sha256": "b38b12152f9f37bf20e96e53234c16bb9338f54dcda5a60e2a3333430f906498",
+            "features": {
+                "T_READONLY": [
+                    12,
+                    13,
+                    13,
+                    13,
+                    14,
+                    14,
+                    15,
+                    15,
+                    22,
+                    23,
+                    23,
+                    23,
+                    24,
+                    31,
+                    31,
+                    32,
+                    41,
+                    41,
+                    42,
+                    42,
+                    42,
+                    43,
+                    43,
+                    52,
+                    52,
+                    53,
+                    53,
+                    53,
+                    54,
+                    54,
+                    54,
+                    55,
+                    56,
+                    63,
+                    64,
+                    71,
+                    71,
+                    72,
+                    72,
+                    73
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/families/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/files.php": {
+            "sha256": "417b5ac6342ab749274cf2e2db2f7949cd8580ab795095f79decf7ed42ab6911",
+            "features": {
+                "T_FN": [
+                    66
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/files.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/main.php": {
+            "sha256": "cd0dccb1271d189edc90d4e1a498e318844a9eca160bb6f2a3bd88890fe27cc5",
+            "features": [],
+            "conversion": "compiler/src-runtime-preparation/main.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/metadata.php": {
+            "sha256": "cd5390270225be1f045d5e0bb157790943dd2ebf871b24d2c7f4c0215792dbb2",
+            "features": {
+                "T_FN": [
+                    211
+                ],
+                "T_ELLIPSIS": [
+                    251
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/metadata.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/native_types.php": {
+            "sha256": "e9fc490e441e7c72355dd1750f9fd001406077464e6cce9e7b154a71078ba708",
+            "features": {
+                "T_READONLY": [
+                    10,
+                    11,
+                    11,
+                    12,
+                    12,
+                    13,
+                    13,
+                    13
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/native_types.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/prepare.php": {
+            "sha256": "c25a6252575da889a369b34d855212977491680fa04773096f7b1151497002e8",
+            "features": {
+                "T_FINALLY": [
+                    16,
+                    85,
+                    92
+                ],
+                "T_ELLIPSIS": [
+                    141,
+                    141,
+                    141,
+                    142,
+                    153
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    259
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/prepare.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/project/adapter.php": {
+            "sha256": "747dcd542193f7bf9895a01c477dc5695093b6414182a5538e344ec45c24ef60",
+            "features": [],
+            "conversion": "compiler/src-runtime-preparation/project/adapter.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/project/module.php": {
+            "sha256": "061060bc6af7efa6d1d5cd2624f95be348a075b8f1a36a3cabbdb1b2349d6c0a",
+            "features": [],
+            "conversion": "compiler/src-runtime-preparation/project/module.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/project/source_adapter.php": {
+            "sha256": "a478d35dc67ec3ef907c5b34fc925691e7d303f6c73badf0249c3cb209a893a4",
+            "features": {
+                "T_FN": [
+                    24,
+                    56
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    43,
+                    57,
+                    57,
+                    57,
+                    57
+                ],
+                "T_INSTANCEOF": [
+                    44
+                ],
+                "T_MATCH": [
+                    49
+                ],
+                "T_ELLIPSIS": [
+                    59
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/project/source_adapter.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/project/structures.php": {
+            "sha256": "7ce7f5d2af29a686f70112c800fa61ebcdff6b8b52ec59bbd5275ca49fbc705e",
+            "features": {
+                "T_READONLY": [
+                    7,
+                    7,
+                    8,
+                    8,
+                    19,
+                    19,
+                    20,
+                    20,
+                    20,
+                    21,
+                    21,
+                    21,
+                    22,
+                    30,
+                    30
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/project/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/publication.php": {
+            "sha256": "1a7872affb2f766fa4f9f62aaea869a014faef0d8d51f7465cf74e38aa5b1e01",
+            "features": {
+                "T_FINALLY": [
+                    78
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/publication.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/records.php": {
+            "sha256": "dd4d1fa4337cae2dcf1c2d178ee5e446b53ee1320270cdd561e5afdc4139bf30",
+            "features": {
+                "T_FN": [
+                    64
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/records.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/request_adapter.php": {
+            "sha256": "cffe67abb48b68d852a51b0f5a424364a3b22d1de2d7c9cd4b7a5feee2c3c9a1",
+            "features": {
+                "T_READONLY": [
+                    10,
+                    11,
+                    12,
+                    13
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/request_adapter.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/requests.php": {
+            "sha256": "8ff0a78e19a87f96033af8e6f978732359320e37f75a319e1f69b899eedfbbb5",
+            "features": {
+                "T_ELLIPSIS": [
+                    36,
+                    36
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/requests.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/reservation.php": {
+            "sha256": "4a2391076a2f7dcea9fe40420859e35aa4f82845a3703a7454a75ec2b453a618",
+            "features": {
+                "T_READONLY": [
+                    10
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/reservation.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/resources.php": {
+            "sha256": "f4e61f736ded0816b65a5be321a5726ccaac0bdc7b520cb8e80735b582a77465",
+            "features": {
+                "T_ELLIPSIS": [
+                    53
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/resources.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/storage.php": {
+            "sha256": "e22f349fc4d40985ab2c6fd187f04e1ef29c2ffcc60c64e697fa551b909406c4",
+            "features": {
+                "T_ELLIPSIS": [
+                    58
+                ]
+            },
+            "conversion": "compiler/src-runtime-preparation/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src-runtime-preparation/symbols.php": {
+            "sha256": "0a3c219a25f0bd6b1007238b1a351099601b73fb959abcb491b70f884b8cfdd1",
+            "features": [],
+            "conversion": "compiler/src-runtime-preparation/symbols.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/data/family_preparation.php": {
+            "sha256": "954f30f4e08a31d10f9adfb28b3ce8e9d46349cde5cbd96cfe1332649662788a",
+            "features": {
+                "T_READONLY": [
+                    18,
+                    18,
+                    19,
+                    19,
+                    26,
+                    26,
+                    27,
+                    27,
+                    27,
+                    35,
+                    35,
+                    36,
+                    43,
+                    43,
+                    44,
+                    44
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/data/family_preparation.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/data/inputs.php": {
+            "sha256": "65239bfa637dd40e14d890ed80e851ab5f4f108d1dde01b525f56c61bf2768e2",
+            "features": {
+                "T_READONLY": [
+                    12,
+                    12,
+                    13,
+                    19,
+                    19,
+                    33,
+                    33,
+                    34,
+                    34,
+                    35,
+                    35,
+                    35,
+                    36,
+                    36,
+                    36,
+                    37,
+                    95
+                ],
+                "T_FN": [
+                    69,
+                    87
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/data/inputs.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/data/package.php": {
+            "sha256": "b488992598badbde9400b144e627bc2faa36fd5caa5ba391b93e85c908d5ab5b",
+            "features": {
+                "T_READONLY": [
+                    21,
+                    21,
+                    22,
+                    22,
+                    23,
+                    23,
+                    24,
+                    24,
+                    25,
+                    25,
+                    26,
+                    26,
+                    27,
+                    27,
+                    27,
+                    28,
+                    28,
+                    104
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    62,
+                    62,
+                    65,
+                    66,
+                    66,
+                    66,
+                    66,
+                    66
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/data/package.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/data/project.php": {
+            "sha256": "9f7cb7a626f4b86ff965c8db4a1f7cc6de2102a070786ec79175dc0632489c76",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    14
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/data/project.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/data/runtime.php": {
+            "sha256": "557ea3c8f783a2cd41950824bbb577523415983d417d9e65928e7ca85efff646",
+            "features": {
+                "T_READONLY": [
+                    26,
+                    27,
+                    27,
+                    35,
+                    35,
+                    36,
+                    36,
+                    37,
+                    38
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/data/runtime.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/family_adapter.php": {
+            "sha256": "1974e2ea0c53097c88fb0d8a2e719162095cefdcdce7aeb6a869efc1a5238372",
+            "features": {
+                "T_ELLIPSIS": [
+                    66
+                ],
+                "T_INSTANCEOF": [
+                    69,
+                    74
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/family_adapter.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/family_operations.php": {
+            "sha256": "37c450588247399a2c23e46f71cba29964540c1e2bb74b7387db3f81a7a3e14f",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    20
+                ],
+                "T_INSTANCEOF": [
+                    41,
+                    63,
+                    67,
+                    70
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/family_operations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/family_preparation_join.php": {
+            "sha256": "0af40421dd025211bcdcdc7187885d1f6aa09786d9880c2a6c641a9f596a79a6",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    14
+                ],
+                "T_INSTANCEOF": [
+                    24
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    40,
+                    40,
+                    41,
+                    45,
+                    59
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/family_preparation_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/bindings.php": {
+            "sha256": "23be70e955751c6746fb3f492de725c2c42df365ad336348776c24d89fb8c573",
+            "features": {
+                "T_TRAIT": [
+                    16
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/bindings.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/callables.php": {
+            "sha256": "00cddb301c92c1e8f63626dc62b3534eb515baafcd1a9f883d6d3f8f371f9196",
+            "features": {
+                "T_TRAIT": [
+                    21
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    40,
+                    65,
+                    74,
+                    106,
+                    122,
+                    166,
+                    166
+                ],
+                "T_INSTANCEOF": [
+                    41,
+                    107
+                ],
+                "T_MATCH": [
+                    79
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/callables.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/lifecycle.php": {
+            "sha256": "bb175e846f252c95b235f9d5f3da53012d77f463a5faea8494fb82c50c38820d",
+            "features": {
+                "T_TRAIT": [
+                    20
+                ],
+                "T_MATCH": [
+                    128
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/lifecycle.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php": {
+            "sha256": "8741a55fa4d572d959ce119808d632d065d99decc1cfcdc0d7f1900a847bc551",
+            "features": {
+                "T_TRAIT": [
+                    16
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/package_types.php": {
+            "sha256": "aa925d968ebc15a3434056ef8726bd54bba818811a0950b0eeed0ced6864ae4e",
+            "features": {
+                "T_TRAIT": [
+                    19
+                ],
+                "T_MATCH": [
+                    43
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    73,
+                    77,
+                    78,
+                    83,
+                    135,
+                    148,
+                    153,
+                    158,
+                    172,
+                    179
+                ],
+                "T_INSTANCEOF": [
+                    74,
+                    89,
+                    149,
+                    154
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/package_types.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/records.php": {
+            "sha256": "0dbbf1f10e4fab0999a48c4084327d7899d0d3c76ee7825b18cda8f4f295bb6c",
+            "features": {
+                "T_TRAIT": [
+                    14
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    54,
+                    58,
+                    58
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/records.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/resources.php": {
+            "sha256": "b35535a59ce5d189513e17a34eb4ccf9c6898aefed817ceff0d33795bb5dac5c",
+            "features": {
+                "T_TRAIT": [
+                    12
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    32,
+                    36
+                ],
+                "T_ELLIPSIS": [
+                    54
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/resources.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/storage.php": {
+            "sha256": "e26e130c4a15ab40d85c1f458e039c80e0fb5a043b97e9bd992f58d09af70e82",
+            "features": {
+                "T_TRAIT": [
+                    12
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    39,
+                    43,
+                    112
+                ],
+                "T_FN": [
+                    60
+                ],
+                "T_ELLIPSIS": [
+                    82
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/handlers/type_definitions.php": {
+            "sha256": "ff15a99e01bdddec1d403f88bf92203b8a3e68685aef9572f94b464dd6e5e1be",
+            "features": {
+                "T_TRAIT": [
+                    29
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/handlers/type_definitions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/input_join.php": {
+            "sha256": "c438859a1f19b8ce33a7d841845d5a14ed928e1cbd0867ecd5adb040b8f02c61",
+            "features": {
+                "T_READONLY": [
+                    15,
+                    16,
+                    16
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    25,
+                    74,
+                    105
+                ],
+                "T_ELLIPSIS": [
+                    92,
+                    92
+                ],
+                "T_FN": [
+                    105
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/input_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/main_load_runtime.php": {
+            "sha256": "63bbf4170007439d42e7355dd6a82ca9f3535d54b77ffebf8ea97d45b233119a",
+            "features": {
+                "T_READONLY": [
+                    27,
+                    28
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/main_load_runtime.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/package_adapter.php": {
+            "sha256": "eb63a837ccdfd413383b0b71a0f24ecd6d8214fd5749f791de21e7a95b0a96e5",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    111,
+                    112,
+                    116,
+                    160,
+                    191
+                ],
+                "T_INSTANCEOF": [
+                    117
+                ],
+                "T_MATCH": [
+                    138
+                ],
+                "T_FN": [
+                    177
+                ],
+                "T_ELLIPSIS": [
+                    186,
+                    186
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/package_adapter.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/prepare_families.php": {
+            "sha256": "35f35db9341e7eaa042fb635b6532962a2ee0cd2599ea1e70c8493c6e51be6db",
+            "features": {
+                "T_READONLY": [
+                    19,
+                    19,
+                    20,
+                    20
+                ],
+                "T_INSTANCEOF": [
+                    55
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/prepare_families.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/project_import.php": {
+            "sha256": "ec6bda2a8d4b09df366666ebadd0579dd2308706b433f12f263d57b3344b2de8",
+            "features": {
+                "T_FN": [
+                    57
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/project_import.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/runtime_import.php": {
+            "sha256": "ef5eb876479cf3abda19d72908b30e9f4d6a03f4fd518130a5f4d63b1a03d622",
+            "features": {
+                "T_FN": [
+                    26,
+                    59
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    86
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/runtime_import.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/utilities/callable_bindings.php": {
+            "sha256": "17d8cf71baeaa65a3ec9a778a86db9ab866b9cddf946c0c1c0cce90eb6ccbf53",
+            "features": [],
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/utilities/callable_bindings.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php": {
+            "sha256": "12664aedf13eaa7e33b0610b2280185b61d9e043df5fe2672580c504cf89b564",
+            "features": {
+                "T_ELLIPSIS": [
+                    58
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_manifest/data/result.php": {
+            "sha256": "390893ad3e8029a476d943d9c648d69951f2f012c63f2149a0d35f0b6fa23403",
+            "features": [],
+            "conversion": "compiler/src/01_prepare_inputs/read_manifest/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_manifest/main_read_manifest.php": {
+            "sha256": "a5f410d8e7fb85bc077b5ebb606d6c74cd2ce33c9997cefd150d6d0d26b0f62b",
+            "features": {
+                "T_READONLY": [
+                    25
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_manifest/main_read_manifest.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php": {
+            "sha256": "dcbb86a5ce90734e7c1c8425d8d7569b00c2469b56ea1797c69b89dba8f6eff8",
+            "features": {
+                "T_INSTANCEOF": [
+                    33
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/data/buffer.php": {
+            "sha256": "a401d76baa1e60c79fedd5dc1b68b368f84fb2a4da39adbe8bbb4b2bb6f0515d",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26,
+                    27,
+                    28
+                ]
+            },
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/data/result.php": {
+            "sha256": "f0a5a05cc29b2f16bbb751d777968218c8477b49e10cb1508a0113d95e8624b5",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26,
+                    27
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/data/store.php": {
+            "sha256": "8d320706436101b405d8689a7a3995c9191e015119a62cd9ecaecb994e75e1ea",
+            "features": {
+                "T_CLONE": [
+                    100,
+                    106
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/data/structures.php": {
+            "sha256": "ef9607320e11374851527aa76d551ebb49b727e29bb1aa8b6e08f437f701bf4e",
+            "features": {
+                "T_READONLY": [
+                    33,
+                    34,
+                    35,
+                    36,
+                    39,
+                    51,
+                    52,
+                    53,
+                    68,
+                    69,
+                    70,
+                    71
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/main_discover_sources.php": {
+            "sha256": "e2be2b690fe5f1d4d7402757fdf0444ee057bee3d63241149b5d8e83901ef9e6",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26
+                ],
+                "T_CLONE": [
+                    135
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/main_discover_sources.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/main_read_sources.php": {
+            "sha256": "da200a17adb91e15b1e2961c82af7296533bbed17a889ce8eb78dac19abc25b2",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/main_read_sources.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/read.php": {
+            "sha256": "d9f0ed8eaab3cd4437ea786312166b1f2614dd93012be474c1d490746e66c77b",
+            "features": {
+                "T_FINALLY": [
+                    56
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/read.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/scan.php": {
+            "sha256": "3ca2e0cb47a1c892320f5378282eea1a5354080a19d88bd49e5e8f0d025d3ec2",
+            "features": [],
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/scan.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/scan_join.php": {
+            "sha256": "aec86c844302a75b8f3a69ea6ce6c21c9590efcdf66a907725c4ca33cb7b4bdc",
+            "features": {
+                "T_READONLY": [
+                    22,
+                    23,
+                    24
+                ],
+                "T_CLONE": [
+                    64
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/scan_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/snapshot_join.php": {
+            "sha256": "2d596fcf154d74ae123f51ff8e95e97a58c6b4f40e79f728b591baa9cae879c6",
+            "features": {
+                "T_READONLY": [
+                    22,
+                    23
+                ],
+                "T_CLONE": [
+                    71,
+                    89
+                ]
+            },
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/snapshot_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/utilities/path_syntax.php": {
+            "sha256": "d9edd7fc580ca7c04f5fefa42ea93e678a493c51b8f144dc2043114991a027bd",
+            "features": [],
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/01_prepare_inputs/read_sources/utilities/paths.php": {
+            "sha256": "cc71277f23e30e78c98d66c5dd93852fd1b0567f4e79a153c769a059e31a49e9",
+            "features": [],
+            "conversion": "compiler/src/01_prepare_inputs/read_sources/utilities/paths.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/02_tokenize/join.php": {
+            "sha256": "0af7ec9ccd1ea6bd71d5138b00c81137c34bd0748d8130980e28ead9dc40d71f",
+            "features": {
+                "T_READONLY": [
+                    26,
+                    27,
+                    28
+                ]
+            },
+            "conversion": "compiler/src/02_tokenize/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/02_tokenize/main_tokenize.php": {
+            "sha256": "cd85b5fa4fda332e8732d2c5baaf90a3ab423d10f1a1eea1b598aef318c59afe",
+            "features": {
+                "T_READONLY": [
+                    29,
+                    30,
+                    31
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    122
+                ]
+            },
+            "conversion": "compiler/src/02_tokenize/main_tokenize.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/02_tokenize/store.php": {
+            "sha256": "550afb04b9fde1413e7372c5667dca11a23518ce0b09bba2bd9867ea54e51510",
+            "features": {
+                "T_READONLY": [
+                    22
+                ]
+            },
+            "conversion": "compiler/src/02_tokenize/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/02_tokenize/structures.php": {
+            "sha256": "761f8ea93f3b9140250dd1a32c51496670732e526c76f670f805880cb15fb559",
+            "features": [],
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/02_tokenize/tokenize.php": {
+            "sha256": "03172258b4038114b7a5d1528d4e34f7175c2b26a765575fc2d55dc08757da85",
+            "features": [],
+            "conversion": "compiler/src/02_tokenize/tokenize.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/data/nodes.php": {
+            "sha256": "0ab958fe3fa79adb31a062db0efd00d14fc3329b0593a47a241e3097c7620e33",
+            "features": [],
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/03_parse/data/result.php": {
+            "sha256": "406544a1cfe5d7afb08d22c7ad0d7e34af95261dcd5cdc2a827008fb6018c4e2",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    48,
+                    49
+                ]
+            },
+            "conversion": "compiler/src/03_parse/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/data/role_views.php": {
+            "sha256": "62a5255811c57c30b128a755c341bcc0e7424e341e393c3ac61b76d4801ed00b",
+            "features": {
+                "T_READONLY": [
+                    24,
+                    25,
+                    26,
+                    27,
+                    42,
+                    43,
+                    44,
+                    58,
+                    59,
+                    60,
+                    74,
+                    75,
+                    86,
+                    86,
+                    86,
+                    93,
+                    93,
+                    100,
+                    100,
+                    101,
+                    108,
+                    108,
+                    115,
+                    115,
+                    122,
+                    122,
+                    129,
+                    129,
+                    130
+                ]
+            },
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/03_parse/data/store.php": {
+            "sha256": "e51e3fe22d79b5f72f72df7af769ce12abd5e3a05ce345de59c5b705228c033f",
+            "features": [],
+            "conversion": "compiler/src/03_parse/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/data/structures.php": {
+            "sha256": "17e932ac9bbe73d0ff79c576ea95f57121d63e2d3e2b47e43d68610235618453",
+            "features": {
+                "T_READONLY": [
+                    40,
+                    41
+                ]
+            },
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/03_parse/data/tree.php": {
+            "sha256": "2d14c9404321c7abe1f417918d15306f52120a2deece1712b3ecacae3c79725b",
+            "features": [],
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/03_parse/handlers/control_statements.php": {
+            "sha256": "5c600a7d1183ca800c5f989bfbab343e3b44c02f4e687357e9acf65d814a3211",
+            "features": {
+                "T_TRAIT": [
+                    21
+                ]
+            },
+            "conversion": "compiler/src/03_parse/handlers/control_statements.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/handlers/declarations.php": {
+            "sha256": "7c82d3d515edc4ef0cc4d4ab9db9a531f02d07180ef6c1e85404d6001037f905",
+            "features": {
+                "T_TRAIT": [
+                    23
+                ],
+                "T_MATCH": [
+                    39
+                ]
+            },
+            "conversion": "compiler/src/03_parse/handlers/declarations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/handlers/expressions.php": {
+            "sha256": "f0c05f88d1e8d27b6e8cc84738d78bcc4add96ded67c835ccceb3e610e5f22da",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ],
+                "T_MATCH": [
+                    109
+                ]
+            },
+            "conversion": "compiler/src/03_parse/handlers/expressions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/handlers/metaprogramming.php": {
+            "sha256": "91d804053197f8a3dd134d66c4bf122e0c28e104faeb7ecbc74fd7b913c77963",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ]
+            },
+            "conversion": "compiler/src/03_parse/handlers/metaprogramming.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/handlers/statements.php": {
+            "sha256": "cec92986fb3e451c2017495fee56a2d1db0ec38ebf69862017e4f0a4126688aa",
+            "features": {
+                "T_TRAIT": [
+                    21
+                ]
+            },
+            "conversion": "compiler/src/03_parse/handlers/statements.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/join.php": {
+            "sha256": "4c4b2d18b47230b7962dd8ec90aecd5e9d23ee4c5d77a73311421eaba36f11a1",
+            "features": {
+                "T_READONLY": [
+                    39,
+                    40,
+                    41,
+                    42
+                ]
+            },
+            "conversion": "compiler/src/03_parse/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/main_parse.php": {
+            "sha256": "5a3f93e850245365db8a31f07ecef78e9d7f09b500bf6be09b221c11f9dde528",
+            "features": {
+                "T_READONLY": [
+                    33,
+                    34,
+                    35,
+                    36
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    127
+                ]
+            },
+            "conversion": "compiler/src/03_parse/main_parse.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/parse_file.php": {
+            "sha256": "f12704efdbfc7df71f6cbf8376ce66c90f2a5412398ea416bd0511c28d71cab2",
+            "features": {
+                "T_READONLY": [
+                    41
+                ]
+            },
+            "conversion": "compiler/src/03_parse/parse_file.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/utilities/binary_syntax.php": {
+            "sha256": "fc04e3381b5e3ad8ff809e4713bb91fe42224d3bbc56ae9f5f18dcc830fbda8b",
+            "features": {
+                "T_MATCH": [
+                    19,
+                    29,
+                    39
+                ]
+            },
+            "conversion": "compiler/src/03_parse/utilities/binary_syntax.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/utilities/metaprogramming_syntax.php": {
+            "sha256": "d84e2975487cae25744a4a7b679e90c9b8476eae8bddffd7cb9d0727f0107de2",
+            "features": {
+                "T_TRAIT": [
+                    15
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    37,
+                    40,
+                    51,
+                    66,
+                    70,
+                    123,
+                    130
+                ]
+            },
+            "conversion": "compiler/src/03_parse/utilities/metaprogramming_syntax.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/utilities/syntax_access.php": {
+            "sha256": "341f0b33f5930288ae585691740a29d05c2679e5ba2c3a21a5dbac1b2f698b20",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    30,
+                    35,
+                    40,
+                    51,
+                    56,
+                    87,
+                    104,
+                    130,
+                    134,
+                    144,
+                    168,
+                    187,
+                    205,
+                    205,
+                    230,
+                    252
+                ],
+                "T_ELLIPSIS": [
+                    238
+                ]
+            },
+            "conversion": "compiler/src/03_parse/utilities/syntax_access.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/03_parse/utilities/syntax_comparer.php": {
+            "sha256": "66c2dd52b22d8906d2b28b875cad0d13b84496659cae78279b90bb9565a3f7d4",
+            "features": {
+                "T_MATCH": [
+                    47
+                ]
+            },
+            "conversion": "compiler/src/03_parse/utilities/syntax_comparer.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/allocation_flow.php": {
+            "sha256": "2163ebd3a5a0564d6be258041610b3d67937cf5f12a5c50fb6c3385f2ef4d411",
+            "features": {
+                "T_READONLY": [
+                    27,
+                    27
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    86,
+                    90,
+                    189,
+                    194
+                ],
+                "T_CLONE": [
+                    148,
+                    278
+                ],
+                "T_MATCH": [
+                    229
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/allocation_flow.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/body.php": {
+            "sha256": "283e4a6a7b4fc8a8b4b84490785b30f32cd2cbfcac6b840a509c8f7f6e25310d",
+            "features": {
+                "T_READONLY": [
+                    55,
+                    55
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/body.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/data/exports.php": {
+            "sha256": "03826b9333b9784f5136615d002b8d17ee28af9d38e709970aff4671216b8f6d",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    15,
+                    15,
+                    16,
+                    23
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/data/exports.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/data/ownership.php": {
+            "sha256": "4059fb51faf0b5a8ce53d8d1b7b336335473721a365dc417c8fbb28daef2c6cc",
+            "features": {
+                "T_READONLY": [
+                    15,
+                    15,
+                    63,
+                    63,
+                    64,
+                    64,
+                    74,
+                    74,
+                    86,
+                    86,
+                    87,
+                    95,
+                    97,
+                    97,
+                    98,
+                    98,
+                    98,
+                    107,
+                    108,
+                    109,
+                    116,
+                    116,
+                    117
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/data/ownership.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/data/result.php": {
+            "sha256": "b8847565aa7a524f71c31fa6d0e1272a8e0ce8dd149d7c32684189c450207118",
+            "features": {
+                "T_READONLY": [
+                    24,
+                    33,
+                    34,
+                    37,
+                    38,
+                    39,
+                    40,
+                    41,
+                    42,
+                    43
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    92,
+                    106,
+                    188
+                ],
+                "T_ELLIPSIS": [
+                    127
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/data/store.php": {
+            "sha256": "01dad6eb30f4f4ab54c6e4908e47ab777138e0634f4d06010ea65a558a3ddc0a",
+            "features": {
+                "T_READONLY": [
+                    26
+                ],
+                "T_FN": [
+                    63
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/data/structures.php": {
+            "sha256": "9b772ad8476b0eee2301b1883795d6d1bd3f65af025d440efb95c8116e17505b",
+            "features": {
+                "T_READONLY": [
+                    44,
+                    47,
+                    48,
+                    49,
+                    76,
+                    77,
+                    80,
+                    81,
+                    82,
+                    95,
+                    96,
+                    115,
+                    115,
+                    116,
+                    116,
+                    127,
+                    127
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/export_join.php": {
+            "sha256": "3ace9e0860b5674edfb973810a849680ba44c6bca4598ab77e47f3ce12a9dfa7",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    14,
+                    15
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/export_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/export_worker.php": {
+            "sha256": "5016f20c96f065fbb74f9d9e6e85be9dcad5d76ca78a3717349057626a8c0267",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    25
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/export_worker.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/flow.php": {
+            "sha256": "fd6ef417b7d331caf7df4fb77ec063f07f7c1b8b909d4eed250310e3f0654862",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    42
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/flow.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/handlers/locals.php": {
+            "sha256": "030fc9136e96ef02e404678f161dde8849b0358d0a0c1c33e100486f9cc7d37f",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    60
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/handlers/locals.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/handlers/statements.php": {
+            "sha256": "71e86221a9d77f7d69a0dd1c5e2a7194bac48263e4ec4b7665263aa51f69bcfc",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ],
+                "T_MATCH": [
+                    34,
+                    40,
+                    107
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    47,
+                    58
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/handlers/statements.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/handlers/values.php": {
+            "sha256": "a80ac4dec47ef926b7d7e9368739ccd18333086b581ec8423f5944bca12fca4e",
+            "features": {
+                "T_TRAIT": [
+                    18
+                ],
+                "T_MATCH": [
+                    35
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/handlers/values.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/join.php": {
+            "sha256": "b343c2d5a6f24720a959ddf4dd8ff4b66a4b75d6a9841fca2c1eac138cc8c5e6",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26,
+                    27,
+                    28
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    64
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/main_analyze_lifetimes.php": {
+            "sha256": "33906e84ec0fc79a8b528365bbdf16a8131bbd5942af04066f7ae091afdddf8b",
+            "features": {
+                "T_READONLY": [
+                    29,
+                    30,
+                    31,
+                    32
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    117,
+                    118
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/main_analyze_lifetimes.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/ownership_join.php": {
+            "sha256": "297a718f16a05030d37e808db26de46c1c2e784cb98467a071e7ddb67bd4bb73",
+            "features": {
+                "T_READONLY": [
+                    13,
+                    13
+                ],
+                "T_INSTANCEOF": [
+                    34,
+                    108
+                ],
+                "T_ELLIPSIS": [
+                    49,
+                    99
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/ownership_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/ownership_preparation.php": {
+            "sha256": "c596d45ea2d050988a3899f222daab1d781b1ff99a32d95beabb7c1b78900a4b",
+            "features": {
+                "T_INSTANCEOF": [
+                    50,
+                    50,
+                    123,
+                    125,
+                    128
+                ],
+                "T_ELLIPSIS": [
+                    65,
+                    139,
+                    139
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    94
+                ],
+                "T_MATCH": [
+                    208
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/ownership_preparation.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/ownership_worker.php": {
+            "sha256": "fa76f0584e90443a80eee9555557cf999710070bb0ecae5699497dfe5bed25de",
+            "features": {
+                "T_INSTANCEOF": [
+                    17
+                ],
+                "T_ELLIPSIS": [
+                    75
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/ownership_worker.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/resource_aliasing.php": {
+            "sha256": "90f616ac0dccc8e526ffec86f8e21d507b9b75843a3ffa9c387246464af8fdd4",
+            "features": {
+                "T_TRAIT": [
+                    13
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    62,
+                    63
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/resource_aliasing.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/resource_effects.php": {
+            "sha256": "cd4fdb481891703982108e9656a12cddd28fdd817d04de957733cf1c660b5482",
+            "features": {
+                "T_TRAIT": [
+                    15
+                ],
+                "T_MATCH": [
+                    23,
+                    28
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/resource_effects.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/resource_locations.php": {
+            "sha256": "80f98c84a59c90d2c2e6dfa0b7a8c85220cac38b573753f838839651af6ddeca",
+            "features": {
+                "T_ELLIPSIS": [
+                    56,
+                    56,
+                    77
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/resource_locations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/analyze_lifetimes/resource_states.php": {
+            "sha256": "45236ebbda34727410c874bffc9c3165eb677f93f69fe5c35d7ee495ae82cdce",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/analyze_lifetimes/resource_states.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/body.php": {
+            "sha256": "a5a2215c8e44b6ff296ec019376f601b9ed17457b65c427f6823fe3200fd1b80",
+            "features": {
+                "T_READONLY": [
+                    32,
+                    33,
+                    34,
+                    35,
+                    36,
+                    37
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    76,
+                    85
+                ],
+                "T_MATCH": [
+                    190
+                ],
+                "T_INSTANCEOF": [
+                    219
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/body.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/data/result.php": {
+            "sha256": "66e3b95120ac543f09ece94aac7ca28dfa3b5ddf4fec7d4e50af919c3a57e4ee",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    37,
+                    38,
+                    39,
+                    40,
+                    41,
+                    42,
+                    45,
+                    48,
+                    49,
+                    50,
+                    51,
+                    52,
+                    53
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    56,
+                    101,
+                    102,
+                    144,
+                    144,
+                    171
+                ],
+                "T_INSTANCEOF": [
+                    90,
+                    102
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/data/store.php": {
+            "sha256": "5597382b5c7417b9744bb323f4603066397c695f0e08ea0badb5d5c926a36978",
+            "features": {
+                "T_FN": [
+                    64
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/data/structures.php": {
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66",
+            "features": {
+                "T_READONLY": [
+                    21,
+                    23,
+                    24,
+                    25,
+                    26,
+                    67,
+                    67,
+                    68,
+                    84,
+                    85,
+                    85,
+                    103,
+                    103,
+                    123,
+                    124,
+                    125,
+                    128,
+                    136,
+                    136,
+                    137,
+                    145,
+                    166,
+                    167,
+                    170,
+                    171,
+                    172,
+                    187,
+                    188,
+                    189,
+                    205,
+                    206,
+                    207,
+                    208,
+                    209,
+                    211,
+                    247,
+                    248,
+                    251,
+                    254,
+                    255,
+                    258,
+                    261,
+                    262,
+                    263,
+                    287,
+                    288,
+                    303,
+                    304,
+                    319,
+                    320,
+                    321,
+                    322,
+                    323,
+                    331,
+                    331,
+                    332,
+                    341,
+                    353,
+                    353,
+                    354,
+                    354,
+                    369,
+                    369,
+                    370,
+                    370,
+                    371,
+                    371,
+                    381,
+                    381,
+                    382,
+                    382,
+                    383,
+                    383,
+                    398,
+                    398,
+                    399,
+                    399,
+                    412,
+                    412,
+                    449,
+                    449,
+                    450,
+                    450
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    29
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/flow.php": {
+            "sha256": "77ab8ea9df48c93254d6b15cfbef9c6d417c5fb33250a630c219328624d7021f",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/check_bodies/flow.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/handlers/control_statements.php": {
+            "sha256": "faa710651e6f2512a2fbffc10392d160372e46b14ae056e1124970cc57e3276e",
+            "features": {
+                "T_TRAIT": [
+                    19
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/handlers/control_statements.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/handlers/expressions.php": {
+            "sha256": "8e51ca6bdd4846e83d21302e6630631d8750a3effa8ece7e53024eccd9467bcc",
+            "features": {
+                "T_TRAIT": [
+                    20
+                ],
+                "T_INSTANCEOF": [
+                    72,
+                    82,
+                    328
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    109,
+                    346,
+                    353
+                ],
+                "T_MATCH": [
+                    148
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/handlers/expressions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/handlers/places.php": {
+            "sha256": "9d92efb8ddbd9d10177db4e7951badd180a9a10c14580ca08c99032319b4a0e9",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    112
+                ],
+                "T_INSTANCEOF": [
+                    145
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/handlers/places.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/handlers/statements.php": {
+            "sha256": "a293b1e8cf2dd0607c3a9803553eb9a47b045ed3ae43e1f5014d9d1f603d7add",
+            "features": {
+                "T_TRAIT": [
+                    20
+                ],
+                "T_INSTANCEOF": [
+                    34,
+                    164
+                ],
+                "T_MATCH": [
+                    79,
+                    179,
+                    196
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/handlers/statements.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/handlers/writes.php": {
+            "sha256": "85841535cbc3338dad12be7a413fccc40b499bcafd642d76c302460b6ea4a4f4",
+            "features": {
+                "T_TRAIT": [
+                    12
+                ],
+                "T_INSTANCEOF": [
+                    37,
+                    70
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/handlers/writes.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/join.php": {
+            "sha256": "28dad915be519dcf21dfab8ae12253ec26db0d8bb1341b3e6283ccab639e4811",
+            "features": {
+                "T_READONLY": [
+                    26,
+                    27,
+                    28,
+                    29,
+                    30
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    60,
+                    60
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/main_check_bodies.php": {
+            "sha256": "58f31fee413330800f470747ccb1906ceab7ba9a6d599e55269f1b8e5bb94ef7",
+            "features": {
+                "T_READONLY": [
+                    29,
+                    30,
+                    31,
+                    32,
+                    33
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/main_check_bodies.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/body_validity.php": {
+            "sha256": "6394bd789e9c40403a7e3e9df54adcd23a26c367582d2d3fd8013bfb2fa58057",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    25,
+                    26
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/utilities/body_validity.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/byte_literals.php": {
+            "sha256": "b051e817fdc59f981dbd070706091bf2c84a5c5ae04a8fb2a11a1f7a1b739fb2",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/check_bodies/utilities/byte_literals.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/conversions.php": {
+            "sha256": "bba6dc89a94e029370f5fa6bcab259ad921a01ff04c79c7c89700e29fa46575d",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/check_bodies/utilities/conversions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/decimal_range.php": {
+            "sha256": "d61e732004afb1aa23bffad2e63eadc1cf32422f6c6b6eefe249ce4f7613bbc5",
+            "features": [],
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/evaluation.php": {
+            "sha256": "c64a473e3fb3ce9b97c1da3e0feb75a02403bb42369157e726023cccc4a9136e",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    27,
+                    88
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/utilities/evaluation.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/flow_graph.php": {
+            "sha256": "d11f6266478a11346813b1dc1f498f1f9b9aa1101402236016dc0ee33b84c787",
+            "features": {
+                "T_FN": [
+                    35
+                ],
+                "T_MATCH": [
+                    41
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/utilities/flow_graph.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/literals.php": {
+            "sha256": "c846d4f2952de42bcf59d6e929d38979926815f07cffa5151294ef1fbcd3b729",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/check_bodies/utilities/literals.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_bodies/utilities/operations.php": {
+            "sha256": "a07c6a8886358cb6916d4bf3e68111e8cd3f9c6f80e095ff2b77a7f9cc574449",
+            "features": {
+                "T_MATCH": [
+                    20
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_bodies/utilities/operations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_templates/body.php": {
+            "sha256": "fc3f3ff2c61b34b387c851fd1653e7ff5407722bf257b8260bfc7fce24554b93",
+            "features": {
+                "T_READONLY": [
+                    23
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    58,
+                    237,
+                    353,
+                    370,
+                    370,
+                    378
+                ],
+                "T_FN": [
+                    245
+                ],
+                "T_INSTANCEOF": [
+                    298
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_templates/body.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_templates/data/result.php": {
+            "sha256": "54bd475b387129b3b89453743ded2a770b13f64f92bb55bcbb80ea76baba2a86",
+            "features": {
+                "T_READONLY": [
+                    16,
+                    17,
+                    17,
+                    18,
+                    18,
+                    48,
+                    48
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    57
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_templates/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_templates/data/structures.php": {
+            "sha256": "d4a59d4af56d834f92cd7c98667d4bd777a29327240da818289dca182024a867",
+            "features": {
+                "T_READONLY": [
+                    22,
+                    25,
+                    26,
+                    27,
+                    39,
+                    40,
+                    47,
+                    47
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_templates/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_templates/join.php": {
+            "sha256": "16ddc142e2dff2e25e6f4c5690a2c9dce9430ca85da0cb8ac5bdfbd468db7a9d",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    15,
+                    15,
+                    16,
+                    16
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    62
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_templates/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_templates/main_check_templates.php": {
+            "sha256": "33e798e80eee56c12059c014d2238fb2521704564abc65a9e687ea93835b2101",
+            "features": {
+                "T_READONLY": [
+                    30,
+                    31,
+                    32,
+                    33,
+                    34
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    117
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_templates/main_check_templates.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/check_templates/terms.php": {
+            "sha256": "5770fb9b02e7dd314fc8713003983045349963698ee33b124398f9722af6d493",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26,
+                    26
+                ],
+                "T_FN": [
+                    67
+                ],
+                "T_INSTANCEOF": [
+                    71,
+                    174,
+                    184,
+                    195,
+                    213,
+                    224,
+                    236,
+                    239,
+                    242
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    192,
+                    204,
+                    212
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/check_templates/terms.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/collect.php": {
+            "sha256": "ba1e440bf5fa28cccf8d2422c09bf06276e3933f0994e9e24dda8de7c664394a",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/collect_symbols/collect.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/compare.php": {
+            "sha256": "75189ae4f9562cb478e31a7f85c5d6d70d2aad0c2fcc7561ae8fc91cd8ef8494",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/collect_symbols/compare.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/comparison_join.php": {
+            "sha256": "96702dce37d6b511e7b80dbc0d999a0dec80a8242b3e40b33613f57a163d0dac",
+            "features": {
+                "T_READONLY": [
+                    22,
+                    23
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    46,
+                    55
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/comparison_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/data/result.php": {
+            "sha256": "c59eb36b968162add543791471689c4439ba5872effeee2a68c978e27ff51cfd",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    39,
+                    39
+                ],
+                "T_READONLY": [
+                    58,
+                    59
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/data/store.php": {
+            "sha256": "8fe030c83dc63e8d1dd6e2aaef2d8f8b5e83e877bb12ebefcd8ac424113895c1",
+            "features": {
+                "T_FN": [
+                    107,
+                    113
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    139
+                ],
+                "T_MATCH": [
+                    144
+                ],
+                "T_INSTANCEOF": [
+                    145,
+                    145,
+                    146,
+                    146
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/data/structures.php": {
+            "sha256": "08b6d2285cf9562583215d228715ad3dc9c78878c0882ee4390a0378ce7c7350",
+            "features": {
+                "T_READONLY": [
+                    44,
+                    45,
+                    46,
+                    118,
+                    119,
+                    120,
+                    121,
+                    143,
+                    144,
+                    145,
+                    146,
+                    147,
+                    148,
+                    149
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    85,
+                    86,
+                    86
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/handlers/declarations.php": {
+            "sha256": "6e78e5883ca7c93e6bb3b773ccdbc41cf6f2da4ca1b4301e14363d5622eb6268",
+            "features": {
+                "T_TRAIT": [
+                    23
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/handlers/declarations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/join.php": {
+            "sha256": "a375e1dd4e05f148527ad9832c4f0901f189a2da90f1e05f9feb9334f8e5509e",
+            "features": {
+                "T_READONLY": [
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                    32
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    125,
+                    126,
+                    175,
+                    180
+                ],
+                "T_MATCH": [
+                    168,
+                    207
+                ],
+                "T_INSTANCEOF": [
+                    169,
+                    169,
+                    170,
+                    170,
+                    175,
+                    176,
+                    180,
+                    180,
+                    193
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/main_collect_symbols.php": {
+            "sha256": "d971f1e8a95bc023b39dd8bfff21335f1c3784486b1cc79a0fe4c20aac9aec3e",
+            "features": {
+                "T_READONLY": [
+                    30,
+                    31,
+                    32,
+                    33,
+                    34,
+                    35
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/main_collect_symbols.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/main_compare_symbols.php": {
+            "sha256": "042d68bab4ca96010d2bda830865af480c98acdd085461eb3cb50436dfb3cf74",
+            "features": {
+                "T_READONLY": [
+                    27,
+                    28
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/collect_symbols/main_compare_symbols.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/utilities/declaration_syntax.php": {
+            "sha256": "0cb71c91c75d40d3f33b03ef5a3793247cce4a4ff5032fe40faa39c4a4173acf",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/collect_symbols/utilities/declaration_syntax.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/collect_symbols/utilities/frontend_validation.php": {
+            "sha256": "147cbc5c1a33b8753b340b1f2ebd1bea7918d595c2d14c15c8bbeeb2837da7f5",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/collect_symbols/utilities/frontend_validation.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/applications.php": {
+            "sha256": "bce41368d9eab48a893c738f7da569f9b9e338162b74088250a1589712c56d9c",
+            "features": {
+                "T_INSTANCEOF": [
+                    25
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/applications.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/bindings.php": {
+            "sha256": "d03093eff1a7f8ab1f2b7dec351b5520e86eb337d391cc872db80f2dda8b3678",
+            "features": {
+                "T_MATCH": [
+                    48
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/bindings.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/constants.php": {
+            "sha256": "1bd1961914d306975a1f0a6640431c063005e3dc9fadd737bc685f5e4b37dc07",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    29
+                ],
+                "T_READONLY": [
+                    40,
+                    40,
+                    41
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/constants.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/data/result.php": {
+            "sha256": "d2da74e90fe51dd04eecf822b0200c6f11aa34a63e66a87c01adedece403a4b7",
+            "features": {
+                "T_READONLY": [
+                    16,
+                    19,
+                    19,
+                    20,
+                    20,
+                    21,
+                    21,
+                    22,
+                    22,
+                    23,
+                    24
+                ],
+                "T_FN": [
+                    41,
+                    49,
+                    53
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/data/store.php": {
+            "sha256": "226928e3f3d5453d9d3a785bb5d9ea834f6e0e1433355fc846e904699c925e67",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    28
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/data/structures.php": {
+            "sha256": "d7c377acb0a3bef2c47e038de5ae99340f01196042419b0721e9dd01483d0d7a",
+            "features": {
+                "T_READONLY": [
+                    13,
+                    14,
+                    22,
+                    25,
+                    26,
+                    26,
+                    27,
+                    61,
+                    62,
+                    70,
+                    70,
+                    71,
+                    82,
+                    83,
+                    84,
+                    100,
+                    101,
+                    102,
+                    103
+                ],
+                "T_INSTANCEOF": [
+                    41
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/data/view.php": {
+            "sha256": "e792d41e600d2b4f2aec7f4f5275afed9f65ae34e56a5dfe3d2ae814df762d5a",
+            "features": {
+                "T_TRAIT": [
+                    24
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/data/view.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/identities.php": {
+            "sha256": "9380313dbbe5de9c100fbee65f3a0940b520371b23aa2945c6e89cdf3a72bc0b",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/instantiate/identities.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/join.php": {
+            "sha256": "397d7661500b67570c42bdfb8171cd129b2cd531e5f3d08ea2dd979215744cc3",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    14,
+                    15,
+                    15,
+                    16,
+                    16,
+                    17
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    33,
+                    71,
+                    72
+                ],
+                "T_INSTANCEOF": [
+                    82,
+                    82,
+                    83,
+                    85,
+                    103,
+                    126
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/member_join.php": {
+            "sha256": "e1d8f5226a00f63e2ca608cf669bc99750e3cd99e8a9d3917c5cff1f28d15a7d",
+            "features": {
+                "T_READONLY": [
+                    18,
+                    18,
+                    19,
+                    19,
+                    20,
+                    20,
+                    21
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    62,
+                    64,
+                    84,
+                    85
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/member_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/members.php": {
+            "sha256": "422991c3861ec22dafbe847cb36ebe775235717acddc246e017f802f6c9edd92",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    25,
+                    26,
+                    28,
+                    31,
+                    33
+                ],
+                "T_INSTANCEOF": [
+                    25
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/instantiate/members.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/instantiate/policy.php": {
+            "sha256": "3835b20184e4f71f50bd54873db7c360856cc58786db5f10171f569db29d5107",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/instantiate/policy.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/body.php": {
+            "sha256": "9d069a7c230829f2e941bd9fd600ef92a9d37f7ce5b941c97f1f41063ea69877",
+            "features": {
+                "T_READONLY": [
+                    62,
+                    62,
+                    63
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    88
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/body.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/data/declarations.php": {
+            "sha256": "1eb4a86ae6858c7bd0b5e5d41373eda3118b7c2b44d23ed2f64cf6ba1e964d2c",
+            "features": {
+                "T_READONLY": [
+                    34,
+                    34,
+                    35,
+                    36,
+                    59,
+                    62,
+                    62,
+                    63,
+                    71,
+                    71,
+                    78,
+                    78,
+                    79,
+                    79,
+                    86,
+                    87
+                ],
+                "T_MATCH": [
+                    38,
+                    44
+                ],
+                "T_INSTANCEOF": [
+                    39,
+                    40
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/data/declarations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/data/result.php": {
+            "sha256": "ea6ae6c08d9f7237776d16d53c48227dfca8cf632266d2607bbefae39f130796",
+            "features": {
+                "T_READONLY": [
+                    24,
+                    27,
+                    30,
+                    33,
+                    36,
+                    39,
+                    55,
+                    56,
+                    57,
+                    58,
+                    59,
+                    60,
+                    61,
+                    62,
+                    63,
+                    64,
+                    65
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    85,
+                    105,
+                    110,
+                    127,
+                    164
+                ],
+                "T_FN": [
+                    262,
+                    264
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/data/store.php": {
+            "sha256": "6fb6042886e21d991d03c7f01f9c05d507b619e596227a0ffc272f2dcf764b91",
+            "features": {
+                "T_READONLY": [
+                    27
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/data/structures.php": {
+            "sha256": "194025b79ff4bc712ce28d1bc67b3d7ec1ea102d4e20172c7db8edda5f252486",
+            "features": {
+                "T_READONLY": [
+                    23,
+                    24,
+                    40,
+                    41,
+                    58,
+                    59,
+                    60,
+                    85,
+                    86,
+                    87,
+                    99,
+                    101,
+                    109,
+                    109
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/handlers/declarations.php": {
+            "sha256": "11a9dbc5171cf7bbf89db0b2f5028d3918e861ea36c3b88c0e87e799e9ad332c",
+            "features": {
+                "T_TRAIT": [
+                    18
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/handlers/declarations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/handlers/expressions.php": {
+            "sha256": "bcff006e808bcd19f88b7b6a890d636e72aeb5e23e539c731b1d5a027bba04a0",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ],
+                "T_INSTANCEOF": [
+                    147
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/handlers/expressions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/handlers/names.php": {
+            "sha256": "c2845e8148cd22e3f9e2e77583fec1fbee11f3971e0b12c9d4fe1973e1b22e5f",
+            "features": {
+                "T_TRAIT": [
+                    16
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/handlers/names.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/handlers/statements.php": {
+            "sha256": "6b59e120831bd766c31170ec76d0c6cf6b7ad536d80284208d7a9cebffaf92c8",
+            "features": {
+                "T_TRAIT": [
+                    22
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/handlers/statements.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/join.php": {
+            "sha256": "902439b56d05ec5294eff1f0fe2e7f4b41b582cbdfcfac98f7b1a2565c1933b1",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26,
+                    27,
+                    28
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/main_resolve_symbols.php": {
+            "sha256": "c0e21f9c2eae82a08e20770b152dc3ef97813194e816b33390d6c3ff5f70b4cf",
+            "features": {
+                "T_READONLY": [
+                    28,
+                    29,
+                    30,
+                    31
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/main_resolve_symbols.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/utilities/binding_coverage.php": {
+            "sha256": "422afa13b1e1af2ff205378ed73b1975a311e6d7f4727b20b6df0554b374575e",
+            "features": {
+                "T_ELLIPSIS": [
+                    22,
+                    22,
+                    40,
+                    40
+                ],
+                "T_INSTANCEOF": [
+                    84,
+                    167,
+                    169
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    84
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/utilities/binding_coverage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/utilities/declaration_lookup.php": {
+            "sha256": "445c8290165abd057708dbb39b4b779ced850214ec125ea0a7a4bcf6d5a2a0bf",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/resolve_symbols/utilities/declaration_lookup.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/utilities/function_lookup.php": {
+            "sha256": "38e9dc65eec224ad589e814387b23a8ba6fc6ea10fea1687c6a97cb2930efb93",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/resolve_symbols/utilities/function_lookup.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_symbols/utilities/resolution_validity.php": {
+            "sha256": "15cc18a83243ebfd89e0515062a0361f2a0ee11691fb28f4d088ac52354a6f60",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    30,
+                    38,
+                    100
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_symbols/utilities/resolution_validity.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/data/export_identity.php": {
+            "sha256": "b2f5ddeb059b365a9008effe29bceb797c2bd943611c2398489fdac0cc47b122",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    17,
+                    17
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/data/export_identity.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/data/preparation.php": {
+            "sha256": "4dbeea9d0d29378aaf7e74e9b4dd5d995a708596f7b5f936b48f3f5a411985f8",
+            "features": {
+                "T_READONLY": [
+                    20,
+                    20,
+                    21
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/data/preparation.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/data/records.php": {
+            "sha256": "52ac30f36b4286aa36d2f83bd00d95bc30e41b0ae5fd7ae85aeb09e797e1941c",
+            "features": {
+                "T_READONLY": [
+                    17,
+                    18,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    29,
+                    29
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/data/records.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/data/result.php": {
+            "sha256": "280856488bb569d318665ab32e5e426f86f5000022ee43a252adaa75b24b5870",
+            "features": {
+                "T_READONLY": [
+                    23,
+                    29,
+                    30,
+                    31,
+                    70,
+                    73,
+                    74,
+                    75,
+                    76,
+                    77,
+                    78,
+                    79,
+                    80,
+                    81,
+                    82,
+                    108,
+                    130,
+                    131,
+                    132,
+                    135,
+                    136,
+                    137
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    34,
+                    85,
+                    89,
+                    143,
+                    144,
+                    151,
+                    157,
+                    168,
+                    193,
+                    342,
+                    343
+                ],
+                "T_FN": [
+                    328,
+                    344
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/data/structures.php": {
+            "sha256": "a2e9393f52f3341ca1dfc251d7fa290bb734fb2d1f85db46f7edba31d0e56aa3",
+            "features": {
+                "T_READONLY": [
+                    21,
+                    22,
+                    35,
+                    42,
+                    43,
+                    44,
+                    45,
+                    46,
+                    47,
+                    58,
+                    64,
+                    65,
+                    66,
+                    67
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    50,
+                    70
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/definition_view.php": {
+            "sha256": "35d8d7f9afa35e2eebb2d1e7dca089c5d5384fab8d623a3b9ff82384ce000105",
+            "features": {
+                "T_READONLY": [
+                    16,
+                    17,
+                    18,
+                    21,
+                    21
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/definition_view.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/lifecycle_composition.php": {
+            "sha256": "89cfb1529500515dce54ae9e3a10ebe2fadbc4e2c687a7946d10f2104ecd2e1a",
+            "features": {
+                "T_INSTANCEOF": [
+                    125
+                ],
+                "T_MATCH": [
+                    127
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/lifecycle_composition.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/local_join.php": {
+            "sha256": "cdd2c18dcfc8e965a0dbcc04371c317e10e3be270ce82592a3599467282d41ae",
+            "features": {
+                "T_READONLY": [
+                    32,
+                    33,
+                    34,
+                    35,
+                    36,
+                    37,
+                    38,
+                    39,
+                    40
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/local_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/locals.php": {
+            "sha256": "58302a9b5503bcd51d000bfd7de2e322ff17f3f8f4d3bdb5282e43d835c27145",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/resolve_types/locals.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/main_prepare_concrete.php": {
+            "sha256": "b443eb8b132330235472d4cdca9d38b969c6a41c004413cc00371621e7d3d8f6",
+            "features": {
+                "T_READONLY": [
+                    55,
+                    56,
+                    56,
+                    57,
+                    57,
+                    58,
+                    58,
+                    59,
+                    60,
+                    61,
+                    62
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    74,
+                    93,
+                    132,
+                    132,
+                    168,
+                    245,
+                    337,
+                    368
+                ],
+                "T_INSTANCEOF": [
+                    167,
+                    183,
+                    187,
+                    193,
+                    196,
+                    243,
+                    247,
+                    391
+                ],
+                "T_FN": [
+                    290,
+                    303,
+                    358,
+                    366,
+                    431
+                ],
+                "T_CLONE": [
+                    356
+                ],
+                "T_ELLIPSIS": [
+                    360
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/main_prepare_concrete.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/main_prepare_entry.php": {
+            "sha256": "9cd7ad45732b9451deda66b3d0f2eb3b4c7bc4be9a62629b30ed313bdf4a24b0",
+            "features": {
+                "T_READONLY": [
+                    28,
+                    29,
+                    30
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/main_prepare_entry.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/main_resolve_types.php": {
+            "sha256": "f08ae6bd71069dba7199dd3b857de01040d3ee8a6efbeee7a48e4f5430ce3bd3",
+            "features": {
+                "T_READONLY": [
+                    34,
+                    35,
+                    36,
+                    37,
+                    38,
+                    39,
+                    40,
+                    41,
+                    42,
+                    43,
+                    44
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    77,
+                    82,
+                    118
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/main_resolve_types.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/preparation_queue.php": {
+            "sha256": "a85d895525694b2ccffb8edaae9dc41dbe6ab2a35fdbe3691db0568a8d4b2ba1",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/resolve_types/preparation_queue.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/record_definitions.php": {
+            "sha256": "5de4cd97e0b70a1824c918c562706ff1353b5e5ec01c4076d8ffdcac4c7d45e2",
+            "features": {
+                "T_INSTANCEOF": [
+                    35,
+                    40
+                ],
+                "T_ELLIPSIS": [
+                    43
+                ],
+                "T_FN": [
+                    51
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/record_definitions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/record_join.php": {
+            "sha256": "8abfb786059cfb91b5ce7b8091bbdf8e6fa256b8500ebf37d735b838f5a45627",
+            "features": {
+                "T_READONLY": [
+                    21,
+                    21,
+                    22
+                ],
+                "T_INSTANCEOF": [
+                    35,
+                    52,
+                    53,
+                    91,
+                    109,
+                    116
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    38,
+                    39,
+                    95,
+                    95
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/record_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/records.php": {
+            "sha256": "145eab93e83afcd17649436841fb6bb032baa0b4081dfb521344c1441b55b1ed",
+            "features": {
+                "T_INSTANCEOF": [
+                    45
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    77,
+                    77
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/records.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/signature_join.php": {
+            "sha256": "1d5b3e0557b03b14b2a72d8b5bb7ee0a8d6d234a903b14d58b0980d5a6c3eeb6",
+            "features": {
+                "T_READONLY": [
+                    30,
+                    31,
+                    32,
+                    33,
+                    34,
+                    35,
+                    36,
+                    37,
+                    38
+                ],
+                "T_INSTANCEOF": [
+                    96,
+                    200,
+                    201
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    133,
+                    198
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/signature_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/signatures.php": {
+            "sha256": "20a78df7ab548e3ca138cfc882bfab819dcc4b8d54093fe71113a0d3d44a42e4",
+            "features": {
+                "T_MATCH": [
+                    57
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    58,
+                    59,
+                    107
+                ],
+                "T_INSTANCEOF": [
+                    88
+                ],
+                "T_FN": [
+                    93
+                ],
+                "T_ELLIPSIS": [
+                    95
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/signatures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/source_identities.php": {
+            "sha256": "eaffb0a68fe9630333a56a30b3cf205b8af13e2afc9d124da15d56c8d510f7d0",
+            "features": {
+                "T_READONLY": [
+                    19,
+                    20,
+                    20,
+                    21,
+                    21,
+                    22
+                ],
+                "T_FINALLY": [
+                    39
+                ],
+                "T_ELLIPSIS": [
+                    51
+                ],
+                "T_INSTANCEOF": [
+                    53
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    101,
+                    123,
+                    128
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/source_identities.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/source_lifecycle.php": {
+            "sha256": "1913ddeccd41fe00a79871d2ac334d95da73d90ab4c639a2cd91ff5369001445",
+            "features": {
+                "T_MATCH": [
+                    23,
+                    62
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    47,
+                    88,
+                    89
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/source_lifecycle.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/storage.php": {
+            "sha256": "d297fa50b684f5c68cce217c7c5c4e03f83ef15e18fb5eea817c46ccc95a1237",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    29,
+                    50,
+                    51,
+                    92,
+                    92
+                ],
+                "T_MATCH": [
+                    98
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/utilities/annotation_types.php": {
+            "sha256": "ab8355f290c846df45777ca73b7a8bdaa04968294fe22d8817188d66a628cd7d",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    45
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/utilities/annotation_types.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/utilities/callable_inputs.php": {
+            "sha256": "f3332a972a3cfca0bbf8d50b02ea1016261a0f4065cd62d2ec17314c4d33c90a",
+            "features": {
+                "T_ELLIPSIS": [
+                    15,
+                    15
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    15,
+                    25,
+                    33
+                ],
+                "T_INSTANCEOF": [
+                    24,
+                    32,
+                    36,
+                    41,
+                    46,
+                    51
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/utilities/callable_inputs.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/utilities/local_type_validity.php": {
+            "sha256": "4e9d2adcf8275105bfd0d31c3189e829b3ee16fd89acb93cb88e26b660936996",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    28,
+                    37,
+                    37
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/utilities/local_type_validity.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/utilities/parameter_contracts.php": {
+            "sha256": "0c9983e4097d6d1159f0adb7fd596f290cfd144a1ca3244a8a1641abac5c1f10",
+            "features": {
+                "T_MATCH": [
+                    18,
+                    43
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    35,
+                    36
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/utilities/parameter_contracts.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/utilities/signature_validity.php": {
+            "sha256": "be40597b82d3949f31fe0d5f4e086b78f05932cd936423d53ab3d4eab964bc92",
+            "features": {
+                "T_INSTANCEOF": [
+                    25
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    27,
+                    27,
+                    28
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/utilities/signature_validity.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/resolve_types/utilities/type_cache.php": {
+            "sha256": "125e8498a0fcd85fc90b0dc6bde8f95a46f4c8c4d61758d56b37c3c8d372459c",
+            "features": {
+                "T_CLONE": [
+                    57
+                ],
+                "T_INSTANCEOF": [
+                    69
+                ],
+                "T_MATCH": [
+                    80
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/resolve_types/utilities/type_cache.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/callables.php": {
+            "sha256": "6e67ca54c1d28f4fd0bfccbd4779318b7572e7c8bdfc9453fd496a400dcabd25",
+            "features": {
+                "T_READONLY": [
+                    20,
+                    20,
+                    33,
+                    34,
+                    48,
+                    50,
+                    60,
+                    64,
+                    64,
+                    65,
+                    65,
+                    66,
+                    108,
+                    108,
+                    109,
+                    109,
+                    110,
+                    110,
+                    111,
+                    111,
+                    112
+                ],
+                "T_INSTANCEOF": [
+                    71,
+                    92,
+                    93,
+                    94,
+                    95
+                ],
+                "T_MATCH": [
+                    91
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/callables.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/catalog.php": {
+            "sha256": "afb0ff63c71a5a0b06ccdd9feb47adc250849f9c990da336c45ab14b526cbe3f",
+            "features": {
+                "T_READONLY": [
+                    33,
+                    34,
+                    35,
+                    37,
+                    38,
+                    40
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/catalog.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/definitions.php": {
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177",
+            "features": {
+                "T_READONLY": [
+                    59,
+                    60,
+                    61,
+                    62,
+                    63,
+                    64,
+                    65,
+                    66,
+                    67,
+                    68,
+                    132,
+                    133,
+                    134,
+                    137,
+                    138,
+                    142,
+                    143,
+                    144,
+                    145,
+                    146,
+                    147,
+                    149,
+                    150,
+                    227,
+                    228,
+                    229,
+                    253,
+                    254,
+                    255,
+                    256
+                ],
+                "T_MATCH": [
+                    97
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    159,
+                    163,
+                    166
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/definitions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/families.php": {
+            "sha256": "c19105e37da982eb9b8d5c0d60298fc43cb5af969a72b539b68dd3291a719d89",
+            "features": {
+                "T_READONLY": [
+                    12,
+                    13,
+                    19,
+                    19,
+                    31,
+                    31,
+                    31,
+                    38,
+                    38,
+                    39,
+                    39,
+                    39,
+                    40,
+                    49,
+                    49,
+                    50,
+                    50,
+                    50,
+                    51
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/families.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/generic.php": {
+            "sha256": "0358f2e24debde89d98686f4082ab4abf6d05f5244a3977505ebca16d9be2514",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/type_model/data/generic.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/lifecycle.php": {
+            "sha256": "d4c35417826d54ba3bf480e7f94c5590dc06e890a639df79b6e02f0eeebbdb69",
+            "features": {
+                "T_MATCH": [
+                    42
+                ],
+                "T_READONLY": [
+                    53,
+                    54,
+                    54,
+                    61,
+                    61,
+                    62,
+                    62,
+                    63,
+                    71,
+                    71,
+                    72,
+                    73,
+                    90,
+                    94,
+                    94,
+                    95,
+                    95,
+                    96,
+                    96,
+                    97
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    83
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/lifecycle.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/records.php": {
+            "sha256": "df25c46fe4fc13e525ede37430af507f0f646ff5e6b61bc30ccfb6cae2f912b0",
+            "features": {
+                "T_READONLY": [
+                    23,
+                    23,
+                    24,
+                    24,
+                    24,
+                    43,
+                    43,
+                    44,
+                    53,
+                    53,
+                    54,
+                    54,
+                    54,
+                    55,
+                    56,
+                    56,
+                    57,
+                    58,
+                    66,
+                    69,
+                    69
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/records.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/representations.php": {
+            "sha256": "e42d15746723cb4ec4814c268a35604f498ed4e2c5065df9f333d393b0049304",
+            "features": {
+                "T_READONLY": [
+                    24,
+                    25,
+                    26,
+                    64,
+                    76,
+                    97,
+                    98,
+                    111,
+                    111,
+                    123,
+                    123,
+                    132,
+                    135,
+                    136,
+                    137,
+                    139,
+                    160,
+                    160,
+                    160,
+                    171,
+                    171,
+                    185,
+                    186,
+                    214,
+                    215,
+                    218,
+                    219,
+                    223
+                ],
+                "T_MATCH": [
+                    83,
+                    189
+                ],
+                "T_INSTANCEOF": [
+                    147,
+                    192,
+                    193,
+                    194,
+                    195,
+                    196,
+                    197,
+                    198
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/representations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/resources.php": {
+            "sha256": "479a3c83916f58e6b65feea5e14ef895e5cec31f578b60b35115c1f746207306",
+            "features": {
+                "T_READONLY": [
+                    30,
+                    30,
+                    31
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/resources.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/semantic_calls.php": {
+            "sha256": "ceb7e2c7e75a4ae4814a1f60ebf2c9083a08c72b1420c6e37241390187ed3f06",
+            "features": {
+                "T_READONLY": [
+                    35,
+                    35,
+                    41,
+                    41,
+                    50,
+                    50,
+                    51
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/semantic_calls.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/source_families.php": {
+            "sha256": "16199634e860a5c355425a99d85a8da5f90ee9b2880dc414abcad1294bf36773",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    15,
+                    16,
+                    17,
+                    21,
+                    21,
+                    34,
+                    35,
+                    36,
+                    37,
+                    40,
+                    40
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/source_families.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/storage.php": {
+            "sha256": "1c65d2f884f79238e8912edeb230af026c33098a6d1c34259a0184ebaa9b2c2d",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    15,
+                    16,
+                    26,
+                    26,
+                    27,
+                    27,
+                    28,
+                    28,
+                    29,
+                    29,
+                    29,
+                    48,
+                    51,
+                    51,
+                    52,
+                    52,
+                    53,
+                    53,
+                    68,
+                    68,
+                    69
+                ],
+                "T_MATCH": [
+                    55
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/store.php": {
+            "sha256": "0cb72eaefb9c53245e360154de5c4664c4c446c9892e4b253f1c7c6e6d383155",
+            "features": {
+                "T_READONLY": [
+                    27,
+                    47
+                ],
+                "T_INSTANCEOF": [
+                    270,
+                    355
+                ],
+                "T_FN": [
+                    305
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    353,
+                    354,
+                    354,
+                    354,
+                    354,
+                    354,
+                    368,
+                    380
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/data/type_references.php": {
+            "sha256": "de906b93b00b611d0f9f1701efac4622bf0af0b6dfcd0ec3f2dbd3a2a73fdf65",
+            "features": {
+                "T_READONLY": [
+                    16,
+                    16,
+                    23,
+                    23,
+                    29,
+                    29,
+                    36,
+                    36
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/data/type_references.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/family_contracts.php": {
+            "sha256": "72cec0d839370e8df3061681c402a489df29fb72f97ba468cd5d31333cc458cd",
+            "features": {
+                "T_INSTANCEOF": [
+                    23,
+                    36,
+                    63,
+                    71,
+                    78,
+                    106,
+                    112,
+                    118,
+                    122
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/family_contracts.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/generic_contracts.php": {
+            "sha256": "33bd42be5c39c557c09365200ba7da65c23460a407cfec84ea4c64631b731b7e",
+            "features": [],
+            "conversion": "compiler/src/04_analyze/type_model/generic_contracts.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/04_analyze/type_model/result_contracts.php": {
+            "sha256": "9b6a6195465c36237b6fd4ef35cf22ae096d457db4985c9545ea6a9d43b2d0ad",
+            "features": {
+                "T_MATCH": [
+                    16
+                ]
+            },
+            "conversion": "compiler/src/04_analyze/type_model/result_contracts.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/body.php": {
+            "sha256": "df2fb4999cadece4cd009f71fb9e7843c25772f2cff34687a53db08568fb1c33",
+            "features": {
+                "T_READONLY": [
+                    44
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/body.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/data/result.php": {
+            "sha256": "491c71b3a0f7ab2c2630c998d9b5e5f9c4c68b51e531ead89b9b42651e2f7ca5",
+            "features": {
+                "T_READONLY": [
+                    18,
+                    18,
+                    19,
+                    36,
+                    37,
+                    38,
+                    39,
+                    40,
+                    77,
+                    78,
+                    79,
+                    80,
+                    81,
+                    82,
+                    110,
+                    111,
+                    112,
+                    119,
+                    120,
+                    121
+                ],
+                "T_FN": [
+                    197,
+                    198
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/data/structures.php": {
+            "sha256": "f2f6f8119fc77a08dca26f3dc3aef39ddc3fa7d66bd4373b62c8e05394b727c4",
+            "features": {
+                "T_READONLY": [
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    31,
+                    32,
+                    39,
+                    39,
+                    40
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/handlers/calls.php": {
+            "sha256": "292140405ca3f948b94e3ba21d0d206434f4347bfbbca31371f6c5191905610d",
+            "features": {
+                "T_TRAIT": [
+                    19
+                ],
+                "T_ELLIPSIS": [
+                    45
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    132,
+                    179
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/handlers/calls.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/handlers/instructions.php": {
+            "sha256": "b8e3057c475d4705c27d678f49a9931ff13040276ee57d3d1b46cf98fb99856c",
+            "features": {
+                "T_TRAIT": [
+                    21
+                ],
+                "T_MATCH": [
+                    30,
+                    96
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/handlers/instructions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/handlers/locations.php": {
+            "sha256": "ee55047900448b3f76ee1ab4ff8d0a0e3f0b3f6aed7038a5fe177317339be9e0",
+            "features": {
+                "T_TRAIT": [
+                    15
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    112
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/handlers/locations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/handlers/storage.php": {
+            "sha256": "3a5e22736b54a9889a9a6731281a5689fbcb04b100b037ce3cddb1de289f591b",
+            "features": {
+                "T_TRAIT": [
+                    13
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    119
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/handlers/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/handlers/terminators.php": {
+            "sha256": "c865d15b368fcaa8d7726395d0a96e49222ec1f0909cd4b9f9c8934ce63ee7b8",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ],
+                "T_MATCH": [
+                    22
+                ],
+                "T_INSTANCEOF": [
+                    23,
+                    24
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/handlers/terminators.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/join.php": {
+            "sha256": "c0fc44a15a4e6a384bd33cb3cd5e0d25f572bf639d7f46eafad7b9714f6680ff",
+            "features": {
+                "T_READONLY": [
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    76
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/lifecycle.php": {
+            "sha256": "87a737fca8747b1dc17475f25906b4705d5e5dc7b7d6cbec5b1acdfc46946713",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    22,
+                    62,
+                    104
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/lifecycle.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/lifecycle_join.php": {
+            "sha256": "6520f9241cece104465498e0c1a0e8565964066c00b4be9ccac6680ec47a380c",
+            "features": {
+                "T_READONLY": [
+                    16,
+                    17,
+                    17
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    63
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/lifecycle_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/main_assemble_modules.php": {
+            "sha256": "15bbb347d7fe96e0436af53d5d949ffb8960a9a7d143f29ce59d6f795e3c437d",
+            "features": {
+                "T_READONLY": [
+                    27,
+                    28,
+                    29
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    112
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/main_assemble_modules.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/main_emit_llvm.php": {
+            "sha256": "444ba181b74ec2c08ac2c88cf701e46a14fe8716fe04429a4827fcc2a16fee87",
+            "features": {
+                "T_READONLY": [
+                    30,
+                    31,
+                    32,
+                    33,
+                    34
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    47,
+                    48,
+                    87,
+                    133,
+                    133
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/main_emit_llvm.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/module_join.php": {
+            "sha256": "87e7940d38ce3f8580db42b1353ab9aa425058eb1a570d3cfc05d206b69947e6",
+            "features": {
+                "T_READONLY": [
+                    22,
+                    23,
+                    24
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    69
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/module_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/modules.php": {
+            "sha256": "a25e5f21e89d36c2a801aabe16011de16f63505ed26d08312b340e6a76f02f52",
+            "features": {
+                "T_ELLIPSIS": [
+                    66,
+                    66
+                ],
+                "T_FN": [
+                    95
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/modules.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/source_exports.php": {
+            "sha256": "f8b6d359b48699333ff4d8e28b78079156563d1e4893a42dc15b65d8bf8f1515",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    21
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/emit_llvm/source_exports.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/emit_llvm/utilities/module_validity.php": {
+            "sha256": "af07b18f98d1197337fee1206b0b1986ec6764823dc1ad7ac19dc5ba8f04ac73",
+            "features": [],
+            "conversion": "compiler/src/05_generate_code/emit_llvm/utilities/module_validity.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/binary_operations.php": {
+            "sha256": "1d5be875aae9e5704a7122986172fde5a183cc31c5f9c7e24117e1d539f92385",
+            "features": {
+                "T_MATCH": [
+                    26
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/binary_operations.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/body.php": {
+            "sha256": "5cad34454c48fcc20668e4f49b7ae162ee7aae72c7857c9ddd14c9f3dc764da7",
+            "features": {
+                "T_READONLY": [
+                    60
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/body.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/data/result.php": {
+            "sha256": "cbe87dccea1edf52c89497cb66bb1c5910d191689e1a5d58c2c04b1c1d4ae1c7",
+            "features": {
+                "T_READONLY": [
+                    39,
+                    40,
+                    41,
+                    42,
+                    43,
+                    44,
+                    45,
+                    48
+                ],
+                "T_MATCH": [
+                    92
+                ],
+                "T_INSTANCEOF": [
+                    94,
+                    98,
+                    101,
+                    103,
+                    105,
+                    107
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    106
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/data/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/data/store.php": {
+            "sha256": "a41326b164f78639c6958cc482942e6161f64b848ce130a8be7f63238bfe510c",
+            "features": {
+                "T_FN": [
+                    61
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/data/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/data/structures.php": {
+            "sha256": "21d018b528a137266c8acb6976d994ff630f2a90ef774a2abf0e73207a7cc6a3",
+            "features": {
+                "T_READONLY": [
+                    26,
+                    27,
+                    94,
+                    95,
+                    96,
+                    115,
+                    116,
+                    117,
+                    118,
+                    119,
+                    132,
+                    133,
+                    146,
+                    147,
+                    148,
+                    149,
+                    162,
+                    162,
+                    179,
+                    179,
+                    179,
+                    203,
+                    204,
+                    207,
+                    208,
+                    243,
+                    246,
+                    262,
+                    263,
+                    264,
+                    280,
+                    281,
+                    282,
+                    283,
+                    284,
+                    292,
+                    299,
+                    299,
+                    299,
+                    307,
+                    307,
+                    318,
+                    318,
+                    319,
+                    331,
+                    331,
+                    332,
+                    344,
+                    344,
+                    345,
+                    356,
+                    357,
+                    357,
+                    366,
+                    366
+                ],
+                "T_MATCH": [
+                    211
+                ],
+                "T_INSTANCEOF": [
+                    213,
+                    215,
+                    216,
+                    218,
+                    219,
+                    220,
+                    221,
+                    223,
+                    224,
+                    225,
+                    226,
+                    227
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    222,
+                    309,
+                    322,
+                    334,
+                    368
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/data/structures.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/handlers/control_flow.php": {
+            "sha256": "32e3cdbe1fe31de469c4a4f558d9a65de745d9be995353494d88c4fca11e274c",
+            "features": {
+                "T_TRAIT": [
+                    17
+                ],
+                "T_MATCH": [
+                    23
+                ],
+                "T_INSTANCEOF": [
+                    29
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/handlers/control_flow.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/handlers/expressions.php": {
+            "sha256": "437d570ca3e0a9d2e12ed3f6bea48b6d7319275259d2e7d3378d4f41a80b0627",
+            "features": {
+                "T_TRAIT": [
+                    22
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    89,
+                    204
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/handlers/expressions.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/handlers/locals.php": {
+            "sha256": "6215c71f4e6c7089ee5371fb634e1fca2a6e75a6b2f0d32457ff529f547c8673",
+            "features": {
+                "T_TRAIT": [
+                    20
+                ],
+                "T_FN": [
+                    47
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    53,
+                    103,
+                    222,
+                    238,
+                    251
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/handlers/locals.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/handlers/statements.php": {
+            "sha256": "6dd01bac97f87633a223ebeb1236a2bca59feaafa8eca05221c3ca2fadf5771d",
+            "features": {
+                "T_TRAIT": [
+                    19
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    26
+                ],
+                "T_MATCH": [
+                    37,
+                    43
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/handlers/statements.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/handlers/storage.php": {
+            "sha256": "d37d8e0c58c2ab568bb693bc30ec0d0bf88d70b6e30e9e9f21a0a9561250e1cf",
+            "features": {
+                "T_TRAIT": [
+                    12
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/handlers/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/join.php": {
+            "sha256": "740eaae58d0780b204bb95a5aca6e2af96ea815c285d97298d22817aae444a6f",
+            "features": {
+                "T_READONLY": [
+                    26,
+                    27,
+                    28,
+                    29
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/main_lower.php": {
+            "sha256": "6ca27094ddf16a7d7ad446851c5efe68aff283e30ab37cd598b294f054ef0ca7",
+            "features": {
+                "T_READONLY": [
+                    29,
+                    30,
+                    31,
+                    32
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/main_lower.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/lower/main_native_entry.php": {
+            "sha256": "58adcd3e2d7da2019d7baaa5fc135975d1e6a911e87c4dab03c10aa136cd835c",
+            "features": {
+                "T_READONLY": [
+                    30,
+                    31,
+                    32
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/lower/main_native_entry.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/backend_join.php": {
+            "sha256": "107583c20bc7c3b17a5538545e1663103e2e1177ac3c7e48e3f334841b45b1ec",
+            "features": {
+                "T_READONLY": [
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                    32,
+                    33,
+                    34
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    68,
+                    86
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/backend_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/callable.php": {
+            "sha256": "f4158e0f7040e85198de1ddc7f2f2d8b626595af1895c220f73c0673bef7fb00",
+            "features": {
+                "T_FN": [
+                    39
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    47,
+                    49,
+                    53,
+                    54,
+                    55,
+                    55
+                ],
+                "T_INSTANCEOF": [
+                    49
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/callable.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/abi.php": {
+            "sha256": "364b900a52ff17576354cf53e9eb64abc9a4e03c681192b3084c0a8cd1a1135c",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    15,
+                    24,
+                    24,
+                    25,
+                    25,
+                    26,
+                    27
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/abi.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/bindings.php": {
+            "sha256": "46122cd8f5ac66553a1ef3c3e9eb912d86603f809269dbe03c8d0a5e89c63e44",
+            "features": {
+                "T_READONLY": [
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    58,
+                    61,
+                    62,
+                    63,
+                    64,
+                    65,
+                    66,
+                    67,
+                    70,
+                    71,
+                    72,
+                    73,
+                    74
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/bindings.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/configuration.php": {
+            "sha256": "b8eb647e8dbd5132b1f3a0da5972b6bacae182b1b7339a84d71c64b6cffc05bc",
+            "features": {
+                "T_READONLY": [
+                    29,
+                    30,
+                    31,
+                    32,
+                    33,
+                    34,
+                    35
+                ]
+            },
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/context.php": {
+            "sha256": "83c3f481fc05c3329be9c2bc7bee86f2ef5d6b0509846cef0b01c8713eb246a1",
+            "features": {
+                "T_READONLY": [
+                    24,
+                    26,
+                    27,
+                    28,
+                    29,
+                    40,
+                    42,
+                    44,
+                    45,
+                    46,
+                    47
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    65,
+                    81,
+                    101,
+                    132,
+                    157,
+                    157,
+                    182,
+                    199,
+                    200,
+                    298,
+                    300
+                ],
+                "T_ELLIPSIS": [
+                    81,
+                    81
+                ],
+                "T_FN": [
+                    294,
+                    296,
+                    297,
+                    301
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/context.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/layout.php": {
+            "sha256": "22d0ac294bfb4a5f74a40624477df2b83538e5c7da12f138643e3d8c956ab1d0",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    14,
+                    15,
+                    15,
+                    25,
+                    25,
+                    26,
+                    58,
+                    58,
+                    59,
+                    59,
+                    59,
+                    60,
+                    60,
+                    61,
+                    61,
+                    62,
+                    73,
+                    73,
+                    74,
+                    74,
+                    75,
+                    75,
+                    75,
+                    76,
+                    76,
+                    95,
+                    95
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/layout.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/lifecycle.php": {
+            "sha256": "1def3fa8bb6cc07510324aeee8b5dc9fb7db2b9b46b85ae6907c11a3349d7257",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    15,
+                    22,
+                    22
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/lifecycle.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/source_exports.php": {
+            "sha256": "a336a40083d33548c60fb4373e43cf9cb47c0221225a5b96b8225ff19e9ca6a2",
+            "features": {
+                "T_MATCH": [
+                    31
+                ],
+                "T_READONLY": [
+                    56,
+                    57,
+                    57,
+                    58,
+                    72,
+                    73,
+                    73,
+                    74,
+                    74,
+                    81,
+                    82,
+                    82,
+                    93,
+                    93,
+                    112,
+                    113,
+                    114,
+                    114,
+                    114
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/source_exports.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/storage.php": {
+            "sha256": "8b4634babd0cedc841bde4006c7c58be8daffeba8b07d836e00af42443337baf",
+            "features": {
+                "T_READONLY": [
+                    12,
+                    13,
+                    19,
+                    19
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/data/tools.php": {
+            "sha256": "681d67bcb9f354444b70856b34bead9ebe8a9ed1005fd1c9d946994f26e6d7c7",
+            "features": {
+                "T_READONLY": [
+                    17,
+                    17,
+                    18,
+                    25,
+                    25
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/data/tools.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/export_verification.php": {
+            "sha256": "576703971d26154e6e2880ad0eb9dd91b8cc29c745cd4fd6594ff2d9e68108a9",
+            "features": {
+                "T_ELLIPSIS": [
+                    29
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    42,
+                    59,
+                    60,
+                    88,
+                    89
+                ],
+                "T_INSTANCEOF": [
+                    61,
+                    96
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/export_verification.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/layout.php": {
+            "sha256": "1364950607c3737197150456d474a373e839c8f110b6fc9d7483c8e97c6e6a9c",
+            "features": {
+                "T_FN": [
+                    24,
+                    106
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    39,
+                    116
+                ],
+                "T_FINALLY": [
+                    213
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/layout.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/layout_coordinator.php": {
+            "sha256": "ba739fc119a257631abb49dc29c19bd1efe8d13a2430183d40f87f2d003ba921",
+            "features": {
+                "T_READONLY": [
+                    21,
+                    21,
+                    22
+                ],
+                "T_ELLIPSIS": [
+                    56
+                ],
+                "T_FN": [
+                    61
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/layout_coordinator.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/layout_join.php": {
+            "sha256": "79cfb9e75839574cf4c5de650e216acedc769a2b161f194ae9f584c69d7d9a73",
+            "features": {
+                "T_READONLY": [
+                    15,
+                    15,
+                    16,
+                    16
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/layout_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/lifecycle_join.php": {
+            "sha256": "54bc83704ec2f4443be1c0a4714f6ba0b3a1143c23da405b826a9a00bfbc7a49",
+            "features": {
+                "T_READONLY": [
+                    22,
+                    23,
+                    24,
+                    25,
+                    26
+                ],
+                "T_ELLIPSIS": [
+                    41,
+                    41
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    41
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/lifecycle_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/main_prepare_backend.php": {
+            "sha256": "c28e61acd4f50b61bca97f1a1a58db22d631449ddbacd96a682818a6f23df700",
+            "features": {
+                "T_READONLY": [
+                    39,
+                    40,
+                    41,
+                    42,
+                    43,
+                    44,
+                    45,
+                    46
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    62,
+                    66,
+                    170,
+                    185
+                ],
+                "T_ELLIPSIS": [
+                    83,
+                    98,
+                    99,
+                    100,
+                    185,
+                    185
+                ],
+                "T_FN": [
+                    98,
+                    99,
+                    100,
+                    103
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/main_prepare_backend.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/native_layout.php": {
+            "sha256": "ebb3ace2209b102a8a2db06f0520bf669555b7cebb4efe2f9afa96bc4c3c939b",
+            "features": [],
+            "conversion": "compiler/src/05_generate_code/prepare_backend/native_layout.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/project_exports.php": {
+            "sha256": "a69de1c6880d2f692579b059cb9ae967567f5662c1c85e74f2e8bcfd461251b2",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    25,
+                    27,
+                    46,
+                    96
+                ],
+                "T_FN": [
+                    99
+                ],
+                "T_INSTANCEOF": [
+                    111
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/project_exports.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/source_export_coordinator.php": {
+            "sha256": "78c8a1095c833102205248052305b7e4475bf4990c1e46cde04a8ae84350bd7b",
+            "features": {
+                "T_READONLY": [
+                    16,
+                    17,
+                    17,
+                    18,
+                    18,
+                    19,
+                    19
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    28
+                ],
+                "T_ELLIPSIS": [
+                    60
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/source_export_coordinator.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/source_export_join.php": {
+            "sha256": "ac4487b28c50f3d1e2a79416ed3e96f6a44971e8aa5841d35347bb99307f00aa",
+            "features": {
+                "T_READONLY": [
+                    15,
+                    15,
+                    16
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/source_export_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/source_export_preparation.php": {
+            "sha256": "7cfa3fcadf1613a8130ea450649da27f51f35e7eb4bec93b33b209cb6bcff5e0",
+            "features": {
+                "T_FN": [
+                    102,
+                    103,
+                    111
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/source_export_preparation.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/storage.php": {
+            "sha256": "b11add1a9cf816bf77673106da6b176cdcc1d2d707c93f718d27d33f2c565639",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    18,
+                    36,
+                    37,
+                    53,
+                    63
+                ],
+                "T_FN": [
+                    51
+                ],
+                "T_INSTANCEOF": [
+                    79
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/storage.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/storage_join.php": {
+            "sha256": "e79a0485ca724eb2b0b406661c41c6f4075fa3417c366bd9fb8badda8903c1bb",
+            "features": {
+                "T_READONLY": [
+                    15,
+                    16,
+                    16,
+                    17
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    52,
+                    53
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/storage_join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/tools/toolchain.php": {
+            "sha256": "34f0f409fac941b9f40c7766674e835edb9b8d372e778b2c590af2680ec0c3e8",
+            "features": {
+                "T_READONLY": [
+                    42
+                ],
+                "T_ELLIPSIS": [
+                    101,
+                    156,
+                    157,
+                    348,
+                    349,
+                    349,
+                    351,
+                    351,
+                    376
+                ],
+                "T_FINALLY": [
+                    201,
+                    288,
+                    443
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    326
+                ],
+                "T_FN": [
+                    415
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/tools/toolchain.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/utilities/callable_contract.php": {
+            "sha256": "1b3c1e581afca0bd2f26e4d4816375b3a4d3f80f5bedbc67e8314a9214c3d225",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    29,
+                    31,
+                    39,
+                    40,
+                    40,
+                    41,
+                    47,
+                    80
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/utilities/callable_contract.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/05_generate_code/prepare_backend/utilities/llvm_types.php": {
+            "sha256": "e46b9eb27f7361f59db0de57fcf052539489de08d41b61ea9437ffde8b4b5867",
+            "features": {
+                "T_MATCH": [
+                    34,
+                    38,
+                    100
+                ],
+                "T_FN": [
+                    163
+                ]
+            },
+            "conversion": "compiler/src/05_generate_code/prepare_backend/utilities/llvm_types.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/06_build_output/build_native/compile_objects.php": {
+            "sha256": "80a11202034612337b3c42ed54f0f4cc44018bbe0e778e7d20a9391b9ded0d7f",
+            "features": {
+                "T_ELLIPSIS": [
+                    53
+                ]
+            },
+            "conversion": "compiler/src/06_build_output/build_native/compile_objects.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/06_build_output/build_native/join.php": {
+            "sha256": "42fc7428ae489c636958ae8dd35d748fa626467db54705e861f92e9480e673c8",
+            "features": {
+                "T_READONLY": [
+                    22,
+                    23,
+                    24
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    63
+                ]
+            },
+            "conversion": "compiler/src/06_build_output/build_native/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/06_build_output/build_native/main_build_native.php": {
+            "sha256": "66137930a86b4a4cbb51417a6886cfca8ebd28e0f83ca25def9968513bfd50d2",
+            "features": {
+                "T_READONLY": [
+                    26,
+                    27,
+                    28,
+                    29,
+                    30
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    41,
+                    106,
+                    156,
+                    156
+                ],
+                "T_FN": [
+                    123
+                ],
+                "T_ELLIPSIS": [
+                    138
+                ]
+            },
+            "conversion": "compiler/src/06_build_output/build_native/main_build_native.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/06_build_output/build_native/result.php": {
+            "sha256": "f7f05409b928f09d34da18eeee0cf31563205d93624963df3048fe801ce33895",
+            "features": {
+                "T_READONLY": [
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    43,
+                    83,
+                    83,
+                    84,
+                    147,
+                    147
+                ],
+                "T_FN": [
+                    65
+                ],
+                "T_ELLIPSIS": [
+                    113
+                ]
+            },
+            "conversion": "compiler/src/06_build_output/build_native/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/06_build_output/build_native/utilities/native_paths.php": {
+            "sha256": "17ed14abbc1371cb11e9460fc03344cbf3d8054a7d7e8fc5481feb9103eda84e",
+            "features": [],
+            "conversion": "compiler/src/06_build_output/build_native/utilities/native_paths.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/06_build_output/build_native/workspace.php": {
+            "sha256": "f18236d5ec542a613bedc4317eea70a352533f055b74d1674bcd45b7c484aae0",
+            "features": {
+                "T_READONLY": [
+                    24
+                ]
+            },
+            "conversion": "compiler/src/06_build_output/build_native/workspace.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/compile.php": {
+            "sha256": "b9a68cb3ec55d6b48d6dee459d0e6dcd4a04433350356d08d7ea3594594d2bbb",
+            "features": {
+                "T_READONLY": [
+                    38,
+                    55,
+                    56,
+                    56,
+                    57,
+                    57,
+                    58,
+                    366,
+                    367,
+                    368,
+                    369,
+                    370,
+                    371,
+                    372,
+                    373,
+                    374,
+                    375
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    90,
+                    91,
+                    92,
+                    93,
+                    94,
+                    95,
+                    96,
+                    97,
+                    98,
+                    99,
+                    100,
+                    101,
+                    112,
+                    112,
+                    112,
+                    120,
+                    125,
+                    144,
+                    153,
+                    154,
+                    215,
+                    215,
+                    216,
+                    220,
+                    225,
+                    227,
+                    229,
+                    230,
+                    241,
+                    246,
+                    272,
+                    283,
+                    305,
+                    306
+                ],
+                "T_CLONE": [
+                    156,
+                    325
+                ],
+                "T_FINALLY": [
+                    282
+                ],
+                "T_ELLIPSIS": [
+                    304,
+                    305
+                ]
+            },
+            "conversion": "compiler/src/compile/compile.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/data/native_project.php": {
+            "sha256": "9eaa8201db82feb636ad9aeee860b4b28f7ca1b71b15ec0a583482bb9589af24",
+            "features": {
+                "T_READONLY": [
+                    14,
+                    15,
+                    18
+                ]
+            },
+            "conversion": "compiler/src/compile/data/native_project.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/inputs.php": {
+            "sha256": "837f61b624501a035dcbce78a75464e08a162078c6c6aef368494bad9674985c",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    43
+                ]
+            },
+            "conversion": "compiler/src/compile/inputs.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/join.php": {
+            "sha256": "15d97d8b50c9309a225b5a8332eb261b17327249e8c6c64543f9465a684ca481",
+            "features": [],
+            "conversion": "compiler/src/compile/join.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/lock.php": {
+            "sha256": "a425d82f5eb289ad2edce5e8ec3f8982f55e69bcc5340de69def459c3ea5b203",
+            "features": [],
+            "conversion": "compiler/src/compile/lock.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/phases.php": {
+            "sha256": "4de9f552c64fe541bda499a960bbdd8cacc16e36f0e6891001f8249c392cf01c",
+            "features": [],
+            "conversion": "compiler/src/compile/phases.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/result.php": {
+            "sha256": "381c9463b88aa9bb8f72c2016f1c64f403e0ca868b79e5eab187c0e1804c4697",
+            "features": {
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    79,
+                    80,
+                    119
+                ]
+            },
+            "conversion": "compiler/src/compile/result.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/compile/state.php": {
+            "sha256": "fcc903d7e5422d2ffaba5ee8a3bc12ddd7f25aa796cbb734b8a92da4cd91d3fb",
+            "features": [],
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/compile/step.php": {
+            "sha256": "11cd04bd3be1b672e404345cb80cff2f2134073838d77c70fad737ec7708f09c",
+            "features": [],
+            "conversion": "accepted_syntax_only"
+        },
+        "compiler/src/diagnostics/diagnostics.php": {
+            "sha256": "ced293fade56ea31aa05c9d5d4f90ee6f78f2f38c172fb3484cd347c831051e4",
+            "features": {
+                "T_READONLY": [
+                    28,
+                    29,
+                    30,
+                    31
+                ]
+            },
+            "conversion": "compiler/src/diagnostics/diagnostics.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/main.php": {
+            "sha256": "f1ddd585a48aafbcc6bf6ad0bbbe80923016d6402bfbd5d5804fa6c8ed766542",
+            "features": [],
+            "conversion": "compiler/src/main.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/simulate_increment/run.php": {
+            "sha256": "16e81a29aeb812f83ab2f1d352693ed56d139898ffc22646f97f393c6bdbc8ef",
+            "features": {
+                "T_FINALLY": [
+                    66
+                ]
+            },
+            "conversion": "compiler/src/simulate_increment/run.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/src/simulate_increment/store.php": {
+            "sha256": "7293f69fe93fa274a90cada27d16d5f9105c1f0e08e62f9e3cf61617f609b455",
+            "features": {
+                "T_FINALLY": [
+                    135,
+                    159
+                ],
+                "T_NULLSAFE_OBJECT_OPERATOR": [
+                    142,
+                    143
+                ]
+            },
+            "conversion": "compiler/src/simulate_increment/store.php:1: missing or stale managed imports; run sync_imports.php"
+        },
+        "compiler/tool_process/process.php": {
+            "sha256": "f1d1820710a11021717a7771ba88eb73c47f12b9f4b9296a0599fd9c651e8327",
+            "features": {
+                "T_ELLIPSIS": [
+                    53
+                ]
+            },
+            "conversion": "compiler/tool_process/process.php:1: missing or stale managed imports; run sync_imports.php"
+        }
+    }
+}

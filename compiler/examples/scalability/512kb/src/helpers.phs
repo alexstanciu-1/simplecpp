@@ -1,0 +1,2 @@
+function seed(): int { return 42; }
+function visit(): void { return; }

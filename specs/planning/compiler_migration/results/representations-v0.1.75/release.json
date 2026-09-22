@@ -1,0 +1,13 @@
+{
+  "release_url": "https://github.com/alexstanciu-1/simplecpp/releases/tag/v0.1.75",
+  "repository_url": "https://github.com/alexstanciu-1/simplecpp.git",
+  "tag": "v0.1.75",
+  "tag_object": "24223da84225f80beccb2e105bb49f5a5467c356",
+  "commit": "3e944d18608857967a4784ee858063bea2db7747",
+  "remote_verification": "git ls-remote matched both the annotated tag object and peeled commit",
+  "checkout": "/tmp/scpp-v0.1.75-probe",
+  "checkout_source": "local shared clone, detached at verified release tag",
+  "version_file": "0.1.75",
+  "changelog_sha256": "2ad6f5ca5d508069021d25d35b519682e568515819c8ce7968561835517f52e9",
+  "limitation": "Release web page could not be retrieved by browser tool; tag verified directly against GitHub and release notes read from that commit."
+}

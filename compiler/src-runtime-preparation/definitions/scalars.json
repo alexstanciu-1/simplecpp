@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "types": [
+    {"id": "native_int", "cpp_name": "std::int64_t", "header": "cstdint", "kind": "integer", "language_type": {"name": "int", "namespace": ""}}
+  ],
+  "operations": [
+    {"id": "integer.absolute", "kind": "free_function", "cpp_name": "std::abs", "header": "cstdlib", "parameters": ["native_int"], "result_type": "native_int", "error_policy": "terminate", "expose_as": {"name": "runtime_abs", "namespace": ""}}
+  ]
+}

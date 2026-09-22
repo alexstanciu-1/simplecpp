@@ -4,6 +4,1681 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/planning/compiler_migration/php_adaptation_record.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/json_document_requirement.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/compiler_preparation_symbols_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/current_frontier.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/compiler_source_scanner_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/json_ingestion_preflight.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/json-shape-preflight-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/portability/compiler_manifest_record_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_native_project_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/enum_portability_decision.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/enum-shape-audit-01/inventory.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/enum-shape-audit-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/portability/compiler_type_references_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_byte_literals_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_syntax_comparer_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_parser_selection_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_binary_syntax_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/struct_member_cursor_decision.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/compiler_frontend_join_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_frontend_record_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_token_selection_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/source_diagnostic_preflight.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/compiler_token_join_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_token_store_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_read_selection_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_snapshot_join_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_scan_join_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_scan_result_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/os_helpers.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/collection_helpers.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_source_set_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/container_returns.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/map_iteration.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/container_annotations.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_discovery_records_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_read_tasks_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_tool_contracts_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/validation_workflow.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/collection_snapshots.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/method_signatures.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/authoring_guide.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": ".agents/skills/simple-cpp-portable-php/SKILL.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/simple_cpp_batch.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/utf8_text_contract.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/traits_and_incremental_index.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/authoring_shape_audit.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/authoring-audit-01/inventory.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/portability/compiler_exception_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/exception_boundary.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/compiler_decimal_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_storage_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_cursor_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_role_views_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_nodes_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_string_bytes_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_path_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_step_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_token_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/portability.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/compiler_context_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "tests/portability/compiler_context/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/context-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/tools/portability_target.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/class_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/hash_keyed_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/hash_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/hash_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/release-notes.md",
+                        "kind": "markdown",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/release.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/scalar_control.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/vector_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.75/vector_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/class_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/hash_keyed_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/hash_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/hash_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/release-notes.md",
+                        "kind": "markdown",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/release.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/scalar_control.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/struct_construction.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/vector_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-v0.1.76/vector_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/representation_gate.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/class_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/hash_keyed_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/hash_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/hash_record_field.last_error.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/hash_record_field.last_run.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/hash_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/scalar_control.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/scalar_control.last_error.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/scalar_control.last_run.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/vector_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/vector_record_field.last_error.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/vector_record_field.last_run.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-01/vector_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/class_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/hash_keyed_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/hash_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/hash_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/scalar_control.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/vector_record_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/representations-02/vector_string_field.config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "tests/portability/native_representation/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/B01-retry.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/benchmark-original-smoke.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/benchmark-smoke.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-baseline.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-clang-driver-children.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-clang-startup.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-file-modules-5mb.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-gc-scope.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-grouped-stages.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-large-tools.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-large.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-linkers.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-native-batches.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-native-dispatch.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-native-system-samples.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-parallel20-5mb.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-parallel20-tools-5mb.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-phase-gc.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-php-only.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-resident-updates.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest20-5mb.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest20-tools-5mb.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest40-5mb.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-retest40-tools-5mb.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-reuse-mold-groups.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/benchmarks/scalability/results/2026-09-11-tools.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "compiler/docs/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/code_formatting.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/code_organization.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/compiler_pipeline.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/allocation_ownership.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/analysis_cooperation_proposal.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/analysis_handlers.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/backend_organization_review.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/backend_preparation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/binary_operations.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/body_checking.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/clang_lifecycle_composition.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/code_generation_handlers.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/compiler_extension_assessment.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/compiler_pipeline_comparison.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/compiler_pipeline_original.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/compiler_pipeline_review.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/conversion_selection.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/core_data_structures.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/custom_source_exports.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/explicit_instantiation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/first_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/fixed_array_list_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/foundations_consolidation_audit.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/generic_contract_implementation_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/generic_type_contract.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/increment_simulation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/incremental_native_investigation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/incremental_refresh_rules.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/inline_runtime_storage.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/input_preparation_organization.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/integer_conversions.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/join_organization.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/lifecycle_contracts.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/lifecycle_preparation_proof.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/lifecycle_probes/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/lifetime_analysis.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/llvm_lto_readiness.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/local_type_resolution.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/lowering.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/lowering_inputs.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/managed_element_storage_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/metaprogramming_parsing.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/native_dispatch_investigation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/native_executable.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/nested_family_consolidation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/operations_and_control_flow.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/owned_source_results_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/owning_storage_fields.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/parser_scaling_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/parsing.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/performance_watchlist.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/program_entry.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/project_manifest.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/provider_append_aliasing.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/provider_family_compiler_integration.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/provider_family_implementation_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/resolved_to_llvm_development_slowdown.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/return_type_resolution.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/runtime_cleanup.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/runtime_console.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/runtime_copy_construction.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/runtime_package_consumption.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/runtime_package_preparation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/runtime_string_literals.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/scalability_first_run.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_family_consolidation.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_family_integration_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_list_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_native_contract.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_operation_adapter_proof.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_record_borrowing.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_skeleton.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_specialization_measurements.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/source_specialization_proof.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/struct_member_audit.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/structured_values_layout.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/symbol_collection.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/symbol_comparison.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/symbol_resolution.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/template_bindings.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/type_capability_assessment.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/type_storage.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/details/typed_storage_plan.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/planning/compiler_foundations.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/docs/type_model.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/function_arguments/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/function_arguments/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/runtime_console/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/10mb/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/128kb/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/1mb/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/256kb/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/512kb/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/5mb/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/64kb/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/scalability/inventory.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/examples/three_files/project.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/language/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/language/instantiation_limits.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/language/named_types.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/reference/README.md",
+                        "kind": "markdown",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "compiler/reference/original-phpp/src/README.md",
+                        "kind": "markdown",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "compiler/reference/original-phpp/src/prism.json",
+                        "kind": "json",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "compiler/reference/original-phpp/tests/README.md",
+                        "kind": "markdown",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "compiler/reference/source-repository/prototype_readme.md",
+                        "kind": "markdown",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "compiler/reference/source-repository/working_rules.md",
+                        "kind": "markdown",
+                        "doc_status": "historical"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/config.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/definitions/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/definitions/allocation.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/definitions/element_storage.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/definitions/scalars.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/definitions/strings.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/families/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/project/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/tests/families/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/tests/families/catalog.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/tests/lifecycle/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/tests/sequence_aliasing/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/tests/source_operations/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/tests/specializations/catalog.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src-runtime-preparation/tests/specializations/request.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/01_prepare_inputs/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/01_prepare_inputs/load_runtime/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/01_prepare_inputs/read_manifest/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/01_prepare_inputs/read_sources/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/02_tokenize/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/03_parse/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/analyze_lifetimes/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/check_bodies/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/check_templates/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/collect_symbols/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/instantiate/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/resolve_symbols/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/resolve_types/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/04_analyze/type_model/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/05_generate_code/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/05_generate_code/emit_llvm/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/05_generate_code/lower/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/05_generate_code/prepare_backend/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/06_build_output/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/06_build_output/build_native/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/compile/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/compile/steps.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/diagnostics/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/src/simulate_increment/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/tests/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/tool_process/calls.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/tools/backend.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/tools/toolchain.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/adoption.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/adoption_inventory.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/B01.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/preparation.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/reports/lifecycle/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/reports/source-operations/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/reports/specializations/accepted.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/adoption-01/reports/specializations/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-01/config/prototype__src-runtime-preparation__config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-01/config/tools__toolchain.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-01/reports/lifecycle/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-01/reports/source-operations/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-01/reports/specializations/accepted.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-01/reports/specializations/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-01/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/B01-retry.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/config/prototype__src-runtime-preparation__config.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/config/tools__toolchain.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/reports/lifecycle/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/reports/source-operations/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/reports/specializations/accepted.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/reports/specializations/report.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/results/baseline-02/summary.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "tools/compiler_migration/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/README.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/boundary.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/baseline.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/compiler_migration/source_inventory.json",
+                        "kind": "json",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/debt.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/catalog/README.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/catalog/language.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/catalog/libraries.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/catalog/conversion.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "examples/portability/take/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "examples/portability/take/phpp/prism.json",
+                        "kind": "json",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "specs/portability/first_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "compiler/README.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/planning/v0.2_development.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "specs/portability/README.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "tools/php_portability/README.md",
+                        "kind": "markdown",
+                        "doc_status": "supporting"
+                    },
+                    {
+                        "path": "tests/portability/README.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
                         "path":  "CHANGELOG.md",
                         "kind":  "markdown",
                         "doc_status":  "supporting"

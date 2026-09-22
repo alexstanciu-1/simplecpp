@@ -1,0 +1,9 @@
+{
+  "runtime": {
+    "languages": {
+      "php": {"profile": "strict"}
+    }
+  },
+  "build": {"cxx": "clang++"},
+  "entrypoint": "main.phs"
+}

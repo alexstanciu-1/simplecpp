@@ -1,0 +1,5 @@
+class Role {
+    public function __construct(public readonly int $id) {}
+}
+$r = new Role(7);
+echo $r->id, "\n";

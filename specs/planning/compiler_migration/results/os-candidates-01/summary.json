@@ -1,0 +1,23 @@
+{
+  "status": "blocked-native-parity",
+  "php_lifecycle": "passed",
+  "fast_regressions": "passed",
+  "target_revision": "08c8206aae914240d8b25fd2d1cd49c7149dd417",
+  "target_clean": true,
+  "blocker": "Runtime aliases are emitted as conflicting class forward declarations in signatures",
+  "issue_comment": "https://github.com/alexstanciu-1/simplecpp/issues/231#issuecomment-5764637852",
+  "source_sha256": {
+    "tools/php_portability/runtime/file_locks.php": "3bde579fd7b0ee830829a47f17a6ff281275e31419c0b7f70d8f018ac2fb2935",
+    "tools/php_portability/runtime/file_locks.phs": "6c175c524066d390362a32309577cbd4cae1d0a02f983dbc2b4edc7bd0fa2cad",
+    "tools/php_portability/runtime/processes.php": "5bd05077614074d579c8920fddf41c1bfd838e6fa0ed05d20e993a26d348fa22",
+    "tools/php_portability/runtime/processes.phs": "9eaac789e027f3468de2fe2e5d072b6db3240773c729abb067858ffdf8ccebc2",
+    "tools/php_portability/runtime/process_launcher.php": "4a750df0a0decb9460f716c007af60946ed06a8fc04a4ee402d7925a0514f2d9",
+    "tools/php_portability/runtime/bootstrap.php": "03a0a0330df729a8fa358255a5a7d781573b544d2ea4be06904352a8417c1a56",
+    "tools/php_portability/install_native_runtime.php": "408e72b20cbf026c8bfaa18ab3991cbf0494b5da57b5d33fcba993f24144ee7d",
+    "tools/php_portability/function_map.php": "31e7627754fe4ffb0c0c6fc1313653a37e5816b5558e01868a3d095395059ff8",
+    "tools/php_portability/src/converter.php": "859659b9d9762cb806c9054a3b35e19bea35abe356bb42d5b05a53a818835339",
+    "tests/portability/os_php.php": "d7351e9c562b7a1571534f3540bf047d8ee1e12cc7e9b8a5f601cb20927c8fb0",
+    "tests/portability/os_native.py": "f827998f4e855001a872330e77e1d3cb6d4ff39fc9d695e00bb47cb7b0c61340",
+    "tests/portability/native_runtime.py": "70ce9bf30dcdf8a2c7dcf13ee8106717eb71f7794538af6dd2cb1ef64625e0f6"
+  }
+}

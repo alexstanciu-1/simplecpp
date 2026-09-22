@@ -1,0 +1,16 @@
+struct element_row {
+    uint32 $value = 0;
+}
+
+struct record_vector {
+    public $items vector<element_row>;
+}
+
+$element element_row = [];
+$element->value = 7;
+$items vector<element_row> = [$element];
+$original record_vector = [];
+$original->items = $items;
+$copy record_vector = $original;
+$copy->items[0]->value = 9;
+echo $original->items[0]->value, ":", $copy->items[0]->value, "\n";

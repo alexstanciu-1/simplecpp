@@ -1,0 +1,131 @@
+
+
+/*
+ * Role: Completed file frontend, structural validation and export.
+ * Used by: File_Parser; Frontend_Join; analysis
+ * Flow: tokens + syntax + entity/body IDs -> File_Frontend
+ */
+
+namespace parse;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Parsed file: one root covering definitions and the implicit entry body.
+// All node IDs below belong to this file's syntax snapshot, not the symbol index.
+/**
+ * @compiler-api Parser output consumed by collection, comparison, resolution and debug.
+ * Readable fields: source_file_id, tokens, syntax, defined_entities, entry_body_id.
+ * One syntax root contains the implicit entry block then ordered definitions. The
+ * entity list indexes that tree, not duplicated nodes. Keep this exact frontend with
+ * its source spans; never combine IDs/spelling with a different file version.
+ * Only parse assembles the record; construction binds inputs but leaves structural assembly incomplete.
+ */
+class File_Frontend {
+    public int $source_file_id = 0;
+    public \tokenize\Token_Buffer $tokens;public Syntax_Tree $syntax;public function __construct(\tokenize\Token_Buffer $tokens, Syntax_Tree $syntax) {$this->tokens = $tokens;$this->syntax = $syntax;
+    }
+
+    // Index into the root's declaration children, not a second copy of syntax.
+    // Top-level declaration node IDs in source order. Members belong to their entity.
+    /** @var list<int> */
+    public $defined_entities vector<int> = [];
+
+    // A completed parse has a block node here, even when it has no statements.
+    // Zero denotes an unfinished result. This body is not a named declaration.
+    public int $entry_body_id = 0;
+
+    // Root/index consistency for a complete file, shared by joins and storage.
+    /**
+     * @compiler-api Read-only root/entry/definition-index consistency check; throws on malformed structure.
+     * This is not a full grammar/semantic validation of every descendant.
+     */
+    public function validate(): void {
+        $id = $this->source_file_id;
+        $node_count = count($this->syntax->nodes);
+        $root_id = $this->syntax->root_node_id;
+        if (($this->entry_body_id < 1) || ($this->entry_body_id > $node_count)
+            || ($root_id < 1) || ($root_id > $node_count)) {
+            throw new \scpp_portability_exception('Invalid file frontend');
+        }
+        $entry = $this->syntax->nodes[$this->entry_body_id - 1];
+        $root = $this->syntax->nodes[$root_id - 1];
+        if (($id < 1) || ($this->tokens->source->source_file_id !== $id)
+            || ($this->syntax->source_file_id !== $id) || ($entry->kind !== syntax_kind::block)
+            || ($root->kind !== syntax_kind::file_root) || ($root->next_sibling_id !== 0)
+            || ($root->first_child_id !== $this->entry_body_id)) {
+            throw new \scpp_portability_exception('Invalid file frontend');
+        }
+        $next = $entry->next_sibling_id;
+        foreach ($this->defined_entities  as $entity_id) {
+            if (($entity_id < 1) || ($entity_id > $node_count) || ($next !== $entity_id)
+                || ($entity_id === $this->entry_body_id) || ($entity_id === $this->syntax->root_node_id)) {
+                throw new \scpp_portability_exception('Invalid file definition index');
+            }
+            $entity = $this->syntax->nodes[$entity_id - 1];
+            $next = $entity->next_sibling_id;
+        }
+        if ($next !== 0) {
+            throw new \scpp_portability_exception('Incomplete file definition index');
+        }
+    }
+
+    /** @compiler-api On-demand debug view; not a semantic input or a persisted-cache format. */
+    public function to_json(): string {
+        $json = '{"source_file_id":' . $this->source_file_id
+            . ',"path":' . \read_sources\Source_Json::quote($this->tokens->source->path)
+            . ',"root_node_id":' . $this->syntax->root_node_id . ',"defined_entities":[';
+        $separator = '';
+        foreach ($this->defined_entities  as $id) {
+            $json .= $separator . $id;
+            $separator = ',';
+        }
+        $json .= '],"entry_body_id":' . $this->entry_body_id . ',"nodes":[';
+        $separator = '';
+        foreach ($this->syntax->nodes  as $index => $node) {
+            $json .= $separator . '{"id":' . ($index + 1)
+                . ',"kind":' . \read_sources\Source_Json::quote(Syntax_Kinds::name($node->kind))
+                . ',"start":' . $node->start . ',"length":' . $node->length
+                . ',"first_child_id":' . $node->first_child_id . ',"next_sibling_id":' . $node->next_sibling_id;
+            if (($node->kind === syntax_kind::name) || ($node->kind === syntax_kind::variable_name) || ($node->kind === syntax_kind::integer_literal)
+                || ($node->kind === syntax_kind::string_literal) || ($node->kind === syntax_kind::boolean_literal)) {
+                $json .= ',"text":' . \read_sources\Source_Json::quote(string_byte_slice($this->tokens->source->content, $node->start, $node->length));
+            }
+            $json .= '}';
+            $separator = ',';
+        }
+        return $json . ']}';
+    }
+}

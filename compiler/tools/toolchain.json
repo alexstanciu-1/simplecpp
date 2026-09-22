@@ -1,0 +1,5 @@
+{
+  "scpp": "../../../simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+  "branch": "codex/compiler-vector-runtime",
+  "verified_commit": "fc20d73d040c4e69758bcec0b1caf40c26755f72"
+}

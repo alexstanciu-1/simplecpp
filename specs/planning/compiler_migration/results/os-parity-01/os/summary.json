@@ -1,0 +1,5 @@
+{
+  "passed": true,
+  "target_revision": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+  "expected": "locked\ncontended\ntransfer-held\nshared\nshared-pair\nreleased-transfer-error\npath-error\ninput:err:7\ninput\nclosed-error\nexec-error\n127\npending-error\ntimeout:9\nstopped:9\n"
+}

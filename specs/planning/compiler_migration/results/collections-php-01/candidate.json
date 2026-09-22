@@ -1,0 +1,9 @@
+{
+  "runtime_candidate_commit": "394164c0f376443c31c96660dee250719a7dd804",
+  "php_only": true,
+  "converter_bindings_available": false,
+  "source_sha256": {
+    "tools/php_portability/runtime/collections.php": "63321ab282f9ca8dad5e957ba98efb7227aca81bce87e179d2d3fccdb7433dcd",
+    "tests/portability/collections_php.php": "feeb5e4e087c0bc113d67fc25fd3e5283797ffe7b0548699117d7856099c1326"
+  }
+}

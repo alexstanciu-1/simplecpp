@@ -1,0 +1,43 @@
+namespace read_sources;
+
+// Source-language membership policy for the current PHP++ frontend.
+function is_source_path(string $path): bool {
+    return str_ends_with($path, ".phs");
+}
+
+// Native path forms: POSIX roots, Windows UNC roots, and rooted drive paths.
+function is_absolute_path(string $path): bool {
+    if (str_starts_with($path, "/") || str_starts_with($path, "\\")) {
+        return true;
+    }
+    return strlen($path) >= 3 && substr($path, 1, 1) === ":"
+        && (substr($path, 2, 1) === "/" || substr($path, 2, 1) === "\\");
+}
+
+function join_path(string $base, string $relative): string {
+    if (str_ends_with($base, "/")) {
+        return $base . $relative;
+    }
+    return $base . "/" . $relative;
+}
+
+function resolve_path(string $base, string $path): string {
+    $candidate string = $path;
+    if (!is_absolute_path($path)) {
+        $candidate = join_path($base, $path);
+    }
+    $resolved string = "";
+    $error error;
+    if (!take($resolved, $error, fs_realpath($candidate))) {
+        throw new \Exception("Cannot resolve source path: " . $candidate);
+    }
+    // Normalize native Windows separators; preserve literal backslashes in POSIX names.
+    if (!str_starts_with($resolved, "/")) {
+        return str_replace("\\", "/", $resolved);
+    }
+    return $resolved;
+}
+
+function change_detection_limitation(): string {
+    return "Current limitation: file changes use whole-second mtime and size. Wait at least one second after the last edit before compiling, and at least one second after the scan before editing again. Edits outside this timing window may go undetected.";
+}

@@ -1,0 +1,137 @@
+{
+  "status": "passed",
+  "scope": "portability-ready source set",
+  "native_requested": [],
+  "steps": [
+    {
+      "name": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-os-final-fast-01/source"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.383
+    },
+    {
+      "name": "php-behavior",
+      "command": [
+        "php",
+        "-r",
+        "foreach (array_slice($argv, 1) as $file) { require $file; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-os-final-fast-01/source/src/compile/state.php",
+        "/tmp/scpp-os-final-fast-01/source/src/02_tokenize/structures.php",
+        "/tmp/scpp-os-final-fast-01/source/src/compile/step.php",
+        "/tmp/scpp-os-final-fast-01/source/src/01_prepare_inputs/read_sources/utilities/path_syntax.php",
+        "/tmp/scpp-os-final-fast-01/source/src/03_parse/data/nodes.php",
+        "/tmp/scpp-os-final-fast-01/source/src/03_parse/data/role_views.php",
+        "/tmp/scpp-os-final-fast-01/source/src/03_parse/data/structures.php",
+        "/tmp/scpp-os-final-fast-01/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/scpp-os-final-fast-01/source/src/03_parse/data/tree.php",
+        "/tmp/scpp-os-final-fast-01/source/src/04_analyze/check_bodies/utilities/decimal_range.php",
+        "/tmp/scpp-os-final-fast-01/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/scpp-os-final-fast-01/source/src/05_generate_code/prepare_backend/data/tools.php",
+        "/tmp/scpp-os-final-fast-01/source/src/01_prepare_inputs/read_sources/data/read_tasks.php",
+        "/tmp/scpp-os-final-fast-01/source/src/01_prepare_inputs/read_sources/data/structures.php",
+        "/tmp/scpp-os-final-fast-01/source/src/01_prepare_inputs/read_sources/data/source_json.php",
+        "/tmp/scpp-os-final-fast-01/source/src/01_prepare_inputs/read_sources/data/store.php",
+        "/tmp/scpp-os-final-fast-01/source/main.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.117
+    },
+    {
+      "name": "source-set-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/source_set_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.103
+    },
+    {
+      "name": "collections-php",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/collections_php.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.042
+    },
+    {
+      "name": "foundation",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/run.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 2.569
+    },
+    {
+      "name": "check-regressions",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/check.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 2.482
+    },
+    {
+      "name": "prologues",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/prologues.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.855
+    },
+    {
+      "name": "native-framework-install",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/native_runtime.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.923
+    }
+  ],
+  "configured_target": {
+    "repository": "https://github.com/alexstanciu-1/simplecpp.git",
+    "release": null,
+    "verified_commit": "08c8206aae914240d8b25fd2d1cd49c7149dd417",
+    "cli": "bin/scpp.php",
+    "profile": "strict",
+    "purpose": "PHP++ compiler implementation target; separate from the adopted LLVM runtime-provider baseline",
+    "base_release": "v0.1.76",
+    "branch": "codex/file-lock-runtime",
+    "status": "unreleased tested candidate"
+  },
+  "source_sha256": {
+    "src/compile/state.php": "015b88d887549b17fa7fd1db842ec2edc8ca9af62a8f662330a0653d409983b9",
+    "src/02_tokenize/structures.php": "f7a722d37c6bc5dd4eeabb127d16116cea1ec14fab1bf1a757e8b912512738da",
+    "src/compile/step.php": "93b992ad39eb1632d8e204c272abff64cccbd65d5da3e54f0b34a149df442a3f",
+    "src/01_prepare_inputs/read_sources/utilities/path_syntax.php": "2f3e9a8de55671c93d0fd2622a62abac535212fdf44398d010b39872b6d77713",
+    "src/03_parse/data/nodes.php": "77bf553af2d2be718ed240f3aa3075f9221a73fe9d73dc90c620d263b5c9b641",
+    "src/03_parse/data/role_views.php": "4e09d01b434071d0019293c936511073e65f6b9a76c87e2a5f9fc3906506a842",
+    "src/03_parse/data/structures.php": "93634c0ca8a68e74cb8cedbfe2970ce9a530cea36393ed7ffb19f597b26d8752",
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "e54a1ffafd80485b525709bc344d81fa4d39c8c5675f48267c59457fd1467e58",
+    "src/03_parse/data/tree.php": "ef88f17d0b1035d6ebca4ac49eeadbd6a5e557fdecdec5a2a299570dd0ea11e2",
+    "src/04_analyze/check_bodies/utilities/decimal_range.php": "eb27de59506291bbcf2260b3c20d1c645f5f36af7f61dab7785fae4ebabbbb87",
+    "src/05_generate_code/prepare_backend/data/configuration.php": "e4a03edc3c212e2979864c731fa2bf3465d30c14cbc34ed3888c5135d4cf5d1f",
+    "src/05_generate_code/prepare_backend/data/tools.php": "d0d0420cd000ce3c9fb71f91be75e8e0919a1b377b6ddd03d893e80642ff4524",
+    "src/01_prepare_inputs/read_sources/data/read_tasks.php": "59006fb7593fd2f3e6e379453d677ca5eeefbc67fd3249dc828df7761b09182a",
+    "src/01_prepare_inputs/read_sources/data/structures.php": "6293447cc2793b9c21d3bd1f7b4695706a9d9c2032cd082dd0147a9527132cf3",
+    "src/01_prepare_inputs/read_sources/data/source_json.php": "e25da253aa551a4b0334d146fd90054da38217abab32d57c0066f4765278b828",
+    "src/01_prepare_inputs/read_sources/data/store.php": "3ecff2a1b776022628f6ab1d8c22b1e71635bced9d2dc626910056db02e83bb3"
+  },
+  "native_proved": []
+}

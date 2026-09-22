@@ -1,0 +1,22 @@
+namespace compile;
+
+// Shared implemented prefix. Inspecting inputs does not publish compilation.
+function refresh_compiler_inputs(string $manifest_path, \read_manifest\Project_Manifest $previous_manifest, \read_sources\Source_Set $previous_sources, bool $initial): Input_Snapshot {
+    $result Input_Snapshot = new Input_Snapshot();
+    $result->manifest = \read_manifest\read_project_manifest($manifest_path);
+    $result->context = select_input_update($previous_manifest, $result->manifest, $initial);
+    $result->sources = \read_sources\discover_project_sources($result->manifest, $previous_sources);
+    if (count($result->sources->removed_file_ids) > 0) {
+        $result->context->full_rebuild = true;
+    }
+    return $result;
+}
+
+function select_input_update(\read_manifest\Project_Manifest $previous, \read_manifest\Project_Manifest $current, bool $initial): Update_Context {
+    $update Update_Context = new Update_Context();
+    $update->full_rebuild = $initial
+        || $current->path !== $previous->path
+        || $current->directory !== $previous->directory
+        || $current->content !== $previous->content;
+    return $update;
+}

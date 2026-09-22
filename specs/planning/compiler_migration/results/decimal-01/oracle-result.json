@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "tests/portability/decimal_range.py"
+  ],
+  "exit_code": 0,
+  "cases": 24728,
+  "oracle": "Python arbitrary-precision integers; seeded random and boundary cases"
+}

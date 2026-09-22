@@ -1,0 +1,8 @@
+{
+  "source_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "original_path": "prototype/src/02_tokenize/structures.php",
+  "adopted_path": "compiler/src/02_tokenize/structures.php",
+  "original_sha256": "614c42d917d385f46bbc5ee60e2f1c8b9c2bc1b7c43c9f81b217a88c2d209c91",
+  "adapted_sha256": "16952ebcfd16a7ef10084a8bd9cd1e6c69053c0997f1b466c720db9e138bcf0f",
+  "only_managed_imports_changed": true
+}

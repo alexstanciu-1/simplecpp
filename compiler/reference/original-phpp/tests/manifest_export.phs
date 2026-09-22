@@ -1,0 +1,46 @@
+use function read_manifest\read_project_manifest;
+
+function check_export(bool $condition, string $message): void {
+    if (!$condition) {
+        throw new Exception($message);
+    }
+}
+
+function check_manifest_export(\read_manifest\Project_Manifest $manifest): void {
+    $before string = $manifest->content;
+    $json string = $manifest->to_json();
+    // Export shape mirrors Project_Manifest's five fields.
+    $decoded mixed;
+    $error error;
+    check_export(take($decoded, $error, json_decode($json)), "export must be valid JSON");
+    check_export(count($decoded) === 5, "export must contain every snapshot field");
+    check_export($decoded["path"] === $manifest->path, "manifest path must survive export");
+    check_export($decoded["content"] === $before, "exact source bytes must survive JSON escaping");
+    check_export($decoded["directory"] === $manifest->directory, "resolved directory must survive export");
+    check_export($decoded["entry_path"] === $manifest->entry_path, "entry path must survive export");
+    $roots mixed = $decoded["source_folder_paths"];
+    check_export(count($roots) === count($manifest->source_folder_paths), "root count must survive export");
+    foreach ($roots as $index => $root) {
+        $position int = $index;
+        check_export($root === $manifest->source_folder_paths[$position], "root order and spelling must survive export");
+    }
+    check_export($manifest->content === $before && $manifest->to_json() === $json, "export must be repeatable and leave the snapshot unchanged");
+}
+
+$manifest \read_manifest\Project_Manifest = read_project_manifest("../fixtures/three_files/project.json");
+check_manifest_export($manifest);
+echo $manifest->to_json(), "\n";
+
+// Exercise JSON escaping and multiple roots through a real read as well.
+$content string = "{\n\t\"source_folders\":[\"folder with spaces\",\"../shared\"],\n\t\"entry\":\"src/a\\\"b\\\\c.phs\"\n}\n";
+$written int = 0;
+$error error;
+check_export(take($written, $error, fs_put("export_input.json", $content)), "fixture write failed");
+$other \read_manifest\Project_Manifest = read_project_manifest("export_input.json");
+check_manifest_export($other);
+check_export($other->content === $content, "reader must retain tabs and newlines");
+
+// The same method can inspect an unfinished/default result.
+$empty \read_manifest\Project_Manifest = new \read_manifest\Project_Manifest();
+check_manifest_export($empty);
+echo "manifest JSON export ok: actual reader output, escaping, root order, empty snapshot, and repeatability\n";

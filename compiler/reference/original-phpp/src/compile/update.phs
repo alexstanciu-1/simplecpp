@@ -1,0 +1,77 @@
+namespace compile;
+
+use function collect_symbols\refresh_declarations;
+use function parse\join_file_frontends;
+use function read_sources\join_source_snapshots;
+use function resolve_symbols\join_symbol_resolutions;
+
+// Coordinate compilation stages over a session and request.
+
+// Skeleton for steps 1-6 only. Stage placeholders stop explicitly if called.
+// Backend work and publication are not enabled; main inspects manifest + sources.
+function prepare_compiler_update(Compiler_Session $session, string $manifest_path): Prepared_Update {
+    $inputs Input_Snapshot = refresh_compiler_inputs($manifest_path, $session->manifest, $session->sources, (int)$session->generation === 0);
+    $manifest \read_manifest\Project_Manifest = $inputs->manifest;
+    $update Update_Context = $inputs->context;
+    $sources \read_sources\Source_Set = $inputs->sources;
+
+    // At most one escalation: selective -> all. Restart the SAME loops if a
+    // later phase discovers unsupported impact after earlier work was skipped.
+    while (true) {
+        $files Frontend_Phase_Result = run_frontend_phase($sources, $update);
+        $current_sources \read_sources\Source_Set = join_source_snapshots($sources, $files->sources);
+        $frontends vector<\parse\File_Frontend> = join_file_frontends($session->frontends, $current_sources, $files->frontends, 0, count($files->frontends));
+        $symbols \collect_symbols\Symbol_Refresh = refresh_declarations($session->symbols, $session->frontends, $current_sources, $frontends);
+        if (!$update->full_rebuild && !$symbols->incremental_supported) {
+            $update->full_rebuild = true;
+            continue;
+        }
+
+        $resolved vector<\resolve_symbols\Symbol_Resolution> = run_symbol_phase($symbols, $current_sources, $frontends, $update);
+        $incremental_supported bool = true;
+        foreach ($resolved as $result) {
+            if (!$result->incremental_supported) {
+                $incremental_supported = false;
+            }
+        }
+        if (!$update->full_rebuild && !$incremental_supported) {
+            $update->full_rebuild = true;
+            continue;
+        }
+
+        $candidate Prepared_Update = new Prepared_Update();
+        $candidate->context = $update;
+        $candidate->manifest = $manifest;
+        $candidate->sources = $current_sources;
+        $candidate->frontends = $frontends;
+        $candidate->symbols = $symbols;
+        $candidate->resolutions = join_symbol_resolutions($session->resolutions, $symbols, $resolved);
+        return $candidate;
+    }
+    throw new \Exception("Invalid update flow: preparation ended without a candidate");
+}
+
+// Create a fresh selection decision without changing the published baseline.
+function begin_compiler_update(Compiler_Session $session, \read_manifest\Project_Manifest $manifest): Update_Context {
+    return select_input_update($session->manifest, $manifest, (int)$session->generation === 0);
+}
+
+function publish_compiler_update(Compiler_Session $session, Prepared_Update $update): void {
+    // TODO: extend the candidate with remaining semantic/backend results first.
+    // Publish consistent state, removals and diagnostics, then advance generation.
+    // Never mutate the session during preparation or publish old outputs as new.
+    // TODO (later): after successful publication and all readers have finished,
+    // run cleanup_compiler_update at the end of the common update cycle.
+    throw new \Exception("Not implemented: publish_compiler_update");
+}
+
+// Deferred maintenance boundary, not required for the first real increment.
+function cleanup_compiler_update(Compiler_Session $session): void {
+    // TODO: ask each store owner to reclaim rows marked deleted/removed and
+    // obsolete payloads after no phase reader needs them. Repair indexes and
+    // snapshot-local references if rows move; preserve live logical identities.
+    // Consume removal bookkeeping only after its contributions are retired.
+    // Logical exclusion from current lookup/work happens during the update;
+    // this later cleanup reclaims storage through the same full/selective path.
+    throw new \Exception("Not implemented: cleanup_compiler_update");
+}

@@ -1,0 +1,11 @@
+{
+  "final_generated_bytes_match_native_proof": true,
+  "sha256": {
+    "tools/php_portability/convert.php": "5bf5e2c75c07febe84e438ee1951f292cba14e003debaf64c84b72ad05913c3e",
+    "tools/php_portability/src/converter.php": "e46f3250acd5aa543f92271c72b906abf203d824d3815b6bb7090272396a2ff4",
+    "tools/php_portability/src/declaration_index.php": "1137a0b37ba72977a8cb5cc5b5cc33697e4baed61e600919cf35cf17fb27d8dd",
+    "tools/php_portability/src/project_cache.php": "35c906b44261341e53bce3bd8c9ebb2a6facc1f47b1355be195aafff75233f19",
+    "tools/php_portability/src/import_policy.php": "d698acce8f94b8043cb9c4ee40000641416fa4b61daef79beb6c762910ee7c6a",
+    "tests/portability/traits.py": "88f2f5503820ec4e011e92cf55427bacdcda8e5b6c18ff16d8c9c436ea6e13c0"
+  }
+}

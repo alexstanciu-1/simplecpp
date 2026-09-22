@@ -1,0 +1,52 @@
+
+
+/*
+ * Role: Marker for owners that accept a selected worker-result batch.
+ * Used by: Compiler process join owners
+ * Call map: [action] construct fixed context and tasks -> concrete owner join($results)
+ */
+
+namespace compile;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @compiler-api Marker for acceptance owners with captured context and selected tasks.
+ * Each concrete join owns its explicit batch and return types. There is no erased
+ * polymorphic join(array): mixed dispatch contract. Validation, mutation and
+ * rollback guarantees belong to each owner; constructors only capture context.
+ */
+interface Join {
+}

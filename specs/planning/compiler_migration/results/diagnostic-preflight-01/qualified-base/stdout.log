@@ -1,0 +1,52 @@
+Transpiled PHP files: 3, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-2f0d667f-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/5] PCH app_pch.hpp.gch
+[2/5] CXX base.o
+FAILED: base.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../scpp-2f0d667f-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/db9bd7998fa9ef09.hpp -MMD -MF base.o.d -MT base.o -c ../generated/base.cpp -o base.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/db9bd7998fa9ef09.hpp:5:
+./../generated/__project_units/../child.hpp:13:22: error: base class has incomplete type
+   13 | class Child : public Root_Base {
+      |               ~~~~~~~^~~~~~~~~
+./../generated/__project_units/../child.hpp:11:7: note: forward declaration of 'scpp::diagnostics::Root_Base'
+   11 | class Root_Base;
+      |       ^
+1 error generated.
+[3/5] CXX main.o
+FAILED: main.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../scpp-2f0d667f-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/db9bd7998fa9ef09.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/db9bd7998fa9ef09.hpp:5:
+./../generated/__project_units/../child.hpp:13:22: error: base class has incomplete type
+   13 | class Child : public Root_Base {
+      |               ~~~~~~~^~~~~~~~~
+./../generated/__project_units/../child.hpp:11:7: note: forward declaration of 'scpp::diagnostics::Root_Base'
+   11 | class Root_Base;
+      |       ^
+../generated/main.cpp:11:23: error: no member named 'value' in 'scpp::diagnostics::Child'
+   11 |         php::echo_one(child->value);
+      |                       ~~~~~~~^
+2 errors generated.
+[4/5] CXX child.o
+FAILED: child.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../scpp-2f0d667f-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/db9bd7998fa9ef09.hpp -MMD -MF child.o.d -MT child.o -c ../generated/child.cpp -o child.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/db9bd7998fa9ef09.hpp:5:
+./../generated/__project_units/../child.hpp:13:22: error: base class has incomplete type
+   13 | class Child : public Root_Base {
+      |               ~~~~~~~^~~~~~~~~
+./../generated/__project_units/../child.hpp:11:7: note: forward declaration of 'scpp::diagnostics::Root_Base'
+   11 | class Root_Base;
+      |       ^
+1 error generated.
+ninja: build stopped: subcommand failed.

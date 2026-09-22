@@ -1,0 +1,1 @@
+Struct field hash_row::$items uses unsupported first-slice field type hash<string> at line 2.

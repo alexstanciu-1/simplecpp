@@ -1,0 +1,17 @@
+{
+  "original_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "files": [
+    {
+      "original_path": "src/01_prepare_inputs/read_sources/data/store.php",
+      "extracted_path": "src/01_prepare_inputs/read_sources/data/buffer.php",
+      "declarations_preserved_except_vector_annotation": true,
+      "original_declaration_sha256": "e77f4eed3d89740bcd9ef1e98aeb00b77774bbaee512995581e1c3f959151c30"
+    },
+    {
+      "original_path": "src/03_parse/data/store.php",
+      "extracted_path": "src/03_parse/data/tree.php",
+      "declarations_preserved_except_vector_annotation": true,
+      "original_declaration_sha256": "ec2f8b347222266835cc7d49ecf8c4a8947c35d9136fbba6dc699b4cd0729266"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "selected_revision": "08c8206aae914240d8b25fd2d1cd49c7149dd417",
+  "release": false,
+  "proofs": [
+    "collections/summary.json",
+    "compiler/summary.json",
+    "fast/summary.json"
+  ]
+}

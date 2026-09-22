@@ -1,0 +1,71 @@
+
+
+namespace parse;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** @compiler-internal Pure parser-task selection; no file worker or shared-state mutation. */
+class Parser_Selection {
+    /** Select all live tokens on full, otherwise only replaced/missing frontends. */
+    public static function select(\read_sources\Source_Set $sources, \tokenize\Token_Set $tokens, Frontend_Set $previous, bool $full_rebuild): vector<\tokenize\Token_Buffer> {
+        $tasks vector<\tokenize\Token_Buffer> = [];
+        foreach ($sources->files  as $file) {
+            if ($file->change_state === \read_sources\file_change::deleted) {
+                continue;
+            }
+            $buffer = $tokens->for_file($file->id);
+            if ($buffer === null) {
+                throw new \scpp_portability_exception('Missing or stale tokens for parsing');
+            }
+            if ($buffer->source !== $file->buffer) {
+                throw new \scpp_portability_exception('Missing or stale tokens for parsing');
+            }
+            if ($full_rebuild) {
+                $tasks[] = $buffer;
+                continue;
+            }
+            $old = $previous->for_file($file->id);
+            if ($old === null) {
+                $tasks[] = $buffer;
+                continue;
+            }
+            if ($old->tokens !== $buffer) {
+                $tasks[] = $buffer;
+            }
+        }
+        return $tasks;
+    }
+}

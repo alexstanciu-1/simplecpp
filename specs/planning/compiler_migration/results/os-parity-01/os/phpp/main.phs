@@ -1,0 +1,72 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$handle = scpp_portability_lock_empty();
+echo scpp_portability_lock_try($handle, "/tmp/scpp-os-native-2f0d667f-01/shared.lock", false) ? "locked\n" : "bad\n";
+$alias = $handle;
+$other = scpp_portability_lock_empty();
+echo scpp_portability_lock_try($other, "/tmp/scpp-os-native-2f0d667f-01/shared.lock", false) ? "bad\n" : "contended\n";
+$moved = scpp_portability_lock_transfer($handle);
+scpp_portability_lock_release($alias);
+echo scpp_portability_lock_try($other, "/tmp/scpp-os-native-2f0d667f-01/shared.lock", true) ? "bad\n" : "transfer-held\n";
+scpp_portability_lock_release($moved); scpp_portability_lock_release($moved);
+echo scpp_portability_lock_try($other, "/tmp/scpp-os-native-2f0d667f-01/shared.lock", true) ? "shared\n" : "bad\n";
+$reader = scpp_portability_lock_empty(); echo scpp_portability_lock_try($reader, "/tmp/scpp-os-native-2f0d667f-01/shared.lock", true) ? "shared-pair\n" : "bad\n";
+scpp_portability_lock_release($other); scpp_portability_lock_release($reader);
+try { scpp_portability_lock_transfer($moved); } catch (\scpp_portability_exception $__scpp_portability_exception_1) {if ($__scpp_portability_exception_1->matches(8)) {$error = $__scpp_portability_exception_1; echo "released-transfer-error\n"; }else { throw $__scpp_portability_exception_1; }}
+try { scpp_portability_lock_try($other, "", false); } catch (\scpp_portability_exception $__scpp_portability_exception_2) {if ($__scpp_portability_exception_2->matches(8)) {$error = $__scpp_portability_exception_2; echo "path-error\n"; }else { throw $__scpp_portability_exception_2; }}
+$args vector<string> = ["-c", "cat; printf err >&2; exit 7"];
+$p = scpp_portability_process_spawn("/bin/sh", $args, "input", 1000, "");
+$alias_process = $p;
+for ($i = 0; $i < 1000000; $i++) { if (scpp_portability_process_poll($p)) { break; } }
+$out = scpp_portability_process_output($p);
+echo $out->stdout_text, ":", $out->stderr_text, ":", $out->exit_code, "\n";
+$out->stdout_text = "edited";
+$again = scpp_portability_process_output($p); echo $again->stdout_text, "\n";
+scpp_portability_process_close($alias_process); scpp_portability_process_close($p);
+try { scpp_portability_process_poll($p); } catch (\scpp_portability_exception $__scpp_portability_exception_3) {if ($__scpp_portability_exception_3->matches(8)) {$error = $__scpp_portability_exception_3; echo "closed-error\n"; }else { throw $__scpp_portability_exception_3; }}
+$missing_args vector<string> = [];
+try { scpp_portability_process_spawn("/not/a/program", $missing_args, "", 0, ""); } catch (\scpp_portability_exception $__scpp_portability_exception_4) {if ($__scpp_portability_exception_4->matches(8)) {$error = $__scpp_portability_exception_4; echo "exec-error\n"; }else { throw $__scpp_portability_exception_4; }}
+$args_127 vector<string> = ["-c", "exit 127"];
+$p127 = scpp_portability_process_spawn("/bin/sh", $args_127, "", 1000, "");
+for ($i = 0; $i < 1000000; $i++) { if (scpp_portability_process_poll($p127)) { break; } }
+$out127 = scpp_portability_process_output($p127); echo $out127->exit_code, "\n";scpp_portability_process_close($p127);
+$sleep_args vector<string> = ["10"];
+$slow = scpp_portability_process_spawn("/bin/sleep", $sleep_args, "", 10, "");
+try { scpp_portability_process_output($slow); } catch (\scpp_portability_exception $__scpp_portability_exception_5) {if ($__scpp_portability_exception_5->matches(8)) {$error = $__scpp_portability_exception_5; echo "pending-error\n"; }else { throw $__scpp_portability_exception_5; }}
+for ($i = 0; $i < 1000000; $i++) { if (scpp_portability_process_poll($slow)) { break; } }
+$timed = scpp_portability_process_output($slow);
+echo $timed->timed_out ? "timeout" : "bad", ":", $timed->signal, "\n";scpp_portability_process_close($slow);
+$stop = scpp_portability_process_spawn("/bin/sleep", $sleep_args, "", 0, "");scpp_portability_process_stop($stop);scpp_portability_process_stop($stop);
+for ($i = 0; $i < 1000000; $i++) { if (scpp_portability_process_poll($stop)) { break; } }
+$stopped = scpp_portability_process_output($stop);echo $stopped->stopped ? "stopped" : "bad", ":", $stopped->signal, "\n";scpp_portability_process_close($stop);

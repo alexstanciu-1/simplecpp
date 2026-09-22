@@ -1,0 +1,5 @@
+namespace lower;
+
+// Lower accepted bodies and data into explicit execution and target ABI operations.
+
+// Own lowered representations, ABI actions, and source/authorization provenance.

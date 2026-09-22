@@ -1,0 +1,13 @@
+class Diagnostic_Probe_Error extends \scpp_portability_runtime_exception {
+    public int $source_file_id = 0;
+    public string $path = "";
+    public int $start = 0;
+    public int $length = 0;
+    public function __construct(int $id, string $path, int $start, int $length, string $reason) {
+        $this->source_file_id = $id;
+        $this->path = $path;
+        $this->start = $start;
+        $this->length = $length;
+        $this->detail = $path . ': byte ' . $start . ': ' . $reason;
+    }
+}

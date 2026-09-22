@@ -1,0 +1,10 @@
+struct hash_row {
+    public $items hash<string>;
+}
+
+$original hash_row = [];
+$items hash<string> = ["key" => "before"];
+$original->items = $items;
+$copy hash_row = $original;
+$copy->items["key"] = "after";
+echo $original->items["key"], ":", $copy->items["key"], "\n";

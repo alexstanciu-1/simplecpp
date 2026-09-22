@@ -1,0 +1,7 @@
+{
+  "original_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "original_path": "prototype/src/03_parse/data/structures.php",
+  "extracted_path": "compiler/src/03_parse/data/nodes.php",
+  "declarations_preserved_byte_for_byte": true,
+  "declarations_sha256": "42f0b36d9f914c7e45b4c6df653f52e89362657f066256e9892a2a015dfb8614"
+}

@@ -1,0 +1,6 @@
+{
+  "source": "src/01_prepare_inputs/read_sources/data/structures.php",
+  "change": "managed imports and two vector<string> annotations only",
+  "original_sha256": "5d88fb7d0340bed25129c7b59b72f03ea1f7d4ada856205433b607505934bee5",
+  "final_converter_regeneration_matches_native_proof": true
+}

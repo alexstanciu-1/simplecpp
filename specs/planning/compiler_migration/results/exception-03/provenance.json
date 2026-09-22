@@ -1,0 +1,7 @@
+{
+  "original_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "path": "compiler/src/05_generate_code/prepare_backend/data/configuration.php",
+  "only_managed_imports_changed": true,
+  "original_sha256": "9c2e08c75e455e2528ff54aff6a5f88e9512b41c4a44294b706cb91c88d07c6d",
+  "adapted_sha256": "b8eb647e8dbd5132b1f3a0da5972b6bacae182b1b7339a84d71c64b6cffc05bc"
+}

@@ -1,0 +1,6 @@
+{
+  "fixture": "integration/runtime_strings.php",
+  "runner": "compiler/tests/run.py:run_fixture",
+  "returncode": 0,
+  "scope": "retained adopted compiler runtime string integration"
+}

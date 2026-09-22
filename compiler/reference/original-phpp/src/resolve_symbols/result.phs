@@ -1,0 +1,7 @@
+namespace resolve_symbols;
+
+class Symbol_Resolution {
+    public uint32 $symbol_id = 0;
+    public $bindings vector<symbol_binding> = [];
+    public bool $incremental_supported = false;
+}

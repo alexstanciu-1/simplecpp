@@ -1,0 +1,1 @@
+{"entrypoint":"main.phs","build":{"mode":"debug","cxx":"clang++-18"},"runtime":{"languages":{"php":{"profile":"strict"}},"modules":["filesystem","process"]}}

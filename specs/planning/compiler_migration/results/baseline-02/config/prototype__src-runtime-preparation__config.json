@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "provider": "simple_cpp",
+  "definitions_directory": "definitions",
+  "output_directory": "../generated-runtime",
+  "include_directories": [
+    "../../../../../home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/runtime/include",
+    "include"
+  ],
+  "clang": "clang++-18",
+  "target": null,
+  "standard": "c++23"
+}

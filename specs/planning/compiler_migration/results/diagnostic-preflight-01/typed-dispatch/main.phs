@@ -1,0 +1,43 @@
+$fault = new \Diagnostic_Probe_Error(7, 'test.phs', 3, 2, 'bad token');
+$selected int = 0;
+$narrow \Diagnostic_Probe_Error;
+$broad \scpp_portability_exception;
+try {
+    try { throw $fault; }
+    catch (\Diagnostic_Probe_Error $caught_narrow) {
+        $narrow = $caught_narrow;
+        $selected = 1;
+    }
+} catch (\scpp_portability_exception $caught_broad) {
+    $broad = $caught_broad;
+    $selected = 2;
+}
+if ($selected === 1) {
+    echo $narrow->source_file_id, ':', $narrow->path, ':', $narrow->start, ':', $narrow->length, "\n";
+    echo $narrow->getMessage(), "\n";
+    echo scpp_portability_same_exception($fault, $narrow) ? "same\n" : "bad\n";
+} else if ($selected === 2) { echo "bad branch\n"; }
+try { throw $fault; }
+catch (\scpp_portability_runtime_exception $runtime) { echo $runtime->getMessage(), "\n"; }
+// A handler's failure must escape sibling dispatch.
+try {
+    $arm int = 0;
+    $first \Diagnostic_Probe_Error;
+    $second \scpp_portability_exception;
+    try {
+        try { throw $fault; }
+        catch (\Diagnostic_Probe_Error $a) { $first = $a; $arm = 1; }
+    } catch (\scpp_portability_exception $b) { $second = $b; $arm = 2; }
+    if ($arm === 1) { throw new \scpp_portability_runtime_exception('handler escape'); }
+    else if ($arm === 2) { echo "bad sibling\n"; }
+} catch (\scpp_portability_exception $outer) { echo $outer->getMessage(), "\n"; }
+// An unmatched subtype reaches the next selected catch; its body runs later.
+$arm_b int = 0;
+$first_b \Diagnostic_Probe_Error;
+$second_b \scpp_portability_exception;
+try {
+    try { throw new \scpp_portability_logic_exception('broad fallback'); }
+    catch (\Diagnostic_Probe_Error $a_b) { $first_b = $a_b; $arm_b = 1; }
+} catch (\scpp_portability_exception $b_b) { $second_b = $b_b; $arm_b = 2; }
+if ($arm_b === 1) { echo "bad narrow\n"; }
+else if ($arm_b === 2) { echo $second_b->getMessage(), "\n"; }

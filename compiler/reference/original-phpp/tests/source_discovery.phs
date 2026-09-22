@@ -1,0 +1,137 @@
+use function read_manifest\read_project_manifest;
+use function read_sources\discover_project_sources;
+use function read_sources\resolve_path;
+
+function check_sources(bool $condition, string $message): void {
+    if (!$condition) {
+        throw new Exception($message);
+    }
+}
+
+function write_source_fixture(string $path, string $content): void {
+    $written int = 0;
+    $error error;
+    check_sources(take($written, $error, fs_put($path, $content)), "Cannot write fixture: " . $path);
+    check_sources($written === strlen($content), "Incomplete fixture write");
+}
+
+$manifest \read_manifest\Project_Manifest = read_project_manifest("../fixtures/three_files/project.json");
+$folder_zero uint32 = 0;
+$folder_one uint32 = 1;
+$empty \read_sources\Source_Set = new \read_sources\Source_Set();
+$first \read_sources\Source_Set = discover_project_sources($manifest, $empty);
+check_sources(count($first->folders) === 1 && count($first->files) === 3, "Recursive scan must find all three files");
+check_sources(count($first->file_ids_in_folder($folder_zero)) === 3, "Nested files belong to the top folder");
+foreach ($first->files as $file) {
+    check_sources($file->change_state === \read_sources\file_change::added && $file->needs_recompile, "First scan selects added files");
+}
+$before string = $first->to_json();
+$unchanged \read_sources\Source_Set = discover_project_sources($manifest, $first);
+foreach ($unchanged->files as $file) {
+    check_sources($file->change_state === \read_sources\file_change::unchanged, "Second scan must classify unchanged files");
+    check_sources($file->needs_recompile, "Unchanged metadata must not clear unfinished stage work");
+    check_sources($first->find_file_id($unchanged->path_by_id($file->full_path_id)) === $file->id, "Stable path must preserve file ID");
+}
+check_sources($first->to_json() === $before && count($empty->files) === 0, "Discovery must not mutate its inputs");
+$decoded mixed;
+$json_error error;
+check_sources(take($decoded, $json_error, json_decode($unchanged->to_json())), "source export must be valid JSON");
+check_sources(count($decoded["files"]) === 3 && count($decoded["folders"]) === 1, "Debug snapshot must export source membership");
+check_sources($decoded["files"][0]["change_state"] === "unchanged", "Export must carry actual change state");
+
+// Coordinator uses discovery, then stops honestly at the next unfinished stage.
+$session \compile\Compiler_Session = new \compile\Compiler_Session();
+$stopped bool = false;
+try {
+    \compile\prepare_compiler_update($session, $manifest->path);
+} catch (Exception $exception) {
+    $stopped = $exception->message_string() === "Not implemented: read_source_snapshot";
+}
+check_sources($stopped && (int)$session->generation === 0 && count($session->sources->files) === 0, "Preparation must reach source reading without publishing");
+
+// mtime changes independently of size.
+$path string = resolve_path($manifest->directory, "src/nested/value.phs");
+$id uint32 = $unchanged->find_file_id($path);
+$old \read_sources\source_file = $unchanged->file_by_id($id);
+dt_sleep_ms(1100);
+check_sources(fs_touch($path), "Cannot touch fixture");
+dt_sleep_ms(1100);
+$touched \read_sources\Source_Set = discover_project_sources($manifest, $unchanged);
+$row \read_sources\source_file = $touched->file_by_id($id);
+check_sources($row->mtime !== $old->mtime && $row->size === $old->size, "Fixture must change only mtime");
+check_sources($row->change_state === \read_sources\file_change::changed, "mtime alone must trigger change");
+
+// Deliberately edit within one timestamp second to prove the size check too.
+// Retry only if the real filesystem clock crosses a second during the edit.
+$baseline \read_sources\Source_Set = $touched;
+$size_proved bool = false;
+$attempt int = 0;
+$text string = "return 1;\n";
+while ($attempt < 3 && !$size_proved) {
+    $old = $baseline->file_by_id($id);
+    write_source_fixture($path, $text);
+    $next \read_sources\Source_Set = discover_project_sources($manifest, $baseline);
+    $row = $next->file_by_id($id);
+    if ($row->mtime === $old->mtime) {
+        check_sources($row->size !== $old->size, "Fixture must change size");
+        check_sources($row->change_state === \read_sources\file_change::changed, "Size alone must trigger change");
+        $size_proved = true;
+    }
+    $baseline = $next;
+    $text = $text . "\n";
+    $attempt = $attempt + 1;
+}
+check_sources($size_proved, "Could not exercise equal-mtime size change on this filesystem");
+
+// One shared dataset: additions, tombstones, and new identity on recreation.
+$added_path string = $manifest->directory . "/src/new.phs";
+write_source_fixture($added_path, "function added(): int { return 7; }\n");
+write_source_fixture($manifest->directory . "/src/notes.txt", "not source code");
+$added \read_sources\Source_Set = discover_project_sources($manifest, $baseline);
+$added_id uint32 = $added->find_file_id($added_path);
+check_sources((int)$added_id !== 0 && count($added->files) === 4, "Add source, ignore unrelated extension");
+$row = $added->file_by_id($added_id);
+check_sources($row->change_state === \read_sources\file_change::added, "New path must be added");
+check_sources(fs_remove($added_path), "Cannot remove fixture");
+$removed \read_sources\Source_Set = discover_project_sources($manifest, $added);
+$row = $removed->file_by_id($added_id);
+check_sources($row->change_state === \read_sources\file_change::deleted && !$row->needs_recompile, "Removed file must be inactive");
+check_sources((int)$removed->find_file_id($added_path) === 0 && count($removed->file_ids_in_folder($folder_zero)) === 3, "Live indexes must exclude deleted rows");
+check_sources($removed->path_by_id($row->full_path_id) === $added_path, "Tombstone must retain origin");
+$again \read_sources\Source_Set = discover_project_sources($manifest, $removed);
+check_sources(count($again->removed_file_ids) === 1, "Pending removals must not duplicate");
+write_source_fixture($added_path, "return 9;\n");
+$recreated \read_sources\Source_Set = discover_project_sources($manifest, $again);
+check_sources($recreated->find_file_id($added_path) !== $added_id, "Recreated path must not reuse retired identity");
+check_sources(count($recreated->files) === 5 && count($recreated->file_ids_in_folder($folder_zero)) === 4, "Retain old tombstone outside live index");
+
+// Root reorder changes folder positions, not logical file identity.
+check_sources(fs_mkdir($manifest->directory . "/other"), "Cannot create second root");
+write_source_fixture($manifest->directory . "/other/helper.phs", "return 2;\n");
+write_source_fixture($manifest->directory . "/two.json", "{\"source_folders\":[\"src\",\"other\"],\"entry\":\"src/main.phs\"}");
+$two_manifest \read_manifest\Project_Manifest = read_project_manifest($manifest->directory . "/two.json");
+$two \read_sources\Source_Set = discover_project_sources($two_manifest, $recreated);
+check_sources(count($two->file_ids_in_folder($folder_zero)) === 4 && count($two->file_ids_in_folder($folder_one)) === 1, "Each module indexes its own file IDs");
+write_source_fixture($manifest->directory . "/two.json", "{\"source_folders\":[\"other\",\"src\"],\"entry\":\"src/main.phs\"}");
+$two_manifest = read_project_manifest($manifest->directory . "/two.json");
+$reordered \read_sources\Source_Set = discover_project_sources($two_manifest, $two);
+$row = $reordered->file_by_id($id);
+check_sources((int)$row->top_folder_index === 1 && count($reordered->file_ids_in_folder($folder_zero)) === 1, "Folder indexes must follow current manifest order");
+check_sources($reordered->find_file_id($path) === $id, "Root reorder must preserve path identity");
+$single \read_sources\Source_Set = discover_project_sources($manifest, $reordered);
+$other_id uint32 = $reordered->find_file_id($manifest->directory . "/other/helper.phs");
+$row = $single->file_by_id($other_id);
+check_sources($row->change_state === \read_sources\file_change::deleted && (int)$row->top_folder_index === -1, "Removed root must withdraw its files without dangling ownership");
+
+// A failed candidate must leave the previous snapshot usable.
+$before = $single->to_json();
+write_source_fixture($manifest->directory . "/bad.json", "{\"source_folders\":[\"src\",\"src/nested\"],\"entry\":\"src/main.phs\"}");
+$bad \read_manifest\Project_Manifest = read_project_manifest($manifest->directory . "/bad.json");
+$rejected bool = false;
+try {
+    discover_project_sources($bad, $single);
+} catch (Exception $exception) {
+    $rejected = str_starts_with($exception->message_string(), "Overlapping source roots:");
+}
+check_sources($rejected && $single->to_json() === $before, "Failed discovery must not mutate previous state");
+echo "source discovery ok: recursive membership, mtime and size independently, stable IDs, additions/removals/recreation, folder indexes, exports, and input purity\n";

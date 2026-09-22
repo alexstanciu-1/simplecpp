@@ -1,0 +1,24 @@
+namespace parse;
+
+// Own the common frontend syntax representation and its structural invariants.
+
+enum syntax_kind : uint16 {
+    case invalid = 0;
+    case function_declaration = 1;
+    case parameter_list = 2;
+    case block = 3;
+    case return_statement = 4;
+    case call_expression = 5;
+    case name = 6;
+    case integer_literal = 7;
+}
+
+// IDs are one-based row positions within one Syntax_Tree snapshot; zero is absent.
+// Nodes remain in append order. Child/sibling links describe logical order.
+// No references into the vector survive an append; retain IDs instead.
+struct syntax_node {
+    public \read_sources\source_span $span;
+    public uint32 $first_child_id = 0;
+    public uint32 $next_sibling_id = 0;
+    public syntax_kind $kind = syntax_kind::invalid;
+}

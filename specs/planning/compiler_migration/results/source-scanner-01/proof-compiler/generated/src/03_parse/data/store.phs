@@ -1,0 +1,95 @@
+
+
+/*
+ * Role: Flat syntax storage and frontend lookup by file.
+ * Used by: File_Parser; Frontend_Join; analysis
+ * Flow: Syntax_Tree / File_Frontend -> Frontend_Set
+ */
+
+namespace parse;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// One complete parse result per file, shared unchanged between updates.
+/**
+ * @compiler-api Joined current file frontends; semantic steps query by logical file identity.
+ * Removed files are absent. Returned frontends/trees are shared read-only.
+ */
+class Frontend_Set implements \compile\Step_Result, \compile\Step_Store {
+    /** @var array<int, File_Frontend> */
+    private $by_file hash<File_Frontend, int> = [];
+
+    /**
+     * @compiler-api Create an empty baseline; nonempty assembly belongs to the producing join.
+     * Construction checks local invariants, not completeness of a compiler phase.
+     * @param list<File_Frontend>|null $files Null constructs the empty baseline.
+     */
+    public function __construct($files nullable<vector<File_Frontend>> = null) {
+        $selected vector<File_Frontend> = [];
+        take($selected, $files);
+        foreach ($selected  as $file) {
+            $id = $file->source_file_id;
+            if (isset($this->by_file[$id])) {
+                throw new \scpp_portability_exception('Invalid or duplicate file frontend');
+            }
+            $file->validate();
+            $this->by_file[$id] = $file;
+        }
+    }
+
+    /** @compiler-api Return the shared file frontend or null for an absent logical file ID. */
+    public function for_file(int $id): nullable<File_Frontend> {
+        if (!isset($this->by_file[$id])) { return null; }
+        return $this->by_file[$id];
+    }
+
+    /** @compiler-api On-demand debug view; not a semantic input or a persisted-cache format. */
+    public function to_json(): string {
+        $json = '[';
+        $separator = '';
+        foreach ($this->by_file  as $file) {
+            $json .= $separator . $file->to_json();
+            $separator = ',';
+        }
+        return $json . ']';
+    }
+}

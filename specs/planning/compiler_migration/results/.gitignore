@@ -1,0 +1,5 @@
+# Baseline logs are intentional, durable review evidence.
+!**/*.log
+
+# Disposable tokenization caches are not proof inputs.
+.scpp-token-cache/

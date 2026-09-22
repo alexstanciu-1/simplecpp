@@ -1,0 +1,14 @@
+namespace parse;
+
+// Parsed file: top-level definitions plus one implicit entry callable's body.
+// All node IDs below belong to this file's syntax snapshot, not the symbol index.
+class File_Frontend {
+    public uint32 $source_file_id = 0;
+    public $tokens \tokenize\Token_Buffer;
+    public $syntax Syntax_Tree;
+    // Top-level declaration node IDs in source order. Members belong to their entity.
+    public $defined_entities vector<uint32> = [];
+    // A completed parse has a block node here, even when it has no statements.
+    // Zero denotes an unfinished result. This body is not a named declaration.
+    public uint32 $entry_body_id = 0;
+}

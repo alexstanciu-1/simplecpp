@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "source_types": [
+    {
+      "id": "point",
+      "name": "point",
+      "fields": [
+        {
+          "name": "x",
+          "type": "signed32",
+          "writable": true
+        },
+        {
+          "name": "y",
+          "type": "signed32",
+          "writable": true
+        }
+      ]
+    },
+    {
+      "id": "sample",
+      "name": "sample",
+      "fields": [
+        {
+          "name": "tag",
+          "type": "byte",
+          "writable": true
+        },
+        {
+          "name": "total",
+          "type": "signed64",
+          "writable": true
+        },
+        {
+          "name": "delta",
+          "type": "signed32",
+          "writable": true
+        }
+      ]
+    }
+  ],
+  "specializations": [
+    {
+      "id": "points",
+      "family": "sequence",
+      "arguments": [
+        "point"
+      ],
+      "operations": [
+        "construct",
+        "destroy",
+        "append_copy",
+        "length",
+        "read_copy"
+      ]
+    },
+    {
+      "id": "samples",
+      "family": "sequence",
+      "arguments": [
+        "sample"
+      ],
+      "operations": [
+        "construct",
+        "destroy",
+        "append_copy",
+        "length",
+        "read_copy"
+      ]
+    }
+  ],
+  "scope": "isolated_source_records"
+}

@@ -1,0 +1,25 @@
+namespace parse;
+
+// Build syntax from tokens and recover with source-anchored diagnostics.
+
+function parse_source(
+    \read_sources\Source_Buffer $source,
+    \tokenize\Token_Buffer $tokens
+): File_Frontend {
+    // TODO: build flat syntax and return the file ID, tokens, and syntax together.
+    // List top-level declaration IDs in defined_entities. Put executable statements
+    // in entry_body_id, using the same block/statement nodes as function bodies.
+    // Always provide an entry block, including for declaration-only/empty files.
+    // Preserve origins and declaration-initializer ordering for later semantics.
+    // Collect definitions locally; do not write the project symbol index.
+    throw new \Exception("Not implemented: parse_source");
+}
+
+function join_file_frontends(vector<File_Frontend> $current, \read_sources\Source_Set $sources, vector<File_Frontend> $results, int $index, int $count): vector<File_Frontend> {
+    // Merge results[index .. index + count); index is zero-based, count is the entry count.
+    // The caller supplies a safe range and passes the returned state to later joins.
+    // TODO: validate range bounds, merge only that segment by source file ID,
+    // retain other current files, and drop files removed from sources.
+    // All node references must belong to the selected file's current snapshot.
+    throw new \Exception("Not implemented: join_file_frontends");
+}

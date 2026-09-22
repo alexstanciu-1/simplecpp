@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "types": [
+    {
+      "id": "string",
+      "cpp_name": "scpp::string_t",
+      "header": "scpp/string_t.hpp",
+      "kind": "runtime_value",
+      "storage": "inline",
+      "lifecycle": {
+        "construct": "string.from_bytes",
+        "destroy": "string.destroy",
+        "copy_construct": "string.copy",
+        "move_construct": "string.move",
+        "copy_assign": "string.assign"
+      },
+      "language_type": {
+        "name": "string",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "size",
+      "cpp_name": "std::size_t",
+      "header": "cstddef",
+      "kind": "integer"
+    },
+    {
+      "id": "bytes",
+      "cpp_name": "std::string_view",
+      "header": "string_view",
+      "kind": "byte_span",
+      "language_type": {
+        "name": "literal_bytes",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "void",
+      "cpp_name": "void",
+      "header": "cstddef",
+      "kind": "void",
+      "language_type": {
+        "name": "void",
+        "namespace": ""
+      }
+    }
+  ],
+  "operations": [
+    {
+      "id": "string.from_bytes",
+      "kind": "construct_from_bytes",
+      "type": "string",
+      "error_policy": "terminate",
+      "parameter_type": "bytes",
+      "expose_as": {
+        "name": "string_from_bytes",
+        "namespace": ""
+      },
+      "language_binding": "byte_literal",
+      "default_literal": true
+    },
+    {
+      "id": "string.byte_length",
+      "kind": "const_method",
+      "type": "string",
+      "member": "byte_size",
+      "result_type": "size",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "string.destroy",
+      "kind": "destroy",
+      "type": "string",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "string.copy",
+      "kind": "copy_construct",
+      "type": "string",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "string.echo",
+      "kind": "free_function",
+      "cpp_name": "scpp::php::echo_one",
+      "header": "scpp/lang/php.hpp",
+      "parameters": [
+        {
+          "type": "string",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "void",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "echo_text",
+        "namespace": ""
+      },
+      "language_binding": "echo"
+    },
+    {
+      "id": "string.from_int",
+      "kind": "free_function",
+      "cpp_name": "scpp::cast",
+      "cpp_template_arguments": [
+        "string",
+        "native_int"
+      ],
+      "header": "scpp/lang/php.hpp",
+      "parameters": [
+        {
+          "type": "native_int",
+          "passing": "direct",
+          "cpp_passing": "const_reference"
+        }
+      ],
+      "result_type": "string",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "string_from_int",
+        "namespace": ""
+      },
+      "conversion_purpose": "explicit_cast"
+    },
+    {
+      "id": "string.to_int",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::int_from_string",
+      "header": "scpp_provider/strings.hpp",
+      "parameters": [
+        {
+          "type": "string",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "native_int",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "int_from_string",
+        "namespace": ""
+      },
+      "conversion_purpose": "explicit_cast"
+    },
+    {
+      "id": "string.concat",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::string_concat",
+      "header": "scpp_provider/strings.hpp",
+      "parameters": [
+        {
+          "type": "string",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        },
+        {
+          "type": "string",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "string",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "string_concat",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "string.length",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::string_byte_length",
+      "header": "scpp_provider/strings.hpp",
+      "parameters": [
+        {
+          "type": "string",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "native_int",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "string_byte_length",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "console.input_line",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::input_line",
+      "header": "scpp_provider/console.hpp",
+      "parameters": [],
+      "result_type": "string",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "input_line",
+        "namespace": ""
+      }
+    },
+    {
+      "id": "string.move",
+      "kind": "move_construct",
+      "type": "string",
+      "error_policy": "terminate"
+    },
+    {
+      "id": "string.assign",
+      "kind": "copy_assign",
+      "type": "string",
+      "error_policy": "terminate"
+    }
+  ]
+}

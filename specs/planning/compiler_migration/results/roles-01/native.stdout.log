@@ -1,0 +1,83 @@
+Transpiled PHP files: 7, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-v0.1.76-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/9] PCH app_pch.hpp.gch
+[2/9] CXX src/02_tokenize/structures.o
+FAILED: src/02_tokenize/structures.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/a0ed7831a9b41a91.hpp -MMD -MF src/02_tokenize/structures.o.d -MT src/02_tokenize/structures.o -c ../generated/src/02_tokenize/structures.cpp -o src/02_tokenize/structures.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/a0ed7831a9b41a91.hpp:8:
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+   50 |         parameter_parts(int_t<> variable_id, int_t<> type_syntax_id, syntax_kind reference = null);
+      |                                                                                  ^           ~~~~
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+1 error generated.
+[3/9] CXX src/03_parse/data/nodes.o
+FAILED: src/03_parse/data/nodes.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/a0ed7831a9b41a91.hpp -MMD -MF src/03_parse/data/nodes.o.d -MT src/03_parse/data/nodes.o -c ../generated/src/03_parse/data/nodes.cpp -o src/03_parse/data/nodes.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/a0ed7831a9b41a91.hpp:8:
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+   50 |         parameter_parts(int_t<> variable_id, int_t<> type_syntax_id, syntax_kind reference = null);
+      |                                                                                  ^           ~~~~
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+1 error generated.
+[4/9] CXX src/03_parse/data/role_views.o
+FAILED: src/03_parse/data/role_views.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/a0ed7831a9b41a91.hpp -MMD -MF src/03_parse/data/role_views.o.d -MT src/03_parse/data/role_views.o -c ../generated/src/03_parse/data/role_views.cpp -o src/03_parse/data/role_views.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/a0ed7831a9b41a91.hpp:8:
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+   50 |         parameter_parts(int_t<> variable_id, int_t<> type_syntax_id, syntax_kind reference = null);
+      |                                                                                  ^           ~~~~
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+1 error generated.
+[5/9] CXX src/compile/state.o
+FAILED: src/compile/state.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/a0ed7831a9b41a91.hpp -MMD -MF src/compile/state.o.d -MT src/compile/state.o -c ../generated/src/compile/state.cpp -o src/compile/state.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/a0ed7831a9b41a91.hpp:8:
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+   50 |         parameter_parts(int_t<> variable_id, int_t<> type_syntax_id, syntax_kind reference = null);
+      |                                                                                  ^           ~~~~
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+1 error generated.
+[6/9] CXX src/compile/step.o
+FAILED: src/compile/step.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/a0ed7831a9b41a91.hpp -MMD -MF src/compile/step.o.d -MT src/compile/step.o -c ../generated/src/compile/step.cpp -o src/compile/step.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/a0ed7831a9b41a91.hpp:8:
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+   50 |         parameter_parts(int_t<> variable_id, int_t<> type_syntax_id, syntax_kind reference = null);
+      |                                                                                  ^           ~~~~
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+1 error generated.
+[7/9] CXX src/01_prepare_inputs/read_sources/utilities/path_syntax.o
+FAILED: src/01_prepare_inputs/read_sources/utilities/path_syntax.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/a0ed7831a9b41a91.hpp -MMD -MF src/01_prepare_inputs/read_sources/utilities/path_syntax.o.d -MT src/01_prepare_inputs/read_sources/utilities/path_syntax.o -c ../generated/src/01_prepare_inputs/read_sources/utilities/path_syntax.cpp -o src/01_prepare_inputs/read_sources/utilities/path_syntax.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/a0ed7831a9b41a91.hpp:8:
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+   50 |         parameter_parts(int_t<> variable_id, int_t<> type_syntax_id, syntax_kind reference = null);
+      |                                                                                  ^           ~~~~
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+1 error generated.
+[8/9] CXX main.o
+FAILED: main.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-v0.1.76-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/a0ed7831a9b41a91.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/a0ed7831a9b41a91.hpp:8:
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: error: no viable conversion from 'const null_t' to 'syntax_kind'
+   50 |         parameter_parts(int_t<> variable_id, int_t<> type_syntax_id, syntax_kind reference = null);
+      |                                                                                  ^           ~~~~
+./../generated/__project_units/../src/03_parse/data/role_views.hpp:50:75: note: passing argument to parameter 'reference' here
+1 error generated.
+ninja: build stopped: subcommand failed.

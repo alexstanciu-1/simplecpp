@@ -1,0 +1,13 @@
+{
+  "source_exports": {
+    "fixture": "05_generate_code/prepare_backend/source_exports.php",
+    "runner": "compiler/tests/run.py:run_fixture",
+    "returncode": 0
+  },
+  "readonly_rejections": {
+    "command": "python3 tests/portability/run.py",
+    "returncode": 0,
+    "test_sha256": "1f3d53f7281c01a420db510d6168cbaf19f42fc8f91cf53726989617b988c412",
+    "stdout": "Portability conversion, runtime states, rejection and incremental checks passed."
+  }
+}

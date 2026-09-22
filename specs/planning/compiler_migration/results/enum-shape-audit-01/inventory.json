@@ -1,0 +1,1818 @@
+{
+    "scope": [
+        "compiler/src",
+        "compiler/src-runtime-preparation"
+    ],
+    "method": "token_get_all declaration inventory; no consumer symbol resolution",
+    "enums": [
+        {
+            "name": "runtime_storage_kind",
+            "namespace": "load_runtime",
+            "file": "compiler/src/01_prepare_inputs/load_runtime/data/runtime.php",
+            "line": 14,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "integer",
+                    "literal": "'integer'"
+                },
+                {
+                    "name": "address",
+                    "literal": "'address'"
+                },
+                {
+                    "name": "byte_span",
+                    "literal": "'byte_span'"
+                },
+                {
+                    "name": "void_type",
+                    "literal": "'void'"
+                },
+                {
+                    "name": "opaque_inline",
+                    "literal": "'opaque_inline'"
+                },
+                {
+                    "name": "record",
+                    "literal": "'record'"
+                }
+            ],
+            "methods": [],
+            "sha256": "557ea3c8f783a2cd41950824bbb577523415983d417d9e65928e7ca85efff646"
+        },
+        {
+            "name": "runtime_module_kind",
+            "namespace": "load_runtime",
+            "file": "compiler/src/01_prepare_inputs/load_runtime/data/runtime.php",
+            "line": 44,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "ordinary",
+                    "literal": "'ordinary'"
+                },
+                {
+                    "name": "full_lto",
+                    "literal": "'full_lto'"
+                },
+                {
+                    "name": "thin_lto",
+                    "literal": "'thin_lto'"
+                }
+            ],
+            "methods": [],
+            "sha256": "557ea3c8f783a2cd41950824bbb577523415983d417d9e65928e7ca85efff646"
+        },
+        {
+            "name": "file_change",
+            "namespace": "read_sources",
+            "file": "compiler/src/01_prepare_inputs/read_sources/data/structures.php",
+            "line": 83,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "unchanged",
+                    "literal": "0"
+                },
+                {
+                    "name": "added",
+                    "literal": "1"
+                },
+                {
+                    "name": "changed",
+                    "literal": "2"
+                },
+                {
+                    "name": "deleted",
+                    "literal": "3"
+                },
+                {
+                    "name": "moved",
+                    "literal": "4"
+                }
+            ],
+            "methods": [],
+            "sha256": "4c2ae2a6eb98bf766281553900c50c06680458bfb698ef99c5a6cad591835911"
+        },
+        {
+            "name": "token_kind",
+            "namespace": "tokenize",
+            "file": "compiler/src/02_tokenize/structures.php",
+            "line": 50,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "invalid",
+                    "literal": "0"
+                },
+                {
+                    "name": "end_of_file",
+                    "literal": "1"
+                },
+                {
+                    "name": "identifier",
+                    "literal": "2"
+                },
+                {
+                    "name": "integer_literal",
+                    "literal": "3"
+                },
+                {
+                    "name": "function_keyword",
+                    "literal": "4"
+                },
+                {
+                    "name": "return_keyword",
+                    "literal": "5"
+                },
+                {
+                    "name": "left_parenthesis",
+                    "literal": "6"
+                },
+                {
+                    "name": "right_parenthesis",
+                    "literal": "7"
+                },
+                {
+                    "name": "left_brace",
+                    "literal": "8"
+                },
+                {
+                    "name": "right_brace",
+                    "literal": "9"
+                },
+                {
+                    "name": "colon",
+                    "literal": "10"
+                },
+                {
+                    "name": "comma",
+                    "literal": "11"
+                },
+                {
+                    "name": "semicolon",
+                    "literal": "12"
+                },
+                {
+                    "name": "variable_name",
+                    "literal": "13"
+                },
+                {
+                    "name": "assignment",
+                    "literal": "14"
+                },
+                {
+                    "name": "plus",
+                    "literal": "15"
+                },
+                {
+                    "name": "if_keyword",
+                    "literal": "16"
+                },
+                {
+                    "name": "else_keyword",
+                    "literal": "17"
+                },
+                {
+                    "name": "while_keyword",
+                    "literal": "18"
+                },
+                {
+                    "name": "string_literal",
+                    "literal": "19"
+                },
+                {
+                    "name": "echo_keyword",
+                    "literal": "20"
+                },
+                {
+                    "name": "struct_keyword",
+                    "literal": "21"
+                },
+                {
+                    "name": "public_keyword",
+                    "literal": "22"
+                },
+                {
+                    "name": "new_keyword",
+                    "literal": "23"
+                },
+                {
+                    "name": "field_arrow",
+                    "literal": "24"
+                },
+                {
+                    "name": "left_angle",
+                    "literal": "25"
+                },
+                {
+                    "name": "right_angle",
+                    "literal": "26"
+                },
+                {
+                    "name": "template_keyword",
+                    "literal": "27"
+                },
+                {
+                    "name": "typename_keyword",
+                    "literal": "28"
+                },
+                {
+                    "name": "constexpr_keyword",
+                    "literal": "29"
+                },
+                {
+                    "name": "consteval_keyword",
+                    "literal": "30"
+                },
+                {
+                    "name": "const_keyword",
+                    "literal": "31"
+                },
+                {
+                    "name": "boolean_literal",
+                    "literal": "32"
+                },
+                {
+                    "name": "ampersand",
+                    "literal": "33"
+                },
+                {
+                    "name": "left_bracket",
+                    "literal": "34"
+                },
+                {
+                    "name": "right_bracket",
+                    "literal": "35"
+                }
+            ],
+            "methods": [],
+            "sha256": "c2966a8f8f4a208f9f6fe0d1fec84b3df2afcf2e4938193f04e093c2cb79fa21"
+        },
+        {
+            "name": "syntax_kind",
+            "namespace": "parse",
+            "file": "compiler/src/03_parse/data/nodes.php",
+            "line": 48,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "invalid",
+                    "literal": "0"
+                },
+                {
+                    "name": "function_declaration",
+                    "literal": "1"
+                },
+                {
+                    "name": "parameter_list",
+                    "literal": "2"
+                },
+                {
+                    "name": "block",
+                    "literal": "3"
+                },
+                {
+                    "name": "return_statement",
+                    "literal": "4"
+                },
+                {
+                    "name": "call_expression",
+                    "literal": "5"
+                },
+                {
+                    "name": "name",
+                    "literal": "6"
+                },
+                {
+                    "name": "integer_literal",
+                    "literal": "7"
+                },
+                {
+                    "name": "expression_statement",
+                    "literal": "8"
+                },
+                {
+                    "name": "file_root",
+                    "literal": "9"
+                },
+                {
+                    "name": "variable_name",
+                    "literal": "10"
+                },
+                {
+                    "name": "local_declaration",
+                    "literal": "11"
+                },
+                {
+                    "name": "assignment_statement",
+                    "literal": "12"
+                },
+                {
+                    "name": "parameter_declaration",
+                    "literal": "13"
+                },
+                {
+                    "name": "addition_expression",
+                    "literal": "14"
+                },
+                {
+                    "name": "if_statement",
+                    "literal": "15"
+                },
+                {
+                    "name": "while_statement",
+                    "literal": "16"
+                },
+                {
+                    "name": "string_literal",
+                    "literal": "17"
+                },
+                {
+                    "name": "echo_statement",
+                    "literal": "18"
+                },
+                {
+                    "name": "struct_declaration",
+                    "literal": "19"
+                },
+                {
+                    "name": "field_declaration",
+                    "literal": "20"
+                },
+                {
+                    "name": "field_expression",
+                    "literal": "21"
+                },
+                {
+                    "name": "construct_expression",
+                    "literal": "22"
+                },
+                {
+                    "name": "template_application",
+                    "literal": "23"
+                },
+                {
+                    "name": "template_declaration",
+                    "literal": "24"
+                },
+                {
+                    "name": "template_parameter_list",
+                    "literal": "25"
+                },
+                {
+                    "name": "type_parameter_declaration",
+                    "literal": "26"
+                },
+                {
+                    "name": "value_parameter_declaration",
+                    "literal": "27"
+                },
+                {
+                    "name": "constant_declaration",
+                    "literal": "28"
+                },
+                {
+                    "name": "type_annotation",
+                    "literal": "29"
+                },
+                {
+                    "name": "constexpr_declaration",
+                    "literal": "30"
+                },
+                {
+                    "name": "consteval_declaration",
+                    "literal": "31"
+                },
+                {
+                    "name": "constexpr_if_statement",
+                    "literal": "32"
+                },
+                {
+                    "name": "consteval_if_statement",
+                    "literal": "33"
+                },
+                {
+                    "name": "boolean_literal",
+                    "literal": "34"
+                },
+                {
+                    "name": "reference_annotation",
+                    "literal": "35"
+                },
+                {
+                    "name": "const_reference_annotation",
+                    "literal": "36"
+                },
+                {
+                    "name": "index_expression",
+                    "literal": "37"
+                },
+                {
+                    "name": "method_declaration",
+                    "literal": "38"
+                },
+                {
+                    "name": "less_than_expression",
+                    "literal": "39"
+                }
+            ],
+            "methods": [],
+            "sha256": "6c51cb339c689b39bc31bd64b0dd29565b5bd04460958546752f28dd143ca633"
+        },
+        {
+            "name": "expression_context",
+            "namespace": "parse",
+            "file": "compiler/src/03_parse/data/structures.php",
+            "line": 47,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "value",
+                    "literal": "0"
+                },
+                {
+                    "name": "type",
+                    "literal": "1"
+                },
+                {
+                    "name": "group",
+                    "literal": "2"
+                },
+                {
+                    "name": "call_arguments",
+                    "literal": "3"
+                },
+                {
+                    "name": "template_arguments",
+                    "literal": "4"
+                },
+                {
+                    "name": "constructed_type",
+                    "literal": "5"
+                },
+                {
+                    "name": "index",
+                    "literal": "6"
+                }
+            ],
+            "methods": [],
+            "sha256": "42b4e7c5be6d4a63a2a46906066564a7bc57032d4b23ca12d0b97dc0db166c01"
+        },
+        {
+            "name": "lifetime_end",
+            "namespace": "analyze_lifetimes",
+            "file": "compiler/src/04_analyze/analyze_lifetimes/data/structures.php",
+            "line": 13,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "discard",
+                    "literal": "'discard'"
+                },
+                {
+                    "name": "condition",
+                    "literal": "'condition'"
+                },
+                {
+                    "name": "return_copy",
+                    "literal": "'return_copy'"
+                },
+                {
+                    "name": "return_construct",
+                    "literal": "'return_construct'"
+                },
+                {
+                    "name": "local_copy",
+                    "literal": "'local_copy'"
+                },
+                {
+                    "name": "argument_copy",
+                    "literal": "'argument_copy'"
+                },
+                {
+                    "name": "argument_borrow",
+                    "literal": "'argument_borrow'"
+                },
+                {
+                    "name": "local_construct",
+                    "literal": "'local_construct'"
+                },
+                {
+                    "name": "copy_source",
+                    "literal": "'copy_source'"
+                },
+                {
+                    "name": "assignment_source",
+                    "literal": "'assignment_source'"
+                },
+                {
+                    "name": "conversion_input",
+                    "literal": "'conversion_input'"
+                },
+                {
+                    "name": "operation_input",
+                    "literal": "'operation_input'"
+                },
+                {
+                    "name": "index_input",
+                    "literal": "'index_input'"
+                },
+                {
+                    "name": "target_index",
+                    "literal": "'target_index'"
+                }
+            ],
+            "methods": [],
+            "sha256": "9b772ad8476b0eee2301b1883795d6d1bd3f65af025d440efb95c8116e17505b"
+        },
+        {
+            "name": "local_end",
+            "namespace": "analyze_lifetimes",
+            "file": "compiler/src/04_analyze/analyze_lifetimes/data/structures.php",
+            "line": 60,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "scope_exit",
+                    "literal": "'scope_exit'"
+                },
+                {
+                    "name": "return_exit",
+                    "literal": "'return_exit'"
+                }
+            ],
+            "methods": [],
+            "sha256": "9b772ad8476b0eee2301b1883795d6d1bd3f65af025d440efb95c8116e17505b"
+        },
+        {
+            "name": "cleanup_subject",
+            "namespace": "analyze_lifetimes",
+            "file": "compiler/src/04_analyze/analyze_lifetimes/data/structures.php",
+            "line": 103,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "local",
+                    "literal": "'local'"
+                },
+                {
+                    "name": "temporary",
+                    "literal": "'temporary'"
+                }
+            ],
+            "methods": [],
+            "sha256": "9b772ad8476b0eee2301b1883795d6d1bd3f65af025d440efb95c8116e17505b"
+        },
+        {
+            "name": "value_kind",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 34,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "integer_literal",
+                    "literal": "'integer_literal'"
+                },
+                {
+                    "name": "record_default",
+                    "literal": "'record_default'"
+                },
+                {
+                    "name": "default_construct",
+                    "literal": "'default_construct'"
+                },
+                {
+                    "name": "byte_literal",
+                    "literal": "'byte_literal'"
+                },
+                {
+                    "name": "call_result",
+                    "literal": "'call_result'"
+                },
+                {
+                    "name": "local_read",
+                    "literal": "'local_read'"
+                },
+                {
+                    "name": "local_borrow",
+                    "literal": "'local_borrow'"
+                },
+                {
+                    "name": "conversion",
+                    "literal": "'conversion'"
+                },
+                {
+                    "name": "operation",
+                    "literal": "'operation'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "statement_kind",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 48,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "return_statement",
+                    "literal": "'return'"
+                },
+                {
+                    "name": "expression_statement",
+                    "literal": "'expression'"
+                },
+                {
+                    "name": "local_declaration",
+                    "literal": "'local_declaration'"
+                },
+                {
+                    "name": "assignment",
+                    "literal": "'assignment'"
+                },
+                {
+                    "name": "condition",
+                    "literal": "'condition'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "conversion_use",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 57,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "argument",
+                    "literal": "'argument'"
+                },
+                {
+                    "name": "return_value",
+                    "literal": "'return_value'"
+                },
+                {
+                    "name": "initialization",
+                    "literal": "'initialization'"
+                },
+                {
+                    "name": "assignment",
+                    "literal": "'assignment'"
+                },
+                {
+                    "name": "condition",
+                    "literal": "'condition'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "conversion_form",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 74,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "identity",
+                    "literal": "'identity'"
+                },
+                {
+                    "name": "primitive",
+                    "literal": "'primitive'"
+                },
+                {
+                    "name": "provider_call",
+                    "literal": "'provider_call'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "conversion_kind",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 95,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "integer_widen",
+                    "literal": "'integer_widen'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "local_write_kind",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 218,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "value_copy",
+                    "literal": "'value_copy'"
+                },
+                {
+                    "name": "zero_initialize",
+                    "literal": "'zero_initialize'"
+                },
+                {
+                    "name": "direct_construct",
+                    "literal": "'direct_construct'"
+                },
+                {
+                    "name": "copy_construct",
+                    "literal": "'copy_construct'"
+                },
+                {
+                    "name": "copy_assign",
+                    "literal": "'copy_assign'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "return_kind",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 227,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "value",
+                    "literal": "'value'"
+                },
+                {
+                    "name": "store",
+                    "literal": "'store'"
+                },
+                {
+                    "name": "direct_construct",
+                    "literal": "'direct_construct'"
+                },
+                {
+                    "name": "copy_construct",
+                    "literal": "'copy_construct'"
+                },
+                {
+                    "name": "move_construct",
+                    "literal": "'move_construct'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "flow_end",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 360,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "jump",
+                    "literal": "'jump'"
+                },
+                {
+                    "name": "branch",
+                    "literal": "'branch'"
+                },
+                {
+                    "name": "return_exit",
+                    "literal": "'return'"
+                },
+                {
+                    "name": "fallthrough",
+                    "literal": "'fallthrough'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "projection_kind",
+            "namespace": "check_bodies",
+            "file": "compiler/src/04_analyze/check_bodies/data/structures.php",
+            "line": 389,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "field",
+                    "literal": "'field'"
+                },
+                {
+                    "name": "index",
+                    "literal": "'index'"
+                },
+                {
+                    "name": "element",
+                    "literal": "'element'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a499a4b29702cb2759dacfda2a28c0ef73119722474197ca4dfdb45d93a11b66"
+        },
+        {
+            "name": "term_kind",
+            "namespace": "check_templates",
+            "file": "compiler/src/04_analyze/check_templates/data/structures.php",
+            "line": 11,
+            "backing": "unit",
+            "cases": [
+                {
+                    "name": "named",
+                    "literal": null
+                },
+                {
+                    "name": "parameter",
+                    "literal": null
+                },
+                {
+                    "name": "application",
+                    "literal": null
+                },
+                {
+                    "name": "constant",
+                    "literal": null
+                },
+                {
+                    "name": "array_type",
+                    "literal": null
+                }
+            ],
+            "methods": [],
+            "sha256": "d4a59d4af56d834f92cd7c98667d4bd777a29327240da818289dca182024a867"
+        },
+        {
+            "name": "symbol_kind",
+            "namespace": "collect_symbols",
+            "file": "compiler/src/04_analyze/collect_symbols/data/structures.php",
+            "line": 17,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "invalid",
+                    "literal": "0"
+                },
+                {
+                    "name": "function_symbol",
+                    "literal": "1"
+                },
+                {
+                    "name": "file_entry",
+                    "literal": "2"
+                },
+                {
+                    "name": "struct_symbol",
+                    "literal": "3"
+                },
+                {
+                    "name": "template_struct",
+                    "literal": "4"
+                },
+                {
+                    "name": "template_function",
+                    "literal": "5"
+                },
+                {
+                    "name": "constant_symbol",
+                    "literal": "6"
+                }
+            ],
+            "methods": [],
+            "sha256": "08b6d2285cf9562583215d228715ad3dc9c78878c0882ee4390a0378ce7c7350"
+        },
+        {
+            "name": "change_status",
+            "namespace": "collect_symbols",
+            "file": "compiler/src/04_analyze/collect_symbols/data/structures.php",
+            "line": 92,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "unchanged",
+                    "literal": "0"
+                },
+                {
+                    "name": "added",
+                    "literal": "1"
+                },
+                {
+                    "name": "changed",
+                    "literal": "2"
+                },
+                {
+                    "name": "removed",
+                    "literal": "3"
+                },
+                {
+                    "name": "uncompared",
+                    "literal": "4"
+                }
+            ],
+            "methods": [],
+            "sha256": "08b6d2285cf9562583215d228715ad3dc9c78878c0882ee4390a0378ce7c7350"
+        },
+        {
+            "name": "name_role",
+            "namespace": "resolve_symbols",
+            "file": "compiler/src/04_analyze/resolve_symbols/data/declarations.php",
+            "line": 12,
+            "backing": "unit",
+            "cases": [
+                {
+                    "name": "type",
+                    "literal": null
+                },
+                {
+                    "name": "value",
+                    "literal": null
+                },
+                {
+                    "name": "type_family",
+                    "literal": null
+                }
+            ],
+            "methods": [],
+            "sha256": "1eb4a86ae6858c7bd0b5e5d41373eda3118b7c2b44d23ed2f64cf6ba1e964d2c"
+        },
+        {
+            "name": "reference_kind",
+            "namespace": "resolve_symbols",
+            "file": "compiler/src/04_analyze/resolve_symbols/data/declarations.php",
+            "line": 19,
+            "backing": "unit",
+            "cases": [
+                {
+                    "name": "source_type",
+                    "literal": null
+                },
+                {
+                    "name": "provided_type",
+                    "literal": null
+                },
+                {
+                    "name": "provided_record",
+                    "literal": null
+                },
+                {
+                    "name": "template_type",
+                    "literal": null
+                },
+                {
+                    "name": "template_parameter",
+                    "literal": null
+                },
+                {
+                    "name": "project_constant",
+                    "literal": null
+                },
+                {
+                    "name": "local_constant",
+                    "literal": null
+                }
+            ],
+            "methods": [],
+            "sha256": "1eb4a86ae6858c7bd0b5e5d41373eda3118b7c2b44d23ed2f64cf6ba1e964d2c"
+        },
+        {
+            "name": "local_access",
+            "namespace": "resolve_symbols",
+            "file": "compiler/src/04_analyze/resolve_symbols/data/structures.php",
+            "line": 71,
+            "backing": "unit",
+            "cases": [
+                {
+                    "name": "read",
+                    "literal": null
+                },
+                {
+                    "name": "write",
+                    "literal": null
+                }
+            ],
+            "methods": [],
+            "sha256": "194025b79ff4bc712ce28d1bc67b3d7ec1ea102d4e20172c7db8edda5f252486"
+        },
+        {
+            "name": "preparation_kind",
+            "namespace": "resolve_types",
+            "file": "compiler/src/04_analyze/resolve_types/data/preparation.php",
+            "line": 12,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "application",
+                    "literal": "'application'"
+                },
+                {
+                    "name": "record",
+                    "literal": "'record'"
+                },
+                {
+                    "name": "member",
+                    "literal": "'member'"
+                }
+            ],
+            "methods": [],
+            "sha256": "4dbeea9d0d29378aaf7e74e9b4dd5d995a708596f7b5f936b48f3f5a411985f8"
+        },
+        {
+            "name": "abi_extension",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/callables.php",
+            "line": 12,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "none",
+                    "literal": "''"
+                },
+                {
+                    "name": "sign",
+                    "literal": "'signext'"
+                },
+                {
+                    "name": "zero",
+                    "literal": "'zeroext'"
+                }
+            ],
+            "methods": [],
+            "sha256": "6e67ca54c1d28f4fd0bfccbd4779318b7572e7c8bdfc9453fd496a400dcabd25"
+        },
+        {
+            "name": "result_passing",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/callables.php",
+            "line": 26,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "direct",
+                    "literal": "'direct'"
+                },
+                {
+                    "name": "caller_storage",
+                    "literal": "'caller_storage'"
+                }
+            ],
+            "methods": [],
+            "sha256": "6e67ca54c1d28f4fd0bfccbd4779318b7572e7c8bdfc9453fd496a400dcabd25"
+        },
+        {
+            "name": "language_binding",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/callables.php",
+            "line": 41,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "byte_literal",
+                    "literal": "'byte_literal'"
+                },
+                {
+                    "name": "echo_value",
+                    "literal": "'echo'"
+                }
+            ],
+            "methods": [],
+            "sha256": "6e67ca54c1d28f4fd0bfccbd4779318b7572e7c8bdfc9453fd496a400dcabd25"
+        },
+        {
+            "name": "conversion_purpose",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 13,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "implicit_boundary",
+                    "literal": "'implicit'"
+                },
+                {
+                    "name": "explicit_cast",
+                    "literal": "'explicit_cast'"
+                },
+                {
+                    "name": "condition",
+                    "literal": "'condition'"
+                },
+                {
+                    "name": "text",
+                    "literal": "'text'"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "copy_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 21,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "value",
+                    "literal": "'value'"
+                },
+                {
+                    "name": "construct",
+                    "literal": "'construct'"
+                },
+                {
+                    "name": "unavailable",
+                    "literal": "'unavailable'"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "expiring_construction",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 29,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "unavailable",
+                    "literal": "'unavailable'"
+                },
+                {
+                    "name": "value",
+                    "literal": "'value'"
+                },
+                {
+                    "name": "copy",
+                    "literal": "'copy'"
+                },
+                {
+                    "name": "construct",
+                    "literal": "'construct'"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "assignment_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 37,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "unavailable",
+                    "literal": "'unavailable'"
+                },
+                {
+                    "name": "value",
+                    "literal": "'value'"
+                },
+                {
+                    "name": "call",
+                    "literal": "'call'"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "cleanup_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 44,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "none",
+                    "literal": "'none'"
+                },
+                {
+                    "name": "destroy",
+                    "literal": "'destroy'"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "integer_comparison",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 108,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "ordered",
+                    "literal": "'ordered'"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "integer_addition",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 113,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "wrapping",
+                    "literal": "'wrapping'"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "implementation_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/definitions.php",
+            "line": 211,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "",
+                    "literal": "0"
+                },
+                {
+                    "name": "native_operation",
+                    "literal": "1"
+                }
+            ],
+            "methods": [],
+            "sha256": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+        },
+        {
+            "name": "element_effect_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/families.php",
+            "line": 24,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "safe_element_input",
+                    "literal": "'safe_element_input'"
+                },
+                {
+                    "name": "invalidate_elements",
+                    "literal": "'invalidate_elements'"
+                }
+            ],
+            "methods": [],
+            "sha256": "c19105e37da982eb9b8d5c0d60298fc43cb5af969a72b539b68dd3291a719d89"
+        },
+        {
+            "name": "generic_contract",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/generic.php",
+            "line": 12,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "copyable_value",
+                    "literal": "'copyable_value'"
+                }
+            ],
+            "methods": [
+                "permits"
+            ],
+            "sha256": "0358f2e24debde89d98686f4082ab4abf6d05f5244a3977505ebca16d9be2514"
+        },
+        {
+            "name": "construction_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/lifecycle.php",
+            "line": 12,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "unavailable",
+                    "literal": "'unavailable'"
+                },
+                {
+                    "name": "zero",
+                    "literal": "'zero'"
+                },
+                {
+                    "name": "construct",
+                    "literal": "'construct'"
+                }
+            ],
+            "methods": [],
+            "sha256": "d4c35417826d54ba3bf480e7f94c5590dc06e890a639df79b6e02f0eeebbdb69"
+        },
+        {
+            "name": "lifecycle_operation_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/lifecycle.php",
+            "line": 19,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "default_construct",
+                    "literal": "'default_construct'"
+                },
+                {
+                    "name": "destroy",
+                    "literal": "'destroy'"
+                },
+                {
+                    "name": "copy_construct",
+                    "literal": "'copy_construct'"
+                },
+                {
+                    "name": "move_construct",
+                    "literal": "'move_construct'"
+                },
+                {
+                    "name": "copy_assign",
+                    "literal": "'copy_assign'"
+                }
+            ],
+            "methods": [
+                "has_source",
+                "creates_destination",
+                "composition"
+            ],
+            "sha256": "d4c35417826d54ba3bf480e7f94c5590dc06e890a639df79b6e02f0eeebbdb69"
+        },
+        {
+            "name": "record_layout_policy",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/records.php",
+            "line": 13,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "target",
+                    "literal": "'target'"
+                },
+                {
+                    "name": "native_verified",
+                    "literal": "'native_verified'"
+                }
+            ],
+            "methods": [],
+            "sha256": "df25c46fe4fc13e525ede37430af507f0f646ff5e6b61bc30ccfb6cae2f912b0"
+        },
+        {
+            "name": "representation_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/representations.php",
+            "line": 36,
+            "backing": "int",
+            "cases": [
+                {
+                    "name": "void_type",
+                    "literal": "0"
+                },
+                {
+                    "name": "integer",
+                    "literal": "1"
+                },
+                {
+                    "name": "floating_point",
+                    "literal": "2"
+                },
+                {
+                    "name": "pointer",
+                    "literal": "3"
+                },
+                {
+                    "name": "fixed_array",
+                    "literal": "4"
+                },
+                {
+                    "name": "structure",
+                    "literal": "5"
+                },
+                {
+                    "name": "function_signature",
+                    "literal": "6"
+                },
+                {
+                    "name": "opaque_inline",
+                    "literal": "7"
+                },
+                {
+                    "name": "byte_span",
+                    "literal": "8"
+                }
+            ],
+            "methods": [],
+            "sha256": "e42d15746723cb4ec4814c268a35604f498ed4e2c5065df9f333d393b0049304"
+        },
+        {
+            "name": "floating_format",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/representations.php",
+            "line": 51,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "ieee_binary16",
+                    "literal": "'ieee_binary16'"
+                },
+                {
+                    "name": "bfloat16",
+                    "literal": "'bfloat16'"
+                },
+                {
+                    "name": "ieee_binary32",
+                    "literal": "'ieee_binary32'"
+                },
+                {
+                    "name": "ieee_binary64",
+                    "literal": "'ieee_binary64'"
+                },
+                {
+                    "name": "ieee_binary128",
+                    "literal": "'ieee_binary128'"
+                }
+            ],
+            "methods": [],
+            "sha256": "e42d15746723cb4ec4814c268a35604f498ed4e2c5065df9f333d393b0049304"
+        },
+        {
+            "name": "resource_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/resources.php",
+            "line": 12,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "allocation",
+                    "literal": "'allocation'"
+                }
+            ],
+            "methods": [],
+            "sha256": "479a3c83916f58e6b65feea5e14ef895e5cec31f578b60b35115c1f746207306"
+        },
+        {
+            "name": "allocation_effect_kind",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/resources.php",
+            "line": 17,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "acquire",
+                    "literal": "'acquire'"
+                },
+                {
+                    "name": "release",
+                    "literal": "'release'"
+                },
+                {
+                    "name": "transfer",
+                    "literal": "'transfer'"
+                },
+                {
+                    "name": "inspect",
+                    "literal": "'inspect'"
+                },
+                {
+                    "name": "mutate",
+                    "literal": "'mutate'"
+                },
+                {
+                    "name": "observe",
+                    "literal": "'observe'"
+                }
+            ],
+            "methods": [],
+            "sha256": "479a3c83916f58e6b65feea5e14ef895e5cec31f578b60b35115c1f746207306"
+        },
+        {
+            "name": "argument_passing",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/semantic_calls.php",
+            "line": 12,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "value",
+                    "literal": "'value'"
+                },
+                {
+                    "name": "borrow_const",
+                    "literal": "'borrow_const'"
+                },
+                {
+                    "name": "borrow_mutable",
+                    "literal": "'borrow_mutable'"
+                },
+                {
+                    "name": "byte_span",
+                    "literal": "'byte_span'"
+                }
+            ],
+            "methods": [
+                "is_borrow"
+            ],
+            "sha256": "ceb7e2c7e75a4ae4814a1f60ebf2c9083a08c72b1420c6e37241390187ed3f06"
+        },
+        {
+            "name": "result_production",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/semantic_calls.php",
+            "line": 26,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "none",
+                    "literal": "'none'"
+                },
+                {
+                    "name": "value",
+                    "literal": "'value'"
+                },
+                {
+                    "name": "owned",
+                    "literal": "'owned'"
+                },
+                {
+                    "name": "dependent_value",
+                    "literal": "'dependent_value'"
+                }
+            ],
+            "methods": [],
+            "sha256": "ceb7e2c7e75a4ae4814a1f60ebf2c9083a08c72b1420c6e37241390187ed3f06"
+        },
+        {
+            "name": "storage_role",
+            "namespace": "type_model",
+            "file": "compiler/src/04_analyze/type_model/data/storage.php",
+            "line": 35,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "allocate",
+                    "literal": "'allocate'"
+                },
+                {
+                    "name": "push",
+                    "literal": "'push'"
+                },
+                {
+                    "name": "pop",
+                    "literal": "'pop'"
+                },
+                {
+                    "name": "count",
+                    "literal": "'count'"
+                },
+                {
+                    "name": "release",
+                    "literal": "'release'"
+                },
+                {
+                    "name": "transfer",
+                    "literal": "'transfer'"
+                }
+            ],
+            "methods": [],
+            "sha256": "1c65d2f884f79238e8912edeb230af026c33098a6d1c34259a0184ebaa9b2c2d"
+        },
+        {
+            "name": "instruction_kind",
+            "namespace": "lower",
+            "file": "compiler/src/05_generate_code/lower/data/structures.php",
+            "line": 62,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "parameter",
+                    "literal": "'parameter'"
+                },
+                {
+                    "name": "constant",
+                    "literal": "'constant'"
+                },
+                {
+                    "name": "byte_literal",
+                    "literal": "'byte_literal'"
+                },
+                {
+                    "name": "convert",
+                    "literal": "'convert'"
+                },
+                {
+                    "name": "call",
+                    "literal": "'call'"
+                },
+                {
+                    "name": "storage_begin",
+                    "literal": "'storage_begin'"
+                },
+                {
+                    "name": "storage_end",
+                    "literal": "'storage_end'"
+                },
+                {
+                    "name": "load",
+                    "literal": "'load'"
+                },
+                {
+                    "name": "store",
+                    "literal": "'store'"
+                },
+                {
+                    "name": "borrow",
+                    "literal": "'borrow'"
+                },
+                {
+                    "name": "address",
+                    "literal": "'address'"
+                },
+                {
+                    "name": "destroy",
+                    "literal": "'destroy'"
+                },
+                {
+                    "name": "default_construct",
+                    "literal": "'default_construct'"
+                },
+                {
+                    "name": "copy_construct",
+                    "literal": "'copy_construct'"
+                },
+                {
+                    "name": "move_construct",
+                    "literal": "'move_construct'"
+                },
+                {
+                    "name": "copy_assign",
+                    "literal": "'copy_assign'"
+                },
+                {
+                    "name": "binary",
+                    "literal": "'binary'"
+                }
+            ],
+            "methods": [],
+            "sha256": "21d018b528a137266c8acb6976d994ff630f2a90ef774a2abf0e73207a7cc6a3"
+        },
+        {
+            "name": "binary_operation",
+            "namespace": "lower",
+            "file": "compiler/src/05_generate_code/lower/data/structures.php",
+            "line": 171,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "add_wrap",
+                    "literal": "'add_wrap'"
+                },
+                {
+                    "name": "less_signed",
+                    "literal": "'less_signed'"
+                },
+                {
+                    "name": "less_unsigned",
+                    "literal": "'less_unsigned'"
+                }
+            ],
+            "methods": [],
+            "sha256": "21d018b528a137266c8acb6976d994ff630f2a90ef774a2abf0e73207a7cc6a3"
+        },
+        {
+            "name": "integer_adaptation",
+            "namespace": "prepare_backend",
+            "file": "compiler/src/05_generate_code/prepare_backend/data/abi.php",
+            "line": 33,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "identity",
+                    "literal": "'identity'"
+                },
+                {
+                    "name": "truncate",
+                    "literal": "'trunc'"
+                },
+                {
+                    "name": "sign_extend",
+                    "literal": "'sext'"
+                },
+                {
+                    "name": "zero_extend",
+                    "literal": "'zext'"
+                }
+            ],
+            "methods": [],
+            "sha256": "364b900a52ff17576354cf53e9eb64abc9a4e03c681192b3084c0a8cd1a1135c"
+        },
+        {
+            "name": "source_export_availability",
+            "namespace": "prepare_backend",
+            "file": "compiler/src/05_generate_code/prepare_backend/data/source_exports.php",
+            "line": 13,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "available",
+                    "literal": "'available'"
+                },
+                {
+                    "name": "forbidden",
+                    "literal": "'forbidden'"
+                },
+                {
+                    "name": "unsupported",
+                    "literal": "'unsupported'"
+                }
+            ],
+            "methods": [],
+            "sha256": "a336a40083d33548c60fb4373e43cf9cb47c0221225a5b96b8225ff19e9ca6a2"
+        },
+        {
+            "name": "source_export_role",
+            "namespace": "prepare_backend",
+            "file": "compiler/src/05_generate_code/prepare_backend/data/source_exports.php",
+            "line": 20,
+            "backing": "string",
+            "cases": [
+                {
+                    "name": "default_construct",
+                    "literal": "'default_construct'"
+                },
+                {
+                    "name": "copy_construct",
+                    "literal": "'copy_construct'"
+                },
+                {
+                    "name": "move_construct",
+                    "literal": "'move_construct'"
+                },
+                {
+                    "name": "copy_assign",
+                    "literal": "'copy_assign'"
+                },
+                {
+                    "name": "move_assign",
+                    "literal": "'move_assign'"
+                },
+                {
+                    "name": "destroy",
+                    "literal": "'destroy'"
+                }
+            ],
+            "methods": [
+                "implemented_kind",
+                "semantics"
+            ],
+            "sha256": "a336a40083d33548c60fb4373e43cf9cb47c0221225a5b96b8225ff19e9ca6a2"
+        },
+        {
+            "name": "step_status",
+            "namespace": "compile",
+            "file": "compiler/src/compile/step.php",
+            "line": 48,
+            "backing": "unit",
+            "cases": [
+                {
+                    "name": "created",
+                    "literal": null
+                },
+                {
+                    "name": "ready",
+                    "literal": null
+                },
+                {
+                    "name": "running",
+                    "literal": null
+                },
+                {
+                    "name": "processed",
+                    "literal": null
+                },
+                {
+                    "name": "finished",
+                    "literal": null
+                },
+                {
+                    "name": "failed",
+                    "literal": null
+                }
+            ],
+            "methods": [],
+            "sha256": "120f2a59f2e078e94fcf9bbbbf184f30e1c9ed135310c918771efe178eb3ee64"
+        }
+    ]
+}

@@ -1,0 +1,211 @@
+{
+  "status": "passed",
+  "scope": "portability-ready source set",
+  "native_requested": [
+    "compiler"
+  ],
+  "steps": [
+    {
+      "name": "target-revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-2f0d667f-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.006
+    },
+    {
+      "name": "target-status",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-2f0d667f-probe",
+        "status",
+        "--porcelain"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.022
+    },
+    {
+      "name": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-token-selection-01/source"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.555
+    },
+    {
+      "name": "php-behavior",
+      "command": [
+        "php",
+        "-r",
+        "foreach (array_slice($argv, 1) as $file) { require $file; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-token-selection-01/source/src/compile/state.php",
+        "/tmp/scpp-token-selection-01/source/src/02_tokenize/structures.php",
+        "/tmp/scpp-token-selection-01/source/src/compile/step.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/utilities/path_syntax.php",
+        "/tmp/scpp-token-selection-01/source/src/03_parse/data/nodes.php",
+        "/tmp/scpp-token-selection-01/source/src/03_parse/data/role_views.php",
+        "/tmp/scpp-token-selection-01/source/src/03_parse/data/structures.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/scpp-token-selection-01/source/src/03_parse/data/tree.php",
+        "/tmp/scpp-token-selection-01/source/src/04_analyze/check_bodies/utilities/decimal_range.php",
+        "/tmp/scpp-token-selection-01/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/scpp-token-selection-01/source/src/05_generate_code/prepare_backend/data/tools.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/data/read_tasks.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/data/structures.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/data/source_json.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/data/store.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/data/result.php",
+        "/tmp/scpp-token-selection-01/source/src/compile/join.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/scan_join.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/snapshot_join.php",
+        "/tmp/scpp-token-selection-01/source/src/01_prepare_inputs/read_sources/select_reads.php",
+        "/tmp/scpp-token-selection-01/source/src/02_tokenize/store.php",
+        "/tmp/scpp-token-selection-01/source/src/02_tokenize/join.php",
+        "/tmp/scpp-token-selection-01/source/src/02_tokenize/select_tasks.php",
+        "/tmp/scpp-token-selection-01/source/main.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.119
+    },
+    {
+      "name": "source-set-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/source_set_oracle.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.107
+    },
+    {
+      "name": "collections-php",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/collections_php.php"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.049
+    },
+    {
+      "name": "foundation",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/run.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 2.561
+    },
+    {
+      "name": "check-regressions",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/check.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 4.205
+    },
+    {
+      "name": "prologues",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/prologues.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.842
+    },
+    {
+      "name": "native-framework-install",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/native_runtime.py"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.911
+    },
+    {
+      "name": "native-compiler",
+      "command": [
+        "/usr/bin/python3",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/compiler_context/run.py",
+        "--target-checkout",
+        "/tmp/scpp-2f0d667f-probe",
+        "--results",
+        "/tmp/scpp-token-selection-01/proof-compiler"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 37.677
+    },
+    {
+      "name": "target-status-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-2f0d667f-probe",
+        "status",
+        "--porcelain"
+      ],
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.023
+    }
+  ],
+  "configured_target": {
+    "repository": "https://github.com/alexstanciu-1/simplecpp.git",
+    "release": null,
+    "verified_commit": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+    "cli": "bin/scpp.php",
+    "profile": "strict",
+    "purpose": "PHP++ compiler implementation target; separate from the adopted LLVM runtime-provider baseline",
+    "base_release": "v0.1.76",
+    "branch": "codex/file-lock-runtime",
+    "status": "unreleased tested candidate"
+  },
+  "verified_target_revision": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+  "source_sha256": {
+    "src/compile/state.php": "7bd761a2bd5f7e86ae3a2a58ca43d1d1450b19797f665fe3a583d78714b42823",
+    "src/02_tokenize/structures.php": "102db34625b1fbadbff7dca9970d283e37731125ab69632b4c329a7412702f55",
+    "src/compile/step.php": "cbe7837db0da6d9b8f48c6747f2cf1969ff9efad127ea30273e7c945f40da3f4",
+    "src/01_prepare_inputs/read_sources/utilities/path_syntax.php": "6a0c0580e32cd7c5e7888ed53b53e5b864bd580eaaae833bf175783293e10d43",
+    "src/03_parse/data/nodes.php": "c6b330b74378efddb42e7f24dc9e7a8b71dce334257054cbe17b2e4d8cb3e46a",
+    "src/03_parse/data/role_views.php": "d964d55c14394a07701835ad3e7f297b48a851ab2d5bd873603aab635bfd190a",
+    "src/03_parse/data/structures.php": "8b2b218515f34fbf76c20c254c4e30fdd57301b5e650cd4f12786bf2f840ea41",
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "81fb02ba7ba6988ebb996ce8c346fa39a2a5f78c50befa58e1de370f22df92ba",
+    "src/03_parse/data/tree.php": "b79586bc028685993e61cf6aa27b9bf6a91b7458a833c7366b10f727e1e5d325",
+    "src/04_analyze/check_bodies/utilities/decimal_range.php": "5f68379f96af02c66830f433b680a69a69ef1c6b111cbbe2ea1a82ee6d7f287a",
+    "src/05_generate_code/prepare_backend/data/configuration.php": "3399be0371b1726d8f43a4997f9a62b637b9023b343764f4f44a3e15e5f2fdb0",
+    "src/05_generate_code/prepare_backend/data/tools.php": "659797470fabfb8cfdde6c39d407b8a6e2d10a1daac8671496bf2ffd7b22afaf",
+    "src/01_prepare_inputs/read_sources/data/read_tasks.php": "4bec2891117e2a41ff5a307325f7d2ccbbebeaffd24074ed26c61afdf5a0a69f",
+    "src/01_prepare_inputs/read_sources/data/structures.php": "e98a27989184364b3b5edb8725638782c431f28c64c9975dce8de63e4b0195d3",
+    "src/01_prepare_inputs/read_sources/data/source_json.php": "62ffd5f775d5ff7144d7af32c92946f231686d32098b93901a554e60c910c12d",
+    "src/01_prepare_inputs/read_sources/data/store.php": "5ee6601892ee229183a080f2c56bda5cc1911c2117b711c2514d6159e61a3246",
+    "src/01_prepare_inputs/read_sources/data/result.php": "3312726c3974533af770b1bb6f99ab63e6e7c4e2abab04e91dd98bc789996e4b",
+    "src/compile/join.php": "05af64cb4aff047cd666fa5166744432842b381301d66f683404af75e0e9b8bb",
+    "src/01_prepare_inputs/read_sources/scan_join.php": "30357b7810025761ec2f05765e7813ddcb0bb10b47f685eda62baa1b75744fd6",
+    "src/01_prepare_inputs/read_sources/snapshot_join.php": "cfbec461f413beea451290c0c777e8639545d374a2de0f57326cde1801ec86cd",
+    "src/01_prepare_inputs/read_sources/select_reads.php": "95c65fc14d88988b28b636d8efaa514f25f953e018790971f8539363cbe909e7",
+    "src/02_tokenize/store.php": "1e0515a1e9872a6457b8332674edb762a1b084bde5c287254a11702ae0452583",
+    "src/02_tokenize/join.php": "9ee3e9c1e9b2337932c80d403baeebe0da2e541bafa4d037ba26fb70a016d135",
+    "src/02_tokenize/select_tasks.php": "f8623595bc5cb98c91518bfd60da1f2744b793ab89050b0cbdf116c7841b94ae"
+  },
+  "native_proved": [
+    "compiler"
+  ]
+}

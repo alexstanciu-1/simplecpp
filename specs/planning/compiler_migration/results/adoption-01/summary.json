@@ -1,0 +1,46 @@
+{
+  "doc_status": "derived",
+  "adoption_completed": true,
+  "source_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "preserved_files": 2968,
+  "relocated_files": 147,
+  "history_bundle_verified": true,
+  "compiler_default_suite": "109/110; same timeout as baseline-02",
+  "compiler_isolated_retry": "passed in 79.132 seconds",
+  "preparation_gates": "B02\u2013B07 passed",
+  "benchmark_smoke": "failed identically in original snapshot and adopted tree; stale callable_binding.symbol_id in measurement code",
+  "benchmark_commands": [
+    [
+      "python3",
+      "compiler/benchmarks/scalability/run.py",
+      "--sizes",
+      "64kb",
+      "--trials",
+      "1",
+      "--results",
+      "specs/planning/compiler_migration/results/adoption-01/benchmark-smoke.json"
+    ],
+    [
+      "python3",
+      "/tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/run.py",
+      "--sizes",
+      "64kb",
+      "--trials",
+      "1",
+      "--results",
+      "specs/planning/compiler_migration/results/adoption-01/benchmark-original-smoke.json"
+    ]
+  ],
+  "final_adopted_hashes_match": true,
+  "final_original_hashes_match": true,
+  "git": {
+    "source": {
+      "head": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+      "status": ""
+    },
+    "runtime": {
+      "head": "fc20d73d040c4e69758bcec0b1caf40c26755f72",
+      "status": ""
+    }
+  }
+}

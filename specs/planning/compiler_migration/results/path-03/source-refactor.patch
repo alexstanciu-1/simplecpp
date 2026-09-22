@@ -1,0 +1,108 @@
+--- original/src/01_prepare_inputs/read_sources/utilities/paths.php
++++ compiler/src/01_prepare_inputs/read_sources/utilities/paths.php
+@@ -39,33 +39,21 @@
+         return $resolved;
+     }
+ 
+-    /** @compiler-api Join path spellings without canonicalization or checking existence; relative must be relative. */
++    /** Join spelling without canonicalization or filesystem access. */
+     public static function join(string $base, string $relative): string
+     {
+-        if (str_ends_with($base, "/")) {
+-            return $base . $relative;
+-        }
+-        return $base . "/" . $relative;
++        return Source_Path_Syntax::join($base, $relative);
+     }
+ 
+-    // Interpret path syntax on the host that will resolve and read it.
+-    /** @compiler-internal Host-specific path syntax check used by resolve; does not access the filesystem. */
++    /** Interpret spelling on the host that will resolve it. */
+     public static function is_absolute(string $path): bool
+     {
+-        if (DIRECTORY_SEPARATOR !== "\\") {
+-            return str_starts_with($path, "/");
+-        }
+-        if (str_starts_with($path, "/") || str_starts_with($path, "\\")) {
+-            return true;
+-        }
+-        return (strlen($path) >= 3) && (substr($path, 1, 1) === ":")
+-            && ((substr($path, 2, 1) === "/") || (substr($path, 2, 1) === "\\"));
++        return Source_Path_Syntax::is_absolute($path, DIRECTORY_SEPARATOR === "\\");
+     }
+ 
+-    // Source-language membership policy for the current PHP++ frontend.
+-    /** @compiler-internal Source membership predicate for discovery; suffix recognition does not parse a file. */
++    /** Source membership is a suffix policy, not parsing. */
+     public static function is_source(string $path): bool
+     {
+-        return str_ends_with($path, ".phs");
++        return Source_Path_Syntax::is_source($path);
+     }
+ }
+--- original/bootstrap.php
++++ compiler/bootstrap.php
+@@ -8,6 +8,8 @@
+  *   [action] require bootstrap.php
+  *     -> [action] load records, traits and processing classes
+  */
++
++require_once __DIR__ . '/../tools/php_portability/runtime/bootstrap.php';
+ 
+ if (PHP_INT_SIZE < 8) {
+     throw new RuntimeException('The prototype requires 64-bit PHP.');
+@@ -163,6 +165,7 @@
+ require_once __DIR__ . '/src/03_parse/data/store.php';
+ require_once __DIR__ . '/src/03_parse/data/structures.php';
+ require_once __DIR__ . '/src/01_prepare_inputs/read_manifest/data/result.php';
++require_once __DIR__ . '/src/01_prepare_inputs/read_sources/utilities/path_syntax.php';
+ require_once __DIR__ . '/src/01_prepare_inputs/read_sources/utilities/paths.php';
+ require_once __DIR__ . '/src/01_prepare_inputs/read_sources/read.php';
+ require_once __DIR__ . '/src/01_prepare_inputs/read_sources/data/result.php';
+--- /dev/null
++++ compiler/src/01_prepare_inputs/read_sources/utilities/path_syntax.php
+@@ -0,0 +1,44 @@
++<?php
++declare(strict_types=1);
++
++/* Pure source-path spelling rules; filesystem and host selection stay in Source_Paths. */
++namespace read_sources;
++// <scpp-imports>
++use function scpp\take_nullable as take_nullable;
++use function scpp\take_false as take_false;
++use function scpp\take_bool as take_bool;
++use function scpp\string_byte_slice as string_byte_slice;
++// </scpp-imports>
++
++class Source_Path_Syntax
++{
++    /** @compiler-api Join path spellings without canonicalization or checking existence; relative must be relative. */
++    public static function join(string $base, string $relative): string
++    {
++        if (str_ends_with($base, "/")) {
++            return $base . $relative;
++        }
++        return $base . "/" . $relative;
++    }
++
++    // Interpret path syntax on the host that will resolve and read it.
++    /** @compiler-internal Host-specific path syntax check used by resolve; does not access the filesystem. */
++    public static function is_absolute(string $path, bool $windows): bool
++    {
++        if (!$windows) {
++            return str_starts_with($path, "/");
++        }
++        if (str_starts_with($path, "/") || str_starts_with($path, "\\")) {
++            return true;
++        }
++        return (strlen($path) >= 3) && (string_byte_slice($path, 1, 1) === ":")
++            && ((string_byte_slice($path, 2, 1) === "/") || (string_byte_slice($path, 2, 1) === "\\"));
++    }
++
++    // Source-language membership policy for the current PHP++ frontend.
++    /** @compiler-internal Source membership predicate for discovery; suffix recognition does not parse a file. */
++    public static function is_source(string $path): bool
++    {
++        return str_ends_with($path, ".phs");
++    }
++}

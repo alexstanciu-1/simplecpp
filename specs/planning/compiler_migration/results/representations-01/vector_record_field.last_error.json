@@ -1,0 +1,31 @@
+{
+    "version": 1,
+    "command": "build",
+    "argv": [
+        "/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/bin/scpp.php",
+        "run",
+        "--no-stan"
+    ],
+    "cwd": "/tmp/scpp-representation-probes-oy_6amdl/vector_record_field",
+    "project_root": "/tmp/scpp-representation-probes-oy_6amdl/vector_record_field",
+    "project_mode": "strict",
+    "category": "runtime_cache",
+    "subcategory": "missing_runtime_artifact",
+    "short_message": "Required runtime artifact is missing.",
+    "exit_code": 2,
+    "started_at": "2026-09-21T09:57:04+00:00",
+    "finished_at": "2026-09-21T09:57:04+00:00",
+    "duration_ms": 147,
+    "guidance": [
+        "This build is reusing runtime artifacts by default.",
+        "Run 'scpp runtime-build --debug' to rebuild the reusable debug runtime artifact.",
+        "Retry with 'scpp build --build-runtime' if you want the build command to refresh the runtime now.",
+        "Run 'scpp error' for the saved summary.",
+        "Run 'scpp full-error' for the full saved report."
+    ],
+    "diagnostics": [],
+    "raw_output": {
+        "stdout": "",
+        "stderr": ""
+    }
+}

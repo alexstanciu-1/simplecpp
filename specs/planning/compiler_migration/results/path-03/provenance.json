@@ -1,0 +1,15 @@
+{
+  "source_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "files": {
+    "src/01_prepare_inputs/read_sources/utilities/paths.php": {
+      "original_sha256": "189727b6d11a7ada71f0d00e956f7930f3136a17561484d946e59ade0b441e33",
+      "adapted_sha256": "cc71277f23e30e78c98d66c5dd93852fd1b0567f4e79a153c769a059e31a49e9"
+    },
+    "bootstrap.php": {
+      "original_sha256": "c02c7f75277cee0dc271c9c17f30be4fda105c3e49dee3d13e659efb30ce5133",
+      "adapted_sha256": "d654cc59b369369afc167884df70f3745973f6a89d118006bb1f8c228200e336"
+    }
+  },
+  "extracted_file": "src/01_prepare_inputs/read_sources/utilities/path_syntax.php",
+  "extracted_sha256": "8733a467d281086ddc3caee60731cb9918cc44eb7f54917cea38a1f8d3c5bc16"
+}

@@ -1,0 +1,253 @@
+
+
+/*
+ * Role: Source bytes, metadata snapshots and lookup indexes.
+ * Used by: Source_Reader; source joins; downstream frontend
+ * Flow: Source_Buffer / source_file -> Source_Set -> consumers
+ */
+
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Own the folder table, shared file dataset, and indexes for one source snapshot.
+// The coordinator assembles a replacement; phase readers never mutate it.
+// Row lookups return the stored object; clone before editing a retained row.
+/**
+ * @compiler-api Current source membership produced by discovery/snapshot joins.
+ * Readable fields: folders, files, removed_file_ids. Use lookup methods for identity
+ * and folder membership; file IDs are not row offsets. Shared records are read-only.
+ * read_sources owns construction/index maintenance and acknowledgment. Compile
+ * requests an acknowledged snapshot before publication; it does not edit rows.
+ * next_file_id is discovery allocation state, not a downstream API.
+ */
+class Source_Set implements \compile\Step_Result, \compile\Step_Store {
+    /** @var list<source_folder> */
+    public $folders vector<source_folder> = [];
+
+    /** @var list<source_file> */
+    public $files vector<source_file> = [];
+
+    /** @var list<int> */
+    public $removed_file_ids vector<int> = [];
+    public int $next_file_id = 1;
+    private int $entry_file_id = 0;
+
+    /** @compiler-api After a complete discovery join, report pending file work/removals; no mutation. */
+    public function has_pending_changes(): bool {
+        if (count($this->removed_file_ids) > 0) {
+            return true;
+        }
+        foreach ($this->files  as $file) {
+            if ($file->needs_recompile) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** @compiler-internal Discovery binds the manifest entry after complete membership/index construction. */
+    public function set_entry_file(int $id): void {
+        $file = $this->file_by_id($id);
+        if ($file->change_state === file_change::deleted) {
+            throw new \scpp_portability_logic_exception('Entry file is removed');
+        }
+        $this->entry_file_id = $id;
+    }
+
+    /** @compiler-api Read a shared row by logical file ID, including tombstones; throws when unknown. */
+    public function file_by_id(int $id): source_file {
+        if (!isset($this->row_by_file_id[$id])) {
+            throw new \scpp_portability_exception("Unknown source file ID");
+        }
+        return $this->files[(int)$this->row_by_file_id[$id]];
+    }
+
+    /** @compiler-api Read the entry row selected during discovery; no filesystem lookup or mutation. */
+    public function entry_file(): source_file {
+        if ($this->entry_file_id === 0) {
+            throw new \scpp_portability_logic_exception('Source entry is not prepared');
+        }
+        $file = $this->file_by_id($this->entry_file_id);
+        if ($file->change_state === file_change::deleted) {
+            throw new \scpp_portability_logic_exception('Source entry is removed');
+        }
+        return $file;
+    }
+
+    // Folder indexes contain logical file IDs, never copies of file records.
+    /** @var list<list<int>> */
+    private $by_top_folder vector<vector<int>> = [];
+
+    /** @var array<int, int> */
+    private $row_by_file_id hash<int, int> = [];
+
+    /** @var array<string, int> */
+    private $id_by_path hash<int> = [];
+
+    /**
+     * @compiler-api Prepare an acknowledged snapshot for successful publication.
+     * Clear pending work/removal observations in a new owner; retain unchanged rows
+     * and immutable buffers. Never mutate this snapshot or reclaim tombstones.
+     * The caller must adopt the result only after publication succeeds.
+     */
+    public function acknowledged(): Source_Set {
+        $result = new Source_Set();
+        $result->folders = $this->folders;
+        $result->files = $this->files;
+        $result->next_file_id = $this->next_file_id;
+        $result->entry_file_id = $this->entry_file_id;
+        $result->by_top_folder = $this->by_top_folder;
+        $result->row_by_file_id = $this->row_by_file_id;
+        $result->id_by_path = $this->id_by_path;
+        foreach ($this->files  as $index => $file) {
+            if (!$file->needs_recompile) {
+                continue;
+            }
+            $row = new source_file();
+            $row->id = $file->id;
+            $row->top_folder_index = $file->top_folder_index;
+            $row->full_path = $file->full_path;
+            $row->relative_path = $file->relative_path;
+            $row->mtime = $file->mtime;
+            $row->size = $file->size;
+            $row->buffer = $file->buffer;
+            $row->change_state = $file->change_state;
+            $row->needs_recompile = false;
+            $result->files[$index] = $row;
+        }
+        return $result;
+    }
+
+    /**
+     * @compiler-internal Rebuild private indexes from a candidate dataset; throws on invalid identity/membership.
+     * Never call on a shared phase input.
+     */
+    public function refresh_indexes(): void {
+        $by_top_folder vector<vector<int>> = [];
+        $row_by_file_id hash<int, int> = [];
+        $id_by_path hash<int> = [];
+        foreach ($this->folders  as $folder) {
+            $ids vector<int> = [];
+            $by_top_folder[] = $ids;
+        }
+        foreach ($this->files  as $index => $file) {
+            if (((int)$file->id === 0) || (isset($row_by_file_id[$file->id]))) {
+                throw new \scpp_portability_exception("Invalid or duplicate source file ID");
+            }
+            $row_by_file_id[$file->id] = $index;
+            $path = $file->full_path;
+            if ($file->change_state === file_change::deleted) {
+                continue;
+            }
+            if ($file->change_state === file_change::moved) {
+                throw new \scpp_portability_exception("Unsupported source change: moved");
+            }
+            $folder_index = (int)$file->top_folder_index;
+            if (($folder_index < 0) || ($folder_index >= count($this->folders))) {
+                throw new \scpp_portability_exception("Source file has no current folder owner");
+            }
+            if (isset($id_by_path[$path])) {
+                throw new \scpp_portability_exception("Duplicate source path: " . $path);
+            }
+            $id_by_path[$path] = $file->id;
+            $by_top_folder[$folder_index][] = $file->id;
+        }
+
+        // Adopt all indexes together after the candidate membership has been validated.
+        $this->by_top_folder = $by_top_folder;
+        $this->row_by_file_id = $row_by_file_id;
+        $this->id_by_path = $id_by_path;
+    }
+
+    /** @compiler-api Read a shared folder by zero-based position in this snapshot; throws when absent. */
+    public function folder_by_index(int $index): source_folder {
+        if (($index < 0) || ($index >= count($this->folders))) {
+            throw new \scpp_portability_exception("Invalid source folder index");
+        }
+        return $this->folders[(int)$index];
+    }
+
+    /** @compiler-api Read live logical file IDs for a snapshot-local folder index; throws when absent. */
+    public function file_ids_in_folder(int $index): vector<int> {
+        if (($index < 0) || ($index >= count($this->by_top_folder))) {
+            throw new \scpp_portability_exception("Invalid source folder index");
+        }
+        return $this->by_top_folder[(int)$index];
+    }
+
+    /** @compiler-api Look up a canonical live path; return zero when absent. Deleted rows are excluded. */
+    public function find_file_id(string $path): int {
+        if (!isset($this->id_by_path[$path])) {
+            return 0;
+        }
+        return $this->id_by_path[$path];
+    }
+
+    /** @compiler-api On-demand debug view; not a semantic input or a persisted-cache format. */
+    public function to_json(): string {
+        $encoded = '';
+        try {
+            $encoded = $this->encode_json();
+        } catch (\scpp_portability_exception $__scpp_portability_exception_1) {if ($__scpp_portability_exception_1->matches(64)) {$exception = $__scpp_portability_exception_1;
+            throw new \scpp_portability_exception("Cannot export sources: " . $exception->getMessage(), 0, $exception);
+        }else { throw $__scpp_portability_exception_1; }}
+        return $encoded;
+    }
+
+    private function encode_json(): string {
+        $out = '{"folders":[';
+        $separator = '';
+        foreach ($this->folders  as $folder) {
+            $out .= $separator . '{"path":' . Source_Json::quote($folder->path)
+                . ',"resolved_path":' . Source_Json::quote($folder->resolved_path);
+            $names vector<string> = [];
+            if (take($names, $folder->file_names)) {
+                $out .= ',"file_names":[';
+                $name_separator = '';
+                foreach ($names  as $name) {
+                    $out .= $name_separator . Source_Json::quote($name);
+                    $name_separator = ',';
+                }
+                $out .= ']';
+            }
+            $out .= '}';
+            $separator = ',';
+        }
+        $out .= '],"files":[';
+        $separator = '';
+        foreach ($this->files  as $file) {
+            $out .= $separator . '{"id":' . $file->id . ',"top_folder_index":' . $file->top_folder_index
+                . ',"path":' . Source_Json::quote($file->full_path)
+                . ',"relative_path":' . Source_Json::quote($file->relative_path)
+                . ',"mtime":' . $file->mtime . ',"size":' . $file->size
+                . ',"change_state":' . Source_Json::quote(Source_Json::change_name($file->change_state))
+                . ',"needs_recompile":' . ($file->needs_recompile ? 'true' : 'false') . '}';
+            $separator = ',';
+        }
+        $out .= '],"removed_file_ids":[';
+        $separator = '';
+        foreach ($this->removed_file_ids  as $id) {
+            $out .= $separator . $id;
+            $separator = ',';
+        }
+        return $out . '],"entry_file_id":' . $this->entry_file_id . '}';
+    }
+}

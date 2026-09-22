@@ -1,0 +1,26 @@
+namespace compile;
+
+// Own retained compiler state and its published generations.
+
+class Compiler_Session {
+    public uint32 $generation = 0;
+    public $manifest \read_manifest\Project_Manifest;
+    public $sources \read_sources\Source_Set;
+    public $frontends vector<\parse\File_Frontend> = [];
+    public $symbols \collect_symbols\Symbol_Store;
+    public $resolutions vector<\resolve_symbols\Symbol_Resolution> = [];
+
+    public function __construct() {
+        $this->manifest = new \read_manifest\Project_Manifest();
+        $this->sources = new \read_sources\Source_Set();
+        $this->symbols = new \collect_symbols\Symbol_Store();
+    }
+}
+
+// Per-update control state, separate from the published session.
+
+class Update_Context {
+    // Coordinator writes between phases; phase tasks only read this decision.
+    // Once enabled, it stays enabled until this update ends.
+    public bool $full_rebuild = false;
+}

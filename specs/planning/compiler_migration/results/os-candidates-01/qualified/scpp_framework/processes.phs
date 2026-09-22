@@ -1,0 +1,31 @@
+// Portable facade. Native result errors become the supported PHP exception family.
+function scpp_portability_process_spawn(string $executable, $args vector<string>, string $input, int $timeout_ms, string $cwd): \process_handle {
+    $out \process_handle;
+    $failure error;
+    if (!take($out, $failure, process_start($executable, $args, $input, $timeout_ms, $cwd))) {
+        throw new scpp_portability_runtime_exception($failure->get_message());
+    }
+    return $out;
+}
+function scpp_portability_process_poll(\process_handle $handle): bool {
+    $done bool = false;
+    $failure error;
+    if (!take($done, $failure, process_poll($handle))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $done;
+}
+function scpp_portability_process_output(\process_handle $handle): \process_output {
+    $out \process_output;
+    $failure error;
+    if (!take($out, $failure, process_result($handle))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $out;
+}
+function scpp_portability_process_stop(\process_handle $handle): void {
+    $done bool = false;
+    $failure error;
+    if (!take($done, $failure, process_stop($handle))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+}
+function scpp_portability_process_close(\process_handle $handle): void {
+    $done bool = false;
+    $failure error;
+    if (!take($done, $failure, process_close($handle))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+}

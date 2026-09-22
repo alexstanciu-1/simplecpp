@@ -1,0 +1,154 @@
+namespace read_sources;
+
+// Own source bytes separately from the inline file metadata.
+class Source_Buffer {
+    public uint32 $source_file_id = 0;
+    public string $content = "";
+}
+
+// Own the folder table, shared file dataset, and indexes for one source snapshot.
+// The coordinator assembles a replacement; phase readers never mutate it.
+class Source_Set {
+    public $folders vector<source_folder> = [];
+    public $files vector<source_file> = [];
+    // Variable-size payload tables. IDs are one-based, zero denotes absence.
+    public $paths vector<string> = [];
+    public $buffers vector<Source_Buffer> = [];
+    public $removed_file_ids vector<uint32> = [];
+    public uint32 $next_file_id = 1;
+
+    // Folder indexes contain logical file IDs, never copies of file records.
+    private $by_top_folder vector<vector<uint32>> = [];
+    private $row_by_file_id hash<uint32, uint32> = [];
+    private $id_by_path hash<uint32, string> = [];
+
+    public function refresh_indexes(): void {
+        $by_top_folder vector<vector<uint32>> = [];
+        $row_by_file_id hash<uint32, uint32> = [];
+        $id_by_path hash<uint32, string> = [];
+        foreach ($this->folders as $folder) {
+            $ids vector<uint32> = [];
+            $by_top_folder[] = $ids;
+        }
+        foreach ($this->files as $index => $file) {
+            if ((int)$file->id === 0 || isset($row_by_file_id[$file->id])) {
+                throw new \Exception("Invalid or duplicate source file ID");
+            }
+            $row_by_file_id[$file->id] = $index;
+            $path string = $this->path_by_id($file->full_path_id);
+            if ($file->change_state === file_change::deleted) {
+                continue;
+            }
+            if ($file->change_state === file_change::moved) {
+                throw new \Exception("Unsupported source change: moved");
+            }
+            $folder_index int = (int)$file->top_folder_index;
+            if ($folder_index < 0 || $folder_index >= count($this->folders)) {
+                throw new \Exception("Source file has no current folder owner");
+            }
+            if (isset($id_by_path[$path])) {
+                throw new \Exception("Duplicate source path: " . $path);
+            }
+            $id_by_path[$path] = $file->id;
+            $by_top_folder[$folder_index][] = $file->id;
+        }
+        $this->by_top_folder = $by_top_folder;
+        $this->row_by_file_id = $row_by_file_id;
+        $this->id_by_path = $id_by_path;
+    }
+
+    public function folder_by_index(uint32 $index): source_folder {
+        if ((int)$index >= count($this->folders)) {
+            throw new \Exception("Invalid source folder index");
+        }
+        return $this->folders[(int)$index];
+    }
+
+    public function path_by_id(uint32 $id): string {
+        if ((int)$id === 0 || (int)$id > count($this->paths)) {
+            throw new \Exception("Invalid source path ID");
+        }
+        return $this->paths[(int)$id - 1];
+    }
+
+    public function buffer_by_id(uint32 $id): Source_Buffer {
+        if ((int)$id === 0 || (int)$id > count($this->buffers)) {
+            throw new \Exception("Invalid source buffer ID");
+        }
+        return $this->buffers[(int)$id - 1];
+    }
+
+    public function file_ids_in_folder(uint32 $index): vector<uint32> {
+        if ((int)$index >= count($this->by_top_folder)) {
+            throw new \Exception("Invalid source folder index");
+        }
+        return $this->by_top_folder[(int)$index];
+    }
+
+    public function file_by_id(uint32 $id): source_file {
+        if (!isset($this->row_by_file_id[$id])) {
+            throw new \Exception("Unknown source file ID");
+        }
+        return $this->files[(int)$this->row_by_file_id[$id]];
+    }
+
+    public function find_file_id(string $path): uint32 {
+        if (!isset($this->id_by_path[$path])) {
+            return 0;
+        }
+        return $this->id_by_path[$path];
+    }
+
+    public function add_path(string $path): uint32 {
+        $this->paths[] = $path;
+        $id uint32 = count($this->paths);
+        return $id;
+    }
+
+    public function to_json(): string {
+        $folders dynamic = [];
+        foreach ($this->folders as $index => $folder) {
+            $row dynamic = [];
+            $row["path"] = $this->path_by_id($folder->path_id);
+            $row["resolved_path"] = $this->path_by_id($folder->resolved_path_id);
+            $folders[$index] = $row;
+        }
+        $files dynamic = [];
+        foreach ($this->files as $index => $file) {
+            $row dynamic = [];
+            $row["id"] = (int)$file->id;
+            $row["top_folder_index"] = (int)$file->top_folder_index;
+            $row["path"] = $this->path_by_id($file->full_path_id);
+            $row["relative_path"] = $this->path_by_id($file->relative_path_id);
+            $row["mtime"] = (int)$file->mtime;
+            $row["size"] = (int)$file->size;
+            $row["change_state"] = file_change_name($file->change_state);
+            $row["needs_recompile"] = $file->needs_recompile;
+            $files[$index] = $row;
+        }
+        $removed dynamic = [];
+        foreach ($this->removed_file_ids as $index => $id) {
+            $removed[$index] = (int)$id;
+        }
+        $result dynamic = [];
+        $result["folders"] = $folders;
+        $result["files"] = $files;
+        $result["removed_file_ids"] = $removed;
+        $text string = "";
+        $error error;
+        if (!take($text, $error, json_encode($result))) {
+            throw new \Exception("Cannot export sources: " . $error->get_message());
+        }
+        return $text;
+    }
+}
+
+// Debug spelling of the source-change enum; no compilation decisions here.
+function file_change_name(file_change $state): string {
+    if ($state === file_change::unchanged) { return "unchanged"; }
+    if ($state === file_change::added) { return "added"; }
+    if ($state === file_change::changed) { return "changed"; }
+    if ($state === file_change::deleted) { return "deleted"; }
+    if ($state === file_change::moved) { return "moved"; }
+    throw new \Exception("Unknown source file change state");
+}

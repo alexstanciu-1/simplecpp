@@ -1,0 +1,28 @@
+// Portable facade: operational errors throw; contention remains false.
+function scpp_portability_lock_empty(): file_lock_handle {
+    $out file_lock_handle;
+    return $out;
+}
+function scpp_portability_lock_try(file_lock_handle &$out, string $path, bool $shared): bool {
+    $acquired bool = false;
+    $failure error;
+    if (!take($acquired, $failure, fs_lock_try($out, $path, $shared))) {
+        throw new scpp_portability_runtime_exception($failure->get_message());
+    }
+    return $acquired;
+}
+function scpp_portability_lock_release(file_lock_handle $handle): void {
+    $done bool = false;
+    $failure error;
+    if (!take($done, $failure, fs_lock_release($handle))) {
+        throw new scpp_portability_runtime_exception($failure->get_message());
+    }
+}
+function scpp_portability_lock_transfer(file_lock_handle $handle): file_lock_handle {
+    $out file_lock_handle;
+    $failure error;
+    if (!take($out, $failure, fs_lock_transfer($handle))) {
+        throw new scpp_portability_runtime_exception($failure->get_message());
+    }
+    return $out;
+}

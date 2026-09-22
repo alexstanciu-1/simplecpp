@@ -1,0 +1,9 @@
+namespace resolve_symbols;
+
+// A resolved source use, not a copy of its target declaration.
+struct symbol_binding {
+    public uint32 $owner_symbol_id = 0;
+    public uint32 $source_file_id = 0;
+    public uint32 $use_node_id = 0;
+    public uint32 $target_symbol_id = 0;
+}

@@ -1,0 +1,10 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in main.phs:7: constructor for 'scpp::scpp_invalid_argument' must explicitly initialize the base class 'scpp_error' which does not have a default constructor
+Generated location: .prism/generated/main.cpp:33:24
+Compile note in main.phs:1: 'scpp::scpp_error' declared here
+Generated location: .prism/generated/main.hpp:14:7
+Raw compiler excerpt:
+main.cpp:33:24: error: constructor for 'scpp::scpp_invalid_argument' must explicitly initialize the base class 'scpp_error' which does not have a default constructor
+main.hpp:14:7: note: 'scpp::scpp_error' declared here
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

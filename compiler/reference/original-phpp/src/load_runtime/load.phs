@@ -1,0 +1,5 @@
+namespace load_runtime;
+
+// Import and validate versioned catalogs and runtime provider descriptors.
+
+// Own runtime ABI contracts and demanded bridge descriptions.

@@ -1,0 +1,65 @@
+
+
+/*
+ * Role: Object compilation outputs and retained link configuration.
+ * Used by: LLVM_Toolchain; Native_Builder
+ * Flow: fixed inputs -> owned contracts -> read-only consumers
+ */
+
+namespace prepare_backend;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @compiler-api Fixed object-generation input from native building to the tool
+ * service. IR strings are shared; output is a separately reserved private file.
+ */
+final class object_compilation {
+    public readonly string $ir;public readonly string $output;public readonly backend_configuration $configuration;public function __construct(string $ir, string $output, backend_configuration $configuration) {$this->ir = $ir;$this->output = $output;$this->configuration = $configuration;
+    }
+}
+
+/** @compiler-api Fixed linker invocation identity; separate from IR/ABI and object generation. */
+final class link_configuration {
+    public readonly string $executable;public readonly string $key;public function __construct(string $executable, string $key) {$this->executable = $executable;$this->key = $key;
+    }
+}

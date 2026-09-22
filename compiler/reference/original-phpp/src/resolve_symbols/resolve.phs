@@ -1,0 +1,20 @@
+namespace resolve_symbols;
+
+function resolve_symbol(
+    \collect_symbols\Symbol_Store $symbols,
+    uint32 $symbol_id,
+    \read_sources\Source_Set $sources,
+    vector<\parse\File_Frontend> $frontends
+): Symbol_Resolution {
+    // TODO: read published phase inputs and return this symbol's use bindings.
+    // Unknown downstream impact rejects incremental handling, not full compilation.
+    // Language errors need diagnostics regardless of the full-rebuild flag.
+    throw new \Exception("Not implemented: resolve_symbol");
+}
+
+function join_symbol_resolutions(vector<Symbol_Resolution> $previous, \collect_symbols\Symbol_Refresh $symbols, vector<Symbol_Resolution> $results): vector<Symbol_Resolution> {
+    // TODO: replace selected bindings and remove all uses owned by deleted symbols.
+    // Declaration refresh must select re-resolution for uses in replaced ASTs.
+    // Retain old binding rows only where their AST snapshot remains unchanged.
+    throw new \Exception("Not implemented: join_symbol_resolutions");
+}

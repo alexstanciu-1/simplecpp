@@ -1,0 +1,229 @@
+Running syntax checks and 110 tests with up to 10 jobs.
+All prototype PHP files pass syntax checks.
+[1/110] PASS 04_analyze/type_model/type_storage.php
+type storage ok: distinct identities, shared representations, flat fields/parameters, composed recursive graph, immutable candidates, action descriptors and invalid inputs; storage boundary verified
+[2/110] PASS 03_parse/frontend_storage.php
+frontend storage ok: record clones, long tokens, independent file tables and linked traversal
+failed manifest preparation preserves session state
+[3/110] PASS 03_parse/struct_parsing.php
+struct parsing ok: shared field roles, ordered declarations, logical changes, malformed shapes and snapshot purity
+[4/110] PASS 04_analyze/collect_symbols/semantic_storage.php
+semantic storage ok: exact syntax references, implicit entry, change/work separation, removal origins, invalid records and root/index consistency; storage contracts verified
+[5/110] PASS 04_analyze/type_model/type_context.php
+type context ok: pending/declaration/representation separation, fixed cache inputs, conservative full selection, warm sharing and candidate isolation; signature integration is tested separately
+[6/110] PASS 04_analyze/type_model/semantic_calls.php
+semantic call contracts: physical mappings and incompatible passing/results checked
+[7/110] PASS 04_analyze/type_model/type_reuse.php
+type reuse ok: parsed occurrences share IDs, lazy definition work, warm cache purity, namespaces, candidate invalidation and failure isolation; signature integration is tested separately
+[8/110] PASS 04_analyze/type_model/type_definitions.php
+type definitions ok: signedness by ID, shared shapes and definitions, coherent invalidation, pure candidates, pipeline reuse/provider edits and exports
+[9/110] PASS 04_analyze/resolve_types/local_types.php
+local types ok: shared annotation resolution, one materialization, cross-file IDs, fixed workers, joins, reuse, edits, removal, metadata, exports and repair
+[10/110] PASS 04_analyze/analyze_lifetimes/resource_contracts.php
+Resource contracts: relation algebra, canonical paths, projection and alias endpoints passed
+[11/110] PASS 03_parse/metaprogramming_parsing.php
+metaprogramming parsing ok: general multi-argument applications, declarations/constants/context syntax, deep/wide inputs, exports, fixed workers, one replacement and semantic rejection
+[12/110] PASS 04_analyze/check_bodies/body_tasks.php
+body tasks ok: fixed callable inputs, composed workers, separate joins/reuse, provenance, task release and native update
+[13/110] PASS 04_analyze/resolve_types/parameter_types.php
+parameter types ok: ordered/shared signatures and locals, catalog facts, workers/joins, reuse, invalidation, edits, diagnostics, exports and downstream gates
+[14/110] PASS 04_analyze/resolve_types/return_types.php
+return types ok: authoritative types, cross-file reuse, independent workers, one materialization, joins, edits, source diagnostics, rollback/repair, catalog invalidation, fresh equivalence and separate signature/body ownership
+[15/110] PASS 04_analyze/check_bodies/local_bodies.php
+local bodies ok: typed initialization/reads/writes, shared conversions, scope ranges, void/return rules, dependencies, fixed workers, reuse, failure/repair and local lowering
+[16/110] PASS 05_generate_code/lower/lowering_inputs.php
+lowering inputs ok: shared contract access, frozen context, missing/stale contracts, all configuration dependencies, binding changes and lineage
+[17/110] PASS 05_generate_code/prepare_backend/layout_preparation.php
+layout preparation ok: fixed dependency views, subset batches, early/final reuse and provenance rejection
+[18/110] PASS 04_analyze/analyze_lifetimes/local_lifetimes.php
+local lifetimes ok: initialization, copy reads/writes, lexical exits, return unwind, unreachable exclusion, contracts, fixed workers, reuse, repair and native scalar blocks
+[19/110] PASS 04_analyze/analyze_lifetimes/lifetime_analysis.php
+lifetime analysis ok: reachable temporaries, scalar contracts, copies/discards, void/entry flow, pure workers, joins, reuse, edits, removal, rollback/repair, metadata, large bodies and exports
+[20/110] PASS 04_analyze/check_bodies/body_checking.php
+body checking ok: real literal/call/return typing, conversion boundary, ranges, fixed workers, reuse, callee contract invalidation, rollback/repair, metadata defaults, large bodies, fresh comparison and debug exports
+[21/110] PASS 04_analyze/analyze_lifetimes/parameter_lifetimes.php
+parameter lifetimes ok: entry bindings, call consumption, nested argument retention, scope/return exits, purity/reuse, malformed inputs, exports and lowering handoff
+[22/110] PASS 04_analyze/check_bodies/parameter_bodies.php
+parameter bodies ok: initialized inputs, flat argument plans, left-to-right nesting, conversions, dependencies, workers/joins, reuse, exports, failures and native completion
+[23/110] PASS 05_generate_code/lower/lowering.php
+lowering ok: real plans and composed evaluation, call order, constants, void/return flow, lifetimes, fixed workers, reuse, failure/repair, backend invalidation, removals and exports
+[24/110] PASS features/local_lowering.php
+local lowering ok: native scope/copy/write/return behavior, flat storage, unreachable exclusion, exports, fixed workers, reuse, body increment, repair and metadata-driven storage
+[25/110] PASS features/addition.php
+addition ok: composition, wrapping, provider permission, deep operands, fixed workers, native update and repair
+[26/110] PASS features/integer_comparisons.php
+integer comparison tests passed
+[27/110] PASS integration/single_file.php
+single file ok: virtual input, isolated workers, native execution, body increment, retained purity and Windows target naming
+[28/110] PASS 05_generate_code/prepare_backend/backend_preparation.php
+backend preparation ok: verified Clang target and scalar calls, signature-only inputs, real bindings, fixed workers, reuse, automatic contract refresh, rollback/repair, target edits, removals and exports
+[29/110] PASS features/integer_conversions.php
+integer conversions ok: source-to-native signed/unsigned widening, all implicit boundaries, flat unary plans, consumers, metadata, unchanged reuse, body increment, rollback/repair and generic widths
+[30/110] PASS features/parameter_lowering.php
+parameter lowering ok: native cross-file copies, argument order, nested/void calls, stack passing, shared contracts, exports, fixed workers, reuse, body increment, failure/repair and provider-defined types
+[31/110] PASS features/control_flow.php
+control flow ok: branches, nested loops, scope exits, repeated execution, return paths, worker purity, native updates and repair
+[32/110] PASS integration/native_executable.php
+native executable ok: real execution, emission workers, body increment, full fallback, publication, rollback/repair, ABI adaptations, artifact reuse and exports
+[33/110] PASS integration/provider_family_declarations.php
+family declarations ok: metadata exposure, scoped members, two slots, unused-definition permissions, native ordinary output and one increment
+[34/110] PASS 05_generate_code/prepare_backend/source_exports.php
+source exports ok: exact identities, six-role contracts, private ABI joins, rebuild binding and body reuse
+[35/110] PASS integration/runtime_inputs.php
+runtime inputs ok: scoped identities, composed records, shared scalars, leases, joins, conflicts, one increment, full/ThinLTO
+[36/110] PASS integration/runtime_inline.php
+inline runtime ok: generic opaque types, destination construction, call-scoped borrowing, aligned identity, flow, fixed workers, one increment and unsupported ownership rejection
+[37/110] PASS integration/provider_family_types.php
+family types ok: source demands, shared preparation, generic forwarding, native lifecycle, final leases, joins and one new-specialization increment
+[38/110] PASS integration/runtime_cleanup.php
+runtime cleanup ok: metadata destruction, locals/temporaries, boundary order validation, branches/loops/returns, native oracles, fixed workers, reuse and managed-body replacement increments
+[39/110] PASS integration/source_project_preparation.php
+project source preparation ok: generated adapters, explicit crossings, source import acceptance and reuse
+[40/110] PASS integration/runtime_copy.php
+runtime copy ok: explicit metadata, independent storage, cleanup-free copies, control flow, native oracle, lifecycle workers and incremental replacement
+[41/110] PASS integration/source_family_custom.php
+custom source exports ok: nested lifecycle, checked evidence, rejected joins, one body increment, O0/O1/ThinLTO
+[42/110] PASS integration/provider_family_methods.php
+family methods ok: concrete and generic calls, receiver positions, coalesced coverage and one method-demand increment
+[43/110] PASS integration/provider_family_append.php
+family append ok: real runtime vector, scalar places and temporaries, once-only evaluation, conversion, generic forwarding, copy/assignment/self-assignment and one increment
+[44/110] PASS integration/source_structs.php
+source structs ok: common definitions/places, target layout, zero construction, independent copying, field reads/writes, fixed workers and one body increment
+[45/110] PASS integration/runtime_abi.php
+runtime ABI ok: adapter, canonical types, shared declarations, integer widening/attributes, native execution, incremental reuse, provider invalidation, locking, rejected contracts, full/ThinLTO
+[46/110] PASS integration/lifecycle_composition.php
+lifecycle composition ok: nested aligned runtime fields, compact arrays, member copies, temporary/early cleanup, private workers and one increment
+[47/110] PASS integration/allocation_ownership.php
+allocation ownership ok: native allocators, effects, joins, borrows, failures, incremental replacement and ThinLTO
+[48/110] PASS integration/custom_lifecycle.php
+custom lifecycle ok: field/body ordering, managed receivers, nested records, early returns, custom copies and body replacement
+[49/110] PASS integration/typed_storage.php
+typed storage ok: generic metadata, target layout, prefix guards, native joins, increment and ThinLTO
+[50/110] PASS integration/managed_growing_list.php
+managed growing lists ok: source growth/copy/assignment, owned reads, early cleanup, private workers, one increment and O1/ThinLTO
+[51/110] PASS integration/managed_storage.php
+managed storage ok: native/source lifecycle, assignment, transfer, prefix failures, joins, increment and O1/ThinLTO
+[52/110] PASS integration/index_depth.php
+index depth ok: 256 nested read/write operands, native execution, default stack settings and one body replacement
+[53/110] PASS integration/runtime_assignment.php
+runtime assignment ok: ordinary/family-independent metadata, live replacement, self-assignment, fields, generic permissions, cleanup, joins and one increment
+[54/110] PASS integration/fixed_array_list.php
+fixed list ok: source methods, const/mutable receivers, demanded concrete implementations, private joins, templated capacities and one method-body replacement
+[55/110] PASS integration/fixed_arrays.php
+fixed arrays ok: templated capacities/concrete elements, copy/zero storage, const references, target order, checked bounds and one pure incremental replacement
+[56/110] PASS integration/runtime_console.php
+runtime console ok: strict parse, line input, concat, byte length, composed execution, fixed workers and incremental replacement
+[57/110] PASS integration/owning_storage_fields.php
+owning storage field tests passed
+[58/110] PASS integration/provider_family_nested.php
+nested families ok: native vectors, two-argument family, exact imported types, owned results, balanced cleanup, joins, reuse and O1/ThinLTO
+[59/110] PASS integration/source_record_borrows.php
+source record borrowing: ok
+[60/110] PASS integration/owned_results.php
+owned results: ok
+owned result workers, generic permissions, increment and missing-support diagnostic: ok
+[61/110] PASS 06_build_output/build_native/native_modules.php
+native modules ok: file units, cross-file declarations, object reuse, missing/tampered repair, full selection, worker join, removal and file ownership
+[62/110] PASS 05_generate_code/emit_llvm/module_assembly.php
+module assembly ok: independent files, reverse completion, full/selected reuse, entry invalidation, stale/incomplete rejection, purity and real execution
+[63/110] PASS integration/runtime_record_borrows.php
+record borrowing ok: JSON to native, local address identity, value copies, signature joins, worker purity and body replacement
+[64/110] PASS integration/source_family_execution.php
+source/native family proof ok: common types, source exports, balanced cleanup, one increment, O0/O1/ThinLTO
+[65/110] PASS features/program_entry.php
+program entry ok: manifest selection, shared callable/body path, fixed workers, reuse, edits, diagnostics, rollback/repair, supporting-file policy, entry replacement and exports
+[66/110] PASS integration/native_publication.php
+native publication ok: protected input paths, canonical aliases, rename rollback, cleanup warnings, retry and abandoned cleanup diagnostics
+[67/110] PASS integration/native_reuse.php
+native reuse ok: early gate, shared stages, artifact repair, linker identity/failure/protection, config changes and source repair
+[68/110] PASS 04_analyze/collect_symbols/symbol_collection.php
+symbol collection ok: cross-file lookup, implicit entries, independent workers, stable identities, uncompared matches, duplicates, rollback, removals/renames, origin retention, fresh equivalence and ID bounds
+[69/110] PASS 04_analyze/resolve_symbols/symbol_resolution.php
+symbol resolution ok: project calls, recursion, body boundaries, independent workers, reuse, stale binding rejection, unknown-name rollback, deletions, fresh equivalence and large bodies
+[70/110] PASS 04_analyze/resolve_symbols/template_bindings.php
+template bindings ok: shared declaration lookup, parameter scopes, source/provider references, formal dependencies, private workers/joins, native coexistence and one-increment proofs
+[71/110] PASS 04_analyze/resolve_types/concrete_preparation.php
+concrete preparation ok: ordinary diagnostics, deferred dependent methods, indexed readiness, selected reuse and one pure demand replacement
+[72/110] PASS integration/runtime_strings.php
+runtime strings ok: real Simple C++ strings, second type via definitions, spans, void borrows, literals/echo/copies, native cleanup, fixed workers and incremental literal replacement
+[73/110] PASS 04_analyze/resolve_symbols/local_resolution.php
+local resolution ok: lexical scopes, declaration identities, read/write bindings, shadowing, diagnostics, fixed workers, joins, reuse, replacement, exports and repair
+[74/110] PASS 04_analyze/resolve_symbols/parameter_binding.php
+parameter binding ok: shared local table, root scope, reads/writes, shadowing, duplicates, ordinal lookup, fixed workers, reuse, edits, exports and explicit next-stage boundary
+[75/110] PASS 04_analyze/resolve_symbols/argument_resolution.php
+argument resolution ok: nested calls/locals, scopes, dependencies, workers/joins, reuse, exports, deep/wide traversal and downstream gates
+[76/110] PASS 01_prepare_inputs/read_manifest/project_manifest.php
+valid manifest checks passed: disk reads, snapshots, rebuild decisions, and discovery handoff
+project manifest ok: disk reads, validation, exact snapshots, rebuild decisions, and failure isolation
+[77/110] PASS 01_prepare_inputs/read_manifest/manifest_export.php
+{"path":"..\/fixtures\/three_files\/project.json","content":"{\n  \"source_folders\": [\"src\"],\n  \"entry\": \"src\/main.phs\"\n}\n","directory":"\/tmp\/scpp_check_qh3js75v\/fixtures\/three_files","source_folder_paths":["src"],"entry_path":"src\/main.phs"}
+manifest JSON export ok: actual reader output, escaping, root order, empty snapshot, and repeatability
+[78/110] PASS 04_analyze/instantiate/explicit_instances.php
+explicit instances ok: literal constants, distinct callable identities, shared structural preparation, nested/repeated demands, native execution, recursion, private workers/joins and one incremental demand replacement
+[79/110] PASS 01_prepare_inputs/read_sources/source_paths.php
+source paths ok: host syntax, manifest-relative resolution and native filesystem discovery
+[80/110] PASS 01_prepare_inputs/read_sources/source_snapshots.php
+source snapshots ok: exact reads, empty files, task isolation, deterministic joins, reuse, replacement, missing results and changed/deleted input rejection
+[81/110] PASS 01_prepare_inputs/read_sources/source_read_races.php
+source read races ok: mid-read growth, same-metadata path replacement, deletion and handle release
+[82/110] PASS 01_prepare_inputs/read_sources/source_scan_tasks.php
+source scan tasks ok: independent directories, reverse completion, batch completeness, input purity and failure recovery
+[83/110] PASS 04_analyze/collect_symbols/symbol_comparison.php
+symbol comparison ok: definition/child distinctions, logical subtree equality, positions and IDs, sparse catalogs, pure workers, join validation, full rebuild, large bodies and old-snapshot release
+[84/110] PASS 02_tokenize/tokenization.php
+tokenization ok: exact spans, variables/assignment, comments, EOF, identifier boundaries, debug export, long tokens and anchored rejection
+[85/110] PASS 04_analyze/check_templates/generic_contracts.php
+generic contracts: native copy/forwarding, definition restrictions, private joins and one retained increment passed
+[86/110] PASS 03_parse/step_lifecycle.php
+parsing step lifecycle ok: transitions, typed outputs, failures, purity, reuse, full rebuild and removal
+[87/110] PASS 02_tokenize/variable_tokens.php
+variable tokens ok: real file reads, exact exports, fixed workers, selective/full reuse, rejection boundaries and repair
+[88/110] PASS 03_parse/parsing.php
+parsing ok: file definitions/entry bodies, ordered statements, call/return trees, spans, large flat trees, exports, purity and anchored syntax errors
+[89/110] PASS 03_parse/variable_parsing.php
+variable parsing ok: flat ASTs, local ownership, fixed workers, joins, reuse, comparison, errors and semantic boundaries
+[90/110] PASS 03_parse/parameter_parsing.php
+parameter parsing ok: ordered typed parameters/arguments, nesting, flat storage, roles, spans, comparison, fixed workers, reuse, full selection and honest semantic boundaries
+[91/110] PASS 02_tokenize/lexical_updates.php
+lexical updates ok: zero-work reuse, reversed completion, partial/stale-result rejection, body edit, failure/repair, fresh equivalence, full rebuild and bounded buffer retention
+[92/110] PASS integration/boundaries.php
+PHP boundaries ok: strict manifest shapes, lookup bounds, ID exhaustion and export recovery
+[93/110] PASS 01_prepare_inputs/read_manifest/manifest_recovery.php
+manifest recovery ok: malformed input, path/JSON diagnostics, retained-state purity, and repaired refreshes in one process
+[94/110] PASS 01_prepare_inputs/read_sources/source_discovery.php
+source discovery ok: recursive membership, mtime and size independently, stable IDs, additions/removals/recreation, folder indexes, exports, and input purity
+[95/110] PASS 03_parse/parse_updates.php
+parse updates ok: snapshot reuse, full/selective equivalence, independent workers, segment joins, completeness, failure/repair, removal and AST release
+[96/110] PASS compile/join_contracts.php
+join contracts ok: all owners, empty batches, concrete outputs, retained-input purity, native reuse and deferred parser validation
+[97/110] PASS compile/step_lifecycle.php
+all step lifecycles ok: 21 owners, transitions, typed identity, input purity, warm output, terminal failures and unpublished native cleanup
+[98/110] PASS compile/compile_driver.php
+compile driver ok: ordered input work, explicit stopping point, resident observations, rebuild decisions, and failure isolation
+[99/110] PASS compile/lock_ownership.php
+lock ownership ok: success/failure release, same-process exclusion, and borrowed-lock validation
+[100/110] PASS integration/provider_records.php
+provider records ok: JSON preparation, native field measurements, shared source/provider definitions and locations, worker purity, reuse, provider replacement and rejected unsupported contracts
+[101/110] PASS compile/incremental_policy.php
+incremental policy ok: shared inspection/native gate, body reuse, definition fallback, equal LLVM and failure/repair
+[102/110] PASS integration/runtime_conversions.php
+runtime conversions ok: purpose selection, real owned strings, nonmovable second type, physical result storage, native cleanup, fixed workers and incremental replacement
+[103/110] FAIL integration/provider_family_runtime_types.php
+Command '['/usr/bin/php', '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/integration/provider_family_runtime_types.php']' timed out after 180 seconds
+[104/110] PASS integration/native_cli.py
+Native CLI: executable increment, exports, folder restoration and nonfatal cleanup warnings passed.
+[105/110] PASS integration/project_lock.py
+Project locking: cross-process/API/CLI exclusion, canonical aliases, independent projects, simulation contention, release and crash recovery passed.
+[106/110] PASS integration/parallel_native.py
+Parallel native: 20-job bound/full overlap, three-file incremental overlap, cache reuse, failed-batch cancellation, descendants, timeout, repair and limit validation passed.
+[107/110] PASS integration/single_file_cli.py
+Single-file CLI: defaults, membership, paths, protection, diagnostics and manifest compatibility passed.
+[108/110] PASS simulate_increment/increment_simulation.py
+CLI simulation: two real refreshes, stable IDs, rebuild decisions, exact restoration, and error handling passed.
+Crash checks: killed PHP process at all five boundaries; journal-guided recovery restored both trees. Restore collision preserved unrelated data.
+[109/110] PASS integration/growing_list.php
+growing source list, copy and assignment tests passed
+owned list results and one increment: ok
+[110/110] PASS integration/runtime_record_strings.php
+record/string composition ok: metadata borrow plus owned result, copies, control flow, one body increment, snapshot purity and source signature diagnostics
+109/110 tests passed in 232.3s (10 jobs).

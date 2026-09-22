@@ -1,0 +1,38 @@
+Preparing request.json ...
+Preparation: built
+Preparing request.json ...
+Preparation: reused
+Built points-O0
+Built points-O1-full
+Built points-O1-thin
+Built points-O1
+Built samples-O0
+Built samples-O1-full
+Built samples-O1
+Built samples-O1-thin
+points O0 access: bridge/native 1.583x
+points O0 lifecycle: bridge/native 1.235x
+points O1 access: bridge/native 1.001x
+points O1 lifecycle: bridge/native 1.219x
+points O1-full access: bridge/native 1.000x
+points O1-full lifecycle: bridge/native 1.328x
+points O1-thin access: bridge/native 0.992x
+points O1-thin lifecycle: bridge/native 1.179x
+samples O0 access: bridge/native 1.378x
+samples O0 lifecycle: bridge/native 1.183x
+samples O1 access: bridge/native 1.018x
+samples O1 lifecycle: bridge/native 1.270x
+samples O1-full access: bridge/native 1.003x
+samples O1-full lifecycle: bridge/native 1.110x
+samples O1-thin access: bridge/native 0.978x
+samples O1-thin lifecycle: bridge/native 1.286x
+Built points-O1-counts
+Built samples-O1-counts
+Built points-O1-caller-edit
+Preparing request.json ...
+Preparation: reused
+Preparing changed-request.json ...
+Preparation: built
+Built points-O1-record-edit
+7 request/acceptance rejection checks passed
+PASS: report and artifacts in /tmp/scpp-adoption-preparation-29v8zist/specializations

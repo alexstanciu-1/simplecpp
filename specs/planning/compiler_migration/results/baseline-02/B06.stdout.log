@@ -1,0 +1,38 @@
+Preparing request.json ...
+Preparation: built
+Preparing request.json ...
+Preparation: reused
+Built points-O0
+Built points-O1-full
+Built points-O1-thin
+Built points-O1
+Built samples-O0
+Built samples-O1-full
+Built samples-O1
+Built samples-O1-thin
+points O0 access: bridge/native 1.594x
+points O0 lifecycle: bridge/native 1.206x
+points O1 access: bridge/native 1.006x
+points O1 lifecycle: bridge/native 1.297x
+points O1-full access: bridge/native 1.006x
+points O1-full lifecycle: bridge/native 1.314x
+points O1-thin access: bridge/native 1.005x
+points O1-thin lifecycle: bridge/native 1.195x
+samples O0 access: bridge/native 1.324x
+samples O0 lifecycle: bridge/native 1.143x
+samples O1 access: bridge/native 1.004x
+samples O1 lifecycle: bridge/native 1.280x
+samples O1-full access: bridge/native 0.998x
+samples O1-full lifecycle: bridge/native 1.301x
+samples O1-thin access: bridge/native 0.989x
+samples O1-thin lifecycle: bridge/native 1.327x
+Built points-O1-counts
+Built samples-O1-counts
+Built points-O1-caller-edit
+Preparing request.json ...
+Preparation: reused
+Preparing changed-request.json ...
+Preparation: built
+Built points-O1-record-edit
+7 request/acceptance rejection checks passed
+PASS: report and artifacts in /tmp/scpp-migration-baseline-3tbn5u7z/specializations

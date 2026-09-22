@@ -1,0 +1,9 @@
+namespace collect_symbols;
+
+class Symbol_Refresh {
+    public $current Symbol_Store;
+    public $work vector<symbol_work> = [];
+    public $removed_symbol_ids vector<uint32> = [];
+    // No change category is accepted until the comparison rule exists.
+    public bool $incremental_supported = false;
+}

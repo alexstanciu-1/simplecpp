@@ -1,0 +1,1 @@
+Bootstrap-loaded scanned_source_file size write and source_read_task path write both throw Error. Native readonly enforcement is not claimed.

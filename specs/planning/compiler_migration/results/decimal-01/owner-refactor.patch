@@ -1,0 +1,32 @@
+--- original/src/04_analyze/check_bodies/utilities/literals.php
++++ compiler/src/04_analyze/check_bodies/utilities/literals.php
+@@ -32,28 +32,8 @@
+         }
+         $bits = $definition->representation->payload->bit_width - ($definition->signed ? 1 : 0);
+ 
+-        // Even this loose bound rejects huge source literals before repeated division.
+-        if (strlen($value) > $bits) {
++        if (!Decimal_Range::fits_positive($value, $bits)) {
+             throw new \RangeException('Integer literal is outside the range of ' . $definition->name);
+-        }
+-        $remaining = $value;
+-        for ($used = 0; $remaining !== ''; ++$used)
+-        {
+-            if ($used >= $bits) {
+-                throw new \RangeException('Integer literal is outside the range of ' . $definition->name);
+-            }
+-            $quotient = '';
+-            $carry = 0;
+-            for ($i = 0, $length = strlen($remaining); $i < $length; ++$i)
+-            {
+-                $digit = $carry * 10 + ord($remaining[$i]) - 48;
+-                $q = intdiv($digit, 2);
+-                if (($q !== 0) || ($quotient !== '')) {
+-                    $quotient .= chr(48 + $q);
+-                }
+-                $carry = $digit % 2;
+-            }
+-            $remaining = $quotient;
+         }
+         return $value;
+     }

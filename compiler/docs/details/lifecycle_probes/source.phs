@@ -1,0 +1,55 @@
+struct leaf {
+    public int32 $value;
+}
+
+struct outer {
+    public leaf $child;
+    public $items vector<leaf>;
+}
+
+function read(outer $row): int32
+{
+    return $row->child->value;
+}
+
+function change(outer $row): int32
+{
+    $row->child->value = 7;
+    return $row->child->value;
+}
+
+function borrow(outer &$row): void
+{
+    $row->child->value = 9;
+}
+
+function make(): outer
+{
+    $row outer;
+    $row->child->value = 5;
+    return $row;
+}
+
+// Default construction reaches the nested integer and empty container.
+$a outer;
+echo $a->child->value, ":", count($a->items), "\n";
+
+// Copy construction and assignment must both produce independent containers.
+$a->child->value = 3;
+$entry leaf;
+$entry->value = 11;
+$a->items[] = $entry;
+$b outer = $a;
+$b->child->value = 4;
+$c outer;
+$c = $a;
+$c = $c;
+$b->items[0]->value = 12;
+$a->items[] = $entry;
+echo count($a->items), ":", count($b->items), ":", count($c->items), ":", $b->items[0]->value, ":", $c->items[0]->value, "\n";
+
+// Ordinary parameters copy; explicit references mutate the original.
+echo read($a), ":", change($a), ":", $a->child->value, ":", $b->child->value, ":", $c->child->value, "\n";
+borrow($a);
+$d outer = make();
+echo $a->child->value, ":", $d->child->value, "\n";

@@ -1,0 +1,9 @@
+64kb trial 1: FAILED PHP Warning:  Undefined property: prepare_backend\callable_binding::$symbol_id in /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php on line 73
+TypeError: lower\Lowered_Set::for_symbol(): Argument #1 ($id) must be of type int, null given, called in /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php on line 73 and defined in /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/src/05_generate_code/lower/data/store.php:39
+Stack trace:
+#0 /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php(73): lower\Lowered_Set->for_symbol()
+#1 /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php(112): Scalability_Run::measure()
+#2 /tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/benchmarks/scalability/measure.php(127): Scalability_Run::run()
+#3 {main}
+
+Results: specs/planning/compiler_migration/results/adoption-01/benchmark-original-smoke.json

@@ -1,0 +1,23 @@
+namespace collect_symbols;
+
+// Declaration identities and selected symbol work.
+
+enum symbol_kind : uint16 {
+    case invalid = 0;
+    case function_symbol = 1;
+}
+
+struct symbol_record {
+    public uint32 $symbol_id = 0;
+    public uint32 $name_id = 0;
+    public uint32 $namespace_id = 0;
+    public uint32 $source_file_id = 0;
+    public uint32 $declaration_node_id = 0;
+    public uint32 $body_node_id = 0;
+    public symbol_kind $kind = symbol_kind::invalid;
+}
+
+struct symbol_work {
+    public uint32 $symbol_id = 0;
+    public bool $needs_recompile = true;
+}

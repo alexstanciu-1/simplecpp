@@ -1,0 +1,3 @@
+locks: contention, transfer, inheritance, identity and cleanup passed
+processes: descendant cleanup, inherited tokens, SIGCHLD and descriptor stability passed
+processes: handshake, exec errors, binary IO, snapshots, timeout, stop and cleanup passed

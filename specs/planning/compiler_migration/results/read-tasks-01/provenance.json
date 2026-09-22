@@ -1,0 +1,8 @@
+{
+  "original": "src/01_prepare_inputs/read_sources/data/structures.php",
+  "extracted": "src/01_prepare_inputs/read_sources/data/read_tasks.php",
+  "declarations_preserved": true,
+  "remaining_source_preserved": true,
+  "original_sha256": "ef9607320e11374851527aa76d551ebb49b727e29bb1aa8b6e08f437f701bf4e",
+  "extracted_declarations_sha256": "aa0e0671fd3ff5a234dda8ed4673b2634a8ef1e750ccd1cfc26d28d6503a2eff"
+}

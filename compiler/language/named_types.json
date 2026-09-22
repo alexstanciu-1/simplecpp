@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "provider": "simple_cpp_language",
+  "representation_scope": "language_values",
+  "literal_types": {
+    "integer": {
+      "name": "int",
+      "namespace": ""
+    },
+    "boolean": {
+      "name": "bool",
+      "namespace": ""
+    }
+  },
+  "entry_return_type": {
+    "name": "int",
+    "namespace": ""
+  },
+  "types": [
+    {
+      "name": "void",
+      "namespace": "",
+      "kind": "void",
+      "lifetime": null
+    },
+    {
+      "name": "int",
+      "namespace": "",
+      "kind": "integer",
+      "bit_width": 64,
+      "signed": true,
+      "lifetime": {
+        "copy": "value",
+        "cleanup": "none"
+      },
+      "integer_family": "simple_cpp.integer",
+      "addition": "wrapping",
+      "comparison": "ordered"
+    },
+    {
+      "name": "uint32",
+      "namespace": "",
+      "kind": "integer",
+      "bit_width": 32,
+      "signed": false,
+      "lifetime": {
+        "copy": "value",
+        "cleanup": "none"
+      },
+      "integer_family": "simple_cpp.integer",
+      "addition": "wrapping",
+      "struct_field": true,
+      "comparison": "ordered"
+    },
+    {
+      "name": "float",
+      "namespace": "",
+      "kind": "floating_point",
+      "format": "ieee_binary64",
+      "lifetime": {
+        "copy": "value",
+        "cleanup": "none"
+      }
+    },
+    {
+      "name": "int32",
+      "namespace": "",
+      "kind": "integer",
+      "bit_width": 32,
+      "signed": true,
+      "lifetime": {
+        "copy": "value",
+        "cleanup": "none"
+      },
+      "integer_family": "simple_cpp.integer",
+      "addition": "wrapping",
+      "struct_field": true,
+      "comparison": "ordered"
+    },
+    {
+      "name": "uint8",
+      "namespace": "",
+      "kind": "integer",
+      "bit_width": 8,
+      "signed": false,
+      "lifetime": {
+        "copy": "value",
+        "cleanup": "none"
+      },
+      "integer_family": "simple_cpp.integer",
+      "addition": "wrapping",
+      "struct_field": true,
+      "comparison": "ordered"
+    },
+    {
+      "name": "bool",
+      "namespace": "",
+      "kind": "integer",
+      "bit_width": 1,
+      "signed": false,
+      "lifetime": {
+        "copy": "value",
+        "cleanup": "none"
+      },
+      "struct_field": true
+    }
+  ]
+}

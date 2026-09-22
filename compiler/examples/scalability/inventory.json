@@ -1,0 +1,86 @@
+[
+  {
+    "project": "64kb",
+    "target_bytes": 65536,
+    "source_bytes": 65545,
+    "files": 11,
+    "functions": 268,
+    "generated_functions": 266,
+    "functions_per_file": 32,
+    "edit_file": "src/group_0008.phs",
+    "edited_function": "sample_000266",
+    "source_sha256": "587f651fbfe7737a95e18b9909cb05e67a0e6d16971a8c774272c420f63387ab"
+  },
+  {
+    "project": "128kb",
+    "target_bytes": 131072,
+    "source_bytes": 131227,
+    "files": 19,
+    "functions": 535,
+    "generated_functions": 533,
+    "functions_per_file": 32,
+    "edit_file": "src/group_0016.phs",
+    "edited_function": "sample_000533",
+    "source_sha256": "d52646044f101a33a18cd8fc5f64e3bd1052832d83f736e12bf11994d1a61ac9"
+  },
+  {
+    "project": "256kb",
+    "target_bytes": 262144,
+    "source_bytes": 262345,
+    "files": 36,
+    "functions": 1068,
+    "generated_functions": 1066,
+    "functions_per_file": 32,
+    "edit_file": "src/group_0033.phs",
+    "edited_function": "sample_001066",
+    "source_sha256": "a6d3ba74e4e0d8e24664fee64bb1bdcb4221c5b65138734429ecde8fc0255615"
+  },
+  {
+    "project": "512kb",
+    "target_bytes": 524288,
+    "source_bytes": 524335,
+    "files": 69,
+    "functions": 2133,
+    "generated_functions": 2131,
+    "functions_per_file": 32,
+    "edit_file": "src/group_0066.phs",
+    "edited_function": "sample_002131",
+    "source_sha256": "00bb8012323a4fdfa15bc7a7b495473a18de5a723a53b0933f777ee2cf645fab"
+  },
+  {
+    "project": "1mb",
+    "target_bytes": 1048576,
+    "source_bytes": 1048807,
+    "files": 136,
+    "functions": 4265,
+    "generated_functions": 4263,
+    "functions_per_file": 32,
+    "edit_file": "src/group_0133.phs",
+    "edited_function": "sample_004263",
+    "source_sha256": "4c13e876751fb8e63621e528dc1c617f028f138afd3a38702e277a3d43709751"
+  },
+  {
+    "project": "5mb",
+    "target_bytes": 5242880,
+    "source_bytes": 5243107,
+    "files": 669,
+    "functions": 21315,
+    "generated_functions": 21313,
+    "functions_per_file": 32,
+    "edit_file": "src/group_0666.phs",
+    "edited_function": "sample_021313",
+    "source_sha256": "b85eb10336118d6ac1b50cdb44ef20f7ac0c648dc25bbff297693233214a7317"
+  },
+  {
+    "project": "10mb",
+    "target_bytes": 10485760,
+    "source_bytes": 10485859,
+    "files": 1335,
+    "functions": 42627,
+    "generated_functions": 42625,
+    "functions_per_file": 32,
+    "edit_file": "src/group_1332.phs",
+    "edited_function": "sample_042625",
+    "source_sha256": "b8037e8ebd8d56bec1c2bbcd6d44dab23592e3e60fd507137a3343084b9c5773"
+  }
+]

@@ -1,0 +1,10 @@
+
+return ret_me();
+
+function ret_me(): int {
+	return ret_me_2();
+}
+
+function ret_me_2(): int {
+	return 80;
+}

@@ -1,0 +1,37 @@
+
+
+/*
+ * Role: Expression contexts and mutable cursors; nodes and role views have separate owners.
+ * Used by: File_Parser; Syntax_Access; syntax consumers
+ * Flow: tokens -> syntax nodes -> structural queries
+ */
+
+namespace parse;
+
+
+
+
+
+
+
+/** The expression driver uses these syntax contexts without consulting symbols or types. */
+enum expression_context : int {
+    case value = 0;
+    case type = 1;
+    case group = 2;
+    case call_arguments = 3;
+    case template_arguments = 4;
+    case constructed_type = 5;
+    case index = 6;
+}
+
+/** @compiler-internal Private continuation: expression accumulation and an optional enclosing syntax node. */
+class expression_cursor {
+    /** @var list<int> Private operand syntax IDs awaiting precedence reduction. */
+    public $operands /** vector<int> */ = [];
+    /** @var list<syntax_kind> */
+    public $operators /** vector<syntax_kind> */ = [];
+
+    public readonly expression_context $context;public readonly int $node_id;public int $last_child_id;public function __construct(expression_context $context = expression_context::value, int $node_id = 0, int $last_child_id = 0) {$this->context = $context;$this->node_id = $node_id;$this->last_child_id = $last_child_id;}
+}
+

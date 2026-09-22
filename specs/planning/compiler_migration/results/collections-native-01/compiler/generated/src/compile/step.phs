@@ -1,0 +1,66 @@
+
+
+/*
+ * Role: Small contracts for one compiler step execution.
+ * Used by: main_<process>.php owners; Compiler_Session; Phases
+ * Call map (ordered caller-driven lifecycle):
+ *   Step::init(); Runnable_Step::run() [if supported]; Step::finalize(); Step::result()
+ * Queries: status() and supports_run() are always available.
+ */
+
+namespace compile;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+enum step_status {
+    case created;
+    case ready;
+    case running;
+    case processed;
+    case finished;
+    case failed;
+}
+
+// Markers preserve each process's concrete output and storage APIs.
+interface Step_Result {
+}
+
+interface Step_Store {
+}
+
+interface Step {
+    public function init(): void;
+    public function finalize(): void;
+    public function result(): Step_Result;
+    public function status(): step_status;
+    public function supports_run(): bool;
+}
+
+interface Runnable_Step {
+    public function run(): void;
+}
+
+interface Store_Providing_Step {
+    public function store(): Step_Store;
+}

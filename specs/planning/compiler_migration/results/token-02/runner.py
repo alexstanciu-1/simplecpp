@@ -1,0 +1,125 @@
+"""Prove the adopted update context through PHP, local conversion and native PHP++."""
+import argparse
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import time
+
+ROOT = Path(__file__).resolve().parents[3]
+EXPECTED = 'initial=0\nshared=1\nnext=0\nprevious=1\nrebound=0\nretained=1\ndefault=1\n0:0\ntoken-shared=1\n7:3\nindependent=1\n'
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--target-checkout', type=Path, required=True)
+    parser.add_argument('--results', type=Path, required=True)
+    args = parser.parse_args()
+    results = args.results.resolve()
+    if results.exists():
+        raise SystemExit('Use a fresh evidence directory.')
+    target = json.loads((ROOT / 'compiler/tools/portability_target.json').read_text())
+    checkout = args.target_checkout.resolve()
+    def git(*parts):
+        return subprocess.check_output(['git', *parts], cwd=checkout, text=True).strip()
+    assert git('rev-parse', 'HEAD') == target['verified_commit']
+    assert git('status', '--porcelain') == ''
+    results.mkdir(parents=True)
+    work = Path(tempfile.mkdtemp(prefix='scpp-context-port-'))
+    source, output = work / 'php', work / 'phpp'
+    source.mkdir()
+    report = {'workspace': str(work), 'target_revision': target['verified_commit'], 'commands': []}
+
+    def run(label, cmd, cwd=ROOT, ok=True):
+        started = time.monotonic()
+        proc = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
+        (results / (label + '.stdout.log')).write_text(proc.stdout)
+        (results / (label + '.stderr.log')).write_text(proc.stderr)
+        report['commands'].append({'label': label, 'command': [str(x) for x in cmd], 'cwd': str(cwd), 'exit_code': proc.returncode, 'seconds': round(time.monotonic() - started, 3)})
+        (results / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
+        assert (proc.returncode == 0) == ok, (label, proc.stdout, proc.stderr)
+        return proc
+
+    # The component stays owned in compiler/; staging is a disposable source set,
+    # not a parallel maintained implementation or an expansion of directory CLI scope.
+    selection = json.loads((ROOT / 'compiler/portability.json').read_text())
+    assert selection['schema_version'] == 1 and selection['source_root'] == '.'
+    for relative in selection['files']:
+        p = Path(relative)
+        assert not p.is_absolute() and '..' not in p.parts and p.suffix == '.php'
+        dst = source / p
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / 'compiler' / p, dst)
+    shutil.copy2(Path(__file__).parent / 'main.php', source / 'main.php')
+    tools = ROOT / 'tools/php_portability'
+    run('imports', ['php', str(tools / 'sync_imports.php'), str(source), '--check'])
+    php = run('php', ['php', '-r', 'require $argv[1]; require $argv[2]; require $argv[3]; require $argv[4];',
+        str(tools / 'runtime/bootstrap.php'), str(ROOT / 'compiler/src/compile/state.php'), str(ROOT / 'compiler/src/02_tokenize/structures.php'), str(source / 'main.php')])
+    assert php.stdout == EXPECTED
+    convert = ['php', str(tools / 'convert.php'), str(source), str(output)]
+    assert json.loads(run('convert', convert).stdout)['converted'] == len(selection['files']) + 1
+    generated = output / 'src/compile/state.phs'
+    stamp = generated.stat().st_mtime_ns
+    assert json.loads(run('reuse', convert).stdout) == {'converted': 0, 'reused': len(selection['files']) + 1, 'removed': 0}
+    assert generated.stat().st_mtime_ns == stamp
+    assert 'namespace compile;' in generated.read_text() and 'declare(' not in generated.read_text()
+    before = (output / '.scpp-portability.json').read_bytes()
+    rejects = [
+        'enum Bad: string { case a = "a"; }',
+        'enum Bad: int { case a = 1 + 2; }',
+        'enum Bad: int { case a = -1; }',
+        'enum Bad: int { public function f(): bool { return true; } }',
+        '$a = Kind::method();',
+        '$a = Kind::$dynamic;',
+        'class Bad { public Kind $kind = Kind::method(); }',
+        'class Bad { public function method(): bool { return false; } }',
+        'class Bad { public static bool $value = false; }',
+        'class Bad { private bool $value = false; }',
+        'class Bad { public ?bool $value = null; }',
+        'class Bad { public bool $value; }',
+        'class Bad extends Other {}',
+        '$name = "x"; $object->$name = true;',
+        '$object->method();',
+        '$object = new $name();',
+        '$object = new Thing(1);',
+    ]
+    block = (source / 'main.php').read_text().split('// </scpp-imports>')[0] + '// </scpp-imports>\n'
+    for i, body in enumerate(rejects):
+        (source / 'bad.php').write_text(block + body + '\n')
+        failure = run('reject-' + str(i), convert, ok=False)
+        assert 'bad.php:' in failure.stderr
+        assert (output / '.scpp-portability.json').read_bytes() == before
+    (source / 'bad.php').unlink()
+    # Existing compiler proof exercises real request decisions after the import edit.
+    spec = importlib.util.spec_from_file_location('compiler_tests', ROOT / 'compiler/tests/run.py')
+    compiler_tests = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(compiler_tests)
+    for name in ['compile/compile_driver.php', 'compile/incremental_policy.php', '02_tokenize/tokenization.php', '02_tokenize/variable_tokens.php', '02_tokenize/lexical_updates.php']:
+        result = compiler_tests.run_fixture(name, 180)
+        label = Path(name).stem
+        (results / (label + '.stdout.log')).write_text(result.stdout)
+        (results / (label + '.stderr.log')).write_text(result.stderr)
+        assert result.returncode == 0, (name, result.stderr)
+    report['compiler_fixtures'] = ['compile/compile_driver.php', 'compile/incremental_policy.php', '02_tokenize/tokenization.php', '02_tokenize/variable_tokens.php', '02_tokenize/lexical_updates.php']
+    cli = str(checkout / target['cli'])
+    run('init', ['php', cli, 'init', '--php-profile=strict'], cwd=output)
+    config = json.loads((output / 'prism.json').read_text())
+    config['build']['cxx'] = 'clang++-18'
+    config['runtime']['modules'] = []
+    (output / 'prism.json').write_text(json.dumps(config, indent=2) + '\n')
+    # init creates main.phs only if absent; verify converter-owned entry survives.
+    assert (output / 'main.phs').read_text().find('new \\compile\\Update_Context()') >= 0
+    native = run('native', ['php', cli, 'run', '--build-runtime'], cwd=output)
+    assert native.stdout.endswith(EXPECTED), native.stdout
+    report.update(passed=True, expected_stdout=EXPECTED, target_clean=git('status', '--porcelain') == '')
+    assert report['target_clean']
+    (results / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
+    shutil.copy2(generated, results / 'state.phs')
+    shutil.copy2(output / 'src/02_tokenize/structures.phs', results / 'structures.phs')
+    print('Adopted Update_Context and tokenizer rows: PHP/native identity and independent-update behavior passed; compiler fixtures and rejection checks passed.')
+
+
+if __name__ == '__main__':
+    main()

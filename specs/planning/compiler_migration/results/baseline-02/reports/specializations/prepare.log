@@ -1,0 +1,2 @@
+["php", "/tmp/scpp-migration-baseline-3tbn5u7z/source/prototype/src-runtime-preparation/tests/specializations/prepare.php", "/tmp/scpp-migration-baseline-3tbn5u7z/specializations", "/tmp/scpp-migration-baseline-3tbn5u7z/specializations/changed-request.json"]
+{"status":"built","input_key":"3b7a6efa7412dfcec77f45b48627b37f526500602386930b7a6607a085fd421a","manifest":"\/tmp\/scpp-migration-baseline-3tbn5u7z\/specializations\/output\/package\/manifest.json","clang_commands":16}

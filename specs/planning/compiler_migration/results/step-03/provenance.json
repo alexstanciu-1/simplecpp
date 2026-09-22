@@ -1,0 +1,8 @@
+{
+  "source_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "source_path": "prototype/src/compile/step.php",
+  "adapted_path": "compiler/src/compile/step.php",
+  "original_sha256": "bc8d915bb39bb9f7431610ebb3898eb25549fe03e96690c8e8629e714000cf45",
+  "adapted_sha256": "ffcf6ce7cf093dbb48eb2c51429813c902242793b491c66aa20a3497ebac6ddd",
+  "only_managed_imports_changed": true
+}

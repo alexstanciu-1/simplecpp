@@ -1,0 +1,20 @@
+{
+  "command": [
+    "python3",
+    "compiler/tests/run.py",
+    "--jobs",
+    "10",
+    "--timeout",
+    "180"
+  ],
+  "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+  "exit_code": 1,
+  "status": "failed",
+  "passed_fixtures": 109,
+  "total_fixtures": 110,
+  "runner_elapsed_seconds": 232.3,
+  "failure": "integration/provider_family_runtime_types.php: 180-second timeout",
+  "comparison": "Same single timeout as baseline-02; all other fixtures passed.",
+  "stdout": "B01.stdout.log",
+  "stderr": "B01.stderr.log"
+}

@@ -1,0 +1,105 @@
+use function read_manifest\read_project_manifest;
+use function compile\begin_compiler_update;
+use function compile\prepare_compiler_update;
+
+function check_manifest(bool $condition, string $message): void {
+    if (!$condition) {
+        throw new Exception($message);
+    }
+}
+
+function write_manifest_fixture(string $path, string $content): void {
+    $written int = 0;
+    $error error;
+    check_manifest(take($written, $error, fs_put($path, $content)), "fixture write failed");
+}
+
+function expect_invalid_manifest(string $content, string $expected): void {
+    $path string = "invalid.json";
+    write_manifest_fixture($path, $content);
+    $rejected bool = false;
+    try {
+        read_project_manifest($path);
+    } catch (Exception $exception) {
+        $rejected = str_contains($exception->message_string(), $expected);
+    }
+    check_manifest($rejected, "missing manifest diagnostic: " . $expected);
+    // Repair and re-read in this same process after every rejected input.
+    write_manifest_fixture($path, '{"source_folders":["src"],"entry":"src/main.phs"}');
+    $repaired \read_manifest\Project_Manifest = read_project_manifest($path);
+    check_manifest($repaired->entry_path === "src/main.phs", "Reader must recover after invalid input");
+}
+
+$path string = "../fixtures/three_files/project.json";
+$manifest \read_manifest\Project_Manifest = read_project_manifest($path);
+check_manifest(count($manifest->source_folder_paths) === 1, "sample must declare one module root");
+check_manifest($manifest->source_folder_paths[0] === "src", "configured root must stay relative");
+check_manifest($manifest->entry_path === "src/main.phs", "entry must come from the manifest");
+check_manifest(fs_is_file($manifest->directory . "/" . $manifest->entry_path), "relative entry must use manifest directory, not cwd");
+
+$session \compile\Compiler_Session = new \compile\Compiler_Session();
+$decision \compile\Update_Context = begin_compiler_update($session, $manifest);
+check_manifest($decision->full_rebuild, "first update must select full rebuild");
+check_manifest((int)$session->generation === 0 && $session->manifest->path === "", "decision must not publish state");
+
+// Seed only a manifest comparison baseline; this is not compiler publication.
+$session->manifest = $manifest;
+$session->generation = 1;
+$unchanged \read_manifest\Project_Manifest = read_project_manifest($path);
+$decision = begin_compiler_update($session, $unchanged);
+check_manifest(!$decision->full_rebuild, "unchanged manifest must leave selective work possible");
+$original string = $manifest->content;
+write_manifest_fixture($path, $original . "\n \n");
+$changed \read_manifest\Project_Manifest = read_project_manifest($path);
+check_manifest($changed->content === $original . "\n \n", "retain exact bytes, including whitespace");
+$decision = begin_compiler_update($session, $changed);
+check_manifest($decision->full_rebuild, "any content change must select full rebuild");
+check_manifest($session->manifest->content === $original, "reading replacement must preserve baseline");
+write_manifest_fixture("other.json", $original);
+$other \read_manifest\Project_Manifest = read_project_manifest("other.json");
+$decision = begin_compiler_update($session, $other);
+check_manifest($decision->full_rebuild, "manifest path change must select full rebuild");
+
+// A valid manifest reaches the next real boundary and cannot report compilation.
+$stopped bool = false;
+try {
+    prepare_compiler_update($session, $path);
+} catch (Exception $exception) {
+    $stopped = $exception->message_string() === "Not implemented: read_source_snapshot";
+}
+check_manifest($stopped, "valid manifest must reach source reading placeholder after discovery");
+check_manifest((int)$session->generation === 1 && $session->manifest->content === $original, "failed preparation must retain published baseline");
+
+write_manifest_fixture("paths.json", '{"source_folders":["folder with spaces","../shared"],"entry":"folder with spaces/a=b.phs"}');
+$paths \read_manifest\Project_Manifest = read_project_manifest("paths.json");
+check_manifest(count($paths->source_folder_paths) === 2 && $paths->source_folder_paths[1] === "../shared", "support multiple roots");
+check_manifest($paths->entry_path === "folder with spaces/a=b.phs", "preserve path characters");
+echo "valid manifest checks passed: disk reads, snapshots, rebuild decisions, and discovery handoff\n";
+
+expect_invalid_manifest("", "json error at byte");
+expect_invalid_manifest("{", "json error at byte");
+expect_invalid_manifest('{"entry":"\\q"}', "json error at byte");
+expect_invalid_manifest("null", "Required settings");
+expect_invalid_manifest("false", "Required settings");
+expect_invalid_manifest('{"source_folders":["src"]}', "Required settings");
+expect_invalid_manifest('{"entry":"main.phs"}', "Required settings");
+expect_invalid_manifest('{"source_folders":[],"entry":"main.phs"}', "nonempty list");
+expect_invalid_manifest('{"source_folders":[""],"entry":"main.phs"}', "nonempty string path");
+expect_invalid_manifest('{"source_folders":[42],"entry":"main.phs"}', "invalid.json:");
+expect_invalid_manifest('{"source_folders":["src"],"entry":false}', "invalid.json:");
+expect_invalid_manifest('{"source_folders":["src"],"entry":"a\u0000b"}', "NUL bytes");
+expect_invalid_manifest('{"source_folders":["src"],"entry":"main.phs","unknown":1}', "Unknown manifest setting");
+expect_invalid_manifest('{"source_folders":["src","src"],"entry":"main.phs"}', "Duplicate source folder");
+expect_invalid_manifest('{"source_folders":{"name":"src"},"entry":"main.phs"}', "invalid.json:");
+$missing bool = false;
+try {
+    read_project_manifest("missing.json");
+} catch (Exception $exception) {
+    $missing = str_contains($exception->message_string(), "Cannot locate project manifest");
+}
+check_manifest($missing, "missing input must not become empty/default configuration");
+write_manifest_fixture($path, $original);
+$repaired \read_manifest\Project_Manifest = read_project_manifest($path);
+$decision = begin_compiler_update($session, $repaired);
+check_manifest(!$decision->full_rebuild, "repair to baseline must not inherit earlier update flag");
+echo "project manifest ok: disk reads, validation, exact snapshots, rebuild decisions, and failure isolation\n";

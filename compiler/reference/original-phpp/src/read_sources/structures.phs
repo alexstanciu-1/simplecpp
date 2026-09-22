@@ -1,0 +1,42 @@
+namespace read_sources;
+
+// Own file discovery, source identities, versioned snapshots, and source buffers.
+
+// Byte range in the source snapshot owned by the containing file table.
+struct source_span {
+    public uint32 $start = 0;
+    public uint32 $length = 0;
+}
+
+// Each configured top folder is a module; subdirectories stay within that module.
+struct source_folder {
+    // Configured path, preferably relative to the manifest's directory.
+    public uint32 $path_id = 0;
+    // Resolved absolute root for I/O, filled by source discovery.
+    public uint32 $resolved_path_id = 0;
+}
+
+enum file_change : uint8 {
+    case unchanged = 0;
+    case added = 1;
+    case changed = 2;
+    case deleted = 3;
+    case moved = 4; // Reserved; discovery currently reports deletion + addition.
+}
+
+// Inline metadata in one project-wide file dataset.
+struct source_file {
+    public uint32 $id = 0;
+    // Snapshot-local folder position; -1 for a deleted file with no current owner.
+    public int32 $top_folder_index = 0;
+    // Canonical path retains identity/origin even after its folder is removed.
+    public uint32 $full_path_id = 0;
+    public uint32 $relative_path_id = 0;
+    public int64 $mtime = 0;
+    public int64 $size = 0;
+    // One-based Source_Set buffer ID; zero means no read snapshot yet.
+    public uint32 $buffer_id = 0;
+    // Classification for this update, independent of stage-result invalidation.
+    public file_change $change_state = file_change::unchanged;
+    public bool $needs_recompile = true;
+}

@@ -1,0 +1,7 @@
+["/usr/bin/clang++-18", "--target=x86_64-pc-linux-gnu", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src-runtime-preparation/tests/lifecycle/harness.cpp", "/tmp/scpp-adoption-preparation-29v8zist/lifecycle/missing-main.cpp", "/tmp/scpp-adoption-preparation-29v8zist/lifecycle/O0/shell.bc", "-o", "/tmp/scpp-adoption-preparation-29v8zist/lifecycle/missing-body"]
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/shell-104ab3.o: in function `lifecycle_probe::custom_record::custom_record(int)':
+shell.cpp:(.text._ZN15lifecycle_probe13custom_recordC2Ei[_ZN15lifecycle_probe13custom_recordC2Ei]+0x1f): undefined reference to `proof_initializer'
+/usr/bin/ld: shell.cpp:(.text._ZN15lifecycle_probe13custom_recordC2Ei[_ZN15lifecycle_probe13custom_recordC2Ei]+0x61): undefined reference to `proof_constructor_body'
+/usr/bin/ld: /tmp/scpp-adoption-preparation-29v8zist/tmp/shell-104ab3.o: in function `lifecycle_probe::custom_record::~custom_record()':
+shell.cpp:(.text._ZN15lifecycle_probe13custom_recordD2Ev[_ZN15lifecycle_probe13custom_recordD2Ev]+0x15): undefined reference to `proof_destructor_body'
+clang++-18: error: linker command failed with exit code 1 (use -v to see invocation)

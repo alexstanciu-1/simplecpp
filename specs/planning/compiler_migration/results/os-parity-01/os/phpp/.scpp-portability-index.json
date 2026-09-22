@@ -1,0 +1,38 @@
+{
+    "schema": 1,
+    "version": "0b6f27abf8210d5a83245311c2e6a7f6992590341bfd0fcbcf2fa41bce2397f2",
+    "source": "\/tmp\/scpp-os-native-2f0d667f-01\/php",
+    "directories": {
+        "": {
+            "stat": {
+                "dev": 2096,
+                "ino": 742263,
+                "mode": 16877,
+                "size": 4096,
+                "mtime": 1790013508,
+                "ctime": 1790013508
+            },
+            "checked_at": 1790013508,
+            "names": [
+                "main.php"
+            ]
+        }
+    },
+    "files": {
+        "main.php": {
+            "stat": {
+                "dev": 2096,
+                "ino": 742267,
+                "mode": 33188,
+                "size": 4221,
+                "mtime": 1790013508,
+                "ctime": 1790013508
+            },
+            "checked_at": 1790013508,
+            "hash": "f9965f23db159fdc8d0c4519cd35c24dda19ab4e4dae9846160e9b2c5216983b",
+            "cache": "948d589f971112295e425d0fbe5c0dafd73d6f04199f52f0b0dc0d57957aae1c",
+            "cache_hash": "533ea4e1854965f3f15f656a8dd31184fab7074401e28e47f26bde5156490b17",
+            "declarations": []
+        }
+    }
+}

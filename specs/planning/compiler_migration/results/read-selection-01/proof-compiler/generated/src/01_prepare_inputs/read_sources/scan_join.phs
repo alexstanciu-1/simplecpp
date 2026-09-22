@@ -1,0 +1,117 @@
+
+
+/*
+ * Role: Reconcile a source scan batch and produce next tasks.
+ * Used by: Source_Discovery::run()
+ * Call map:
+ *   Source_Scan_Join::join()
+ *     -> [action] validate results, reconcile identities and seed children
+ */
+
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** @compiler-internal Accept source scan batches into the discovery coordinator's private candidate. */
+class Source_Scan_Join implements \compile\Join {
+    /**
+     * Capture the fixed context and selected tasks; validation belongs to join().
+     * @param list<source_scan_task> $tasks
+     */
+    private readonly Source_Set $current;private readonly Source_Set $previous;/** PHP readonly; native usage contract. */ private $tasks vector<source_scan_task>;public function __construct(Source_Set $current, Source_Set $previous, $tasks vector<source_scan_task>) {$this->current = $current;$this->previous = $previous;$this->tasks = $tasks;
+    }
+
+    /**
+     * @compiler-internal Discovery coordinator only; mutates its private current candidate after batch validation.
+     * An allocation/reconciliation failure may leave that candidate partially populated; discard it.
+     * Coordinator only: accept a complete batch in any completion order.
+     * Reconcile into the private candidate, returning the next directory batch.
+     * Task indexes belong to this batch; do not mix results between batches/runs.
+     * @param list<Source_Scan_Result> $results
+     * @return list<source_scan_task>
+     */
+    public function join($results vector<Source_Scan_Result>): vector<source_scan_task> {
+        $by_task hash<Source_Scan_Result, int> = [];
+        foreach ($results  as $result) {
+            $index = $result->task->index;
+            if ((!isset($this->tasks[$index])) || ($this->tasks[$index] !== $result->task) || (isset($by_task[$index]))) {
+                throw new \scpp_portability_exception("Unexpected or duplicate source scan result: " . $index);
+            }
+            $by_task[$index] = $result;
+        }
+        if (count($by_task) !== count($this->tasks)) {
+            throw new \scpp_portability_exception("Incomplete source scan batch");
+        }
+
+        $next vector<source_scan_task> = [];
+
+        // Task order, never completion order, determines new file identities.
+        foreach ($this->tasks  as $task) {
+            $result = $by_task[$task->index];
+            foreach ($result->files  as $observed) {
+                $path = Source_Path_Syntax::join($task->root, $observed->relative_path);
+                $old_id = $this->previous->find_file_id($path);
+                $file = ($old_id !== 0) ? $this->previous->file_by_id($old_id)->copy() : new source_file();
+                if ($old_id !== 0)
+                {
+                    $file->change_state = file_change::unchanged;
+                    if (($file->mtime !== $observed->mtime) || ($file->size !== $observed->size)) {
+                        $file->change_state = file_change::changed;
+                        $file->needs_recompile = true;
+                        $file->buffer = null;
+                    }
+                }
+                else
+                {
+                    if (($this->current->next_file_id < 1) || ($this->current->next_file_id > \read_sources\MAX_SOURCE_FILE_ID)) {
+                        throw new \scpp_portability_exception("Source file ID space exhausted");
+                    }
+                    $file->id = $this->current->next_file_id++;
+                    $file->change_state = file_change::added;
+                }
+                $file->top_folder_index = $task->top_folder_index;
+                $file->full_path = $path;
+                $file->relative_path = $observed->relative_path;
+                $file->mtime = $observed->mtime;
+                $file->size = $observed->size;
+                $this->current->files[] = $file;
+            }
+            foreach ($result->directories  as $relative) {
+                $next[] = new source_scan_task(
+                    count($next), $task->top_folder_index, $task->root, $relative
+                );
+            }
+        }
+        return $next;
+    }
+}

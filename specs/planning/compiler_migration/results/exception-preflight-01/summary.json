@@ -1,0 +1,9 @@
+{
+  "workspace": "/tmp/scpp-exception-probe-_g58r282",
+  "exit_code": 1,
+  "target": "v0.1.76",
+  "target_revision": "8cc4d8ff7eb395c6cc69219f25bef960323bce45",
+  "target_clean": true,
+  "strict": true,
+  "stan_enabled": true
+}

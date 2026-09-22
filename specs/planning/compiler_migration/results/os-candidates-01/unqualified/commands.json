@@ -1,0 +1,102 @@
+[
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-08c8206a-probe",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit": 0,
+    "stdout": "08c8206aae914240d8b25fd2d1cd49c7149dd417\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-08c8206a-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/scpp-os-native-01/php"
+    ],
+    "exit": 0,
+    "stdout": "Updated imports: 1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/scpp-os-native-01/php"
+    ],
+    "exit": 0,
+    "stdout": "{\"checked\":1,\"cache\":{\"listed_directories\":1,\"read_sources\":1,\"tokenized\":1,\"loaded_tokens\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-os-native-01/php",
+      "/tmp/scpp-os-native-01/phpp"
+    ],
+    "exit": 0,
+    "stdout": "{\"converted\":1,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "-r",
+      "require $argv[1];require $argv[2];",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+      "/tmp/scpp-os-native-01/php/main.php"
+    ],
+    "exit": 0,
+    "stdout": "locked\ncontended\ntransfer-held\nshared\nshared-pair\nreleased-transfer-error\npath-error\ninput:err:7\ninput\nclosed-error\nexec-error\n127\npending-error\ntimeout:9\nstopped:9\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/scpp-os-native-01/phpp",
+      "--os"
+    ],
+    "exit": 0,
+    "stdout": "{\"updated\":1}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-08c8206a-probe/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "exit": 0,
+    "stdout": "Created prism.json\nProject root: /tmp/scpp-os-native-01/phpp\nEntrypoint: main.phs\nPHP profile: strict\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-08c8206a-probe/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "exit": 1,
+    "stdout": "Transpiled PHP files: 5, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-08c8206a-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/7] PCH app_pch.hpp.gch\n[2/7] CXX scpp_framework/exceptions.o\nFAILED: scpp_framework/exceptions.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-08c8206a-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -pthread -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/56d4e57e8558060f.hpp -MMD -MF scpp_framework/exceptions.o.d -MT scpp_framework/exceptions.o -c ../generated/scpp_framework/exceptions.cpp -o scpp_framework/exceptions.o\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:6:\n./../generated/__project_units/../scpp_framework/file_locks.hpp:10:7: error: definition of type 'file_lock_handle' conflicts with type alias of the same name\n   10 | class file_lock_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/filesystem/file_lock.hpp:35:7: note: 'file_lock_handle' declared here\n   35 | using file_lock_handle = fs::file_lock;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:10:7: error: definition of type 'process_handle' conflicts with type alias of the same name\n   10 | class process_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:46:7: note: 'process_handle' declared here\n   46 | using process_handle = process::handle;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:11:7: error: definition of type 'process_output' conflicts with type alias of the same name\n   11 | class process_output;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:47:7: note: 'process_output' declared here\n   47 | using process_output = process::output;\n      |       ^\n3 errors generated.\n[3/7] CXX main.o\nFAILED: main.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-08c8206a-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -pthread -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/56d4e57e8558060f.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:6:\n./../generated/__project_units/../scpp_framework/file_locks.hpp:10:7: error: definition of type 'file_lock_handle' conflicts with type alias of the same name\n   10 | class file_lock_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/filesystem/file_lock.hpp:35:7: note: 'file_lock_handle' declared here\n   35 | using file_lock_handle = fs::file_lock;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:10:7: error: definition of type 'process_handle' conflicts with type alias of the same name\n   10 | class process_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:46:7: note: 'process_handle' declared here\n   46 | using process_handle = process::handle;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:11:7: error: definition of type 'process_output' conflicts with type alias of the same name\n   11 | class process_output;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:47:7: note: 'process_output' declared here\n   47 | using process_output = process::output;\n      |       ^\n3 errors generated.\n[4/7] CXX scpp_framework/file_locks.o\nFAILED: scpp_framework/file_locks.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-08c8206a-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -pthread -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/56d4e57e8558060f.hpp -MMD -MF scpp_framework/file_locks.o.d -MT scpp_framework/file_locks.o -c ../generated/scpp_framework/file_locks.cpp -o scpp_framework/file_locks.o\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:6:\n./../generated/__project_units/../scpp_framework/file_locks.hpp:10:7: error: definition of type 'file_lock_handle' conflicts with type alias of the same name\n   10 | class file_lock_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/filesystem/file_lock.hpp:35:7: note: 'file_lock_handle' declared here\n   35 | using file_lock_handle = fs::file_lock;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:10:7: error: definition of type 'process_handle' conflicts with type alias of the same name\n   10 | class process_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:46:7: note: 'process_handle' declared here\n   46 | using process_handle = process::handle;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:11:7: error: definition of type 'process_output' conflicts with type alias of the same name\n   11 | class process_output;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:47:7: note: 'process_output' declared here\n   47 | using process_output = process::output;\n      |       ^\n3 errors generated.\n[5/7] CXX scpp_framework/strings.o\nFAILED: scpp_framework/strings.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-08c8206a-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -pthread -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/56d4e57e8558060f.hpp -MMD -MF scpp_framework/strings.o.d -MT scpp_framework/strings.o -c ../generated/scpp_framework/strings.cpp -o scpp_framework/strings.o\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:6:\n./../generated/__project_units/../scpp_framework/file_locks.hpp:10:7: error: definition of type 'file_lock_handle' conflicts with type alias of the same name\n   10 | class file_lock_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/filesystem/file_lock.hpp:35:7: note: 'file_lock_handle' declared here\n   35 | using file_lock_handle = fs::file_lock;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:10:7: error: definition of type 'process_handle' conflicts with type alias of the same name\n   10 | class process_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:46:7: note: 'process_handle' declared here\n   46 | using process_handle = process::handle;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:11:7: error: definition of type 'process_output' conflicts with type alias of the same name\n   11 | class process_output;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:47:7: note: 'process_output' declared here\n   47 | using process_output = process::output;\n      |       ^\n3 errors generated.\n[6/7] CXX scpp_framework/processes.o\nFAILED: scpp_framework/processes.o \nclang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-08c8206a-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -pthread -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/56d4e57e8558060f.hpp -MMD -MF scpp_framework/processes.o.d -MT scpp_framework/processes.o -c ../generated/scpp_framework/processes.cpp -o scpp_framework/processes.o\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:6:\n./../generated/__project_units/../scpp_framework/file_locks.hpp:10:7: error: definition of type 'file_lock_handle' conflicts with type alias of the same name\n   10 | class file_lock_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/filesystem/file_lock.hpp:35:7: note: 'file_lock_handle' declared here\n   35 | using file_lock_handle = fs::file_lock;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:10:7: error: definition of type 'process_handle' conflicts with type alias of the same name\n   10 | class process_handle;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:46:7: note: 'process_handle' declared here\n   46 | using process_handle = process::handle;\n      |       ^\nIn file included from <built-in>:1:\nIn file included from ./../generated/__project_units/56d4e57e8558060f.hpp:7:\n./../generated/__project_units/../scpp_framework/processes.hpp:11:7: error: definition of type 'process_output' conflicts with type alias of the same name\n   11 | class process_output;\n      |       ^\n/tmp/scpp-os-native-01/phpp/.prism/build/../../../../scpp-08c8206a-probe/runtime/include/modules/process/process.hpp:47:7: note: 'process_output' declared here\n   47 | using process_output = process::output;\n      |       ^\n3 errors generated.\nninja: build stopped: subcommand failed.\n",
+    "stderr": "Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.\nCompile error in around scpp_framework/file_locks.phs:1: definition of type 'file_lock_handle' conflicts with type alias of the same name\nGenerated location: .prism/generated/scpp_framework/file_locks.hpp:10:7\nCompile error in around scpp_framework/processes.phs:1: definition of type 'process_handle' conflicts with type alias of the same name\nGenerated location: .prism/generated/scpp_framework/processes.hpp:10:7\nCompile error in around scpp_framework/processes.phs:1: definition of type 'process_output' conflicts with type alias of the same name\nGenerated location: .prism/generated/scpp_framework/processes.hpp:11:7\nRaw compiler excerpt:\nfile_locks.hpp:10:7: error: definition of type 'file_lock_handle' conflicts with type alias of the same name\nprocesses.hpp:10:7: error: definition of type 'process_handle' conflicts with type alias of the same name\nprocesses.hpp:11:7: error: definition of type 'process_output' conflicts with type alias of the same name\nRun 'scpp error' for more details.\nRun 'scpp full-error' for the saved JSON report.\n"
+  }
+]

@@ -1,0 +1,9 @@
+64kb trial 1: FAILED PHP Warning:  Undefined property: prepare_backend\callable_binding::$symbol_id in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/benchmarks/scalability/measure.php on line 73
+TypeError: lower\Lowered_Set::for_symbol(): Argument #1 ($id) must be of type int, null given, called in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/benchmarks/scalability/measure.php on line 73 and defined in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/05_generate_code/lower/data/store.php:39
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/benchmarks/scalability/measure.php(73): lower\Lowered_Set->for_symbol()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/benchmarks/scalability/measure.php(112): Scalability_Run::measure()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/benchmarks/scalability/measure.php(127): Scalability_Run::run()
+#3 {main}
+
+Results: specs/planning/compiler_migration/results/adoption-01/benchmark-smoke.json

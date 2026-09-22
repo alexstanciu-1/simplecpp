@@ -1,0 +1,5 @@
+try {
+    throw new \InvalidArgumentException("bad input");
+} catch (\InvalidArgumentException $error) {
+    echo $error->getMessage(), "\n";
+}

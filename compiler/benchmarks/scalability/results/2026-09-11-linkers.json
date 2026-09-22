@@ -1,0 +1,125 @@
+{
+    "method": "Five rotating-order trials per linker, same 669 native objects retained in resident PHP process; Tool_Process launches Clang with explicit --ld-path; linking time includes driver, excludes object-list construction, hashing, publication and execution. No Python.",
+    "rows": [
+        {
+            "trial": 1,
+            "linker": "bfd",
+            "seconds": 0.260794587,
+            "child_cpu_seconds": 0.257536,
+            "executable_bytes": 3343552,
+            "exit_code": 42
+        },
+        {
+            "trial": 1,
+            "linker": "lld",
+            "seconds": 0.172213457,
+            "child_cpu_seconds": 0.213648,
+            "executable_bytes": 3341536,
+            "exit_code": 42
+        },
+        {
+            "trial": 1,
+            "linker": "mold",
+            "seconds": 0.139932055,
+            "child_cpu_seconds": 0.071068,
+            "executable_bytes": 3343416,
+            "exit_code": 42
+        },
+        {
+            "trial": 2,
+            "linker": "lld",
+            "seconds": 0.157680191,
+            "child_cpu_seconds": 0.19387,
+            "executable_bytes": 3341536,
+            "exit_code": 42
+        },
+        {
+            "trial": 2,
+            "linker": "mold",
+            "seconds": 0.114139302,
+            "child_cpu_seconds": 0.06515400000000005,
+            "executable_bytes": 3343416,
+            "exit_code": 42
+        },
+        {
+            "trial": 2,
+            "linker": "bfd",
+            "seconds": 0.255957281,
+            "child_cpu_seconds": 0.251879,
+            "executable_bytes": 3343552,
+            "exit_code": 42
+        },
+        {
+            "trial": 3,
+            "linker": "mold",
+            "seconds": 0.111436707,
+            "child_cpu_seconds": 0.064389,
+            "executable_bytes": 3343416,
+            "exit_code": 42
+        },
+        {
+            "trial": 3,
+            "linker": "bfd",
+            "seconds": 0.262977501,
+            "child_cpu_seconds": 0.257635,
+            "executable_bytes": 3343552,
+            "exit_code": 42
+        },
+        {
+            "trial": 3,
+            "linker": "lld",
+            "seconds": 0.164464314,
+            "child_cpu_seconds": 0.199256,
+            "executable_bytes": 3341536,
+            "exit_code": 42
+        },
+        {
+            "trial": 4,
+            "linker": "bfd",
+            "seconds": 0.263175638,
+            "child_cpu_seconds": 0.257631,
+            "executable_bytes": 3343552,
+            "exit_code": 42
+        },
+        {
+            "trial": 4,
+            "linker": "lld",
+            "seconds": 0.156409961,
+            "child_cpu_seconds": 0.1924,
+            "executable_bytes": 3341536,
+            "exit_code": 42
+        },
+        {
+            "trial": 4,
+            "linker": "mold",
+            "seconds": 0.109856307,
+            "child_cpu_seconds": 0.065688,
+            "executable_bytes": 3343416,
+            "exit_code": 42
+        },
+        {
+            "trial": 5,
+            "linker": "lld",
+            "seconds": 0.155711029,
+            "child_cpu_seconds": 0.193468,
+            "executable_bytes": 3341536,
+            "exit_code": 42
+        },
+        {
+            "trial": 5,
+            "linker": "mold",
+            "seconds": 0.112125573,
+            "child_cpu_seconds": 0.064201,
+            "executable_bytes": 3343416,
+            "exit_code": 42
+        },
+        {
+            "trial": 5,
+            "linker": "bfd",
+            "seconds": 0.25788555,
+            "child_cpu_seconds": 0.253405,
+            "executable_bytes": 3343552,
+            "exit_code": 42
+        }
+    ]
+}

@@ -1,0 +1,100 @@
+namespace simulate_increment;
+
+// Own a reversible directory swap and its process-crash recovery journal.
+// Use one simulation at a time; these directories require exclusive user access.
+class Folder_Swap {
+    public string $project = "";
+    public string $edited = "";
+    public string $backup = "";
+    public string $journal_directory = "";
+    public string $journal = "";
+    public string $manifest_path = "";
+    private bool $original_parked = false;
+    private bool $edited_installed = false;
+
+    public function begin(): void {
+        // Exclusive creation also refuses a journal left by an earlier process.
+        if (!fs_mkdir($this->journal_directory)) {
+            throw new \Exception("Cannot reserve simulation journal; inspect: " . $this->journal_directory);
+        }
+        $note dynamic = [];
+        $note["stage"] = "prepared";
+        $note["project"] = $this->project;
+        $note["edited"] = $this->edited;
+        $note["backup"] = $this->backup;
+        $note["recovery"] = "Stop the simulation process before recovery. Inspect actual paths: an intent record may precede or follow its rename. If backup and project exist and edited is absent, rename project back to edited first. If backup and edited exist and project is absent, rename backup back to project. Never overwrite an existing path. If project and edited exist and backup is absent, restoration is complete. Otherwise stop and inspect. Remove this journal and its empty directory only after restoration. A partial final line does not invalidate earlier complete records.";
+        $this->append_record($note);
+    }
+
+    public function record(string $stage): void {
+        $entry dynamic = [];
+        $entry["stage"] = $stage;
+        $this->append_record($entry);
+    }
+
+    private function append_record(mixed $entry): void {
+        $text string = "";
+        $error error;
+        if (!take($text, $error, json_encode($entry))) {
+            throw new \Exception("Cannot encode simulation journal record: " . $error->get_message());
+        }
+        $this->append($text . "\n");
+    }
+
+    private function append(string $text): void {
+        $handle resource_handle;
+        if (!take($handle, io_open($this->journal, "ab"))) {
+            throw new \Exception("Cannot open simulation journal: " . $this->journal);
+        }
+        $written int = 0;
+        $ok bool = take($written, io_write($handle, $text));
+        $flushed bool = io_flush($handle);
+        $closed bool = io_close($handle);
+        if (!$ok || $written !== strlen($text) || !$flushed || !$closed) {
+            throw new \Exception("Cannot persist simulation stage; inspect: " . $this->journal);
+        }
+    }
+
+    private function rename_folder(string $from, string $to, string $stage): void {
+        if (!fs_is_dir($from) || fs_exists($to) || fs_is_link($to)) {
+            throw new \Exception("Cannot rename simulation folder without overwriting; inspect: " . $this->journal);
+        }
+        $this->record($stage);
+        if (!fs_rename($from, $to)) {
+            throw new \Exception("Simulation rename failed: " . $from . " -> " . $to . "; recovery note: " . $this->journal);
+        }
+    }
+
+    public function park_original(): void {
+        $this->rename_folder($this->project, $this->backup, "before_park_original");
+        $this->original_parked = true;
+        $this->record("original_parked");
+    }
+
+    public function install_edited(): void {
+        $this->rename_folder($this->edited, $this->project, "before_install_edited");
+        $this->edited_installed = true;
+        $this->record("edited_installed");
+    }
+
+    public function return_edited(): void {
+        $this->rename_folder($this->project, $this->edited, "before_return_edited");
+        $this->edited_installed = false;
+        $this->record("edited_returned");
+    }
+
+    public function restore_original(): void {
+        $this->rename_folder($this->backup, $this->project, "before_restore_original");
+        $this->original_parked = false;
+        $this->record("original_restored");
+    }
+
+    public function finish(): void {
+        if ($this->edited_installed) { $this->return_edited(); }
+        if ($this->original_parked) { $this->restore_original(); }
+        $this->record("restored");
+        if (!fs_remove($this->journal) || !fs_rmdir($this->journal_directory)) {
+            throw new \Exception("Folders restored; cannot remove simulation journal directory: " . $this->journal_directory);
+        }
+    }
+}

@@ -1,0 +1,8 @@
+{
+  "target": "v0.1.76",
+  "revision": "8cc4d8ff7eb395c6cc69219f25bef960323bce45",
+  "workspace": "/tmp/scpp-readonly-probe-mi_pe0l3",
+  "explicit_readonly_write_accepted": true,
+  "explicit_output": "7\n9\n",
+  "promoted_exit_code": 1
+}

@@ -1,0 +1,56 @@
+
+
+/* Fixed source observations and read requests; discovery metadata stays in structures.php. */
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Observed filesystem facts only. The coordinator decides identity/change state.
+/** @compiler-internal Read-only discovery transfer record, scoped to one scan batch; no downstream stage API. */
+class scanned_source_file {
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly string $relative_path;public readonly int $mtime;public readonly int $size;public function __construct(string $relative_path, int $mtime, int $size) {$this->relative_path = $relative_path;$this->mtime = $mtime;$this->size = $size;
+    }
+}
+
+// Selected before execution; a reader needs no access to the shared dataset.
+/**
+ * @compiler-api Fixed read task selected during Source_Reader::init() and consumed by Snapshot_Reader.
+ * All readonly fields identify one file/version to read; consumers do not construct replacements.
+ */
+class source_read_task {
+    /** @compiler-internal Producer-only construction; readiness follows the owning process contract. */
+    public readonly int $source_file_id;public readonly string $path;public readonly int $mtime;public readonly int $size;public function __construct(int $source_file_id, string $path, int $mtime, int $size) {$this->source_file_id = $source_file_id;$this->path = $path;$this->mtime = $mtime;$this->size = $size;
+    }
+}
+

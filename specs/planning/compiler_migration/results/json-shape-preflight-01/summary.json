@@ -1,0 +1,29 @@
+{
+  "status": "preflight_complete_target_shape_loss_confirmed",
+  "target_revision": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+  "target_clean": true,
+  "native_exit_code": 0,
+  "native_command": [
+    "php",
+    "/tmp/scpp-2f0d667f-probe/bin/scpp.php",
+    "run",
+    "--build-runtime"
+  ],
+  "required_module": "json",
+  "stan_enabled": true,
+  "native_observations": [
+    "{} => []",
+    "[] => []",
+    "{\"0\":\"src\"} => [\"src\"]",
+    "[\"src\"] => [\"src\"]",
+    "{\"source_folders\":{},\"entry\":\"a.phs\"} => {\"source_folders\":[],\"entry\":\"a.phs\"}",
+    "{\"source_folders\":[],\"entry\":\"a.phs\"} => {\"source_folders\":[],\"entry\":\"a.phs\"}",
+    "{\"source_folders\":{\"0\":\"src\"},\"entry\":\"a.phs\"} => {\"source_folders\":[\"src\"],\"entry\":\"a.phs\"}",
+    "{\"source_folders\":[\"src\"],\"entry\":\"a.phs\"} => {\"source_folders\":[\"src\"],\"entry\":\"a.phs\"}"
+  ],
+  "source_sha256": {
+    "src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php": "dcbb86a5ce90734e7c1c8425d8d7569b00c2469b56ea1797c69b89dba8f6eff8",
+    "tests/01_prepare_inputs/read_manifest/project_manifest.php": "bd06767bde8a35e9f59ce09effcddcbbdfdfcdd28817d4654a8290a8e1f799c8"
+  },
+  "scope": "JSON input shape preservation only; no compiler parser marked portable"
+}

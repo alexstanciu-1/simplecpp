@@ -1,0 +1,66 @@
+
+
+/*
+ * Role: Private result from one directory or explicit-file scan.
+ * Used by: Source_Scanner; Source_Scan_Join
+ * Flow: source_scan_task -> Source_Scan_Result -> discovery join
+ */
+
+namespace read_sources;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @compiler-internal Discovery-only worker result; all fields are fixed until its coordinator join.
+ * The exact task reference establishes provenance; no file identities are assigned here.
+ */
+class Source_Scan_Result {
+    // Retain the originating immutable task; its index alone is only batch-local.
+    /**
+     * @compiler-internal Producer-only construction; readiness follows the owning process contract.
+     * @param list<scanned_source_file> $files
+     * @param list<string> $directories Child paths relative to the source root.
+     */
+    public readonly source_scan_task $task;/** PHP readonly; native usage contract. */ public $files vector<scanned_source_file>;/** PHP readonly; native usage contract. */ public $directories vector<string>;public function __construct(source_scan_task $task, $files vector<scanned_source_file>, $directories vector<string>) {$this->task = $task;$this->files = $files;$this->directories = $directories;
+    }
+}

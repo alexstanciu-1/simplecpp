@@ -1,0 +1,14 @@
+--- prototype/src/compile/state.php
++++ compiler/src/compile/state.php
+@@ -8,6 +8,11 @@
+  */
+ 
+ namespace compile;
++// <scpp-imports>
++use function scpp\take_nullable as take_nullable;
++use function scpp\take_false as take_false;
++use function scpp\take_bool as take_bool;
++// </scpp-imports>
+ 
+ // Per-update control state, separate from the published session.
+ 

@@ -1,0 +1,26 @@
+namespace samples;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Row { public int $id = 0; }
+class Lookup {
+    private $positions hash<int, int> = [];
+    public function put(int $id, int $position): void { $this->positions[$id] = $position; }
+    public function contains(Row $row): bool { return isset($this->positions[$row->id]); }
+}

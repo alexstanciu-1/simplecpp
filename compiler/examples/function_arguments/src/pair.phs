@@ -1,0 +1,6 @@
+function pair($first int, $second int): int {
+    $copy int = $first;
+    $first = $second;
+    $second = 99;
+    return choose($copy, $first);
+}

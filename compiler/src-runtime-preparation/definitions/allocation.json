@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "types": [
+    {
+      "id": "allocation",
+      "cpp_name": "scpp_provider::allocation",
+      "header": "scpp_provider/allocation.hpp",
+      "kind": "runtime_value",
+      "storage": "inline",
+      "resource": "allocation",
+      "lifecycle": {
+        "default_construct": "allocation.default",
+        "cleanup": "none"
+      },
+      "language_type": {
+        "name": "allocation",
+        "namespace": ""
+      }
+    }
+  ],
+  "operations": [
+    {
+      "id": "allocation.default",
+      "kind": "construct",
+      "type": "allocation",
+      "parameters": [],
+      "error_policy": "terminate"
+    },
+    {
+      "id": "allocation.acquire",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::allocation_acquire",
+      "header": "scpp_provider/allocation.hpp",
+      "parameters": [
+        {
+          "type": "allocation",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        },
+        "native_int",
+        "native_int"
+      ],
+      "result_type": "void",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "allocation_acquire",
+        "namespace": ""
+      },
+      "allocation_effect": {
+        "kind": "acquire",
+        "owner": 0
+      }
+    },
+    {
+      "id": "allocation.release",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::allocation_release",
+      "header": "scpp_provider/allocation.hpp",
+      "parameters": [
+        {
+          "type": "allocation",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "void",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "allocation_release",
+        "namespace": ""
+      },
+      "allocation_effect": {
+        "kind": "release",
+        "owner": 0
+      }
+    },
+    {
+      "id": "allocation.transfer",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::allocation_transfer",
+      "header": "scpp_provider/allocation.hpp",
+      "parameters": [
+        {
+          "type": "allocation",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        },
+        {
+          "type": "allocation",
+          "passing": "mutable_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "void",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "allocation_transfer",
+        "namespace": ""
+      },
+      "allocation_effect": {
+        "kind": "transfer",
+        "owner": 0,
+        "destination": 1
+      }
+    },
+    {
+      "id": "allocation.size",
+      "kind": "free_function",
+      "cpp_name": "scpp_provider::allocation_size",
+      "header": "scpp_provider/allocation.hpp",
+      "parameters": [
+        {
+          "type": "allocation",
+          "passing": "const_address",
+          "borrow_scope": "call"
+        }
+      ],
+      "result_type": "native_int",
+      "error_policy": "terminate",
+      "expose_as": {
+        "name": "allocation_size",
+        "namespace": ""
+      },
+      "allocation_effect": {
+        "kind": "inspect",
+        "owner": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "php",
+    "tools/php_portability/convert.php",
+    "/tmp/scpp-context-port-rz1hqa0k/php",
+    "/tmp/scpp-context-port-rz1hqa0k/phpp"
+  ],
+  "result": {
+    "converted": 12,
+    "reused": 0,
+    "removed": 0
+  },
+  "generated_bytes_unchanged": true
+}

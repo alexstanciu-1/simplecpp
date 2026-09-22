@@ -1,0 +1,1 @@
+integer conversions ok: source-to-native signed/unsigned widening, all implicit boundaries, flat unary plans, consumers, metadata, unchanged reuse, body increment, rollback/repair and generic widths

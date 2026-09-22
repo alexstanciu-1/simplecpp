@@ -1,0 +1,13 @@
+{
+  "fixture": "integration/provider_family_runtime_types.php",
+  "runner": "compiler/tests/run.py",
+  "entry": "run_fixture(fixture, 180)",
+  "timeout_seconds": 180,
+  "concurrency": 1,
+  "stdout": "B01-retry.stdout.log",
+  "stderr": "B01-retry.stderr.log",
+  "status": "passed",
+  "exit_code": 0,
+  "elapsed_seconds": 79.132,
+  "changed_adopted_files": []
+}

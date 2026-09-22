@@ -1,0 +1,46 @@
+
+
+/*
+ * Role: Verified backend target configuration.
+ * Used by: LLVM_Toolchain; LLVM_Backend; lowering and native build
+ * Flow: fixed inputs -> owned contracts -> read-only consumers
+ */
+
+namespace prepare_backend;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @compiler-api Fixed backend facts shared with lowering, emission and native build.
+ * All readonly fields are readable: keys identify exact revisions; target/layout,
+ * CPU and features guide output. Consumers must not supply local target defaults.
+ * Only backend preparation establishes verified support; construction does not.
+ */
+final class backend_configuration {
+    public readonly string $backend_key;public readonly string $target_triple;public readonly string $data_layout;public readonly string $cpu;public readonly string $features;public readonly string $abi_key;public readonly string $runtime_key;public function __construct(string $backend_key, string $target_triple, string $data_layout, string $cpu, string $features, string $abi_key, string $runtime_key) {$this->backend_key = $backend_key;$this->target_triple = $target_triple;$this->data_layout = $data_layout;$this->cpu = $cpu;$this->features = $features;$this->abi_key = $abi_key;$this->runtime_key = $runtime_key;
+        if (($backend_key === '') || ($target_triple === '') || ($data_layout === '') || ($abi_key === '') || ($runtime_key === '')) {
+            throw new \scpp_portability_invalid_argument_exception('Backend configuration requires explicit backend, target, layout, ABI and runtime identities');
+        }
+    }
+}

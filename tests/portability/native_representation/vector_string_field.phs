@@ -1,0 +1,10 @@
+struct vector_row {
+    public $items vector<string>;
+}
+
+$original vector_row = [];
+$items vector<string> = ["before"];
+$original->items = $items;
+$copy vector_row = $original;
+$copy->items[0] = "after";
+echo $original->items[0], ":", $copy->items[0], "\n";

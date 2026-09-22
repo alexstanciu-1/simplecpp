@@ -1,0 +1,7 @@
+{
+  "original_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "original_path": "prototype/src/03_parse/data/structures.php",
+  "extracted_path": "compiler/src/03_parse/data/role_views.php",
+  "declarations_preserved_byte_for_byte": true,
+  "declarations_sha256": "a2cfbf7ede639f4f668ac074dafbd1dc7780d4c290d5dd571af5e0466b3cf96d"
+}

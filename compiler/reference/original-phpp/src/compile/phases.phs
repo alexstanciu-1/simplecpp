@@ -1,0 +1,43 @@
+namespace compile;
+
+use function parse\parse_source;
+use function read_sources\read_source_snapshot;
+use function resolve_symbols\resolve_symbol;
+use function tokenize\tokenize_source;
+
+// Serial execution of independent file units. Future workers keep these inputs
+// unchanged and return the same payloads; only the coordinator collects/joins.
+function run_frontend_phase(
+    \read_sources\Source_Set $sources,
+    Update_Context $update
+): Frontend_Phase_Result {
+    $results Frontend_Phase_Result = new Frontend_Phase_Result();
+    foreach ($sources->files as $file) {
+        if ($file->change_state === \read_sources\file_change::deleted) {
+            continue;
+        }
+        if ($file->change_state === \read_sources\file_change::moved) {
+            throw new \Exception("Unsupported source change: moved");
+        }
+        if ($update->full_rebuild || $file->needs_recompile) {
+            $snapshot \read_sources\Source_Buffer = read_source_snapshot($sources, $file);
+            $tokens \tokenize\Token_Buffer = tokenize_source($snapshot);
+            $frontend \parse\File_Frontend = parse_source($snapshot, $tokens);
+            $results->sources[] = $snapshot;
+            $results->frontends[] = $frontend;
+        }
+    }
+    return $results;
+}
+
+// All declarations are available before this phase. Independent resolution units
+// can later run together; dependency groups require a join before their users.
+function run_symbol_phase(\collect_symbols\Symbol_Refresh $symbols, \read_sources\Source_Set $sources, vector<\parse\File_Frontend> $frontends, Update_Context $update): vector<\resolve_symbols\Symbol_Resolution> {
+    $results vector<\resolve_symbols\Symbol_Resolution> = [];
+    foreach ($symbols->work as $element) {
+        if ($update->full_rebuild || $element->needs_recompile) {
+            $results[] = resolve_symbol($symbols->current, $element->symbol_id, $sources, $frontends);
+        }
+    }
+    return $results;
+}

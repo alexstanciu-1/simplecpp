@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "native": true,
+  "expected": "0:pending:initial\n12:99:1:8:12:104\n9:37:ready:prepared\n0\n",
+  "target_revision": "8cc4d8ff7eb395c6cc69219f25bef960323bce45"
+}

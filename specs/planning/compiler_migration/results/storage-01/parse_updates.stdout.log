@@ -1,0 +1,1 @@
+parse updates ok: snapshot reuse, full/selective equivalence, independent workers, segment joins, completeness, failure/repair, removal and AST release

@@ -1,0 +1,106 @@
+
+
+/*
+ * Role: Normalized project manifest, from JSON or a virtual one-file project.
+ * Used by: Manifest_Reader; Compiler_Session; Source_Reader
+ * Flow: project input -> Project_Manifest -> input selection/discovery
+ */
+
+namespace read_manifest;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @compiler-api Manifest_Reader output, shared read-only with compile, discovery and entry selection.
+ * Readable fields: path, content, directory, source_folder_paths, source_file_paths, entry_path.
+ * path names the actual input; content is exact JSON, or null for a virtual manifest.
+ * Source bytes belong only to source reading, never configuration comparison.
+ * directory anchors relative paths. Defaults form an empty baseline, not valid project configuration.
+ */
+class Project_Manifest implements \compile\Step_Result {
+    public string $path = "";
+    public $content nullable<string> = "";
+
+    // Absolute directory of the project input, used as the base for relative paths.
+    public string $directory = "";
+
+    /** @var list<string> */
+    public $source_folder_paths vector<string> = [];
+
+    /** @var list<string> Explicit sources; their neighboring files do not participate. */
+    public $source_file_paths vector<string> = [];
+    public string $entry_path = "";
+
+    // Debug snapshot of this result, including the exact input and path context.
+    /** @compiler-api On-demand debug view; not a semantic input or a persisted-cache format. */
+    public function to_json(): string {
+        $out string = '';
+        try {
+            $out = '{"path":' . scpp_portability_json_quote($this->path) . ',"content":';
+            $content string = '';
+            if (take($content, $this->content)) { $out = $out . scpp_portability_json_quote($content); }
+            else { $out = $out . 'null'; }
+            $out = $out . ',"directory":' . scpp_portability_json_quote($this->directory) . ',"source_folder_paths":[';
+            $first bool = true;
+            foreach ($this->source_folder_paths  as $root) {
+                if (!$first) { $out = $out . ','; }
+                $out = $out . scpp_portability_json_quote($root);
+                $first = false;
+            }
+            $out = $out . ']';
+            if (count($this->source_file_paths) !== 0) {
+                $out = $out . ',"source_file_paths":[';
+                $first = true;
+                foreach ($this->source_file_paths  as $path) {
+                    if (!$first) { $out = $out . ','; }
+                    $out = $out . scpp_portability_json_quote($path);
+                    $first = false;
+                }
+                $out = $out . ']';
+            }
+            $out = $out . ',"entry_path":' . scpp_portability_json_quote($this->entry_path) . '}';
+        } catch (\scpp_portability_exception $__scpp_portability_exception_1) {if ($__scpp_portability_exception_1->matches(64)) {$exception = $__scpp_portability_exception_1;
+            throw new \scpp_portability_exception("Cannot export project manifest: " . $exception->getMessage(), 0, $exception);
+        }else { throw $__scpp_portability_exception_1; }}
+        return $out;
+    }
+}

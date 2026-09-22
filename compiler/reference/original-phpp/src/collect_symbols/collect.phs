@@ -1,0 +1,20 @@
+namespace collect_symbols;
+
+// Collect declarations and classify changes against the previous project state.
+
+function refresh_declarations(
+    Symbol_Store $previous,
+    vector<\parse\File_Frontend> $previous_frontends,
+    \read_sources\Source_Set $sources,
+    vector<\parse\File_Frontend> $current_frontends
+): Symbol_Refresh {
+    // TODO: build a replacement dataset/indexes; do not mutate the previous store.
+    // Read each file's defined_entities; members stay under their owning entity.
+    // Give entry_body_id its implicit callable owner without inventing a source name.
+    // Match kind/namespace/name, retain origins, diagnose duplicate keys.
+    // Remove deleted declarations from every index; rename is delete + add.
+    // Return work for every current symbol. Select changed/missing results
+    // and bindings whose AST was replaced; never retain stale use-node IDs.
+    // First incremental rule: body edits with unchanged callable contracts.
+    throw new \Exception("Not implemented: refresh_declarations");
+}

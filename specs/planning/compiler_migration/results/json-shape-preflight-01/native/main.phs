@@ -1,0 +1,15 @@
+$inputs vector<string> = ['{}', '[]', '{"0":"src"}', '["src"]', '{"source_folders":{},"entry":"a.phs"}', '{"source_folders":[],"entry":"a.phs"}', '{"source_folders":{"0":"src"},"entry":"a.phs"}', '{"source_folders":["src"],"entry":"a.phs"}'];
+foreach ($inputs as $text) {
+    $value mixed;
+    $error error;
+    if (!take($value, $error, json_decode($text))) {
+        echo 'decode-error:', $error->get_message(), "\n";
+        continue;
+    }
+    $encoded string = '';
+    if (!take($encoded, $error, json_encode($value))) {
+        echo 'encode-error:', $error->get_message(), "\n";
+        continue;
+    }
+    echo $text, ' => ', $encoded, "\n";
+}

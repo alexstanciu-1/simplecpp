@@ -1,0 +1,18 @@
+["/usr/bin/clang++-18", "-std=c++23", "-I/home/alexv/__AI/simple_cpp_compiler/vendor/simple_cpp/runtime/include", "-I/tmp/scpp-migration-baseline-d3bpetju/source/prototype/src-runtime-preparation/include", "-I/tmp/scpp-migration-baseline-d3bpetju/source/prototype/src-runtime-preparation/tests/source_operations", "/tmp/scpp-migration-baseline-d3bpetju/source/prototype/src-runtime-preparation/tests/source_operations/harness.cpp", "/tmp/scpp-migration-baseline-d3bpetju/source-operations/O0/native.bc", "/tmp/scpp-migration-baseline-d3bpetju/source-operations/empty.cpp", "-o", "/tmp/scpp-migration-baseline-d3bpetju/source-operations/missing"]
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `native_payload_roundtrip':
+native.cpp:(.text+0x8e): undefined reference to `source_copy'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `_ZN23source_operations_probe15element_adapterILb1EEC2ENS_11source_viewEQT_':
+native.cpp:(.text._ZN23source_operations_probe15element_adapterILb1EEC2ENS_11source_viewEQT_[_ZN23source_operations_probe15element_adapterILb1EEC2ENS_11source_viewEQT_]+0x19): undefined reference to `source_copy'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `source_operations_probe::element_adapter<true>::element_adapter(source_operations_probe::element_adapter<true>&&)':
+native.cpp:(.text._ZN23source_operations_probe15element_adapterILb1EEC2EOS1_[_ZN23source_operations_probe15element_adapterILb1EEC2EOS1_]+0x19): undefined reference to `source_move'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `source_operations_probe::element_adapter<true>::~element_adapter()':
+native.cpp:(.text._ZN23source_operations_probe15element_adapterILb1EED2Ev[_ZN23source_operations_probe15element_adapterILb1EED2Ev]+0x11): undefined reference to `source_destroy'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `source_operations_probe::element_adapter<true>::element_adapter()':
+native.cpp:(.text._ZN23source_operations_probe15element_adapterILb1EEC2Ev[_ZN23source_operations_probe15element_adapterILb1EEC2Ev]+0x11): undefined reference to `source_construct'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `_ZN23source_operations_probe15element_adapterILb1EEaSERKS1_QT_':
+native.cpp:(.text._ZN23source_operations_probe15element_adapterILb1EEaSERKS1_QT_[_ZN23source_operations_probe15element_adapterILb1EEaSERKS1_QT_]+0x1d): undefined reference to `source_assign'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `_ZN23source_operations_probe15element_adapterILb1EEC2ERKS1_QT_':
+native.cpp:(.text._ZN23source_operations_probe15element_adapterILb1EEC2ERKS1_QT_[_ZN23source_operations_probe15element_adapterILb1EEC2ERKS1_QT_]+0x19): undefined reference to `source_copy'
+/usr/bin/ld: /tmp/scpp-migration-baseline-d3bpetju/tmp/native-dd82cd.o: in function `source_operations_probe::element_adapter<true>::operator=(source_operations_probe::element_adapter<true>&&)':
+native.cpp:(.text._ZN23source_operations_probe15element_adapterILb1EEaSEOS1_[_ZN23source_operations_probe15element_adapterILb1EEaSEOS1_]+0x1d): undefined reference to `source_move_assign'
+clang++-18: error: linker command failed with exit code 1 (use -v to see invocation)

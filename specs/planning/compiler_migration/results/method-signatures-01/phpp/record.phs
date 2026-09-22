@@ -1,0 +1,20 @@
+namespace data;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ class Record { public int $value = 1; }

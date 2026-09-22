@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "target_revision": "2f0d667f38a35ff02ef77e813f409189cba2d032",
+  "proofs": [
+    "os/summary.json",
+    "compiler/summary.json"
+  ],
+  "source_sha256": {
+    "tools/php_portability/runtime/file_locks.php": "3bde579fd7b0ee830829a47f17a6ff281275e31419c0b7f70d8f018ac2fb2935",
+    "tools/php_portability/runtime/file_locks.phs": "6c175c524066d390362a32309577cbd4cae1d0a02f983dbc2b4edc7bd0fa2cad",
+    "tools/php_portability/runtime/processes.php": "5bd05077614074d579c8920fddf41c1bfd838e6fa0ed05d20e993a26d348fa22",
+    "tools/php_portability/runtime/processes.phs": "9eaac789e027f3468de2fe2e5d072b6db3240773c729abb067858ffdf8ccebc2",
+    "tools/php_portability/runtime/process_launcher.php": "4a750df0a0decb9460f716c007af60946ed06a8fc04a4ee402d7925a0514f2d9"
+  }
+}

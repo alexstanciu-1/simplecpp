@@ -1,0 +1,1 @@
+runtime strings ok: real Simple C++ strings, second type via definitions, spans, void borrows, literals/echo/copies, native cleanup, fixed workers and incremental literal replacement

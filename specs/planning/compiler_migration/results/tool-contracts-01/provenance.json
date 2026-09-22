@@ -1,0 +1,6 @@
+{
+  "source": "compiler/src/05_generate_code/prepare_backend/data/tools.php",
+  "change": "managed imports only; declarations and bodies preserved byte-for-byte after block removal",
+  "before_sha256": "681d67bcb9f354444b70856b34bead9ebe8a9ed1005fd1c9d946994f26e6d7c7",
+  "after_sha256": "20414aa34abde757e6af6fa62ed68c0f6a5773e598ad0b58191129a3768e77f2"
+}

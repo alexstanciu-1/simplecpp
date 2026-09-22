@@ -1,0 +1,69 @@
+
+
+/*
+ * Role: Declaration type references without concrete layout or ABI.
+ * Used by: semantic signatures; family declarations; source/provider adapters
+ * Flow: exact identity -> unresolved reference -> producer-owned resolution
+ */
+namespace type_model;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+interface type_reference {
+}
+
+/** @compiler-api Exact language name awaiting resolution in the containing provider catalog's context. */
+final class named_type_reference implements type_reference {
+    public readonly string $name;public readonly string $namespace_name;public function __construct(string $name, string $namespace_name) {$this->name = $name;$this->namespace_name = $namespace_name;
+    }
+}
+
+/** Exact provider type identity, independent of optional source-language exposure. */
+final class provider_type_reference implements type_reference {
+    public readonly string $provider;public readonly string $id;public function __construct(string $provider, string $id) {$this->provider = $provider;$this->id = $id;
+    }
+}
+
+final class parameter_type_reference implements type_reference {
+    public readonly string $owner;public readonly int $slot;public function __construct(string $owner, int $slot) {$this->owner = $owner;$this->slot = $slot;
+    }
+}
+
+final class family_type_reference implements type_reference {
+    /** @param list<type_reference> $arguments */
+    public readonly string $family;/** PHP readonly; native usage contract. */ public $arguments vector<type_reference>;public function __construct(string $family, $arguments vector<type_reference>) {$this->family = $family;$this->arguments = $arguments;
+    }
+}

@@ -1,0 +1,1319 @@
+{
+    "method": "Three fresh PHP processes; temporary compiler copy with guarded hrtime\/gc_status stage timers. No Python or per-Clang wrappers. 20 jobs. Seven disjoint groups; native excludes nested link, final group includes link\/publication and untimed coordination residual. GC stays in the executing stage. Table uses arithmetic means so groups sum to mean request time.",
+    "fixture": {
+        "project": "5mb",
+        "target_bytes": 5242880,
+        "source_bytes": 5243107,
+        "files": 669,
+        "functions": 21315,
+        "generated_functions": 21313,
+        "functions_per_file": 32,
+        "edit_file": "src\/group_0666.phs",
+        "edited_function": "sample_021313",
+        "source_sha256": "b85eb10336118d6ac1b50cdb44ef20f7ac0c648dc25bbff297693233214a7317"
+    },
+    "backend": {
+        "clang": "clang",
+        "target": null,
+        "compile_jobs": 20
+    },
+    "groups": {
+        "Inputs, scan and tokenization": [
+            "manifest",
+            "catalog",
+            "discovery",
+            "tokenize"
+        ],
+        "Parsing and symbols": [
+            "parse",
+            "collect",
+            "entry",
+            "resolve",
+            "compare"
+        ],
+        "Types, body checks and lifetimes": [
+            "type_prepare",
+            "types",
+            "bodies",
+            "lifetimes"
+        ],
+        "Backend preparation and lowering": [
+            "backend",
+            "lower"
+        ],
+        "LLVM emission and entry adapter": [
+            "entry_adapter",
+            "emit"
+        ]
+    },
+    "trials": [
+        {
+            "trial": 1,
+            "measurements": [
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.3932e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 0.000126894,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.00378254,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.737521654,
+                            "gc_seconds": 0.072479317,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.95555549,
+                            "gc_seconds": 0.176409286,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.090821167,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001467746,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 1.460318306,
+                            "gc_seconds": 0.675118861,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.00354954,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 2.9891e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 1.195232259,
+                            "gc_seconds": 0.6314407080000001,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 1.915371601,
+                            "gc_seconds": 0.8246390359999998,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.88842685,
+                            "gc_seconds": 0.432993867,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.225841047,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 1.754375197,
+                            "gc_seconds": 1.0066057990000004,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 0.05730493,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.909914009,
+                            "gc_seconds": 0.3829437109999998,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.348051791,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 7.933017791,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000481455,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "cold",
+                    "seconds": 18.134282742,
+                    "php_peak_bytes": 738155416,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 4.202630585,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 734951088,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.74149502,
+                        "Parsing and symbols": 2.511712249,
+                        "Types, body checks and lifetimes": 3.999060601,
+                        "Backend preparation and lowering": 1.9802162440000002,
+                        "LLVM emission and entry adapter": 0.967218939,
+                        "Native cache checks and object compilation": 7.5849660000000005,
+                        "Linking, publication and coordination": 0.3496136889999981
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.5562e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 4.1581e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003506548,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.00033541,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.006495949,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.030949663,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001381842,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.131260441,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 1.339e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 7.57e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.190417626,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.07617326,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.018919422,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.053483192,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.482439658,
+                            "gc_seconds": 0.4465192919999996,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 2.0821e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.037644027,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.022968578,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000167015,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "unchanged",
+                    "seconds": 1.057018772,
+                    "php_peak_bytes": 743543952,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.4465192919999996,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740208648,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.003949101,
+                        "Parsing and symbols": 0.170101285,
+                        "Types, body checks and lifetimes": 0.28551787800000006,
+                        "Backend preparation and lowering": 0.53592285,
+                        "LLVM emission and entry adapter": 0.037664847999999994,
+                        "Native cache checks and object compilation": 0.022968578,
+                        "Linking, publication and coordination": 0.0008942320000000503
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 7.1692e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 4.2191e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003522038,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.000479545,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.00550954,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.02891201,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001379032,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.128463735,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 8.4842e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 5.13e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.174576926,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.067943523,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.015483128,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.04419814,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.388160534,
+                            "gc_seconds": 0.3619697569999998,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 9.05e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.029675639,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.313906977,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.387123417,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.004431456,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "body_edit",
+                    "seconds": 1.280737722,
+                    "php_peak_bytes": 743486616,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.3619697569999998,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740939792,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343552,
+                    "exit_code": 43,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.004115466,
+                        "Parsing and symbols": 0.164349159,
+                        "Types, body checks and lifetimes": 0.258008707,
+                        "Backend preparation and lowering": 0.432358674,
+                        "LLVM emission and entry adapter": 0.029684689,
+                        "Native cache checks and object compilation": 0.07321644000000005,
+                        "Linking, publication and coordination": 0.3190045869999999
+                    }
+                }
+            ]
+        },
+        {
+            "trial": 2,
+            "measurements": [
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 4.7231e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 9.1372e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.00389635,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.685881728,
+                            "gc_seconds": 0.08652401,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.995030764,
+                            "gc_seconds": 0.227877785,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.094384493,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001444095,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 1.722138759,
+                            "gc_seconds": 0.866096147,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.005081684,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 1.4671e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 1.614117702,
+                            "gc_seconds": 0.910424892,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 3.028593578,
+                            "gc_seconds": 1.3421150179999999,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.913313046,
+                            "gc_seconds": 0.43653116400000025,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.283195877,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 1.824470617,
+                            "gc_seconds": 1.0375249659999999,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 0.052401033,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.965379765,
+                            "gc_seconds": 0.39601902700000036,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.288970344,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 6.4740283,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000347641,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "cold",
+                    "seconds": 18.664924728,
+                    "php_peak_bytes": 738155416,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 5.3031130090000005,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 734951088,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.689916681,
+                        "Parsing and symbols": 2.8180797949999996,
+                        "Types, body checks and lifetimes": 5.556038997,
+                        "Backend preparation and lowering": 2.107666494,
+                        "LLVM emission and entry adapter": 1.017780798,
+                        "Native cache checks and object compilation": 6.185057956,
+                        "Linking, publication and coordination": 0.29038400699999656
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.6422e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.9381e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.004199062,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.000493475,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.008978401,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.030576048,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.00129455,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.117565858,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 1.296e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 8.22e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.180642313,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.075296091,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.021501153,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.044868346,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.452420474,
+                            "gc_seconds": 0.42786959599999985,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 2.7271e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.026721047,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.019839261,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000241768,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "unchanged",
+                    "seconds": 0.98565872,
+                    "php_peak_bytes": 743543952,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.42786959599999985,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740208648,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.00479834,
+                        "Parsing and symbols": 0.158427817,
+                        "Types, body checks and lifetimes": 0.277447777,
+                        "Backend preparation and lowering": 0.49728882,
+                        "LLVM emission and entry adapter": 0.026748318,
+                        "Native cache checks and object compilation": 0.019839261,
+                        "Linking, publication and coordination": 0.001108387000000044
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.8382e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.6501e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003470778,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.000492775,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.007347081,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.028865623,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.002129546,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.124736471,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 8.4882e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 5.241e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.179729248,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.083558792,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.019028126,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.050516622,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.429457358,
+                            "gc_seconds": 0.40463657300000033,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 1.008e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.038392158,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.326455488,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.385818845,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.004325586,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "body_edit",
+                    "seconds": 1.358714397,
+                    "php_peak_bytes": 743486616,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.40463657300000033,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740939792,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343552,
+                    "exit_code": 43,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.004068436,
+                        "Parsing and symbols": 0.16316360300000002,
+                        "Types, body checks and lifetimes": 0.28232140699999997,
+                        "Backend preparation and lowering": 0.47997398,
+                        "LLVM emission and entry adapter": 0.038402238000000005,
+                        "Native cache checks and object compilation": 0.059363357000000005,
+                        "Linking, publication and coordination": 0.331421376
+                    }
+                }
+            ]
+        },
+        {
+            "trial": 3,
+            "measurements": [
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 5.2251e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 0.000155565,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003625255,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.712832248,
+                            "gc_seconds": 0.098703693,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.975368018,
+                            "gc_seconds": 0.212609561,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.095242637,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001234258,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 1.641542065,
+                            "gc_seconds": 0.8226009969999999,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.00324597,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 1.046e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 1.509246179,
+                            "gc_seconds": 0.859631976,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 2.131137127,
+                            "gc_seconds": 0.9334441410000001,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 1.087790356,
+                            "gc_seconds": 0.5107129779999999,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.270055491,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 1.77019099,
+                            "gc_seconds": 1.0077191640000005,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 0.04919561,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.92152703,
+                            "gc_seconds": 0.38234383699999963,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.367287839,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 6.670736696,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000490186,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "cold",
+                    "seconds": 17.844535558,
+                    "php_peak_bytes": 738155416,
+                    "gc_runs": 47,
+                    "gc_collected": 0,
+                    "gc_seconds": 4.827766347,
+                    "php_peak_allocated_bytes": 749002752,
+                    "php_retained_bytes": 734951088,
+                    "full_rebuild": true,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 669,
+                    "replaced_bodies": 21316,
+                    "replaced_lowered": 21316,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 669,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.716665319,
+                        "Parsing and symbols": 2.716632948,
+                        "Types, body checks and lifetimes": 4.728184122,
+                        "Backend preparation and lowering": 2.040246481,
+                        "LLVM emission and entry adapter": 0.97072264,
+                        "Native cache checks and object compilation": 6.303448856999999,
+                        "Linking, publication and coordination": 0.3686351909999992
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 0.000586048,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 0.000107744,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.005530914,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.001247639,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.01398876,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.054992198,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.001753965,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.16118905,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 1.867e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 7.1892e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.208808787,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.125851513,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.025051753,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.066293473,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.580598738,
+                            "gc_seconds": 0.5510286839999994,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 3.5591e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.044975409,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.051932455,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.000178986,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "unchanged",
+                    "seconds": 1.344380471,
+                    "php_peak_bytes": 743543952,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.5510286839999994,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740208648,
+                    "full_rebuild": false,
+                    "tokens": 1108976,
+                    "ast_nodes": 789939,
+                    "checked_statements": 191821,
+                    "lowered_instructions": 341012,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 0,
+                    "replaced_bodies": 0,
+                    "replaced_lowered": 0,
+                    "artifact_reused": true,
+                    "emitted_modules": 669,
+                    "replaced_objects": 0,
+                    "llvm_bytes": 16539618,
+                    "executable_bytes": 3343552,
+                    "exit_code": 42,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.007472345,
+                        "Parsing and symbols": 0.231942643,
+                        "Types, body checks and lifetimes": 0.359783945,
+                        "Backend preparation and lowering": 0.6468922109999999,
+                        "LLVM emission and entry adapter": 0.045011,
+                        "Native cache checks and object compilation": 0.051932455,
+                        "Linking, publication and coordination": 0.0013458720000001367
+                    }
+                },
+                {
+                    "stage_timings": {
+                        "manifest": {
+                            "seconds": 6.5071e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "catalog": {
+                            "seconds": 3.7741e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "discovery": {
+                            "seconds": 0.003723834,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "tokenize": {
+                            "seconds": 0.00070383,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "parse": {
+                            "seconds": 0.007083019,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "collect": {
+                            "seconds": 0.031649671,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "entry": {
+                            "seconds": 0.002069648,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "resolve": {
+                            "seconds": 0.127706146,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "compare": {
+                            "seconds": 0.000133194,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "type_prepare": {
+                            "seconds": 5.84e-6,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "types": {
+                            "seconds": 0.216875911,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "bodies": {
+                            "seconds": 0.110456197,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lifetimes": {
+                            "seconds": 0.019335191,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "backend": {
+                            "seconds": 0.066590709,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "lower": {
+                            "seconds": 0.516154139,
+                            "gc_seconds": 0.4879358610000004,
+                            "calls": 1
+                        },
+                        "entry_adapter": {
+                            "seconds": 1.2231e-5,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "emit": {
+                            "seconds": 0.030309339,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "link": {
+                            "seconds": 0.297496207,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "native": {
+                            "seconds": 0.378739732,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        },
+                        "publish": {
+                            "seconds": 0.003805867,
+                            "gc_seconds": 0,
+                            "calls": 1
+                        }
+                    },
+                    "phase": "body_edit",
+                    "seconds": 1.516135507,
+                    "php_peak_bytes": 743486616,
+                    "gc_runs": 1,
+                    "gc_collected": 0,
+                    "gc_seconds": 0.4879358610000004,
+                    "php_peak_allocated_bytes": 759488512,
+                    "php_retained_bytes": 740939792,
+                    "full_rebuild": false,
+                    "tokens": 1108980,
+                    "ast_nodes": 789942,
+                    "checked_statements": 191822,
+                    "lowered_instructions": 341014,
+                    "lowered_bodies": 21316,
+                    "replaced_frontends": 1,
+                    "replaced_bodies": 1,
+                    "replaced_lowered": 1,
+                    "artifact_reused": false,
+                    "emitted_modules": 669,
+                    "replaced_objects": 1,
+                    "llvm_bytes": 16539655,
+                    "executable_bytes": 3343552,
+                    "exit_code": 43,
+                    "groups": {
+                        "Inputs, scan and tokenization": 0.004530476,
+                        "Parsing and symbols": 0.168641678,
+                        "Types, body checks and lifetimes": 0.3466731390000001,
+                        "Backend preparation and lowering": 0.5827448479999999,
+                        "LLVM emission and entry adapter": 0.030321570000000003,
+                        "Native cache checks and object compilation": 0.08124352499999998,
+                        "Linking, publication and coordination": 0.30198027100000013
+                    }
+                }
+            ]
+        }
+    ],
+    "means": {
+        "cold": {
+            "seconds": 18.214581009333333,
+            "gc_seconds": 4.777836647,
+            "groups": {
+                "Inputs, scan and tokenization": 0.7160256733333333,
+                "Parsing and symbols": 2.6821416639999995,
+                "Types, body checks and lifetimes": 4.761094573333334,
+                "Backend preparation and lowering": 2.0427097396666665,
+                "LLVM emission and entry adapter": 0.9852407923333333,
+                "Native cache checks and object compilation": 6.691157604333333,
+                "Linking, publication and coordination": 0.3362109623333313
+            }
+        },
+        "unchanged": {
+            "seconds": 1.1290193210000001,
+            "gc_seconds": 0.47513919066666627,
+            "groups": {
+                "Inputs, scan and tokenization": 0.005406595333333333,
+                "Parsing and symbols": 0.18682391499999998,
+                "Types, body checks and lifetimes": 0.3075832,
+                "Backend preparation and lowering": 0.560034627,
+                "LLVM emission and entry adapter": 0.036474721999999994,
+                "Native cache checks and object compilation": 0.031580098,
+                "Linking, publication and coordination": 0.0011161636666667436
+            }
+        },
+        "body_edit": {
+            "seconds": 1.3851958753333333,
+            "gc_seconds": 0.41818073033333353,
+            "groups": {
+                "Inputs, scan and tokenization": 0.004238126,
+                "Parsing and symbols": 0.16538481333333332,
+                "Types, body checks and lifetimes": 0.29566775100000003,
+                "Backend preparation and lowering": 0.49835916733333335,
+                "LLVM emission and entry adapter": 0.03280283233333334,
+                "Native cache checks and object compilation": 0.07127444066666667,
+                "Linking, publication and coordination": 0.3174687446666667
+            }
+        }
+    },
+    "recorded_utc": "2026-09-11T07:11:57+00:00",
+    "php_version": "8.5.7",
+    "note": "Fresh profiled runs, not a retroactive subdivision of prior measurements. Sum group means to obtain mean request time; displayed rounding may differ. Per-stage GC is nested in elapsed times."
+}

@@ -1,0 +1,13 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in child.phs:2: base class has incomplete type
+Generated location: .prism/generated/child.hpp:13:22
+Compile note in around child.phs:1: forward declaration of 'scpp::diagnostics::Root_Base'
+Generated location: .prism/generated/child.hpp:11:7
+Compile error in main.phs:2: no member named 'value' in 'scpp::diagnostics::Child'
+Generated location: .prism/generated/main.cpp:11:23
+Raw compiler excerpt:
+child.hpp:13:22: error: base class has incomplete type
+child.hpp:11:7: note: forward declaration of 'scpp::diagnostics::Root_Base'
+main.cpp:11:23: error: no member named 'value' in 'scpp::diagnostics::Child'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

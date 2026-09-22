@@ -1,0 +1,75 @@
+namespace simulate_increment;
+
+use function read_sources\resolve_path;
+use function read_sources\join_path;
+use function compile\refresh_compiler_inputs;
+
+function check_pending_simulation(string $manifest_path): void {
+    // Check the lexical path first: the original may be absent after a crash.
+    $directory string = fs_dirname($manifest_path);
+    require_clear_journal($directory);
+    if (fs_is_dir($directory)) {
+        require_clear_journal(resolve_path(".", $directory));
+    }
+}
+
+function require_clear_journal(string $directory): void {
+    $pending string = $directory . ".scpp-simulation";
+    if (fs_exists($pending) || fs_is_link($pending)) {
+        throw new \Exception("Pending simulation; restore folders using: " . $pending . "/journal.jsonl");
+    }
+}
+
+function prepare_folder_swap(string $manifest_path, string $edited_path): Folder_Swap {
+    // The manifest directory is the project folder for this initial simulation.
+    check_pending_simulation($manifest_path);
+    $swap Folder_Swap = new Folder_Swap();
+    $swap->project = resolve_path(".", fs_dirname($manifest_path));
+    $swap->journal_directory = $swap->project . ".scpp-simulation";
+    $swap->journal = join_path($swap->journal_directory, "journal.jsonl");
+    $swap->edited = resolve_path(".", $edited_path);
+    if (!fs_is_dir($swap->project) || !fs_is_dir($swap->edited)
+        || fs_dirname($swap->project) === $swap->project
+        || $swap->project === $swap->edited
+        || str_starts_with($swap->edited, join_path($swap->project, ""))
+        || str_starts_with($swap->project, join_path($swap->edited, ""))) {
+        throw new \Exception("Simulation requires two distinct, non-nested project directories");
+    }
+    // Reserve space outside both trees and reject another simulation of the copy.
+    if ($swap->edited === $swap->journal_directory
+        || fs_exists($swap->edited . ".scpp-simulation") || fs_is_link($swap->edited . ".scpp-simulation")) {
+        throw new \Exception("Edited project has a conflicting simulation journal");
+    }
+    $swap->backup = join_path($swap->journal_directory, "original");
+    $swap->manifest_path = join_path($swap->project, fs_basename($manifest_path));
+    if (!fs_is_file($swap->manifest_path)
+        || !fs_is_file(join_path($swap->edited, fs_basename($manifest_path)))) {
+        throw new \Exception("Both simulation folders must contain the named project manifest");
+    }
+    return $swap;
+}
+
+function run_simulation(string $manifest_path, string $edited_path, bool $debug_json): void {
+    $swap Folder_Swap = prepare_folder_swap($manifest_path, $edited_path);
+    $swap->begin();
+    $first \compile\Input_Snapshot;
+    $second \compile\Input_Snapshot;
+    $previous_manifest \read_manifest\Project_Manifest = new \read_manifest\Project_Manifest();
+    $previous_sources \read_sources\Source_Set = new \read_sources\Source_Set();
+    try {
+        $swap->record("before_initial_run");
+        $first = refresh_compiler_inputs($swap->manifest_path, $previous_manifest, $previous_sources, true);
+        $swap->record("initial_run_complete");
+        $swap->park_original();
+        $swap->install_edited();
+        $swap->record("before_incremental_run");
+        $second = refresh_compiler_inputs($swap->manifest_path, $first->manifest, $first->sources, false);
+        $swap->record("incremental_run_complete");
+    } finally {
+        // Catchable failures restore too. A hard crash leaves the journal behind.
+        $swap->finish();
+    }
+    if ($debug_json) {
+        echo "{\"runs\":[", $first->to_json(), ",", $second->to_json(), "]}\n";
+    }
+}
