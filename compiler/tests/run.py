@@ -31,7 +31,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('record_materialization', Path(__file__).parent / 'record_materialization/run.py'),
           ('definition_view', Path(__file__).parent / 'definition_view/run.py'),
           ('instance_contexts', Path(__file__).parent / 'instance_contexts/run.py'),
-          ('instance_identities', Path(__file__).parent / 'instance_identities/run.py')]
+          ('instance_identities', Path(__file__).parent / 'instance_identities/run.py'),
+          ('symbolic_terms', Path(__file__).parent / 'symbolic_terms/run.py')]
 
 
 def main():

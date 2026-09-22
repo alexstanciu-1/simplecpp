@@ -793,3 +793,30 @@ including specific, parent and unrelated exception catches. No target change. Th
 allocator oracle was added after the native run without source/probe changes. The instance
 registry still requires real template permission results; no placeholder has been added.
 Evidence/timings: results/instance-identities-01.
+
+## Symbolic terms and permission-result contracts (2026-09-22)
+
+Replaced type_term's int/string/definition/record union with an explicitly validated
+symbolic record and factories. Formal parameters carry source owner and slot integers
+rather than an encoded string. Named provider/record targets retain exact object identity;
+source declarations retain their source ID. Constants retain exact provenance text.
+Application arguments are ordered, copied vectors of immutable term handles. Dependency
+propagates from formals through arguments. Symbolic arrays retain only element identity,
+as in the prototype; concrete extent/layout belongs to later preparation.
+
+Type_Term::same performs iterative full identity comparison with two reusable vectors and
+a logical stack size, replacing ad-hoc pair arrays and array_pop. The native proof handles
+1,000 nested arrays. Future optimization: profile scratch allocations before introducing
+a term arena or native tagged union; no representation tuning is claimed here.
+
+Definition_Task requires its exact owner binding. Definition_Result retains exact source,
+catalog, declaration and binding snapshots; Template_Set rejects missing/stale source
+permissions while ordinary declarations need none. Private vectors/maps prevent accidental
+result mutation. Only the checking producer may create permission rows; this checkpoint
+migrates the data contracts, not the semantic worker or provider-family rules.
+
+40 shared PHP/native checks pass. Both native builds passed: first 30 symbolic/task checks,
+then 40 after adding permission containers. No conversion/native correction. 529 pairwise
+comparisons and 23 dependency flags match direct execution of the retained term model.
+The first PHP-ready milestone is retained; subsequent elapsed time includes the additional
+permission-model authoring, not just native stabilization. Evidence: results/symbolic-terms-01.

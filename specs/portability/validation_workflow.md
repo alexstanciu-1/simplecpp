@@ -198,3 +198,6 @@ range cases (Python arbitrary precision), registered as instance_contexts.
 
 Instance identities: 23 PHP/native outcomes and 60 direct retained allocator calls;
 the native proof also covers framework OverflowException ancestry.
+
+Symbolic template data: 40 PHP/native outcomes, 529 retained pair comparisons and
+23 dependency flags. Permission containers are proved; the checking producer is pending.

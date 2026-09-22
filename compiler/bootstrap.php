@@ -89,3 +89,6 @@ require_once __DIR__ . '/src/04_analyze/check_bodies/utilities/decimal_range.php
 require_once __DIR__ . '/src/04_analyze/check_bodies/utilities/literals.php';
 require_once __DIR__ . '/src/04_analyze/instantiate/data/context.php';
 require_once __DIR__ . '/src/04_analyze/instantiate/identities.php';
+require_once __DIR__ . '/src/04_analyze/check_templates/data/terms.php';
+require_once __DIR__ . '/src/04_analyze/check_templates/data/structures.php';
+require_once __DIR__ . '/src/04_analyze/check_templates/data/result.php';
