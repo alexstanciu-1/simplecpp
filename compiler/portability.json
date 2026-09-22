@@ -126,7 +126,8 @@
     "src/01_prepare_inputs/load_runtime/data/package.php",
     "src/04_analyze/type_model/callable_contracts.php",
     "src/01_prepare_inputs/load_runtime/utilities/callable_retention.php",
-    "src/04_analyze/type_model/lifecycle_contracts.php"
+    "src/04_analyze/type_model/lifecycle_contracts.php",
+    "src/04_analyze/type_model/definition_contracts.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

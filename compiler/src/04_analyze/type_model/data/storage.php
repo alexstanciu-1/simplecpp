@@ -67,6 +67,9 @@ final class Storage_Family {
         foreach ($primitives as $key => $primitive) { $this->primitives[$key] = $primitive; }
         foreach ($operations as $role => $spelling) { Storage_Roles::parse($role); $this->operations[$role] = $spelling; }
     }
+    /** Snapshot membership for contract consumers; contained immutable primitives remain shared. */
+    public function primitive_contracts(): array /** hash<Storage_Primitive> */ { return $this->primitives; }
+    public function operation_spellings(): array /** hash<string> */ { return $this->operations; }
     public function primitive_for(string $name): Storage_Primitive {
         if (!isset($this->primitives[$name])) { throw new \OutOfBoundsException('Missing storage primitive'); }
         return $this->primitives[$name];

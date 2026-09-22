@@ -1566,3 +1566,30 @@ stored a nullable resource enum and a separate path list. Full definition equali
 must compare these normalized facts; an absent wrapper and an explicit empty
 obligation represent the same original resource/path contract. Wrapper allocation
 identity must not introduce a false contract change.
+
+
+## Full semantic definition comparison
+
+Definition_Contracts composes existing representation, lifecycle and callable ABI
+comparison with explicit definition metadata, ordered resource paths, exact target
+layout, record field recipes/body IDs and typed-storage dependencies. Storage_Family
+now provides typed membership snapshots for its primitive contracts and operation
+spellings; returned maps cannot mutate its membership. Contained immutable primitive
+objects remain shared. The comparator checks both key membership and values, without
+requiring map insertion order to agree. Record fields and resource path sequences
+remain ordered.
+
+Absent resource wrappers and RESOURCE_NONE/no-path wrappers compare as the same
+original resource/path contract. Optional native layouts and element storage remain
+distinct from absence; matching physical dimensions alone does not establish equal
+semantic types. Recursive descriptor/element dependencies use the immutable acyclic
+model and the same accepted type/symbol lineage; no general PHP object-graph
+comparison, serialization fingerprint, reflection or new canonical IDs are used.
+
+Evidence: results/definition-contracts-01. Independent 30-definition, 18-family and
+17-record all-pairs matrices give 1,513 PHP/native outcomes, including membership
+snapshot checks. Seven targeted retained-prototype equality checks confirm critical
+normalization/order/identity distinctions; this is not 1,513 retained comparisons.
+One reserved local in the test fixture was corrected before PHP readiness. The
+first native build passed without correction. Complete Runtime_Type retention and
+package-context reuse are the next consumers, not yet wired by this checkpoint.

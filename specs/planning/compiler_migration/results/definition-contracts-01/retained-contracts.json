@@ -1,0 +1,18 @@
+{
+  "command": [
+    "php",
+    "compiler/tests/definition_contracts/oracle.php"
+  ],
+  "passed": true,
+  "checks": 7,
+  "seconds": 0.055,
+  "results": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ]
+}

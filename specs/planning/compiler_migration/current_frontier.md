@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **125 production files**: input preparation (137 outcomes),
+Active readiness is **126 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -234,3 +234,12 @@ imported/source operation plans participate; source member order matters, while
 role-map insertion order does not. Local type/body IDs are comparable only within
 the same accepted lineage. Next: complete definition/resource/layout/storage
 comparison, then type and package reuse. This helper alone does not authorize reuse.
+
+
+Full definition comparison adds 1,513 PHP/native matrix outcomes plus seven focused
+retained-prototype contract checks (`results/definition-contracts-01`). Resource
+paths, native layouts, record fields and typed-storage dependencies now participate
+alongside names, representations and lifecycle permissions. Empty resource wrappers
+normalize to no obligations; storage map insertion order is ignored while ordered
+paths/fields retain meaning. Next: integrate exact type retention, then package
+binding/project-context comparison; complete package acceptance remains unfinished.

@@ -56,7 +56,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('package_type_map', Path(__file__).parent / 'package_type_map/run.py'),
           ('runtime_package', Path(__file__).parent / 'runtime_package/run.py'),
           ('callable_contracts', Path(__file__).parent / 'callable_contracts/run.py'),
-          ('lifecycle_contracts', Path(__file__).parent / 'lifecycle_contracts/run.py')]
+          ('lifecycle_contracts', Path(__file__).parent / 'lifecycle_contracts/run.py'),
+          ('definition_contracts', Path(__file__).parent / 'definition_contracts/run.py')]
 
 
 def main():
