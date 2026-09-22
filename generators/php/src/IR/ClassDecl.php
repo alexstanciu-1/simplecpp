@@ -17,6 +17,7 @@ final class ClassDecl
 	 * @param list<ConstantDecl> $constants
 	 * @param list<MethodDecl> $methods
 	 * @param list<string> $interfaces
+	 * Parent/interface references retain a leading backslash for an authored absolute name.
 	 * @param list<ConstantDecl> $enumCases
 	 */
 	public function __construct(

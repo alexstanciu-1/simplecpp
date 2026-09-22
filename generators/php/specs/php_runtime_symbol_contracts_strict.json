@@ -12,6 +12,8 @@
 	],
 	"owner_availability_policy": {
 		"core": "strict_profile_core",
+		"collections": "strict_profile_core",
+		"process": "explicit_project_module",
 		"php": "strict_profile_core",
 		"str": "shared_runtime_core",
 		"source": "shared_runtime_core",
@@ -50,6 +52,386 @@
 		"contract_authority_source": "default_missing_contract"
 	},
 	"symbol_contracts": {
+		"fs_read_snapshot": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 3,
+			"max_arity": 3,
+			"parameter_type_refs": [
+				"string",
+				"int",
+				"int"
+			],
+			"parameter_names": [
+				"path",
+				"expected_mtime",
+				"expected_size"
+			],
+			"parameter_passing": [
+				"value",
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<string>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/filesystem/fs_read_snapshot.md"
+		},
+		"fs_is_windows": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"parameter_names": [],
+			"parameter_passing": [],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/filesystem/fs_is_windows.md"
+		},
+		"process_start": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 4,
+			"max_arity": 5,
+			"parameter_type_refs": [
+				"string",
+				"vector<string>",
+				"string",
+				"int",
+				"string"
+			],
+			"parameter_names": [
+				"executable",
+				"args",
+				"input",
+				"timeout_ms",
+				"cwd"
+			],
+			"parameter_passing": [
+				"value",
+				"value",
+				"value",
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<process_handle>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/process/process_start.md"
+		},
+		"process_poll": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"process_handle"
+			],
+			"parameter_names": [
+				"handle"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<bool>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/process/process_poll.md"
+		},
+		"process_result": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"process_handle"
+			],
+			"parameter_names": [
+				"handle"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<process_output>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/process/process_result.md"
+		},
+		"process_stop": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"process_handle"
+			],
+			"parameter_names": [
+				"handle"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<bool>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/process/process_stop.md"
+		},
+		"process_close": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"process_handle"
+			],
+			"parameter_names": [
+				"handle"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<bool>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/process/process_close.md"
+		},
+		"fs_lock_try": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 3,
+			"parameter_type_refs": [
+				"file_lock_handle",
+				"string",
+				"bool"
+			],
+			"parameter_names": [
+				"out",
+				"path",
+				"shared"
+			],
+			"parameter_passing": [
+				"reference",
+				"value",
+				"value"
+			],
+			"return_type_ref": "result<bool>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/filesystem/fs_lock_try.md"
+		},
+		"fs_lock_release": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"file_lock_handle"
+			],
+			"parameter_names": [
+				"handle"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<bool>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/filesystem/fs_lock_release.md"
+		},
+		"fs_lock_transfer": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": [
+				"file_lock_handle"
+			],
+			"parameter_names": [
+				"handle"
+			],
+			"parameter_passing": [
+				"value"
+			],
+			"return_type_ref": "result<file_lock_handle>",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/filesystem/fs_lock_transfer.md"
+		},
+		"sequence_map": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/sequence_map.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "map",
+				"accepted_carrier_families": [
+					"vector",
+					"fixed_array"
+				]
+			}
+		},
+		"sequence_filter": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/sequence_filter.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "filter",
+				"accepted_carrier_families": [
+					"vector",
+					"fixed_array"
+				]
+			}
+		},
+		"keyed_map": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/keyed_map.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "map",
+				"accepted_carrier_families": [
+					"hash",
+					"mixed"
+				]
+			}
+		},
+		"keyed_filter": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/keyed_filter.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "filter",
+				"accepted_carrier_families": [
+					"hash",
+					"mixed"
+				]
+			}
+		},
+		"collection_map": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/collection_map.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "map"
+			}
+		},
+		"collection_filter": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/collection_filter.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "filter"
+			}
+		},
 		"cli_argc": {
 			"contract_status": "complete",
 			"signature_status": "known",

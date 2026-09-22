@@ -171,6 +171,9 @@
         "fs_is_link": "fs::is_link",
         "fs_exists": "fs::exists",
         "fs_get": "fs::get",
+        "fs_lock_try": "fs::lock_try",
+        "fs_lock_release": "fs::lock_release",
+        "fs_lock_transfer": "fs::lock_transfer",
         "fs_put": "fs::put",
         "fs_mkdir": "fs::mkdir",
         "fs_scan": "fs::scan",
@@ -240,6 +243,19 @@
         "webview_message_id": "webview_runtime::message_id",
         "webview_message_command": "webview_runtime::message_command",
         "webview_message_payload_json": "webview_runtime::message_payload_json",
-        "webview_close": "webview_runtime::close"
+        "webview_close": "webview_runtime::close",
+        "process_start": "process::start",
+        "process_poll": "process::poll",
+        "process_result": "process::collect",
+        "process_stop": "process::stop",
+        "process_close": "process::close",
+        "collection_map": "collections::map",
+        "collection_filter": "collections::filter",
+        "sequence_map": "collections::sequence_map",
+        "sequence_filter": "collections::sequence_filter",
+        "keyed_map": "collections::keyed_map",
+        "keyed_filter": "collections::keyed_filter",
+        "fs_is_windows": "fs::is_windows",
+        "fs_read_snapshot": "fs::read_snapshot"
     }
 }

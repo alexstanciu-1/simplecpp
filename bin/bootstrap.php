@@ -43,6 +43,7 @@ require_once __DIR__ . '/../generators/php/src/Stan/StanFrontendClassifier.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanDependencyResolver.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanDiagnosticCollector.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanDiagnosticEnricher.php';
+require_once __DIR__ . '/../generators/php/src/Stan/StanRuntimeCallResolver.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanExpressionTypeResolver.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanPositionResolver.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanSourceUnit.php';

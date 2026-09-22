@@ -5,6 +5,7 @@ project(scpp_runtime LANGUAGES CXX)
 option(SCPP_LANGUAGE_TARGET_PHP "Build runtime with PHP-target array semantics" ON)
 option(SCPP_WITH_MYSQLI "Build runtime with the optional mysqli module enabled" ON)
 option(SCPP_WITH_REGEX "Build runtime with the optional PCRE2 regex module enabled" OFF)
+option(SCPP_WITH_PROCESS "Build managed child processes" OFF)
 option(SCPP_WITH_CURL "Build runtime with the optional libcurl module enabled" OFF)
 option(SCPP_WITH_UI "Build runtime with the optional native ui module enabled" OFF)
 
@@ -24,8 +25,20 @@ PUBLIC
 
 target_compile_features(scpp_json PUBLIC cxx_std_23)
 
+if(SCPP_WITH_PROCESS)
+	add_library(scpp_process SHARED include/modules/process/process.cpp)
+	target_include_directories(scpp_process PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+	target_compile_features(scpp_process PUBLIC cxx_std_23)
+	if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+		find_package(Threads REQUIRED)
+		target_link_libraries(scpp_process PRIVATE Threads::Threads)
+	endif()
+endif()
+
 add_library(scpp_filesystem SHARED
 	include/modules/filesystem/filesystem.cpp
+	include/modules/filesystem/file_lock.cpp
+	include/modules/filesystem/snapshot.cpp
 )
 
 target_include_directories(scpp_filesystem
@@ -103,6 +116,9 @@ PUBLIC
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
 target_link_libraries(scpp_runtime PUBLIC scpp_json scpp_filesystem scpp_datetime)
+if(SCPP_WITH_PROCESS)
+	target_link_libraries(scpp_runtime PUBLIC scpp_process)
+endif()
 if(SCPP_WITH_REGEX)
 	target_link_libraries(scpp_runtime PUBLIC scpp_regex)
 endif()

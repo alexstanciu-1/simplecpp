@@ -1,0 +1,5 @@
+namespace models;
+class Base {
+	public int $value = 11;
+	public function read(): int { return $this->value; }
+}

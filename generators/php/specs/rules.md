@@ -78,6 +78,23 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - non-void functions must return a value on all paths
 - void functions cannot return a value
 
+### Runtime shallow-signature metadata
+
+Strict contract rows in `php_runtime_symbol_contracts_strict.json` may opt into
+metadata-derived STAN signatures by supplying `parameter_names` and
+`parameter_passing` alongside `parameter_type_refs`. All three are ordered lists
+of equal length matching `max_arity`; passing entries are `value` or `reference`.
+`min_arity` selects required parameters. Optional parameters in this bounded path
+use the shallow generator's existing zero/false/empty/null defaults for scalar
+types; nonstandard defaults require extending the metadata contract first.
+The return comes from `return_type_ref`, and `signature_status` must be `known`.
+Malformed opt-in rows fail generation rather than falling back to guessed types.
+Rows without this metadata retain their existing signature-map path.
+
+This is signature rendering from authored metadata, not S2S type inference.
+The separate compiler's `source_consumption_status` is not changed by rendering
+the PHS shallow surface; its acceptance gates remain independently tracked.
+
 ### Closures and callable locals
 - Closure expressions are concrete callable values and lower to native C++ lambdas.
 - Explicit strict callable locals such as `$f function<int()> = function () use ($a) { return $a; };` lower to `std::function<int_t()>` storage and provide the expected closure signature when the initializer omits a return type.
@@ -343,6 +360,14 @@ Priority note:
 - `/** vector<T> */ []` lowers to `vector_t<T>{}`
 - `/** vector<T> */ [e1, e2, ...]` lowers to `vector_t<T>{e1, e2, ...}`
 - typed vector literals must remain positional; explicit keys are rejected
+- Ordinary typed vector reads use checked `.at(...)` access. Chained reads follow
+  each explicit container element type, including fields declared on the current
+  class reached through `$this`. The current class IR supplies that authored field
+  type; `$this` must not require a local-variable declaration to retain it.
+- This is a local structural metadata lookup, not inheritance resolution or
+  whole-program inference. It introduces no aliases: a local initialized from a
+  vector/inner-vector read retains normal value-copy semantics. Nested writes and
+  appends continue through the separate mutating LHS path.
 
 ### Typed hashes
 - Typed hash literals use the same expected-type initializer path inside struct fields and nested vector/hash/fixed-array literals as at typed local declarations. Known container element/value types must remain typed during recursive literal lowering.
@@ -452,7 +477,20 @@ Known semantic edge:
 - include minimization is not required for the generator
 
 ### Forward Declarations
+- An explicitly absolute base/interface reference must not create a forward
+  declaration inside the derived class's namespace. Its dependency must resolve
+  by the exact qualified identity, without a short-name fallback to another scope.
 - forward declarations may be used only in trivial obvious cases where a class type is referenced through `shared_p<T>` in declarations
+- `TypeMapper` owns classification of atomic runtime-provided type declarations.
+  After traversing container/wrapper arguments, the header emitter consults that
+  owner rather than declaring runtime types as user classes. In particular,
+  `file_lock_handle`, `process_handle` and `process_output` are runtime aliases;
+  emitting `class` declarations for them is invalid. Leading source backslashes
+  do not change their ownership; qualified user names are not matched by basename.
+- Declaration ownership is independent of value/handle representation. These
+  aliases retain ordinary shared class-handle mapping in parameters, returns,
+  fields and wrapper payloads, including native handle references for authored
+  by-reference parameters. Ordinary user-class forward declarations remain valid.
 - the generator must not build a dependency solver for include optimization
 - if a case is not trivially safe for forward declaration, the generator may use the simpler include-based path instead
 
@@ -540,6 +578,17 @@ The generator must not emit raw `new` for these supported construction forms.
 ### 15.2 Static Access
 - same-namespace static access remains unqualified, for example `X::make()`
 - fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` â†’ `::scpp::A::X::make()`
+
+### Explicit inheritance references
+- IR parent/interface references retain authored absolute qualification. For
+  example, `namespace diagnostics; class Child extends \Root_Base {}` inherits
+  from `::scpp::Root_Base`, even when `diagnostics::Root_Base` also exists.
+- Base declarations, parent constructor initializers and `parent::` calls use
+  the same preserved reference. A leading `parent::__construct(...)` expression
+  statement is consumed into the C++ base initializer, not emitted as a method call.
+- Explicitly qualified class references in construction and typed catches also
+  retain their source root. Existing unqualified inheritance behavior is unchanged;
+  this rule does not add general inheritance analysis or import resolution.
 
 ### 15.3 Static Access Through Instances
 PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`.
@@ -696,7 +745,7 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;``. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;``. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; rooted runtime/helper occurrences are limited to generated using-directives and explicit import-lowering forms such as `use` declarations. Explicit source class references preserve their root as specified under Explicit inheritance references. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
@@ -883,8 +932,11 @@ php::expect_array_argument(...)
 ::scpp::A::B::LIMIT
 ```
 
-Allowed exception:
+Allowed exceptions:
 - generated using-directives/import-lowering lines may still use rooted forms, for example `using namespace ::scpp;` or `using ::scpp::A::B::f;`
+- Explicit source class qualification is preserved as a rooted class path in
+  inheritance, parent initializers/calls, construction and typed catches. This is
+  user-class identity, not runtime helper qualification.
 
 Example:
 ```cpp
@@ -1328,3 +1380,40 @@ If a symbol is not present in the registry, the generator will **not** rewrite i
 - `take(...)` output arguments must be simple local variables in v1. Wrong arity, wrong output type, or a non-wrapper source is a compile-time generator error when the source or output type is known.
 - `take(...)` evaluates its source expression exactly once and returns `bool_t`; for `result_or_bool<T>`, the helper returns `true` for both wrapped-value and bool-true states so mysqli-style APIs remain representable.
 - `take(...)` is the preferred explicit payload-extraction form for `result*<T>` wrappers because the generator does not perform symbol-resolution-driven wrapper inference.
+
+### Argument-dependent runtime calls
+
+Strict runtime contracts may opt into `call_contract` metadata. The initial
+bounded schema is `{"kind":"collection_transform","operation":"map"}` or
+`filter`; it requires collection argument 0 and callback argument 1. This is a
+STAN semantic rule, not a generator type-inference rule or user-defined generics.
+
+`FrontEndSymbolExtractor` preserves arguments on function-call expression chains
+and emits structural `callable` descriptors containing authored parameters,
+return type and return-reference flag. `IrBuilder` supplies the same annotation
+reading used by ordinary declarations; summaries restore the owning file's
+annotations before reading closures. No symbols or types are inferred there.
+
+`StanRuntimeCallResolver` instantiates the registered rule from argument types.
+The expression resolver uses it for both result inference and call diagnostics,
+including nested argument, return and element expressions. Its collection type
+policy also supplies foreach element/key types. Explicit callable-local types
+and complete inline/local closure signatures share `function<U(T)>` type syntax.
+Existing concrete calls retain their fixed signatures. Constrained collection
+adapters add `accepted_carrier_families` to the same call contract. STAN checks
+that authored/inferred carrier family before reusing callback validation and result
+construction. Indexed expression descriptors also use this carrier model for value
+types, including the value-first `hash<T,K>` order and nested generic arguments.
+
+The generated shallow function has erased `mixed` positions solely so its name
+and arity can be represented in parseable PHS. Its generated comment identifies
+that erasure; it is not the semantic call result. The fixed-return catalog reports
+no fixed return type for a polymorphic call. STAN instantiates the metadata rule,
+and does not fall back to the erased result when instantiation fails. Both the
+resolver and contract JSON participate in STAN implementation/cache signatures.
+
+The generator still lowers ordinary registered names to native entry points and
+lets C++ deduce templates. Dynamic result locals need an explicit `dynamic`
+annotation for subsequent shared-table subscript lowering. Generic PHS
+`dynamic<T,K>` remains unsupported. See `specs/builtins/collections.md` for the
+normative helper contract and callback discipline.

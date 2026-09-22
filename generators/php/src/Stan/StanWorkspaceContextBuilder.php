@@ -94,6 +94,8 @@ final class StanWorkspaceContextBuilder
 			$repoRoot . '/generators/php/src/Stan/StanDiagnosticCollector.php',
 			$repoRoot . '/generators/php/src/Stan/StanDiagnosticEnricher.php',
 			$repoRoot . '/generators/php/src/Stan/StanExpressionTypeResolver.php',
+			$repoRoot . '/generators/php/src/Stan/StanRuntimeCallResolver.php',
+			$repoRoot . '/generators/php/specs/php_runtime_symbol_contracts_strict.json',
 			$repoRoot . '/generators/php/src/Stan/StanFilePass.php',
 			$repoRoot . '/generators/php/src/Stan/StanFrontendClassifier.php',
 			$repoRoot . '/generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php',

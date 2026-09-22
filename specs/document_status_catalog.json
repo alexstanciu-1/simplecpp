@@ -4,6 +4,106 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path":  "specs/builtins/filesystem/fs_read_snapshot.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fs_is_windows.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/sequence_map.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/sequence_filter.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/keyed_map.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/keyed_filter.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/process/process_start.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/process/process_poll.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/process/process_result.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/process/process_stop.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/process/process_close.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/collection_map.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/collection_filter.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/process.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/planning/issue_231_runtime_capabilities_design.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/file_locks.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fs_lock_try.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fs_lock_release.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fs_lock_transfer.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
                         "path":  "CHANGELOG.md",
                         "kind":  "markdown",
                         "doc_status":  "supporting"

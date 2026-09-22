@@ -33,6 +33,7 @@ final class FrontEndSymbolExtractor
 	/** @return array<string,mixed> */
 	public function summarize(PhpFile $file, ?string $sourceCode = null): array
 	{
+		$this->builder->useAnnotations($file->scannerAnnotations);
 		$sourceLines = $this->loadSourceLines($file->path, $sourceCode);
 		$namespaces = [];
 		foreach ($file->namespaces as $namespaceBlock) {
@@ -1190,6 +1191,7 @@ final class FrontEndSymbolExtractor
 				return [
 					'line' => $line,
 					'root_kind' => 'function_call',
+					'args' => $this->describeArgs($current->children['args'] ?? null, $line),
 					'root_name' => $name,
 					'segments' => $segments,
 				];
@@ -2177,6 +2179,15 @@ final class FrontEndSymbolExtractor
 	/** @return array<string,mixed> */
 	private function describeExpression(mixed $expr, int $line): array
 	{
+		if (is_object($expr) && ($expr->kind ?? null) === AstKind::CLOSURE) {
+			$params = $this->builder->buildParams(array_values($expr->children['params']->children ?? []));
+			return [
+				'kind' => 'callable',
+				'returns_reference' => (((int) ($expr->flags ?? 0)) & AstKind::RETURN_REF) !== 0,
+				'params' => array_map($this->summarizeParam(...), $params),
+				'return_type' => $this->builder->resolveFunctionLikeReturnType($expr),
+			];
+		}
 		$element = $this->describeElementExpression($expr, $line);
 		if ($element !== null) {
 			return $element;
