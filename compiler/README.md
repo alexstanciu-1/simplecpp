@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **95 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **97 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -109,3 +109,7 @@ and [adaptation/timing record](../specs/planning/compiler_migration/php_adaptati
 Normalized record catalog storage and family import acceptance now add 30 PHP/native
 checks, with scalar/catalog and source-resolution native regressions passing.
 Prepared-package ingestion/composition and shared symbol integration remain pending.
+
+Prepared callable ABI transport and semantic compatibility add 66 PHP/native checks
+and retained-validator agreement for 32 compatibility cases and slot mappings.
+Storage-family contracts and complete prepared-package consumption remain pending.

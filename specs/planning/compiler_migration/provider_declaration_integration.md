@@ -100,3 +100,8 @@ Normalized record catalog storage and Family_Adapter acceptance/exposure validat
 are also proved (results/provider-catalog-01). This completes record lookup and
 family-to-catalog mapping checks, not prepared-package JSON ingestion/composition.
 Existing scalar and project-resolution native proofs pass on the extended catalog.
+
+Prepared callable ABI records and semantic compatibility checks are now proved
+(results/callable-abi-01). Exact extension/result/binding/conversion spellings,
+borrow modes, span expansion and hidden-result slots are retained. Storage-family
+contracts and package ingestion remain dependencies before complete provider imports.

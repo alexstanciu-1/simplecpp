@@ -98,3 +98,5 @@ require_once __DIR__ . '/src/04_analyze/type_model/data/families.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/source_families.php';
 require_once __DIR__ . '/src/04_analyze/type_model/family_contracts.php';
 require_once __DIR__ . '/src/01_prepare_inputs/load_runtime/family_adapter.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/callable_modes.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/callables.php';

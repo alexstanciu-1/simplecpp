@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **95 production files**: input preparation (137 outcomes),
+Active readiness is **97 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -92,3 +92,7 @@ Normalized record catalogs and Family_Adapter acceptance now add 30 PHP/native
 outcomes. Existing scalar catalog (116) and project resolution (182) native proofs
 pass after the shared catalog extension. Next: prepared callable/storage contracts
 and package metadata ingestion/composition, then provider symbol origins and bindings.
+
+Prepared callable ABI contracts add 66 PHP/native outcomes, 32 retained compatibility
+comparisons and direct/hidden slot-map agreement. Next: storage-family contracts,
+then package ingestion/composition and shared provider symbol integration.

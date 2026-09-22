@@ -908,3 +908,30 @@ regressions, to avoid multiplying one new-shape failure.
 Evidence, source hashes, commands and phase timings: results/provider-catalog-01.
 Package ingestion/composition, callable/storage contracts, shared provider symbols
 and name bindings, and full template execution still remain.
+
+## Callable ABI transport and semantic compatibility (2026-09-22)
+
+Migrated the prototype's prepared-callable model. Integer, borrowed-address and
+byte-span ABI subclasses become a tagged Runtime_Abi_Position with validated
+payload shapes; byte spans retain their measured integer-length ABI. No semantic
+passing or ownership capability is inferred from a pointer or native link name.
+Runtime_Callable_Abi copies typed parameters and builds semantic-to-physical slot
+mappings explicitly: hidden result storage takes slot zero, spans take two slots,
+and ordinary parameters take one. Accessors preserve immutable container snapshots.
+
+Compatibility validation preserves all prototype passing/result rules, including
+rejection of unresolved dependent results and mismatched owned-result transport.
+Runtime_Callable retains exact semantic/ABI objects and source/provider identities.
+Nullable binding/conversion tags preserve absent versus zero-valued permissions;
+explicit codecs retain the original provider strings. Direct ABI results remain
+integer-only; generic storage primitives will have their own address-result contract.
+
+66 independent PHP/native outcomes pass. The retained validator agrees on all
+16 argument-passing and 16 result-production combinations and both direct/hidden
+slot mappings. Native command attempt one stopped at STAN before C++ compilation:
+codec early returns plus terminal throws were misclassified as missing returns.
+The existing explicit-result/final-return style passes on attempt two, which is
+the first actual C++ build. No converter or v0.1 modification.
+
+Timing/evidence: results/callable-abi-01. Next: storage-family contracts and prepared
+package consumption. Shared provider symbol integration remains incomplete.

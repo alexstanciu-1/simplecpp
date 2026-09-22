@@ -1,0 +1,29 @@
+STAN pre-build check failed: 8 compile-errors
+
+[compile-error] Function `type_model\Callable_Modes::extension_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:20
+
+[compile-error] Function `type_model\Callable_Modes::extension` declared as `int` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:26
+
+[compile-error] Function `type_model\Callable_Modes::result_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:30
+
+[compile-error] Function `type_model\Callable_Modes::result` declared as `int` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:35
+
+[compile-error] Function `type_model\Callable_Modes::binding_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:39
+
+[compile-error] Function `type_model\Callable_Modes::binding` declared as `int` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:44
+
+[compile-error] Function `type_model\Callable_Modes::conversion_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:48
+
+[compile-error] Function `type_model\Callable_Modes::conversion` declared as `int` may exit without returning a value.
+  at src/04_analyze/type_model/data/callable_modes.phs:55
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

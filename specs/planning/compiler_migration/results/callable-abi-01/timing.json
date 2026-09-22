@@ -1,0 +1,25 @@
+{
+  "authoring_start_epoch": 1790095473.2573133,
+  "first_php_ready_epoch": 1790095563.265307,
+  "authoring_to_php_ready_seconds": 90.008,
+  "first_php_ready_sha256": {
+    "src/04_analyze/type_model/data/callable_modes.php": "6da2aae7af9314805bea131a18d57283e65152a2a16a2d93bd9089699d2a9993",
+    "src/04_analyze/type_model/data/callables.php": "2450e8479025d72917f1a8f3b2abe7edcb432c835ed6385fc107b0abdcb9f146"
+  },
+  "native_command_attempts_to_first_pass": 2,
+  "cpp_compilation_attempts_to_first_pass": 1,
+  "prebuild_stan_corrective_cycles": 1,
+  "cpp_corrective_cycles": 0,
+  "correction": "STAN did not recognize value-return branches followed by terminal throw as exhaustive; use explicit result variables and a final return as in existing codecs.",
+  "native_build_seconds": [
+    0.711,
+    26.466
+  ],
+  "native_ready_epoch": 1790095662.167071,
+  "post_php_note": "Includes source correction and independent retained-oracle authoring.",
+  "consolidation_start_epoch": 1790095742.9639468,
+  "final_verification_builds": 1,
+  "final_verification_reason": "Strengthened codec proof from roundtrip-only to independent provider string expectations; production sources unchanged.",
+  "proof_fixture_sha256": "2e01f8065dfcb0bbc22604df552a705815824e01eec69ddbe26bca9f02f7c46b",
+  "consolidation_end_epoch": 1790095856.6591046
+}
