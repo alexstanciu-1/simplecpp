@@ -489,3 +489,28 @@ native cases. The new factory/mode paths have 98 independent native expected out
 No source-runtime-preparation, converter, framework or target code was changed.
 See [the evidence](results/type-representations-01/README.md). Continue with lifecycle
 operations/contracts, then named definitions and the catalog binding required by entry.
+
+## Lifecycle operations and shared lifetime policies (2026-09-22)
+
+The prototype's runtime/source operation union becomes one explicitly tagged record
+with distinct named factories, validated inactive payloads and retained linkage/owner
+facts. Nullable constituent operations still mean primitive behavior, not missing
+information. Source member vectors are copied; constituent operations remain shared
+immutable identities. Composition preserves custom copy/default initialization, custom
+assignment ownership, reverse destruction and move/copy fallback. No actual operation
+execution or backend availability is inferred by constructing these descriptors.
+
+Lifetime permission fields are compact producer data copied into private contract
+state. Optional implementations are indexed by lifecycle role rather than five nullable
+slots. Exact required/forbidden role checks preserve the original relationship between
+permissions and bindings; absent lookups require an explicit has_operation check. This
+is structural adaptation, not removal of lifecycle semantics. Unknown policy strings
+and tags reject through explicit codecs. Construction also checks malformed metadata,
+negative member/range IDs and duplicate operation bindings earlier than the prototype.
+
+All 154 PHP/native outcomes passed on the first checker/conversion/native build. The
+retained lifecycle/definition files execute directly as a host ordering/fallback oracle;
+four host serialization assertions prove input-policy/list/order-view independence.
+No converter/framework/target changes were required. Timings:
+[type lifetime evidence](results/type-lifetimes-01/README.md). Next is the scalar
+language catalog's named definitions and authoritative entry/default bindings.

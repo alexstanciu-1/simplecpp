@@ -1,0 +1,13 @@
+{
+  "php_outcomes": 154,
+  "native_outcomes": 154,
+  "host_purity_assertions": 4,
+  "checker_corrections": 0,
+  "native_build_attempts": 1,
+  "native_failure_corrective_cycles": 0,
+  "native_behavior_attempts": 1,
+  "final_ready_files": 48,
+  "converter_changes": false,
+  "framework_changes": false,
+  "target_changes": false
+}

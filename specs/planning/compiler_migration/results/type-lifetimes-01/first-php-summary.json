@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "cases": 154,
+  "command": [
+    "php",
+    "-r",
+    "require \"compiler/bootstrap.php\"; require \"compiler/tests/type_lifetimes/probe.php\"; \\lifetime_test\\Probe::run();"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337"
+  }
+}

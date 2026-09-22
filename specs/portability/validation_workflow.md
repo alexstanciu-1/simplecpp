@@ -3,7 +3,7 @@ Doc Status: supporting
 
 ## Active rewrite proofs
 
-The ready set contains forty-four input/tokenization/parser/source-symbol production files. The default driver runs their
+The ready set contains forty-eight input/tokenization/parser/source-symbol production files. The default driver runs their
 PHP outcome proof plus independent framework checks. Add `--native compiler
 --target-checkout TARGET` to convert and prove all registered rewrite stages natively.
 `compiler/tests/run.py` requires the ready set to match registered stage sources.
@@ -75,7 +75,7 @@ Select proofs relevant to the change; repeat `--native` to request several:
 | Selection | Existing owner |
 | --- | --- |
 | `os` | Process/lock facade parity; requires the alias-signature fix in `2f0d667f` or a proved successor |
-| `compiler` | Registered active rewrite stages: forty-four production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle), syntax access/comparison 134, project parser 66 (+9 host purity), source collection 97 (+9 host purity), entry selection 44 (+9 host purity), representations 98 (+5 host assertions and retained constructor oracle) |
+| `compiler` | Registered active rewrite stages: forty-eight production files; manifest 35, discovery 62, reads 40, tokenizer 304, parser foundation 414, expressions 132, file grammar 82 (+9 host lifecycle), syntax access/comparison 134, project parser 66 (+9 host purity), source collection 97 (+9 host purity), entry selection 44 (+9 host purity), representations 98 (+5 host assertions and retained constructor oracle), lifetimes 154 (+4 host assertions and retained oracle) |
 | `methods` | Named/scalar method boundaries, void, identity and mutation |
 | `returns` | Container return copying and nonpublic scalar state |
 | `iteration` | Typed map presence checks and by-value iteration |
@@ -169,3 +169,5 @@ cost of getting it working natively. It adds no requirement for more frequent bu
 [Source entry preparation](entry_preparation.md) proves manifest selection and supporting-file execution policy (44 PHP/native outcomes plus nine host purity checks). Catalog return-type binding remains pending.
 
 [Type representations](type_representations.md) adds 98 PHP/native outcomes for all prototype value shapes, passing/result modes and context/lineage records, plus retained-constructor and host purity checks.
+
+[Type lifetimes](type_lifetimes.md) adds 154 PHP/native outcomes for operation composition and capability/binding validation, with retained-prototype and host purity checks.

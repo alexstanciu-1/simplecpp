@@ -1,0 +1,57 @@
+{
+  "measurement": "Elapsed wall time, includes tests and waits; initial orientation excluded. Milestones recorded immediately after successful commands.",
+  "started": "2026-09-22T10:55:00.722773+00:00",
+  "milestones": [
+    {
+      "name": "authoring-start",
+      "at": "2026-09-22T10:55:00.722773+00:00"
+    },
+    {
+      "name": "php-ready",
+      "at": "2026-09-22T10:57:06.336712+00:00",
+      "evidence": "/tmp/lifetimes-first-php-summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+        "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+        "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+        "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337"
+      }
+    },
+    {
+      "name": "native-ready",
+      "at": "2026-09-22T10:58:48.916836+00:00",
+      "evidence": "/tmp/scpp-lifetimes-native-01/summary.json",
+      "source_sha256": {
+        "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+        "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+        "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+        "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337"
+      }
+    },
+    {
+      "name": "regression-start",
+      "at": "2026-09-22T10:58:49.145204+00:00"
+    },
+    {
+      "name": "regression-passed",
+      "at": "2026-09-22T10:59:54.757709+00:00"
+    },
+    {
+      "name": "consolidation-start",
+      "at": "2026-09-22T10:59:54.804081+00:00"
+    },
+    {
+      "name": "finish",
+      "at": "2026-09-22T11:01:34.710222+00:00"
+    }
+  ],
+  "finished": "2026-09-22T11:01:34.710222+00:00",
+  "elapsed_seconds": 393.987,
+  "interval_seconds": {
+    "authoring_to_php_ready": 125.614,
+    "php_to_native_ready": 102.58,
+    "regression_wall": 65.613,
+    "consolidation_wall": 99.906
+  },
+  "overlap_note": "Intervals include overlapping oracle, documentation, waits and validation; not additive active-work costs."
+}

@@ -3,8 +3,8 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection and type representations cover **44 production files**
-with PHP/native proofs. Representation vocabulary is proved; lifetime and named-definition contracts come next. No active compiler
+reuse, source declarations, entry selection, representations and lifecycle contracts cover **48 production files**
+with PHP/native proofs. Representation vocabulary is proved; lifecycle contracts are proved; scalar named-definition catalog ingestion comes next. No active compiler
 CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
@@ -14,7 +14,7 @@ Bring reusable code in deliberately, applying the portable-PHP and strict skills
 
 The converter, PHP runtime framework and reusable capability tests remain at
 `tools/php_portability/` and `tests/portability/` from the repository root.
-`portability.json` lists the forty-four proved source files. `tools/portability_target.json`
+`portability.json` lists the forty-eight proved source files. `tools/portability_target.json`
 pins tested, unreleased #240 candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
 Other retained toolchain configuration is historical provider/tooling input, not
 proof that the rewritten compiler can run it already.
@@ -76,3 +76,5 @@ scheduler and later semantic stages remain pending.
 [Source entry preparation](../specs/portability/entry_preparation.md) proves manifest selection and supporting-file execution policy (44 PHP/native outcomes plus nine host purity checks). Catalog return-type binding remains pending.
 
 [Type representations](../specs/portability/type_representations.md) adds 98 PHP/native outcomes for all prototype value shapes, passing/result modes and context/lineage records, plus retained-constructor and host purity checks.
+
+[Type lifetimes](../specs/portability/type_lifetimes.md) adds 154 PHP/native outcomes for operation composition and capability/binding validation, with retained-prototype and host purity checks.

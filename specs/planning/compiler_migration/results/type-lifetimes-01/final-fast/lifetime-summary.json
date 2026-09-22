@@ -1,0 +1,111 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "retained-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/type_lifetimes/oracle.php"
+      ],
+      "seconds": 0.051,
+      "exit": 0
+    },
+    {
+      "label": "host-purity",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/type_lifetimes/purity.php"
+      ],
+      "seconds": 0.056,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source"
+      ],
+      "seconds": 0.068,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source"
+      ],
+      "seconds": 0.204,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source/src/04_analyze/type_model/data/lifetime_policy_codec.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source/probe.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source/main.php"
+      ],
+      "seconds": 0.052,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/phpp"
+      ],
+      "seconds": 0.127,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/source",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/phpp"
+      ],
+      "seconds": 0.059,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/scpp-lifetimes-final-fast-01/compiler-php/type_lifetimes/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.057,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 0,
+  "native": false,
+  "cases": 154,
+  "lifetime_outcomes": 154,
+  "host_purity_assertions": 4,
+  "production_files": [
+    "src/04_analyze/type_model/data/lifecycle_roles.php",
+    "src/04_analyze/type_model/data/lifecycle.php",
+    "src/04_analyze/type_model/data/lifetime_contract.php",
+    "src/04_analyze/type_model/data/lifetime_policy_codec.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337"
+  }
+}

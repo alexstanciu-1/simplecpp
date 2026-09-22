@@ -47,3 +47,7 @@ require_once __DIR__ . '/src/04_analyze/resolve_types/main_prepare_entry.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/semantic_modes.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/representations.php';
 require_once __DIR__ . '/src/04_analyze/type_model/data/context.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/lifecycle_roles.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/lifecycle.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/lifetime_contract.php';
+require_once __DIR__ . '/src/04_analyze/type_model/data/lifetime_policy_codec.php';

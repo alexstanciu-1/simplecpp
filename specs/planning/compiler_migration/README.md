@@ -5,8 +5,8 @@ See [the current dependency frontier](current_frontier.md) for next actions and
 accepted migration decisions and outstanding target requirements.
 
 **Rewrite reset completed; source collection proved:** input preparation, tokenization,
-parser storage/grammar/queries/project reuse, source symbols, entry selection and representations provide
-forty-four active production files. Source collection adds 97 PHP/native outcomes
+parser storage/grammar/queries/project reuse, source symbols, entry selection, representations and lifecycle contracts provide
+forty-eight active production files. Source collection adds 97 PHP/native outcomes
 and nine host purity assertions. Source entry selection adds 44 PHP/native outcomes and nine host purity checks; its return-type binding awaits the type catalog.
 See [file parser](../../portability/file_parser.md).
 See [parser foundation](../../portability/parser_foundation.md).
