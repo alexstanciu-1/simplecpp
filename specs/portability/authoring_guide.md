@@ -67,6 +67,10 @@ arities and target bindings. Arbitrary q_-prefixed PHP builtins are not supporte
 | Sequence/keyed map and filter | Explicit carrier policy and bounded typed `function` callbacks; [contract and candidate target](collection_helpers.md). |
 | Managed text and explicit byte helpers | Text helpers validate UTF-8 and use code points; byte helpers serve source offsets/binary data. [String contract](utf8_text_contract.md). |
 
+File-scope constants currently accept integer literals; class constants are not
+converted. For fixed string metadata such as a protocol profile, use an explicit
+static accessor returning the string.
+
 Read the linked slice before using its advanced forms. Do not assume that because
 the index recognizes a declaration kind its body or interactions are supported.
 

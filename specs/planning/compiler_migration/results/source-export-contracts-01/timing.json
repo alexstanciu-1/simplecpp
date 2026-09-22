@@ -1,0 +1,22 @@
+{
+  "authoring_start_epoch": 1790103379.0,
+  "php_ready_epoch": 1790103666.1784618,
+  "php_ready_sha256": {
+    "src/05_generate_code/prepare_backend/data/abi.php": "a35af4224ecd7c67eb4de0144a0dcc9add66b489ed0a4936b3b3b7bee41c701e",
+    "src/05_generate_code/prepare_backend/data/source_exports.php": "f6ae3afb4376fa8d8fdd3b2c3c136799c673d07efb1615c95b0cbd1ea7e22ddc"
+  },
+  "authoring_to_php_ready_seconds": 287.178,
+  "php_ready_to_native_pass_seconds": 64.185,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 2,
+  "failed_checker_runs": 3,
+  "checker_corrections": [
+    "Rename probe local export to operation_export.",
+    "Replace unsupported string class constant with static profile accessor."
+  ],
+  "checker_repeat_note": "One prematurely scheduled target run repeated the same class-constant checker failure; it did not reach native build.",
+  "native_build_seconds": 36.284,
+  "consolidation_start_epoch": 1790103765.1578417,
+  "consolidation_end_epoch": 1790103876.7972662
+}

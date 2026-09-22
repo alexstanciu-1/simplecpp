@@ -1420,3 +1420,30 @@ raise the original logical errors through explicit guards. Proofs cover copied
 membership, shared identities, metadata bounds, native predicate behavior and six
 PHP-only malformed carrier cases. Native measuring, join acceptance and source export
 publication remain future components. Evidence: `results/layout-contracts-01`.
+
+
+## Physical ABI and source-export capability records
+
+Backend ABI parameter/target records retain explicit LLVM spellings, extension tags
+and exact selected lifecycle objects. The prototype's runtime/source lifecycle union
+uses the already-proved tagged Lifecycle_Operation owner. Source-export capability
+validation additionally requires a source operation, preserving the former PHP
+parameter-type restriction rather than accepting an imported operation by accident.
+
+Source role/state enums become compact codes with exact protocol-name codecs. The
+nine-field semantic profile becomes a named readonly record instead of an ad hoc
+array. Both move roles stay explicitly unsupported for source export; requiring one
+cannot silently select copying. Task/export maps copy membership and retain exact
+project, identity, accepted layout, capability and ABI associations. Implementation
+and import targets remain distinct. Producer/join acceptance still owns publication;
+record construction alone is not an accepted export.
+
+The fixed source payload profile is a static `profile()` accessor because class
+string constants are not in the portable converter subset. The wire spelling is
+unchanged. An early reserved-local check also caught `$export` in the test probe.
+These are source adaptations, not converter/runtime feature additions.
+
+The final source_linkage record is deferred until its runtime-input and analyzed
+verification owners exist; it is not replaced with mixed containers or fake types.
+Source-export selection/preparation/join validation remain pending. Evidence and
+correction timings: `results/source-export-contracts-01`.

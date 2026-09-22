@@ -51,7 +51,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('native_type_import', Path(__file__).parent / 'native_type_import/run.py'),
           ('export_provenance', Path(__file__).parent / 'export_provenance/run.py'),
           ('export_identity', Path(__file__).parent / 'export_identity/run.py'),
-          ('layout_contracts', Path(__file__).parent / 'layout_contracts/run.py')]
+          ('layout_contracts', Path(__file__).parent / 'layout_contracts/run.py'),
+          ('source_export_contracts', Path(__file__).parent / 'source_export_contracts/run.py')]
 
 
 def main():

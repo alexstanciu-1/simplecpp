@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **115 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **117 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 
@@ -156,3 +156,10 @@ comparisons and six PHP carrier rejections (`results/layout-contracts-01`). Copi
 container membership retains exact shared lineage and definition provenance. Native
 measurement/join acceptance remain unimplemented. Next: source export capability
 and task records, then compiler-side source payload binding and package composition.
+
+
+Physical ABI and source-export records add 219 PHP/native outcomes, including 204
+retained capability/semantic comparisons (`results/source-export-contracts-01`).
+Source-only complete plans, explicit unavailable states and separate import/implementation
+associations are preserved. Next: compiler-side source payload binding and package
+type composition; source export production/join/linkage remain unfinished.

@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **115 production files**: input preparation (137 outcomes),
+Active readiness is **117 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -190,3 +190,10 @@ comparisons and six PHP carrier rejections (`results/layout-contracts-01`). Copi
 container membership retains exact shared lineage and definition provenance. Native
 measurement/join acceptance remain unimplemented. Next: source export capability
 and task records, then compiler-side source payload binding and package composition.
+
+
+Physical ABI and source-export records add 219 PHP/native outcomes, including 204
+retained capability/semantic comparisons (`results/source-export-contracts-01`).
+Source-only complete plans, explicit unavailable states and separate import/implementation
+associations are preserved. Next: compiler-side source payload binding and package
+type composition; source export production/join/linkage remain unfinished.
