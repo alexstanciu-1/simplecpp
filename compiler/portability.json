@@ -232,7 +232,9 @@
     "src/04_analyze/check_bodies/utilities/body_validity.php",
     "src/04_analyze/check_bodies/select_tasks.php",
     "src/04_analyze/check_bodies/join.php",
-    "src/04_analyze/check_bodies/main_check_bodies.php"
+    "src/04_analyze/check_bodies/main_check_bodies.php",
+    "src/04_analyze/analyze_lifetimes/data/initialization.php",
+    "src/04_analyze/analyze_lifetimes/flow.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

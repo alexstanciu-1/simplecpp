@@ -1,0 +1,148 @@
+[
+  {
+    "name": "empty",
+    "source": "function f(): int { return 0; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "parameter",
+    "source": "function f($p int): int { return $p; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "locals",
+    "source": "function f($p int): int { $a int=1; $b int=2; return $b; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "nested",
+    "source": "function f(): int { { $a int=1; { $b int=2; } } $c int=3; return $c; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "branch",
+    "source": "function f($p int): int { $a int=1; if ($p) { $b int=2; } else { $c int=3; } return $a; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "returns",
+    "source": "function f($p int): int { if ($p) { $a int=1; return $a; } else { $b int=2; return $b; } } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "loop",
+    "source": "function f($p int): int { $a int=1; while ($p) { $b int=2; $p=0; } return $a; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "nested_loops",
+    "source": "function f($p int): int { $a int=1; while ($p) { $b int=2; while ($p) { $c int=3; $p=0; } $p=0; } return $a; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "branch_loop",
+    "source": "function f($p int): int { while ($p) { if ($p) { $a int=1; } else { $b int=2; } $p=0; } return $p; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "unreachable",
+    "source": "function f(): int { return 0; $a int=1; while (1) { $b int=2; } } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "shadow",
+    "source": "function f(): int { { $x int=1; } { $x int=2; } return 0; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "many_locals",
+    "source": "function f($p int): int { $x0 int=0; $x1 int=1; $x2 int=2; $x3 int=3; $x4 int=4; $x5 int=5; $x6 int=6; $x7 int=7; $x8 int=8; $x9 int=9; $x10 int=10; $x11 int=11; $x12 int=12; $x13 int=13; $x14 int=14; $x15 int=15; $x16 int=16; $x17 int=17; $x18 int=18; $x19 int=19; $x20 int=20; $x21 int=21; $x22 int=22; $x23 int=23; $x24 int=24; $x25 int=25; $x26 int=26; $x27 int=27; $x28 int=28; $x29 int=29; $x30 int=30; $x31 int=31; $x32 int=32; $x33 int=33; $x34 int=34; $x35 int=35; $x36 int=36; $x37 int=37; $x38 int=38; $x39 int=39; $x40 int=40; $x41 int=41; $x42 int=42; $x43 int=43; $x44 int=44; $x45 int=45; $x46 int=46; $x47 int=47; $x48 int=48; $x49 int=49; $x50 int=50; $x51 int=51; $x52 int=52; $x53 int=53; $x54 int=54; $x55 int=55; $x56 int=56; $x57 int=57; $x58 int=58; $x59 int=59; $x60 int=60; $x61 int=61; $x62 int=62; $x63 int=63; $x64 int=64; $x65 int=65; $x66 int=66; $x67 int=67; $x68 int=68; $x69 int=69; $x70 int=70; $x71 int=71; $x72 int=72; $x73 int=73; $x74 int=74; $x75 int=75; $x76 int=76; $x77 int=77; $x78 int=78; $x79 int=79; $x80 int=80; $x81 int=81; $x82 int=82; $x83 int=83; $x84 int=84; $x85 int=85; $x86 int=86; $x87 int=87; $x88 int=88; $x89 int=89; $x90 int=90; $x91 int=91; $x92 int=92; $x93 int=93; $x94 int=94; $x95 int=95; $x96 int=96; $x97 int=97; $x98 int=98; $x99 int=99; $x100 int=100; $x101 int=101; $x102 int=102; $x103 int=103; $x104 int=104; $x105 int=105; $x106 int=106; $x107 int=107; $x108 int=108; $x109 int=109; $x110 int=110; $x111 int=111; $x112 int=112; $x113 int=113; $x114 int=114; $x115 int=115; $x116 int=116; $x117 int=117; $x118 int=118; $x119 int=119; $x120 int=120; $x121 int=121; $x122 int=122; $x123 int=123; $x124 int=124; $x125 int=125; $x126 int=126; $x127 int=127; $x128 int=128; $x129 int=129; $x130 int=130; $x131 int=131; $x132 int=132; $x133 int=133; $x134 int=134; $x135 int=135; $x136 int=136; $x137 int=137; $x138 int=138; $x139 int=139; $x140 int=140; $x141 int=141; $x142 int=142; $x143 int=143; $x144 int=144; $x145 int=145; $x146 int=146; $x147 int=147; $x148 int=148; $x149 int=149; $x150 int=150; $x151 int=151; $x152 int=152; $x153 int=153; $x154 int=154; $x155 int=155; $x156 int=156; $x157 int=157; $x158 int=158; $x159 int=159; $x160 int=160; $x161 int=161; $x162 int=162; $x163 int=163; $x164 int=164; $x165 int=165; $x166 int=166; $x167 int=167; $x168 int=168; $x169 int=169; $x170 int=170; $x171 int=171; $x172 int=172; $x173 int=173; $x174 int=174; $x175 int=175; $x176 int=176; $x177 int=177; $x178 int=178; $x179 int=179; $x180 int=180; $x181 int=181; $x182 int=182; $x183 int=183; $x184 int=184; $x185 int=185; $x186 int=186; $x187 int=187; $x188 int=188; $x189 int=189; $x190 int=190; $x191 int=191; $x192 int=192; $x193 int=193; $x194 int=194; $x195 int=195; $x196 int=196; $x197 int=197; $x198 int=198; $x199 int=199; $x200 int=200; $x201 int=201; $x202 int=202; $x203 int=203; $x204 int=204; $x205 int=205; $x206 int=206; $x207 int=207; $x208 int=208; $x209 int=209; $x210 int=210; $x211 int=211; $x212 int=212; $x213 int=213; $x214 int=214; $x215 int=215; $x216 int=216; $x217 int=217; $x218 int=218; $x219 int=219; $x220 int=220; $x221 int=221; $x222 int=222; $x223 int=223; $x224 int=224; $x225 int=225; $x226 int=226; $x227 int=227; $x228 int=228; $x229 int=229; $x230 int=230; $x231 int=231; $x232 int=232; $x233 int=233; $x234 int=234; $x235 int=235; $x236 int=236; $x237 int=237; $x238 int=238; $x239 int=239; $x240 int=240; $x241 int=241; $x242 int=242; $x243 int=243; $x244 int=244; $x245 int=245; $x246 int=246; $x247 int=247; $x248 int=248; $x249 int=249; $x250 int=250; $x251 int=251; $x252 int=252; $x253 int=253; $x254 int=254; $x255 int=255; if ($p) { return $x255; } return $x0; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "deep_scopes",
+    "source": "function f(): int { {{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{$x int=1;}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} return 0; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "many_branches",
+    "source": "function f($p int): int { if ($p) { $x0 int=0; } if ($p) { $x1 int=1; } if ($p) { $x2 int=2; } if ($p) { $x3 int=3; } if ($p) { $x4 int=4; } if ($p) { $x5 int=5; } if ($p) { $x6 int=6; } if ($p) { $x7 int=7; } if ($p) { $x8 int=8; } if ($p) { $x9 int=9; } if ($p) { $x10 int=10; } if ($p) { $x11 int=11; } if ($p) { $x12 int=12; } if ($p) { $x13 int=13; } if ($p) { $x14 int=14; } if ($p) { $x15 int=15; } if ($p) { $x16 int=16; } if ($p) { $x17 int=17; } if ($p) { $x18 int=18; } if ($p) { $x19 int=19; } if ($p) { $x20 int=20; } if ($p) { $x21 int=21; } if ($p) { $x22 int=22; } if ($p) { $x23 int=23; } if ($p) { $x24 int=24; } if ($p) { $x25 int=25; } if ($p) { $x26 int=26; } if ($p) { $x27 int=27; } if ($p) { $x28 int=28; } if ($p) { $x29 int=29; } if ($p) { $x30 int=30; } if ($p) { $x31 int=31; } if ($p) { $x32 int=32; } if ($p) { $x33 int=33; } if ($p) { $x34 int=34; } if ($p) { $x35 int=35; } if ($p) { $x36 int=36; } if ($p) { $x37 int=37; } if ($p) { $x38 int=38; } if ($p) { $x39 int=39; } if ($p) { $x40 int=40; } if ($p) { $x41 int=41; } if ($p) { $x42 int=42; } if ($p) { $x43 int=43; } if ($p) { $x44 int=44; } if ($p) { $x45 int=45; } if ($p) { $x46 int=46; } if ($p) { $x47 int=47; } if ($p) { $x48 int=48; } if ($p) { $x49 int=49; } if ($p) { $x50 int=50; } if ($p) { $x51 int=51; } if ($p) { $x52 int=52; } if ($p) { $x53 int=53; } if ($p) { $x54 int=54; } if ($p) { $x55 int=55; } if ($p) { $x56 int=56; } if ($p) { $x57 int=57; } if ($p) { $x58 int=58; } if ($p) { $x59 int=59; } if ($p) { $x60 int=60; } if ($p) { $x61 int=61; } if ($p) { $x62 int=62; } if ($p) { $x63 int=63; } return $p; } return 0;",
+    "blocks": []
+  },
+  {
+    "name": "diamond_intersection",
+    "source": "function f($p int): int { $a int=1; $b int=2; return 0; } return 0;",
+    "blocks": [
+      [
+        0,
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        4,
+        0
+      ],
+      [
+        2,
+        0,
+        1,
+        1,
+        4,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        3,
+        0,
+        0
+      ]
+    ]
+  },
+  {
+    "name": "loop_intersection",
+    "source": "function f($p int): int { $a int=1; $b int=2; return 0; } return 0;",
+    "blocks": [
+      [
+        0,
+        1,
+        1,
+        1,
+        2,
+        0
+      ],
+      [
+        1,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        2,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        3,
+        0,
+        0
+      ]
+    ]
+  }
+]

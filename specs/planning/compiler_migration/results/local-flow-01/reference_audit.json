@@ -1,0 +1,5 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/flow.php": "fd6ef417b7d331caf7df4fb77ec063f07f7c1b8b909d4eed250310e3f0654862",
+  "compiler/reference/pre-rewrite/src/04_analyze/check_bodies/utilities/flow_graph.php": "d11f6266478a11346813b1dc1f498f1f9b9aa1101402236016dc0ee33b84c787",
+  "compiler/tests/local_flow/reference.php": "a983cd94009e72285dc2d9bd1128a6cec3d2e00d1d2fbc0871bab2850aced6af"
+}

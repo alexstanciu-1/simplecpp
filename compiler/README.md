@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **231 production files** in PHP and native
+The registered component proofs cover **233 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -278,3 +278,5 @@ export and whole-stage coordination. Lifetime analysis remains unmigrated.
 Typed-storage body integration: 23 PHP/native cases pass (`results/body-storage-01`). No production changes; readiness stays 231 files. See `specs/portability/compiler_body_storage_slice.md` for scope and remaining obligations.
 
 Managed-value body integration: 23 PHP/native cases pass (`results/body-managed-01`). No production changes; readiness stays 231 files. See `specs/portability/compiler_body_managed_slice.md` for scope and remaining obligations.
+
+Definite-initialization flow begins lifetime-stage migration: 16 PHP/native and retained-solver comparisons pass (`results/local-flow-01`). Typed ordered facts and exact checked-body ownership preserve scope/intersection behavior. Ready count is 233 files. Cleanup, consumption and allocation/ownership analysis remain unfinished.
