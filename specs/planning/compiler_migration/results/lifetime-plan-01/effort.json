@@ -1,0 +1,24 @@
+{
+  "authoring_start_epoch": 1790154931.617636,
+  "first_php_ready_epoch": 1790155309.4854367,
+  "first_php_cases": 25,
+  "final_php_native_cases": 29,
+  "authoring_through_first_php_ready_seconds": 377.868,
+  "checker_corrective_cycles": 1,
+  "php_fixture_corrective_cycles_after_first_pass": 1,
+  "native_attempts_to_first_pass": 2,
+  "native_corrective_cycles": 1,
+  "cpp_builds": 2,
+  "native_build_seconds": 290.416,
+  "native_php_ready_epoch": 1790155623.5947142,
+  "native_proof_completed_epoch": 1790155916.9338624,
+  "native_stabilization_wall_seconds": 607.448,
+  "notes": [
+    "Reserved C++ variable void renamed at converter check.",
+    "Additional indexed/deep/large cases added after first PHP readiness; fixture changed int field to field-eligible int32.",
+    "Private plan fields renamed before native compilation to avoid method/field collisions.",
+    "Native correction: reset typed hash through an explicitly typed empty local instead of assigning untyped [] to a property.",
+    "First invocation named native-01 stopped in PHP fixture preparation, before any native build.",
+    "Plan is consumption/cleanup only; full analyzed-body publication requires resource ownership acceptance."
+  ]
+}

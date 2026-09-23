@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile warning in src/04_analyze/analyze_lifetimes/plan_body.phs:143: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+Generated location: .prism/generated/src/04_analyze/analyze_lifetimes/plan_body.cpp:293:2
+Compile warning in src/04_analyze/analyze_lifetimes/plan_body.phs:163: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+Generated location: .prism/generated/src/04_analyze/analyze_lifetimes/plan_body.cpp:336:2
+Compile error in src/04_analyze/analyze_lifetimes/plan_body.phs:216: no viable overloaded '='
+Generated location: .prism/generated/src/04_analyze/analyze_lifetimes/plan_body.cpp:430:14
+Additional remapped diagnostics: 2
+Raw compiler excerpt:
+plan_body.cpp:293:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+plan_body.cpp:336:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+plan_body.cpp:430:14: error: no viable overloaded '='
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

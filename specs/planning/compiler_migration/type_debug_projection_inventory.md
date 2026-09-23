@@ -44,3 +44,5 @@ name codecs when composing this debug view. No complete body dump is claimed yet
 Body_Set now owns fixed project membership and callable lookup. Its prototype
 `to_json()` remains pending the complete Checked_Body projection above. Compose that
 projection in publication order; do not substitute the narrow test fixture plan text.
+
+Lifetime_Plan exposes typed consumption/local/cleanup facts. The preserved Analyzed_Body `to_array()` projection remains pending the combined result/resource owner; do not publish a plan-only export as complete analyzed-body state.

@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught LogicException: Unsupported record field contract in /tmp/lifetime-plan-native-01/source/src/04_analyze/resolve_types/record_definitions.php:28
+Stack trace:
+#0 /tmp/lifetime-plan-native-01/source/fixture.php(51): resolve_types\Record_Definitions::materialize()
+#1 /tmp/lifetime-plan-native-01/source/probe.php(63): lifetime_plan_fixture\Fixture::prepare()
+#2 /tmp/lifetime-plan-native-01/source/main.php(2): lifetime_plan_test\Probe::run()
+#3 Command line code(1): require('...')
+#4 {main}
+  thrown in /tmp/lifetime-plan-native-01/source/src/04_analyze/resolve_types/record_definitions.php on line 28
