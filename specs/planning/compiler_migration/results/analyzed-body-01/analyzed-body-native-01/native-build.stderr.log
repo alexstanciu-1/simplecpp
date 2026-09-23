@@ -1,0 +1,11 @@
+STAN pre-build check failed: 2 compile-errors
+
+[compile-error] Function `analyze_lifetimes\Lifetime_Worker::resource_analysis` declared as `nullable<Allocation_Analysis>` may exit without returning a value.
+  at src/04_analyze/analyze_lifetimes/body.phs:16
+
+[compile-error] Function `analyze_lifetimes\Lifetime_Worker::prepare_plan` declared as `Lifetime_Plan` may exit without returning a value.
+  at src/04_analyze/analyze_lifetimes/body.phs:22
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

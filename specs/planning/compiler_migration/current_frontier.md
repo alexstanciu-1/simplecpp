@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **257 production files**: input preparation (137 outcomes),
+Active readiness is **259 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -624,3 +624,5 @@ Ownership dependency scheduling and incremental reuse add eight PHP/native scena
 Ownership request selection adds eight PHP/native source scenarios plus structural ordering/reuse assertions (`results/ownership-selection-01`). Readiness is 257 files / 119 registered proofs. Includes the default-record return resource-transfer correction and 23 focused PHP regressions. Custom lifecycle selection integration and complete lifetime publication remain separate obligations.
 
 Custom source lifecycle selection adds ten PHP/native scenarios (`results/ownership-lifecycle-selection-01`). Exact concrete method binding, accepted lifecycle execution and missing-body rejection pass on the first native build. Readiness remains 257 files, now 120 registered proofs. Complete lifetime publication is next; broader copy/move/assignment expression integration remains tracked.
+
+Complete analyzed-body acceptance adds 8 PHP/native scenarios plus boundary assertions (`results/analyzed-body-01`). Readiness is 259 files / 121 registered proofs. Whole-stage coordination/export integration remains separate.

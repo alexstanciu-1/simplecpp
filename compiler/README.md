@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **257 production files** in PHP and native
+The registered component proofs cover **259 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -312,3 +312,5 @@ Ownership dependency scheduling and incremental reuse add eight PHP/native scena
 Ownership request selection adds eight PHP/native source scenarios plus structural ordering/reuse assertions (`results/ownership-selection-01`). Readiness is 257 files / 119 registered proofs. Includes the default-record return resource-transfer correction and 23 focused PHP regressions. Custom lifecycle selection integration and complete lifetime publication remain separate obligations.
 
 Custom source lifecycle selection adds ten PHP/native scenarios (`results/ownership-lifecycle-selection-01`). Exact concrete method binding, accepted lifecycle execution and missing-body rejection pass on the first native build. Readiness remains 257 files, now 120 registered proofs. Complete lifetime publication is next; broader copy/move/assignment expression integration remains tracked.
+
+Complete analyzed-body acceptance adds 8 PHP/native scenarios plus boundary assertions (`results/analyzed-body-01`). Readiness is 259 files / 121 registered proofs. Whole-stage coordination/export integration remains separate.

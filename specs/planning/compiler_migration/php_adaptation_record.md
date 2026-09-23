@@ -3904,3 +3904,9 @@ First native build passed without correction. Detailed authoring, fixture correc
 ## Custom lifecycle selection integration (2026-09-23)
 
 Ten PHP/native scenarios cover constructor, destructor, copy constructor, assignment and all four together, with accepted bodies and deliberate missing-body rejection. Actual parsed source methods, materialized record contracts and concrete receiver instances prove the selector binds each role to its exact callable and body dependency. Queues execute the resulting contracts. No production changes or native corrections were required. This does not prove every copy/move/assignment expression or field-role override. Evidence and timing: results/ownership-lifecycle-selection-01.
+
+## Complete analyzed-body acceptance (2026-09-23)
+
+Lifetime_Worker composes a proved cleanup plan with accepted ownership or direct allocation analysis. Analyzed_Body validates exact body/resource provenance, allocation presence, reachable-block membership and valid resource states; lifetime rows remain owned by the shared plan. Native STAN rejected returns inside forwarding try/catch helpers on attempt one. Retaining the delegates and querying their diagnostics directly removed that duplicated exception routing. Attempt two passed; one C++ build, one native STAN correction cycle. Named-nullable local annotations also required one earlier checker correction.
+
+Evidence and timing: results/analyzed-body-01. Native build: 496.622 seconds. Full stage orchestration and debug/export obligations remain separate.

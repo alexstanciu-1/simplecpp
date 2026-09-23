@@ -126,7 +126,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('ownership_join', Path(__file__).parent / 'ownership_join/run.py'),
           ('ownership_queue', Path(__file__).parent / 'ownership_queue/run.py'),
           ('ownership_selection', Path(__file__).parent / 'ownership_selection/run.py'),
-          ('ownership_lifecycle_selection', Path(__file__).parent / 'ownership_lifecycle_selection/run.py')]
+          ('ownership_lifecycle_selection', Path(__file__).parent / 'ownership_lifecycle_selection/run.py'),
+          ('analyzed_body', Path(__file__).parent / 'analyzed_body/run.py')]
 
 
 def main():

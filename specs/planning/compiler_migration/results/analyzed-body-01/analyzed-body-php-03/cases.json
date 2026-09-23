@@ -1,0 +1,50 @@
+[
+  {
+    "source": "function f(): int { return 0; } return 0;",
+    "ownership": false,
+    "allocations": false,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; return 0; } return 0;",
+    "ownership": false,
+    "allocations": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_4<int32>($s); return 0; } return 0;",
+    "ownership": false,
+    "allocations": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); return 0; } return 0;",
+    "ownership": false,
+    "allocations": false,
+    "expected": "Allocation must be released or transferred before its owner leaves scope"
+  },
+  {
+    "source": "function f(const Nested &$n): int { return 0; } return 0;",
+    "ownership": true,
+    "allocations": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): int { $n Nested; return 0; } return 0;",
+    "ownership": true,
+    "allocations": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): Nested { return new Nested(); } return 0;",
+    "ownership": true,
+    "allocations": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f($p int): int { $s Storage<int32>; if ($p) { storage_0<int32>($s,4); storage_4<int32>($s); } return 0; } return 0;",
+    "ownership": false,
+    "allocations": true,
+    "expected": "accepted"
+  }
+]

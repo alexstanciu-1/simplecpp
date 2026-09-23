@@ -1,0 +1,13 @@
+{
+  "authoring_start_epoch": 1790162560.0,
+  "first_php_ready_epoch": 1790162731.8863566,
+  "authoring_through_first_php_ready_seconds": 171.886,
+  "native_attempts_to_first_pass": 2,
+  "native_corrective_cycles": 1,
+  "cpp_builds": 1,
+  "native_build_seconds": 496.622,
+  "notes": [
+    "Lifetime_Worker composes a proved cleanup plan with accepted ownership or direct allocation analysis. Analyzed_Body validates exact body/resource provenance, allocation presence, reachable-block membership and valid resource states; lifetime rows remain owned by the shared plan. Native STAN rejected returns inside forwarding try/catch helpers on attempt one. Retaining the delegates and querying their diagnostics directly removed that duplicated exception routing. Attempt two passed; one C++ build, one native STAN correction cycle. Named-nullable local annotations also required one earlier checker correction.",
+    "Wall time includes overlapping proof expansion and development; it is not exclusive stabilization labor."
+  ]
+}
