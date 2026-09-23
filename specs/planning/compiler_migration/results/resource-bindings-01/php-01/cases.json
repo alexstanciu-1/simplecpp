@@ -1,0 +1,56 @@
+[
+  {
+    "mode": "operand",
+    "source": "function g(const Box &$b): int { return 0; } function f(const Box &$b): int { return g($b); } return 0;",
+    "expected": "1",
+    "position": 0
+  },
+  {
+    "mode": "operand",
+    "source": "function g(const Storage<int32> &$s): int { return 0; } function f(const Box &$b): int { return g($b->items); } return 0;",
+    "expected": "1:0",
+    "position": 0
+  },
+  {
+    "mode": "operand",
+    "source": "function g(const Storage<int32> &$s): int { return 0; } function f(const Nested &$n): int { return g($n->box->items); } return 0;",
+    "expected": "1:0.0",
+    "position": 0
+  },
+  {
+    "mode": "operand",
+    "source": "function g(const Box &$a,const Box &$b): int { return 0; } function f(const Box &$a,const Box &$b): int { return g($b,$a); } return 0;",
+    "expected": "2",
+    "position": 0
+  },
+  {
+    "mode": "operand",
+    "source": "function g(const Box &$a,const Box &$b): int { return 0; } function f(const Box &$a,const Box &$b): int { return g($b,$a); } return 0;",
+    "expected": "1",
+    "position": 1
+  },
+  {
+    "mode": "summary",
+    "source": "function g(const Box &$a,const Box &$b): int { return 0; } function f(const Box &$a,const Box &$b): int { return g($b,$a); } return 0;",
+    "expected": "1>2",
+    "position": 0
+  },
+  {
+    "mode": "allocation",
+    "source": "function g(const Box &$a,const Box &$b): int { return 0; } function f(const Box &$a,const Box &$b): int { return g($b,$a); } return 0;",
+    "expected": "1>2",
+    "position": 0
+  },
+  {
+    "mode": "operand",
+    "source": "function g($n int): int { return $n; } function f(): int { return g(1); } return 0;",
+    "expected": "Allocation operation requires an existing local owner",
+    "position": 0
+  },
+  {
+    "mode": "operand",
+    "source": "function g(const int32 &$n): int { return 0; } function f(const Storage<int32> &$s): int { return g($s[0]); } return 0;",
+    "expected": "Dynamically selected owner subobjects require an ownership contract",
+    "position": 0
+  }
+]

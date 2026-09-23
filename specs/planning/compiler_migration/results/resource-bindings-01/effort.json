@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790158207.020522,
+  "first_php_ready_epoch": 1790158307.8482578,
+  "authoring_through_first_php_ready_seconds": 100.828,
+  "checker_corrective_cycles": 0,
+  "php_fixture_corrective_cycles": 1,
+  "production_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 303.204,
+  "native_stabilization_wall_seconds": 324.162,
+  "notes": [
+    "Bounded fixture cannot prepare a second source function Storage<int32> signature; replaced with existing storage-provider calls preserving nested paths. Full coordinator remains pending.",
+    "Measured authoring includes waiting for the PHP checker alongside another native build."
+  ]
+}

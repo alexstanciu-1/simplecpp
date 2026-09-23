@@ -247,7 +247,8 @@
     "src/04_analyze/analyze_lifetimes/data/resource_flow.php",
     "src/04_analyze/analyze_lifetimes/data/ownership_contracts.php",
     "src/04_analyze/analyze_lifetimes/resource_calls.php",
-    "src/04_analyze/analyze_lifetimes/allocation_calls.php"
+    "src/04_analyze/analyze_lifetimes/allocation_calls.php",
+    "src/04_analyze/analyze_lifetimes/resource_bindings.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

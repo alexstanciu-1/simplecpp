@@ -1,0 +1,4 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/resource_effects.php": "cd4fdb481891703982108e9656a12cddd28fdd817d04de957733cf1c660b5482",
+  "compiler/tests/resource_bindings/cases.py": "32cf063fc83c0dac30446366555d8485faaa448cdd281eb3adaaa2053e1d61e2"
+}

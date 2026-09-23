@@ -1,0 +1,11 @@
+PHP Fatal error:  Uncaught RuntimeException: Bound parameter type requires unsupported concrete preparation in /tmp/resource-bindings-php-01/source/src/04_analyze/resolve_types/utilities/annotation_types.php:18
+Stack trace:
+#0 /tmp/resource-bindings-php-01/source/src/04_analyze/resolve_types/utilities/annotation_types.php(55): resolve_types\Annotation_Types->fail()
+#1 /tmp/resource-bindings-php-01/source/src/04_analyze/resolve_types/signatures.php(59): resolve_types\Annotation_Types::definition()
+#2 /tmp/resource-bindings-php-01/source/probe.php(11): resolve_types\Signature_Resolver::resolve()
+#3 /tmp/resource-bindings-php-01/source/probe.php(24): resource_bindings_test\Probe::snapshot()
+#4 /tmp/resource-bindings-php-01/source/probe.php(54): resource_bindings_test\Probe::run_case()
+#5 /tmp/resource-bindings-php-01/source/main.php(2): resource_bindings_test\Probe::run()
+#6 Command line code(1): require('...')
+#7 {main}
+  thrown in /tmp/resource-bindings-php-01/source/src/04_analyze/resolve_types/utilities/annotation_types.php on line 18
