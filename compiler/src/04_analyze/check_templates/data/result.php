@@ -26,12 +26,21 @@ final class Definition_Result {
         if ($this->task->bindings!==$names->for_symbol($owner->symbol_id)) { return false; }
         if ($this->catalog!==$catalog) { return false; }
         foreach ($this->dependencies as $dependency) {
+            if (!$names->has_declaration($dependency->symbol_id)) { return false; }
             if ($names->declaration_for($dependency->symbol_id)!==$dependency) { return false; }
         }
         foreach ($this->bindings as $binding) {
             if ($names->for_symbol($binding->owner->symbol_id)!==$binding) { return false; }
         }
         return true;
+    }
+    /** A successful worker must retain both exact owner dependencies, even for an empty body. */
+    public function has_owner_provenance(): bool {
+        if ($this->visited_nodes < 1) { return false; }
+        $declaration = false; $binding = false;
+        foreach ($this->dependencies as $dependency) { if ($dependency === $this->task->owner) { $declaration = true; } }
+        foreach ($this->bindings as $resolution) { if ($resolution === $this->task->bindings) { $binding = true; } }
+        return $declaration && $binding;
     }
     public function dependency_count(): int { return q_count($this->dependencies); }
     public function dependency_at(int $index): \collect_symbols\Symbol_Record {

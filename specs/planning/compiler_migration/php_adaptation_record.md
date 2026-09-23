@@ -2376,3 +2376,44 @@ Native stabilization is recorded separately in the saved timing/result evidence.
 
 All 46 PHP/native outcomes and 20 host-only assertions pass. Native attempt one
 passed without corrections; see `results/template-body-01`.
+
+
+## Template selection, reuse and batch acceptance
+
+Template_Plan now owns fixed symbols, bindings, catalog and previous permissions.
+It selects only source templates; provider contracts require no fabricated source
+checking task. Unchanged exact dependencies retain the previous Definition_Result;
+full rebuilds select every current source template. Additions and deletions derive
+membership from current declarations rather than copying the previous map.
+
+Template_Join accepts completion in any order, but requires the exact selected task,
+unique complete results, current dependencies and positive work with both owner
+provenances. Definition_Result::has_owner_provenance keeps that query with the owner
+of its private dependency lists. Invalid batches construct no published permission
+set and do not mutate previous results. The plan cannot be caller-populated with
+forged or duplicate tasks; malformed external results are still rejected by the join.
+
+Template_Checker composes plan, private workers and join behind the current migrated
+static stage-entry convention. Template_Update holds either complete permissions or
+one attributed diagnostic, never both or neither. Full shared compile Step lifecycle
+orchestration remains later coordinator work; this slice does not claim that protocol
+or a full compiler pipeline. A failure after an earlier worker succeeds discards the
+private partial batch; stale/internal failures do not become source diagnostics.
+
+While connecting reuse, dependency removal exposed a preexisting gap: current() asked
+Resolution_Set::declaration_for for an ID that might have disappeared. The resolution
+store now exposes has_declaration, and Definition_Result returns false for an absent
+dependency before looking it up. Missing dependencies cause rechecking rather than an
+internal lookup exception. This is a narrow query on the existing symbol-store owner,
+not a second symbol index or a new validity heuristic.
+
+The proof covers cold/warm/full updates, reversed arrival, missing/duplicate/foreign
+results, missing declaration/binding provenance, zero visits, stale catalogs, changed
+and removed dependencies, added/removed templates, unrelated ordinary edits, missing/
+stale bindings and failed outcomes. Host-only snapshot assertions additionally prove
+purity and recovery after rejecting batches and after a later worker fails. Existing
+symbolic-model expectations and retained oracle are rerun because the result owner
+changed. Timing preserves the first passing PHP checkpoint separately from native.
+
+All 22 PHP/native scenarios, 13 host invariants and the 40-case model regression
+pass. Native build one passed without correction (`results/template-project-01`).

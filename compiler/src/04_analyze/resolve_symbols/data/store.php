@@ -15,6 +15,10 @@ final class Resolution_Set {
         if (!isset($this->by_symbol[$id])) { return null; }
         return $this->rows[$this->by_symbol[$id]];
     }
+    public function has_declaration(int $id): bool {
+        if ($this->symbols === null) { return false; }
+        return $this->symbols->contains($id);
+    }
     public function declaration_for(int $id): \collect_symbols\Symbol_Record {
         if ($this->symbols === null) { throw new \LogicException('Empty resolution baseline has no declarations'); }
         return $this->symbols->symbol_by_id($id);
