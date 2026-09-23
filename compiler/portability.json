@@ -240,7 +240,8 @@
     "src/04_analyze/analyze_lifetimes/handlers/locals.php",
     "src/04_analyze/analyze_lifetimes/handlers/values.php",
     "src/04_analyze/analyze_lifetimes/handlers/statements.php",
-    "src/04_analyze/analyze_lifetimes/plan_body.php"
+    "src/04_analyze/analyze_lifetimes/plan_body.php",
+    "src/04_analyze/analyze_lifetimes/resource_states.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

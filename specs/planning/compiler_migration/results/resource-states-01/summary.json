@@ -1,0 +1,165 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "reference",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/resource_states/reference.php",
+        "/tmp/resource-states-native-01/cases.json"
+      ],
+      "seconds": 0.31,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/resource-states-native-01/source"
+      ],
+      "seconds": 0.332,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/resource-states-native-01/source"
+      ],
+      "seconds": 0.48,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/resource-states-native-01/source/src/04_analyze/analyze_lifetimes/resource_states.php",
+        "/tmp/resource-states-native-01/source/probe.php",
+        "/tmp/resource-states-native-01/source/main.php"
+      ],
+      "seconds": 0.406,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/resource-states-native-01/source",
+        "/tmp/resource-states-native-01/phpp"
+      ],
+      "seconds": 0.437,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/resource-states-native-01/source",
+        "/tmp/resource-states-native-01/phpp"
+      ],
+      "seconds": 0.357,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/resource-states-native-01/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.259,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.037,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.141,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.697,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 97.379,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/resource-states-native-01/phpp/.prism/build/main"
+      ],
+      "seconds": 0.082,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.189,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "independent_oracle_and_reference_cases": 336,
+  "php_ready_epoch": 1790155785.963393,
+  "php_ready_sha256": {
+    "src/04_analyze/analyze_lifetimes/resource_states.php": "148a16b73d7646488ffbe01beb4237337ce5755437472d29fd36666a4e895383"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 336,
+  "resource_states_outcomes": 336,
+  "production_files": [
+    "src/04_analyze/analyze_lifetimes/resource_states.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/analyze_lifetimes/resource_states.php": "148a16b73d7646488ffbe01beb4237337ce5755437472d29fd36666a4e895383"
+  }
+}

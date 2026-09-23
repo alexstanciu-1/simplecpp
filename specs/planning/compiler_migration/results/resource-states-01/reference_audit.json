@@ -1,0 +1,5 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/resource_states.php": "45236ebbda34727410c874bffc9c3165eb677f93f69fe5c35d7ee495ae82cdce",
+  "compiler/tests/resource_states/reference.php": "d087f3d87a0e241aaa34378c65821eabd7119bc0d4eee57a0aed5aa59c3f4c42",
+  "compiler/tests/resource_states/cases.py": "081260199ad8c050baaa97576e708742a5cbf46a8760957dc1f75e1babe65d23"
+}

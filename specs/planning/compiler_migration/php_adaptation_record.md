@@ -3471,3 +3471,28 @@ stage remain unfinished. Native provider bodies are not executed by this compile
 plan proof. Resource location/state discovery and allocation-flow checking are next.
 
 Authoring through first PHP readiness (25 cases): 377.868 seconds. One checker correction and one expanded-fixture PHP correction; final 29 cases pass. First native build rejected an untyped empty-array assignment to the live-local hash. Reset through a typed empty local preserves the source contract; second native build passed in 290.416 seconds (one native correction cycle). Evidence: results/lifetime-plan-01.
+
+## Resource-state algebra (2026-09-23)
+
+Resource_States preserves the prototype four-bit relation model: one two-bit output
+set for empty input and one for owned input. Composition, required-state acceptance
+and deterministic-input queries keep their original meaning, including missing and
+ambiguous outputs. File-scope RESOURCE_* constants replace unsupported class constants.
+
+The converter's supported token set has no bitwise/shift operators. The portable
+implementation expresses the two finite lanes using modulo/division and explicit
+set union, with no temporary arrays or table allocation. This is a local algorithm
+adaptation, not a converter extension. Relation values are explicitly restricted to
+0..15 and required masks to 0..3; out-of-domain integers now fail at this internal
+boundary instead of accidentally depending on the prototype's bit truncation.
+Consumers must supply validated relation values. No deeper performance claim is made.
+
+All 336 valid-domain outcomes agree in PHP/native with the original helper and an
+independent edge-set relational oracle (256 compositions, 64 required-mask queries,
+16 determinism queries). The independent oracle follows the preserved resource
+contract test's edge-set method. Tests also cover 4,096 associativity combinations,
+both identity directions for all 16 relations, and six invalid-domain rejections.
+These prove the algebra, not whole-body allocation safety. Resource locations,
+aliasing, effects, fixed-point flow and ownership acceptance remain to migrate.
+
+Authoring through first PHP readiness: 1.748 seconds. First PHP/native passes with zero corrections. Native build: 97.379 seconds. Evidence: results/resource-states-01.

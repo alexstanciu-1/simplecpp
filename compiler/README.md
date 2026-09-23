@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **239 production files** in PHP and native
+The registered component proofs cover **240 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -284,3 +284,5 @@ Definite-initialization flow begins lifetime-stage migration: 16 PHP/native and 
 Lifetime record contracts add 1,105 PHP/native and retained-constructor comparisons (`results/lifetime-records-01`). Stable end/subject names survive the enum-to-tag adaptation. Readiness is 234 files. Full lifetime worker, result ownership, allocation analysis and stage integration remain unfinished.
 
 Lifetime consumption and cleanup planning adds 29 PHP/native scenarios (`results/lifetime-plan-01`). The explicit intermediate plan preserves scope/value/cleanup contracts without claiming resource ownership acceptance. Readiness is 239 files. Allocation/ownership flow, full analyzed-body publication and stage integration remain incomplete.
+
+Resource-state algebra adds 336 PHP/native, prototype and independent-oracle outcomes, plus exhaustive associativity/identity checks (`results/resource-states-01`). Readiness is 240 files. Resource location/effect/alias modeling and full allocation/ownership analysis remain unfinished.
