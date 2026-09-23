@@ -1,0 +1,52 @@
+[
+  {
+    "mode": "constructor",
+    "missing": false,
+    "expected": "accepted"
+  },
+  {
+    "mode": "constructor",
+    "missing": true,
+    "expected": "Missing checked source lifecycle body"
+  },
+  {
+    "mode": "destructor",
+    "missing": false,
+    "expected": "accepted"
+  },
+  {
+    "mode": "destructor",
+    "missing": true,
+    "expected": "Missing checked source lifecycle body"
+  },
+  {
+    "mode": "copy",
+    "missing": false,
+    "expected": "accepted"
+  },
+  {
+    "mode": "copy",
+    "missing": true,
+    "expected": "Missing checked source lifecycle body"
+  },
+  {
+    "mode": "assign",
+    "missing": false,
+    "expected": "accepted"
+  },
+  {
+    "mode": "assign",
+    "missing": true,
+    "expected": "Missing checked source lifecycle body"
+  },
+  {
+    "mode": "all",
+    "missing": false,
+    "expected": "accepted"
+  },
+  {
+    "mode": "all",
+    "missing": true,
+    "expected": "Missing checked source lifecycle body"
+  }
+]

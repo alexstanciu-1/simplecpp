@@ -3900,3 +3900,7 @@ Ordered type access and named request/child records replace structural catalog c
 Integration uncovered the preserved prototype mismatch between RETURN_STORE for zero-initialized record returns and allocation analysis requiring a construction return. Allocation_Pass now transfers already prepared facts only for RETURN_STORE + VALUE_RECORD_DEFAULT; arbitrary resource stores remain rejected. Direct and called owned returns assert exact empty nested result states. Eight PHP/native scenarios pass, with 23 existing PHP allocation regressions.
 
 First native build passed without correction. Detailed authoring, fixture correction and first-PHP timing evidence: results/ownership-selection-01/effort.json.
+
+## Custom lifecycle selection integration (2026-09-23)
+
+Ten PHP/native scenarios cover constructor, destructor, copy constructor, assignment and all four together, with accepted bodies and deliberate missing-body rejection. Actual parsed source methods, materialized record contracts and concrete receiver instances prove the selector binds each role to its exact callable and body dependency. Queues execute the resulting contracts. No production changes or native corrections were required. This does not prove every copy/move/assignment expression or field-role override. Evidence and timing: results/ownership-lifecycle-selection-01.

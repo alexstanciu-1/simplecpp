@@ -1,0 +1,14 @@
+{
+  "authoring_start_epoch": 1790162232.942105,
+  "authoring_start_note": "First fixture/runner write timestamp; excludes initial read-only investigation.",
+  "first_php_ready_epoch": 1790162259.4953003,
+  "authoring_through_first_php_ready_seconds": 26.553,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 0,
+  "php_corrective_cycles": 0,
+  "native_build_seconds": 410.312,
+  "notes": [
+    "Native build overlaps another proof and later lifetime-worker development."
+  ]
+}

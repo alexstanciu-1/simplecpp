@@ -11,8 +11,8 @@ Type enumeration uses existing ordered Type_Store accessors rather than adding a
 second structural catalog. Compound type/symbol keys replace nested member maps;
 ordered Ownership_Child records preserve field ordinals and reverse destruction.
 The selector retains source-operation member roles, including copy fallback during
-movement and no automatic field work for custom assignment. Those last paths still
-need broader integration proofs; implementation is not evidence of coverage.
+movement and no automatic field work for custom assignment. Concrete move fallback and aggregate member overrides still need broader integration
+proofs; implementation is not evidence of coverage.
 
 Body dependencies are selected from checked calls, value construction, return mode
 and write mode. Raw allocation owners stay on their existing direct analysis path;
@@ -30,8 +30,8 @@ Owned-return cases assert the exact nested result path and empty state, not just
 PHP/native output agreement. The first native build passed without corrective cycles. Evidence is saved in
 `specs/planning/compiler_migration/results/ownership-selection-01`.
 
-Positive custom lifecycle-body selection and concrete copy/move/assignment contracts
-remain integration obligations. The current storage fixture intentionally does not
+Concrete copy/move/assignment expression dependencies remain integration obligations;
+custom lifecycle-body selection is proved below. The current storage fixture intentionally does not
 grant these operations. Do not weaken its lifetime policy to make a test pass.
 
 ## Integration correction
@@ -54,15 +54,16 @@ The early harness needed two dependency-loading corrections; expansion needed on
 checker-only key-expression correction and one unsupported move-fixture correction.
 The discovered return integration mismatch required one production correction.
 
-## Custom lifecycle integration in progress
+## Custom lifecycle integration
 
-`compiler/tests/ownership_lifecycle_selection/run.py` now supplies ten PHP-passing
+`compiler/tests/ownership_lifecycle_selection/run.py` now supplies ten PHP/native-passing
 cases: constructor, destructor, copy constructor, copy assignment and all four
 combined, each with accepted checked bodies and with those bodies deliberately
 omitted. The fixture parses actual methods, materializes their record contracts,
 creates concrete receiver instances, resolves signatures/locals and checks bodies.
 Selection must retain each role's exact concrete callable, include its body dependency,
 and reject missing checked source bodies. Complete selected queues also run in PHP.
-The first native proof is running at `/tmp/ownership-lifecycle-selection-native-01`.
+The first native proof passed without corrections; evidence is saved in
+`specs/planning/compiler_migration/results/ownership-lifecycle-selection-01`.
 No production changes were needed for these additional cases. Broader source
 copy/move/assignment expression dependency coverage remains separate.

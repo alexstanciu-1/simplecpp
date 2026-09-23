@@ -310,3 +310,5 @@ Ownership batch acceptance and semantic summary reuse add 15 PHP/native outcomes
 Ownership dependency scheduling and incremental reuse add eight PHP/native scenarios (`results/ownership-queue-01`). Readiness is 256 files / 118 registered proofs. First native build passed without corrections. Concrete request selection and complete lifetime publication remain unfinished.
 
 Ownership request selection adds eight PHP/native source scenarios plus structural ordering/reuse assertions (`results/ownership-selection-01`). Readiness is 257 files / 119 registered proofs. Includes the default-record return resource-transfer correction and 23 focused PHP regressions. Custom lifecycle selection integration and complete lifetime publication remain separate obligations.
+
+Custom source lifecycle selection adds ten PHP/native scenarios (`results/ownership-lifecycle-selection-01`). Exact concrete method binding, accepted lifecycle execution and missing-body rejection pass on the first native build. Readiness remains 257 files, now 120 registered proofs. Complete lifetime publication is next; broader copy/move/assignment expression integration remains tracked.
