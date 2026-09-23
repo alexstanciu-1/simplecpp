@@ -1,0 +1,34 @@
+[
+  {
+    "mode": "fresh",
+    "expected": "accepted"
+  },
+  {
+    "mode": "body_replaced",
+    "expected": "accepted"
+  },
+  {
+    "mode": "changed_dependency",
+    "expected": "accepted"
+  },
+  {
+    "mode": "full",
+    "expected": "accepted"
+  },
+  {
+    "mode": "removed",
+    "expected": "accepted"
+  },
+  {
+    "mode": "cycle",
+    "expected": "Recursive ownership summary dependencies are unsupported: parent, leaf"
+  },
+  {
+    "mode": "missing",
+    "expected": "Missing ownership preparation input: leaf -> missing"
+  },
+  {
+    "mode": "duplicate",
+    "expected": "Duplicate ownership request"
+  }
+]

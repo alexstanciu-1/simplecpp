@@ -255,7 +255,9 @@
     "src/04_analyze/analyze_lifetimes/allocation_flow.php",
     "src/04_analyze/analyze_lifetimes/data/ownership_tasks.php",
     "src/04_analyze/analyze_lifetimes/ownership_worker.php",
-    "src/04_analyze/analyze_lifetimes/ownership_join.php"
+    "src/04_analyze/analyze_lifetimes/ownership_join.php",
+    "src/04_analyze/analyze_lifetimes/data/ownership_requests.php",
+    "src/04_analyze/analyze_lifetimes/ownership_queue.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

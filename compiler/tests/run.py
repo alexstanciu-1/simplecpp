@@ -123,7 +123,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('allocation_pass', Path(__file__).parent / 'allocation_pass/run.py'),
           ('allocation_flow', Path(__file__).parent / 'allocation_flow/run.py'),
           ('ownership_worker', Path(__file__).parent / 'ownership_worker/run.py'),
-          ('ownership_join', Path(__file__).parent / 'ownership_join/run.py')]
+          ('ownership_join', Path(__file__).parent / 'ownership_join/run.py'),
+          ('ownership_queue', Path(__file__).parent / 'ownership_queue/run.py')]
 
 
 def main():

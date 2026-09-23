@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790160772.410489,
+  "first_php_ready_epoch": 1790160889.829938,
+  "authoring_through_first_php_ready_seconds": 117.419,
+  "checker_corrective_cycles": 0,
+  "php_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "native_verification_builds": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 345.483,
+  "post_php_wall_seconds": 773.1,
+  "notes": [
+    "Post-PHP wall time includes proof expansion, user progress discussion and ownership-join consolidation, not exclusively stabilization labor.",
+    "First PHP checkpoint had six cases; final proof has eight after body-replacement and changed-dependency additions."
+  ]
+}

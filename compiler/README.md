@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **254 production files** in PHP and native
+The registered component proofs cover **256 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -306,3 +306,5 @@ Fixed-point allocation analysis adds 15 PHP/native branch, loop and inferred-par
 Ownership tasks and lifecycle workers add 53 PHP/native retained-worker comparisons plus body/provenance assertions (`results/ownership-worker-01`). Readiness is 253 files / 116 registered proofs. Final native verification includes the corrected borrow classifier. Ownership join/preparation and complete lifetime publication remain unfinished.
 
 Ownership batch acceptance and semantic summary reuse add 15 PHP/native outcomes plus 18 comparison assertions (`results/ownership-join-01`). Readiness is 254 files / 117 registered proofs. First native build passed without corrections. Ownership request selection/scheduling and complete lifetime publication remain unfinished.
+
+Ownership dependency scheduling and incremental reuse add eight PHP/native scenarios (`results/ownership-queue-01`). Readiness is 256 files / 118 registered proofs. First native build passed without corrections. Concrete request selection and complete lifetime publication remain unfinished.
