@@ -119,7 +119,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('resource_calls', Path(__file__).parent / 'resource_calls/run.py'),
           ('allocation_calls', Path(__file__).parent / 'allocation_calls/run.py'),
           ('resource_bindings', Path(__file__).parent / 'resource_bindings/run.py'),
-          ('allocation_traversal', Path(__file__).parent / 'allocation_traversal/run.py')]
+          ('allocation_traversal', Path(__file__).parent / 'allocation_traversal/run.py'),
+          ('allocation_pass', Path(__file__).parent / 'allocation_pass/run.py')]
 
 
 def main():

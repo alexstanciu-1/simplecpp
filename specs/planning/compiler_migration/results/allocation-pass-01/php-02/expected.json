@@ -1,0 +1,10 @@
+[
+  "",
+  "Allocation must be released or transferred before its owner leaves scope",
+  "",
+  "",
+  "Allocation must be released or transferred before its owner leaves scope",
+  "",
+  "Element access requires an owned allocation",
+  ""
+]

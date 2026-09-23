@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **248 production files** in PHP and native
+The registered component proofs cover **249 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -298,3 +298,5 @@ Runtime allocation effects add 896 PHP/native preserved-trait comparisons with i
 Checked ownership operand binding adds nine real-body PHP/native scenarios and attributed failure checks (`results/resource-bindings-01`). Readiness is 247 files / 112 registered proofs. Allocation traversal, fixed-point flow and complete ownership acceptance remain unfinished.
 
 Checked resource expression traversal adds 25 PHP/native scenarios for runtime effects, borrows and construction/destruction fields (`results/allocation-traversal-01`). Readiness is 248 files / 113 registered proofs. Statement/scope integration, fixed-point flow and ownership acceptance remain unfinished.
+
+Resource statement/scope-exit transfer adds eight PHP/native scenarios with entry and sibling-exit independence (`results/allocation-pass-01`). Readiness is 249 files / 114 registered proofs. Fixed-point analysis, ownership-summary inference and full acceptance remain unfinished.

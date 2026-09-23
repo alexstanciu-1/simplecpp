@@ -249,7 +249,8 @@
     "src/04_analyze/analyze_lifetimes/resource_calls.php",
     "src/04_analyze/analyze_lifetimes/allocation_calls.php",
     "src/04_analyze/analyze_lifetimes/resource_bindings.php",
-    "src/04_analyze/analyze_lifetimes/allocation_traversal.php"
+    "src/04_analyze/analyze_lifetimes/allocation_traversal.php",
+    "src/04_analyze/analyze_lifetimes/allocation_pass.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

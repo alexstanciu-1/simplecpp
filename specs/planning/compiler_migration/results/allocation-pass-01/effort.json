@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790159087.798655,
+  "first_php_ready_epoch": 1790159295.315184,
+  "authoring_through_first_php_ready_seconds": 207.517,
+  "checker_corrective_cycles": 0,
+  "php_fixture_corrective_cycles": 1,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 338.974,
+  "native_stabilization_wall_seconds": 369.483,
+  "notes": [
+    "Indexed assignment fixture changed from Storage<int32> to Storage<int>: implicit int-to-int32 conversion is unsupported.",
+    "Timing overlaps the preceding expression checkpoint and native build; not exclusive CPU effort."
+  ]
+}
