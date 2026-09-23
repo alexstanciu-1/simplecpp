@@ -584,3 +584,5 @@ and absent binding diagnostics. Provider functions are not linked or executed by
 this compiler proof. No production changes; readiness stays 231 files. Remaining
 body integration includes storage elements and managed lifecycle paths, plus debug
 export and whole-stage coordination. Lifetime analysis remains unmigrated.
+
+Typed-storage body integration: 23 PHP/native cases pass (`results/body-storage-01`). No production changes; readiness stays 231 files. See `specs/portability/compiler_body_storage_slice.md` for scope and remaining obligations.

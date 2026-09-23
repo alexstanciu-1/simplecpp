@@ -1,0 +1,209 @@
+[
+  {
+    "name": "read",
+    "source": "function f(): int32 { $s Storage<int32>; return $s[0]; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 3,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "const_read",
+    "source": "function f(const Storage<int32> &$s): int32 { return $s[0]; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 2,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "write",
+    "source": "function f($x int32): int32 { $s Storage<int32>; $s[0] = $x; return $s[1]; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 5,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "nested_index",
+    "source": "function f(): int32 { $s Storage<int32>; return $s[$s[0]]; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 4,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "index_call",
+    "source": "function f(): int32 { $s Storage<int32>; return $s[index()]; } function index(): int { return 0; } return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 3,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "index_before_rhs",
+    "source": "function f(): int { $s Storage<int>; $s[index()] = value(); return $s[0]; } function index(): int { return 0; } function value(): int { return 0; } return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 5,
+    "calls": 2,
+    "fall": false
+  },
+  {
+    "name": "record_field",
+    "source": "function f(): int32 { $s Storage<Point>; return $s[0]->value; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 3,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "record_field_write",
+    "source": "function f($x int32): int32 { $s Storage<Point>; $s[0]->value = $x; return $s[1]->value; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 5,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "record_borrow",
+    "source": "function f(): int32 { $s Storage<Point>; return read($s[0]); } function read(const Point &$p): int32 { return $p->value; } return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 4,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "record_mutable_borrow",
+    "source": "function f(): int32 { $s Storage<Point>; return change($s[0]); } function change(Point &$p): int32 { return $p->value; } return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 4,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "count",
+    "source": "function f(): int { $s Storage<int32>; return storage_3<int32>($s); }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 3,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "const_count",
+    "source": "function f(const Storage<int32> &$s): int { return storage_3<int32>($s); }  return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 2,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "push",
+    "source": "function f($x int32): int32 { $s Storage<int32>; storage_1<int32>($s,$x); return $s[0]; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 5,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "record_push",
+    "source": "function f(const Point &$p): int32 { $s Storage<Point>; storage_1<Point>($s,$p); return $s[0]->value; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 5,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "allocate_release",
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_4<int32>($s); return 0; }  return 0;",
+    "error": "",
+    "statements": 4,
+    "values": 5,
+    "calls": 2,
+    "fall": false
+  },
+  {
+    "name": "transfer",
+    "source": "function f(): int { $b Storage<int32>; $a Storage<int32>; storage_5<int32>($a,$b); return 0; }  return 0;",
+    "error": "",
+    "statements": 4,
+    "values": 5,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "pop",
+    "source": "function f(): int { $s Storage<int32>; storage_2<int32>($s); return 0; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 3,
+    "calls": 1,
+    "fall": false
+  },
+  {
+    "name": "const_write",
+    "source": "function f(const Storage<int32> &$s,$x int32): int32 { $s[0] = $x; return $x; }  return 0;",
+    "error": "Cannot write through a const reference parameter",
+    "statements": 1,
+    "values": 2,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "const_field_write",
+    "source": "function f(const Storage<Point> &$s,$x int32): int32 { $s[0]->value = $x; return $x; }  return 0;",
+    "error": "Cannot write through a const reference parameter",
+    "statements": 1,
+    "values": 2,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "const_mutable_borrow",
+    "source": "function f(const Storage<Point> &$s): int32 { return change($s[0]); } function change(Point &$p): int32 { return $p->value; } return 0;",
+    "error": "A const reference cannot be passed as a mutable reference",
+    "statements": 1,
+    "values": 2,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "const_push",
+    "source": "function f(const Storage<int32> &$s,$x int32): int32 { storage_1<int32>($s,$x); return $x; }  return 0;",
+    "error": "A const reference cannot be passed as a mutable reference",
+    "statements": 1,
+    "values": 2,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "void_index",
+    "source": "function f(): int32 { $s Storage<int32>; return $s[index()]; } function index(): void {} return 0;",
+    "error": "Array index must be an integer",
+    "statements": 2,
+    "values": 3,
+    "calls": 0,
+    "fall": false
+  },
+  {
+    "name": "owner_copy",
+    "source": "function f(): int { $s Storage<int32>; $copy Storage<int32> = $s; return 0; }  return 0;",
+    "error": "Unsupported inline object copy; copy construction is unavailable",
+    "statements": 2,
+    "values": 3,
+    "calls": 0,
+    "fall": false
+  }
+]

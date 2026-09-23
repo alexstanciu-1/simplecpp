@@ -1,0 +1,15 @@
+{
+  "authoring_start_epoch": 1790153471.317062,
+  "first_php_ready_epoch": 1790153629.375831,
+  "authoring_through_first_php_ready_seconds": 158.059,
+  "php_corrective_cycles": 1,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 314.593,
+  "native_stabilization_wall_seconds_through_consolidation": 348.083,
+  "notes": [
+    "No production changes. Compiler plan proof; no provider execution or allocation/lifetime safety claim.",
+    "First fixture attempted mutable source parameters for noncopyable owners; preserved source contract rejects these. Mutation cases now create local owners; const borrows remain source parameters."
+  ]
+}
