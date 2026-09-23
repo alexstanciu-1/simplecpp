@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **200 production files**: input preparation (137 outcomes),
+Active readiness is **202 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -546,3 +546,5 @@ Preparation queue dependency: single hash-slot removal is now proved in PHP/nati
 member keys. Converter/checker rejection regressions pass; first native attempt
 passed without corrections. Readiness stays 200 files. Next: migrate the typed
 preparation queue and prove scheduling, dependency edges and payload release.
+
+Concrete preparation queue adds 31 PHP/native scheduling assertions and a host-only payload-release check (`results/preparation-queue-01`). First native attempt passed without corrections. Readiness is 202 files. Next: concrete coordinator dependencies, including family preparation acceptance, layout/source-export services and bounded instantiation policy. Full analysis execution remains incomplete.

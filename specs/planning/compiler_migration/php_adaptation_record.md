@@ -2958,3 +2958,23 @@ passed, zero corrective cycles, one C++ build. Per-command times are saved; exac
 authoring/PHP-ready elapsed time was not captured. Checker rejection/publication
 purity and the existing converter/runtime/incremental suite also passed. No new
 compiler production files are claimed by this tooling checkpoint.
+
+## Concrete preparation queue (2026-09-23)
+
+Migrated the prototype request payload and fact-indexed readiness owner. Named
+entry/dependent/batch records replace nested mutable arrays; integer task tags
+and checked typed getters replace the enum/union carrier. Facts still wake only
+indexed consumers. Hash deletion releases completed payloads and consumed edges.
+Two local invariant repairs remove stale ready membership when an already-ready
+request acquires a prerequisite or completes before take. Existing coordinator
+flows retain their behavior. No new compiler functionality or runtime-preparation
+changes were introduced.
+
+The focused trace proves 31 scheduling/identity/rejection assertions in PHP and
+native, including fixed mixed-kind batches, deduplication, prepublished facts,
+blocked cycles and reuse after completion. A separate host weak-reference check
+proves request/task release. Native passed attempt one, zero corrective cycles;
+per-command timings, first PHP checkpoint and final source hashes are retained in
+`results/preparation-queue-01`. Authoring start was not captured; no estimated
+elapsed authoring time is presented. Full coordinator/provider execution remains
+separate. See `specs/portability/preparation_queue.md` for the ownership contract.

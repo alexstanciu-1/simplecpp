@@ -201,7 +201,9 @@
     "src/04_analyze/resolve_types/locals.php",
     "src/04_analyze/resolve_types/local_join.php",
     "src/04_analyze/resolve_types/construction_types.php",
-    "src/04_analyze/resolve_types/type_association_debug.php"
+    "src/04_analyze/resolve_types/type_association_debug.php",
+    "src/04_analyze/resolve_types/data/preparation.php",
+    "src/04_analyze/resolve_types/preparation_queue.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

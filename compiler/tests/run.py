@@ -91,7 +91,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('signature_publication', Path(__file__).parent / 'signature_publication/run.py'),
           ('type_snapshot', Path(__file__).parent / 'type_snapshot/run.py'),
           ('local_types', Path(__file__).parent / 'local_types/run.py'),
-          ('construction_types', Path(__file__).parent / 'construction_types/run.py')]
+          ('construction_types', Path(__file__).parent / 'construction_types/run.py'),
+          ('preparation_queue', Path(__file__).parent / 'preparation_queue/run.py')]
 
 
 def main():
