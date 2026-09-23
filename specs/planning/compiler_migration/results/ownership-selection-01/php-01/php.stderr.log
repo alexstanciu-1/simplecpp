@@ -1,0 +1,4 @@
+PHP Fatal error:  Cannot redeclare class analyze_lifetimes\Ownership_Request (previously declared in /tmp/ownership-selection-php-01/source/src/04_analyze/analyze_lifetimes/data/ownership_requests.php:5) in /tmp/ownership-selection-php-01/source/src/04_analyze/analyze_lifetimes/data/ownership_requests.php on line 5
+PHP Stack trace:
+PHP   1. {main}() Command line code:0
+PHP   2. {main}() Command line code:0

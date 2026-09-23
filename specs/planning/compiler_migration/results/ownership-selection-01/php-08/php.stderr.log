@@ -1,0 +1,13 @@
+PHP Fatal error:  Uncaught LogicException: Resource-owning result requires construction in /tmp/ownership-selection-php-08/source/src/04_analyze/analyze_lifetimes/allocation_pass.php:137
+Stack trace:
+#0 /tmp/ownership-selection-php-08/source/src/04_analyze/analyze_lifetimes/allocation_pass.php(63): analyze_lifetimes\Allocation_Pass->statement()
+#1 /tmp/ownership-selection-php-08/source/src/04_analyze/analyze_lifetimes/allocation_flow.php(71): analyze_lifetimes\Allocation_Pass->block()
+#2 /tmp/ownership-selection-php-08/source/src/04_analyze/analyze_lifetimes/allocation_flow.php(36): analyze_lifetimes\Allocation_Flow->solve()
+#3 /tmp/ownership-selection-php-08/source/src/04_analyze/analyze_lifetimes/ownership_worker.php(22): analyze_lifetimes\Allocation_Flow->analyze()
+#4 /tmp/ownership-selection-php-08/source/src/04_analyze/analyze_lifetimes/ownership_queue.php(52): analyze_lifetimes\Ownership_Worker->run()
+#5 /tmp/ownership-selection-php-08/source/probe.php(100): analyze_lifetimes\Ownership_Queue->run()
+#6 /tmp/ownership-selection-php-08/source/probe.php(105): ownership_selection_test\Probe::source_case()
+#7 /tmp/ownership-selection-php-08/source/main.php(2): ownership_selection_test\Probe::run()
+#8 Command line code(1): require('...')
+#9 {main}
+  thrown in /tmp/ownership-selection-php-08/source/src/04_analyze/analyze_lifetimes/allocation_pass.php on line 137

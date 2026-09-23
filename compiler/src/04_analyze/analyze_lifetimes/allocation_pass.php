@@ -129,7 +129,13 @@ final class Allocation_Pass {
                 if ($resource !== null) { $has_fields = $resource->path_count() !== 0; }
                 if ($has_fields) {
                     $empty /** hash<int> */ = []; $fields = new Resource_Field_State($empty);
-                    if ($statement->return_mode === \check_bodies\RETURN_DIRECT_CONSTRUCT) {
+                    // Zero-initialized records use RETURN_STORE in body checking, but their
+                    // prepared resource facts still transfer into the caller-owned result.
+                    $prepared_return = $statement->return_mode === \check_bodies\RETURN_DIRECT_CONSTRUCT;
+                    if ($statement->return_mode === \check_bodies\RETURN_STORE) {
+                        $prepared_return = $source->kind === \check_bodies\VALUE_RECORD_DEFAULT;
+                    }
+                    if ($prepared_return) {
                         if (!isset($constructed[$statement->value_id])) { throw new \LogicException('Owned result requires prepared resource facts'); }
                         $fields = $constructed[$statement->value_id];
                     } else if ($statement->return_mode === \check_bodies\RETURN_COPY_CONSTRUCT) { $fields = $this->traversal->source_construction_fields($statement->value_id,$flow,'copy:'); }
@@ -142,7 +148,7 @@ final class Allocation_Pass {
                             $observations->result[$path] = Resource_States::join($previous,$state);
                         }
                     }
-                    if ($statement->return_mode === \check_bodies\RETURN_DIRECT_CONSTRUCT) { $value_id = $statement->value_id; unset($constructed[$value_id]); }
+                    if ($prepared_return) { $value_id = $statement->value_id; unset($constructed[$value_id]); }
                 }
             }
         }

@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught Error: Class "check_bodies\Body_Set" not found in /tmp/ownership-selection-php-02/source/probe.php:26
+Stack trace:
+#0 /tmp/ownership-selection-php-02/source/main.php(2): ownership_selection_test\Probe::run()
+#1 Command line code(1): require('...')
+#2 {main}
+  thrown in /tmp/ownership-selection-php-02/source/probe.php on line 26

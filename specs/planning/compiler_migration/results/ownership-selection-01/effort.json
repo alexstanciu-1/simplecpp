@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790161702.0,
+  "first_php_ready_epoch": 1790161785.877926,
+  "authoring_through_first_php_ready_seconds": 83.878,
+  "checker_corrective_cycles": 1,
+  "php_fixture_corrective_cycles": 3,
+  "production_corrective_cycles": 1,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "native_build_seconds": 360.667,
+  "notes": [
+    "First PHP checkpoint was one nested selection scenario. Expanded proof is eight source cases plus baseline assertions.",
+    "Two dependency-loading harness corrections, one unsupported move-fixture correction, one checker key-expression correction.",
+    "The integration discovered and fixed the inherited RETURN_STORE record-default resource transfer mismatch.",
+    "Post-PHP work includes coverage expansion and parallel lifecycle selection development; do not treat elapsed wall time as exclusive stabilization labor."
+  ]
+}

@@ -3892,3 +3892,11 @@ publication and whole-stage coordination remain unfinished. src-runtime-preparat
 is unchanged.
 
 Authoring through first PHP readiness: 117.419 seconds. Native build: 345.483 seconds; one attempt, zero corrective cycles. Evidence: results/ownership-queue-01.
+
+## Ownership request selection (2026-09-23)
+
+Ordered type access and named request/child records replace structural catalog copies and ad-hoc nested maps. Selection captures semantic body/lifecycle dependencies; readiness and acceptance stay in Ownership_Queue. Source methods retain concrete callable identities and per-field lifecycle roles. See specs/portability/compiler_ownership_selection_slice.md for scope and explicit remaining integration obligations.
+
+Integration uncovered the preserved prototype mismatch between RETURN_STORE for zero-initialized record returns and allocation analysis requiring a construction return. Allocation_Pass now transfers already prepared facts only for RETURN_STORE + VALUE_RECORD_DEFAULT; arbitrary resource stores remain rejected. Direct and called owned returns assert exact empty nested result states. Eight PHP/native scenarios pass, with 23 existing PHP allocation regressions.
+
+First native build passed without correction. Detailed authoring, fixture correction and first-PHP timing evidence: results/ownership-selection-01/effort.json.

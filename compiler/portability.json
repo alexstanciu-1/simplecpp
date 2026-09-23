@@ -257,7 +257,8 @@
     "src/04_analyze/analyze_lifetimes/ownership_worker.php",
     "src/04_analyze/analyze_lifetimes/ownership_join.php",
     "src/04_analyze/analyze_lifetimes/data/ownership_requests.php",
-    "src/04_analyze/analyze_lifetimes/ownership_queue.php"
+    "src/04_analyze/analyze_lifetimes/ownership_queue.php",
+    "src/04_analyze/analyze_lifetimes/ownership_selection.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
