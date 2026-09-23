@@ -1,0 +1,237 @@
+[
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_4<int32>($s); return 0; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; return storage_3<int32>($s); }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_4<int32>($s); return 0; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); return storage_3<int32>($s); }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_0<int32>($s,8); return 0; }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      "Allocation acquisition requires an empty owner"
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; $t Storage<int32>; storage_0<int32>($s,4); storage_5<int32>($s,$t); return 0; }  return 0;",
+    "expected": [
+      [
+        5,
+        10
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_5<int32>($s,$s); return 0; }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      "Allocation transfer requires a distinct empty destination"
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int32 { $s Storage<int32>; return $s[0]; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      "Element access requires an owned allocation"
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int32 { $s Storage<int32>; storage_0<int32>($s,4); return $s[0]; }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int32 { $s Storage<Point>; storage_0<Point>($s,4); return consume($s[0],storage_3<Point>($s)); } function consume(const Point &$p,$n int): int32 { return $p->value; } return 0;",
+    "expected": [
+      [
+        10
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<Point>; storage_0<Point>($s,4); storage_1<Point>($s,$s[0]); return 0; }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      ""
+    ],
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_4<int32>($s); return 0; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      "Allocation mutation would invalidate an active call borrow"
+    ],
+    "pin": true,
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $b Box; return read($b); } function read(const Box &$b): int { return 0; } return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ],
+    "summary_call": true,
+    "mode": "expression"
+  },
+  {
+    "source": "function f(): int { $b Box; return 0; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ],
+    "construct_dependency": true,
+    "mode": "expression"
+  },
+  {
+    "mode": "construct",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 1,
+    "result": 10,
+    "state": 10,
+    "expected": ""
+  },
+  {
+    "mode": "construct",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 2,
+    "result": 10,
+    "state": 10,
+    "expected": "Complete construction requires empty field storage"
+  },
+  {
+    "mode": "construct",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 3,
+    "result": 9,
+    "state": 5,
+    "expected": ""
+  },
+  {
+    "mode": "construct",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 1,
+    "result": 5,
+    "state": 5,
+    "expected": ""
+  },
+  {
+    "mode": "destroy",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 1,
+    "result": 5,
+    "state": 5,
+    "expected": ""
+  },
+  {
+    "mode": "destroy",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 2,
+    "result": 5,
+    "state": 10,
+    "expected": ""
+  },
+  {
+    "mode": "destroy",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 1,
+    "result": 5,
+    "state": 10,
+    "expected": "Temporary destruction does not satisfy its ownership contract"
+  },
+  {
+    "mode": "destroy",
+    "source": "function f(): int { $b Box; return 0; } return 0;",
+    "required": 3,
+    "result": 5,
+    "state": 15,
+    "expected": ""
+  },
+  {
+    "mode": "copy",
+    "source": "function read(const Box &$b): int { return 0; } function f(): int { $b Box; return read($b); } return 0;",
+    "required": 1,
+    "result": 10,
+    "state": 10,
+    "initial": 10,
+    "expected": ""
+  },
+  {
+    "mode": "move",
+    "source": "function read(const Box &$b): int { return 0; } function f(): int { $b Box; return read($b); } return 0;",
+    "required": 1,
+    "result": 10,
+    "state": 10,
+    "initial": 10,
+    "expected": ""
+  },
+  {
+    "mode": "copy",
+    "source": "function read(const Box &$b): int { return 0; } function f(): int { $b Box; return read($b); } return 0;",
+    "required": 1,
+    "result": 10,
+    "state": 10,
+    "initial": 5,
+    "expected": "Source call ownership requirements are not satisfied"
+  }
+]

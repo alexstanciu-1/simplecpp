@@ -1,0 +1,26 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/allocation-traversal-php-01/source"
+      ],
+      "seconds": 2.698,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/allocation-traversal-php-01/source"
+      ],
+      "seconds": 7.204,
+      "exit": 1
+    }
+  ],
+  "native_build_attempts": 0
+}

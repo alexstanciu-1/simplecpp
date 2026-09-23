@@ -1,0 +1,11 @@
+PHP Fatal error:  Uncaught RuntimeException: Source reference parameters require a plain record type or a const record borrow in /tmp/allocation-traversal-php-04/source/src/04_analyze/resolve_types/utilities/annotation_types.php:18
+Stack trace:
+#0 /tmp/allocation-traversal-php-04/source/src/04_analyze/resolve_types/utilities/parameter_contracts.php(28): resolve_types\Annotation_Types->fail()
+#1 /tmp/allocation-traversal-php-04/source/src/04_analyze/resolve_types/signatures.php(60): resolve_types\Parameter_Contracts::validate()
+#2 /tmp/allocation-traversal-php-04/source/probe.php(11): resolve_types\Signature_Resolver::resolve()
+#3 /tmp/allocation-traversal-php-04/source/probe.php(24): allocation_traversal_test\Probe::snapshot()
+#4 /tmp/allocation-traversal-php-04/source/probe.php(88): allocation_traversal_test\Probe::run_case()
+#5 /tmp/allocation-traversal-php-04/source/main.php(2): allocation_traversal_test\Probe::run()
+#6 Command line code(1): require('...')
+#7 {main}
+  thrown in /tmp/allocation-traversal-php-04/source/src/04_analyze/resolve_types/utilities/annotation_types.php on line 18

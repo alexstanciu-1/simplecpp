@@ -1,0 +1,21 @@
+{
+  "authoring_start_epoch": 1790158465.1202,
+  "first_php_ready_epoch": 1790158649.9437664,
+  "first_php_cases": 9,
+  "final_php_native_cases": 25,
+  "authoring_through_first_php_ready_seconds": 184.824,
+  "checker_corrective_cycles": 1,
+  "php_fixture_corrective_cycles": 2,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 320.275,
+  "native_stabilization_wall_seconds": 618.766,
+  "notes": [
+    "Checker correction replaced unsupported uninitialized object fields with constructor-injected pass owners.",
+    "Initial expected count-on-empty rejection was corrected: storage count is metadata observe.",
+    "Expanded nested fixture used unsupported source references; replaced by supported Point borrowing and explicit pinned-borrow input.",
+    "First PHP checkpoint remains the initial nine cases; later work expanded coverage before native execution.",
+    "Wall intervals overlap other checkpoint work and native compilation; not exclusive CPU effort."
+  ]
+}

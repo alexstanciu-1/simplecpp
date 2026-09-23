@@ -1,0 +1,84 @@
+[
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_4<int32>($s); return 0; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; return storage_3<int32>($s); }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_4<int32>($s); return 0; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); return storage_3<int32>($s); }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_0<int32>($s,8); return 0; }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      "Allocation acquisition requires an empty owner"
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; $t Storage<int32>; storage_0<int32>($s,4); storage_5<int32>($s,$t); return 0; }  return 0;",
+    "expected": [
+      [
+        5,
+        10
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_5<int32>($s,$s); return 0; }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      "Allocation transfer requires a distinct empty destination"
+    ]
+  },
+  {
+    "source": "function f(): int32 { $s Storage<int32>; return $s[0]; }  return 0;",
+    "expected": [
+      [
+        5
+      ],
+      "Element access requires an owned allocation"
+    ]
+  },
+  {
+    "source": "function f(): int32 { $s Storage<int32>; storage_0<int32>($s,4); return $s[0]; }  return 0;",
+    "expected": [
+      [
+        10
+      ],
+      ""
+    ]
+  }
+]
