@@ -391,3 +391,10 @@ source-definition permissions; source templates still require them. Ready-file c
 remains 156 because this changes existing owners. Next: provided-record bindings
 and symbolic interpretation; package artifact acceptance and full coordinator execution
 remain unfinished.
+
+
+Provider-record bindings add 19 PHP/native scenarios; affected lookup (40), lexical
+resolution (320), and project resolution (182) native regressions pass. Exact record
+identity now participates in lookup and incremental validity. See
+`results/provider-record-bindings-01`. Readiness remains 156 files. Next: symbolic
+template interpretation, then template body checking and result orchestration.

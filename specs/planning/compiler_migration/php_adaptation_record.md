@@ -2259,3 +2259,26 @@ retained and execution resumes at the failed stage instead of rebuilding them.
 The final 24-scenario integration proof and all 68 registered native stages pass.
 The cumulative certificate audits current production bytes, rather than treating
 older success reports as sufficient evidence after shared-model changes.
+
+
+## Provider-record bindings
+
+Name_Binding restores the prototype's provided-record category using a distinct
+nullable Record_Declaration handle. Constructor validation permits exactly the
+payload appropriate to each tag/role; normalized provider records have no invented
+numeric symbol or canonical type ID. same_target compares exact record identity,
+ignoring occurrence position. A structurally equal reconstructed record is a changed
+dependency, while rebuilding a catalog around the same accepted records permits reuse.
+
+Declaration_Lookup receives an explicit namespace and tries named definitions,
+normalized records, then source structs. Existing source callers pass their owner's
+namespace. Source-struct collision checks and incremental validity now consider both
+catalog definition categories. Missing or replaced records invalidate dependent
+source resolutions; unrelated record replacement does not.
+
+Nineteen focused PHP/native scenarios and the affected 40/320/182 native regression
+suites pass. First native build passed, with no native correction. Timing preserves
+the original PHP-ready checkpoint. No converter, target or runtime-preparation changes.
+
+This adds one optional shared handle per binding. A later tagged-layout optimization
+can reduce variant storage after profiling; do not erase the distinct record identity.

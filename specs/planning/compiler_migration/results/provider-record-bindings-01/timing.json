@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790130785.4140034,
+  "first_php_ready_epoch": 1790130947.1246698,
+  "authoring_to_php_ready_wall_seconds": 161.711,
+  "native_build_attempts_started": 1,
+  "native_correction_cycles": 0,
+  "first_php_summary": "/tmp/provider-record-bindings-01/summary.json",
+  "note": "Prepared in an isolated source copy while the main shared-symbol cumulative native run continues; do not transplant until that checkpoint is consolidated.",
+  "first_native_pass_epoch": 1790131107.2084193,
+  "php_ready_to_native_pass_wall_seconds": 160.084,
+  "native_build_attempts_to_first_pass": 1,
+  "final_verification_builds": 0,
+  "affected_regressions_summary": "/tmp/provider-record-regressions-01/summary.json",
+  "affected_regressions_passed": true,
+  "integrated_epoch": 1790134075.3151295
+}

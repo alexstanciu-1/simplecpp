@@ -11,7 +11,7 @@ trait Name_Resolution {
             $parts = \parse\Syntax_Access::function_parts($tree,$id); $this->annotation((int)$parts->return_type_id,0,'return');
         } elseif ($kind === \parse\SYNTAX_STRUCT_DECLARATION) {
             $parts = \parse\Syntax_Access::struct_parts($tree,$id);
-            if ($this->catalog->find_type($this->owner->name,'') !== null) { $this->fail((int)$parts->name_id,'Duplicate source/provider type: ' . $this->owner->name); }
+            if (($this->catalog->find_type($this->owner->name,$this->owner->namespace_name) !== null) || ($this->catalog->find_record($this->owner->name,$this->owner->namespace_name) !== null)) { $this->fail((int)$parts->name_id,'Duplicate source/provider type: ' . $this->owner->name); }
             $fields /** hash<bool> */ = [];
             $cursor = \parse\Syntax_Access::struct_members($tree,(int)$this->owner->source_fact()->declaration_node_id,\parse\SYNTAX_FIELD_DECLARATION);
             while ($cursor->advance()) {
@@ -50,7 +50,7 @@ trait Name_Resolution {
             if ($role !== \resolve_symbols\NAME_VALUE) { $this->fail($id,"Constant '" . $name . "' is not a type"); }
             return new Name_Binding($id,$role,\resolve_symbols\REFERENCE_LOCAL_CONSTANT,$constant,null);
         }
-        return Declaration_Lookup::find($this->symbols,$this->catalog,$name,$id,$role);
+        return Declaration_Lookup::find($this->symbols,$this->catalog,$name,$id,$role,$this->owner->namespace_name);
     }
     private function bind_name(int $id, int $role, int $scope, string $description): Name_Binding {
         $binding = $this->lookup_name($id,$role,$scope); $name = $this->text($id);

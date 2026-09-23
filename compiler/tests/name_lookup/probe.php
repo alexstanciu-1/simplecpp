@@ -13,31 +13,31 @@ final class Probe {
         if (!$refresh->valid) { throw new \LogicException($refresh->error_reason); }
         $store = $refresh->current;
         $catalog = \load_runtime\Catalog_Syntax::parse(fs_read_text('inputs/catalog.json'));
-        $integer = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'int',1,\resolve_symbols\NAME_TYPE);
+        $integer = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'int',1,\resolve_symbols\NAME_TYPE,'');
         Probe::check($integer !== null);
         Probe::check($integer->provided_type === $catalog->entry_return_type);
         Probe::check($integer->target_id === 0);
         Probe::check($integer->kind === \resolve_symbols\REFERENCE_PROVIDED_TYPE);
-        $box = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',2,\resolve_symbols\NAME_TYPE);
+        $box = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',2,\resolve_symbols\NAME_TYPE,'');
         Probe::check($box->target_id === $store->find_symbol('Box',\collect_symbols\SYMBOL_STRUCT,0,''));
         Probe::check($box->provided_type === null);
         Probe::check($box->kind === \resolve_symbols\REFERENCE_SOURCE_TYPE);
-        $bag = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'Bag',3,\resolve_symbols\NAME_TYPE_FAMILY);
+        $bag = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'Bag',3,\resolve_symbols\NAME_TYPE_FAMILY,'');
         Probe::check($bag->target_id === $store->find_symbol('Bag',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0,''));
         Probe::check($bag->kind === \resolve_symbols\REFERENCE_TEMPLATE_TYPE);
-        $constant = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'N',4,\resolve_symbols\NAME_VALUE);
+        $constant = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'N',4,\resolve_symbols\NAME_VALUE,'');
         Probe::check($constant->target_id === $store->find_symbol('N',\collect_symbols\SYMBOL_CONSTANT,0,''));
         Probe::check($constant->kind === \resolve_symbols\REFERENCE_PROJECT_CONSTANT);
-        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'N',1,\resolve_symbols\NAME_TYPE) === null);
-        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',1,\resolve_symbols\NAME_VALUE) === null);
-        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Bag',1,\resolve_symbols\NAME_TYPE) === null);
-        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',1,\resolve_symbols\NAME_TYPE_FAMILY) === null);
-        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Int',1,\resolve_symbols\NAME_TYPE) === null);
-        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'missing',1,\resolve_symbols\NAME_VALUE) === null);
-        $other = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'int',90,\resolve_symbols\NAME_TYPE);
+        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'N',1,\resolve_symbols\NAME_TYPE,'') === null);
+        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',1,\resolve_symbols\NAME_VALUE,'') === null);
+        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Bag',1,\resolve_symbols\NAME_TYPE,'') === null);
+        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',1,\resolve_symbols\NAME_TYPE_FAMILY,'') === null);
+        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Int',1,\resolve_symbols\NAME_TYPE,'') === null);
+        Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'missing',1,\resolve_symbols\NAME_VALUE,'') === null);
+        $other = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'int',90,\resolve_symbols\NAME_TYPE,'');
         Probe::check($integer->same_target($other));
         $fresh = \load_runtime\Catalog_Syntax::parse(fs_read_text('inputs/catalog.json'));
-        $rebound = \resolve_symbols\Declaration_Lookup::find($store,$fresh,'int',1,\resolve_symbols\NAME_TYPE);
+        $rebound = \resolve_symbols\Declaration_Lookup::find($store,$fresh,'int',1,\resolve_symbols\NAME_TYPE,'');
         Probe::check(!$integer->same_target($rebound));
         Probe::check(!$box->same_target($bag));
         $zero = new \resolve_symbols\Name_Binding(1,\resolve_symbols\NAME_TYPE,\resolve_symbols\REFERENCE_TEMPLATE_PARAMETER,0,null);
@@ -54,7 +54,7 @@ final class Probe {
         $member = $store->symbol_by_id($store->find_symbol('size',\collect_symbols\SYMBOL_FUNCTION,$box->target_id,''));
         Probe::check(\resolve_symbols\Function_Lookup::find($member,(int)$member->source_fact()->name_node_id,$store) === 0);
         $bad = false;
-        try { \resolve_symbols\Declaration_Lookup::find($store,$catalog,'missing',1,0); } catch (\InvalidArgumentException $e) { $bad = true; }
+        try { \resolve_symbols\Declaration_Lookup::find($store,$catalog,'missing',1,0,''); } catch (\InvalidArgumentException $e) { $bad = true; }
         Probe::check($bad);
         $bad = false;
         try { \resolve_symbols\Function_Lookup::find($member,(int)$member->source_fact()->body_node_id,$store); } catch (\InvalidArgumentException $e) { $bad = true; }

@@ -12,7 +12,7 @@ final class Resolution_Validity {
         if ($symbols->symbol_by_id($owner->symbol_id) !== $owner) { return false; }
         $kind = $owner->kind();
         if (($kind === \collect_symbols\SYMBOL_STRUCT) || ($kind === \collect_symbols\SYMBOL_TEMPLATE_STRUCT)) {
-            if ($catalog->find_type($owner->name,'') !== null) { return false; }
+            if (($catalog->find_type($owner->name,$owner->namespace_name) !== null) || ($catalog->find_record($owner->name,$owner->namespace_name) !== null)) { return false; }
         }
         for ($index = 0; $index < $result->calls_count(); $index++) {
             $binding = $result->calls_at($index); $node = (int)$binding->use_node_id;
@@ -49,7 +49,7 @@ final class Resolution_Validity {
                 if (\collect_symbols\File_Collector::name_text($owner->source_frontend(),(int)$constant->first_child) !== $text) { return false; }
             } else {
                 if ($binding->kind === \resolve_symbols\REFERENCE_PROJECT_CONSTANT) { if ($binding->target_id === $owner->symbol_id) { return false; } }
-                $current = Declaration_Lookup::find($symbols,$catalog,$text,$binding->use_node_id,$binding->role);
+                $current = Declaration_Lookup::find($symbols,$catalog,$text,$binding->use_node_id,$binding->role,$owner->namespace_name);
                 if ($current === null) { return false; }
                 if (!$current->same_target($binding)) { return false; }
             }
