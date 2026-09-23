@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **177 production files**: input preparation (137 outcomes),
+Active readiness is **181 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -479,3 +479,12 @@ method ownership, inherited arguments, pending work and exact current/previous r
 pass. Native build one passed without correction. Ready count is 177 files.
 Next: concrete source-record preparation and acceptance, including its lifecycle-body
 dependencies; callable signatures and full preparation orchestration remain unfinished.
+
+
+Source/provider record preparation and acceptance add 33 PHP/native outcomes and
+27 host invariants (`results/record-preparation-01`). Field/extent normalization,
+lifecycle-body IDs, ordinary/template/provider provenance and complete batch
+acceptance pass. The 46-case template-body PHP regression also passes after the
+shared role-map refactor. Native build one passed without correction. Readiness is
+181 files. Next: concrete callable signature preparation and its lifecycle validation;
+full preparation queues and coordinator execution remain unfinished.

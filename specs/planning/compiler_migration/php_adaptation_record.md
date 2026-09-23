@@ -2701,3 +2701,64 @@ forms; this checkpoint adds no new converter capability.
 correction. The final host proof also reuses the exact cloned-receiver rejection
 from retained `resolve_types/concrete_preparation.php`; its whole-program preparation
 checks remain later work. Evidence: `results/member-instances-01`.
+
+
+## Source/provider record normalization and acceptance
+
+`Record_Preparation` now selects missing ordinary source records and normalized
+provider records, normalizes source fields, and returns private `Record_Result`
+contracts. Explicit concrete template contexts use the same worker. Fields retain
+exact accepted element definitions and named `Field_Type` extents, rather than a
+source-side union of scalar and array-definition classes. Constant and template-value
+extents use the existing fixed binding reader; no expression evaluation is introduced.
+
+`Record_Task` replaces the prototype's input union and optional read-input bundle
+with an explicit source-context/provider-declaration alternative plus fixed Bindings
+and Symbol_Store owners. Both origins share the canonical qualified-name key; source
+instances already carry their reserved internal type namespace/name. There is no
+second origin-specific type namespace. Task constructors reject ambiguous alternatives.
+
+The existing `Lifecycle_Bodies` value record holds constructor/destructor/copy/
+assignment symbol IDs. `Source_Lifecycle_Bodies` owns extraction and source signature
+shape checks (mutable receiver, body presence, copy-source arity and const-reference
+syntax). The small `Source_Lifecycle` role query now delegates its spelling map to
+name_role. Body extraction lives separately so symbolic template checking does not
+depend on concrete record-task/annotation machinery. This is a local decomposition
+of the prototype lifecycle owner, not a new semantic stage. Exact return/receiver/copy
+source type validation still belongs to upcoming callable-signature preparation.
+
+Extents are checked as exact positive decimal values against the signed 64-bit compiler
+index domain before arithmetic conversion. This replaces host-dependent filter_var
+integer ingestion. The maximum boundary is tested as a normalized contract, without
+claiming that an array of that size can be allocated or laid out. Accumulation groups
+the decoded digit before addition to avoid an intermediate overflow at that boundary.
+
+`Record_Join` checks current source/provider ownership, catalog context, accepted
+template contexts, complete result membership, exact field definitions/extents and
+lifecycle IDs before applying declarations in selected order. Source conflicts retain
+source anchors; provider-only conflicts cannot invent one. Provider outputs retain
+exact normalized declaration identity. Current type/instance/name inputs remain
+fixed while workers and validation run; accepted canonical publication deliberately
+changes the private candidate observed by task readers. Failed materialization still
+requires discarding that private candidate; rollback is not implied.
+
+The PHP corpus exposed fixture boundaries: duplicate fields and source/provider name
+collisions are already rejected by name resolution; their checks are recorded as
+upstream host proofs. Const methods use `public const function`. Generic arrays of a
+dependent element type remain deliberately rejected by template permissions, so the
+concrete-record proofs separately exercise supported T substitution and an integer
+value parameter used as the extent of a concrete element type. No restriction was
+weakened to make those fixtures pass.
+
+The first 33 PHP behavior outcomes passed before a host purity assertion was repaired:
+it had incorrectly serialized the intentionally mutable candidate through task reader
+views after successful publication. The corrected proof compares immutable facts and
+normalized outputs separately, while requiring complete candidate purity on rejection.
+This was a test correction after the PHP-ready timestamp, not a production behavior fix.
+
+Full preparation queues, callable signatures, lifecycle body type checking and compiler
+coordinator execution remain unfinished. src-runtime-preparation remains untouched.
+
+33 PHP/native outcomes and 27 host invariants pass on native build one without
+correction; the existing 46-case template-body PHP regression also passes.
+Evidence: `results/record-preparation-01`.

@@ -178,7 +178,11 @@
     "src/04_analyze/instantiate/join.php",
     "src/04_analyze/instantiate/data/members.php",
     "src/04_analyze/instantiate/members.php",
-    "src/04_analyze/instantiate/member_join.php"
+    "src/04_analyze/instantiate/member_join.php",
+    "src/04_analyze/resolve_types/source_lifecycle_bodies.php",
+    "src/04_analyze/resolve_types/data/records.php",
+    "src/04_analyze/resolve_types/records.php",
+    "src/04_analyze/resolve_types/record_join.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

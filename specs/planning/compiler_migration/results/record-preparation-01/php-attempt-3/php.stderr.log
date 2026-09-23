@@ -1,0 +1,7 @@
+PHP Fatal error:  Uncaught LogicException: provider_collision: Duplicate source/provider type: Point in /tmp/record-preparation-03/source/probe.php:40
+Stack trace:
+#0 /tmp/record-preparation-03/source/probe.php(71): record_preparation_test\Fixture::prepare()
+#1 /tmp/record-preparation-03/source/main.php(2): record_preparation_test\Probe::run()
+#2 Command line code(1): require('...')
+#3 {main}
+  thrown in /tmp/record-preparation-03/source/probe.php on line 40

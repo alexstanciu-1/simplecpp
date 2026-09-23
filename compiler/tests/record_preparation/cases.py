@@ -1,0 +1,6 @@
+def build():
+    return ['scalar','array','constant_extent','max_extent','zero_extent','overflow_extent','bad_field','empty',
+            'lifecycle','ctor_parameters','copy_missing','copy_mutable','copy_extra','const_receiver',
+            'two_records','reverse','late_invalid','incomplete','duplicate_result','duplicate_task',
+            'wrong_field','wrong_extent','readonly_field','wrong_name','wrong_bodies','forged_task','wrong_catalog',
+            'provider','provider_clone','template','template_extent','stale_instance','selection']

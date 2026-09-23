@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught LogicException: Record purity assertion 2 in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/record_preparation/purity.php:5
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/record_preparation/purity.php(14): verify()
+#1 Command line code(1): require('...')
+#2 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/record_preparation/purity.php on line 5

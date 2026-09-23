@@ -1,0 +1,135 @@
+Transpiled PHP files: 119, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/121] PCH app_pch.hpp.gch
+[2/121] CXX scpp_framework/collections.o
+[3/121] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[4/121] CXX src/03_parse/data/nodes.o
+[5/121] CXX src/02_tokenize/structures.o
+[6/121] CXX src/03_parse/data/result.o
+[7/121] CXX src/02_tokenize/store.o
+[8/121] CXX main.o
+[9/121] CXX src/01_prepare_inputs/load_runtime/main_load_runtime.o
+[10/121] CXX src/02_tokenize/tokenize.o
+[11/121] CXX scpp_framework/json_document.o
+[12/121] CXX src/03_parse/data/expression_state.o
+[13/121] CXX src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o
+[14/121] CXX scpp_framework/exceptions.o
+[15/121] CXX scpp_framework/filesystem.o
+[16/121] CXX scpp_framework/strings.o
+[17/121] CXX src/03_parse/handlers/statements.o
+[18/121] CXX src/03_parse/handlers/metaprogramming.o
+[19/121] CXX src/03_parse/data/role_views.o
+[20/121] CXX src/03_parse/data/tree.o
+[21/121] CXX probe.o
+[22/121] CXX src/03_parse/handlers/expressions.o
+[23/121] CXX src/03_parse/handlers/declarations.o
+[24/121] CXX src/03_parse/main_parse.o
+[25/121] CXX src/03_parse/handlers/control_statements.o
+[26/121] CXX src/03_parse/utilities/metaprogramming_syntax.o
+[27/121] CXX src/03_parse/utilities/struct_member_cursor.o
+[28/121] CXX src/03_parse/data/store.o
+[29/121] CXX src/03_parse/select_tasks.o
+[30/121] CXX src/03_parse/utilities/binary_syntax.o
+[31/121] CXX src/03_parse/parse_file.o
+[32/121] CXX src/04_analyze/check_templates/data/interpretation.o
+[33/121] CXX src/04_analyze/check_bodies/utilities/decimal_range.o
+[34/121] CXX src/03_parse/utilities/syntax_access.o
+[35/121] CXX src/03_parse/join.o
+[36/121] CXX src/04_analyze/check_templates/data/structures.o
+[37/121] CXX src/04_analyze/check_bodies/utilities/literals.o
+[38/121] CXX src/03_parse/utilities/syntax_comparer.o
+[39/121] CXX src/04_analyze/check_templates/data/result.o
+[40/121] CXX src/04_analyze/check_templates/main_check_templates.o
+[41/121] CXX src/04_analyze/check_templates/data/terms.o
+[42/121] CXX src/04_analyze/check_templates/join.o
+[43/121] CXX src/04_analyze/collect_symbols/collect.o
+[44/121] CXX src/04_analyze/collect_symbols/data/provider_declaration.o
+[45/121] CXX src/04_analyze/check_templates/body.o
+[46/121] CXX src/04_analyze/check_templates/select_tasks.o
+[47/121] CXX src/04_analyze/collect_symbols/data/result.o
+[48/121] CXX src/04_analyze/collect_symbols/data/structures.o
+[49/121] CXX src/04_analyze/check_templates/terms.o
+[50/121] CXX src/04_analyze/collect_symbols/main_collect_symbols.o
+[51/121] CXX src/04_analyze/collect_symbols/data/store.o
+[52/121] CXX src/04_analyze/instantiate/data/context.o
+[53/121] CXX src/04_analyze/instantiate/bindings.o
+[54/121] CXX src/04_analyze/instantiate/constants.o
+[55/121] CXX src/04_analyze/instantiate/applications.o
+[56/121] CXX src/04_analyze/instantiate/data/applications.o
+[57/121] CXX src/04_analyze/instantiate/data/members.o
+[58/121] CXX src/04_analyze/instantiate/data/state.o
+[59/121] CXX src/04_analyze/instantiate/members.o
+[60/121] CXX src/04_analyze/instantiate/identities.o
+[61/121] CXX src/04_analyze/resolve_symbols/handlers/declarations.o
+[62/121] CXX src/04_analyze/resolve_symbols/handlers/expressions.o
+[63/121] CXX src/04_analyze/instantiate/data/result.o
+[64/121] CXX src/04_analyze/instantiate/data/store.o
+[65/121] CXX src/04_analyze/instantiate/data/view.o
+[66/121] CXX src/04_analyze/instantiate/member_join.o
+[67/121] CXX src/04_analyze/resolve_symbols/data/result.o
+[68/121] CXX src/04_analyze/resolve_symbols/data/declarations.o
+[69/121] CXX src/04_analyze/resolve_symbols/data/structures.o
+[70/121] CXX src/04_analyze/resolve_symbols/data/traversal.o
+[71/121] CXX src/04_analyze/resolve_symbols/data/store.o
+[72/121] CXX src/04_analyze/instantiate/join.o
+[73/121] CXX src/04_analyze/resolve_symbols/body.o
+[74/121] CXX src/04_analyze/resolve_symbols/handlers/statements.o
+[75/121] CXX src/04_analyze/resolve_symbols/handlers/names.o
+[76/121] CXX src/04_analyze/resolve_symbols/utilities/declaration_lookup.o
+[77/121] CXX src/04_analyze/resolve_types/data/entry_contract.o
+[78/121] CXX src/04_analyze/resolve_symbols/utilities/function_lookup.o
+[79/121] CXX src/04_analyze/resolve_types/data/lifecycle_bodies.o
+[80/121] CXX src/04_analyze/resolve_types/data/entry_selection.o
+[81/121] CXX src/04_analyze/resolve_types/data/records.o
+[82/121] CXX src/04_analyze/resolve_symbols/utilities/resolution_validity.o
+[83/121] CXX src/04_analyze/resolve_symbols/select_tasks.o
+[84/121] CXX src/04_analyze/resolve_symbols/join.o
+[85/121] CXX src/04_analyze/resolve_types/definition_view.o
+[86/121] CXX src/04_analyze/resolve_symbols/main_resolve_symbols.o
+[87/121] CXX src/04_analyze/resolve_types/record_join.o
+[88/121] CXX src/04_analyze/resolve_types/record_definitions.o
+[89/121] CXX src/04_analyze/resolve_types/main_prepare_entry.o
+[90/121] CXX src/04_analyze/resolve_symbols/utilities/binding_coverage.o
+[91/121] CXX src/04_analyze/resolve_types/source_lifecycle.o
+[92/121] CXX src/04_analyze/resolve_types/lifecycle_composition.o
+[93/121] CXX src/04_analyze/resolve_types/records.o
+[94/121] CXX src/04_analyze/resolve_types/utilities/annotation_types.o
+[95/121] CXX src/04_analyze/resolve_types/utilities/type_cache.o
+[96/121] CXX src/04_analyze/type_model/data/callable_modes.o
+[97/121] CXX src/04_analyze/resolve_types/storage.o
+[98/121] CXX src/04_analyze/type_model/data/callables.o
+[99/121] CXX src/04_analyze/resolve_types/source_lifecycle_bodies.o
+[100/121] CXX src/04_analyze/type_model/data/context.o
+[101/121] CXX src/04_analyze/type_model/data/definitions.o
+[102/121] CXX src/04_analyze/type_model/data/generic.o
+[103/121] CXX src/04_analyze/type_model/data/catalog.o
+[104/121] CXX src/04_analyze/type_model/data/lifecycle.o
+[105/121] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[106/121] CXX src/04_analyze/type_model/data/families.o
+[107/121] CXX src/04_analyze/type_model/data/native_record_layout.o
+[108/121] CXX src/04_analyze/type_model/data/semantic_calls.o
+[109/121] CXX src/04_analyze/type_model/data/records.o
+[110/121] CXX src/04_analyze/type_model/data/representations.o
+[111/121] CXX src/04_analyze/type_model/data/lifetime_policy_codec.o
+[112/121] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[113/121] CXX src/04_analyze/type_model/data/semantic_modes.o
+[114/121] CXX src/04_analyze/type_model/data/source_families.o
+[115/121] CXX src/04_analyze/type_model/data/resources.o
+[116/121] CXX src/04_analyze/type_model/data/storage.o
+[117/121] CXX src/04_analyze/type_model/data/type_record.o
+[118/121] CXX src/04_analyze/type_model/data/type_references.o
+[119/121] CXX src/04_analyze/type_model/result_contracts.o
+[120/121] CXX src/04_analyze/type_model/data/store.o
+[121/121] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/01_prepare_inputs/load_runtime/main_load_runtime.o, .prism/build/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o, .prism/build/src/01_prepare_inputs/read_sources/data/buffer.o, .prism/build/src/02_tokenize/store.o, .prism/build/src/02_tokenize/structures.o, .prism/build/src/02_tokenize/tokenize.o, .prism/build/src/03_parse/data/expression_state.o, .prism/build/src/03_parse/data/nodes.o, .prism/build/src/03_parse/data/result.o, .prism/build/src/03_parse/data/role_views.o, .prism/build/src/03_parse/data/store.o, .prism/build/src/03_parse/data/tree.o, .prism/build/src/03_parse/handlers/control_statements.o, .prism/build/src/03_parse/handlers/declarations.o, .prism/build/src/03_parse/handlers/expressions.o, .prism/build/src/03_parse/handlers/metaprogramming.o, .prism/build/src/03_parse/handlers/statements.o, .prism/build/src/03_parse/join.o, .prism/build/src/03_parse/main_parse.o, .prism/build/src/03_parse/parse_file.o, .prism/build/src/03_parse/select_tasks.o, .prism/build/src/03_parse/utilities/binary_syntax.o, .prism/build/src/03_parse/utilities/metaprogramming_syntax.o, .prism/build/src/03_parse/utilities/struct_member_cursor.o, .prism/build/src/03_parse/utilities/syntax_access.o, .prism/build/src/03_parse/utilities/syntax_comparer.o, .prism/build/src/04_analyze/check_bodies/utilities/decimal_range.o, .prism/build/src/04_analyze/check_bodies/utilities/literals.o, .prism/build/src/04_analyze/check_templates/body.o, .prism/build/src/04_analyze/check_templates/data/interpretation.o, .prism/build/src/04_analyze/check_templates/data/result.o, .prism/build/src/04_analyze/check_templates/data/structures.o, .prism/build/src/04_analyze/check_templates/data/terms.o, .prism/build/src/04_analyze/check_templates/join.o, .prism/build/src/04_analyze/check_templates/main_check_templates.o, .prism/build/src/04_analyze/check_templates/select_tasks.o, .prism/build/src/04_analyze/check_templates/terms.o, .prism/build/src/04_analyze/collect_symbols/collect.o, .prism/build/src/04_analyze/collect_symbols/data/provider_declaration.o, .prism/build/src/04_analyze/collect_symbols/data/result.o, .prism/build/src/04_analyze/collect_symbols/data/store.o, .prism/build/src/04_analyze/collect_symbols/data/structures.o, .prism/build/src/04_analyze/collect_symbols/main_collect_symbols.o, .prism/build/src/04_analyze/instantiate/applications.o, .prism/build/src/04_analyze/instantiate/bindings.o, .prism/build/src/04_analyze/instantiate/constants.o, .prism/build/src/04_analyze/instantiate/data/applications.o, .prism/build/src/04_analyze/instantiate/data/context.o, .prism/build/src/04_analyze/instantiate/data/members.o, .prism/build/src/04_analyze/instantiate/data/result.o, .prism/build/src/04_analyze/instantiate/data/state.o, .prism/build/src/04_analyze/instantiate/data/store.o, .prism/build/src/04_analyze/instantiate/data/view.o, .prism/build/src/04_analyze/instantiate/identities.o, .prism/build/src/04_analyze/instantiate/join.o, .prism/build/src/04_analyze/instantiate/member_join.o, .prism/build/src/04_analyze/instantiate/members.o, .prism/build/src/04_analyze/resolve_symbols/body.o, .prism/build/src/04_analyze/resolve_symbols/data/declarations.o, .prism/build/src/04_analyze/resolve_symbols/data/result.o, .prism/build/src/04_analyze/resolve_symbols/data/store.o, .prism/build/src/04_analyze/resolve_symbols/data/structures.o, .prism/build/src/04_analyze/resolve_symbols/data/traversal.o, .prism/build/src/04_analyze/resolve_symbols/handlers/declarations.o, .prism/build/src/04_analyze/resolve_symbols/handlers/expressions.o, .prism/build/src/04_analyze/resolve_symbols/handlers/names.o, .prism/build/src/04_analyze/resolve_symbols/handlers/statements.o, .prism/build/src/04_analyze/resolve_symbols/join.o, .prism/build/src/04_analyze/resolve_symbols/main_resolve_symbols.o, .prism/build/src/04_analyze/resolve_symbols/select_tasks.o, .prism/build/src/04_analyze/resolve_symbols/utilities/binding_coverage.o, .prism/build/src/04_analyze/resolve_symbols/utilities/declaration_lookup.o, .prism/build/src/04_analyze/resolve_symbols/utilities/function_lookup.o, .prism/build/src/04_analyze/resolve_symbols/utilities/resolution_validity.o, .prism/build/src/04_analyze/resolve_types/data/entry_contract.o, .prism/build/src/04_analyze/resolve_types/data/entry_selection.o, .prism/build/src/04_analyze/resolve_types/data/lifecycle_bodies.o, .prism/build/src/04_analyze/resolve_types/data/records.o, .prism/build/src/04_analyze/resolve_types/definition_view.o, .prism/build/src/04_analyze/resolve_types/lifecycle_composition.o, .prism/build/src/04_analyze/resolve_types/main_prepare_entry.o, .prism/build/src/04_analyze/resolve_types/record_definitions.o, .prism/build/src/04_analyze/resolve_types/record_join.o, .prism/build/src/04_analyze/resolve_types/records.o, .prism/build/src/04_analyze/resolve_types/source_lifecycle.o, .prism/build/src/04_analyze/resolve_types/source_lifecycle_bodies.o, .prism/build/src/04_analyze/resolve_types/storage.o, .prism/build/src/04_analyze/resolve_types/utilities/annotation_types.o, .prism/build/src/04_analyze/resolve_types/utilities/type_cache.o, .prism/build/src/04_analyze/type_model/data/callable_modes.o, .prism/build/src/04_analyze/type_model/data/callables.o, .prism/build/src/04_analyze/type_model/data/catalog.o, .prism/build/src/04_analyze/type_model/data/context.o, .prism/build/src/04_analyze/type_model/data/definitions.o, .prism/build/src/04_analyze/type_model/data/families.o, .prism/build/src/04_analyze/type_model/data/generic.o, .prism/build/src/04_analyze/type_model/data/lifecycle.o, .prism/build/src/04_analyze/type_model/data/lifecycle_roles.o, .prism/build/src/04_analyze/type_model/data/lifetime_contract.o, .prism/build/src/04_analyze/type_model/data/lifetime_policy_codec.o, .prism/build/src/04_analyze/type_model/data/native_record_layout.o, .prism/build/src/04_analyze/type_model/data/records.o, .prism/build/src/04_analyze/type_model/data/representations.o, .prism/build/src/04_analyze/type_model/data/resources.o, .prism/build/src/04_analyze/type_model/data/semantic_calls.o, .prism/build/src/04_analyze/type_model/data/semantic_modes.o, .prism/build/src/04_analyze/type_model/data/source_families.o, .prism/build/src/04_analyze/type_model/data/storage.o, .prism/build/src/04_analyze/type_model/data/store.o, .prism/build/src/04_analyze/type_model/data/type_record.o, .prism/build/src/04_analyze/type_model/data/type_references.o, .prism/build/src/04_analyze/type_model/result_contracts.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main
