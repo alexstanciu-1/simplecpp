@@ -1,0 +1,56 @@
+Transpiled PHP files: 112, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/114] PCH app_pch.hpp.gch
+[2/114] CXX src/03_parse/data/nodes.o
+[3/114] CXX src/02_tokenize/store.o
+[4/114] CXX src/01_prepare_inputs/load_runtime/main_load_runtime.o
+[5/114] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+[6/114] CXX src/02_tokenize/structures.o
+[7/114] CXX scpp_framework/exceptions.o
+[8/114] CXX probe.o
+FAILED: probe.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b54891d4bf56ff7b.hpp -MMD -MF probe.o.d -MT probe.o -c ../generated/probe.cpp -o probe.o
+../generated/probe.cpp:64:16: error: member 'create' used before its declaration
+   64 |         auto source = create<::scpp::read_sources::Source_Buffer>();
+      |                       ^
+../generated/probe.cpp:59:48: note: member is declared here
+   59 | shared_p<instance_join_test::Fixture> Fixture::create(const string_t& entry, const string_t& formals, bool_t permissions, const string_t& extra) {
+      |                                                ^
+../generated/probe.cpp:64:16: error: no matching function for call to 'create'
+   64 |         auto source = create<::scpp::read_sources::Source_Buffer>();
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../generated/probe.cpp:71:15: error: member 'create' used before its declaration
+   71 |         auto files = create<::scpp::parse::Frontend_Set>();
+      |                      ^
+../generated/probe.cpp:59:48: note: member is declared here
+   59 | shared_p<instance_join_test::Fixture> Fixture::create(const string_t& entry, const string_t& formals, bool_t permissions, const string_t& extra) {
+      |                                                ^
+../generated/probe.cpp:71:15: error: no matching function for call to 'create'
+   71 |         auto files = create<::scpp::parse::Frontend_Set>();
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4 errors generated.
+[9/114] CXX src/02_tokenize/tokenize.o
+[10/114] CXX scpp_framework/filesystem.o
+[11/114] CXX src/03_parse/data/result.o
+[12/114] CXX src/03_parse/data/expression_state.o
+[13/114] CXX scpp_framework/strings.o
+[14/114] CXX main.o
+[15/114] CXX scpp_framework/collections.o
+[16/114] CXX scpp_framework/json_document.o
+[17/114] CXX src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o
+[18/114] CXX src/03_parse/data/role_views.o
+[19/114] CXX src/03_parse/handlers/control_statements.o
+[20/114] CXX src/03_parse/handlers/declarations.o
+[21/114] CXX src/03_parse/handlers/expressions.o
+[22/114] CXX src/03_parse/data/tree.o
+[23/114] CXX src/03_parse/data/store.o
+ninja: build stopped: subcommand failed.

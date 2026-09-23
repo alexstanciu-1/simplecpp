@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in probe.phs:23: member 'create' used before its declaration
+Generated location: .prism/generated/probe.cpp:64:16
+Compile note in probe.phs:20: member is declared here
+Generated location: .prism/generated/probe.cpp:59:48
+Compile error in probe.phs:23: no matching function for call to 'create'
+Generated location: .prism/generated/probe.cpp:64:16
+Additional remapped diagnostics: 2
+Raw compiler excerpt:
+probe.cpp:64:16: error: member 'create' used before its declaration
+probe.cpp:59:48: note: member is declared here
+probe.cpp:64:16: error: no matching function for call to 'create'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

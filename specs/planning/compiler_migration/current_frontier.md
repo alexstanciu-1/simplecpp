@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **173 production files**: input preparation (137 outcomes),
+Active readiness is **174 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -463,3 +463,11 @@ Ordered arguments, explicit missing prerequisites, exact storage ownership and p
 candidate isolation are proved. Native build two passed after one field/method naming
 correction. Ready count is 173 files. Next: application acceptance and instance joins;
 storage callable signatures and full preparation orchestration remain unfinished.
+
+
+Application batch acceptance adds 32 PHP/native scenarios and 16 host invariants
+(`results/instance-join-01`). Complete provenance checks precede ordered allocation;
+identity reuse, pending prerequisites, concrete-context provenance and storage
+publication pass. Native build two passed after one fixture naming correction. Ready count is 174
+files. Next: concrete member-instance preparation and acceptance; callable signatures
+and complete preparation orchestration remain unfinished.

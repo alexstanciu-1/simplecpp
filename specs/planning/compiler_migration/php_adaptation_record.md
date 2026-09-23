@@ -2595,3 +2595,57 @@ include continuation/status-discussion gaps; command timings remain the precise
 execution measurements.
 
 Evidence: `results/application-arguments-01`.
+
+
+## Application batch acceptance and instance publication
+
+`Instance_Join` now owns complete application-batch acceptance and adoption into the
+coordinator's private instance/type candidates. It preserves task order independently
+of result arrival order, validates exact selected-task and current binding/declaration
+identity, requires template permissions, and rejects unaccepted or replaced concrete
+contexts. A join-local `Bindings` reader is tied to the supplied candidate; no mutable
+reader or nullable reader state is added to the public contract.
+
+All worker results are validated before identity allocation. Source type arguments
+retain exact accepted definition identity; value arguments retain exact typed decimal
+values. Pending source results may report any nonempty subset of unresolved type
+arguments, as in the prototype. Provider-family prerequisites must match the complete
+ordered missing list; storage prerequisites must name the sole unresolved element.
+The worker is reused for provider normalization, while source provenance validation
+retains the prototype's direct argument checks. Typed vectors/maps replace dynamic
+lists and membership helpers; keyed lookups use explicit guards and local keys.
+
+After validation, the existing identity ledger performs deduplication. Current
+contexts are retained; previous contexts are reused only for the same declaration
+and exact arguments. Storage type applications publish their concrete descriptor;
+storage function applications ensure that descriptor exists without publishing it
+as a function's instance type. Multiple occurrences share the accepted context.
+
+The ownership boundary is unchanged: validation failures leave candidates untouched;
+failures during allocation/materialization require the coordinator to discard its
+private candidates. This checkpoint does not claim transactional rollback for the
+adoption phase. Prior snapshots remain isolated. Full concrete preparation, selection,
+member instances, signature preparation and coordinator integration remain unfinished.
+
+The proof reuses the join invariants from the retained `explicit_instances.php` test:
+reversed arrivals, exact identity reuse, incomplete/duplicate batches, forged argument
+and prerequisite rejection, foreign lineage rejection and unchanged prior state.
+Its whole-program execution, nested preparation loop and incremental executable
+replacement portions require later stages and are not counted as passing here.
+New focused coverage includes provider/storage publication and accepted/absent/stale
+concrete-context provenance. Host serialization checks prove inputs and failed
+candidates stay unchanged; native execution proves the accepted identities and values.
+
+Cheap checker iterations corrected standalone named-field declarations and a method
+call used directly as an isset key. Constructor promotion and a join-local reader
+keep the intended ownership without adding nullable initialization state. The
+existing skill/authoring guide already documents these restrictions.
+
+The first native build failed in the test fixture: a factory method named `create`
+shadowed the emitted unqualified object-construction helper. Renaming that factory
+to `prepare` was the only native correction; the production join did not change.
+The authoring guide now records this observed target limitation. No generated output
+or pinned target implementation was patched.
+
+32 PHP/native scenarios and 16 host invariants pass on native build two after one fixture naming
+correction. Evidence: `results/instance-join-01`.

@@ -47,6 +47,12 @@ replacement object to hide that identity mismatch. See
 Keep field and method names distinct within a class: PHP permits `$selected` plus
 `selected()`, but both become the same C++ member name.
 
+On the pinned target, avoid a factory method named `create` when its body constructs
+objects: emitted unqualified `create<T>()` calls can bind to that member instead of
+the runtime helper. Use a descriptive factory name such as `prepare` or `from_source`.
+This is a target lowering limitation, not a PHP restriction; see the instance-join
+migration evidence in `specs/planning/compiler_migration/results/instance-join-01`.
+
 Use no namespace or one leading lowercase `namespace name;`, optionally preceded
 by `declare(strict_types=1);` and comments. Do not add function imports. The host
 bootstrap supplies [global portable helpers](global_functions.md): plain names for

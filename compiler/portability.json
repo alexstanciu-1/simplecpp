@@ -174,7 +174,8 @@
     "src/04_analyze/instantiate/constants.php",
     "src/04_analyze/resolve_types/storage.php",
     "src/04_analyze/instantiate/data/applications.php",
-    "src/04_analyze/instantiate/applications.php"
+    "src/04_analyze/instantiate/applications.php",
+    "src/04_analyze/instantiate/join.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
