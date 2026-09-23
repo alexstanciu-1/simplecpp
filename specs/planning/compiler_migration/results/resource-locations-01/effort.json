@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790156167.880982,
+  "first_php_ready_epoch": 1790156281.9869733,
+  "first_php_cases": 488,
+  "final_php_native_cases": 491,
+  "authoring_through_first_php_ready_seconds": 114.106,
+  "php_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 279.553,
+  "native_proof_completed_epoch": 1790156657.6978889,
+  "native_stabilization_wall_seconds": 375.711,
+  "notes": [
+    "Three nested record discovery cases added after the first PHP pass, before native validation.",
+    "477 outcomes compare directly with preserved helper methods. Seven place-prefix and seven checked-body cases use explicit independent expectations.",
+    "Ordinal accumulation subtracts ASCII zero before addition, avoiding an intermediate overflow at INT64_MAX."
+  ]
+}

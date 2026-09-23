@@ -1,0 +1,5 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/resource_locations.php": "80f98c84a59c90d2c2e6dfa0b7a8c85220cac38b573753f838839651af6ddeca",
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/data/ownership.php": "4059fb51faf0b5a8ce53d8d1b7b336335473721a365dc417c8fbb28daef2c6cc",
+  "compiler/tests/resource_locations/reference.php": "fafc30fd329065c03705391671723209dfaf217173c8b4c352731a1998c32961"
+}

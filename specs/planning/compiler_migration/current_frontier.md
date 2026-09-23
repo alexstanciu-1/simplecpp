@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **240 production files**: input preparation (137 outcomes),
+Active readiness is **242 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -596,3 +596,5 @@ Lifetime record contracts add 1,105 PHP/native and retained-constructor comparis
 Lifetime consumption and cleanup planning adds 29 PHP/native scenarios (`results/lifetime-plan-01`). The explicit intermediate plan preserves scope/value/cleanup contracts without claiming resource ownership acceptance. Readiness is 239 files. Allocation/ownership flow, full analyzed-body publication and stage integration remain incomplete.
 
 Resource-state algebra adds 336 PHP/native, prototype and independent-oracle outcomes, plus exhaustive associativity/identity checks (`results/resource-states-01`). Readiness is 240 files. Resource location/effect/alias modeling and full allocation/ownership analysis remain unfinished.
+
+Resource locations and canonical endpoints add 491 PHP/native outcomes, including 477 direct preserved-helper comparisons and real nested record/parameter discovery (`results/resource-locations-01`). Readiness is 242 files. Resource effects/aliasing and allocation/ownership flow remain unfinished.

@@ -113,7 +113,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('local_flow', Path(__file__).parent / 'local_flow/run.py'),
           ('lifetime_records', Path(__file__).parent / 'lifetime_records/run.py'),
           ('lifetime_plan', Path(__file__).parent / 'lifetime_plan/run.py'),
-          ('resource_states', Path(__file__).parent / 'resource_states/run.py')]
+          ('resource_states', Path(__file__).parent / 'resource_states/run.py'),
+          ('resource_locations', Path(__file__).parent / 'resource_locations/run.py')]
 
 
 def main():
