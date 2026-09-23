@@ -1,0 +1,8 @@
+STAN pre-build check failed: 1 compile-errors
+
+[compile-error] Unresolved static method call `Probe::storage()` in `type_result_records_test\Probe::run`.
+  at probe.phs:29
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

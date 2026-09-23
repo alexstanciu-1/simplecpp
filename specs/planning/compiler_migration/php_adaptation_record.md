@@ -2820,3 +2820,22 @@ was not changed.
 
 33 PHP/native outcomes and 26 host invariants pass on native attempt two after one
 STAN return-shape correction. Evidence: `results/signature-requests-01`.
+
+
+## Type result records: authoritative callable input and local associations
+
+Callable_Signature retains Callable_Input as its exact declaration/instance owner.
+Syntax, declaration and body facts will be read through that owner rather than
+copied into separately constructible fields. External/storage identities stay
+explicit; prepared family callables still require coordinator acceptance. This
+reduces inconsistent provenance states without replacing identity with equality.
+Local_Types copies a typed vector and exposes one-based lookup, retaining exact
+name-resolution/instance ownership. Constructor validation checks association
+shape, not canonical type existence; the containing snapshot must do that.
+Debug serialization and completed snapshot assembly are not yet migrated.
+For optimization, revisit handle/row representation only after publication and
+reuse proofs; do not weaken exact owner checks to reduce record fields.
+
+18 PHP/native outcomes and 23 host invariants pass. A fixture short-name STAN
+ambiguity required one qualification correction; production code passed the
+first C++ build. Evidence: `results/type-result-records-01`.

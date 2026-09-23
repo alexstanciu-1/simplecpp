@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **187 production files**: input preparation (137 outcomes),
+Active readiness is **188 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -497,3 +497,12 @@ attempt two passed after one STAN return-flow correction; only it reached C++ bu
 Readiness is 187 files. Next: callable/type-resolution result records and retained
 signature validity, then signature selection and batch publication. Complete type-stage
 and coordinator execution remain unfinished.
+
+
+Callable provenance and local-type result records add 18 PHP/native outcomes and
+23 host invariants (`results/type-result-records-01`). Exact declaration/instance
+ownership, explicit provider origins and copied local-type membership pass.
+Native attempt two passed after one fixture qualification correction; one C++
+build. Readiness is 188 files. Next: signature validity and selection/publication,
+plus the completed type snapshot's accepted-family associations. No complete
+Type_Resolution or type-stage execution is claimed.

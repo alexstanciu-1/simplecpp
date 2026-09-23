@@ -1,0 +1,2 @@
+def build():
+    return [{'mode': 'scalar'}, {'mode': 'entry'}, {'mode': 'template'}, {'mode': 'provider'}, {'mode': 'family'}, {'mode': 'storage'}, {'mode': 'local_copy'}, {'mode': 'local_count'}, {'mode': 'local_zero'}, {'mode': 'local_bounds'}, {'mode': 'wrong_instance'}, {'mode': 'source_external'}, {'mode': 'provider_annotation'}, {'mode': 'wrong_external'}, {'mode': 'storage_origin'}, {'mode': 'storage_instance'}, {'mode': 'representation_zero'}, {'mode': 'receiver_negative'}]

@@ -1,0 +1,17 @@
+{
+  "authoring_clock_start_epoch": 1790141282.0,
+  "authoring_clock_scope": "Recorded immediately before production authoring; excludes preceding prototype/design inspection.",
+  "first_php_ready_epoch": 1790141419.3509789,
+  "authoring_to_php_seconds": 137.35097885131836,
+  "first_native_pass_epoch": 1790141650.1573138,
+  "php_ready_to_native_pass_seconds": 230.8063349723816,
+  "native_attempts": 2,
+  "cpp_build_attempts": 1,
+  "native_correction_cycles": 1,
+  "correction": "Fully qualify fixture Probe::storage to avoid STAN short-name ambiguity with reused signature fixture Probe.",
+  "checker_corrections_before_php": [
+    "Use a nullable named return rather than unsupported local annotation.",
+    "Use < 1 instead of unsupported <= 0 token."
+  ],
+  "consolidation_epoch": 1790141657.6203427
+}

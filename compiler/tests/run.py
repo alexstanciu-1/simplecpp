@@ -86,7 +86,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('instance_join', Path(__file__).parent / 'instance_join/run.py'),
           ('member_instances', Path(__file__).parent / 'member_instances/run.py'),
           ('record_preparation', Path(__file__).parent / 'record_preparation/run.py'),
-          ('signature_requests', Path(__file__).parent / 'signature_requests/run.py')]
+          ('signature_requests', Path(__file__).parent / 'signature_requests/run.py'),
+          ('type_result_records', Path(__file__).parent / 'type_result_records/run.py')]
 
 
 def main():

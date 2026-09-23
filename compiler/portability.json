@@ -188,7 +188,8 @@
     "src/04_analyze/resolve_types/utilities/parameter_contracts.php",
     "src/04_analyze/resolve_types/source_lifecycle_signature.php",
     "src/04_analyze/resolve_types/storage_signatures.php",
-    "src/04_analyze/resolve_types/signatures.php"
+    "src/04_analyze/resolve_types/signatures.php",
+    "src/04_analyze/resolve_types/data/result.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
