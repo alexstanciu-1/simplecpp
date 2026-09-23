@@ -1,0 +1,6 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/resource_effects.php": "cd4fdb481891703982108e9656a12cddd28fdd817d04de957733cf1c660b5482",
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/resource_aliasing.php": "90f616ac0dccc8e526ffec86f8e21d507b9b75843a3ffa9c387246464af8fdd4",
+  "compiler/tests/allocation_calls/reference.php": "1fa0eee66a146856ccf72b17bd72940137bd641c9d0c9eca6fea151d54f9697f",
+  "compiler/tests/allocation_calls/cases.py": "972894bc1811c804c7ae9531655b807bb1ff563ba107e08b9747c463ecb46a7c"
+}

@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **245 production files**: input preparation (137 outcomes),
+Active readiness is **246 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -604,3 +604,5 @@ Resource flow union and required-input intersection now extend the proved algebr
 Ownership flow/summary records add 340 PHP/native retained-constructor outcomes and snapshot/contract assertions (`results/ownership-records-01`). Readiness is 244 files / 109 registered proofs. Effect/alias consumers, allocation flow and complete ownership acceptance remain unfinished.
 
 Bound resource-call effects and alias checks add 449 PHP/native preserved-trait comparisons, with seven independent outcomes (`results/resource-calls-01`). Readiness is 245 files / 110 registered proofs. Runtime effect binding, allocation flow and complete ownership acceptance remain unfinished.
+
+Runtime allocation effects add 896 PHP/native preserved-trait comparisons with independently specified outcomes (`results/allocation-calls-01`). Readiness is 246 files / 111 registered proofs. Checked operand binding, allocation flow and complete ownership acceptance remain unfinished.

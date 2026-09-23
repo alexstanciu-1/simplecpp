@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790157828.38009,
+  "first_php_ready_epoch": 1790157970.2856822,
+  "first_php_cases": 896,
+  "final_php_native_cases": 896,
+  "authoring_through_first_php_ready_seconds": 141.906,
+  "checker_corrective_cycles": 0,
+  "php_behavior_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 304.726,
+  "native_stabilization_wall_seconds": 336.264,
+  "notes": [
+    "Authoring overlapped the preceding resource-call native proof.",
+    "Explicit outcomes anchor empty release, acquisition, failed inspection and transfer.",
+    "Native build includes the checked-body/resource-location dependency closure."
+  ]
+}

@@ -116,7 +116,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('resource_states', Path(__file__).parent / 'resource_states/run.py'),
           ('resource_locations', Path(__file__).parent / 'resource_locations/run.py'),
           ('ownership_records', Path(__file__).parent / 'ownership_records/run.py'),
-          ('resource_calls', Path(__file__).parent / 'resource_calls/run.py')]
+          ('resource_calls', Path(__file__).parent / 'resource_calls/run.py'),
+          ('allocation_calls', Path(__file__).parent / 'allocation_calls/run.py')]
 
 
 def main():
