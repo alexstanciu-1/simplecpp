@@ -1,0 +1,14 @@
+{
+  "authoring_start_epoch": 1790145187.0,
+  "first_php_ready_epoch": 1790145250.0716264,
+  "authoring_to_php_ready_seconds": 63.072,
+  "native_results": "/tmp/instantiation-policy-native-01",
+  "native_attempts": 1,
+  "corrective_cycles": 0,
+  "retained_oracle_cases": 22,
+  "notes": [
+    "First PHP checkpoint and final native source hashes retained. Oracle was added to runner during native build and separately executed after it. Authoring interval excludes initial policy inspection."
+  ],
+  "status": "passed",
+  "native_build_seconds": 216.962
+}

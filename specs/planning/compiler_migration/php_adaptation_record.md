@@ -2978,3 +2978,20 @@ per-command timings, first PHP checkpoint and final source hashes are retained i
 `results/preparation-queue-01`. Authoring start was not captured; no estimated
 elapsed authoring time is presented. Full coordinator/provider execution remains
 separate. See `specs/portability/preparation_queue.md` for the ownership contract.
+
+## Instantiation policy snapshot (2026-09-23)
+
+Preserved positive integer validation through MAX_SYMBOL_ID and extra-key
+acceptance. The existing lossless JSON view replaces ad-hoc decoding; load and
+parse share one validator and retain path-attributed read/policy errors. The
+caller supplies the path or a compiler language-data directory for default name
+construction. Source __DIR__ cannot identify a compiled installation, so no
+reference-tree location is embedded in production. Final default discovery and
+cache-input tracking remain owned by the compiler session.
+
+Twenty-two documents agree in PHP/native and with the retained prototype;
+real-file success and missing-file failure are also tested. Authoring to first
+PHP checkpoint was 63.072 seconds, excluding initial inspection. Native passed
+first attempt with no corrective cycle. Command times and source hashes live in
+`results/instantiation-policy-01`. No allocation policy enforcement or new compiler
+functionality was added. See `specs/portability/instantiation_policy.md`.

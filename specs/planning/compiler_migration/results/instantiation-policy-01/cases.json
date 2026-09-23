@@ -1,0 +1,90 @@
+[
+  {
+    "text": "{\"max_instances\":1}",
+    "value": 1
+  },
+  {
+    "text": "{\"max_instances\":4096}",
+    "value": 4096
+  },
+  {
+    "text": "{\"max_instances\":4294967295}",
+    "value": 4294967295
+  },
+  {
+    "text": "{\"max_instances\":17,\"future\":true}",
+    "value": 17
+  },
+  {
+    "text": "{}",
+    "value": 0
+  },
+  {
+    "text": "null",
+    "value": 0
+  },
+  {
+    "text": "[]",
+    "value": 0
+  },
+  {
+    "text": "true",
+    "value": 0
+  },
+  {
+    "text": "12",
+    "value": 0
+  },
+  {
+    "text": "\"text\"",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":null}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":false}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":\"12\"}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":[]}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":{}}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":0}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":-1}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":4294967296}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":1.0}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":1e1}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":9223372036854775808}",
+    "value": 0
+  },
+  {
+    "text": "{\"max_instances\":1",
+    "value": 0
+  }
+]
