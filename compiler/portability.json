@@ -227,7 +227,12 @@
     "src/04_analyze/check_bodies/handlers/statements.php",
     "src/04_analyze/check_bodies/handlers/control_statements.php",
     "src/04_analyze/check_bodies/handlers/writes.php",
-    "src/04_analyze/check_bodies/body.php"
+    "src/04_analyze/check_bodies/body.php",
+    "src/04_analyze/check_bodies/data/store.php",
+    "src/04_analyze/check_bodies/utilities/body_validity.php",
+    "src/04_analyze/check_bodies/select_tasks.php",
+    "src/04_analyze/check_bodies/join.php",
+    "src/04_analyze/check_bodies/main_check_bodies.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

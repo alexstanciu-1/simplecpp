@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **226 production files**: input preparation (137 outcomes),
+Active readiness is **231 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -574,3 +574,5 @@ Body-worker input acceptance and dependency retention add 23 PHP/native scenario
 Source Body_Worker and its five handlers now pass 58 PHP/native scenarios (`results/body-worker-01`): literals, calls, nested arguments, operations/conversions, local/field/array writes, record borrowing/returns, scopes and branches/loops. Checked rows are consumed by Expression_Order. The first C++ build passed after one STAN correction cycle; expanded cases have a separate final native verification. Next: method/template/storage and byte/echo provider integration cases, then body selection/reuse/join. Full analysis and lifetime checking remain unfinished.
 
 Concrete source method/template call integration adds 14 PHP/native scenarios (`results/body-calls-01`) without production changes. Real application/member workers and joins prepare receivers, repeated calls, value/type arguments and nested concrete contexts; both callers and concrete callees are checked. Mutable/const receivers, receiver-plus-arguments, `$this` forwarding and arity errors pass. Ready count stays 226. Remaining body coverage includes storage-element expressions, successful byte/echo metadata bindings and managed lifecycle paths; body selection/reuse/join is still unmigrated.
+
+Project body selection, reuse and complete batch publication add 23 PHP/native scenarios (`results/body-project-01`). Shared validity tracks exact source/local/type/signature dependencies and captured parameter IDs; reversed workers publish in current signature order, malformed batches fail without changing prior bodies, and source failures expose no partial set. Concrete method/template bodies participate. First native build passed without corrections. Readiness is 231 files. Remaining body integration covers storage/byte/echo/managed lifecycle cases and debug export; full session/Step coordination and lifetime analysis remain unfinished.

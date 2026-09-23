@@ -1,0 +1,68 @@
+[
+  {
+    "mode": "fresh"
+  },
+  {
+    "mode": "warm"
+  },
+  {
+    "mode": "full"
+  },
+  {
+    "mode": "reversed"
+  },
+  {
+    "mode": "snapshot_membership"
+  },
+  {
+    "mode": "duplicate_set"
+  },
+  {
+    "mode": "duplicate_result"
+  },
+  {
+    "mode": "missing_result"
+  },
+  {
+    "mode": "unselected_result"
+  },
+  {
+    "mode": "foreign_result"
+  },
+  {
+    "mode": "type_dependency"
+  },
+  {
+    "mode": "unrelated_type"
+  },
+  {
+    "mode": "called_signature"
+  },
+  {
+    "mode": "unrelated_signature"
+  },
+  {
+    "mode": "missing_called_signature"
+  },
+  {
+    "mode": "nonparticipant"
+  },
+  {
+    "mode": "missing_own_signature"
+  },
+  {
+    "mode": "unknown_type_dependency"
+  },
+  {
+    "mode": "wrong_parameter_dependency"
+  },
+  {
+    "mode": "wrong_names_owner"
+  },
+  {
+    "mode": "foreign_symbols"
+  },
+  {
+    "mode": "semantic_failure"
+  }
+]

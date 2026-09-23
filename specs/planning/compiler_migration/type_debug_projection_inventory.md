@@ -40,3 +40,7 @@ callable/representation IDs. Use source_path instead of inventing a source-file 
 when the migrated owner has only path identity. Byte_Literal already supplies an
 explicit binary-safe hex projection. Remaining tagged vocabulary needs explicit
 name codecs when composing this debug view. No complete body dump is claimed yet.
+
+Body_Set now owns fixed project membership and callable lookup. Its prototype
+`to_json()` remains pending the complete Checked_Body projection above. Compose that
+projection in publication order; do not substitute the narrow test fixture plan text.

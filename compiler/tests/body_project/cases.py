@@ -1,0 +1,2 @@
+def build():
+    return [{'mode':m} for m in ['concrete','fresh','warm','full','reversed','snapshot_membership','duplicate_set','duplicate_result','missing_result','unselected_result','foreign_result','type_dependency','unrelated_type','called_signature','unrelated_signature','missing_called_signature','nonparticipant','missing_own_signature','unknown_type_dependency','wrong_parameter_dependency','wrong_names_owner','foreign_symbols','semantic_failure']]

@@ -3282,3 +3282,39 @@ build: 278.757 seconds, zero native corrections. Evidence: results/body-calls-01
 This expands coverage without increasing the 226-file readiness count. Storage source
 expressions, successful byte/echo bindings and managed lifecycle paths remain focused
 integration follow-ups; complete body-stage selection/reuse/join remains to migrate.
+
+## Project body selection and publication (2026-09-23)
+
+Body_Plan captures current signature-order inputs and the selected fixed tasks.
+Body_Validity is the single reuse/acceptance rule: exact declaration/instance, names,
+local association, canonical type rows, callable/provider/storage signature identities,
+and captured canonical parameter IDs must remain current. Explicit ID bounds turn
+removed dependencies into cache misses without depending on differing exception
+classes in old/new stores. The original nullable-body helper becomes a concrete helper;
+selection/join guard absence explicitly to fit the portable method contract.
+
+Body_Join validates selected results before publication, accepts out-of-order completion,
+retains unchanged bodies and excludes nonparticipants. Body_Set copies membership while
+sharing completed body identities, with distinct ordinary-symbol/concrete-callable
+queries. The fixed Body_Plan replaces externally supplied arbitrary task arrays, so
+selection itself owns unique task IDs and exact type/name snapshots. Body_Checker
+executes that plan and returns a complete Body_Update or a path/span/reason failure;
+no partial body set escapes. This follows the already migrated Template_Checker facade.
+The original session Step init/run/finalize lifecycle adapter remains a coordinator
+integration obligation; this checkpoint does not claim the complete compiler CLI.
+
+23 PHP/native scenarios cover fresh/full/warm agreement, reversed workers, copied
+membership, duplicate/incomplete/unselected/foreign results, exact dependency
+invalidation, removed signature/nonparticipant handling, missing own dependencies,
+wrong captured parameters, stale owners, semantic-failure isolation, and concrete
+method/template body publication. Targeted dependency tests build changed candidate
+associations to isolate the reuse algorithm; they are not a full incremental source
+edit-to-type-preparation proof. Narrow fixture plan projections compare supported
+literal/call/plain-record cases and do not replace the deferred body debug serializer.
+
+Authoring through first PHP readiness: 328.803
+seconds (22 scenarios); one checker-only nullable-parameter correction. The additional
+concrete project scenario passed before native build. First native build passed in
+283.572 seconds with zero corrections. Evidence: results/body-project-01. Original
+body/Body_Set debug views and remaining storage/provider/managed source scenarios are
+still tracked, alongside lifetime analysis and full pipeline coordination.
