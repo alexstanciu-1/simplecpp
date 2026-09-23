@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **213 production files** in PHP and native
+The registered component proofs cover **214 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -250,3 +250,5 @@ Exact operation contracts and selection add 294 PHP/native cases with retained-p
 Typed value/call/statement records add 1,009 PHP/native outcomes, including 1,000 retained statement combinations and all byte values. Completed body ownership and evaluation order remain separate.
 
 Retained checked-body queries add 23 PHP/native scenarios for canonical dependencies, operands, argument ranges and projected storage. Captured signature parameter IDs remove mutable-store dependence. Body checking/evaluation execution and the debug serializer remain incomplete.
+
+Streaming expression order adds 24 PHP/native traces with retained-generator agreement and a 4,096-level iterative proof. Lifetime/lowering consumers still need migration to the explicit iterator.

@@ -3097,3 +3097,23 @@ records 395.105 seconds to first PHP readiness, one
 checker fixture name correction and one PHP array-materializer fixture correction.
 First native build passed in 231.61 seconds with no native correction. Expression
 ordering, real checking workers/joins and lifetime analysis remain incomplete.
+
+## Streaming expression order (2026-09-23)
+
+Replaced the prototype generator with a lazy explicit next iterator over the same
+checked rows. Left-to-right postorder, strictly ordered call segments, void roots,
+earlier operand bounds and partial events before errors are preserved. Fixed slots
+plus logical depth replace array_pop, retaining scratch proportional to maximum
+expression depth without recursion or a retained event list. Cursor objects emitted
+to consumers are not mutated again. Full segment validation still requires draining;
+discard the iterator after errors. Invalid range bounds are now rejected explicitly.
+
+The 24 traces match both independent expectations and the real prototype generator;
+a 4,096-level conversion chain proves iterative behavior. The host oracle initializes
+only the original Checked_Body fields used by traversal through reflection, so this
+is not an end-to-end source checking claim. Authoring to first PHP readiness:
+256.681 seconds. One checker-only rename of the copied
+void local; first native build passed in 236.056 seconds, zero native corrections.
+An oracle include correction is recorded separately. Evidence: results/expression-order-01.
+Lifetime values, allocation flow and lowering expressions must adopt explicit next
+loops during their migration; no consumer algorithms have been dropped.
