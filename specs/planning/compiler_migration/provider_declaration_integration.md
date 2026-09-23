@@ -304,3 +304,11 @@ Layout graph capture/subset/currentness now has 42 PHP/native scenarios against 
 actual Type_Store. This supplies immutable selected dependencies and exact lineage
 checks. Target measurement and source identity projection still precede complete
 source export capture; fixed-task workers and joins are already separately proved.
+
+
+Provider declaration carriers add 67 PHP/native outcomes
+(`results/provider-declaration-01`). Five authoritative provider payload kinds now
+have checked access and explicit exact-owner retention, including regenerated member
+wrappers and receiver passing checks. This replaces the union at the boundary;
+shared Symbol_Record origins, namespace-aware indexing and provider-aware name
+bindings remain to be integrated next. The carrier alone is not provider publication.

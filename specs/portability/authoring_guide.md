@@ -37,6 +37,13 @@ or automatic renaming. Declared callable parameters and object fields retain the
 existing supported target handling; a parameter exemption does not leak into another
 method. String contents and differently cased names are unaffected.
 
+For operations that return either an existing current or previous class object,
+pass both shared handles explicitly (for example a static retention helper). On the
+pinned target, returning `$this` from an ordinary named-class method produces a raw
+receiver pointer that cannot satisfy its shared-handle return type. Do not create a
+replacement object to hide that identity mismatch. See
+[provider declaration evidence](../planning/compiler_migration/results/provider-declaration-01/summary.json).
+
 Keep field and method names distinct within a class: PHP permits `$selected` plus
 `selected()`, but both become the same C++ member name.
 

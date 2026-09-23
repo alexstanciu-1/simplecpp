@@ -1,0 +1,7 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/04_analyze/collect_symbols/data/provider_declaration.phs:108: no viable conversion from returned value of type 'scpp::collect_symbols::Provider_Declaration *' to function return type 'shared_p<collect_symbols::Provider_Declaration>'
+Generated location: .prism/generated/src/04_analyze/collect_symbols/data/provider_declaration.cpp:221:9
+Raw compiler excerpt:
+provider_declaration.cpp:221:9: error: no viable conversion from returned value of type 'scpp::collect_symbols::Provider_Declaration *' to function return type 'shared_p<collect_symbols::Provider_Declaration>'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

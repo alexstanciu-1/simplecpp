@@ -2150,3 +2150,38 @@ all pass. It is registered in the cumulative fast loop. The existing PHP process
 suite also passes with the required local IPC sandbox exception. No Simple C++ target
 code, protocol surface or runtime-preparation code changed. Native correction cycles
 remain zero; this is a recorded PHP framework correction during final integration.
+
+
+## Provider declaration carrier and retention
+
+The prototype's five-way external-declaration union now has one closed typed owner,
+`collect_symbols\Provider_Declaration`, with exactly one authoritative callable,
+storage family, storage function, generic family declaration or generic method.
+Checked accessors preserve the original shared objects; provider/name/namespace
+facts are derived from those objects. This carrier creates no frontend, syntax IDs,
+accepted package or body. Source/provider integration in Symbol_Record and the
+namespace-aware Symbol_Store is the next dependent change, not completed here.
+
+Retention keeps callable and family owner identity exact. Fresh storage-function
+wrappers may retain an old declaration only for the same family and role; fresh
+generic-method wrappers require the same family declaration and operation object.
+Provider/id/exposed-name/namespace also agree, so malformed or renamed wrappers
+cannot recover stale metadata. This is deliberately stricter than the prototype's
+wrapper shortcut, which relied on its producer constructing consistent metadata.
+The future symbol lookup still owns scope/category and stable symbol-ID retention.
+
+The native target cannot return `$this` as an ordinary shared class handle. The
+first native attempt exposed that mismatch. Retention therefore accepts explicit
+current and previous handles in a static operation, preserving ownership without
+reconstructing objects or changing generated code. Two builds reached the first
+native pass (one correction); a final verification adds mutable/missing/out-of-range
+receiver coverage. All 67 PHP/native outcomes pass on the pinned target. Evidence:
+`results/provider-declaration-01`; timing preserves the original PHP-ready checkpoint
+and notes that the stabilization interval includes the user's chunk-estimate discussion.
+
+The proof covers payload exclusivity/access, metadata, exact-owner retention,
+reconstructed owners versus member wrappers, changed owners/roles/exposure and
+receiver passing. Storage fixtures test the carrier, not complete provider-package
+acceptance. No converter or runtime-preparation changes are involved. A later union
+or layout optimization may reduce the five nullable handle fields, after this
+closed variant contract is integrated and profiled.

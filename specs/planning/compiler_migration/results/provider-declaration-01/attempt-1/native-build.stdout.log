@@ -1,0 +1,60 @@
+Transpiled PHP files: 24, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/26] PCH app_pch.hpp.gch
+[2/26] CXX scpp_framework/exceptions.o
+[3/26] CXX src/04_analyze/collect_symbols/data/provider_declaration.o
+FAILED: src/04_analyze/collect_symbols/data/provider_declaration.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/405d363b0b8240c6.hpp -MMD -MF src/04_analyze/collect_symbols/data/provider_declaration.o.d -MT src/04_analyze/collect_symbols/data/provider_declaration.o -c ../generated/src/04_analyze/collect_symbols/data/provider_declaration.cpp -o src/04_analyze/collect_symbols/data/provider_declaration.o
+../generated/src/04_analyze/collect_symbols/data/provider_declaration.cpp:221:9: error: no viable conversion from returned value of type 'scpp::collect_symbols::Provider_Declaration *' to function return type 'shared_p<collect_symbols::Provider_Declaration>'
+  221 |         return this;
+      |                ^~~~
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:12:7: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'scpp::collect_symbols::Provider_Declaration *' to 'const shared_p<Provider_Declaration> &' for 1st argument
+   12 | class shared_p final {
+      |       ^~~~~~~~
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:12:7: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'scpp::collect_symbols::Provider_Declaration *' to 'shared_p<Provider_Declaration> &&' for 1st argument
+   12 | class shared_p final {
+      |       ^~~~~~~~
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:23:2: note: candidate constructor not viable: no known conversion from 'scpp::collect_symbols::Provider_Declaration *' to 'null_t' for 1st argument
+   23 |         shared_p(null_t) noexcept : value_() {}
+      |         ^        ~~~~~~
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:24:2: note: candidate constructor not viable: no known conversion from 'scpp::collect_symbols::Provider_Declaration *' to 'nullptr_t' for 1st argument
+   24 |         shared_p(nullptr_t) noexcept : value_() {}
+      |         ^        ~~~~~~~~~
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:33:2: note: candidate template ignored: could not match 'shared_p<U>' against 'scpp::collect_symbols::Provider_Declaration *'
+   33 |         shared_p(const shared_p<U> &value) noexcept
+      |         ^
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:38:2: note: candidate template ignored: could not match 'shared_p<U>' against 'scpp::collect_symbols::Provider_Declaration *'
+   38 |         shared_p(shared_p<U> &&value) noexcept
+      |         ^
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:25:11: note: explicit constructor is not a candidate
+   25 |         explicit shared_p(std::shared_ptr<T> value) noexcept : value_(std::move(value)) {}
+      |                  ^
+/tmp/provider-declaration-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/shared_p.hpp:28:11: note: explicit constructor is not a candidate
+   28 |         explicit shared_p(std::shared_ptr<U> value) noexcept
+      |                  ^
+1 error generated.
+[4/26] CXX scpp_framework/collections.o
+[5/26] CXX src/04_analyze/type_model/data/definitions.o
+[6/26] CXX src/04_analyze/type_model/data/callable_modes.o
+[7/26] CXX scpp_framework/filesystem.o
+[8/26] CXX src/04_analyze/type_model/data/lifecycle.o
+[9/26] CXX src/04_analyze/type_model/data/generic.o
+[10/26] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[11/26] CXX main.o
+[12/26] CXX src/04_analyze/type_model/data/callables.o
+[13/26] CXX scpp_framework/strings.o
+[14/26] CXX scpp_framework/json_document.o
+[15/26] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[16/26] CXX src/04_analyze/type_model/data/families.o
+[17/26] CXX probe.o
+[18/26] CXX src/04_analyze/type_model/data/native_record_layout.o
+ninja: build stopped: subcommand failed.

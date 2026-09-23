@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790129074.0,
+  "first_php_ready_epoch": 1790129224.9296222,
+  "authoring_to_php_ready_wall_seconds": 150.93,
+  "first_native_pass_epoch": 1790129509.508371,
+  "php_ready_to_native_pass_wall_seconds": 284.579,
+  "native_build_attempts_to_first_pass": 2,
+  "native_correction_cycles": 1,
+  "corrections": [
+    "Replace return $this with static retention of explicit shared current/previous handles"
+  ],
+  "final_verification_builds": 1,
+  "consolidation_start_epoch": 1790129595.9765568,
+  "timing_note": "Stabilization wall time includes the user-requested chunk estimate discussion; it is not uninterrupted authoring time.",
+  "consolidation_end_epoch": 1790129756.162692,
+  "regression_and_consolidation_wall_seconds": 160.186
+}

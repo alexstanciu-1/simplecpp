@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **155 production files**: input preparation (137 outcomes),
+Active readiness is **156 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -373,3 +373,11 @@ The obsolete layout launcher field is removed; managed processes own isolation.
 Toolchain discovery/coordinator integration and source-export identity/capture remain
 unfinished. Next: source identity/provider symbol dependencies; package artifact
 hashing/executable verification remain separate target API dependencies.
+
+
+Provider declaration carriers add 67 PHP/native outcomes
+(`results/provider-declaration-01`). Five authoritative provider payload kinds now
+have checked access and explicit exact-owner retention, including regenerated member
+wrappers and receiver passing checks. This replaces the union at the boundary;
+shared Symbol_Record origins, namespace-aware indexing and provider-aware name
+bindings remain to be integrated next. The carrier alone is not provider publication.

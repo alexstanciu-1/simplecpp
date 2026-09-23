@@ -3,7 +3,7 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **155 production files**
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **156 production files**
 with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
 CLI or complete compilation pipeline exists yet.
 

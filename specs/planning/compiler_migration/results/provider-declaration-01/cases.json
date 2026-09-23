@@ -1,0 +1,337 @@
+[
+  {
+    "mode": "access",
+    "kind": 0,
+    "access": 0
+  },
+  {
+    "mode": "access",
+    "kind": 0,
+    "access": 1
+  },
+  {
+    "mode": "access",
+    "kind": 0,
+    "access": 2
+  },
+  {
+    "mode": "access",
+    "kind": 0,
+    "access": 3
+  },
+  {
+    "mode": "access",
+    "kind": 0,
+    "access": 4
+  },
+  {
+    "mode": "access",
+    "kind": 1,
+    "access": 0
+  },
+  {
+    "mode": "access",
+    "kind": 1,
+    "access": 1
+  },
+  {
+    "mode": "access",
+    "kind": 1,
+    "access": 2
+  },
+  {
+    "mode": "access",
+    "kind": 1,
+    "access": 3
+  },
+  {
+    "mode": "access",
+    "kind": 1,
+    "access": 4
+  },
+  {
+    "mode": "access",
+    "kind": 2,
+    "access": 0
+  },
+  {
+    "mode": "access",
+    "kind": 2,
+    "access": 1
+  },
+  {
+    "mode": "access",
+    "kind": 2,
+    "access": 2
+  },
+  {
+    "mode": "access",
+    "kind": 2,
+    "access": 3
+  },
+  {
+    "mode": "access",
+    "kind": 2,
+    "access": 4
+  },
+  {
+    "mode": "access",
+    "kind": 3,
+    "access": 0
+  },
+  {
+    "mode": "access",
+    "kind": 3,
+    "access": 1
+  },
+  {
+    "mode": "access",
+    "kind": 3,
+    "access": 2
+  },
+  {
+    "mode": "access",
+    "kind": 3,
+    "access": 3
+  },
+  {
+    "mode": "access",
+    "kind": 3,
+    "access": 4
+  },
+  {
+    "mode": "access",
+    "kind": 4,
+    "access": 0
+  },
+  {
+    "mode": "access",
+    "kind": 4,
+    "access": 1
+  },
+  {
+    "mode": "access",
+    "kind": 4,
+    "access": 2
+  },
+  {
+    "mode": "access",
+    "kind": 4,
+    "access": 3
+  },
+  {
+    "mode": "access",
+    "kind": 4,
+    "access": 4
+  },
+  {
+    "mode": "identity",
+    "kind": 0,
+    "access": 0
+  },
+  {
+    "mode": "identity",
+    "kind": 0,
+    "access": 1
+  },
+  {
+    "mode": "identity",
+    "kind": 0,
+    "access": 2
+  },
+  {
+    "mode": "identity",
+    "kind": 0,
+    "access": 3
+  },
+  {
+    "mode": "identity",
+    "kind": 0,
+    "access": 4
+  },
+  {
+    "mode": "identity",
+    "kind": 1,
+    "access": 0
+  },
+  {
+    "mode": "identity",
+    "kind": 1,
+    "access": 1
+  },
+  {
+    "mode": "identity",
+    "kind": 1,
+    "access": 2
+  },
+  {
+    "mode": "identity",
+    "kind": 1,
+    "access": 3
+  },
+  {
+    "mode": "identity",
+    "kind": 1,
+    "access": 4
+  },
+  {
+    "mode": "identity",
+    "kind": 2,
+    "access": 0
+  },
+  {
+    "mode": "identity",
+    "kind": 2,
+    "access": 1
+  },
+  {
+    "mode": "identity",
+    "kind": 2,
+    "access": 2
+  },
+  {
+    "mode": "identity",
+    "kind": 2,
+    "access": 3
+  },
+  {
+    "mode": "identity",
+    "kind": 2,
+    "access": 4
+  },
+  {
+    "mode": "identity",
+    "kind": 3,
+    "access": 0
+  },
+  {
+    "mode": "identity",
+    "kind": 3,
+    "access": 1
+  },
+  {
+    "mode": "identity",
+    "kind": 3,
+    "access": 2
+  },
+  {
+    "mode": "identity",
+    "kind": 3,
+    "access": 3
+  },
+  {
+    "mode": "identity",
+    "kind": 3,
+    "access": 4
+  },
+  {
+    "mode": "identity",
+    "kind": 4,
+    "access": 0
+  },
+  {
+    "mode": "identity",
+    "kind": 4,
+    "access": 1
+  },
+  {
+    "mode": "identity",
+    "kind": 4,
+    "access": 2
+  },
+  {
+    "mode": "identity",
+    "kind": 4,
+    "access": 3
+  },
+  {
+    "mode": "identity",
+    "kind": 4,
+    "access": 4
+  },
+  {
+    "mode": "clone",
+    "kind": 0,
+    "access": 0
+  },
+  {
+    "mode": "clone",
+    "kind": 1,
+    "access": 0
+  },
+  {
+    "mode": "clone",
+    "kind": 2,
+    "access": 0
+  },
+  {
+    "mode": "clone",
+    "kind": 3,
+    "access": 0
+  },
+  {
+    "mode": "clone",
+    "kind": 4,
+    "access": 0
+  },
+  {
+    "mode": "invalid",
+    "kind": 0,
+    "access": 0
+  },
+  {
+    "mode": "invalid",
+    "kind": 1,
+    "access": 0
+  },
+  {
+    "mode": "invalid",
+    "kind": 2,
+    "access": 0
+  },
+  {
+    "mode": "change",
+    "kind": 0,
+    "access": 0
+  },
+  {
+    "mode": "change",
+    "kind": 1,
+    "access": 0
+  },
+  {
+    "mode": "change",
+    "kind": 2,
+    "access": 0
+  },
+  {
+    "mode": "change",
+    "kind": 3,
+    "access": 0
+  },
+  {
+    "mode": "change",
+    "kind": 4,
+    "access": 0
+  },
+  {
+    "mode": "change",
+    "kind": 5,
+    "access": 0
+  },
+  {
+    "mode": "receiver",
+    "kind": 0,
+    "access": 0
+  },
+  {
+    "mode": "receiver",
+    "kind": 1,
+    "access": 0
+  },
+  {
+    "mode": "receiver",
+    "kind": 2,
+    "access": 0
+  }
+]
