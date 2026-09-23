@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **216 production files**: input preparation (137 outcomes),
+Active readiness is **217 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -564,3 +564,5 @@ Retained checked-body membership/dependency queries add 23 PHP/native scenarios 
 Streaming checked-expression traversal adds 24 PHP/native traces and a 4,096-value depth proof (`results/expression-order-01`). The retained generator agrees, including partial events before rejection. First native attempt passed; one checker-only local rename preceded readiness. Readiness is 214 files. Next: body-checking conversion selection and worker/traversal dependencies; lifetime/lowering iterator consumers and debug serialization remain incomplete.
 
 Purpose-aware conversion selection adds 196 PHP/native cases and 12 payload invariants (`results/body-conversions-01`), with retained-selector agreement. First native attempt passed without corrections. Readiness is 216 files. Next: byte-literal decoding and remaining body-worker traversal/state dependencies, then actual body checking; full orchestration/provider integration remains incomplete.
+
+Quoted-byte decoding adds all 8,593 frozen inputs to active PHP/native coverage (`results/byte-literals-active-01`). The existing adapted algorithm is reused with global helpers; no native correction was needed. Readiness is 217 files. Next: body-worker traversal/state and source checking, using the proved literals, conversions, operations, records and result queries.

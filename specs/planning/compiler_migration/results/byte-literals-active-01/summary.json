@@ -1,0 +1,170 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "frozen-corpus",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/byte_literals/cases.php"
+      ],
+      "seconds": 0.168,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/byte-literals-active-native-01/source"
+      ],
+      "seconds": 0.062,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/byte-literals-active-native-01/source"
+      ],
+      "seconds": 0.143,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/byte-literals-active-native-01/source/src/04_analyze/check_bodies/utilities/byte_literals.php",
+        "/tmp/byte-literals-active-native-01/source/probe.php",
+        "/tmp/byte-literals-active-native-01/source/main.php"
+      ],
+      "seconds": 1.584,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/byte-literals-active-native-01/source",
+        "/tmp/byte-literals-active-native-01/phpp"
+      ],
+      "seconds": 0.088,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/byte-literals-active-native-01/source",
+        "/tmp/byte-literals-active-native-01/phpp"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/byte-literals-active-native-01/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.061,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.008,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.029,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.156,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 25.633,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/byte-literals-active-native-01/phpp/.prism/build/main"
+      ],
+      "seconds": 1.014,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.033,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790148446.979842,
+  "php_ready_sha256": {
+    "src/04_analyze/check_bodies/utilities/byte_literals.php": "0f251cabef549d4d1b6ac93431b802dde132aa7491e43773166b96e05c0cd4ec"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 8593,
+  "byte_literals_outcomes": 8593,
+  "production_files": [
+    "src/04_analyze/check_bodies/utilities/byte_literals.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/check_bodies/utilities/byte_literals.php": "0f251cabef549d4d1b6ac93431b802dde132aa7491e43773166b96e05c0cd4ec"
+  },
+  "native_attempts": 1,
+  "corrective_cycles": 0,
+  "retained_corpus_cases": 8593,
+  "authoring_start_utc": "2026-09-23T07:26:07Z",
+  "authoring_to_php_ready_seconds": 79.98,
+  "corpus_source": "tests/portability/reference/pre-rewrite/byte_literals_oracle.php",
+  "oracle_source": "tests/portability/oracles/byte_literals_original.php"
+}

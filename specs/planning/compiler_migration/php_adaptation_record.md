@@ -3137,3 +3137,20 @@ selector agreement and 12 payload invariants. Authoring to first PHP readiness:
 179.337 seconds. First native build passed in 230.486
 seconds, no corrective cycles. The retained oracle initializes just the original
 snapshot fields needed by selection; no provider machine execution is claimed.
+
+## Quoted-byte decoder re-adoption (2026-09-23)
+
+Reused the preserved portable Byte_Literals algorithm and removed its obsolete
+function-import prologue in favor of global helpers. The original frozen corpus
+generator and baseline decoder supply all 8,593 deterministic inputs: malformed
+quotes, interpolation/Unicode rejection, numeric/control/unknown escapes, all
+raw/escaped/dollar-prefixed bytes and seeded combinations. Both active PHP and
+native now check every outcome, including exact error text; no new string feature
+or provider selection is introduced.
+
+The harness reads ASCII hex corpus data from a file instead of embedding the
+entire corpus in generated source. Results remain byte-based, including invalid
+UTF-8. Evidence in results/byte-literals-active-01 records
+79.98 seconds to first PHP readiness; first native
+build passed in 25.633 seconds, zero corrective cycles. Historical runtime-string
+integration results are not presented as active full-worker coverage.
