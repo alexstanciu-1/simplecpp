@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **170 production files**: input preparation (137 outcomes),
+Active readiness is **173 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -455,3 +455,11 @@ are proved. Native build one passed without corrections. Ready count is 170 file
 Next: application argument normalization and its storage-element eligibility
 dependency; preserve the Storage_Definitions owner when adapting that rule.
 No expression evaluation or complete concrete-preparation pipeline is claimed.
+
+
+Application argument normalization and storage-element eligibility/materialization
+add 25 PHP/native scenarios and 23 host invariants (`results/application-arguments-01`).
+Ordered arguments, explicit missing prerequisites, exact storage ownership and private
+candidate isolation are proved. Native build two passed after one field/method naming
+correction. Ready count is 173 files. Next: application acceptance and instance joins;
+storage callable signatures and full preparation orchestration remain unfinished.

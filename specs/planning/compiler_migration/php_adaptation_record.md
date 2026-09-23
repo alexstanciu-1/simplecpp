@@ -2551,3 +2551,47 @@ overlapped host-purity checks and consolidation drafting.
 
 All 22 PHP/native scenarios and 10 host invariants pass on native build one,
 without native corrections (`results/constant-batch-01`).
+
+
+## Application argument normalization and concrete storage elements
+
+`Application_Worker` retains the prototype's ordered explicit argument algorithm:
+source templates stop at their first unresolved type prerequisite; provider families
+collect every unresolved type argument and discard partial normalized arguments.
+Source value arguments still require the catalog's exact integer contract, including
+formals referring to an earlier type parameter. Accepted constant identity and
+source-attributed errors are retained. Template permissions are checked before work.
+
+A named `Application_Result` replaces the prototype's nullable argument array with
+explicit typed argument/prerequisite vectors. Ready results have no prerequisites;
+pending results expose no partial arguments. Constructor checks reject mixed states,
+invalid node IDs and duplicate prerequisites; copied membership protects the result
+from caller container edits. Empty ready argument lists remain representable.
+`Bindings` supplies the already-proved fixed annotation/catalog/instance view.
+No argument worker allocates identities or publishes instances.
+
+`Storage_Definitions` remains the semantic owner for element eligibility, exact
+family/element identity and materialization into a private canonical type candidate.
+Explicit guards replace dependent nullable expressions. The storage key remains an
+exact JSON tuple, and its namespace retains the NUL prefix. Resource ownership uses
+the shared obligations model. Existing storage with a different accepted family or
+element object rejects rather than silently retaining stale ownership.
+
+The storage signature/matching/element-passing methods are not migrated in this
+checkpoint: their signature-request owner belongs to later concrete callable
+preparation. Application acceptance/instance joins and full preparation orchestration
+also remain unfinished. This is not an expanded template-expression evaluator.
+
+The first PHP run found a fixture using a bit width where Representation::floating
+requires a format name; it was corrected before the PHP-ready checkpoint. The first
+native build exposed a field/method name collision (`arguments`), already covered by
+the authoring guide. Renaming private storage to `ordered_arguments` preserves the
+public contract. This was one native correction cycle, not a target/compiler change.
+
+Evidence includes 25 PHP/native scenarios and 23 host invariants for worker purity,
+result container independence and bounds. Timing records preserve the first passing
+PHP source hashes and separate native stabilization from authoring. Wall intervals
+include continuation/status-discussion gaps; command timings remain the precise
+execution measurements.
+
+Evidence: `results/application-arguments-01`.

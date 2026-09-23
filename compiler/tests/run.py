@@ -81,7 +81,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('template_project', Path(__file__).parent / 'template_project/run.py'),
           ('instance_registry', Path(__file__).parent / 'instance_registry/run.py'),
           ('concrete_bindings', Path(__file__).parent / 'concrete_bindings/run.py'),
-          ('constant_batch', Path(__file__).parent / 'constant_batch/run.py')]
+          ('constant_batch', Path(__file__).parent / 'constant_batch/run.py'),
+          ('application_arguments', Path(__file__).parent / 'application_arguments/run.py')]
 
 
 def main():

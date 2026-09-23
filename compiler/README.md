@@ -3,8 +3,8 @@ Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **170 production files**
-with PHP/native proofs. Shared source/provider symbols are integrated. Provided-record bindings and symbolic template interpretation are integrated. Template body checking is integrated. Template selection/reuse and result acceptance are integrated. Instance registry/snapshots are integrated. Bound annotations and concrete argument reading are integrated. Literal-constant batches are integrated. Next are application argument normalization and storage-element eligibility; complete prepared-package consumption remains unfinished. No active compiler
+reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **173 production files**
+with PHP/native proofs. Shared source/provider symbols are integrated. Provided-record bindings and symbolic template interpretation are integrated. Template body checking is integrated. Template selection/reuse and result acceptance are integrated. Instance registry/snapshots are integrated. Bound annotations and concrete argument reading are integrated. Literal-constant batches are integrated. Application argument normalization and storage-element eligibility/materialization are integrated. Next are application acceptance and instance joins; complete prepared-package consumption remains unfinished. No active compiler
 CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`

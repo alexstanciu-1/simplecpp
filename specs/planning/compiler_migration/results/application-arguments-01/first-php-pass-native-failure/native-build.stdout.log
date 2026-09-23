@@ -1,0 +1,214 @@
+Transpiled PHP files: 111, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/113] PCH app_pch.hpp.gch
+[2/113] CXX src/03_parse/data/expression_state.o
+FAILED: src/03_parse/data/expression_state.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/03_parse/data/expression_state.o.d -MT src/03_parse/data/expression_state.o -c ../generated/src/03_parse/data/expression_state.cpp -o src/03_parse/data/expression_state.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[3/113] CXX scpp_framework/filesystem.o
+FAILED: scpp_framework/filesystem.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF scpp_framework/filesystem.o.d -MT scpp_framework/filesystem.o -c ../generated/scpp_framework/filesystem.cpp -o scpp_framework/filesystem.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[4/113] CXX src/03_parse/data/result.o
+FAILED: src/03_parse/data/result.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/03_parse/data/result.o.d -MT src/03_parse/data/result.o -c ../generated/src/03_parse/data/result.cpp -o src/03_parse/data/result.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[5/113] CXX src/03_parse/data/nodes.o
+FAILED: src/03_parse/data/nodes.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/03_parse/data/nodes.o.d -MT src/03_parse/data/nodes.o -c ../generated/src/03_parse/data/nodes.cpp -o src/03_parse/data/nodes.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[6/113] CXX scpp_framework/json_document.o
+FAILED: scpp_framework/json_document.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF scpp_framework/json_document.o.d -MT scpp_framework/json_document.o -c ../generated/scpp_framework/json_document.cpp -o scpp_framework/json_document.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[7/113] CXX src/01_prepare_inputs/load_runtime/main_load_runtime.o
+FAILED: src/01_prepare_inputs/load_runtime/main_load_runtime.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/01_prepare_inputs/load_runtime/main_load_runtime.o.d -MT src/01_prepare_inputs/load_runtime/main_load_runtime.o -c ../generated/src/01_prepare_inputs/load_runtime/main_load_runtime.cpp -o src/01_prepare_inputs/load_runtime/main_load_runtime.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[8/113] CXX src/02_tokenize/structures.o
+FAILED: src/02_tokenize/structures.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/02_tokenize/structures.o.d -MT src/02_tokenize/structures.o -c ../generated/src/02_tokenize/structures.cpp -o src/02_tokenize/structures.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[9/113] CXX scpp_framework/strings.o
+FAILED: scpp_framework/strings.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF scpp_framework/strings.o.d -MT scpp_framework/strings.o -c ../generated/scpp_framework/strings.cpp -o scpp_framework/strings.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[10/113] CXX scpp_framework/collections.o
+FAILED: scpp_framework/collections.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF scpp_framework/collections.o.d -MT scpp_framework/collections.o -c ../generated/scpp_framework/collections.cpp -o scpp_framework/collections.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[11/113] CXX main.o
+FAILED: main.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[12/113] CXX src/02_tokenize/store.o
+FAILED: src/02_tokenize/store.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/02_tokenize/store.o.d -MT src/02_tokenize/store.o -c ../generated/src/02_tokenize/store.cpp -o src/02_tokenize/store.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[13/113] CXX src/01_prepare_inputs/read_sources/data/buffer.o
+FAILED: src/01_prepare_inputs/read_sources/data/buffer.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/01_prepare_inputs/read_sources/data/buffer.o.d -MT src/01_prepare_inputs/read_sources/data/buffer.o -c ../generated/src/01_prepare_inputs/read_sources/data/buffer.cpp -o src/01_prepare_inputs/read_sources/data/buffer.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[14/113] CXX src/02_tokenize/tokenize.o
+FAILED: src/02_tokenize/tokenize.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/02_tokenize/tokenize.o.d -MT src/02_tokenize/tokenize.o -c ../generated/src/02_tokenize/tokenize.cpp -o src/02_tokenize/tokenize.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[15/113] CXX scpp_framework/exceptions.o
+FAILED: scpp_framework/exceptions.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF scpp_framework/exceptions.o.d -MT scpp_framework/exceptions.o -c ../generated/scpp_framework/exceptions.cpp -o scpp_framework/exceptions.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[16/113] CXX src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o
+FAILED: src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o.d -MT src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o -c ../generated/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.cpp -o src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+1 error generated.
+[17/113] CXX probe.o
+FAILED: probe.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/054c5656f881431a.hpp -MMD -MF probe.o.d -MT probe.o -c ../generated/probe.cpp -o probe.o
+In file included from <built-in>:1:
+In file included from ./../generated/__project_units/054c5656f881431a.hpp:83:
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+   37 |         virtual vector_t<shared_p<Template_Argument>> arguments();
+      |                                                       ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: previous definition is here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+../generated/probe.cpp:199:22: error: 'arguments' is a private member of 'scpp::instantiate::Application_Result'
+  199 |                                                 args = result->arguments();
+      |                                                                ^
+./../generated/__project_units/../src/04_analyze/instantiate/data/applications.hpp:29:40: note: declared private here
+   29 |         vector_t<shared_p<Template_Argument>> arguments = vector_t<shared_p<Template_Argument>>{};
+      |                                               ^
+../generated/probe.cpp:199:14: error: type 'vector_t<shared_p<Template_Argument>>' does not provide a call operator
+  199 |                                                 args = result->arguments();
+      |                                                        ^~~~~~~~~~~~~~~~~
+3 errors generated.
+ninja: build stopped: subcommand failed.

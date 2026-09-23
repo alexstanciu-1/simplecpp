@@ -1,0 +1,7 @@
+PHP Fatal error:  Uncaught TypeError: type_model\Representation::floating(): Argument #1 ($format) must be of type string, int given, called in /tmp/application-arguments-01/source/probe.php on line 86 and defined in /tmp/application-arguments-01/source/src/04_analyze/type_model/data/representations.php:43
+Stack trace:
+#0 /tmp/application-arguments-01/source/probe.php(86): type_model\Representation::floating()
+#1 /tmp/application-arguments-01/source/main.php(2): application_arguments_test\Probe::run()
+#2 Command line code(1): require('...')
+#3 {main}
+  thrown in /tmp/application-arguments-01/source/src/04_analyze/type_model/data/representations.php on line 43

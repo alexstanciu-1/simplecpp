@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/04_analyze/instantiate/data/applications.phs:22: redefinition of 'arguments' as different kind of symbol
+Generated location: .prism/generated/src/04_analyze/instantiate/data/applications.hpp:37:48
+Compile note in src/04_analyze/instantiate/data/applications.phs:9: previous definition is here
+Generated location: .prism/generated/src/04_analyze/instantiate/data/applications.hpp:29:40
+Compile error in probe.phs:75: 'arguments' is a private member of 'scpp::instantiate::Application_Result'
+Generated location: .prism/generated/probe.cpp:199:22
+Additional remapped diagnostics: 2
+Raw compiler excerpt:
+applications.hpp:37:48: error: redefinition of 'arguments' as different kind of symbol
+applications.hpp:29:40: note: previous definition is here
+probe.cpp:199:22: error: 'arguments' is a private member of 'scpp::instantiate::Application_Result'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.
