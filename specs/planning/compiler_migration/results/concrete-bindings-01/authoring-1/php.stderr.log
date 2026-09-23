@@ -1,0 +1,7 @@
+PHP Fatal error:  Uncaught InvalidArgumentException: Value types require lifetime; void must have none in /tmp/concrete-bindings-01/source/src/04_analyze/type_model/data/definitions.php:23
+Stack trace:
+#0 /tmp/concrete-bindings-01/source/probe.php(21): type_model\Named_Definition->__construct()
+#1 /tmp/concrete-bindings-01/source/main.php(2): concrete_bindings_test\Probe::run()
+#2 Command line code(1): require('...')
+#3 {main}
+  thrown in /tmp/concrete-bindings-01/source/src/04_analyze/type_model/data/definitions.php on line 23

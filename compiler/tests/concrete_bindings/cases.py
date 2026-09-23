@@ -1,0 +1,2 @@
+def build():
+    return ['provided','catalog_only','stale_provided','source_pending','source_ready','required_pending','record_pending','record_ready','type_parameter','missing_parameter','value_as_type','integer_parameter','type_as_value','missing_integer_parameter','literal','leading_zero','range_error','nonliteral','global_constant','missing_constant','expression','application_pending','application_ready','direct_application','required_application','missing_bindings','stale_bindings','dependent_direct','wrong_role','byte_span']

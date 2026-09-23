@@ -79,7 +79,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('symbolic_interpretation', Path(__file__).parent / 'symbolic_interpretation/run.py'),
           ('template_body', Path(__file__).parent / 'template_body/run.py'),
           ('template_project', Path(__file__).parent / 'template_project/run.py'),
-          ('instance_registry', Path(__file__).parent / 'instance_registry/run.py')]
+          ('instance_registry', Path(__file__).parent / 'instance_registry/run.py'),
+          ('concrete_bindings', Path(__file__).parent / 'concrete_bindings/run.py')]
 
 
 def main():

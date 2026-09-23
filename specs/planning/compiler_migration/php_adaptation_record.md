@@ -2470,3 +2470,46 @@ are retained in the timing evidence.
 
 All 29 PHP/native outcomes pass on native attempt three, after two correction cycles
 (`results/instance-registry-01`).
+
+
+## Bound annotations and concrete argument reading
+
+The prototype's Annotation_Types and Bindings algorithms now consume fixed migrated
+name, definition and instance views. Accepted type bindings carry exact provider
+objects or source symbol IDs; consumers do not repeat source spelling resolution.
+Missing/stale owner bindings and reconstructed provider identities remain internal
+errors. A source or provided-record definition absent from the merged view returns
+null as a preparation prerequisite. Existing strict errors for canonical identities
+present without a definition are preserved.
+
+Definition_View accepts a catalog-only constructor as well as a catalog plus canonical
+store. This replaces the Type_Catalog|Definition_View union with one concrete read
+contract, without inventing an empty type store or weakening merged-view semantics.
+Annotation_Types::definition takes an explicit Instance_Context and Bindings reader;
+ordinary callers use Instance_Context::ordinary. There are no nullable/default ordinary
+method parameters, and byte-span operands remain forbidden as source-storage types.
+
+Bindings is now a fixed-input reader rather than a static utility with repeated view
+arguments. Type slots must contain type arguments; integer slots must contain present
+exact decimal values. Explicit type applications read accepted registry links and
+remain pending until a type is published. Literal decoding/range checks reuse the
+proved Integer_Literals owner. Global constants retain exact accepted Template_Argument
+objects; local constants, expressions and calls do not acquire evaluation support.
+
+Annotation_Types owns one private source diagnostic for its reader. Semantic rejection
+records path/span/reason before throwing the supported RuntimeException. Internal stale
+or malformed-state errors remain LogicExceptions without a source diagnostic. A worker
+must treat a semantic failure as terminal for that reader and inspect its diagnostic;
+no fabricated type or value is returned to bypass failure. Full custom diagnostic
+exception integration remains a later compiler-coordinator concern.
+
+Thirty PHP/native scenarios cover exact provided identities, catalog-only reads,
+source/record readiness, prepared applications, missing or wrong-role arguments, integer
+normalization and range rejection, unsupported evaluation and byte-span rejection.
+Semantic failures compare exact parser-derived source anchors. Existing fourteen
+Definition_View outcomes verify strict merged-view behavior after the constructor change.
+The first PHP corrections were fixture construction only: byte-span lifetime, the
+Field_Type class spelling, and using a field-admissible int32 definition for records.
+
+All 30 PHP/native scenarios and the 14-case view regression pass. Native attempt one
+passed without corrections (`results/concrete-bindings-01`).

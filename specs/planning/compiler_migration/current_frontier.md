@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **167 production files**: input preparation (137 outcomes),
+Active readiness is **169 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -437,3 +437,12 @@ a converter restriction; concrete read handles preserve the shared query contrac
 Native attempt three passed after two corrections. Ready count is 167 files. Next:
 bound annotation consumption and concrete argument binding; application/member joins
 and full concrete-preparation orchestration remain unfinished.
+
+
+Bound annotation/concrete argument reading adds 30 PHP/native outcomes
+(`results/concrete-bindings-01`); the 14-case existing definition-view PHP regression
+also passes. Exact source/provider identity, pending application/record definitions,
+integer literal/constant/parameter reading and attributed rejection are proved.
+Native attempt one passed without corrections. Ready count is 169 files. Next:
+literal-constant batch preparation, then explicit application argument normalization
+and instance joins. No constant expression execution or complete pipeline is claimed.

@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught Error: Class "type_model\Field_Definition" not found in /tmp/concrete-bindings-02/source/probe.php:22
+Stack trace:
+#0 /tmp/concrete-bindings-02/source/main.php(2): concrete_bindings_test\Probe::run()
+#1 Command line code(1): require('...')
+#2 {main}
+  thrown in /tmp/concrete-bindings-02/source/probe.php on line 22

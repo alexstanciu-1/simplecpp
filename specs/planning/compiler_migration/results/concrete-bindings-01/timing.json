@@ -1,0 +1,15 @@
+{
+  "authoring_start_epoch": 1790136236.8932457,
+  "first_php_ready_epoch": 1790136446.9169624,
+  "authoring_to_php_ready_seconds": 210.02371668815613,
+  "first_php_summary": "/tmp/concrete-bindings-04/summary.json",
+  "checker_correction_cycles": 0,
+  "php_fixture_correction_cycles": 3,
+  "native_attempts_started": 1,
+  "first_native_pass_epoch": 1790136601.8811247,
+  "php_ready_to_native_pass_seconds": 154.96416234970093,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "final_verification_builds": 0,
+  "consolidation_end_epoch": 1790136640.9245598
+}
