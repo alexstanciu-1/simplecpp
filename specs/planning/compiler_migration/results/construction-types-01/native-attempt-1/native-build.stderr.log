@@ -1,0 +1,8 @@
+STAN pre-build check failed: 1 compile-errors
+
+[compile-error] Function `construction_types_test\Probe::name_node` declared as `int` may exit without returning a value.
+  at probe.phs:26
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

@@ -2921,3 +2921,24 @@ resolve_types; no source-preparation tool or runtime behavior changed.
 22 PHP/native outcomes and 26 host invariants pass without a native
 corrective cycle. Evidence: `results/local-types-01`. Construction lookup and debug
 projections remain recorded debt; concrete queues/coordinator remain incomplete.
+
+
+## Construction lookup and explicit type-association diagnostics
+
+Construction_Types moves the prototype snapshot's construction query into a
+worker-owned reader over that exact snapshot. Its Annotation_Types channel retains
+source path/span/reason without mutating the snapshot or flattening source errors.
+The query returns only an already-prepared exact canonical definition; capability
+checks remain body-owned. Source bindings and concrete instances must be current.
+
+Type_Association_Debug replaces reflection/array assembly for the explicit
+signature/local/family portion of the old type dump. Nullable receiver positions,
+provider IDs, passing names and ordered local/parameter IDs remain explicit. Source
+paths replace unavailable prototype file IDs rather than synthesizing identifiers.
+No empty catalog/store/instance placeholders are emitted under a complete-dump API.
+The remaining serializers and their fields are inventoried in
+[type_debug_projection_inventory.md](type_debug_projection_inventory.md).
+
+12 PHP/native scenarios and 57 host invariants pass. Native attempt two passed
+after one fixture return-flow correction; production bytes were unchanged and only
+one C++ build was needed. Evidence: `results/construction-types-01`.

@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **198 production files**: input preparation (137 outcomes),
+Active readiness is **200 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -531,3 +531,12 @@ prefixes, nested/template locals, full provenance acceptance, unchanged reuse an
 local-only invalidation/rebuild pass. First native attempt passed without corrections.
 Readiness is 198 files. Next: construction lookup and debug projections, then complete
 concrete-preparation queue/coordinator dependencies. Full analysis is not yet runnable.
+
+
+Construction lookup and association debug projection add 12 PHP/native scenarios
+and 57 host invariants (`results/construction-types-01`). Read-only exact definition
+lookup, attributed rejection, source/provider/receiver/local/family projection and
+snapshot purity pass. Native attempt two passed after one fixture correction;
+production passed its first C++ build. Readiness is 200 files. Remaining complete-dump
+serializers are inventoried in type_debug_projection_inventory.md. Concrete queues,
+family preparation acceptance and full analysis coordination remain unfinished.

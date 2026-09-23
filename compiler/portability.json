@@ -199,7 +199,9 @@
     "src/04_analyze/resolve_types/data/locals.php",
     "src/04_analyze/resolve_types/utilities/local_type_validity.php",
     "src/04_analyze/resolve_types/locals.php",
-    "src/04_analyze/resolve_types/local_join.php"
+    "src/04_analyze/resolve_types/local_join.php",
+    "src/04_analyze/resolve_types/construction_types.php",
+    "src/04_analyze/resolve_types/type_association_debug.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
