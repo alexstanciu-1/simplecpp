@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **251 production files**: input preparation (137 outcomes),
+Active readiness is **253 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -614,3 +614,5 @@ Checked resource expression traversal adds 25 PHP/native scenarios for runtime e
 Resource statement/scope-exit transfer adds eight PHP/native scenarios with entry and sibling-exit independence (`results/allocation-pass-01`). Readiness is 249 files / 114 registered proofs. Fixed-point analysis, ownership-summary inference and full acceptance remain unfinished.
 
 Fixed-point allocation analysis adds 15 PHP/native branch, loop and inferred-parameter scenarios (`results/allocation-flow-01`). Readiness is 251 files / 115 registered proofs. Ownership task/lifecycle acceptance and full lifetime publication remain unfinished.
+
+Ownership tasks and lifecycle workers add 53 PHP/native retained-worker comparisons plus body/provenance assertions (`results/ownership-worker-01`). Readiness is 253 files / 116 registered proofs. Final native verification includes the corrected borrow classifier. Ownership join/preparation and complete lifetime publication remain unfinished.

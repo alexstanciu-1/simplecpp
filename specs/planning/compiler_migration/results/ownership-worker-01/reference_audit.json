@@ -1,0 +1,6 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/ownership_worker.php": "fa76f0584e90443a80eee9555557cf999710070bb0ecae5699497dfe5bed25de",
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/data/ownership.php": "4059fb51faf0b5a8ce53d8d1b7b336335473721a365dc417c8fbb28daef2c6cc",
+  "compiler/tests/ownership_worker/reference.php": "e8e45c190d66de5f1408147f002d4fef1ecba4ac5329f6ba8f491853e38b139c",
+  "compiler/tests/ownership_worker/cases.py": "8ebd540eda4ad8c1a500a1489e6d548e09471119905083b966e7a8abcab05617"
+}

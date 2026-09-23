@@ -1,0 +1,426 @@
+[
+  {
+    "role": "default_construct",
+    "child": false,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": false,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": false,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": false,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "move_construct",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": false,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 2,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 9,
+    "source": false
+  },
+  {
+    "role": "copy_assign",
+    "child": true,
+    "body": false,
+    "required": 3,
+    "result": 10,
+    "source": false
+  },
+  {
+    "role": "default_construct",
+    "child": true,
+    "body": true,
+    "required": 2,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "destroy",
+    "child": true,
+    "body": true,
+    "required": 2,
+    "result": 5,
+    "source": false
+  },
+  {
+    "role": "copy_construct",
+    "child": true,
+    "body": false,
+    "required": 1,
+    "result": 10,
+    "source": true
+  }
+]

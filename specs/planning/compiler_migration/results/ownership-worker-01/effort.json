@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790159913.845976,
+  "first_php_ready_epoch": 1790160091.41168,
+  "authoring_through_first_php_ready_seconds": 177.566,
+  "checker_corrective_cycles": 0,
+  "php_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "native_verification_builds": 1,
+  "cpp_builds": 2,
+  "first_native_build_seconds": 329.71,
+  "final_native_build_seconds": 338.492,
+  "native_stabilization_wall_seconds": 767.422,
+  "notes": [
+    "Review replaced the allocation parameter non-value test with Semantic_Modes::is_borrow, preserving the prototype exclusion of byte spans.",
+    "The first native snapshot preceded that dependency correction; a separate final native verification proves the current source. The focused 15-case allocation PHP suite also passes after the guard correction.",
+    "Native cases compare lifecycle composition with the retained worker; additional assertions cover body tasks, captured dependencies, immutable exports and malformed provenance."
+  ]
+}

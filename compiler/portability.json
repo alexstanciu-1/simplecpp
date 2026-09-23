@@ -252,7 +252,9 @@
     "src/04_analyze/analyze_lifetimes/allocation_traversal.php",
     "src/04_analyze/analyze_lifetimes/allocation_pass.php",
     "src/04_analyze/analyze_lifetimes/data/allocations.php",
-    "src/04_analyze/analyze_lifetimes/allocation_flow.php"
+    "src/04_analyze/analyze_lifetimes/allocation_flow.php",
+    "src/04_analyze/analyze_lifetimes/data/ownership_tasks.php",
+    "src/04_analyze/analyze_lifetimes/ownership_worker.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

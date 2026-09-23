@@ -21,7 +21,7 @@ final class Allocation_Flow {
         $this->locations = Resource_Locations::locals($this->body); $initial = new Resource_Flow_State();
         foreach ($this->locations as $key => $location) {
             if ($location->local < $this->body->entry_parameter_count()+1) {
-                if (($this->body->local_passing($location->local) === \type_model\PASS_VALUE) || ($location->size() === 0)) {
+                if ((!\type_model\Semantic_Modes::is_borrow($this->body->local_passing($location->local))) || ($location->size() === 0)) {
                     $this->fail((int)$this->body->names->local_for($location->local)->declaration_node_id,'Allocation owner parameters require an ownership contract');
                 }
                 $initial->states[$key] = \analyze_lifetimes\RESOURCE_IDENTITY; $this->parameters[$key] = true;
