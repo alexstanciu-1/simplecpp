@@ -2282,3 +2282,51 @@ the original PHP-ready checkpoint. No converter, target or runtime-preparation c
 
 This adds one optional shared handle per binding. A later tagged-layout optimization
 can reduce variant storage after profiling; do not erase the distinct record identity.
+
+
+## Symbolic template interpretation
+
+The prototype Terms algorithms now interpret real parser/resolution snapshots using
+explicit Type_Term variants. Annotation traversal uses a compact Annotation_Visit
+continuation stack with separate used length and append/overwrite operations; a typed
+node-to-term map caches completed subexpressions. Formal slots retain their declaring
+symbol identity through substitutions. Constant provenance remains symbolic; no
+constant evaluation or canonical type creation is introduced. Type_Term.source_id is
+renamed symbol_id because applications can refer to provider declarations as well as
+source declarations. The source() factory still constructs a source-defined named type.
+
+Exact declaration and binding dependencies are deduplicated while preserving first
+read order. Missing/stale bindings reject before interpretation. Source field lookup
+uses the shared struct-member cursor and applies receiver substitutions; extent
+presence creates the prototype's symbolic array term without evaluating the extent.
+Method lookup uses the receiver's exact declaration scope and qualified name index.
+Provider members use their actual declaration owner, never fabricated source syntax.
+
+Generic forwarding, family argument baseline, default construction and whole-provider
+value restrictions retain the prototype policy. Provider signature mapping selects
+formal arguments, the receiver, or exact catalog definitions/records. Normalized
+metadata validation remains the producer's responsibility; unsupported/missing mappings
+are internal LogicExceptions, not user semantic failures.
+
+Terms captures an immutable Template_Diagnostic (path, span, reason) before throwing
+the supported RuntimeException for semantic rejection. The future worker must inspect
+that diagnostic rather than treating arbitrary runtime exceptions as user errors.
+The worker also owns absence checks before default_construction/provider_value_use:
+these methods now accept a present Type_Term, and absent expression types remain a
+no-op at the caller. This avoids unsupported nullable ordinary method parameters.
+
+The first native attempt stopped at STAN's return-completeness check. Field selection
+now resolves its node before producing a final typed return. Provider-reference dispatch
+has a final mapping call, whose helper has a final typed return. Rejection behavior is
+unchanged; no STAN bypass or generated-code patch was used. Thirty-two PHP/native
+scenarios pass on attempt two, including 100-level nested annotations, substitutions,
+record identity, field/method access, provider requirements, construction, signature
+mapping and attributed errors. The existing 40-outcome symbolic-model PHP proof and
+its retained comparison oracle also pass. Preserve all phase timings and both native
+attempts during installation.
+
+No full template body worker/join or compiler pipeline is claimed. Runtime preparation
+and the target toolchain remain unchanged.
+
+After integration, the existing 40-outcome symbolic-model regression and retained
+oracle passed again, including one separate native verification build.

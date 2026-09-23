@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **156 production files**: input preparation (137 outcomes),
+Active readiness is **158 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -398,3 +398,16 @@ resolution (320), and project resolution (182) native regressions pass. Exact re
 identity now participates in lookup and incremental validity. See
 `results/provider-record-bindings-01`. Readiness remains 156 files. Next: symbolic
 template interpretation, then template body checking and result orchestration.
+
+
+Symbolic template interpretation adds 32 PHP/native scenarios
+(`results/symbolic-interpretation-01`). Formal substitution, constant provenance,
+source/provider fields and methods, provider signature mapping and exact dependency
+capture are proved. Native required two builds and one STAN return-shape correction.
+Two production files bring readiness to 158. Next: template body checking, then
+selection/reuse and complete result acceptance. Concrete instantiation remains separate.
+
+The existing symbolic-model native regression (40 outcomes) also passes after the
+identity-field rename. The next body-checker slice must account for the prototype
+Source_Lifecycle::role dependency; its full bodies/signature validation also serves
+later concrete type preparation. Preserve that semantic owner when adapting it.

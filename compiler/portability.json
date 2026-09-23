@@ -157,7 +157,9 @@
     "src/05_generate_code/prepare_backend/tools/tool_run.php",
     "src/05_generate_code/prepare_backend/layout_probe.php",
     "src/05_generate_code/prepare_backend/layout_worker.php",
-    "src/04_analyze/collect_symbols/data/provider_declaration.php"
+    "src/04_analyze/collect_symbols/data/provider_declaration.php",
+    "src/04_analyze/check_templates/terms.php",
+    "src/04_analyze/check_templates/data/interpretation.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

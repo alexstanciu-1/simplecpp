@@ -1,0 +1,22 @@
+{
+  "authoring_start_epoch": 1790131396.3848999,
+  "first_php_ready_epoch": 1790131709.8069472,
+  "authoring_to_php_ready_wall_seconds": 313.422,
+  "checker_correction_cycles": 1,
+  "checker_corrections": [
+    "Present Type_Term parameters instead of unsupported nullable method parameters; callers own no-op absent expression cases"
+  ],
+  "native_build_attempts_started": 2,
+  "native_correction_cycles": 1,
+  "native_corrections": [
+    "STAN return completeness: select the field node before producing one final return; separate checked provider-reference dispatch from mapped type lookup with a final typed return"
+  ],
+  "symbolic_model_php_regression": "/tmp/symbolic-model-regression-01/summary.json",
+  "first_native_pass_epoch": 1790132209.740952,
+  "php_ready_to_native_pass_wall_seconds": 499.934,
+  "native_build_attempts_to_first_pass": 2,
+  "final_verification_builds": 0,
+  "affected_model_regression_builds": 1,
+  "affected_model_regression_command_seconds": 93.649,
+  "integration_consolidated_epoch": 1790134237.3690445
+}

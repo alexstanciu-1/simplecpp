@@ -11,22 +11,22 @@ const TERM_ARRAY = 5;
 final class Type_Term {
     private array $arguments /** vector<Type_Term> */ = [];
     public readonly bool $dependent;
-    public function __construct(public readonly int $kind, public readonly int $source_id,
+    public function __construct(public readonly int $kind, public readonly int $symbol_id,
         public readonly int $parameter_slot, public readonly string $text_key,
         public readonly ?\type_model\Named_Definition $named_definition,
         public readonly ?\type_model\Record_Declaration $record_definition,
         array $arguments /** vector<Type_Term> */) {
         if (($kind<\check_templates\TERM_NAMED) || ($kind>\check_templates\TERM_ARRAY)) { throw new \InvalidArgumentException('Unknown symbolic term kind'); }
-        if (($source_id<0) || ($source_id>\collect_symbols\MAX_SYMBOL_ID) || ($parameter_slot<0)) { throw new \InvalidArgumentException('Invalid symbolic source identity'); }
+        if (($symbol_id<0) || ($symbol_id>\collect_symbols\MAX_SYMBOL_ID) || ($parameter_slot<0)) { throw new \InvalidArgumentException('Invalid symbolic declaration identity'); }
         $payloads=0;
-        if ($source_id!==0) { $payloads=$payloads+1; }
+        if ($symbol_id!==0) { $payloads=$payloads+1; }
         if ($named_definition!==null) { $payloads=$payloads+1; }
         if ($record_definition!==null) { $payloads=$payloads+1; }
         if ($text_key!=='') { $payloads=$payloads+1; }
         if ($kind===\check_templates\TERM_NAMED) {
             if (($payloads!==1) || ($text_key!=='') || ($parameter_slot!==0) || (q_count($arguments)!==0)) { throw new \InvalidArgumentException('Named term requires one authoritative target'); }
         } elseif (($kind===\check_templates\TERM_PARAMETER) || ($kind===\check_templates\TERM_APPLICATION)) {
-            if (($payloads!==1) || ($source_id===0)) { throw new \InvalidArgumentException('Formal/application requires a source declaration'); }
+            if (($payloads!==1) || ($symbol_id===0)) { throw new \InvalidArgumentException('Formal/application requires a declaration symbol'); }
             if ($kind===\check_templates\TERM_PARAMETER) {
                 if (q_count($arguments)!==0) { throw new \InvalidArgumentException('Formal parameter has no argument list'); }
             } else {
@@ -72,7 +72,7 @@ final class Type_Term {
         $a_pending /** vector<Type_Term> */ = [$left]; $b_pending /** vector<Type_Term> */ = [$right]; $size=1;
         while ($size>0) {
             $size=$size-1; $a=$a_pending[$size]; $b=$b_pending[$size];
-            if (($a->kind!==$b->kind) || ($a->source_id!==$b->source_id) || ($a->parameter_slot!==$b->parameter_slot)
+            if (($a->kind!==$b->kind) || ($a->symbol_id!==$b->symbol_id) || ($a->parameter_slot!==$b->parameter_slot)
                 || ($a->text_key!==$b->text_key) || ($a->named_definition!==$b->named_definition)
                 || ($a->record_definition!==$b->record_definition) || ($a->argument_count()!==$b->argument_count())) { return false; }
             for ($i=0;$i<$a->argument_count();$i++) {

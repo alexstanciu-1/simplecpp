@@ -75,7 +75,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('layout_worker', Path(__file__).parent / 'layout_worker/run.py'),
           ('provider_declaration', Path(__file__).parent / 'provider_declaration/run.py'),
           ('symbol_origins', Path(__file__).parent / 'symbol_origins/run.py'),
-          ('provider_record_bindings', Path(__file__).parent / 'provider_record_bindings/run.py')]
+          ('provider_record_bindings', Path(__file__).parent / 'provider_record_bindings/run.py'),
+          ('symbolic_interpretation', Path(__file__).parent / 'symbolic_interpretation/run.py')]
 
 
 def main():
