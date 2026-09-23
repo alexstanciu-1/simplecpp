@@ -1,0 +1,6 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/data/ownership.php": "4059fb51faf0b5a8ce53d8d1b7b336335473721a365dc417c8fbb28daef2c6cc",
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/ownership_join.php": "297a718f16a05030d37e808db26de46c1c2e784cb98467a071e7ddb67bd4bb73",
+  "compiler/tests/ownership_records/reference.php": "f0fca623cbd6358ac9d8601921fd82e6ef749b7ea030a0123f5393f58d88c2ba",
+  "compiler/tests/ownership_records/cases.py": "2d9babf971b9dd0e097347b7edeb24bec2ac76db9fd45c4b8865fb190d8a0cbd"
+}

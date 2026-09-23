@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790156981.017687,
+  "first_php_ready_epoch": 1790157178.9943492,
+  "authoring_through_first_php_ready_seconds": 197.977,
+  "checker_corrective_cycles": 2,
+  "php_behavior_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 304.416,
+  "native_stabilization_wall_seconds": 324.928,
+  "notes": [
+    "Checker corrections replaced fixture keyed literals with explicit hash writes, and source string casts with concatenation at numeric PHP key boundaries.",
+    "Native proof includes real resource-location dependency closure; build time is not an isolated record performance benchmark."
+  ]
+}

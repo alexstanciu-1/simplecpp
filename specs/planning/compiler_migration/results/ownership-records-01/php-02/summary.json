@@ -1,0 +1,36 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "reference",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/ownership_records/reference.php",
+        "/tmp/ownership-records-php-02/cases.json"
+      ],
+      "seconds": 0.066,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/ownership-records-php-02/source"
+      ],
+      "seconds": 0.738,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/ownership-records-php-02/source"
+      ],
+      "seconds": 2.273,
+      "exit": 1
+    }
+  ],
+  "native_build_attempts": 0
+}

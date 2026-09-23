@@ -243,7 +243,9 @@
     "src/04_analyze/analyze_lifetimes/plan_body.php",
     "src/04_analyze/analyze_lifetimes/resource_states.php",
     "src/04_analyze/analyze_lifetimes/data/resource_locations.php",
-    "src/04_analyze/analyze_lifetimes/resource_locations.php"
+    "src/04_analyze/analyze_lifetimes/resource_locations.php",
+    "src/04_analyze/analyze_lifetimes/data/resource_flow.php",
+    "src/04_analyze/analyze_lifetimes/data/ownership_contracts.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
