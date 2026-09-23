@@ -1,0 +1,68 @@
+[
+  {
+    "mode": "ordinary"
+  },
+  {
+    "mode": "template"
+  },
+  {
+    "mode": "method"
+  },
+  {
+    "mode": "copy"
+  },
+  {
+    "mode": "duplicate_task"
+  },
+  {
+    "mode": "duplicate_result"
+  },
+  {
+    "mode": "missing"
+  },
+  {
+    "mode": "unselected"
+  },
+  {
+    "mode": "wrong_input"
+  },
+  {
+    "mode": "wrong_definition"
+  },
+  {
+    "mode": "wrong_count"
+  },
+  {
+    "mode": "stale_names"
+  },
+  {
+    "mode": "missing_signature"
+  },
+  {
+    "mode": "signature_count"
+  },
+  {
+    "mode": "foreign_signatures"
+  },
+  {
+    "mode": "reuse"
+  },
+  {
+    "mode": "full_select"
+  },
+  {
+    "mode": "invalidate_local"
+  },
+  {
+    "mode": "stale_binding"
+  },
+  {
+    "mode": "void_local"
+  },
+  {
+    "mode": "stale_instance"
+  },
+  {
+    "mode": "wrong_context"
+  }
+]

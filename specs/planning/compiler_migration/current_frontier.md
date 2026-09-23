@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **194 production files**: input preparation (137 outcomes),
+Active readiness is **198 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -523,3 +523,11 @@ instance/package identity, language/conversion indexing and copied membership pa
 Native attempt one passed without corrections. Readiness is 194 files. Construction
 lookup and debug serialization remain to migrate, along with local-type preparation/
 join, family preparation service acceptance and complete type-stage coordination.
+
+
+Local type selection, workers and final association join add 22 PHP/native scenarios
+and 26 host invariants (`results/local-types-01`). Signature parameter
+prefixes, nested/template locals, full provenance acceptance, unchanged reuse and
+local-only invalidation/rebuild pass. First native attempt passed without corrections.
+Readiness is 198 files. Next: construction lookup and debug projections, then complete
+concrete-preparation queue/coordinator dependencies. Full analysis is not yet runnable.

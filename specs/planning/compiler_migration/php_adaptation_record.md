@@ -2896,3 +2896,28 @@ numeric-tuple keys with a typed composite key once justified by measurements.
 26 PHP/native outcomes and 26 host invariants pass on the first native
 attempt. Evidence: `results/type-snapshot-01`. Next are construction lookup/debug
 projection dependencies and local-type preparation, followed by coordinator assembly.
+
+
+## Local type annotation workers and final association join
+
+Local_Type_Request retains an exact Callable_Input and name-resolution owner with
+a copied typed vector containing only body-local definitions. Parameter IDs remain
+owned by the accepted Signature_Set. The join copies them as the local-ID prefix
+and materializes the suffix in declaration order after validating the full batch.
+It does not re-resolve parameter annotations or allocate a second worker result.
+
+Local_Type_Validity owns an optional prior completed snapshot and serves both
+selection and joining. Exact binding/instance and canonical-row identity determine
+reuse; absent history and invalidated/missing type rows select work. Explicit bounds
+avoid depending on the prototype's old lookup exception class. Void diagnostics use
+the existing Annotation_Types channel and retain path/byte span/reason.
+
+The local join validates all selected and unselected participants, current catalog,
+separate candidate, exact request ownership and signature parameter counts before
+writing. Materialization still requires candidate discard on failure. Task/result
+arrival order cannot change published local ordering. The new owner stays inside
+resolve_types; no source-preparation tool or runtime behavior changed.
+
+22 PHP/native outcomes and 26 host invariants pass without a native
+corrective cycle. Evidence: `results/local-types-01`. Construction lookup and debug
+projections remain recorded debt; concrete queues/coordinator remain incomplete.

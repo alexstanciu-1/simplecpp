@@ -195,7 +195,11 @@
     "src/04_analyze/resolve_types/signature_join.php",
     "src/04_analyze/resolve_types/select_signatures.php",
     "src/01_prepare_inputs/load_runtime/data/family_results.php",
-    "src/04_analyze/resolve_types/data/type_resolution.php"
+    "src/04_analyze/resolve_types/data/type_resolution.php",
+    "src/04_analyze/resolve_types/data/locals.php",
+    "src/04_analyze/resolve_types/utilities/local_type_validity.php",
+    "src/04_analyze/resolve_types/locals.php",
+    "src/04_analyze/resolve_types/local_join.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
