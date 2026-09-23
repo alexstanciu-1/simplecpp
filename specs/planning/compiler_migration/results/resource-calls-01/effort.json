@@ -1,0 +1,19 @@
+{
+  "authoring_start_epoch": 1790157476.067579,
+  "first_php_ready_epoch": 1790157626.1184409,
+  "first_php_cases": 448,
+  "final_php_native_cases": 449,
+  "authoring_through_first_php_ready_seconds": 150.051,
+  "checker_corrective_cycles": 0,
+  "php_behavior_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 286.88,
+  "native_stabilization_wall_seconds": 347.735,
+  "notes": [
+    "Authoring interval includes consolidation/commit of the preceding ownership-record checkpoint while its native proof completed.",
+    "Added one explicit alias-exclusion case and seven independently specified outcomes before native execution.",
+    "Native build includes the checked-body/resource-location dependency closure."
+  ]
+}
