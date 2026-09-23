@@ -97,6 +97,15 @@ def main():
             ('trait Ops { public function work(): void { $case = 0; } } class Owner { use Ops; }', 'reserved C++ local identifier $case'),
             ('class Owner { public function __construct(public bool $mutable) {} public function work(): void { $mutable = false; } }', 'reserved C++ local identifier $mutable'),
         ]
+        cases += [
+            ('unset($items);', 'not variable removal'),
+            ('unset($items["a"], $items["b"]);', 'expected )'),
+            ('unset($items[$key + 1]);', 'unsupported unset key'),
+            ('unset($items[key()]);', 'explicit literal or variable key'),
+            ('unset($items[$key->value()]);', 'unsupported unset key'),
+            ('unset($items["a"]["b"]);', 'expected )'),
+            ('unset($items->{$field}["a"]);', 'fixed member name'),
+        ]
         for body, diagnostic in cases:
             write('owner.php', body)
             run('sync_imports.php', source)
@@ -112,6 +121,18 @@ def main():
         run('sync_imports.php', source)
         run('check.php', source)
         run('convert.php', source, output)
+
+        # Hash-slot removal preserves explicit keys and fixed member paths.
+        removal = ('class Slots { public array $items /** hash<int> */ = []; '
+                   'public function remove(string $key): void { '
+                   'unset($this->items[$key]); unset($this->items["missing"]); } } '
+                   '$items /** hash<int, int> */ = []; unset($items[7]);')
+        write('owner.php', removal)
+        run('check.php', source)
+        run('convert.php', source, output)
+        emitted = (output / 'owner.phs').read_text()
+        for spelling in ['unset($this->items[$key]);', 'unset($this->items["missing"]);', 'unset($items[7]);']:
+            assert spelling in emitted, emitted
 
         # Raw PHP compile errors are checked even if token parsing can accept them.
         write('owner.php', 'class Owner { public function f(int $n, int $n): int { return $n; } }')

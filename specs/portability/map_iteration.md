@@ -57,3 +57,22 @@ retains source, output and command logs. Cumulative compiler and nested-containe
 proofs are also rerun to validate the native type spelling on the selected target.
 Source_Set production adaptation and JSON/snapshot-copy work remain separate;
 this slice does not add a production file to the fourteen-file ready set.
+
+## Explicit hash-slot removal
+
+The preparation queue needs to release completed requests and dependency edges.
+Portable PHP now admits `unset($map[$key]);` and fixed field paths such as
+`unset($this->waiting[$request->key]);`. The converter preserves the construct;
+the native hash owns removal and missing-key no-op behavior. No runtime facade or
+symbol/type inference is added.
+
+This narrow form accepts one indexed target, rooted at a variable, with optional
+fixed members before the index. Its key is an integer/string literal or a variable
+with optional fixed members. Variable removal, multiple operands, nested indexes,
+dynamic members and computed/call keys are rejected. Bind computed keys to locals.
+Authors must use hashes: accepting the syntax does not authorize vector deletion.
+Do not remove from the same container being traversed.
+
+The map-iteration proof now also checks integer/string removal, unaffected key
+stability, missing-key no-ops, member-key removal, repeated removal and reinsertion.
+Checker tests cover the rejected forms and unchanged output on rejection.

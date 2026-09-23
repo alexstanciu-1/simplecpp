@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 import subprocess
+import time
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / 'tools/php_portability'
@@ -20,8 +21,9 @@ def main():
     events = []
 
     def run(command, ok=True, cwd=ROOT):
+        started = time.monotonic()
         p = subprocess.run(list(map(str, command)), cwd=cwd, capture_output=True, text=True)
-        events.append({'command': list(map(str, command)), 'exit': p.returncode,
+        events.append({'command': list(map(str, command)), 'exit': p.returncode, 'seconds': round(time.monotonic() - started, 3),
                        'stdout': p.stdout, 'stderr': p.stderr})
         (results / 'commands.json').write_text(json.dumps(events, indent=2) + '\n')
         assert (p.returncode == 0) == ok, (command, p.stdout, p.stderr)
@@ -33,6 +35,7 @@ class Row { public int $id = 0; }
 class Lookup {
     private array $positions /** hash<int, int> */ = [];
     public function put(int $id, int $position): void { $this->positions[$id] = $position; }
+    public function remove(Row $row): void { unset($this->positions[$row->id]); }
     public function contains(Row $row): bool { return isset($this->positions[$row->id]); }
 }''',
         'main.php': r'''$map /** hash<int, int> */ = [];
@@ -77,6 +80,18 @@ $empty /** vector<int> */ = [];
 $visits = 0;
 foreach ($empty as $item) { $visits = $visits + 1; }
 echo $visits, "\n";
+unset($map[12]);
+unset($map[91]);
+echo q_count($map), ":", $map[37], ":", isset($map[12]) ? "bad" : "removed", "\n";
+$remove_key = "/a";
+unset($paths[$remove_key]);
+unset($paths["/missing"]);
+echo q_count($paths), ":", $paths["/b"], "\n";
+$lookup->remove($row);
+$lookup->remove($row);
+echo $lookup->contains($row) ? "bad" : "field-removed", "\n";
+$lookup->put(37, 9);
+echo $lookup->contains($row) ? "readded" : "bad", "\n";
 ''',
     }
     for name, body in bodies.items():
@@ -86,7 +101,7 @@ echo $visits, "\n";
     run(['php', TOOLS / 'convert.php', source, output])
     for generated in output.rglob('*.phs'):
         assert not __import__('re').search(r'/\*\*\s*(?:vector|hash|nullable)<', generated.read_text()), generated
-    expected = 'zero-present:missing:2\n54:2\n49:missing:2\n4:7:13\n37:found\nfalse-present\n0\n'
+    expected = 'zero-present:missing:2\n54:2\n49:missing:2\n4:7:13\n37:found\nfalse-present\n0\n1:5:removed\n1:37\nfield-removed\nreadded\n'
     php = run(['php', '-r', 'foreach (array_slice($argv,1) as $path) { require $path; }',
                TOOLS / 'runtime/bootstrap.php', *[source / name for name in bodies]])
     assert php == expected, php

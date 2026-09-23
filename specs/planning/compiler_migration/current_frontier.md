@@ -540,3 +540,9 @@ snapshot purity pass. Native attempt two passed after one fixture correction;
 production passed its first C++ build. Readiness is 200 files. Remaining complete-dump
 serializers are inventoried in type_debug_projection_inventory.md. Concrete queues,
 family preparation acceptance and full analysis coordination remain unfinished.
+
+Preparation queue dependency: single hash-slot removal is now proved in PHP/native
+(`results/keyed-removal-01`), including missing keys, unaffected entries and fixed
+member keys. Converter/checker rejection regressions pass; first native attempt
+passed without corrections. Readiness stays 200 files. Next: migrate the typed
+preparation queue and prove scheduling, dependency edges and payload release.

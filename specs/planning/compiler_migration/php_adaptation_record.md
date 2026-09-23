@@ -2942,3 +2942,19 @@ The remaining serializers and their fields are inventoried in
 12 PHP/native scenarios and 57 host invariants pass. Native attempt two passed
 after one fixture return-flow correction; production bytes were unchanged and only
 one C++ build was needed. Evidence: `results/construction-types-01`.
+
+## Preparation queue dependency: keyed removal (2026-09-23)
+
+The prototype releases completed requests and per-fact dependency edges with
+`unset`. Preserve that ownership behavior rather than retaining task payloads in
+permanent tombstones or rebuilding entire maps on each completion. The converter
+now supports one explicit hash-slot removal, including fixed field/key paths;
+it adds no inferred types and no PHP runtime shim. The queue itself remains to
+migrate using named records for its nested indexes.
+
+Evidence: `results/keyed-removal-01` extends the existing map-iteration PHP/native
+proof on pinned `9b4b33f35f053b487e018c94d6a4a7888d77c64a`. First native attempt
+passed, zero corrective cycles, one C++ build. Per-command times are saved; exact
+authoring/PHP-ready elapsed time was not captured. Checker rejection/publication
+purity and the existing converter/runtime/incremental suite also passed. No new
+compiler production files are claimed by this tooling checkpoint.

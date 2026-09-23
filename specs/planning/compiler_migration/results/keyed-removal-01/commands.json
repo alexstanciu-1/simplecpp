@@ -1,0 +1,111 @@
+[
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+      "/tmp/keyed-removal-01/php"
+    ],
+    "exit": 0,
+    "seconds": 0.056,
+    "stdout": "Updated imports: 0\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+      "/tmp/keyed-removal-01/php"
+    ],
+    "exit": 0,
+    "seconds": 0.108,
+    "stdout": "{\"checked\":2,\"cache\":{\"listed_directories\":1,\"read_sources\":2,\"tokenized\":2,\"loaded_tokens\":0}}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/keyed-removal-01/php",
+      "/tmp/keyed-removal-01/phpp"
+    ],
+    "exit": 0,
+    "seconds": 0.083,
+    "stdout": "{\"converted\":2,\"reused\":0,\"removed\":0}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "-r",
+      "foreach (array_slice($argv,1) as $path) { require $path; }",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+      "/tmp/keyed-removal-01/php/row.php",
+      "/tmp/keyed-removal-01/php/main.php"
+    ],
+    "exit": 0,
+    "seconds": 0.061,
+    "stdout": "zero-present:missing:2\n54:2\n49:missing:2\n4:7:13\n37:found\nfalse-present\n0\n1:5:removed\n1:37\nfield-removed\nreadded\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/keyed-removal-01/phpp"
+    ],
+    "exit": 0,
+    "seconds": 0.057,
+    "stdout": "{\"updated\":1}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-json-240-probe",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit": 0,
+    "seconds": 0.007,
+    "stdout": "9b4b33f35f053b487e018c94d6a4a7888d77c64a\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "-C",
+      "/tmp/scpp-json-240-probe",
+      "status",
+      "--porcelain"
+    ],
+    "exit": 0,
+    "seconds": 0.032,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-json-240-probe/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "exit": 0,
+    "seconds": 0.181,
+    "stdout": "Created prism.json\nProject root: /tmp/keyed-removal-01/phpp\nEntrypoint: main.phs\nPHP profile: strict\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "php",
+      "/tmp/scpp-json-240-probe/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "exit": 0,
+    "seconds": 24.229,
+    "stdout": "Transpiled PHP files: 5, skipped unchanged: 0\nGenerated Ninja file: .prism/build/build.ninja\nUsing compiler: clang++-18 -fuse-ld=mold (gnu_like)\nUsing build mode: debug\nUsing build grouping policy: incremental (report_only)\nObject cache: disabled (default disabled)\nUsing repo root: /tmp/scpp-json-240-probe\nResolved project dependency graph: 1 project(s)\nRuntime compilation: enabled\nDependency compilation: reuse existing artifacts only\nninja: Entering directory `.prism/build'\n[1/7] PCH app_pch.hpp.gch\n[2/7] CXX scpp_framework/collections.o\n[3/7] CXX scpp_framework/exceptions.o\n[4/7] CXX row.o\n../generated/row.cpp:27:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]\n   27 |         this->positions.remove(row->id);\n      |         ^~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~\n1 warning generated.\n[5/7] CXX scpp_framework/strings.o\n[6/7] CXX main.o\n../generated/main.cpp:103:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]\n  103 |         map.remove(static_cast<int_t<> >(12));\n      |         ^~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~\n../generated/main.cpp:104:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]\n  104 |         map.remove(static_cast<int_t<> >(91));\n      |         ^~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~\n../generated/main.cpp:112:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]\n  112 |         paths.remove(remove_key);\n      |         ^~~~~~~~~~~~ ~~~~~~~~~~\n../generated/main.cpp:113:2: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]\n  113 |         paths.remove(string_t(\"/missing\"));\n      |         ^~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~\n4 warnings generated.\n[7/7] LINK main\nRebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/row.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/strings.o\nTip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.\nBuild completed: .prism/build/main\nzero-present:missing:2\n54:2\n49:missing:2\n4:7:13\n37:found\nfalse-present\n0\n1:5:removed\n1:37\nfield-removed\nreadded\n",
+    "stderr": ""
+  }
+]

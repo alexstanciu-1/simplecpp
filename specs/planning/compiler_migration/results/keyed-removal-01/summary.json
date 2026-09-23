@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "native": true,
+  "expected": "zero-present:missing:2\n54:2\n49:missing:2\n4:7:13\n37:found\nfalse-present\n0\n1:5:removed\n1:37\nfield-removed\nreadded\n",
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native_attempts": 1,
+  "corrective_cycles": 0,
+  "actual_cpp_builds": 1,
+  "scope": "Converter hash-slot removal; no newly migrated compiler production files",
+  "source_sha256": {
+    "tools/php_portability/src/converter.php": "a0b297f15f53b7a68cb066b4b51332ac79a753cb8fea260677a687456271eca7",
+    "tests/portability/map_iteration.py": "8c4d50462e1e57c6d942edb677dcdda85f15d53f09003bf2f3d2c3f3e1837b45",
+    "tests/portability/check.py": "9c895ed3c6606e3950c7b7f447821f258c712a5ab2b2299c19543f62332f4e24"
+  },
+  "timing_note": "Per-command elapsed seconds recorded. Exact authoring/PHP-ready wall interval was not captured; no estimate substituted."
+}

@@ -636,6 +636,32 @@ final class Converter {
 		return new Node('probe', 'isset(' . $text . ')', $line);
 	}
 
+	/** One hash-slot removal. Carrier validity remains a target contract, not symbol inference. */
+	private function keyedRemoval(int $line): Node {
+		$this->expect('(');
+		$root = $this->significant();
+		if ($root[0] !== T_VARIABLE) { $this->fail($line, 'unset requires one keyed variable or fixed-field path'); }
+		$text = $root[1]; $next = $this->significant();
+		while ($next[0] === T_OBJECT_OPERATOR) {
+			$member = $this->significant();
+			if ($member[0] !== T_STRING) { $this->fail($member[2], 'unset requires a fixed member name'); }
+			$text .= '->' . $member[1]; $next = $this->significant();
+		}
+		if ($next[1] !== '[') { $this->fail($line, 'unset supports one hash slot, not variable removal'); }
+		$key = $this->significant();
+		if (!in_array($key[0], [T_VARIABLE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING], true)) { $this->fail($key[2], 'unset requires an explicit literal or variable key'); }
+		$text .= '[' . ($key[0] === T_CONSTANT_ENCAPSED_STRING ? $this->stringLiteral($key) : $key[1]);
+		$next = $this->significant();
+		while ($key[0] === T_VARIABLE && $next[0] === T_OBJECT_OPERATOR) {
+			$member = $this->significant();
+			if ($member[0] !== T_STRING) { $this->fail($member[2], 'unset requires a fixed key member'); }
+			$text .= '->' . $member[1]; $next = $this->significant();
+		}
+		if ($next[1] !== ']') { $this->fail($next[2], 'unsupported unset key expression'); }
+		$text .= ']'; $this->expect(')'); $this->expect(';');
+		return new Node('keyed_removal', 'unset(' . $text . ');', $line);
+	}
+
 	/** A locally spelled single-value callback; no callable or capture resolution. */
 	private function closure(int $line, bool $static): Node {
 		$this->expect('(');
@@ -719,6 +745,7 @@ final class Converter {
 				continue;
 			}
 			if ($id === T_FOREACH) { $nodes[] = $this->foreachLoop($line); continue; }
+			if ($id === T_UNSET) { $nodes[] = $this->keyedRemoval($line); continue; }
 			if ($id === T_ISSET) { $nodes[] = $this->issetProbe($line); continue; }
 			if ($id === T_BREAK || $id === T_CONTINUE) {
 				$this->expect(';');
