@@ -3051,3 +3051,26 @@ Authoring to first PHP checkpoint: 194.821 seconds,
 including one fixture correction from the obsolete definitions() accessor to
 size()/definition_at(). First native build passed in 54.024 seconds with no
 native correction. Typed value records and expression ordering remain separate.
+
+## Typed body records (2026-09-23)
+
+The prototype union payload becomes an explicit tagged Typed_Value with checked
+named accessors and shared typed payload objects. Decimal literals remain strings;
+binary literal contents remain unchanged and expose an explicit hex JSON method
+instead of JsonSerializable. Primitive conversion and operation operands remain
+IDs into the containing body; cross-row/canonical checks are deferred to that
+truthful owner, not fabricated in record constructors. Mismatched payloads now
+fail at construction rather than later consumer access.
+
+Calls retain zero-for-void results and contiguous argument ranges. Argument passing
+uses the existing semantic modes. Statement tags and renamed write_kind/return_mode
+fields preserve the prototype constructor's scope, destination, construction and
+return acceptance. Scope ranges allow empty blocks. Native union/compact carrier
+storage is explicitly deferred; this representation keeps typed shared payloads.
+
+Evidence: 1,009 PHP/native outcomes, 1,000 prototype statement comparisons and the
+full byte range in results/body-records-01. Authoring to first PHP checkpoint:
+192.885 seconds. Two native validation attempts, one
+fixture block-visibility correction, one actual C++ build (27.25 seconds).
+Production passed unchanged from the original PHP checkpoint. Completed-body
+queries and evaluation ordering remain next; no whole body-checker claim is made.

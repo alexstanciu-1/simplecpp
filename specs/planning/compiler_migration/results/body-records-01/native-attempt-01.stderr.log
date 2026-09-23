@@ -1,0 +1,1 @@
+Variable $statement is not visible in this block at line 60. Safe v1 uses block-local variable visibility; declare $statement in the current block or an enclosing block before use.

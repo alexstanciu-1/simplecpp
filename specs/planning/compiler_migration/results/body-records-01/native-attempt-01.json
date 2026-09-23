@@ -1,0 +1,142 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/body-records-native-01/source"
+      ],
+      "seconds": 0.095,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/body-records-native-01/source"
+      ],
+      "seconds": 0.306,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/body-records-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/body-records-native-01/source/src/04_analyze/type_model/data/operations.php",
+        "/tmp/body-records-native-01/source/src/04_analyze/check_bodies/data/places.php",
+        "/tmp/body-records-native-01/source/src/04_analyze/check_bodies/data/values.php",
+        "/tmp/body-records-native-01/source/src/04_analyze/check_bodies/data/statements.php",
+        "/tmp/body-records-native-01/source/probe.php",
+        "/tmp/body-records-native-01/source/main.php"
+      ],
+      "seconds": 0.176,
+      "exit": 0
+    },
+    {
+      "label": "retained-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/body_records/oracle.php",
+        "/tmp/body-records-native-01/cases.json"
+      ],
+      "seconds": 0.08,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/body-records-native-01/source",
+        "/tmp/body-records-native-01/phpp"
+      ],
+      "seconds": 0.17,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/body-records-native-01/source",
+        "/tmp/body-records-native-01/phpp"
+      ],
+      "seconds": 0.074,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/body-records-native-01/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.066,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.009,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.036,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.2,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 1.038,
+      "exit": 3
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790146543.8846526,
+  "php_ready_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/operations.php": "bc58c5f5bb1e402883ff32eec202b87eb4c8b3b41377e94fc1f2009bd34f5122",
+    "src/04_analyze/check_bodies/data/places.php": "ad701e2a41f1c872cbd785e26beeead089d5fcfbd4a87e5318da1c3fd85a1ddb",
+    "src/04_analyze/check_bodies/data/values.php": "77e3cec6482afb5fc5beae2941d9375cf0404a549fff2bf4ea5e35200fa2bcfe",
+    "src/04_analyze/check_bodies/data/statements.php": "cbb0517b0fb3db2ebaefd97a10dfcc7a06d223287e961329430314cba25b3097"
+  }
+}
