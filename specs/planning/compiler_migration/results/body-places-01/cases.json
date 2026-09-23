@@ -1,0 +1,1121 @@
+[
+  {
+    "local": 7,
+    "rows": [],
+    "error": false,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      0
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      0
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        1,
+        0,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      0
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      0,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": false,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        2,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        1,
+        0,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        2,
+        2,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        1,
+        0,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        2,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 7,
+    "rows": [
+      [
+        3,
+        1,
+        9,
+        0
+      ],
+      [
+        3,
+        2,
+        10,
+        2
+      ],
+      [
+        3,
+        3,
+        11,
+        4
+      ]
+    ],
+    "error": false,
+    "allocation": true,
+    "indices": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "local": 1,
+    "rows": [
+      [
+        1,
+        -1,
+        1,
+        0
+      ]
+    ],
+    "error": true,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 1,
+    "rows": [
+      [
+        2,
+        0,
+        1,
+        0
+      ]
+    ],
+    "error": true,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 1,
+    "rows": [
+      [
+        3,
+        0,
+        1,
+        0
+      ]
+    ],
+    "error": true,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 1,
+    "rows": [
+      [
+        1,
+        0,
+        0,
+        0
+      ]
+    ],
+    "error": true,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 1,
+    "rows": [
+      [
+        1,
+        0,
+        1,
+        -1
+      ]
+    ],
+    "error": true,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": 0,
+    "rows": [],
+    "error": true,
+    "allocation": false,
+    "indices": []
+  },
+  {
+    "local": -1,
+    "rows": [],
+    "error": true,
+    "allocation": false,
+    "indices": []
+  }
+]

@@ -207,7 +207,8 @@
     "src/04_analyze/instantiate/policy.php",
     "src/04_analyze/check_bodies/data/flow.php",
     "src/04_analyze/check_bodies/flow.php",
-    "src/04_analyze/check_bodies/utilities/flow_graph.php"
+    "src/04_analyze/check_bodies/utilities/flow_graph.php",
+    "src/04_analyze/check_bodies/data/places.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

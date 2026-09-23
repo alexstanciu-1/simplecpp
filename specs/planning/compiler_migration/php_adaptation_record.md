@@ -3018,3 +3018,20 @@ prototype agreement in results/body-flow-01. Authoring to first PHP checkpoint:
 seconds, zero native corrective cycles. Final harness cleanup removed unused
 copied fixture/data artifacts; tested production and probe sources were byte-audited.
 The body worker, lifetime analysis and full coordinator are not completed here.
+
+## Checked storage places (2026-09-23)
+
+A dedicated data/places.php owner now holds fixed storage-root/projection records.
+Checked integer tags replace the enum. Place copies ordered membership and exposes
+size/at instead of a public array; exact readonly projection objects remain shared.
+The prototype indices generator becomes an explicit next_index cursor, retaining
+order and call_end boundaries without a second operand list or generator allocation.
+Dynamic element projections alone establish allocation dependency. Constructor
+callers supply explicit empty vectors for bare local roots. Later syntax/lifetime/
+lowering consumers must use the new accessors; no permission checks are bypassed.
+
+Evidence in results/body-places-01 covers 47 PHP/native cases with retained
+agreement, projection identity, membership isolation and bounds checks. Authoring
+to first PHP checkpoint: 82.526 seconds. First native
+build passed in 25.929 seconds with zero corrective cycles. Compact value-layout
+projection storage remains an optimization opportunity, not a claimed property.
