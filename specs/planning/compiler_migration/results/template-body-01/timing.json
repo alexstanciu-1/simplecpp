@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790134456.8421497,
+  "native_build_attempts": 1,
+  "native_correction_cycles": 0,
+  "first_php_ready_epoch": 1790134676.6115015,
+  "authoring_to_php_ready_seconds": 219.76935172080994,
+  "first_php_summary": "/tmp/template-body-07/summary.json",
+  "checker_correction_cycles": 6,
+  "php_behavior_correction_cycles": 2,
+  "expanded_php_summary": "/tmp/template-body-purity-01/summary.json",
+  "first_native_pass_epoch": 1790134897.5650573,
+  "php_ready_to_native_pass_seconds": 220.95355582237244,
+  "native_build_attempts_to_first_pass": 1,
+  "final_verification_builds": 0,
+  "consolidation_end_epoch": 1790134982.1939578,
+  "host_purity_assertions": 20
+}

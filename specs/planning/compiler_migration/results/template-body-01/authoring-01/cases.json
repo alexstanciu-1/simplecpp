@@ -1,0 +1,152 @@
+[
+  {
+    "source": "const SEVEN: int32 = 7;\nconst BYTE: uint8 = 3;\nstruct first { public int32 $value; }\nstruct second { public uint8 $value; }\ntemplate<typename T> struct holder {\n    public T $value;\n    public const function get(): T { return $this->value; }\n    public function set($value T): void { $this->value = $value; }\n}\ntemplate<typename T> function identity($value T): T { $copy T = $value; $copy = $value; return $copy; }\ntemplate<typename A, typename B> function first_value($left A, $right B): A { return identity<A>($left); }\ntemplate<typename T> function observe(const T &$value): int { return 2; }\ntemplate<typename T> function copy_forward(const T &$value): int {\n    $copy T = $value;\n    $copy = $value;\n    return observe<T>($copy);\n}\ntemplate<typename T> function read_holder(const holder<T> &$value): T { return $value->get(); }",
+    "reason": "",
+    "count": 8
+  },
+  {
+    "source": "template<typename T> function bad(const T &$x): int { return $x->length; } return 0;",
+    "reason": "member access",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad(const T &$x): int { $copy T = $x; return $copy->length; } return 0;",
+    "reason": "member access",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function id($x T): T { return $x; } template<typename T> function bad($x T): int { $copy T = id<T>($x); return $copy->length; } return 0;",
+    "reason": "member access",
+    "count": 0
+  },
+  {
+    "source": "struct item { public int32 $length; } template<typename T> function bad(const T &$x): int { return $x->length; } $x item; return bad<item>($x);",
+    "reason": "member access",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad($x T): T { return $x + $x; } return 0;",
+    "reason": "operator",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad($x T): int { if ($x) { return 1; } return 0; } return 0;",
+    "reason": "condition",
+    "count": 0
+  },
+  {
+    "source": "template<typename A, typename B> function bad($a A, $b B): A { $a = $b; return $a; } return bad<int, int>(1, 2);",
+    "reason": "same declared type",
+    "count": 0
+  },
+  {
+    "source": "function concrete($x int): int { return $x; } template<typename T> function bad($x T): int { return concrete($x); } return 0;",
+    "reason": "same declared type",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad(): T { return new T(); } return 0;",
+    "reason": "default construction",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad(): int { $x T; return 0; } return 0;",
+    "reason": "default construction",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> struct bad { public T $values[16]; } return 0;",
+    "reason": "fixed-array initialization",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> struct bad { public T $value; public function __construct(): void {} } return 0;",
+    "reason": "field default construction",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad(const T &$x, const T &$y): int { $x = $y; return 0; } return 0;",
+    "reason": "const reference",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad(T &$x): int { return 0; } return 0;",
+    "reason": "Mutable borrowing",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function ok($x T): T { if (true) { return $x; } else { return $x; } }",
+    "reason": "",
+    "count": 1
+  },
+  {
+    "source": "template<typename T> function bad($x T): T { if (true) { return $x; } else { return 1; } }",
+    "reason": "same declared type",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad($x T): int { while ($x) { return 1; } return 0; }",
+    "reason": "condition",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad($x T): int { echo $x; return 0; }",
+    "reason": "output conversion",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad($x T): int { return $x[0]; }",
+    "reason": "index access",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function bad($x T): int { constexpr if (true) { return 0; } return 1; }",
+    "reason": "compile-time branch",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> function good(): int { $a int; $b int = 3; while (false) { $b = $b + 1; } echo \"ok\"; return $b; }",
+    "reason": "",
+    "count": 1
+  },
+  {
+    "source": "template<typename T> function id($x T): T { return $x; } template<typename T> function bad($x T): T { return id<T>(); }",
+    "reason": "argument count",
+    "count": 0
+  },
+  {
+    "source": "struct S { public int $x; public function set(): void {} } template<typename T> function bad(const S &$s): void { $s->set(); }",
+    "reason": "non-const receiver",
+    "count": 0
+  },
+  {
+    "source": "struct S { public int $x; } function write(S &$s): void {} template<typename T> function bad(const S &$s): void { write($s); }",
+    "reason": "mutable parameter",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> struct S { public T $x; public function __copy_construct(const S<T> &$s): void {} }",
+    "reason": "field default construction",
+    "count": 0
+  },
+  {
+    "source": "template<typename T> struct S { public T $x; public function __destruct(): void {} }",
+    "reason": "",
+    "count": 2
+  },
+  {
+    "source": "template<typename T> struct S { public T $x; public function __copy_assign(const S<T> &$s): void {} }",
+    "reason": "",
+    "count": 2
+  },
+  {
+    "source": "template<typename T> struct S { public int $xs[3]; } template<typename T> function read(const S<T> &$s): int { return $s->xs[0]; }",
+    "reason": "",
+    "count": 2
+  },
+  {
+    "source": "template<typename T> struct S { public int $xs[3]; } template<typename T> function bad(const S<T> &$s, $i T): int { return $s->xs[$i]; }",
+    "reason": "index conversion",
+    "count": 0
+  }
+]

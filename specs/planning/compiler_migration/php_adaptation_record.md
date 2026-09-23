@@ -2330,3 +2330,49 @@ and the target toolchain remain unchanged.
 
 After integration, the existing 40-outcome symbolic-model regression and retained
 oracle passed again, including one separate native verification build.
+
+
+## Definition-level template body checking
+
+The preserved Template_Worker algorithm now consumes the migrated parser, symbol,
+resolution and Terms owners. It checks fields, locals, both ordinary branches,
+loops, assignments, returns, output, symbolic expression operands and declared calls.
+It does not create concrete instances, evaluate constants or claim executable body
+or lifetime validation. Retained generic_contracts.php supplies the positive source
+and fourteen definition-level rejection cases; the concrete-instantiation lifetime
+case stays outside this component's proof.
+
+Dense one-based binding IDs map to zero-based Expression_Type vectors. Nullable
+expression types remain explicit inside the named record: compatibility checks take
+records, and guard absent types before calling Terms. This avoids unsupported nullable
+ordinary parameters without collapsing unknown ordinary types into generic identities.
+Postorder expressions use inline Expression_Visit records and a used-length stack;
+statements use an integer stack. Both preserve source order without PHP array_pop,
+array_reverse, unshift, map callbacks or per-node ad-hoc tuple arrays. A later measured
+optimization can replace the sparse node-ID result map with dense scratch storage.
+
+Calls consume declared signatures, never callee bodies. Source receiver substitutions
+and constness carry through field/index access. Provider calls omit the actual declared
+receiver position, retain exact semantic type mappings and query formal requirements;
+ABI details cannot add generic permissions. The proof includes a receiver in slot one.
+
+Source_Lifecycle owns reserved method spelling and returns the existing lifecycle tags,
+with LIFECYCLE_NONE for absence. Only role interpretation is migrated here; source body
+normalization and concrete signature validation remain required work in resolve_types.
+The template checker reuses Lifecycle_Roles::composition for implicit field construction.
+
+Template_Worker::create supplies fresh Terms scratch to a promoted constructor field.
+This avoids unsupported uninitialized typed properties. Workers are one-shot; exact
+source owner and binding snapshots are checked before body traversal. Semantic failure
+retains Terms' source diagnostic; stale/internal failures do not acquire a fabricated
+source diagnostic. Twenty host-only assertions verify input snapshot purity and stale
+owner/binding rejection. Production changes do not touch runtime preparation or native
+target code.
+
+Initial checker corrections were a C++-reserved test variable, unsupported <=/helper
+spelling, an uninitialized typed property and decrement syntax. PHP fixture corrections
+were constexpr branch spelling and a mismatched concrete-callable ABI parameter count.
+Native stabilization is recorded separately in the saved timing/result evidence.
+
+All 46 PHP/native outcomes and 20 host-only assertions pass. Native attempt one
+passed without corrections; see `results/template-body-01`.

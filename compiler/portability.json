@@ -159,7 +159,9 @@
     "src/05_generate_code/prepare_backend/layout_worker.php",
     "src/04_analyze/collect_symbols/data/provider_declaration.php",
     "src/04_analyze/check_templates/terms.php",
-    "src/04_analyze/check_templates/data/interpretation.php"
+    "src/04_analyze/check_templates/data/interpretation.php",
+    "src/04_analyze/resolve_types/source_lifecycle.php",
+    "src/04_analyze/check_templates/body.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

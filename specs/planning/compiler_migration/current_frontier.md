@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **158 production files**: input preparation (137 outcomes),
+Active readiness is **160 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -411,3 +411,12 @@ The existing symbolic-model native regression (40 outcomes) also passes after th
 identity-field rename. The next body-checker slice must account for the prototype
 Source_Lifecycle::role dependency; its full bodies/signature validation also serves
 later concrete type preparation. Preserve that semantic owner when adapting it.
+
+
+Template body checking adds 46 PHP/native outcomes and 20 host-only purity/task
+assertions (`results/template-body-01`). Generic field, local, branch, expression and
+declared-call permissions now compose through Terms. Source_Lifecycle supplies the
+shared reserved-method role query; full lifecycle body/signature normalization remains
+unfinished. Native attempt one passed without correction. Ready count is 160 files.
+Next: template task selection/reuse and complete result acceptance, followed by
+concrete instantiation/type preparation. No complete analysis pipeline is claimed.
