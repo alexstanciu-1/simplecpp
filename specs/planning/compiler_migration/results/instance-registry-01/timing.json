@@ -1,0 +1,18 @@
+{
+  "authoring_start_epoch": 1790135554.6874206,
+  "first_php_ready_epoch": 1790135734.470538,
+  "authoring_to_php_ready_seconds": 179.78311729431152,
+  "first_php_summary": "/tmp/instance-registry-03/summary.json",
+  "checker_correction_cycles": 2,
+  "native_attempts_started": 3,
+  "native_correction_cycles": 2,
+  "native_corrections": [
+    "Renamed count query to size: STAN misclassified its global count helper call as direct recursion",
+    "Explicit typed empty maps/vectors for resets through object fields or inferred local variables"
+  ],
+  "first_native_pass_epoch": 1790136015.0051007,
+  "php_ready_to_native_pass_seconds": 280.5345628261566,
+  "native_build_attempts_to_first_pass": 3,
+  "final_verification_builds": 0,
+  "consolidation_end_epoch": 1790136052.7070272
+}

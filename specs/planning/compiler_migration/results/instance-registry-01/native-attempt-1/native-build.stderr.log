@@ -1,0 +1,14 @@
+STAN pre-build check failed: 3 compile-errors
+
+[compile-error] Direct self-recursive return in `instantiate\Instance_Set::count` has no visible terminating branch.
+  at src/04_analyze/instantiate/data/result.phs:36
+
+[compile-error] Direct self-recursive return in `instantiate\Instance_Store::count` has no visible terminating branch.
+  at src/04_analyze/instantiate/data/store.phs:36
+
+[compile-error] Direct self-recursive return in `instantiate\Instance_View::count` has no visible terminating branch.
+  at src/04_analyze/instantiate/data/view.phs:36
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

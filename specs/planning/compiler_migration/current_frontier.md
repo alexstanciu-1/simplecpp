@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **163 production files**: input preparation (137 outcomes),
+Active readiness is **167 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -428,3 +428,12 @@ PHP/retained-oracle coverage (40 outcomes) also passes. Removed dependencies now
 invalidate permissions without throwing during lookup. Native build one passed
 without correction. Ready count is 163 files. Next: concrete argument binding and
 instance publication dependencies. Full coordinator/Step integration remains unfinished.
+
+
+Instance registry, snapshots and shared concrete read views add 29 PHP/native outcomes
+(`results/instance-registry-01`). Lineage-bound allocation history, new-work draining,
+application/type lookup and snapshot isolation pass. Nullable interface returns remain
+a converter restriction; concrete read handles preserve the shared query contract.
+Native attempt three passed after two corrections. Ready count is 167 files. Next:
+bound annotation consumption and concrete argument binding; application/member joins
+and full concrete-preparation orchestration remain unfinished.

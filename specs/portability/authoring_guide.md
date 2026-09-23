@@ -231,6 +231,10 @@ to the adopted compiler.
 Concrete class/trait methods accept required array parameters with adjacent explicit
 container annotations, as proved by [source-scan reconciliation](compiler_scan_join_slice.md).
 Container interface parameters, defaults and reference parameters remain rejected.
+The converter also rejects nullable interface returns, including nullable named
+objects. Its legacy version-labelled diagnostic is a converter gate, not a fresh
+proof about the pinned target. A concrete read-only view handle can preserve a
+shared batch-read contract; the instance-registry migration records that adaptation.
 Explicit fully qualified uppercase constant references pass through without resolution.
 Initialize a local in its enclosing block before using it after branches; native
 block scope does not inherit PHP's function-wide local-variable behavior.

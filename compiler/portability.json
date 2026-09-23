@@ -164,7 +164,11 @@
     "src/04_analyze/check_templates/body.php",
     "src/04_analyze/check_templates/select_tasks.php",
     "src/04_analyze/check_templates/join.php",
-    "src/04_analyze/check_templates/main_check_templates.php"
+    "src/04_analyze/check_templates/main_check_templates.php",
+    "src/04_analyze/instantiate/data/state.php",
+    "src/04_analyze/instantiate/data/view.php",
+    "src/04_analyze/instantiate/data/result.php",
+    "src/04_analyze/instantiate/data/store.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

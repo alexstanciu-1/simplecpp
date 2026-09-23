@@ -2417,3 +2417,56 @@ changed. Timing preserves the first passing PHP checkpoint separately from nativ
 
 All 22 PHP/native scenarios, 13 host invariants and the 40-case model regression
 pass. Native build one passed without correction (`results/template-project-01`).
+
+
+## Concrete instance registry and fixed read views
+
+Concrete argument binding first needs the prototype Instance_View/Store/Set owner.
+That storage layer now retains contexts, application links, concrete types, literal
+constants, constant owners, source bindings, template permissions and allocation
+history. Instance_Identities remains the sole allocator and enforces the exact type
+lineage. Even an empty registry now has that explicit lineage rather than a nullable
+uninitialized allocation domain.
+
+Instance_State names the internal typed containers. Context IDs and instance IDs stay
+separate. Application links use an unambiguous context-ID/node-ID string key rather
+than a nested PHP map; they still distinguish the same syntax node in different
+concrete contexts. Type lookup retains the prototype length-prefixed namespace/name
+key. Registry mutations append the newly introduced work frontier once; draining it
+does not scan the full registry or invalidate published snapshots.
+
+State fork copies containers and the mutable allocation ledger, while sharing immutable
+semantic objects. Set construction and candidate creation defensively copy their seed;
+export_state returns a copy, never mutable access to retained storage. Public functions()
+returns only template-function or owned-callable contexts, preserving source algorithm
+membership. The prototype's dynamic to_array diagnostic export is not reproduced here;
+all retained data remains available through typed state export for later serialization.
+
+The converter rejects nullable object returns on interfaces. Instance_View is therefore
+a concrete read-only handle over a registry fixed during a worker batch. Store and Set
+both expose view(); the same local Instance_Lookup trait serves all three. Snapshot
+views remain isolated from candidate mutation; candidate views intentionally observe
+later accepted work between batches. This changes representation, not lookup semantics.
+No converter inference, target change or fabricated polymorphism was introduced.
+
+accept_type rejects ordinary contexts and clears an obsolete inverse spelling when
+replacing an instance type. The current portable subset has no unset statement, so
+zero is an explicit absent-instance sentinel; lookups guard it, and snapshot/candidate
+index rebuilding drops such tombstones. The first native attempt hit a STAN false
+self-recursion report for method count calling the global count helper; size names the
+query consistently with other stores and avoids that collision without bypassing STAN.
+
+Optimization follow-up: snapshot currently forks state to install source-binding
+provenance and Set construction defensively forks that state again. These are bounded
+publication-time copies, not per-lookup copies. A measured ownership-transfer API can
+remove the second copy later while preserving the native isolation proofs. No argument
+normalization, application/member joins or whole concrete-preparation pipeline is claimed.
+
+The second native attempt exposed empty array resets inferred as mixed tables when
+assigned through another object's fields or an inferred local. All such resets now
+use explicit typed empty maps/vectors. This was an authoring correction, not a new
+converter feature. Both failed attempts and the first passing PHP hash checkpoint
+are retained in the timing evidence.
+
+All 29 PHP/native outcomes pass on native attempt three, after two correction cycles
+(`results/instance-registry-01`).

@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in probe.phs:29: no viable overloaded '='
+Generated location: .prism/generated/probe.cpp:61:19
+Compile error in probe.phs:49: no viable overloaded '='
+Generated location: .prism/generated/probe.cpp:127:20
+Compile error in probe.phs:49: no viable overloaded '='
+Generated location: .prism/generated/probe.cpp:128:21
+Additional remapped diagnostics: 2
+Raw compiler excerpt:
+probe.cpp:61:19: error: no viable overloaded '='
+probe.cpp:127:20: error: no viable overloaded '='
+probe.cpp:128:21: error: no viable overloaded '='
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.
