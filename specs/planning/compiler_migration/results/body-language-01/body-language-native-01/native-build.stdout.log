@@ -1,0 +1,122 @@
+Transpiled PHP files: 182, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/184] PCH app_pch.hpp.gch
+[2/184] CXX src/01_prepare_inputs/load_runtime/data/runtime.o
+[3/184] CXX scpp_framework/filesystem.o
+[4/184] CXX scpp_framework/collections.o
+[5/184] CXX scpp_framework/json_document.o
+[6/184] CXX scpp_framework/exceptions.o
+[7/184] CXX src/01_prepare_inputs/load_runtime/data/family_preparation.o
+[8/184] CXX src/01_prepare_inputs/load_runtime/handlers/lifecycle.o
+[9/184] CXX src/01_prepare_inputs/load_runtime/data/package_context.o
+[10/184] CXX src/01_prepare_inputs/load_runtime/data/family_results.o
+[11/184] CXX fixture.o
+FAILED: fixture.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/2ea6e964bc16633c.hpp -MMD -MF fixture.o.d -MT fixture.o -c ../generated/fixture.cpp -o fixture.o
+In file included from ../generated/fixture.cpp:1:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/lang/php.hpp:6:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/php_value.hpp:7:
+/tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:174:36: error: implicit instantiation of undefined template 'scpp::detail::condition_ternary_result<scpp::null_t, scpp::shared_p<scpp::type_model::Runtime_Abi_Position>>'
+  174 |         using result_t = typename detail::condition_ternary_result<then_t, else_t>::type;
+      |                                           ^
+../generated/fixture.cpp:40:25: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/fixture.cpp:40:38), (lambda at ../generated/fixture.cpp:40:116), (lambda at ../generated/fixture.cpp:40:158)>' requested here
+   40 |         auto result_abi = php::ternary_eval([&]() -> decltype(auto) { return php::identical(result, string_t("void")); }, [&]() -> decltype(auto) { return null; }, [&]() -> decltype(auto) { return ::scpp::type_model::Runtime_Abi_Position::integer(result_bits, type_model::ABI_EXTENSION_NONE); });
+      |                                ^
+/tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:46:8: note: template is declared here
+   46 | struct condition_ternary_result;
+      |        ^
+/tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::null_t>': unsupported ternary_eval branch combination
+  161 |                 static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported ternary_eval branch combination");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:176:18: note: in instantiation of function template specialization 'scpp::detail::normalize_ternary_branch<int, const scpp::null_t>' requested here
+  176 |                 return detail::normalize_ternary_branch<result_t>(then_fn());
+      |                                ^
+/tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::shared_p<scpp::type_model::Runtime_Abi_Position>>': unsupported ternary_eval branch combination
+  161 |                 static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported ternary_eval branch combination");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:178:17: note: in instantiation of function template specialization 'scpp::detail::normalize_ternary_branch<int, scpp::shared_p<scpp::type_model::Runtime_Abi_Position>>' requested here
+  178 |         return detail::normalize_ternary_branch<result_t>(else_fn());
+      |                        ^
+In file included from ../generated/fixture.cpp:1:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/runtime.hpp:3:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/functional:53:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/tuple:44:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/ranges_util.h:34:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/ranges_base.h:37:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_iterator.h:85:
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_construct.h:115:4: error: no matching function for call to 'construct_at'
+  115 |           std::construct_at(__p, std::forward<_Args>(__args)...);
+      |           ^~~~~~~~~~~~~~~~~
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/alloc_traits.h:661:9: note: in instantiation of function template specialization 'std::_Construct<scpp::type_model::Runtime_Callable_Abi, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+  661 |         { std::_Construct(__p, std::forward<_Args>(__args)...); }
+      |                ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:604:30: note: in instantiation of function template specialization 'std::allocator_traits<std::allocator<void>>::construct<scpp::type_model::Runtime_Callable_Abi, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+  604 |           allocator_traits<_Alloc>::construct(__a, _M_ptr(),
+      |                                     ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:972:6: note: in instantiation of function template specialization 'std::_Sp_counted_ptr_inplace<scpp::type_model::Runtime_Callable_Abi, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+  972 |             _Sp_cp_type(__a._M_a, std::forward<_Args>(__args)...);
+      |             ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:1712:14: note: in instantiation of function template specialization 'std::__shared_count<>::__shared_count<scpp::type_model::Runtime_Callable_Abi, std::allocator<void>, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+ 1712 |         : _M_ptr(), _M_refcount(_M_ptr, __tag, std::forward<_Args>(__args)...)
+      |                     ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr.h:464:4: note: in instantiation of function template specialization 'std::__shared_ptr<scpp::type_model::Runtime_Callable_Abi>::__shared_ptr<std::allocator<void>, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+  464 |         : __shared_ptr<_Tp>(__tag, std::forward<_Args>(__args)...)
+      |           ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr.h:1009:14: note: in instantiation of function template specialization 'std::shared_ptr<scpp::type_model::Runtime_Callable_Abi>::shared_ptr<std::allocator<void>, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+ 1009 |       return shared_ptr<_Tp>(_Sp_alloc_shared_tag<_Alloc>{__a},
+      |              ^
+/tmp/body-language-native-01/phpp/.prism/build/../../../../scpp-json-240-probe/runtime/include/scpp/memory.hpp:21:26: note: in instantiation of function template specialization 'std::make_shared<scpp::type_model::Runtime_Callable_Abi, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+   21 |         return shared_p<T>(std::make_shared<T>(std::forward<TArgs>(args)...));
+      |                                 ^
+../generated/fixture.cpp:42:126: note: in instantiation of function template specialization 'scpp::create<scpp::type_model::Runtime_Callable_Abi, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+   42 |         auto call = create<::scpp::type_model::Runtime_Callable>(string_t("language-fixture"), name, name, string_t(""), signature, create<::scpp::type_model::Runtime_Callable_Abi>(name, string_t("ccc"), result_abi, positions), binding, default_literal);
+      |                                                                                                                                     ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_construct.h:94:5: note: candidate template ignored: substitution failure [with _Tp = scpp::type_model::Runtime_Callable_Abi, _Args = <const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>]: no matching constructor for initialization of 'scpp::type_model::Runtime_Callable_Abi'
+   94 |     construct_at(_Tp* __location, _Args&&... __args)
+      |     ^
+   95 |     noexcept(noexcept(::new((void*)0) _Tp(std::declval<_Args>()...)))
+   96 |     -> decltype(::new((void*)0) _Tp(std::declval<_Args>()...))
+      |                                 ~~~
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_construct.h:119:25: error: no matching constructor for initialization of 'scpp::type_model::Runtime_Callable_Abi'
+  119 |       ::new((void*)__p) _Tp(std::forward<_Args>(__args)...);
+      |                         ^   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../generated/__project_units/../src/04_analyze/type_model/data/callables.hpp:42:2: note: candidate constructor not viable: no known conversion from 'int' to 'nullable<shared_p<type_model::Runtime_Abi_Position>>' for 3rd argument
+   42 |         Runtime_Callable_Abi(const string_t& link_name, const string_t& calling_convention, nullable<shared_p<type_model::Runtime_Abi_Position>> result, const vector_t<shared_p<type_model::Runtime_Abi_Position>>& parameters, int_t<> result_passing = static_cast<int_t<> >(0));
+      |         ^                                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../generated/__project_units/../src/04_analyze/type_model/data/callables.hpp:30:7: note: candidate constructor (the implicit copy constructor) not viable: requires 1 argument, but 4 were provided
+   30 | class Runtime_Callable_Abi {
+      |       ^~~~~~~~~~~~~~~~~~~~
+./../generated/__project_units/../src/04_analyze/type_model/data/callables.hpp:30:7: note: candidate constructor (the implicit move constructor) not viable: requires 1 argument, but 4 were provided
+   30 | class Runtime_Callable_Abi {
+      |       ^~~~~~~~~~~~~~~~~~~~
+5 errors generated.
+[12/184] CXX probe.o
+[13/184] CXX src/01_prepare_inputs/load_runtime/data/package_bindings.o
+[14/184] CXX src/01_prepare_inputs/load_runtime/data/project.o
+[15/184] CXX main.o
+[16/184] CXX scpp_framework/strings.o
+[17/184] CXX src/01_prepare_inputs/load_runtime/data/package.o
+[18/184] CXX src/01_prepare_inputs/load_runtime/handlers/native_import.o
+[19/184] CXX src/01_prepare_inputs/load_runtime/main_load_runtime.o
+[20/184] CXX src/01_prepare_inputs/load_runtime/handlers/package_syntax.o
+[21/184] CXX src/01_prepare_inputs/load_runtime/handlers/type_exposure.o
+[22/184] CXX src/01_prepare_inputs/load_runtime/handlers/package_types.o
+[23/184] CXX src/01_prepare_inputs/load_runtime/project_import.o
+[24/184] CXX src/01_prepare_inputs/load_runtime/handlers/resources.o
+[25/184] CXX src/01_prepare_inputs/load_runtime/handlers/package_type_map.o
+[26/184] CXX src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.o
+ninja: build stopped: subcommand failed.

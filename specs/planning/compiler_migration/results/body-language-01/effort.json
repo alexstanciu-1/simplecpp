@@ -1,0 +1,21 @@
+{
+  "authoring_start_epoch": 1790152775.230293,
+  "first_php_ready_epoch": 1790152916.227635,
+  "authoring_through_first_php_ready_seconds": 140.997,
+  "php_fixture_corrective_cycles": 2,
+  "corrections": [
+    "Use existing RESULT_NONE tag for void semantic result.",
+    "Byte-literal binding tag zero is present, not missing; fixture absence uses -1. Match ABI widths to scalar definitions."
+  ],
+  "native_attempts_to_first_pass": 2,
+  "native_corrective_cycles": 1,
+  "cpp_builds": 2,
+  "native_build_seconds": 298.425,
+  "notes": [
+    "Exact argument IDs added after first PHP pass and before native proof.",
+    "Native correction: nullable ternary replaced by typed nullable-return helper functions.",
+    "No production changes; metadata fixtures prove checking/planning, not linked provider execution."
+  ],
+  "native_stabilization_wall_seconds_through_consolidation": 451.113,
+  "total_native_build_seconds": 380.421
+}

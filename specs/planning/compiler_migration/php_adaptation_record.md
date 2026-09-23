@@ -3318,3 +3318,23 @@ concrete project scenario passed before native build. First native build passed 
 283.572 seconds with zero corrections. Evidence: results/body-project-01. Original
 body/Body_Set debug views and remaining storage/provider/managed source scenarios are
 still tracked, alongside lifetime analysis and full pipeline coordination.
+
+## Byte-literal and echo body integration (2026-09-23)
+
+No production adaptation was needed. A focused fixture supplies ordinary accepted
+catalog definitions and provider declarations, then uses real symbol, signature,
+local-type and body workers. Literal construction is selected by metadata and the
+expected type; raw byte-span arguments bypass construction. Context-free literal
+use requires a default binding. Echo dispatch uses the produced value's canonical
+type. Tests verify exact byte payloads, call/argument order, retained provider
+identity, expression-order consumption, diagnostic attribution and type-store purity.
+This proves compiler checking/planning; it does not execute the provider functions
+or claim completed lowering/runtime integration. Existing decoder corpus remains
+registered independently.
+
+20 PHP/native cases pass. Two PHP fixture corrections: RESULT_NONE is the void tag;
+BINDING_BYTE_LITERAL=0 is a valid present role, so fixture absence must be separate.
+ABI fixture widths were made consistent with uint8/int definitions. No converter or
+production change. Authoring through first PHP readiness: 140.997
+seconds. Exact argument ID checks were added before native execution. The first native build rejected a nullable object ternary in the fixture; typed nullable-return helpers replace it. The second native build passed in 298.425 seconds (one native correction cycle). Evidence:
+results/body-language-01. Storage-element and managed lifecycle integration remain.

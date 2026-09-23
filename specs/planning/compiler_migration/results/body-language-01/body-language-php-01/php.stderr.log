@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught Error: Undefined constant "type_model\RESULT_VOID" in /tmp/body-language-php-01/source/fixture.php:12
+Stack trace:
+#0 /tmp/body-language-php-01/source/fixture.php(32): body_language_fixture\Fixture::callable()
+#1 /tmp/body-language-php-01/source/probe.php(25): body_language_fixture\Fixture::prepare()
+#2 /tmp/body-language-php-01/source/main.php(2): body_language_test\Probe::run()
+#3 Command line code(1): require('...')
+#4 {main}
+  thrown in /tmp/body-language-php-01/source/fixture.php on line 12

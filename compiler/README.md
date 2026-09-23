@@ -266,3 +266,11 @@ Source Body_Worker and its five handlers now pass 58 PHP/native scenarios (`resu
 Concrete source method/template call integration adds 14 PHP/native scenarios (`results/body-calls-01`) without production changes. Real application/member workers and joins prepare receivers, repeated calls, value/type arguments and nested concrete contexts; both callers and concrete callees are checked. Mutable/const receivers, receiver-plus-arguments, `$this` forwarding and arity errors pass. Ready count stays 226. Remaining body coverage includes storage-element expressions, successful byte/echo metadata bindings and managed lifecycle paths; body selection/reuse/join is still unmigrated.
 
 Project body selection, reuse and complete batch publication add 23 PHP/native scenarios (`results/body-project-01`). Shared validity tracks exact source/local/type/signature dependencies and captured parameter IDs; reversed workers publish in current signature order, malformed batches fail without changing prior bodies, and source failures expose no partial set. Concrete method/template bodies participate. First native build passed without corrections. Readiness is 231 files. Remaining body integration covers storage/byte/echo/managed lifecycle cases and debug export; full session/Step coordination and lifetime analysis remain unfinished.
+
+Metadata-driven literal/echo body checking adds 20 PHP/native scenarios
+(`results/body-language-01`): contextual/default constructors, direct span arguments,
+empty/binary/UTF-8 bytes, exact target/argument order, retained provider dependencies,
+and absent binding diagnostics. Provider functions are not linked or executed by
+this compiler proof. No production changes; readiness stays 231 files. Remaining
+body integration includes storage elements and managed lifecycle paths, plus debug
+export and whole-stage coordination. Lifetime analysis remains unmigrated.
