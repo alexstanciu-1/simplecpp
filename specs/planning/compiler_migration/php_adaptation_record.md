@@ -3117,3 +3117,23 @@ void local; first native build passed in 236.056 seconds, zero native correction
 An oracle include correction is recorded separately. Evidence: results/expression-order-01.
 Lifetime values, allocation flow and lowering expressions must adopt explicit next
 loops during their migration; no consumer algorithms have been dropped.
+
+## Purpose-aware conversion selection (2026-09-23)
+
+The existing single selector now consumes canonical types and the accepted
+Type_Resolution provider index. Integer tags and zero-as-absent primitive payloads
+replace enums/nullable enums; mutually exclusive identity/primitive/provider
+selections are checked locally. Empty integer-family strings follow the migrated
+Named_Definition model. Guarded width access preserves eligibility-before-read.
+
+Void and condition requests remain unsupported here. Exact identity, strictly
+wider same-family/signedness implicit conversion, and purpose-specific provider
+lookups retain their original meaning. Provider presence does not authorize
+implicit narrowing or condition conversion. No chain search or materialization
+is added, and applying conversions remains the future body worker's job.
+
+Evidence in results/body-conversions-01: 196 PHP/native combinations, retained
+selector agreement and 12 payload invariants. Authoring to first PHP readiness:
+179.337 seconds. First native build passed in 230.486
+seconds, no corrective cycles. The retained oracle initializes just the original
+snapshot fields needed by selection; no provider machine execution is claimed.

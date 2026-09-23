@@ -1,0 +1,1570 @@
+[
+  {
+    "source": "int",
+    "destination": "int",
+    "purpose": 0,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "int",
+    "purpose": 1,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "int",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "int",
+    "purpose": 3,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "int32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "int32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "int32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "int32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint8",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint8",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint8",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "uint8",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "bool",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "bool",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "bool",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "bool",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "float",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "float",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "float",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "float",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "void",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "void",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "void",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int",
+    "destination": "void",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int",
+    "purpose": 0,
+    "form": 2,
+    "primitive": 1,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int32",
+    "purpose": 0,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int32",
+    "purpose": 1,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "int32",
+    "purpose": 3,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "uint32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "uint32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "uint32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "uint32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "uint8",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "uint8",
+    "purpose": 1,
+    "form": 3,
+    "primitive": 0,
+    "target": 10000
+  },
+  {
+    "source": "int32",
+    "destination": "uint8",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "uint8",
+    "purpose": 3,
+    "form": 3,
+    "primitive": 0,
+    "target": 10001
+  },
+  {
+    "source": "int32",
+    "destination": "bool",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "bool",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "bool",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "bool",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "float",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "float",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "float",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "float",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "void",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "void",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "void",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "int32",
+    "destination": "void",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "int32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint32",
+    "purpose": 0,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint32",
+    "purpose": 1,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint32",
+    "purpose": 3,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint8",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint8",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint8",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "uint8",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "bool",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "bool",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "bool",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "bool",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "float",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "float",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "float",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "float",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "void",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "void",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "void",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint32",
+    "destination": "void",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "int32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint32",
+    "purpose": 0,
+    "form": 2,
+    "primitive": 1,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint8",
+    "purpose": 0,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint8",
+    "purpose": 1,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint8",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "uint8",
+    "purpose": 3,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "bool",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "bool",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "bool",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "bool",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "float",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "float",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "float",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "float",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "void",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "void",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "void",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "uint8",
+    "destination": "void",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "int32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint8",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint8",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint8",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "uint8",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "bool",
+    "purpose": 0,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "bool",
+    "purpose": 1,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "bool",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "bool",
+    "purpose": 3,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "float",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "float",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "float",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "float",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "void",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "void",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "void",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "bool",
+    "destination": "void",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "int32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint8",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint8",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint8",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "uint8",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "bool",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "bool",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "bool",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "bool",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "float",
+    "purpose": 0,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "float",
+    "purpose": 1,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "float",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "float",
+    "purpose": 3,
+    "form": 1,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "void",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "void",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "void",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "float",
+    "destination": "void",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "int32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint32",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint32",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint32",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint32",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint8",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint8",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint8",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "uint8",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "bool",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "bool",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "bool",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "bool",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "float",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "float",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "float",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "float",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "void",
+    "purpose": 0,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "void",
+    "purpose": 1,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "void",
+    "purpose": 2,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  },
+  {
+    "source": "void",
+    "destination": "void",
+    "purpose": 3,
+    "form": 0,
+    "primitive": 0,
+    "target": 0
+  }
+]
