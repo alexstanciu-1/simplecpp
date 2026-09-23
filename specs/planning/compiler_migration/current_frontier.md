@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **217 production files**: input preparation (137 outcomes),
+Active readiness is **218 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -566,3 +566,5 @@ Streaming checked-expression traversal adds 24 PHP/native traces and a 4,096-val
 Purpose-aware conversion selection adds 196 PHP/native cases and 12 payload invariants (`results/body-conversions-01`), with retained-selector agreement. First native attempt passed without corrections. Readiness is 216 files. Next: byte-literal decoding and remaining body-worker traversal/state dependencies, then actual body checking; full orchestration/provider integration remains incomplete.
 
 Quoted-byte decoding adds all 8,593 frozen inputs to active PHP/native coverage (`results/byte-literals-active-01`). The existing adapted algorithm is reused with global helpers; no native correction was needed. Readiness is 217 files. Next: body-worker traversal/state and source checking, using the proved literals, conversions, operations, records and result queries.
+
+Typed body-output ownership adds 33 PHP/native checks and 24 host comparisons with the retained access selector (`results/body-output-01`). Reserved arguments/scopes, pending locations, stable IDs and completed handoff are explicit; first native build passed without corrections. Next: wire the body worker and traversal handlers to the proved output owner. Full body checking remains unfinished.

@@ -1,0 +1,29 @@
+Transpiled PHP files: 13, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/15] PCH app_pch.hpp.gch
+[2/15] CXX scpp_framework/collections.o
+[3/15] CXX src/04_analyze/type_model/data/semantic_modes.o
+[4/15] CXX scpp_framework/filesystem.o
+[5/15] CXX src/04_analyze/check_bodies/data/values.o
+[6/15] CXX scpp_framework/exceptions.o
+[7/15] CXX src/04_analyze/check_bodies/data/statements.o
+[8/15] CXX scpp_framework/json_document.o
+[9/15] CXX main.o
+[10/15] CXX src/04_analyze/check_bodies/data/places.o
+[11/15] CXX scpp_framework/strings.o
+[12/15] CXX src/04_analyze/type_model/data/operations.o
+[13/15] CXX probe.o
+[14/15] CXX src/04_analyze/check_bodies/data/output.o
+[15/15] LINK main
+Rebuilt outputs: .prism/build/app_pch.hpp.gch, .prism/build/main, .prism/build/main.o, .prism/build/probe.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/json_document.o, .prism/build/scpp_framework/strings.o, .prism/build/src/04_analyze/check_bodies/data/output.o, .prism/build/src/04_analyze/check_bodies/data/places.o, .prism/build/src/04_analyze/check_bodies/data/statements.o, .prism/build/src/04_analyze/check_bodies/data/values.o, .prism/build/src/04_analyze/type_model/data/operations.o, .prism/build/src/04_analyze/type_model/data/semantic_modes.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

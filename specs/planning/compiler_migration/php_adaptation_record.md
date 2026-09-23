@@ -3154,3 +3154,28 @@ UTF-8. Evidence in results/byte-literals-active-01 records
 79.98 seconds to first PHP readiness; first native
 build passed in 25.633 seconds, zero corrective cycles. Historical runtime-string
 integration results are not presented as active full-worker coverage.
+
+## Body worker output ownership (2026-09-23)
+
+The prototype stores pending places and finished values in one PHP union array,
+and null placeholders inside argument/scope arrays. Body_Output replaces those
+with typed row/slot records, retaining one-based value/call/scope IDs and zero-based
+argument ranges. Parent argument ranges are reserved before nested calls finish;
+completion order does not change membership or evaluation order. Consumer-selected
+read versus borrow is resolved once, preserving the original rejection on conflict.
+Type retention and source permissions remain worker responsibilities.
+
+Private slot replacement leaves previous row views intact. Completed exports require
+all slots and locations to be finished and return independent container membership.
+The original final body constructor also checked unfinished slots; the new buffer
+makes that boundary explicit before assembly. It adds duplicate completion rejection
+for internal producer mistakes. No source grammar, type permission or lifetime rule
+changes. Temporary wrapper records can be compacted in a measured optimization pass;
+they are not retained by Checked_Body.
+
+Proof: 33 PHP/native checks, plus 24 host access sequences executing the retained
+Place_Checking trait and the active buffer. This is state ownership coverage, not
+an end-to-end body worker. Authoring through first PHP readiness: 232.124 seconds;
+three checker-only corrections (literal class reference, explicit property type,
+compound assignment). Native build one passed in 26.032 seconds with no corrective
+cycles. Evidence: results/body-output-01. Worker integration is the next task.

@@ -101,7 +101,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('checked_body', Path(__file__).parent / 'checked_body/run.py'),
           ('expression_order', Path(__file__).parent / 'expression_order/run.py'),
           ('body_conversions', Path(__file__).parent / 'body_conversions/run.py'),
-          ('byte_literals', Path(__file__).parent / 'byte_literals/run.py')]
+          ('byte_literals', Path(__file__).parent / 'byte_literals/run.py'),
+          ('body_output', Path(__file__).parent / 'body_output/run.py')]
 
 
 def main():

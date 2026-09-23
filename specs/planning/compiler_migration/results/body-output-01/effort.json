@@ -1,0 +1,23 @@
+{
+  "authoring_start_utc": "2026-09-23 07:33:17 UTC",
+  "first_php_ready_epoch": 1790149029.1241562,
+  "authoring_through_php_ready_seconds": 232.124,
+  "checker_corrective_cycles": 3,
+  "checker_corrections": [
+    "fixture self:: replaced with literal Probe::",
+    "explicit PHP array property types",
+    "unsupported += replaced with explicit addition"
+  ],
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "actual_cpp_builds": 1,
+  "native_build_seconds": 26.032,
+  "php_native_outcomes": 33,
+  "host_retained_access_sequences": 24,
+  "notes": [
+    "Oracle added to final runner after native proof; production and native probe bytes match the staged proof.",
+    "No body worker integration or full analysis execution claimed."
+  ],
+  "conversion_native_stabilization_command_seconds": 26.526,
+  "final_php_regression_command_seconds": 0.774
+}

@@ -218,7 +218,8 @@
     "src/04_analyze/check_bodies/utilities/evaluation.php",
     "src/04_analyze/check_bodies/data/conversions.php",
     "src/04_analyze/check_bodies/utilities/conversions.php",
-    "src/04_analyze/check_bodies/utilities/byte_literals.php"
+    "src/04_analyze/check_bodies/utilities/byte_literals.php",
+    "src/04_analyze/check_bodies/data/output.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
