@@ -1,0 +1,9 @@
+PHP Fatal error:  Uncaught TypeError: type_model\Semantic_Signature::__construct(): Argument #2 ($result) must be of type type_model\Semantic_Result, type_model\Type_Reference given, called in /tmp/member-instances-01/source/probe.php on line 15 and defined in /tmp/member-instances-01/source/src/04_analyze/type_model/data/semantic_calls.php:23
+Stack trace:
+#0 /tmp/member-instances-01/source/probe.php(15): type_model\Semantic_Signature->__construct()
+#1 /tmp/member-instances-01/source/probe.php(31): member_instances_test\Fixture::providers()
+#2 /tmp/member-instances-01/source/probe.php(73): member_instances_test\Fixture::prepare()
+#3 /tmp/member-instances-01/source/main.php(2): member_instances_test\Probe::run()
+#4 Command line code(1): require('...')
+#5 {main}
+  thrown in /tmp/member-instances-01/source/src/04_analyze/type_model/data/semantic_calls.php on line 23

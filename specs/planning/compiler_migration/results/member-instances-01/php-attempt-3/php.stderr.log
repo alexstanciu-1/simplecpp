@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught Error: Call to undefined method collect_symbols\Declaration_Collector::name_text() in /tmp/member-instances-03/source/src/04_analyze/instantiate/members.php:65
+Stack trace:
+#0 /tmp/member-instances-03/source/src/04_analyze/instantiate/members.php(25): instantiate\Member_Worker::method_for()
+#1 /tmp/member-instances-03/source/probe.php(75): instantiate\Member_Worker::run()
+#2 /tmp/member-instances-03/source/main.php(2): member_instances_test\Probe::run()
+#3 Command line code(1): require('...')
+#4 {main}
+  thrown in /tmp/member-instances-03/source/src/04_analyze/instantiate/members.php on line 65

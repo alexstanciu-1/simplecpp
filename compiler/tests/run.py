@@ -83,7 +83,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('concrete_bindings', Path(__file__).parent / 'concrete_bindings/run.py'),
           ('constant_batch', Path(__file__).parent / 'constant_batch/run.py'),
           ('application_arguments', Path(__file__).parent / 'application_arguments/run.py'),
-          ('instance_join', Path(__file__).parent / 'instance_join/run.py')]
+          ('instance_join', Path(__file__).parent / 'instance_join/run.py'),
+          ('member_instances', Path(__file__).parent / 'member_instances/run.py')]
 
 
 def main():

@@ -2649,3 +2649,55 @@ or pinned target implementation was patched.
 
 32 PHP/native scenarios and 16 host invariants pass on native build two after one fixture naming
 correction. Evidence: `results/instance-join-01`.
+
+
+## Concrete member receiver preparation and acceptance
+
+`Member_Worker` and `Member_Join` now prepare and accept member calls and selected
+method declarations against fixed symbol/name/type/instance inputs. Receiver types
+come from an already-bound local or parameter annotation, the concrete `$this`
+receiver, or the selected ordinary/template record definition. An unresolved receiver
+remains pending; non-record receivers, unknown methods and explicit calls to source
+lifecycle bodies keep attributed semantic errors. Accepted provider-family receivers
+may have opaque storage and retain their real provider owner, without a fabricated AST.
+
+The task is a small explicit variant: context plus call/receiver node IDs, or context
+plus a method declaration. Call bindings are value rows in the new model, so copied
+row object identity is not provenance. The task copies their scalar IDs and the join
+checks both IDs against the current owner's published bindings. Declaration requests
+check exact record/method ownership. Concrete contexts must be the current accepted
+objects. Constructor checks reject ambiguous/empty task variants.
+
+`Member_Result` copies its ordered argument membership and represents either pending
+or an exact receiver/method pair. Pending results cannot smuggle concrete targets.
+Inherited template arguments retain exact accepted argument-object identity, including
+when their scalar contents would compare equal. The join reuses the worker's receiver
+and nominal method interpretation to validate a complete batch before allocating
+identities, rather than maintaining a second partially duplicated resolver. The fixed
+reader is local to the join and does not escape into accepted state.
+
+Selected order controls adoption despite arbitrary result arrival order. Repeated
+calls/declaration work reuse concrete member identities; previous contexts are reused
+only with the same method, receiver and exact inherited arguments. Only call requests
+publish occurrence bindings. Validation failures leave private candidates unchanged;
+as with application joins, allocation/materialization failures require discarding
+those candidates. No transactional rollback or complete preparation loop is claimed.
+
+The proof builds on real parsed/bound methods and accepted application instances. Its
+prepared record/opaque receiver definitions are explicit fixture inputs; it does not
+claim full record/signature preparation or method-body execution. Covered paths include
+local, parameter and `$this` receivers, ordinary/template declarations, provider-family
+methods, pending work, lifecycle rejection, current/previous identity reuse and forged
+batch provenance. Host checks additionally cover copied binding-row/task membership,
+result-container independence, malformed variants and unchanged semantic snapshots.
+
+PHP stabilization corrected a provider fixture's Semantic_Result wrapper and stale
+prototype helper naming (Declaration_Syntax moved to File_Collector, corrected in two
+iterations). These were source/fixture corrections, not converter or target changes.
+The current skill and guide already describe the required declaration/container/guard
+forms; this checkpoint adds no new converter capability.
+
+28 PHP/native scenarios and 20 host invariants pass on native build one without
+correction. The final host proof also reuses the exact cloned-receiver rejection
+from retained `resolve_types/concrete_preparation.php`; its whole-program preparation
+checks remain later work. Evidence: `results/member-instances-01`.

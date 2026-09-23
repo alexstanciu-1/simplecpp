@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught Error: Class "collect_symbols\Declaration_Syntax" not found in /tmp/member-instances-02/source/src/04_analyze/instantiate/members.php:65
+Stack trace:
+#0 /tmp/member-instances-02/source/src/04_analyze/instantiate/members.php(25): instantiate\Member_Worker::method_for()
+#1 /tmp/member-instances-02/source/probe.php(75): instantiate\Member_Worker::run()
+#2 /tmp/member-instances-02/source/main.php(2): member_instances_test\Probe::run()
+#3 Command line code(1): require('...')
+#4 {main}
+  thrown in /tmp/member-instances-02/source/src/04_analyze/instantiate/members.php on line 65
