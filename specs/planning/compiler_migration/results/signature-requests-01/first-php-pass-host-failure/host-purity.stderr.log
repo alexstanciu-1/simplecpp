@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught OutOfBoundsException: Missing signature parameter in /tmp/signature-requests-01/source/src/04_analyze/resolve_types/data/signatures.php:39
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/signature_requests/purity.php(19): resolve_types\Signature_Request->parameter_at()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/signature_requests/purity.php(6): {closure:/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/signature_requests/purity.php:19}()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/signature_requests/purity.php(19): rejects()
+#3 Command line code(1): require('...')
+#4 {main}
+  thrown in /tmp/signature-requests-01/source/src/04_analyze/resolve_types/data/signatures.php on line 39

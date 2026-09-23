@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **181 production files**: input preparation (137 outcomes),
+Active readiness is **187 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -488,3 +488,12 @@ acceptance pass. The 46-case template-body PHP regression also passes after the
 shared role-map refactor. Native build one passed without correction. Readiness is
 181 files. Next: concrete callable signature preparation and its lifecycle validation;
 full preparation queues and coordinator execution remain unfinished.
+
+
+Concrete callable signature requests add 33 PHP/native outcomes and 26 host invariants
+(`results/signature-requests-01`). Source parameter passing, exact lifecycle receiver/
+copy types, imported/prepared method references and all six storage roles pass. Native
+attempt two passed after one STAN return-flow correction; only it reached C++ build.
+Readiness is 187 files. Next: callable/type-resolution result records and retained
+signature validity, then signature selection and batch publication. Complete type-stage
+and coordinator execution remain unfinished.

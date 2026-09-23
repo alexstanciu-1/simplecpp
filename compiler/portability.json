@@ -182,7 +182,13 @@
     "src/04_analyze/resolve_types/source_lifecycle_bodies.php",
     "src/04_analyze/resolve_types/data/records.php",
     "src/04_analyze/resolve_types/records.php",
-    "src/04_analyze/resolve_types/record_join.php"
+    "src/04_analyze/resolve_types/record_join.php",
+    "src/04_analyze/resolve_types/data/signatures.php",
+    "src/04_analyze/resolve_types/utilities/callable_inputs.php",
+    "src/04_analyze/resolve_types/utilities/parameter_contracts.php",
+    "src/04_analyze/resolve_types/source_lifecycle_signature.php",
+    "src/04_analyze/resolve_types/storage_signatures.php",
+    "src/04_analyze/resolve_types/signatures.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

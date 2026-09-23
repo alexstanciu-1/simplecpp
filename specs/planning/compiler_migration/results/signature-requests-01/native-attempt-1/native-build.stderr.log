@@ -1,0 +1,11 @@
+STAN pre-build check failed: 2 compile-errors
+
+[compile-error] Function `resolve_types\Signature_Resolver::participates` declared as `bool` may exit without returning a value.
+  at src/04_analyze/resolve_types/signatures.phs:5
+
+[compile-error] Function `resolve_types\Parameter_Contracts::passing` declared as `int` may exit without returning a value.
+  at src/04_analyze/resolve_types/utilities/parameter_contracts.phs:5
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

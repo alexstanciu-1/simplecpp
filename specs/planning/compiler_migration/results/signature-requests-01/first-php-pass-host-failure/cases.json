@@ -1,0 +1,167 @@
+[
+  {
+    "mode": "scalar",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "entry",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "const_borrow",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "mutable_borrow",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "managed_const",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "method",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "const_method",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "constructor",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "copy",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "template",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "provider",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "family",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "void_parameter",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "scalar_borrow",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "record_value",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "managed_mutable",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "bad_lifecycle_return",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "bad_copy_type",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "uninstantiated_method",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "uninstantiated_template",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "record_nonparticipant",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "stale_instance",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "unresolved_provider",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "missing_family",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "missing_storage",
+    "role": 0,
+    "error": true
+  },
+  {
+    "mode": "storage",
+    "role": 0,
+    "error": false
+  },
+  {
+    "mode": "storage",
+    "role": 1,
+    "error": false
+  },
+  {
+    "mode": "storage",
+    "role": 2,
+    "error": false
+  },
+  {
+    "mode": "storage",
+    "role": 3,
+    "error": false
+  },
+  {
+    "mode": "storage",
+    "role": 4,
+    "error": false
+  },
+  {
+    "mode": "storage",
+    "role": 5,
+    "error": false
+  },
+  {
+    "mode": "storage_record_push",
+    "role": 1,
+    "error": false
+  },
+  {
+    "mode": "storage_forged",
+    "role": 0,
+    "error": false
+  }
+]

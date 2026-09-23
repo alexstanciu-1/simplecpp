@@ -241,6 +241,13 @@ The converter also rejects nullable interface returns, including nullable named
 objects. Its legacy version-labelled diagnostic is a converter gate, not a fresh
 proof about the pinned target. A concrete read-only view handle can preserve a
 shared batch-read contract; the instance-registry migration records that adaptation.
+On the pinned target, STAN can report a missing return for a helper whose branches
+return values and whose final statement throws. If the control flow is otherwise
+complete, assign a typed result in the recognized branches, throw in the rejecting
+branch, and finish with the typed return. Keep the rejection; do not bypass STAN or
+add a success default that changes behavior. See the signature-request migration
+proof in `specs/planning/compiler_migration/results/signature-requests-01`.
+
 Explicit fully qualified uppercase constant references pass through without resolution.
 Initialize a local in its enclosing block before using it after branches; native
 block scope does not inherit PHP's function-wide local-variable behavior.

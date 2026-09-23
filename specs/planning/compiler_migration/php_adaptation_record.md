@@ -2762,3 +2762,61 @@ coordinator execution remain unfinished. src-runtime-preparation remains untouch
 33 PHP/native outcomes and 27 host invariants pass on native build one without
 correction; the existing 46-case template-body PHP regression also passes.
 Evidence: `results/record-preparation-01`.
+
+
+## Concrete callable signature requests and source boundary contracts
+
+`Callable_Input` replaces the prototype's symbol-or-instance union with an exact
+owner and optional accepted instance. It carries the callable ID explicitly and
+rejects mismatched declaration/instance pairs. `Callable_Inputs` supplies fixed
+membership checks, ordinary/concrete enumeration and accepted provider implementation
+lookup. Prepared family-method callables remain caller-supplied accepted associations;
+this checkpoint consumes them but does not produce or authorize native family code.
+
+`Signature_Request` owns ordered parameter-definition and passing-mode vectors.
+Omitted passing modes normalize to explicit value modes instead of keeping an empty
+sentinel alongside a nonempty parameter list. Definitions retain exact shared identity;
+constructor copies isolate list membership. No canonical IDs or type-store writes are
+performed by request construction or signature resolution.
+
+`Signature_Resolver` now resolves entry, ordinary source, concrete template/member,
+imported callable, prepared family-method and storage-callable requests. Source
+annotations use the existing fixed Bindings reader. Receiver passing comes from the
+accepted concrete context and source constness. Imported names must resolve against
+the accepted definition view; provider declarations never receive a fake syntax tree.
+Compile-time function execution remains rejected, and raw template/member declarations
+remain nonparticipants until they have a current accepted instance.
+
+`Parameter_Contracts` preserves plain-value versus const/mutable borrow semantics:
+source aggregate value parameters remain unsupported, scalar references reject,
+mutable record/opaque references require value-copy/no-cleanup policy, and const
+record borrows preserve managed lifetimes. `Source_Lifecycle_Signature` validates
+void return, mutable exact receiver, and exact same-type const copy source after
+receiver preparation. It is separate from the lightweight role map and body-ID
+extraction, retaining the lifecycle semantic owner without adding concrete signature
+dependencies to symbolic checking.
+
+`Storage_Signatures` is the signature-facing part of the existing storage-definition
+owner. It derives all six operation roles from the accepted family and element;
+scalar push arguments travel by value, record pushes by const borrow, and count
+borrows its receiver const. Exact descriptor/element/family provenance is checked.
+During review, matches() was restored to direct provenance validation without creating
+a second request, preserving the prototype's distinction between resolution and
+acceptance. A missing accepted descriptor returns false during matching, while the
+worker rejects missing preparation. Earlier storage eligibility/materialization
+consumers do not acquire a dependency on signature-request types.
+
+The first 33 PHP outcomes passed without source corrections. The host bounds helper
+needed to catch OutOfBoundsException explicitly. The first native attempt stopped at
+STAN's known final-throw return-flow limitation in participates() and passing(); both
+were reshaped to final typed returns without weakening validation or bypassing STAN.
+Timing separates that native correction from the earlier host test/review adjustments.
+
+This is request preparation, not a complete type stage. Incremental signature selection,
+retained-signature validity, batch acceptance/publication and local types still depend
+on the upcoming Type_Resolution/Callable_Signature result model. Full lifecycle body
+checking and complete coordinator execution remain unfinished. src-runtime-preparation
+was not changed.
+
+33 PHP/native outcomes and 26 host invariants pass on native attempt two after one
+STAN return-shape correction. Evidence: `results/signature-requests-01`.
