@@ -3206,3 +3206,53 @@ results/body-context-01. Authoring to first PHP readiness: 286.227
 seconds; one fixture checker correction and one fixture diagnostic-expectation fix.
 First native build passed in 214.795 seconds, zero native corrections. Statement and
 expression traversal remain the next work; no full-worker coverage is claimed.
+
+## Source body worker integration (2026-09-23)
+
+Migrated Body_Worker and the preserved statement, control, expression, place and write
+traits. The worker consumes Body_Context and Body_Output rather than union arrays
+and duplicate source identity fields. Private typed continuation frames replace
+instanceof dispatch over unrelated cursor classes; dense reusable stacks preserve
+iterative postorder expression and lexical/control traversal. Operation cursors carry
+their result ID instead of mutating an integer reference argument. Place completion
+returns its typed cursor instead of a heterogeneous pair. Argument ranges are reserved
+before nested calls and receiver positions remain explicit. Indexed projections keep
+their call boundary, and assignment-target indices execute before RHS values.
+
+Existing semantic owners supply named types, local types, signatures, lifecycle
+policies, conversion/operation selection, literal decoding and construction lookup.
+Fixed numeric tuple keys replace nested operation caches. Conditional guards protect
+void/missing values before dereference. Read versus borrow stays consumer-selected;
+initialization, assignment, fresh results, and owned return construction retain their
+separate permissions. Source failures use the existing path/span/reason diagnostic
+channel on the worker's Annotation_Types reader; internal failures stay distinct.
+A one-shot worker guard prevents duplicate publication after success or failure.
+Body_Output gained guarded read access to a completed reserved argument for named
+provider conversion checking.
+
+58 source scenarios now parse, collect/resolve names, prepare signatures and locals,
+and produce checked bodies in PHP/native. Independent assertions cover exact nested
+call result IDs and argument ranges, value conversions and operation operands,
+borrow/write/return modes, scope ranges, projected types, purity and repeat rejection.
+One nested-parameter scenario reuses the explicit expectations in the preserved
+parameter_bodies.php test. Expression_Order consumes the resulting plans. Depth cases
+exercise 256-term addition, 128 nested calls and 128 nested blocks. Ordinary provider
+calls and named conversion calls run through accepted signature metadata; provider
+machine code is not executed by this analysis proof.
+
+Coverage does not yet establish concrete method/template application bindings,
+storage-element source expressions, or successful metadata-bound byte/echo handling.
+Those algorithms are adapted but need focused integration scenarios. Complete body
+selection/reuse/join, debug serialization, lifetime analysis and global coordination
+remain separate. Test fixtures normalize Point/Buffer record definitions explicitly;
+this is not proof of full concrete-preparation orchestration.
+
+Authoring through first PHP readiness: 806.153
+seconds (47 scenarios). One checker-only negative-default correction, one production
+PHP name-owner correction and one fixture legality correction preceded it. Native
+attempt one stopped in STAN: private Expression_Frame collided with parse's short
+name, and the infinite traversal loop lacked a recognized terminal return. Distinct
+body-frame names and explicit completion resolve both. Attempt two passed its first
+C++ build (280.028 seconds), with zero C++ corrective cycles. A separate final native
+build verifies the expanded 58-case suite. Detailed commands, both builds and the
+original PHP-ready hashes are saved in results/body-worker-01.

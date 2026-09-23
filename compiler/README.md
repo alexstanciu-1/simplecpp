@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **219 production files** in PHP and native
+The registered component proofs cover **226 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -260,3 +260,5 @@ Quoted-byte decoding reuses the preserved implementation and 8,593-case frozen c
 Typed body-output ownership adds 33 PHP/native checks and 24 host comparisons with the retained access selector (`results/body-output-01`). Reserved arguments/scopes, pending locations, stable IDs and completed handoff are explicit; first native build passed without corrections. Next: wire the body worker and traversal handlers to the proved output owner. Full body checking remains unfinished.
 
 Body-worker input acceptance and dependency retention add 23 PHP/native scenarios plus four retained closure cases (`results/body-context-01`). Exact source/name/signature/local/template associations, signature sharing and iterative implicit element retention pass; first native build passed without correction. Next: actual statement/expression traversal using Body_Context and Body_Output. Complete body checking remains unfinished.
+
+Source Body_Worker and its five handlers now pass 58 PHP/native scenarios (`results/body-worker-01`): literals, calls, nested arguments, operations/conversions, local/field/array writes, record borrowing/returns, scopes and branches/loops. Checked rows are consumed by Expression_Order. The first C++ build passed after one STAN correction cycle; expanded cases have a separate final native verification. Next: method/template/storage and byte/echo provider integration cases, then body selection/reuse/join. Full analysis and lifetime checking remain unfinished.

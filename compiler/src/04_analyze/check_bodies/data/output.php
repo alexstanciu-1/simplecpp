@@ -90,6 +90,12 @@ final class Body_Output {
         $this->arguments[$offset] = new Body_Argument_Slot($value);
         $this->pending_arguments = $this->pending_arguments - 1;
     }
+    public function argument_at(int $offset): Typed_Argument {
+        if (($offset < 0) || ($offset >= q_count($this->arguments))) { throw new \OutOfBoundsException('Unknown argument slot'); }
+        $value = $this->arguments[$offset]->value;
+        if ($value === null) { throw new \LogicException('Argument slot is unfinished'); }
+        return $value;
+    }
     public function complete_scope(int $id, Typed_Scope $value): void {
         if (($id < 1) || ($id > q_count($this->scopes))) { throw new \OutOfBoundsException('Unknown scope slot'); }
         if ($this->scopes[$id - 1]->value !== null) { throw new \LogicException('Scope slot already completed'); }

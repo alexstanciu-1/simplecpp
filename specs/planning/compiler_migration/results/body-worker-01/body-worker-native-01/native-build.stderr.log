@@ -1,0 +1,17 @@
+STAN pre-build check failed: 4 compile-errors
+
+[compile-error] Function `check_bodies\Body_Worker::check_expression` declared as `int` may exit without returning a value.
+  at src/04_analyze/check_bodies/body.phs:6
+
+[compile-error] Missing property read target `->call` on receiver type `parse\Expression_Frame` in `check_bodies\Body_Worker::check_expression` for `$frame->call`.
+  at src/04_analyze/check_bodies/body.phs:29
+
+[compile-error] Missing property read target `->operation` on receiver type `parse\Expression_Frame` in `check_bodies\Body_Worker::check_expression` for `$frame->operation`.
+  at src/04_analyze/check_bodies/body.phs:29
+
+[compile-error] Missing property read target `->place` on receiver type `parse\Expression_Frame` in `check_bodies\Body_Worker::check_expression` for `$frame->place`.
+  at src/04_analyze/check_bodies/body.phs:29
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

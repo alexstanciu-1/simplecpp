@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **219 production files**: input preparation (137 outcomes),
+Active readiness is **226 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -570,3 +570,5 @@ Quoted-byte decoding adds all 8,593 frozen inputs to active PHP/native coverage 
 Typed body-output ownership adds 33 PHP/native checks and 24 host comparisons with the retained access selector (`results/body-output-01`). Reserved arguments/scopes, pending locations, stable IDs and completed handoff are explicit; first native build passed without corrections. Next: wire the body worker and traversal handlers to the proved output owner. Full body checking remains unfinished.
 
 Body-worker input acceptance and dependency retention add 23 PHP/native scenarios plus four retained closure cases (`results/body-context-01`). Exact source/name/signature/local/template associations, signature sharing and iterative implicit element retention pass; first native build passed without correction. Next: actual statement/expression traversal using Body_Context and Body_Output. Complete body checking remains unfinished.
+
+Source Body_Worker and its five handlers now pass 58 PHP/native scenarios (`results/body-worker-01`): literals, calls, nested arguments, operations/conversions, local/field/array writes, record borrowing/returns, scopes and branches/loops. Checked rows are consumed by Expression_Order. The first C++ build passed after one STAN correction cycle; expanded cases have a separate final native verification. Next: method/template/storage and byte/echo provider integration cases, then body selection/reuse/join. Full analysis and lifetime checking remain unfinished.

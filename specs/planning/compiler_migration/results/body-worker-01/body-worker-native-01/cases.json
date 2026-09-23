@@ -1,0 +1,425 @@
+[
+  {
+    "name": "literal",
+    "source": "function f(): int { return 42; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 1,
+    "fall": false
+  },
+  {
+    "name": "parameter",
+    "source": "function f($x int): int { return $x; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 1,
+    "fall": false
+  },
+  {
+    "name": "widen",
+    "source": "function f($x int32): int { return $x; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 2,
+    "fall": false
+  },
+  {
+    "name": "boolean",
+    "source": "function f(): bool { return true; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 1,
+    "fall": false
+  },
+  {
+    "name": "addition",
+    "source": "function f(): int { return 1 + 2; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "less",
+    "source": "function f(): bool { return 1 < 2; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "call",
+    "source": "function f(): int { return g(1); } function g($x int): int { return $x; } return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 1,
+    "values": 2,
+    "fall": false
+  },
+  {
+    "name": "nested_calls",
+    "source": "function f(): int { return g(g(1)); } function g($x int): int { return $x; } return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 2,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "two_arguments",
+    "source": "function f(): int { return g(g(1,2),g(3,4)); } function g($x int,$y int): int { return $x; } return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 3,
+    "values": 7,
+    "fall": false
+  },
+  {
+    "name": "void_call",
+    "source": "function f(): void { g(); return; } function g(): void {} return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 1,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "void_empty",
+    "source": "function f(): void {  }  return 0;",
+    "error": "",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": true
+  },
+  {
+    "name": "local_write",
+    "source": "function f(): int { $x int = 1; $x = 2; return $x; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "calls": 0,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "nested_block",
+    "source": "function f(): int { { $x int = 1; } return 2; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 0,
+    "values": 2,
+    "fall": false
+  },
+  {
+    "name": "both_returns",
+    "source": "function f(): int { if (1) { return 2; } else { return 3; } }  return 0;",
+    "error": "",
+    "statements": 3,
+    "calls": 0,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "loop",
+    "source": "function f(): int { while (1) { 2; } return 3; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "calls": 0,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "unused_parameter",
+    "source": "function f($x int): int { $x; return 1; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 0,
+    "values": 2,
+    "fall": false
+  },
+  {
+    "name": "record_default",
+    "source": "function f(): int32 { $p Point; return $p->value; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 0,
+    "values": 2,
+    "fall": false
+  },
+  {
+    "name": "record_construct",
+    "source": "function f(): int32 { $p Point = new Point(); return $p->value; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 0,
+    "values": 2,
+    "fall": false
+  },
+  {
+    "name": "field_write",
+    "source": "function f($x int32): int32 { $p Point; $p->value = $x; return $p->value; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "calls": 0,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "record_copy",
+    "source": "function f(): int32 { $p Point; $q Point = $p; return $q->value; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "calls": 0,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "record_assignment",
+    "source": "function f(): int32 { $p Point; $q Point; $q = $p; return $q->value; }  return 0;",
+    "error": "",
+    "statements": 4,
+    "calls": 0,
+    "values": 4,
+    "fall": false
+  },
+  {
+    "name": "missing_return",
+    "source": "function f(): int {  }  return 0;",
+    "error": "Callable can finish without returning a value",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "missing_return_arm",
+    "source": "function f(): int { if (1) { return 2; } }  return 0;",
+    "error": "Callable can finish without returning a value",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "empty_return",
+    "source": "function f(): int { return; }  return 0;",
+    "error": "A value is required by the declared return type",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "void_return",
+    "source": "function f(): void { return 1; }  return 0;",
+    "error": "Cannot return a value from a void function",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "void_expression_return",
+    "source": "function f(): int { return g(); } function g(): void {} return 0;",
+    "error": "Return expression produces no value",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "narrow_return",
+    "source": "function f(): int32 { return 1; }  return 0;",
+    "error": "Unsupported implicit return conversion from int to int32",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "arity_missing",
+    "source": "function f(): int { return g(); } function g($x int): int { return $x; } return 0;",
+    "error": "Call argument count does not match the resolved signature",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "arity_extra",
+    "source": "function f(): int { return g(1,2); } function g($x int): int { return $x; } return 0;",
+    "error": "Call argument count does not match the resolved signature",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "void_operand",
+    "source": "function f(): int { return g() + 1; } function g(): void {} return 0;",
+    "error": "Binary operation requires value operands",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "mixed_operation",
+    "source": "function f($x int32): int { return $x + 1; }  return 0;",
+    "error": "Unsupported addition operand types or result contract",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "const_write",
+    "source": "function f(const Point &$p, $x int32): int32 { $p->value = $x; return $x; }  return 0;",
+    "error": "Cannot write through a const reference parameter",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "scalar_default",
+    "source": "function f(): int { $x int; return $x; }  return 0;",
+    "error": "Default construction requires a supported inline type",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "unknown_field",
+    "source": "function f(): int { $p Point; return $p->missing; }  return 0;",
+    "error": "Unknown or unavailable field: missing",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "index_scalar",
+    "source": "function f($x int): int { return $x[0]; }  return 0;",
+    "error": "Indexed access requires a fixed array or typed storage",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "void_condition",
+    "source": "function f(): int { if (g()) { return 1; } return 2; } function g(): void {} return 0;",
+    "error": "Condition requires an integer value",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "literal_overflow",
+    "source": "function f(): int { return 9223372036854775808; }  return 0;",
+    "error": "Integer literal is outside the range of int",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "byte_no_provider",
+    "source": "function f(): int { \"abc\"; return 1; }  return 0;",
+    "error": "No byte-literal construction contract for this context",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "echo_no_provider",
+    "source": "function f(): int { echo 1; return 1; }  return 0;",
+    "error": "No echo contract for this value type",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "owned_local_return",
+    "source": "function f(): Point { $p Point; return $p; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 0,
+    "values": 2,
+    "fall": false
+  },
+  {
+    "name": "owned_fresh_return",
+    "source": "function f(): Point { return new Point(); }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 1,
+    "fall": false
+  },
+  {
+    "name": "owned_borrow_return",
+    "source": "function f(const Point &$p): Point { return $p; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 0,
+    "values": 1,
+    "fall": false
+  },
+  {
+    "name": "const_record_call",
+    "source": "function f(): int32 { $p Point; return g($p); } function g(const Point &$p): int32 { return $p->value; } return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 1,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "mutable_record_call",
+    "source": "function f(): int32 { $p Point; return g($p); } function g(Point &$p): int32 { return $p->value; } return 0;",
+    "error": "",
+    "statements": 2,
+    "calls": 1,
+    "values": 3,
+    "fall": false
+  },
+  {
+    "name": "temporary_record_borrow",
+    "source": "function f(): int32 { return g(new Point()); } function g(const Point &$p): int32 { return $p->value; } return 0;",
+    "error": "Record or mutable borrowing requires existing local storage; temporary record borrowing is unsupported",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "mutable_from_const",
+    "source": "function f(const Point &$p): int32 { return g($p); } function g(Point &$p): int32 { return $p->value; } return 0;",
+    "error": "A const reference cannot be passed as a mutable reference",
+    "statements": 0,
+    "calls": 0,
+    "values": 0,
+    "fall": false
+  },
+  {
+    "name": "two_owned_calls",
+    "source": "function f(): int { return g() + g(); } function g(): int { return 1; } return 0;",
+    "error": "",
+    "statements": 1,
+    "calls": 2,
+    "values": 3,
+    "fall": false
+  }
+]

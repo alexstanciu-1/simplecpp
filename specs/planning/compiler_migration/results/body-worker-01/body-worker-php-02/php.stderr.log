@@ -1,0 +1,12 @@
+PHP Fatal error:  Uncaught Error: Class "collect_symbols\Declaration_Syntax" not found in /tmp/body-worker-php-02/source/src/04_analyze/check_bodies/handlers/places.php:41
+Stack trace:
+#0 /tmp/body-worker-php-02/source/src/04_analyze/check_bodies/handlers/expressions.php(21): check_bodies\Body_Worker->advance_place()
+#1 /tmp/body-worker-php-02/source/src/04_analyze/check_bodies/handlers/statements.php(78): check_bodies\Body_Worker->check_expression()
+#2 /tmp/body-worker-php-02/source/src/04_analyze/check_bodies/handlers/statements.php(43): check_bodies\Body_Worker->check_return()
+#3 /tmp/body-worker-php-02/source/src/04_analyze/check_bodies/handlers/statements.php(29): check_bodies\Body_Worker->check_statement()
+#4 /tmp/body-worker-php-02/source/src/04_analyze/check_bodies/body.php(28): check_bodies\Body_Worker->check_statements()
+#5 /tmp/body-worker-php-02/source/probe.php(31): check_bodies\Body_Worker->check()
+#6 /tmp/body-worker-php-02/source/main.php(2): body_worker_test\Probe::run()
+#7 Command line code(1): require('...')
+#8 {main}
+  thrown in /tmp/body-worker-php-02/source/src/04_analyze/check_bodies/handlers/places.php on line 41

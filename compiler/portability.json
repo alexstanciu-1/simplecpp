@@ -220,7 +220,14 @@
     "src/04_analyze/check_bodies/utilities/conversions.php",
     "src/04_analyze/check_bodies/utilities/byte_literals.php",
     "src/04_analyze/check_bodies/data/output.php",
-    "src/04_analyze/check_bodies/context.php"
+    "src/04_analyze/check_bodies/context.php",
+    "src/04_analyze/check_bodies/data/traversal.php",
+    "src/04_analyze/check_bodies/handlers/places.php",
+    "src/04_analyze/check_bodies/handlers/expressions.php",
+    "src/04_analyze/check_bodies/handlers/statements.php",
+    "src/04_analyze/check_bodies/handlers/control_statements.php",
+    "src/04_analyze/check_bodies/handlers/writes.php",
+    "src/04_analyze/check_bodies/body.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
