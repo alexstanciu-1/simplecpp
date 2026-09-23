@@ -19,8 +19,20 @@ independent edge-set relational oracle (256 compositions, 64 required-mask queri
 16 determinism queries). The independent oracle follows the preserved resource
 contract test's edge-set method. Tests also cover 4,096 associativity combinations,
 both identity directions for all 16 relations, and six invalid-domain rejections.
-These prove the algebra, not whole-body allocation safety. Resource locations,
-aliasing, effects, fixed-point flow and ownership acceptance remain to migrate.
+Control-flow union and required-input intersection now have explicit `join` and
+`intersect` operations in the same algebra owner. These replace the inline `|` and
+`&` expressions in the retained flow solver, return aggregation and requirement
+inference; union must never be replaced by sequential relation composition.
+The expanded suite covers all 256 relation unions and all 16 mask intersections
+against both independent sets and the prototype's inline PHP operators, for 608
+outcomes total, plus ten invalid-domain rejections. The original 336 helper
+comparisons and algebra laws remain in the suite.
+
+These prove the algebra, not whole-body allocation safety. Resource locations are
+proved separately; aliasing, effects, fixed-point flow and ownership acceptance
+remain to migrate.
 
 Run `python3 compiler/tests/resource_states/run.py --results FRESH --target-checkout TARGET`.
 Evidence: `specs/planning/compiler_migration/results/resource-states-01`.
+
+Expanded union/intersection evidence: `specs/planning/compiler_migration/results/resource-joins-01`.

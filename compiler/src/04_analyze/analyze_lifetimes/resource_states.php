@@ -42,6 +42,21 @@ final class Resource_States {
         $empty = $transition % 4; $owned = (int)($transition / 4);
         return Resource_States::transfer($state % 4,$empty,$owned) + 4 * Resource_States::transfer((int)($state / 4),$empty,$owned);
     }
+    /** Control-flow merge is union of possible edges, never sequential composition. */
+    public static function join(int $left, int $right): int {
+        Resource_States::require_relation($left); Resource_States::require_relation($right);
+        return Resource_States::transfer(\analyze_lifetimes\RESOURCE_EITHER,$left % 4,$right % 4)
+            + 4 * Resource_States::transfer(\analyze_lifetimes\RESOURCE_EITHER,(int)($left / 4),(int)($right / 4));
+    }
+    /** Accumulating caller requirements retains only inputs accepted by both constraints. */
+    public static function intersect(int $left, int $right): int {
+        if (($left < 0) || ($left > 3) || ($right < 0) || ($right > 3)) { throw new \InvalidArgumentException('Invalid resource state mask'); }
+        $result = 0;
+        if ($left === $right) { $result = $left; }
+        else if ($left === \analyze_lifetimes\RESOURCE_EITHER) { $result = $right; }
+        else if ($right === \analyze_lifetimes\RESOURCE_EITHER) { $result = $left; }
+        return $result;
+    }
     public static function deterministic(int $state): int {
         Resource_States::require_relation($state); $empty = $state % 4; $owned = (int)($state / 4); $accepted = 0;
         if (($empty === \analyze_lifetimes\RESOURCE_EMPTY) || ($empty === \analyze_lifetimes\RESOURCE_OWNED)) { $accepted = 1; }

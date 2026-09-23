@@ -598,3 +598,5 @@ Lifetime consumption and cleanup planning adds 29 PHP/native scenarios (`results
 Resource-state algebra adds 336 PHP/native, prototype and independent-oracle outcomes, plus exhaustive associativity/identity checks (`results/resource-states-01`). Readiness is 240 files. Resource location/effect/alias modeling and full allocation/ownership analysis remain unfinished.
 
 Resource locations and canonical endpoints add 491 PHP/native outcomes, including 477 direct preserved-helper comparisons and real nested record/parameter discovery (`results/resource-locations-01`). Readiness is 242 files. Resource effects/aliasing and allocation/ownership flow remain unfinished.
+
+Resource flow union and required-input intersection now extend the proved algebra: 608 PHP/native outcomes pass (`results/resource-joins-01`), with first native build success. Counts remain 242 files / 108 suites. Next: typed flow/observation/summary records and resource effect/alias consumers.

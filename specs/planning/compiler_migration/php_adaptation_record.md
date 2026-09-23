@@ -3533,3 +3533,21 @@ and body-derived diagnostics retain path/span/reason. Allocation safety, alias-e
 application and complete ownership flow are still separate dependencies.
 
 Authoring through first PHP readiness: 114.106 seconds. First PHP/native attempts pass without correction; three record cases added before native execution. Native build: 279.553 seconds. Evidence: results/resource-locations-01.
+
+## Resource flow joins and requirement intersections (2026-09-23)
+
+The retained allocation solver and return aggregation union possible relation edges
+with PHP bitwise OR; requirement inference intersects allowed inputs with bitwise
+AND. The portable Resource_States owner now names these distinct concepts as join
+and intersect. The two-lane arithmetic implementation reuses its existing finite-set
+union operation, avoiding unsupported bitwise syntax and temporary containers.
+No algorithm semantics or converter support changed. These helpers prepare the
+actual flow/alias consumers, which are still pending.
+
+All 608 PHP/native outcomes pass: the original 336 plus 256 union and 16 intersection
+pairs, independently modeled with sets and compared with retained inline operators.
+The suite retains composition laws and now rejects ten out-of-domain inputs.
+Measured automated edit-to-PHP readiness: 0.447s (reference inspection, reasoning
+and patch drafting preceded the timer and are not included);
+native build: 27.057s; first native attempt passed with zero corrective cycles.
+Evidence: results/resource-joins-01. Ready counts remain 242 files / 108 suites.

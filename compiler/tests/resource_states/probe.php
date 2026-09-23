@@ -21,7 +21,11 @@ final class Probe {
         try { \analyze_lifetimes\Resource_States::compatible(9,-1); } catch (\InvalidArgumentException $error) { $rejected++; }
         try { \analyze_lifetimes\Resource_States::compatible(9,4); } catch (\InvalidArgumentException $error) { $rejected++; }
         try { \analyze_lifetimes\Resource_States::deterministic(-1); } catch (\InvalidArgumentException $error) { $rejected++; }
-        if ($rejected !== 6) { throw new \LogicException('Accepted invalid resource domain'); }
+        try { \analyze_lifetimes\Resource_States::join(-1,0); } catch (\InvalidArgumentException $error) { $rejected++; }
+        try { \analyze_lifetimes\Resource_States::join(0,16); } catch (\InvalidArgumentException $error) { $rejected++; }
+        try { \analyze_lifetimes\Resource_States::intersect(-1,0); } catch (\InvalidArgumentException $error) { $rejected++; }
+        try { \analyze_lifetimes\Resource_States::intersect(0,4); } catch (\InvalidArgumentException $error) { $rejected++; }
+        if ($rejected !== 10) { throw new \LogicException('Accepted invalid resource domain'); }
     }
     public static function run(string $text): void {
         Probe::laws(); $cases = json_read($text);
@@ -29,6 +33,8 @@ final class Probe {
             $case_data = $cases->at($i); $kind = $case_data->member('kind')->text(); $state = $case_data->member('state')->integer(); $operand = $case_data->member('operand')->integer(); $result = 0;
             if ($kind === 'compose') { $result = \analyze_lifetimes\Resource_States::compose($state,$operand); }
             else if ($kind === 'compatible') { $result = \analyze_lifetimes\Resource_States::compatible($state,$operand); }
+            else if ($kind === 'join') { $result = \analyze_lifetimes\Resource_States::join($state,$operand); }
+            else if ($kind === 'intersect') { $result = \analyze_lifetimes\Resource_States::intersect($state,$operand); }
             else { $result = \analyze_lifetimes\Resource_States::deterministic($state); }
             echo $result . "\n";
         }

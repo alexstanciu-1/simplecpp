@@ -1,0 +1,12 @@
+{
+  "authoring_start_epoch": 1790156869.695444,
+  "first_php_ready_epoch": 1790156870.1425254,
+  "authoring_through_first_php_ready_seconds": 0.447,
+  "native_stabilization_wall_seconds": 27.579,
+  "native_build_seconds": 27.057,
+  "php_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "timing_limit": "Start was captured immediately before automated source edits; prior reference inspection, reasoning and patch drafting were not timed. This is edit-to-PHP time, not total authoring effort."
+}

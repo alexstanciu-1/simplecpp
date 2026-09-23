@@ -14,4 +14,12 @@ def build():
             cases.append(dict(kind='compatible',state=state,operand=required,expected=sum(1 << a for a in accepted)))
         deterministic={a for a in range(2) if len({b for a2,b in relation if a==a2})==1}
         cases.append(dict(kind='deterministic',state=state,operand=0,expected=sum(1 << a for a in deterministic)))
+    for left in range(16):
+        for right in range(16):
+            cases.append(dict(kind='join',state=left,operand=right,expected=encoded(edges(left) | edges(right))))
+    for left in range(4):
+        for right in range(4):
+            a={i for i in range(2) if left & (1 << i)}
+            b={i for i in range(2) if right & (1 << i)}
+            cases.append(dict(kind='intersect',state=left,operand=right,expected=sum(1 << i for i in a & b)))
     return cases
