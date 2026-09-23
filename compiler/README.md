@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **218 production files** in PHP and native
+The registered component proofs cover **219 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
@@ -258,3 +258,5 @@ Conversion selection adds 196 PHP/native cases and 12 selection invariants. Iden
 Quoted-byte decoding reuses the preserved implementation and 8,593-case frozen corpus, now all proved in PHP/native on the active target. Body-worker integration remains separate.
 
 Typed body-output ownership adds 33 PHP/native checks and 24 host comparisons with the retained access selector (`results/body-output-01`). Reserved arguments/scopes, pending locations, stable IDs and completed handoff are explicit; first native build passed without corrections. Next: wire the body worker and traversal handlers to the proved output owner. Full body checking remains unfinished.
+
+Body-worker input acceptance and dependency retention add 23 PHP/native scenarios plus four retained closure cases (`results/body-context-01`). Exact source/name/signature/local/template associations, signature sharing and iterative implicit element retention pass; first native build passed without correction. Next: actual statement/expression traversal using Body_Context and Body_Output. Complete body checking remains unfinished.

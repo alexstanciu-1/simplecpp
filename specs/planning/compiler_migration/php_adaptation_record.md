@@ -3179,3 +3179,30 @@ an end-to-end body worker. Authoring through first PHP readiness: 232.124 second
 three checker-only corrections (literal class reference, explicit property type,
 compound assignment). Native build one passed in 26.032 seconds with no corrective
 cycles. Evidence: results/body-output-01. Worker integration is the next task.
+
+## Body checking context and retained dependencies (2026-09-23)
+
+Extracted the prototype Body_Worker constructor, signature/local queries and implicit
+retention into Body_Context. Callable_Input supplies exact declaration/instance
+identity instead of duplicated syntax/body fields. The snapshot's accepted names
+must be the supplied binding owner; source templates require current definition
+permissions. No new type permission or source grammar is introduced. Nullable locals
+remain meaningful for a callable with no local bindings, including the entry body.
+
+Signature_Dependency captures canonical parameter IDs and exact provider/storage
+associations once per callable. Type retention follows fixed-array and storage element
+edges iteratively, preserving immutable Type_Record identity and terminating repeated
+or cyclic edges. A queue replaces PHP array_pop; retained membership, not incidental
+map iteration order, is the contract. Struct fields are deliberately not an implicit
+closure edge, matching the prototype. Missing resolved definitions now fail explicitly
+rather than reaching an invalid nullable dereference. Discard a failed context.
+
+23 PHP/native scenarios cover ordinary/entry/template/method acceptance, stale input
+rejections, provider signatures, reuse, copied membership, deep (4,096-array) and cyclic
+closure, storage closure and canonical-store purity. Four host cases execute the
+retained private closure through reflection with only its type snapshot initialized;
+that is algorithm comparison, not original whole-worker execution. Evidence:
+results/body-context-01. Authoring to first PHP readiness: 286.227
+seconds; one fixture checker correction and one fixture diagnostic-expectation fix.
+First native build passed in 214.795 seconds, zero native corrections. Statement and
+expression traversal remain the next work; no full-worker coverage is claimed.

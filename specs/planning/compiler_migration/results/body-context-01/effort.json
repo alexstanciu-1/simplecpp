@@ -1,0 +1,22 @@
+{
+  "authoring_start_utc": "2026-09-23 07:40:26 UTC",
+  "first_php_ready_epoch": 1790149512.2268665,
+  "authoring_through_php_ready_seconds": 286.227,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 214.795,
+  "conversion_native_stabilization_command_seconds": 217.283,
+  "checker_corrective_cycles": 1,
+  "php_corrective_cycles": 1,
+  "corrections": [
+    "fixture computed isset key bound to a local",
+    "fixture unknown type error text corrected to owner contract"
+  ],
+  "php_native_outcomes": 23,
+  "retained_closure_cases": 4,
+  "notes": [
+    "Oracle registered during native build; final PHP runner verified separately. Native production/probe/fixture bytes match.",
+    "No statement or expression body checking proved by this checkpoint."
+  ]
+}

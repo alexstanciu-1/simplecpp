@@ -1,0 +1,2 @@
+def build():
+    return [{'mode': m} for m in ['ordinary', 'entry', 'template', 'method', 'provider_dependency', 'signature_reuse', 'local', 'array_closure', 'storage_closure', 'structure_boundary', 'deep_closure', 'cyclic_closure', 'snapshot', 'missing_local_result', 'missing_signature', 'foreign_names', 'foreign_owner', 'stale_instance', 'missing_template_permission', 'unknown_signature', 'invalid_local', 'unknown_type', 'pending_type']]

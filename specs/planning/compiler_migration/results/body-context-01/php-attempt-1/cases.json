@@ -1,0 +1,71 @@
+[
+  {
+    "mode": "ordinary"
+  },
+  {
+    "mode": "entry"
+  },
+  {
+    "mode": "template"
+  },
+  {
+    "mode": "method"
+  },
+  {
+    "mode": "provider_dependency"
+  },
+  {
+    "mode": "signature_reuse"
+  },
+  {
+    "mode": "local"
+  },
+  {
+    "mode": "array_closure"
+  },
+  {
+    "mode": "storage_closure"
+  },
+  {
+    "mode": "structure_boundary"
+  },
+  {
+    "mode": "deep_closure"
+  },
+  {
+    "mode": "cyclic_closure"
+  },
+  {
+    "mode": "snapshot"
+  },
+  {
+    "mode": "missing_local_result"
+  },
+  {
+    "mode": "missing_signature"
+  },
+  {
+    "mode": "foreign_names"
+  },
+  {
+    "mode": "foreign_owner"
+  },
+  {
+    "mode": "stale_instance"
+  },
+  {
+    "mode": "missing_template_permission"
+  },
+  {
+    "mode": "unknown_signature"
+  },
+  {
+    "mode": "invalid_local"
+  },
+  {
+    "mode": "unknown_type"
+  },
+  {
+    "mode": "pending_type"
+  }
+]
