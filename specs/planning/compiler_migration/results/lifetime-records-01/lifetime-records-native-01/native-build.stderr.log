@@ -1,0 +1,11 @@
+STAN pre-build check failed: 2 compile-errors
+
+[compile-error] Function `analyze_lifetimes\Lifetime_Ends::local_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/analyze_lifetimes/data/lifetimes.phs:34
+
+[compile-error] Function `analyze_lifetimes\Lifetime_Ends::subject_name` declared as `string` may exit without returning a value.
+  at src/04_analyze/analyze_lifetimes/data/lifetimes.phs:39
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

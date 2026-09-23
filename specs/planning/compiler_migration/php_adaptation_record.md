@@ -3403,3 +3403,29 @@ This is initialization readiness only: value/local lifetime records, cleanup pla
 allocation/ownership flow, joins and the complete lifetime stage remain to migrate.
 
 Authoring through first PHP readiness: 164.807 seconds. First PHP and native attempts pass, with zero correction cycles. Native build: 291.336 seconds. Evidence: results/local-flow-01.
+
+## Lifetime record contracts (2026-09-23)
+
+Temporary consumption, local exits, active-local rows and cleanup obligations now
+have portable typed records. The preserved string-backed enums become explicit
+numeric tags plus stable boundary-name codecs. Value_Lifetime preserves the exact
+consumer-ID requirements for call arguments, conversions, operations and indices;
+statement-boundary uses retain consumer zero. Local initialization zero continues
+to identify incoming parameters. Local_Lifetime remains producer data: complete
+range/body validation still belongs to the future Analyzed_Body owner.
+
+The records remain immutable shared objects where their original constructor
+contracts or worker stack/index identity matter. The new initialization facts use
+compact value records separately. Neither choice claims that PHP readonly alone
+establishes deep native immutability. The prototype's allocation_analysis carrier
+is deferred to the resource-state migration, where its nested lane maps need an
+explicit owner; it has not been dropped or claimed ready with these records.
+
+A 1,105-case constructor/output matrix agrees in PHP/native with the actual retained
+record classes, covering all 14 temporary end reasons, consumer and ID boundaries,
+both cleanup subjects, local exits and active-local values. This does not prove
+complete lifetime analysis or cleanup execution. The first native attempt stopped
+at STAN on two terminal-throw return paths; a common explicit return preserves the
+codec behavior. The first actual C++ build then passed.
+
+Authoring through first PHP readiness: 73.101 seconds. One STAN-only native correction; first C++ build passed in 24.302 seconds. Evidence: results/lifetime-records-01.

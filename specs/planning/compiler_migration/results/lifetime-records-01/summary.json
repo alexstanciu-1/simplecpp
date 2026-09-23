@@ -1,0 +1,164 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "reference",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/lifetime_records/reference.php",
+        "/tmp/lifetime-records-native-02/cases.json"
+      ],
+      "seconds": 0.069,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/lifetime-records-native-02/source"
+      ],
+      "seconds": 0.067,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/lifetime-records-native-02/source"
+      ],
+      "seconds": 0.144,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/lifetime-records-native-02/source/src/04_analyze/analyze_lifetimes/data/lifetimes.php",
+        "/tmp/lifetime-records-native-02/source/probe.php",
+        "/tmp/lifetime-records-native-02/source/main.php"
+      ],
+      "seconds": 0.13,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/lifetime-records-native-02/source",
+        "/tmp/lifetime-records-native-02/phpp"
+      ],
+      "seconds": 0.127,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/lifetime-records-native-02/source",
+        "/tmp/lifetime-records-native-02/phpp"
+      ],
+      "seconds": 0.078,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/lifetime-records-native-02/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.142,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.024,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.093,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.338,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 24.302,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/lifetime-records-native-02/phpp/.prism/build/main"
+      ],
+      "seconds": 0.07,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.036,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790154706.2628946,
+  "php_ready_sha256": {
+    "src/04_analyze/analyze_lifetimes/data/lifetimes.php": "025f6c823f7defcfa7ce81244f2efb5f43a26d998930c776b346ac0eff200972"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 1105,
+  "lifetime_records_outcomes": 1105,
+  "production_files": [
+    "src/04_analyze/analyze_lifetimes/data/lifetimes.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/analyze_lifetimes/data/lifetimes.php": "025f6c823f7defcfa7ce81244f2efb5f43a26d998930c776b346ac0eff200972"
+  }
+}

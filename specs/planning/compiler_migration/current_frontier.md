@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **233 production files**: input preparation (137 outcomes),
+Active readiness is **234 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -590,3 +590,5 @@ Typed-storage body integration: 23 PHP/native cases pass (`results/body-storage-
 Managed-value body integration: 23 PHP/native cases pass (`results/body-managed-01`). No production changes; readiness stays 231 files. See `specs/portability/compiler_body_managed_slice.md` for scope and remaining obligations.
 
 Definite-initialization flow begins lifetime-stage migration: 16 PHP/native and retained-solver comparisons pass (`results/local-flow-01`). Typed ordered facts and exact checked-body ownership preserve scope/intersection behavior. Ready count is 233 files. Cleanup, consumption and allocation/ownership analysis remain unfinished.
+
+Lifetime record contracts add 1,105 PHP/native and retained-constructor comparisons (`results/lifetime-records-01`). Stable end/subject names survive the enum-to-tag adaptation. Readiness is 234 files. Full lifetime worker, result ownership, allocation analysis and stage integration remain unfinished.

@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790154549.880425,
+  "first_php_ready_epoch": 1790154622.9809537,
+  "authoring_through_first_php_ready_seconds": 73.101,
+  "php_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 2,
+  "native_corrective_cycles": 1,
+  "stan_only_failed_attempts": 1,
+  "cpp_builds": 1,
+  "native_build_seconds": 24.302,
+  "native_proof_completed_epoch": 1790154731.485818,
+  "native_stabilization_wall_seconds": 108.505,
+  "notes": [
+    "First native attempt rejected terminal-throw return paths in two tag-name helpers. Explicit common return preserves behavior.",
+    "Matrix validates constructor contracts, not body ownership/lifetime completeness."
+  ]
+}

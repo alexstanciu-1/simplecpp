@@ -1,0 +1,4 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/data/structures.php": "9b772ad8476b0eee2301b1883795d6d1bd3f65af025d440efb95c8116e17505b",
+  "compiler/tests/lifetime_records/reference.php": "3fac31e7c599a5e6194f2642cccbabe9929d2ff56ad6def24c90e002865511b8"
+}
