@@ -1,0 +1,17 @@
+{
+  "authoring_start_epoch": 1790160412.443623,
+  "first_php_ready_epoch": 1790160508.4406052,
+  "authoring_through_first_php_ready_seconds": 95.997,
+  "checker_corrective_cycles": 0,
+  "php_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "native_verification_builds": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 347.282,
+  "post_php_wall_seconds": 744.361,
+  "notes": [
+    "Post-PHP wall time includes additional contract comparison assertions and overlapping queue development; it is not exclusive native stabilization labor.",
+    "15 explicit acceptance/rejection cases plus 18 symmetric semantic equality assertions."
+  ]
+}

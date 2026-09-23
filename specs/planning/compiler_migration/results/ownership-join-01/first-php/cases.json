@@ -1,0 +1,62 @@
+[
+  {
+    "mode": "normal",
+    "expected": "accepted"
+  },
+  {
+    "mode": "changed",
+    "expected": "accepted"
+  },
+  {
+    "mode": "move_source",
+    "expected": "accepted"
+  },
+  {
+    "mode": "reverse_batch",
+    "expected": "accepted"
+  },
+  {
+    "mode": "body",
+    "expected": "accepted"
+  },
+  {
+    "mode": "const_source",
+    "expected": "Invalid ownership field transition"
+  },
+  {
+    "mode": "unaccessed",
+    "expected": "Invalid ownership field transition"
+  },
+  {
+    "mode": "wrong_field",
+    "expected": "Incomplete ownership summary fields"
+  },
+  {
+    "mode": "missing_parameter",
+    "expected": "Incomplete ownership summary parameters"
+  },
+  {
+    "mode": "extra_result",
+    "expected": "Incomplete owned result resource summary"
+  },
+  {
+    "mode": "missing_result",
+    "expected": "Incomplete ownership batch"
+  },
+  {
+    "mode": "duplicate_task",
+    "expected": "Duplicate ownership task"
+  },
+  {
+    "mode": "duplicate_result",
+    "expected": "Unexpected, duplicate or stale ownership result"
+  },
+  {
+    "mode": "stale",
+    "expected": "Unexpected, duplicate or stale ownership result"
+  },
+  {
+    "mode": "unexpected",
+    "expected": "Unexpected, duplicate or stale ownership result"
+  }
+]
