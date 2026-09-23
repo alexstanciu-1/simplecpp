@@ -1,0 +1,17 @@
+{
+  "authoring_clock_start_epoch": 1790141712.0,
+  "authoring_clock_scope": "Recorded before production authoring; excludes initial prototype read.",
+  "first_php_ready_epoch": 1790141955.8791144,
+  "authoring_to_php_seconds": 243.87911438941956,
+  "first_native_pass_epoch": 1790142191.133332,
+  "php_ready_to_native_pass_seconds": 235.2542176246643,
+  "native_attempts": 1,
+  "cpp_build_attempts": 1,
+  "native_correction_cycles": 0,
+  "post_php_work": "Separate selection from worker dependencies and expand host purity/selective-rebuild coverage.",
+  "checker_corrections_before_php": [
+    "Replace unsupported post-decrement in test reversal loop with explicit subtraction."
+  ],
+  "host_invariants": 28,
+  "consolidation_epoch": 1790142205.8483417
+}

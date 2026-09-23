@@ -189,7 +189,11 @@
     "src/04_analyze/resolve_types/source_lifecycle_signature.php",
     "src/04_analyze/resolve_types/storage_signatures.php",
     "src/04_analyze/resolve_types/signatures.php",
-    "src/04_analyze/resolve_types/data/result.php"
+    "src/04_analyze/resolve_types/data/result.php",
+    "src/04_analyze/resolve_types/data/signature_set.php",
+    "src/04_analyze/resolve_types/utilities/signature_validity.php",
+    "src/04_analyze/resolve_types/signature_join.php",
+    "src/04_analyze/resolve_types/select_signatures.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

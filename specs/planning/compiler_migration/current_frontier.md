@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **188 production files**: input preparation (137 outcomes),
+Active readiness is **192 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -506,3 +506,12 @@ Native attempt two passed after one fixture qualification correction; one C++
 build. Readiness is 188 files. Next: signature validity and selection/publication,
 plus the completed type snapshot's accepted-family associations. No complete
 Type_Resolution or type-stage execution is claimed.
+
+
+Signature selection, reuse and canonical publication add 32 PHP/native outcomes
+and 28 host invariants (`results/signature-publication-01`). Complete provenance
+validation precedes writes; deterministic publication, shared unchanged signatures,
+and stale canonical/source/provider/instance rejection pass. Native attempt one
+passed without correction. Readiness is 192 files. Next: complete type snapshot
+assembly and its accepted-family associations, then local-type preparation/join
+and coordinator integration. Signature_Set alone is not a completed type stage.

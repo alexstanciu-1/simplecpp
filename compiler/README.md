@@ -2,10 +2,15 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-Input preparation, tokenization, parser grammar, structural queries and project parser
-reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **188 production files**
-with PHP/native proofs. Shared source/provider symbols are integrated. Provided-record bindings and symbolic template interpretation are integrated. Template body checking is integrated. Template selection/reuse and result acceptance are integrated. Instance registry/snapshots are integrated. Bound annotations and concrete argument reading are integrated. Literal-constant batches are integrated. Application argument normalization and storage-element eligibility/materialization are integrated. Application acceptance and instance joins are integrated. Concrete member-instance preparation and acceptance are integrated. Concrete source/provider record preparation and acceptance are integrated. Concrete callable signature requests and lifecycle validation are integrated. Next are callable/type-resolution result records and signature acceptance/reuse; complete prepared-package consumption remains unfinished. No active compiler
-CLI or complete compilation pipeline exists yet.
+The registered component proofs cover **192 production files** in PHP and native
+PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
+symbols, name resolution, type-model foundations, template checking, concrete
+instance preparation, records, and callable signature selection/publication/reuse.
+
+Next is complete type-snapshot assembly, including accepted-family associations,
+followed by local-type preparation and coordinator integration. Complete prepared-package
+consumption remains unfinished. No active compiler CLI or complete compilation
+pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`
 stays PHP as-is for now, outside this conversion scope. `tests/` holds registered stage outcome proofs.

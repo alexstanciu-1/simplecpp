@@ -2839,3 +2839,33 @@ reuse proofs; do not weaken exact owner checks to reduce record fields.
 18 PHP/native outcomes and 23 host invariants pass. A fixture short-name STAN
 ambiguity required one qualification correction; production code passed the
 first C++ build. Evidence: `results/type-result-records-01`.
+
+
+## Signature selection, canonical publication and reuse
+
+Signature_Set owns ordered callable membership and its canonical Type_Store.
+This extracts the signature association part of the prototype Type_Resolution
+without manufacturing a completed type stage. The completed snapshot will compose
+this result with local associations and accepted family packages. Published stores
+remain immutable by coordinator discipline; no copy-on-write inference is assumed.
+Signature_Selection is separate from the annotation worker so basic request
+resolution does not depend on prior publication. Both selection and joining use
+Signature_Validity: exact declaration/instance/provider owners, same lineage and
+shared representation/type rows, with resolved parameter and result types.
+Bounds are checked explicitly because migrated store lookups use InvalidArgumentException
+rather than the prototype's OutOfBoundsException. Invalid retained IDs mean stale
+work, not successful reuse or an unrelated lookup exception.
+
+The join copies task/map membership, validates every result against its exact
+selected Callable_Input and authoritative annotation/provider contract, then checks
+all unselected participants before writing. Publication follows declaration/instance
+order, independent of completion order. Validation does not rerun the worker or
+allocate duplicate requests. Materialization failures still require candidate discard;
+there is no rollback claim. Normalized passing modes preserve explicit all-value
+contracts rather than the prototype's optional empty passing sentinel.
+
+32 PHP/native scenarios and 28 host invariants pass on the first native attempt.
+Selective rebuilding after a uint8 parameter-type invalidation retains unchanged
+entry identity and leaves the old snapshot untouched. Evidence:
+`results/signature-publication-01`. Local types, full snapshot assembly and type
+coordination remain open. No src-runtime-preparation code changed.
