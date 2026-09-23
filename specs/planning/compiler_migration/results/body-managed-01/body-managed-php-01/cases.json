@@ -1,0 +1,393 @@
+[
+  {
+    "name": "default",
+    "source": "function f(): int { $x Managed; return 0; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "explicit_default",
+    "source": "function f(): int { $x Managed = new Managed(); return 0; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "copy_local",
+    "source": "function f(): int { $x Managed; $y Managed = $x; return 0; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 3,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      4,
+      1
+    ],
+    "returns": [
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "copy_borrow",
+    "source": "function f(const Managed &$source): int { $x Managed = $source; return 0; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      4,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "assignment",
+    "source": "function f(): int { $x Managed; $y Managed; $y = $x; return 0; }  return 0;",
+    "error": "",
+    "statements": 4,
+    "values": 4,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      3,
+      5,
+      1
+    ],
+    "returns": [
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "assign_borrow",
+    "source": "function f(const Managed &$source): int { $x Managed; $x = $source; return 0; }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 3,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      5,
+      1
+    ],
+    "returns": [
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "return_owned_local",
+    "source": "function f(): Managed { $x Managed; return $x; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      5
+    ]
+  },
+  {
+    "name": "return_borrow",
+    "source": "function f(const Managed &$source): Managed { return $source; }  return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 1,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      1
+    ],
+    "returns": [
+      4
+    ]
+  },
+  {
+    "name": "return_new",
+    "source": "function f(): Managed { return new Managed(); }  return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 1,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      1
+    ],
+    "returns": [
+      3
+    ]
+  },
+  {
+    "name": "provider_return",
+    "source": "function f(): Managed { return make_managed(); }  return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 1,
+    "calls": 1,
+    "fall": false,
+    "writes": [
+      1
+    ],
+    "returns": [
+      3
+    ]
+  },
+  {
+    "name": "provider_initialization",
+    "source": "function f(): Managed { $x Managed = make_managed(); return $x; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 1,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      5
+    ]
+  },
+  {
+    "name": "const_borrow_call",
+    "source": "function f(): int { $x Managed; return read($x); } function read(const Managed &$source): int { return 0; } return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 3,
+    "calls": 1,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "temporary_const_borrow",
+    "source": "function f(): int { return read(make_managed()); } function read(const Managed &$source): int { return 0; } return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 2,
+    "calls": 2,
+    "fall": false,
+    "writes": [
+      1
+    ],
+    "returns": [
+      1
+    ]
+  },
+  {
+    "name": "move_only_return",
+    "source": "function f(): MoveOnly { $x MoveOnly; return $x; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      5
+    ]
+  },
+  {
+    "name": "copy_only_return",
+    "source": "function f(): CopyOnly { $x CopyOnly; return $x; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      4
+    ]
+  },
+  {
+    "name": "no_default_copy",
+    "source": "function f(const NoDefault &$source): NoDefault { $x NoDefault = $source; return $x; }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      4,
+      1
+    ],
+    "returns": [
+      1,
+      5
+    ]
+  },
+  {
+    "name": "no_copy",
+    "source": "function f(): int { $x MoveOnly; $y MoveOnly = $x; return 0; }  return 0;",
+    "error": "Unsupported inline object copy; copy construction is unavailable",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "no_assignment",
+    "source": "function f(): int { $x MoveOnly; $y MoveOnly; $y = $x; return 0; }  return 0;",
+    "error": "Copy assignment is unavailable for this type",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "no_default",
+    "source": "function f(): int { $x NoDefault; return 0; }  return 0;",
+    "error": "Default construction is unavailable for a constituent field",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "pinned_return",
+    "source": "function f(): Pinned { $x Pinned; return $x; }  return 0;",
+    "error": "Construction from an expiring return source is unavailable",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "move_only_borrow_return",
+    "source": "function f(const MoveOnly &$source): MoveOnly { return $source; }  return 0;",
+    "error": "Owned return requires copy construction for this source",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "temporary_assignment",
+    "source": "function f(): int { $x Managed; $x = new Managed(); return 0; }  return 0;",
+    "error": "Copy assignment currently requires an existing source object",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  },
+  {
+    "name": "provider_assignment",
+    "source": "function f(): int { $x Managed; $x = make_managed(); return 0; }  return 0;",
+    "error": "Copy assignment currently requires an existing source object",
+    "statements": 2,
+    "values": 2,
+    "calls": 0,
+    "fall": false,
+    "writes": [
+      3,
+      1
+    ],
+    "returns": [
+      1,
+      1
+    ]
+  }
+]

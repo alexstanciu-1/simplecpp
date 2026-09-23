@@ -1,0 +1,28 @@
+def build():
+    cases=[]
+    def add(name,body,ret='int',params='',extra='',values=2,calls=0,writes=(3,1),returns=(1,1),error=''):
+        cases.append(dict(name=name,source=f'function f({params}): {ret} {{ {body} }} '+extra+' return 0;',error=error,statements=len(writes),values=values,calls=calls,fall=False,writes=list(writes),returns=list(returns)))
+    add('default','$x Managed; return 0;')
+    add('explicit_default','$x Managed = new Managed(); return 0;')
+    add('copy_local','$x Managed; $y Managed = $x; return 0;',values=3,writes=(3,4,1),returns=(1,1,1))
+    add('copy_borrow','$x Managed = $source; return 0;',params='const Managed &$source',writes=(4,1))
+    add('assignment','$x Managed; $y Managed; $y = $x; return 0;',values=4,writes=(3,3,5,1),returns=(1,1,1,1))
+    add('assign_borrow','$x Managed; $x = $source; return 0;',params='const Managed &$source',values=3,writes=(3,5,1),returns=(1,1,1))
+    add('return_owned_local','$x Managed; return $x;',ret='Managed',returns=(1,5))
+    add('return_borrow','return $source;',ret='Managed',params='const Managed &$source',values=1,writes=(1,),returns=(4,))
+    add('return_new','return new Managed();',ret='Managed',values=1,writes=(1,),returns=(3,))
+    add('provider_return','return make_managed();',ret='Managed',values=1,calls=1,writes=(1,),returns=(3,))
+    add('provider_initialization','$x Managed = make_managed(); return $x;',ret='Managed',calls=1,returns=(1,5))
+    add('const_borrow_call','$x Managed; return read($x);',extra='function read(const Managed &$source): int { return 0; }',values=3,calls=1)
+    add('temporary_const_borrow','return read(make_managed());',extra='function read(const Managed &$source): int { return 0; }',values=2,calls=2,writes=(1,),returns=(1,))
+    add('move_only_return','$x MoveOnly; return $x;',ret='MoveOnly',returns=(1,5))
+    add('copy_only_return','$x CopyOnly; return $x;',ret='CopyOnly',returns=(1,4))
+    add('no_default_copy','$x NoDefault = $source; return $x;',ret='NoDefault',params='const NoDefault &$source',writes=(4,1),returns=(1,5))
+    add('no_copy','$x MoveOnly; $y MoveOnly = $x; return 0;',error='Unsupported inline object copy; copy construction is unavailable')
+    add('no_assignment','$x MoveOnly; $y MoveOnly; $y = $x; return 0;',error='Copy assignment is unavailable for this type')
+    add('no_default','$x NoDefault; return 0;',error='Default construction is unavailable for a constituent field')
+    add('pinned_return','$x Pinned; return $x;',ret='Pinned',error='Construction from an expiring return source is unavailable')
+    add('move_only_borrow_return','return $source;',ret='MoveOnly',params='const MoveOnly &$source',error='Owned return requires copy construction for this source')
+    add('temporary_assignment','$x Managed; $x = new Managed(); return 0;',error='Copy assignment currently requires an existing source object')
+    add('provider_assignment','$x Managed; $x = make_managed(); return 0;',error='Copy assignment currently requires an existing source object')
+    return cases

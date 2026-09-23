@@ -586,3 +586,5 @@ body integration includes storage elements and managed lifecycle paths, plus deb
 export and whole-stage coordination. Lifetime analysis remains unmigrated.
 
 Typed-storage body integration: 23 PHP/native cases pass (`results/body-storage-01`). No production changes; readiness stays 231 files. See `specs/portability/compiler_body_storage_slice.md` for scope and remaining obligations.
+
+Managed-value body integration: 23 PHP/native cases pass (`results/body-managed-01`). No production changes; readiness stays 231 files. See `specs/portability/compiler_body_managed_slice.md` for scope and remaining obligations.

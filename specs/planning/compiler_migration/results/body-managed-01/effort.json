@@ -1,0 +1,18 @@
+{
+  "authoring_start_epoch": 1790153709.363577,
+  "first_php_ready_epoch": 1790153773.7548063,
+  "authoring_through_first_php_ready_seconds": 64.391,
+  "php_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 267.852,
+  "native_stabilization_wall_seconds_through_consolidation": 582.462,
+  "notes": [
+    "No production changes. Compiler plan proof; no provider execution or allocation/lifetime safety claim.",
+    "Wall time through consolidation includes waiting for the storage native build and subsequent local-flow authoring; this is not corrective coding time."
+  ],
+  "native_php_ready_epoch": 1790153983.478425,
+  "native_proof_completed_epoch": 1790154254.3257985,
+  "native_verification_seconds_after_final_php_ready": 270.847
+}
