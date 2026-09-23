@@ -28,3 +28,15 @@ names, and unchanged snapshots. Compare meaningful decoded PHP/native data; requ
 byte equality only for a documented output spelling. Shared semantic identities
 must not become raw process addresses or recursive object dumps. The final compiler
 report should compose owning projections rather than reflect over PHP objects.
+
+## Checked body projection
+
+The core Checked_Body query owner is migrated separately from prototype
+`04_analyze/check_bodies/data/result.php::to_array()`. Preserve its on-demand view:
+owner/callable/source/body identity, values with kind-specific payloads, calls,
+statements including target/write/return modes, blocks/scopes, entry parameter
+count, arguments/passing, falls_through, retained type IDs and signature
+callable/representation IDs. Use source_path instead of inventing a source-file ID
+when the migrated owner has only path identity. Byte_Literal already supplies an
+explicit binary-safe hex projection. Remaining tagged vocabulary needs explicit
+name codecs when composing this debug view. No complete body dump is claimed yet.

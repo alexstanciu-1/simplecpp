@@ -3074,3 +3074,26 @@ full byte range in results/body-records-01. Authoring to first PHP checkpoint:
 fixture block-visibility correction, one actual C++ build (27.25 seconds).
 Production passed unchanged from the original PHP checkpoint. Completed-body
 queries and evaluation ordering remain next; no whole body-checker claim is made.
+
+## Retained checked body owner (2026-09-23)
+
+Copied typed membership and named accessors replace public result arrays; canonical
+IDs remain separate from zero-based storage positions. Exact callable input/name/
+local-type provenance is checked without claiming that construction performs body
+checking. Conversion/operation queries retain earlier-operand and exact-type
+requirements. Projected location queries preserve the original field-bound,
+array/element-identity and integer-index behavior. Missing dependencies fail.
+
+Signature_Dependency captures parameter IDs because the migrated Representation
+uses canonical member ranges while the prototype embedded parameter arrays.
+This keeps downstream body queries independent of a mutable Type_Store, with exact
+provider/storage identity for resource effects. Body signature queries return
+that dependency view. Body debug serialization remains explicitly inventoried;
+no source IDs or finished debug dump are fabricated.
+
+The 23 PHP/native scenarios use parsed ownership plus synthetic canonical body
+associations, not end-to-end source checking. Evidence in results/checked-body-01
+records 395.105 seconds to first PHP readiness, one
+checker fixture name correction and one PHP array-materializer fixture correction.
+First native build passed in 231.61 seconds with no native correction. Expression
+ordering, real checking workers/joins and lifetime analysis remain incomplete.

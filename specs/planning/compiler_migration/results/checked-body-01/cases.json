@@ -1,0 +1,71 @@
+[
+  {
+    "mode": "base"
+  },
+  {
+    "mode": "conversion"
+  },
+  {
+    "mode": "conversion_cycle"
+  },
+  {
+    "mode": "operation"
+  },
+  {
+    "mode": "operation_cycle"
+  },
+  {
+    "mode": "operation_type"
+  },
+  {
+    "mode": "operation_result"
+  },
+  {
+    "mode": "argument"
+  },
+  {
+    "mode": "argument_bounds"
+  },
+  {
+    "mode": "field"
+  },
+  {
+    "mode": "field_bounds"
+  },
+  {
+    "mode": "array"
+  },
+  {
+    "mode": "array_type"
+  },
+  {
+    "mode": "element"
+  },
+  {
+    "mode": "element_type"
+  },
+  {
+    "mode": "index_type"
+  },
+  {
+    "mode": "missing_signature"
+  },
+  {
+    "mode": "missing_type"
+  },
+  {
+    "mode": "missing_value"
+  },
+  {
+    "mode": "missing_scope"
+  },
+  {
+    "mode": "unresolved_type"
+  },
+  {
+    "mode": "borrow"
+  },
+  {
+    "mode": "snapshot"
+  }
+]

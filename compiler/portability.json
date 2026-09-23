@@ -212,7 +212,9 @@
     "src/04_analyze/type_model/data/operations.php",
     "src/04_analyze/check_bodies/utilities/operations.php",
     "src/04_analyze/check_bodies/data/values.php",
-    "src/04_analyze/check_bodies/data/statements.php"
+    "src/04_analyze/check_bodies/data/statements.php",
+    "src/04_analyze/check_bodies/data/dependencies.php",
+    "src/04_analyze/check_bodies/data/result.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

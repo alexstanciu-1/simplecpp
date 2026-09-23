@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **211 production files**: input preparation (137 outcomes),
+Active readiness is **213 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -558,3 +558,5 @@ Checked storage roots and projections add 47 PHP/native cases with retained agre
 Exact operation contracts and integer-capability selection add 294 PHP/native cases (`results/body-operations-01`), agreeing with the prototype. First native build passed with zero native corrections; one PHP fixture accessor correction preceded readiness. Readiness is 209 files. These supply the missing operation payload dependency for typed values; calls/statements and evaluation-order consumers remain next.
 
 Typed value, call, argument, statement and scope records add 1,009 PHP/native outcomes (`results/body-records-01`), including 1,000 retained statement combinations and binary-safe literal projection. Native attempt two passed after one fixture scope correction; one actual C++ build and no production correction. Readiness is 211 files. Next: completed body snapshot/dependency queries and evaluation-order traversal.
+
+Retained checked-body membership/dependency queries add 23 PHP/native scenarios (`results/checked-body-01`). Signature parameter IDs are captured alongside immutable representations, without retaining a mutable store. First native attempt passed; one checker and one PHP fixture correction preceded readiness. Readiness is 213 files. Next: expression evaluation-order traversal and body worker dependencies; body debug projection remains inventoried.
