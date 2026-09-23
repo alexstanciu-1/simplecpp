@@ -204,7 +204,10 @@
     "src/04_analyze/resolve_types/type_association_debug.php",
     "src/04_analyze/resolve_types/data/preparation.php",
     "src/04_analyze/resolve_types/preparation_queue.php",
-    "src/04_analyze/instantiate/policy.php"
+    "src/04_analyze/instantiate/policy.php",
+    "src/04_analyze/check_bodies/data/flow.php",
+    "src/04_analyze/check_bodies/flow.php",
+    "src/04_analyze/check_bodies/utilities/flow_graph.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }

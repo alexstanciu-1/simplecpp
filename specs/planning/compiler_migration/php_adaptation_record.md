@@ -2995,3 +2995,26 @@ PHP checkpoint was 63.072 seconds, excluding initial inspection. Native passed
 first attempt with no corrective cycle. Command times and source hashes live in
 `results/instantiation-policy-01`. No allocation policy enforcement or new compiler
 functionality was added. See `specs/portability/instantiation_policy.md`.
+
+## Checked body flow model and graph queries (2026-09-23)
+
+Moved the prototype's flow vocabulary into its own shared data/flow.php owner.
+Checked integer tags replace string-backed enum cases; named nullable reservation
+records replace an untyped array of null-or-block entries. The builder retains
+reserve/begin/terminate/complete behavior, including ignored termination of an
+already closed path and immutable returned membership. Successor IDs are explicit
+method arguments because the current converter rejects their defaults.
+
+Reachability uses a dense visited vector and iterative worklist, followed by
+bottom-up merge sorting by statement start and ID. This preserves deterministic
+results and O(n log n) ordering without callback sorting or per-comparison vector
+arguments. Cycles/shared joins visit each block once. Missing reachable blocks
+still fail; unreachable invalid edges remain irrelevant. Future optimization can
+compact private reservations without changing published block meaning.
+
+Evidence: 48 PHP/native graph cases, a builder protocol trace and retained
+prototype agreement in results/body-flow-01. Authoring to first PHP checkpoint:
+160.660 seconds; one checker-only correction. First native build passed in 27.903
+seconds, zero native corrective cycles. Final harness cleanup removed unused
+copied fixture/data artifacts; tested production and probe sources were byte-audited.
+The body worker, lifetime analysis and full coordinator are not completed here.

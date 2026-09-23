@@ -1,0 +1,170 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/body-flow-native-02/source"
+      ],
+      "seconds": 0.074,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/body-flow-native-02/source"
+      ],
+      "seconds": 0.215,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/body-flow-native-02/source/src/04_analyze/check_bodies/data/flow.php",
+        "/tmp/body-flow-native-02/source/src/04_analyze/check_bodies/flow.php",
+        "/tmp/body-flow-native-02/source/src/04_analyze/check_bodies/utilities/flow_graph.php",
+        "/tmp/body-flow-native-02/source/fixture.php",
+        "/tmp/body-flow-native-02/source/probe.php",
+        "/tmp/body-flow-native-02/source/main.php"
+      ],
+      "seconds": 0.119,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/body-flow-native-02/source",
+        "/tmp/body-flow-native-02/phpp"
+      ],
+      "seconds": 0.151,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/body-flow-native-02/source",
+        "/tmp/body-flow-native-02/phpp"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/body-flow-native-02/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.059,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.007,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.029,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.163,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 27.903,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/body-flow-native-02/phpp/.prism/build/main"
+      ],
+      "seconds": 0.146,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.029,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790145673.6596198,
+  "php_ready_sha256": {
+    "src/04_analyze/check_bodies/data/flow.php": "ec286a5995cd798ac8a85925bbeefd046b70ed84d82587174f27b9dcf506facc",
+    "src/04_analyze/check_bodies/flow.php": "fefc9a81d51b5a8a1aefa3195c00c592f6a8ef27e649711f96090ad6fd8ed0d9",
+    "src/04_analyze/check_bodies/utilities/flow_graph.php": "d2df5ee3b6ac1d19f41773af8c3463e3911549027e0b5cf67acbc30207226fa8"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 48,
+  "body_flow_outcomes": 48,
+  "production_files": [
+    "src/04_analyze/check_bodies/data/flow.php",
+    "src/04_analyze/check_bodies/flow.php",
+    "src/04_analyze/check_bodies/utilities/flow_graph.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/check_bodies/data/flow.php": "ec286a5995cd798ac8a85925bbeefd046b70ed84d82587174f27b9dcf506facc",
+    "src/04_analyze/check_bodies/flow.php": "fefc9a81d51b5a8a1aefa3195c00c592f6a8ef27e649711f96090ad6fd8ed0d9",
+    "src/04_analyze/check_bodies/utilities/flow_graph.php": "d2df5ee3b6ac1d19f41773af8c3463e3911549027e0b5cf67acbc30207226fa8"
+  },
+  "native_attempts": 1,
+  "corrective_cycles": 0,
+  "checker_corrective_cycles": 1,
+  "retained_graph_cases": 48,
+  "authoring_start_utc": "2026-09-23T06:38:33Z",
+  "authoring_to_php_ready_seconds": 160.66,
+  "timing_note": "One checker-only correction made method successor arguments explicit. First native build passed. Final PHP harness removes unused copied input/empty fixture artifacts and adds retained oracle; native production/probe byte-audited unchanged."
+}
