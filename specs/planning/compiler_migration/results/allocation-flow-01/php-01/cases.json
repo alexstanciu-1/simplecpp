@@ -1,0 +1,133 @@
+[
+  {
+    "source": "function f(): int { return 0; } return 0;",
+    "expected": [
+      false,
+      [],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); storage_4<int32>($s); return 0; } return 0;",
+    "expected": [
+      true,
+      [],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { $s Storage<int32>; storage_0<int32>($s,4); return 0; } return 0;",
+    "expected": [
+      false,
+      [],
+      "Allocation must be released or transferred before its owner leaves scope"
+    ]
+  },
+  {
+    "source": "function f($p int): int { $s Storage<int32>; if ($p) { storage_0<int32>($s,4); } else { storage_0<int32>($s,8); } storage_4<int32>($s); return 0; } return 0;",
+    "expected": [
+      true,
+      [],
+      ""
+    ]
+  },
+  {
+    "source": "function f($p int): int { $s Storage<int32>; if ($p) { storage_0<int32>($s,4); } storage_4<int32>($s); return 0; } return 0;",
+    "expected": [
+      false,
+      [],
+      "Allocation ownership differs across control-flow paths"
+    ]
+  },
+  {
+    "source": "function f($p int): int { $s Storage<int32>; while ($p) { storage_0<int32>($s,4); storage_4<int32>($s); $p=0; } return 0; } return 0;",
+    "expected": [
+      true,
+      [],
+      ""
+    ]
+  },
+  {
+    "source": "function f($p int): int { $s Storage<int32>; while ($p) { storage_0<int32>($s,4); $p=0; } return 0; } return 0;",
+    "expected": [
+      false,
+      [],
+      "Allocation ownership differs across control-flow paths"
+    ]
+  },
+  {
+    "source": "function f($p int): int { while ($p) { $s Storage<int32>; storage_0<int32>($s,4); storage_4<int32>($s); $p=0; } return 0; } return 0;",
+    "expected": [
+      true,
+      [],
+      ""
+    ]
+  },
+  {
+    "source": "function f(): int { return 0; $s Storage<int32>; storage_0<int32>($s,4); } return 0;",
+    "expected": [
+      true,
+      [],
+      ""
+    ]
+  },
+  {
+    "source": "function f(const Box &$b): int { return 0; } return 0;",
+    "expected": [
+      true,
+      [
+        [
+          0,
+          "0",
+          3,
+          9,
+          false,
+          false
+        ]
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(const Box &$b): int { return storage_3<int32>($b->items); } return 0;",
+    "expected": [
+      true,
+      [
+        [
+          0,
+          "0",
+          3,
+          9,
+          false,
+          true
+        ]
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(const Box &$b): int32 { return $b->items[0]; } return 0;",
+    "expected": [
+      true,
+      [
+        [
+          0,
+          "0",
+          2,
+          9,
+          false,
+          true
+        ]
+      ],
+      ""
+    ]
+  },
+  {
+    "source": "function f(const Storage<int32> &$s): int { return 0; } return 0;",
+    "expected": [
+      false,
+      [],
+      "Allocation owner parameters require an ownership contract"
+    ]
+  }
+]

@@ -1,0 +1,4 @@
+{
+  "compiler/reference/pre-rewrite/src/04_analyze/analyze_lifetimes/allocation_flow.php": "2163ebd3a5a0564d6be258041610b3d67937cf5f12a5c50fb6c3385f2ef4d411",
+  "compiler/tests/allocation_flow/cases.py": "24e3dcd815d1222965284761cdc879e2741223f4f4e21be65bc94160c021cf36"
+}

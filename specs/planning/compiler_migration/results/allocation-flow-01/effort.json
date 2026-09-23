@@ -1,0 +1,18 @@
+{
+  "authoring_start_epoch": 1790159469.848352,
+  "first_php_ready_epoch": 1790159650.4879012,
+  "authoring_through_first_php_ready_seconds": 180.64,
+  "first_php_cases": 13,
+  "final_php_native_cases": 15,
+  "checker_corrective_cycles": 1,
+  "php_fixture_corrective_cycles": 0,
+  "native_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "cpp_builds": 1,
+  "native_build_seconds": 310.149,
+  "native_stabilization_wall_seconds": 418.086,
+  "notes": [
+    "Checker-only fixture correction materialized the entries map before keyed isset; production did not change.",
+    "Two convergence/stress cases and exact relation assertions were added before native execution; first PHP checkpoint remains 13 cases."
+  ]
+}
