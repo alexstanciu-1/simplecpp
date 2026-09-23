@@ -1,0 +1,65 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/body-operations-native-01/source"
+      ],
+      "seconds": 0.132,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/body-operations-native-01/source"
+      ],
+      "seconds": 1.068,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/lifetime_policy_codec.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/catalog.php",
+        "/tmp/body-operations-native-01/source/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/resolve_types/data/lifecycle_bodies.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/resolve_types/lifecycle_composition.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/type_record.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/result_contracts.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/store.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/resolve_types/utilities/type_cache.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/type_model/data/operations.php",
+        "/tmp/body-operations-native-01/source/src/04_analyze/check_bodies/utilities/operations.php",
+        "/tmp/body-operations-native-01/source/probe.php",
+        "/tmp/body-operations-native-01/source/main.php"
+      ],
+      "seconds": 0.073,
+      "exit": 255
+    }
+  ],
+  "native_build_attempts": 0
+}

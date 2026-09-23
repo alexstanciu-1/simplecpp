@@ -3035,3 +3035,19 @@ agreement, projection identity, membership isolation and bounds checks. Authorin
 to first PHP checkpoint: 82.526 seconds. First native
 build passed in 25.929 seconds with zero corrective cycles. Compact value-layout
 projection storage remains an optimization opportunity, not a claimed property.
+
+## Exact operation contracts and selection (2026-09-23)
+
+Before adapting operation-valued body rows, migrated their truthful type-model
+owner into data/operations.php. Binding tags are checked integers; operand IDs
+are copied typed-vector membership with bounded accessors. The selector retains
+exact-ID matching and declared wrapping/ordered capability checks, with explicit
+boolean-result availability and provider/native implementation identity. It does
+not infer operations from storage, mutate canonical rows, or add coercion.
+
+Evidence: 294 PHP/native catalog combinations with preserved-prototype agreement,
+plus membership/binding identity and bounds checks in results/body-operations-01.
+Authoring to first PHP checkpoint: 194.821 seconds,
+including one fixture correction from the obsolete definitions() accessor to
+size()/definition_at(). First native build passed in 54.024 seconds with no
+native correction. Typed value records and expression ordering remain separate.

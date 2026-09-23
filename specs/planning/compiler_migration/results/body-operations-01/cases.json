@@ -1,0 +1,2060 @@
+[
+  {
+    "left": "int",
+    "right": "int",
+    "operation": "addition",
+    "boolean": true,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "int",
+    "right": "int",
+    "operation": "addition",
+    "boolean": false,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "int",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": "less_signed"
+  },
+  {
+    "left": "int",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "float",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "float",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "void",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "void",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "uint32",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "uint32",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": "less_unsigned"
+  },
+  {
+    "left": "uint32",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "float",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "float",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "void",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "void",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint32",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "int32",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "int32",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": "less_signed"
+  },
+  {
+    "left": "int32",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "float",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "float",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "void",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "void",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "int32",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": true,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "uint8",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": false,
+    "entry": "add_wrap"
+  },
+  {
+    "left": "uint8",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": "less_unsigned"
+  },
+  {
+    "left": "uint8",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "float",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "float",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "void",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "void",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "uint8",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "float",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "float",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "void",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "void",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "bool",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "float",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "float",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "void",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "void",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "float",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int32",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int32",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "int32",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint8",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint8",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "uint8",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "bool",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "bool",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "bool",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "float",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "float",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "float",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "float",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "void",
+    "operation": "addition",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "void",
+    "operation": "addition",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "void",
+    "operation": "less_than",
+    "boolean": false,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": true,
+    "entry": ""
+  },
+  {
+    "left": "void",
+    "right": "void",
+    "operation": "unsupported",
+    "boolean": false,
+    "entry": ""
+  }
+]

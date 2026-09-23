@@ -95,7 +95,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('preparation_queue', Path(__file__).parent / 'preparation_queue/run.py'),
           ('instantiation_policy', Path(__file__).parent / 'instantiation_policy/run.py'),
           ('body_flow', Path(__file__).parent / 'body_flow/run.py'),
-          ('body_places', Path(__file__).parent / 'body_places/run.py')]
+          ('body_places', Path(__file__).parent / 'body_places/run.py'),
+          ('body_operations', Path(__file__).parent / 'body_operations/run.py')]
 
 
 def main():
