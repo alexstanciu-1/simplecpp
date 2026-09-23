@@ -2513,3 +2513,41 @@ Field_Type class spelling, and using a field-admissible int32 definition for rec
 
 All 30 PHP/native scenarios and the 14-case view regression pass. Native attempt one
 passed without corrections (`results/concrete-bindings-01`).
+
+
+## Literal-constant workers and batch acceptance
+
+The prototype Constant_Worker and Constant_Join now use the fixed Bindings reader.
+Unannotated constants use the configured integer-literal definition; annotations
+follow accepted type bindings and must denote an integer representation. Literal
+normalization and range checks stay with Integer_Literals through Bindings::literal.
+Expressions and references remain rejected as initializers; this adds no constant
+execution or folding capability.
+
+Tasks are an explicit vector of source Symbol_Record objects, normalized once into
+an ID-keyed map. The constructor rejects duplicates, non-constant owners and stale
+binding snapshots before accepting work. Results remain a typed ID-keyed map of
+Template_Argument objects, so duplicate result keys are not a representable batch
+shape. Cardinality, key membership, exact definition identity and normalized source
+spelling are checked before returning any accepted map. Output order follows task
+order even when worker results arrive in reverse order.
+
+The join preserves the prototype's division of responsibility: workers perform range
+validation, while the join checks that already-computed outputs match their selected
+source/type provenance without repeating decoding. Leading-zero normalization uses
+an explicit byte scan and handles all-zero input as '0', replacing PHP ltrim/truthiness.
+The accepted values feed Instance_State constants and owner provenance directly.
+
+Twenty-two PHP/native outcomes cover literal limits, zero normalization, unsupported
+initializers, source/type/value mismatches, incomplete/extra/foreign-key batches,
+duplicate or stale tasks, empty batches and registry integration. Ten host-only
+assertions check worker/join purity, rejection after an earlier valid row, recovery
+and accepted map isolation. The first fixture used a nonexistent int8 catalog name;
+it was corrected to the actual signed int32 contract and its exact limits.
+
+No constant selection/reuse coordinator, expression evaluator or application instance
+join is claimed. Phase timings retain the first passing PHP checkpoint; native waiting
+overlapped host-purity checks and consolidation drafting.
+
+All 22 PHP/native scenarios and 10 host invariants pass on native build one,
+without native corrections (`results/constant-batch-01`).

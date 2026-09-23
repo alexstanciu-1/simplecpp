@@ -1,7 +1,7 @@
 # Current migration dependency frontier
 Doc Status: planning
 
-Active readiness is **169 production files**: input preparation (137 outcomes),
+Active readiness is **170 production files**: input preparation (137 outcomes),
 tokenizer (304), parser storage/angle matching (414 plus a reused 5,000-stream PHP
 unit), expression grammar (132), and file statements/declarations (82 plus nine host lifecycle assertions). Exact native target remains
 `9b4b33f35f053b487e018c94d6a4a7888d77c64a`.
@@ -446,3 +446,12 @@ integer literal/constant/parameter reading and attributed rejection are proved.
 Native attempt one passed without corrections. Ready count is 169 files. Next:
 literal-constant batch preparation, then explicit application argument normalization
 and instance joins. No constant expression execution or complete pipeline is claimed.
+
+
+Literal-constant workers and batch acceptance add 22 PHP/native scenarios and
+10 host purity assertions (`results/constant-batch-01`). Exact typed values, integer
+limits, normalized spelling, source provenance and complete task-ordered acceptance
+are proved. Native build one passed without corrections. Ready count is 170 files.
+Next: application argument normalization and its storage-element eligibility
+dependency; preserve the Storage_Definitions owner when adapting that rule.
+No expression evaluation or complete concrete-preparation pipeline is claimed.

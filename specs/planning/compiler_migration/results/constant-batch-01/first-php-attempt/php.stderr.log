@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught LogicException: Project name resolution failed in /tmp/constant-batch-01/source/src/04_analyze/resolve_symbols/main_resolve_symbols.php:22
+Stack trace:
+#0 /tmp/constant-batch-01/source/probe.php(14): resolve_symbols\Resolution_Update->result()
+#1 /tmp/constant-batch-01/source/probe.php(35): constant_batch_test\Probe::reader()
+#2 /tmp/constant-batch-01/source/main.php(2): constant_batch_test\Probe::run()
+#3 Command line code(1): require('...')
+#4 {main}
+  thrown in /tmp/constant-batch-01/source/src/04_analyze/resolve_symbols/main_resolve_symbols.php on line 22

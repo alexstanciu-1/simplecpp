@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790136804.7194555,
+  "first_php_ready_epoch": 1790136836.1483834,
+  "authoring_to_php_ready_seconds": 31.428927898406982,
+  "first_php_summary": "/tmp/constant-batch-02/summary.json",
+  "checker_correction_cycles": 0,
+  "php_fixture_correction_cycles": 1,
+  "native_attempts_started": 1,
+  "first_native_pass_epoch": 1790137015.4851344,
+  "php_ready_to_native_pass_seconds": 179.3367509841919,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "final_verification_builds": 0,
+  "consolidation_end_epoch": 1790137064.107051,
+  "host_purity_assertions": 10
+}

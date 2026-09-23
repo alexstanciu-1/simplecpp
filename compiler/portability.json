@@ -170,7 +170,8 @@
     "src/04_analyze/instantiate/data/result.php",
     "src/04_analyze/instantiate/data/store.php",
     "src/04_analyze/resolve_types/utilities/annotation_types.php",
-    "src/04_analyze/instantiate/bindings.php"
+    "src/04_analyze/instantiate/bindings.php",
+    "src/04_analyze/instantiate/constants.php"
   ],
   "implementation_target": "tools/portability_target.json"
 }
