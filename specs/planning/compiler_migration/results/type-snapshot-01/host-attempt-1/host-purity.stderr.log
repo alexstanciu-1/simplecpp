@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught LogicException: Type snapshot invariant 15 in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/type_snapshot/purity.php:4
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/type_snapshot/purity.php(27): verify()
+#1 Command line code(1): require('...')
+#2 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/type_snapshot/purity.php on line 4

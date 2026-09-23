@@ -2869,3 +2869,30 @@ Selective rebuilding after a uint8 parameter-type invalidation retains unchanged
 entry identity and leaves the old snapshot untouched. Evidence:
 `results/signature-publication-01`. Local types, full snapshot assembly and type
 coordination remain open. No src-runtime-preparation code changed.
+
+
+## Type snapshot association assembly and family records
+
+Type_Resolution composes Signature_Set with copied local/family membership and a
+fixed Instance_Set. Signature and snapshot stores must be identical; local results
+retain exact current binding/owner identity, parameter ordering and canonical types.
+Entry identity/return definition and concrete instance identities are checked before
+publication. The constructor checks association coherence, not all worker obligations.
+
+Language/conversion indexes use flat numeric tuple keys instead of nested PHP maps.
+Missing lookups retain zero/null sentinels. Numeric tags are never inferred from
+provider names. Construction lookup and debug projections remain explicit migration
+debt; neither is silently replaced with an empty result. Body signatures expose an
+ordered typed vector; all signatures remain available through the shared Signature_Set.
+
+Family_Preparation_Task/Result copy operation/source-export memberships while sharing
+exact context, package, export and callable owners. The family preparation service
+and its acceptance join still own authorization; these carriers and snapshot checks
+do not replace package receipt/artifact validation. The existing Runtime_Type_Import
+file stays independent of the new concrete-instance dependency. No changes to the
+preserved PHP preparation tool were needed. Future optimization may replace string
+numeric-tuple keys with a typed composite key once justified by measurements.
+
+26 PHP/native outcomes and 26 host invariants pass on the first native
+attempt. Evidence: `results/type-snapshot-01`. Next are construction lookup/debug
+projection dependencies and local-type preparation, followed by coordinator assembly.

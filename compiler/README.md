@@ -2,13 +2,14 @@
 Doc Status: supporting
 
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
-The registered component proofs cover **192 production files** in PHP and native
+The registered component proofs cover **194 production files** in PHP and native
 PHP++. Coverage includes input preparation, tokenizer/parser, shared source/provider
 symbols, name resolution, type-model foundations, template checking, concrete
 instance preparation, records, and callable signature selection/publication/reuse.
 
-Next is complete type-snapshot assembly, including accepted-family associations,
-followed by local-type preparation and coordinator integration. Complete prepared-package
+Core type-snapshot assembly and accepted-family association checks are proved.
+Construction lookup, debug projections, local-type preparation and coordinator
+integration remain. Complete prepared-package
 consumption remains unfinished. No active compiler CLI or complete compilation
 pipeline exists yet.
 

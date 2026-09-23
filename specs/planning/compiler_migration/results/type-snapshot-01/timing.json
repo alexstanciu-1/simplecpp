@@ -1,0 +1,17 @@
+{
+  "authoring_clock_start_epoch": 1790142323.0,
+  "authoring_clock_scope": "Recorded before production authoring; excludes initial dependency/design inspection.",
+  "first_php_ready_epoch": 1790142600.5100503,
+  "authoring_to_php_seconds": 277.51005029678345,
+  "first_native_pass_epoch": 1790142890.2893543,
+  "php_ready_to_native_pass_seconds": 289.7793040275574,
+  "native_attempts": 1,
+  "cpp_build_attempts": 1,
+  "native_correction_cycles": 0,
+  "post_php_work": "Expanded host snapshot purity and collection isolation proofs; corrected fixture uint64 assumption to existing uint32.",
+  "checker_corrections_before_php": [
+    "Rename reserved test local default to is_default; correct runtime storage constant spelling."
+  ],
+  "host_invariants": 26,
+  "consolidation_epoch": 1790142904.6747613
+}
