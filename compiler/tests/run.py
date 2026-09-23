@@ -104,7 +104,8 @@ STAGES = [('read_manifest', Path(__file__).parent / 'read_manifest/run.py'),
           ('byte_literals', Path(__file__).parent / 'byte_literals/run.py'),
           ('body_output', Path(__file__).parent / 'body_output/run.py'),
           ('body_context', Path(__file__).parent / 'body_context/run.py'),
-          ('body_worker', Path(__file__).parent / 'body_worker/run.py')]
+          ('body_worker', Path(__file__).parent / 'body_worker/run.py'),
+          ('body_calls', Path(__file__).parent / 'body_calls/run.py')]
 
 
 def main():

@@ -3256,3 +3256,29 @@ body-frame names and explicit completion resolve both. Attempt two passed its fi
 C++ build (280.028 seconds), with zero C++ corrective cycles. A separate final native
 build verifies the expanded 58-case suite. Detailed commands, both builds and the
 original PHP-ready hashes are saved in results/body-worker-01.
+
+## Concrete body-call integration proof (2026-09-23)
+
+No production adaptation was needed. A bounded test preparation loop feeds actual
+Application_Worker/Instance_Join and Member_Worker/Member_Join outputs into the
+existing signature/local preparation and type snapshot. It follows newly accepted
+source contexts, including a concrete template calling another template and a method
+calling through `$this`. It is explicit fixture assembly, not a substitute for the
+unfinished production preparation coordinator.
+
+14 PHP/native scenarios prove mutable/const method receivers, a const parameter
+receiver, mutable-from-const rejection, receiver plus explicit arguments, repeated
+method calls, ordinary/nested template applications, bound type parameters, integer
+value parameters, contextual result widening and method arity rejection. The proof
+checks concrete callee bodies as well as caller plans, preserves accepted instance
+identity, verifies receiver passing/local identity and the instantiated literal value,
+and drains Expression_Order for resulting statements. Canonical-store counts remain
+unchanged during checking; repeated worker execution is rejected.
+
+One fixture assertion initially assumed receiver local ID one even when two function
+parameters precede it. The corrected expectation follows lexical local IDs. First PHP
+readiness: 189.669 seconds; first native
+build: 278.757 seconds, zero native corrections. Evidence: results/body-calls-01.
+This expands coverage without increasing the 226-file readiness count. Storage source
+expressions, successful byte/echo bindings and managed lifecycle paths remain focused
+integration follow-ups; complete body-stage selection/reuse/join remains to migrate.

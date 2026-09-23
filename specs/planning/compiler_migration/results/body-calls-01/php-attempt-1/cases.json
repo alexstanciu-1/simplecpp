@@ -1,0 +1,132 @@
+[
+  {
+    "name": "mutable_receiver",
+    "source": "function f(): int32 { $p Point; return $p->get(); }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 3,
+    "calls": 1,
+    "fall": false,
+    "receiver": 2
+  },
+  {
+    "name": "const_receiver",
+    "source": "function f(): int32 { $p Point; return $p->read(); }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 3,
+    "calls": 1,
+    "fall": false,
+    "receiver": 1
+  },
+  {
+    "name": "const_parameter_receiver",
+    "source": "function f(const Point &$p): int32 { return $p->read(); }  return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 2,
+    "calls": 1,
+    "fall": false,
+    "receiver": 1
+  },
+  {
+    "name": "const_to_mutable",
+    "source": "function f(const Point &$p): int32 { return $p->get(); }  return 0;",
+    "error": "A const reference cannot be passed as a mutable reference",
+    "statements": 1,
+    "values": 2,
+    "calls": 1,
+    "fall": false,
+    "receiver": 2
+  },
+  {
+    "name": "receiver_plus_arguments",
+    "source": "function f($x int32,$y int32): int32 { $p Point; return $p->pair($x,$y); }  return 0;",
+    "error": "",
+    "statements": 2,
+    "values": 5,
+    "calls": 1,
+    "fall": false,
+    "receiver": 2
+  },
+  {
+    "name": "repeated_method",
+    "source": "function f(): int32 { $p Point; $p->read(); return $p->read(); }  return 0;",
+    "error": "",
+    "statements": 3,
+    "values": 5,
+    "calls": 2,
+    "fall": false,
+    "receiver": 1
+  },
+  {
+    "name": "template_identity",
+    "source": "function f($x int32): int32 { return identity<int32>($x); } template<typename T> function identity($x T): T { return $x; } return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 2,
+    "calls": 1,
+    "fall": false,
+    "receiver": 0
+  },
+  {
+    "name": "nested_template",
+    "source": "function f($x int32): int32 { return identity<int32>(identity<int32>($x)); } template<typename T> function identity($x T): T { return $x; } return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 3,
+    "calls": 2,
+    "fall": false,
+    "receiver": 0
+  },
+  {
+    "name": "template_value",
+    "source": "function f(): int { return literal<7>(); } template<int N> function literal(): int { return N; } return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 1,
+    "calls": 1,
+    "fall": false,
+    "receiver": 0
+  },
+  {
+    "name": "bound_template_call",
+    "source": "function f($x int32): int32 { return outer<int32>($x); } template<typename T> function identity($x T): T { return $x; } template<typename T> function outer($x T): T { return identity<T>($x); } return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 2,
+    "calls": 1,
+    "fall": false,
+    "receiver": 0
+  },
+  {
+    "name": "generic_widen",
+    "source": "function f($x int32): int { return identity<int32>($x); } template<typename T> function identity($x T): T { return $x; } return 0;",
+    "error": "",
+    "statements": 1,
+    "values": 3,
+    "calls": 1,
+    "fall": false,
+    "receiver": 0
+  },
+  {
+    "name": "method_missing_arg",
+    "source": "function f($x int32): int32 { $p Point; return $p->pair($x); }  return 0;",
+    "error": "Call argument count does not match the resolved signature",
+    "statements": 2,
+    "values": 4,
+    "calls": 1,
+    "fall": false,
+    "receiver": 2
+  },
+  {
+    "name": "method_extra_arg",
+    "source": "function f($x int32): int32 { $p Point; return $p->get($x); }  return 0;",
+    "error": "Call argument count does not match the resolved signature",
+    "statements": 2,
+    "values": 3,
+    "calls": 1,
+    "fall": false,
+    "receiver": 2
+  }
+]

@@ -23,7 +23,7 @@ Produced plans are traversed by Expression_Order. Depth cases cover long operati
 nested calls and blocks. Explicit nested-call expectations are reused from the preserved
 prototype parameter-body tests. The prototype is not run as a complete compiler here.
 
-Remaining integration coverage: concrete method/template application bindings,
+Remaining integration coverage after the concrete-call proof below:
 storage-element expressions, metadata-bound byte/echo success paths, and managed
 lifecycle write/return paths beyond the proved plain-record cases. The corresponding
 worker algorithms are present. Whole body selection/reuse/join and the complete analysis
@@ -34,3 +34,13 @@ Source failures retain path/span/reason through the worker's diagnostic() reader
 Internal stale-state/incomplete-output errors do not fabricate a source diagnostic.
 Snapshot membership stays independent and immutable rows retain identity.
 Evidence and effort: `specs/planning/compiler_migration/results/body-worker-01`.
+
+## Concrete call integration
+
+The additional `compiler/tests/body_calls/run.py` proof executes 14 PHP/native
+scenarios through real application/member preparation, signature/local association,
+and source body checking. It checks both concrete callees and their callers. Method
+receiver modes/positions, ordinary and nested template calls, integer template values,
+`$this` calls and meaningful arity/borrow rejection pass without production changes.
+The fixture's bounded preparation loop is not the production coordinator. Evidence:
+`specs/planning/compiler_migration/results/body-calls-01`.
