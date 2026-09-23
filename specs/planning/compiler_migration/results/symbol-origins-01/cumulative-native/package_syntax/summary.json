@@ -1,0 +1,224 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source"
+      ],
+      "seconds": 0.095,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source"
+      ],
+      "seconds": 0.531,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/probe.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/main.php"
+      ],
+      "seconds": 0.056,
+      "exit": 0
+    },
+    {
+      "label": "retained-oracle",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/package_syntax/oracle.php"
+      ],
+      "seconds": 0.058,
+      "exit": 0
+    },
+    {
+      "label": "migrated-oracle",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/01_prepare_inputs/load_runtime/data/runtime.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/src/01_prepare_inputs/load_runtime/handlers/package_syntax.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source/probe.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/package_syntax/oracle.php"
+      ],
+      "seconds": 0.098,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/phpp"
+      ],
+      "seconds": 0.292,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/source",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/phpp"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.058,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.007,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.03,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.147,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 31.852,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/symbol-origins-cumulative-resume-01/package_syntax/phpp/.prism/build/main"
+      ],
+      "seconds": 0.007,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.026,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790132211.6335003,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/data/runtime.php": "2a730bd038a5cf9673883583f51c1a13a5d8692e798e3d9adc09670799a69937",
+    "src/01_prepare_inputs/load_runtime/handlers/package_syntax.php": "4447880a3380a37843f83268d3a0b0fb0bef3a65c9aa2b754540efb0c56f10ad"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 66,
+  "package_syntax_outcomes": 66,
+  "production_files": [
+    "src/01_prepare_inputs/load_runtime/data/runtime.php",
+    "src/01_prepare_inputs/load_runtime/handlers/package_syntax.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e",
+    "src/04_analyze/type_model/data/type_references.php": "e70468cf04d1f87b34238d90f38ae886c52b9e1ed3f6e3d348c70dc85da639d1",
+    "src/04_analyze/type_model/data/semantic_calls.php": "4e962b92bca91cbb600e18b9d2139f085d4e4b17e1906ac50c3095c3b481b905",
+    "src/04_analyze/type_model/data/callable_modes.php": "49166d285f320e1b8e1c34ee2f9b4150474546dc42ef73366f6ca4ded2622895",
+    "src/04_analyze/type_model/data/callables.php": "2450e8479025d72917f1a8f3b2abe7edcb432c835ed6385fc107b0abdcb9f146",
+    "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f",
+    "src/04_analyze/type_model/data/definitions.php": "6f4ee56c11e634bfdeeeb54a06f4405d35938e877f40f0696d9be599d3ac57df",
+    "src/04_analyze/type_model/data/storage.php": "d95e447a3cf801067b35e06970857b9d79ef3962126dfbcd1a60a00dcc53a4cf",
+    "src/04_analyze/type_model/data/records.php": "9eb9dd43f9e40ec116fee6323da4b67e1ed450a0670f0aa54eedc3d285d24cdd",
+    "src/01_prepare_inputs/load_runtime/data/runtime.php": "2a730bd038a5cf9673883583f51c1a13a5d8692e798e3d9adc09670799a69937",
+    "src/01_prepare_inputs/load_runtime/handlers/package_syntax.php": "4447880a3380a37843f83268d3a0b0fb0bef3a65c9aa2b754540efb0c56f10ad"
+  }
+}

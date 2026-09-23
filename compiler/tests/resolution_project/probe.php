@@ -60,11 +60,11 @@ final class Probe {
         $template_plan = new \resolve_symbols\Resolution_Plan($templates,$cold,$catalog,false); Probe::check($template_plan->task_count() === 4); Probe::check($template_plan->selected($entry));
         $new_templates = Probe::resolve($templates,$cold,$catalog,false);
         Probe::check($new_templates->for_symbol($entry) !== $cold->for_symbol($entry));
-        Probe::check($new_templates->for_symbol($entry)->applications_at(0)->definition === $templates->symbol_by_id($templates->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0)));
+        Probe::check($new_templates->for_symbol($entry)->applications_at(0)->definition === $templates->symbol_by_id($templates->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0,'')));
         $removed_files /** vector<\parse\Parse_Result> */ = [$a,$b,$d]; $removed = Probe::collect($removed_files,$symbols);
         $remove_plan = new \resolve_symbols\Resolution_Plan($removed,$cold,$catalog,false); Probe::check($remove_plan->task_count() === 0);
         $without_spare = Probe::resolve($removed,$cold,$catalog,false); Probe::check($without_spare->size() === 6);
-        Probe::check($without_spare->for_symbol($symbols->find_symbol('spare',\collect_symbols\SYMBOL_FUNCTION,0)) === null);
+        Probe::check($without_spare->for_symbol($symbols->find_symbol('spare',\collect_symbols\SYMBOL_FUNCTION,0,'')) === null);
         Probe::check($cold->size() === 8);
         $fresh_catalog = Probe::catalog(); $catalog_plan = new \resolve_symbols\Resolution_Plan($symbols,$cold,$fresh_catalog,false);
         Probe::check($catalog_plan->task_count() === 4);

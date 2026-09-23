@@ -312,3 +312,13 @@ have checked access and explicit exact-owner retention, including regenerated me
 wrappers and receiver passing checks. This replaces the union at the boundary;
 shared Symbol_Record origins, namespace-aware indexing and provider-aware name
 bindings remain to be integrated next. The carrier alone is not provider publication.
+
+
+Shared source/provider symbol integration now passes 24 PHP/native scenarios and
+the complete 68-stage native gate (`results/symbol-origins-01`). Explicit origins,
+namespace indexes, exact owner retention, source-only task membership and provider
+template argument roles compose without fabricated syntax. Provider families bypass
+source-definition permissions; source templates still require them. Ready-file count
+remains 156 because this changes existing owners. Next: provided-record bindings
+and symbolic interpretation; package artifact acceptance and full coordinator execution
+remain unfinished.

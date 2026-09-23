@@ -1,0 +1,56 @@
+{
+  "complete": false,
+  "passed_stages": [
+    {
+      "stage": "expressions",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/expressions/summary.json"
+    },
+    {
+      "stage": "read_manifest",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/read_manifest/summary.json"
+    },
+    {
+      "stage": "snapshot",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/snapshot/summary.json"
+    },
+    {
+      "stage": "parser_project",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/parser_project/summary.json"
+    },
+    {
+      "stage": "collect_symbols",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/collect_symbols/summary.json"
+    },
+    {
+      "stage": "tokenizer",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/tokenizer/summary.json"
+    },
+    {
+      "stage": "parser_foundation",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/parser_foundation/summary.json"
+    },
+    {
+      "stage": "statements",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/statements/summary.json"
+    },
+    {
+      "stage": "syntax_access",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/syntax_access/summary.json"
+    },
+    {
+      "stage": "discovery",
+      "native": true,
+      "summary": "/tmp/symbol-origins-cumulative-01/discovery/summary.json"
+    }
+  ],
+  "session_id": 56567
+}

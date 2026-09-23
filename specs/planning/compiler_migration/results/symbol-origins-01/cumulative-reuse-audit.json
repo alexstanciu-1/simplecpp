@@ -1,0 +1,32 @@
+{
+  "passed_stages": [
+    "expressions",
+    "name_lookup",
+    "read_manifest",
+    "snapshot",
+    "parser_project",
+    "type_store",
+    "collect_symbols",
+    "tokenizer",
+    "type_representations",
+    "entry_preparation",
+    "symbolic_terms",
+    "lexical_resolution",
+    "parser_foundation",
+    "provider_semantics",
+    "type_lifetimes",
+    "resolution_project",
+    "scalar_catalog",
+    "definition_view",
+    "statements",
+    "syntax_access",
+    "aggregate_lifecycles",
+    "instance_contexts",
+    "native_record_layout",
+    "instance_identities",
+    "record_materialization",
+    "resource_obligations",
+    "discovery"
+  ],
+  "staged_source_mismatches": []
+}

@@ -1,0 +1,187 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "host-purity",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/collect_symbols/purity.php"
+      ],
+      "seconds": 0.079,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-source-02/source"
+      ],
+      "seconds": 0.169,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-source-02/source"
+      ],
+      "seconds": 1.392,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-source-02/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/symbol-origins-source-02/source/src/02_tokenize/structures.php",
+        "/tmp/symbol-origins-source-02/source/src/02_tokenize/store.php",
+        "/tmp/symbol-origins-source-02/source/src/02_tokenize/tokenize.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/data/nodes.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/data/tree.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/utilities/binary_syntax.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/data/expression_state.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/handlers/expressions.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/data/result.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/handlers/statements.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/handlers/control_statements.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/handlers/declarations.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/handlers/metaprogramming.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/parse_file.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/data/role_views.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/utilities/metaprogramming_syntax.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/utilities/struct_member_cursor.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/utilities/syntax_access.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/utilities/syntax_comparer.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/data/store.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/select_tasks.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/join.php",
+        "/tmp/symbol-origins-source-02/source/src/03_parse/main_parse.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/generic.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/families.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/type_model/data/source_families.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/collect_symbols/data/provider_declaration.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/collect_symbols/data/structures.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/collect_symbols/data/store.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/collect_symbols/data/result.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/collect_symbols/collect.php",
+        "/tmp/symbol-origins-source-02/source/src/04_analyze/collect_symbols/main_collect_symbols.php",
+        "/tmp/symbol-origins-source-02/source/probe.php",
+        "/tmp/symbol-origins-source-02/source/main.php"
+      ],
+      "seconds": 0.066,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-source-02/source",
+        "/tmp/symbol-origins-source-02/phpp"
+      ],
+      "seconds": 0.627,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-source-02/source",
+        "/tmp/symbol-origins-source-02/phpp"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/symbol-origins-source-02/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.052,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 0,
+  "native": false,
+  "cases": 97,
+  "collection_outcomes": 97,
+  "host_purity_assertions": 9,
+  "production_files": [
+    "src/04_analyze/collect_symbols/data/structures.php",
+    "src/04_analyze/collect_symbols/data/store.php",
+    "src/04_analyze/collect_symbols/data/result.php",
+    "src/04_analyze/collect_symbols/collect.php",
+    "src/04_analyze/collect_symbols/main_collect_symbols.php"
+  ],
+  "source_sha256": {
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "806840885063fb61bd91700657756bb2e8e84a4f775be18ed866e770db01f583",
+    "src/02_tokenize/structures.php": "0b158c2c15618aecb1a8535a5d73cb7a282c0018995e1acda78282e5ca9a4f34",
+    "src/02_tokenize/store.php": "c4d81f32c641ab04fd75c69c9b782c437357e9df32f953545189ad8f979582a5",
+    "src/02_tokenize/tokenize.php": "de4fdc8891468187882e67b26a889e1e014a289fca9b8962ddd92820cfa96bc9",
+    "src/03_parse/data/nodes.php": "7e2627a4a5d9f9edbd3fc427a45fd3627fc0ef33dfc90894cfa27540873d81ea",
+    "src/03_parse/data/tree.php": "bfc18ac2d7cc0eb8bdbb291943f627cb5636334469b64d7415031f4108274619",
+    "src/03_parse/utilities/binary_syntax.php": "b48266fe3d5a9cd6d0799709f2fad1ff0d3f2de18c4a1ff7bc18798311562920",
+    "src/03_parse/data/expression_state.php": "2ae5aa0d7bf15e1a478a5e7d9ca13b9fbd6e227db18db57307e120567005adc4",
+    "src/03_parse/handlers/expressions.php": "d2aa8696cf698bee1148b7c3a2e79c99419ff49beac7f20ecbd0db7ac3036e10",
+    "src/03_parse/data/result.php": "de0db476535f0482cb1693fec6dca189d1cfdbe5a19e778bf0caa744375285ee",
+    "src/03_parse/handlers/statements.php": "43ceaac5c482d0bd3378ef935ed72ba41497dae62425f1d613b406c87cd187c6",
+    "src/03_parse/handlers/control_statements.php": "0b8bd2579ebf4bd298b670148113465fdb951ce808740f5b79e893d99ad81354",
+    "src/03_parse/handlers/declarations.php": "f702dae6c9b58d3f24a583dd7b7f7daeee80b424c6a465b25b3cfdda9c7cbea4",
+    "src/03_parse/handlers/metaprogramming.php": "5296084785919d49bd8391cbf33f0ef9c0741c71a79982442d4316c910bab413",
+    "src/03_parse/parse_file.php": "59ba771265e6332948922b05e233abc56e686d2070aa616c75d6dd288f326105",
+    "src/03_parse/data/role_views.php": "bd0ec207b8829ca69a5396e513d6f3c59d3243fab38c9e71dbacf9bce497d3cc",
+    "src/03_parse/utilities/metaprogramming_syntax.php": "3fefcb15efed3bc81eb396adbe3bab09144c8787f8c98c2d88393b34e7a998f2",
+    "src/03_parse/utilities/struct_member_cursor.php": "f78f7b0e6f620f0f3a9fd8f1c0ccea03489b897b337794eaa107be7c24992969",
+    "src/03_parse/utilities/syntax_access.php": "3d97687422af2a1a9ef80b3ad2092ebc7d9c8167cc6ecbc0a98a4e673fee30dc",
+    "src/03_parse/utilities/syntax_comparer.php": "cf6dc6df2100595a3f6e5fe7107964335fe1db3e8e317f6cb23695e2bd9d724a",
+    "src/03_parse/data/store.php": "e6681ad9fd981d2ca3b158c719370ff648b7a0b62d690e9f8d270b2fe8e73e10",
+    "src/03_parse/select_tasks.php": "0da2b806e5c0d6af1ffc46824cdc28a73e90a6b0e92ca9f628815c3c804a0033",
+    "src/03_parse/join.php": "2721f3f70a0a4e65dcdad173c0e573915341593fcb765f1b23e7e4968774886e",
+    "src/03_parse/main_parse.php": "2ec8f889783d0d4ab0837dfc3c79b51269e31bf9ad9813d6807c6bd71e4d3392",
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e",
+    "src/04_analyze/type_model/data/type_references.php": "e70468cf04d1f87b34238d90f38ae886c52b9e1ed3f6e3d348c70dc85da639d1",
+    "src/04_analyze/type_model/data/semantic_calls.php": "4e962b92bca91cbb600e18b9d2139f085d4e4b17e1906ac50c3095c3b481b905",
+    "src/04_analyze/type_model/data/callable_modes.php": "49166d285f320e1b8e1c34ee2f9b4150474546dc42ef73366f6ca4ded2622895",
+    "src/04_analyze/type_model/data/callables.php": "2450e8479025d72917f1a8f3b2abe7edcb432c835ed6385fc107b0abdcb9f146",
+    "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f",
+    "src/04_analyze/type_model/data/definitions.php": "6f4ee56c11e634bfdeeeb54a06f4405d35938e877f40f0696d9be599d3ac57df",
+    "src/04_analyze/type_model/data/storage.php": "d95e447a3cf801067b35e06970857b9d79ef3962126dfbcd1a60a00dcc53a4cf",
+    "src/04_analyze/type_model/data/generic.php": "6506e4546b768fce74e2cc74422b7f7bbd1a9b69ce93fd27d6d5bb88a3f44026",
+    "src/04_analyze/type_model/data/families.php": "3116b1601d88720d5dc0beba1afeccb1c217e3688465245545486639f9760cc7",
+    "src/04_analyze/type_model/data/source_families.php": "6f1fcaf2d3d028c79ba74cb81e6af444c1b27d804a2a86476a411d62e89c605e",
+    "src/04_analyze/collect_symbols/data/provider_declaration.php": "b7c51a1b8787e2abe8917a103b94840139e96ab5f53cbde262af0cf397a7517b",
+    "src/04_analyze/collect_symbols/data/structures.php": "a886a413b0bdcc93874266eefd6f2a097d983b405cdd2cecc9b938d333316614",
+    "src/04_analyze/collect_symbols/data/store.php": "4ed1528a6bdeee090991d425a99ee932091202f1293d51d3ef28a683f47631ac",
+    "src/04_analyze/collect_symbols/data/result.php": "92cf3afd75e93f52b095c79dbc1bfa091d7e98b18044d93c1ee6f23138a9c428",
+    "src/04_analyze/collect_symbols/collect.php": "79b48181374ac672e7b0ed07617486af2704a5aedfdf1a4a03fe395f3083e6e5",
+    "src/04_analyze/collect_symbols/main_collect_symbols.php": "58ec01fb3e493959f313664279f86314daf032863dc0ea9dbe3cc10e59c1bc71"
+  }
+}

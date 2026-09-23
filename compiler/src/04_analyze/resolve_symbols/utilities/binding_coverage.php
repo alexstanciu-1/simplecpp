@@ -66,27 +66,27 @@ final class Binding_Coverage {
     private function inspect(): bool {
         if (!$this->prepare()) { return false; }
         $owner = $this->result->owner;
-        $root = (int)$owner->declaration->declaration_node_id;
-        if ($root === 0) { $root = (int)$owner->declaration->body_node_id; }
+        $root = (int)$owner->source_fact()->declaration_node_id;
+        if ($root === 0) { $root = (int)$owner->source_fact()->body_node_id; }
         $this->push($root,false,0,\resolve_symbols\LOCAL_READ,0,0);
         if ($owner->owner_symbol_id !== 0) {
             if ($this->result->locals_count() === 0) { return false; }
             if (!$this->result->locals_at(0)->receiver) { return false; }
-            if ($this->declarations->consume((int)$owner->declaration->declaration_node_id) !== 1) { return false; }
+            if ($this->declarations->consume((int)$owner->source_fact()->declaration_node_id) !== 1) { return false; }
             $this->scope_names[0]->add_local('$this',1);
-            $this->push((int)$owner->declaration->template_parameters_node_id,false,0,\resolve_symbols\LOCAL_READ,0,0);
+            $this->push((int)$owner->source_fact()->template_parameters_node_id,false,0,\resolve_symbols\LOCAL_READ,0,0);
         }
         while ($this->used > 0) {
             $this->used = $this->used - 1; $cursor = $this->pending[$this->used];
             if ($cursor->publish_parameter) {
-                $parts = \parse\Syntax_Access::template_parameter_parts($this->result->owner->frontend->tree,$cursor->node);
+                $parts = \parse\Syntax_Access::template_parameter_parts($this->result->owner->source_frontend()->tree,$cursor->node);
                 $name = $this->text((int)$parts->name_id); $this->template_names[$name] = true;
             } elseif (!$this->visit($cursor)) { return false; }
         }
         return $this->calls->complete() && $this->names->complete() && $this->applications->complete()
             && $this->members->complete() && $this->declarations->complete() && $this->scopes->complete() && $this->uses->complete();
     }
-    private function text(int $node): string { return \collect_symbols\File_Collector::name_text($this->result->owner->frontend,$node); }
+    private function text(int $node): string { return \collect_symbols\File_Collector::name_text($this->result->owner->source_frontend(),$node); }
     private function visible(string $name, int $scope, bool $constant): int {
         $id = $scope;
         while ($id !== 0) {
@@ -117,7 +117,7 @@ final class Binding_Coverage {
             && ((int)$binding->local_id === $visible) && ((int)$binding->access === $cursor->access);
     }
     private function visit(Coverage_Cursor $cursor): bool {
-        $id = $cursor->node; $scope = $cursor->scope; $tree = $this->result->owner->frontend->tree; $node = $tree->row($id); $kind = (int)$node->kind;
+        $id = $cursor->node; $scope = $cursor->scope; $tree = $this->result->owner->source_frontend()->tree; $node = $tree->row($id); $kind = (int)$node->kind;
         if ($cursor->siblings) { $this->push((int)$node->next_sibling,true,$scope,$cursor->access,$cursor->initializing_local,$cursor->initializing_constant); }
         if ($kind === \parse\SYNTAX_NAME) { return $this->free_name($cursor); }
         if ($kind === \parse\SYNTAX_VARIABLE_NAME) { return $this->variable($cursor); }
@@ -154,7 +154,7 @@ final class Binding_Coverage {
         }
         if ($kind === \parse\SYNTAX_CONSTANT_DECLARATION) {
             $parts = \parse\Syntax_Access::constant_parts($tree,$id); $initializing = 0;
-            if ($id !== (int)$this->result->owner->declaration->declaration_node_id) {
+            if ($id !== (int)$this->result->owner->source_fact()->declaration_node_id) {
                 if ($this->declarations->consume($id) !== $scope) { return false; }
                 $name = $this->text((int)$parts->name_id); if ($this->scope_names[$scope-1]->constant($name) !== 0) { return false; }
                 $this->scope_names[$scope-1]->add_constant($name,$id); $initializing = $id;
@@ -174,7 +174,7 @@ final class Binding_Coverage {
         }
         $child = (int)$node->first_child; $follow = true;
         if ($kind === \parse\SYNTAX_METHOD_DECLARATION) {
-            if ($id !== (int)$this->result->owner->declaration->declaration_node_id) { $child = 0; }
+            if ($id !== (int)$this->result->owner->source_fact()->declaration_node_id) { $child = 0; }
             $follow = false;
         } elseif ($kind === \parse\SYNTAX_TYPE_PARAMETER_DECLARATION) {
             $name = $this->text($child); $this->template_names[$name] = true; $child = 0;

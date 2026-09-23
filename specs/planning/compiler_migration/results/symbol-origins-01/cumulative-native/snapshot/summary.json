@@ -1,0 +1,201 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source"
+      ],
+      "seconds": 0.294,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source"
+      ],
+      "seconds": 0.929,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_manifest/data/project_manifest.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_manifest/manifest_reader.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/utilities/paths.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/data/listing.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/scan.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/main_discover_sources.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/read.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/main_read_sources.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/probe.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/main.php"
+      ],
+      "seconds": 0.219,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source",
+        "/tmp/symbol-origins-cumulative-01/snapshot/phpp"
+      ],
+      "seconds": 0.316,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source",
+        "/tmp/symbol-origins-cumulative-01/snapshot/phpp"
+      ],
+      "seconds": 0.177,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.154,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.029,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.057,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.39,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 28.33,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/symbol-origins-cumulative-01/snapshot/phpp/.prism/build/main"
+      ],
+      "seconds": 0.011,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.026,
+      "exit": 0
+    },
+    {
+      "label": "php-refresh",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_manifest/data/project_manifest.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_manifest/manifest_reader.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/utilities/paths.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/data/listing.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/scan.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/main_discover_sources.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/read.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/src/01_prepare_inputs/read_sources/main_read_sources.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/probe.php",
+        "/tmp/symbol-origins-cumulative-01/snapshot/source/main.php"
+      ],
+      "seconds": 0.056,
+      "exit": 0
+    },
+    {
+      "label": "native-refresh",
+      "command": [
+        "/tmp/symbol-origins-cumulative-01/snapshot/phpp/.prism/build/main"
+      ],
+      "seconds": 0.007,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 20,
+  "refresh_cases": 20,
+  "production_files": [
+    "src/01_prepare_inputs/read_sources/data/buffer.php",
+    "src/01_prepare_inputs/read_sources/read.php",
+    "src/01_prepare_inputs/read_sources/main_read_sources.php"
+  ],
+  "source_sha256": {
+    "src/01_prepare_inputs/read_manifest/data/project_manifest.php": "08690ede76edf1ab61848c3d0e69dad0e3236dc6d4333a26addcf95b55e28689",
+    "src/01_prepare_inputs/read_manifest/utilities/manifest_syntax.php": "bda7d4261062f33de11c810aea5683a6f423d871530dbdcd65ec6863e25dc4ae",
+    "src/01_prepare_inputs/read_manifest/manifest_reader.php": "1b600031960269d32dcffbe3cab99c6f8335d965555b64a301e955c9bd8acd8d",
+    "src/01_prepare_inputs/read_sources/utilities/paths.php": "432832947b9856bcd8f5b4ec73311abcd9cf7cae2f0cfbcd51077e7cc46b1fb8",
+    "src/01_prepare_inputs/read_sources/data/listing.php": "82a433e2ce7822478baf82eadfd808fd1afcf9dfb480320f653235a1cef3d619",
+    "src/01_prepare_inputs/read_sources/scan.php": "f69164dace487e897bf63e7cda56e19dc9ee44d06e196373e1b10a455328eafd",
+    "src/01_prepare_inputs/read_sources/main_discover_sources.php": "86dd7075ffd4fa03560fc855ec3ac0161eea9d93e289dcfe15073366cfc4787a",
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "806840885063fb61bd91700657756bb2e8e84a4f775be18ed866e770db01f583",
+    "src/01_prepare_inputs/read_sources/read.php": "1ba2de11348eeb37e58430c8654c68d6e670944c19a501c63fb7bd07d7109a75",
+    "src/01_prepare_inputs/read_sources/main_read_sources.php": "1cbef88579f63352b9423486ef88bae83442e25cbd2f0948c36f97872ff14c40"
+  }
+}

@@ -19,14 +19,14 @@ final class Probe {
         Probe::check($integer->target_id === 0);
         Probe::check($integer->kind === \resolve_symbols\REFERENCE_PROVIDED_TYPE);
         $box = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',2,\resolve_symbols\NAME_TYPE);
-        Probe::check($box->target_id === $store->find_symbol('Box',\collect_symbols\SYMBOL_STRUCT,0));
+        Probe::check($box->target_id === $store->find_symbol('Box',\collect_symbols\SYMBOL_STRUCT,0,''));
         Probe::check($box->provided_type === null);
         Probe::check($box->kind === \resolve_symbols\REFERENCE_SOURCE_TYPE);
         $bag = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'Bag',3,\resolve_symbols\NAME_TYPE_FAMILY);
-        Probe::check($bag->target_id === $store->find_symbol('Bag',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0));
+        Probe::check($bag->target_id === $store->find_symbol('Bag',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0,''));
         Probe::check($bag->kind === \resolve_symbols\REFERENCE_TEMPLATE_TYPE);
         $constant = \resolve_symbols\Declaration_Lookup::find($store,$catalog,'N',4,\resolve_symbols\NAME_VALUE);
-        Probe::check($constant->target_id === $store->find_symbol('N',\collect_symbols\SYMBOL_CONSTANT,0));
+        Probe::check($constant->target_id === $store->find_symbol('N',\collect_symbols\SYMBOL_CONSTANT,0,''));
         Probe::check($constant->kind === \resolve_symbols\REFERENCE_PROJECT_CONSTANT);
         Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'N',1,\resolve_symbols\NAME_TYPE) === null);
         Probe::check(\resolve_symbols\Declaration_Lookup::find($store,$catalog,'Box',1,\resolve_symbols\NAME_VALUE) === null);
@@ -44,20 +44,20 @@ final class Probe {
         Probe::check($zero->target_id === 0);
         foreach ($store->child_symbol_ids(0) as $id) {
             $record = $store->symbol_by_id($id);
-            if ((int)$record->declaration->kind === \collect_symbols\SYMBOL_FUNCTION) {
-                Probe::check(\resolve_symbols\Function_Lookup::find($record,(int)$record->declaration->name_node_id,$store) === $id);
+            if ($record->kind() === \collect_symbols\SYMBOL_FUNCTION) {
+                Probe::check(\resolve_symbols\Function_Lookup::find($record,(int)$record->source_fact()->name_node_id,$store) === $id);
             }
-            if ((int)$record->declaration->kind === \collect_symbols\SYMBOL_TEMPLATE_FUNCTION) {
-                Probe::check(\resolve_symbols\Function_Lookup::find($record,(int)$record->declaration->name_node_id,$store) === $id);
+            if ($record->kind() === \collect_symbols\SYMBOL_TEMPLATE_FUNCTION) {
+                Probe::check(\resolve_symbols\Function_Lookup::find($record,(int)$record->source_fact()->name_node_id,$store) === $id);
             }
         }
-        $member = $store->symbol_by_id($store->find_symbol('size',\collect_symbols\SYMBOL_FUNCTION,$box->target_id));
-        Probe::check(\resolve_symbols\Function_Lookup::find($member,(int)$member->declaration->name_node_id,$store) === 0);
+        $member = $store->symbol_by_id($store->find_symbol('size',\collect_symbols\SYMBOL_FUNCTION,$box->target_id,''));
+        Probe::check(\resolve_symbols\Function_Lookup::find($member,(int)$member->source_fact()->name_node_id,$store) === 0);
         $bad = false;
         try { \resolve_symbols\Declaration_Lookup::find($store,$catalog,'missing',1,0); } catch (\InvalidArgumentException $e) { $bad = true; }
         Probe::check($bad);
         $bad = false;
-        try { \resolve_symbols\Function_Lookup::find($member,(int)$member->declaration->body_node_id,$store); } catch (\InvalidArgumentException $e) { $bad = true; }
+        try { \resolve_symbols\Function_Lookup::find($member,(int)$member->source_fact()->body_node_id,$store); } catch (\InvalidArgumentException $e) { $bad = true; }
         Probe::check($bad);
     }
     public static function invalid(int $node, int $role, int $kind, int $target): void {

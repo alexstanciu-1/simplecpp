@@ -23,7 +23,7 @@ check(!$failed->valid && $failed->current->size() === 0 && $failed->changes === 
 check(serialize($first) === $baseline && serialize($bad) === $bad_before, 'Failure preserves both snapshots');
 $rebound = project($frontends->files[0]->tokens->source->content);
 $again = \collect_symbols\Declaration_Collector::collect($rebound, $first->current, false);
-check(count($again->changes) === 3 && $again->current->record_at(1)->frontend === $rebound->files[0], 'Equal bytes with fresh frontend retain identity but need comparison');
+check(count($again->changes) === 3 && $again->current->record_at(1)->source_frontend() === $rebound->files[0], 'Equal bytes with fresh frontend retain identity but need comparison');
 check(serialize($again->current) === serialize($first->current), 'Fresh frontend yields equal source facts');
 $invalid = project(''); $invalid->valid = false;
 try { \collect_symbols\Declaration_Collector::collect($invalid, $first->current, false); throw new RuntimeException('Accepted invalid frontend set'); } catch (LogicException $error) {}

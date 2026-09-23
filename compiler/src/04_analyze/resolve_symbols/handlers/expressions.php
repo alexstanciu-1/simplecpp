@@ -5,7 +5,7 @@ trait Expression_Resolution {
     private function expression(int $id, int $scope, int $initializing, int $role, string $description): void {
         if ($id === 0) { return; }
         $pending = new Expression_Stack(); $pending->push(new Binding_Cursor($id,$role,false,$description));
-        $tree = $this->owner->frontend->tree;
+        $tree = $this->owner->source_frontend()->tree;
         while (!$pending->empty()) {
             $cursor = $pending->pop(); $node = $tree->row($cursor->node_id);
             if ($cursor->siblings) {
@@ -15,7 +15,7 @@ trait Expression_Resolution {
         }
     }
     private function expression_node(Binding_Cursor $cursor, int $scope, int $initializing, Expression_Stack $pending): void {
-        $id = $cursor->node_id; $tree = $this->owner->frontend->tree; $node = $tree->row($id); $kind = (int)$node->kind;
+        $id = $cursor->node_id; $tree = $this->owner->source_frontend()->tree; $node = $tree->row($id); $kind = (int)$node->kind;
         if ($kind === \parse\SYNTAX_TEMPLATE_APPLICATION) {
             if ($cursor->role !== \resolve_symbols\NAME_TYPE) { $this->fail($id,'A template type application is not a value expression'); }
             $parts = \parse\Syntax_Access::template_application_parts($tree,$id);
@@ -37,7 +37,7 @@ trait Expression_Resolution {
         elseif (($kind !== \parse\SYNTAX_INTEGER_LITERAL) && ($kind !== \parse\SYNTAX_STRING_LITERAL) && ($kind !== \parse\SYNTAX_BOOLEAN_LITERAL)) { $this->fail($id,'Unsupported expression for name resolution: ' . $kind); }
     }
     private function call_expression(int $id, int $scope, Expression_Stack $pending, string $description): void {
-        $tree = $this->owner->frontend->tree; $target_id = \parse\Syntax_Access::call_target($tree,$id); $node = $tree->row($target_id);
+        $tree = $this->owner->source_frontend()->tree; $target_id = \parse\Syntax_Access::call_target($tree,$id); $node = $tree->row($target_id);
         if ((int)$node->kind === \parse\SYNTAX_FIELD_EXPRESSION) {
             $receiver = (int)$node->first_child;
             if ((int)$tree->row($receiver)->kind !== \parse\SYNTAX_VARIABLE_NAME) { $this->fail($receiver,'Method calls currently require a local receiver'); }
@@ -51,21 +51,35 @@ trait Expression_Resolution {
         if ($application) { $name_id = (int)\parse\Syntax_Access::template_application_parts($tree,$target_id)->name_id; }
         $name = $this->text($name_id);
         if (isset($this->parameter_names[$name])) { $this->fail($name_id,'Calling a template parameter is unsupported'); }
-        if (($this->find_constant($name,$scope) !== 0) || ($this->symbols->find_symbol($name,\collect_symbols\SYMBOL_CONSTANT,0) !== 0)) { $this->fail($name_id,'Calling a constant is not implemented'); }
+        if (($this->find_constant($name,$scope) !== 0) || ($this->symbols->find_symbol($name,\collect_symbols\SYMBOL_CONSTANT,0,'') !== 0)) { $this->fail($name_id,'Calling a constant is not implemented'); }
         $target = Function_Lookup::find($this->owner,$name_id,$this->symbols);
         if ($target === 0) { $this->fail($name_id,"Unknown function '" . $name . "'"); }
         $row = new Symbol_Binding(); $row->use_node_id = $name_id; $row->target_symbol_id = $target; $this->calls[] = $row;
         $argument = \parse\Syntax_Access::first_argument($tree,$id);
         if ($argument !== 0) { $pending->push(new Binding_Cursor($argument,\resolve_symbols\NAME_VALUE,true,$description)); }
         if ($application) {
-            if ((int)$this->symbols->symbol_by_id($target)->declaration->kind !== \collect_symbols\SYMBOL_TEMPLATE_FUNCTION) { $this->fail($target_id,'Template arguments require a template function'); }
+            if ($this->symbols->symbol_by_id($target)->kind() !== \collect_symbols\SYMBOL_TEMPLATE_FUNCTION) { $this->fail($target_id,'Template arguments require a template function'); }
             $this->application_arguments($target_id,$target,$pending,$description);
         } elseif ($this->symbols->symbol_by_id($target)->is_template()) { $this->fail($name_id,'Template argument deduction is not implemented; provide explicit arguments'); }
     }
     private function application_arguments(int $id, int $target, Expression_Stack $pending, string $description): void {
-        $tree = $this->owner->frontend->tree; $argument = (int)\parse\Syntax_Access::template_application_parts($tree,$id)->first_argument_id;
+        $tree = $this->owner->source_frontend()->tree; $argument = (int)\parse\Syntax_Access::template_application_parts($tree,$id)->first_argument_id;
         $definition = $this->symbols->symbol_by_id($target); $this->applications[] = new Template_Application_Binding($id,$definition);
-        $source = $definition->frontend->tree; $list = (int)$definition->declaration->template_parameters_node_id;
+        if (!$definition->is_source()) {
+            $external = $definition->provider(); $arity = 1;
+            if ($external->kind() === \collect_symbols\PROVIDER_FAMILY) { $arity = $external->family()->definition->parameter_count(); }
+            $provider_arguments /** vector<Binding_Cursor> */ = [];
+            for ($slot = 0; $slot < $arity; $slot++) {
+                if ($argument === 0) { $this->fail($id,'Provider family type argument count mismatch'); }
+                $provider_arguments[] = new Binding_Cursor($argument,\resolve_symbols\NAME_TYPE,false,$description);
+                $argument = (int)$tree->row($argument)->next_sibling;
+            }
+            if ($argument !== 0) { $this->fail($id,'Provider family type argument count mismatch'); }
+            $position_provider = q_count($provider_arguments);
+            while ($position_provider > 0) { $position_provider = $position_provider - 1; $pending->push($provider_arguments[$position_provider]); }
+            return;
+        }
+        $source = $definition->source_frontend()->tree; $list = (int)$definition->source_fact()->template_parameters_node_id;
         $arguments /** vector<Binding_Cursor> */ = []; $parameter = (int)$source->row($list)->first_child;
         while ($parameter !== 0) {
             if ($argument === 0) { $this->fail($id,'Template argument count mismatch'); }
@@ -80,7 +94,7 @@ trait Expression_Resolution {
     }
     /** Leaf-to-root location operands; callers choose forward or stack scheduling. */
     private function place_indices(int $id): array /** vector<int> */ {
-        $tree = $this->owner->frontend->tree; $out /** vector<int> */ = [];
+        $tree = $this->owner->source_frontend()->tree; $out /** vector<int> */ = [];
         while (true) {
             $node = $tree->row($id); $kind = (int)$node->kind;
             if (($kind !== \parse\SYNTAX_FIELD_EXPRESSION) && ($kind !== \parse\SYNTAX_INDEX_EXPRESSION)) { break; }

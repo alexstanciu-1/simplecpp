@@ -34,9 +34,9 @@ final class Probe {
         $entry = \resolve_types\Entry_Preparation::prepare($files, $collection);
         Probe::check($entry->valid);
         Probe::check($entry->symbol() === $collection->current->symbol_by_id($collection->current->entry_symbol_id('/not-on-disk/main.phs')));
-        Probe::check($entry->symbol()->frontend === $files->files[0]);
-        Probe::check((int)$entry->symbol()->declaration->declaration_node_id === 0);
-        Probe::check((int)$entry->symbol()->declaration->body_node_id === $files->files[0]->entry);
+        Probe::check($entry->symbol()->source_frontend() === $files->files[0]);
+        Probe::check((int)$entry->symbol()->source_fact()->declaration_node_id === 0);
+        Probe::check((int)$entry->symbol()->source_fact()->body_node_id === $files->files[0]->entry);
         Probe::check($entry->symbol()->name === '');
         Probe::check($entry->error_path === '');
         $warm = \resolve_types\Entry_Preparation::prepare($files, $collection);
@@ -53,7 +53,7 @@ final class Probe {
         Probe::check(\resolve_types\Entry_Preparation::prepare($empty, $empty_symbols)->valid);
         $empty->entry_index = 1;
         $switched = \resolve_types\Entry_Preparation::prepare($empty, $empty_symbols);
-        Probe::check($switched->symbol()->frontend === $empty->files[1]);
+        Probe::check($switched->symbol()->source_frontend() === $empty->files[1]);
         Probe::check($switched->symbol()->symbol_id !== $empty_symbols->current->entry_symbol_id('/not-on-disk/main.phs'));
         // This phase does not type-check entry returns or resolve references.
         $untyped = Probe::project('return unknown_name;', '');
@@ -86,8 +86,8 @@ final class Probe {
         $repair = \resolve_types\Entry_Preparation::prepare($repaired, $repair_symbols);
         Probe::check($repair->valid);
         Probe::check($repair->symbol()->symbol_id === $entry->symbol()->symbol_id);
-        Probe::check($repair->symbol()->frontend === $repaired->files[0]);
-        Probe::check($entry->symbol()->frontend === $files->files[0]);
+        Probe::check($repair->symbol()->source_frontend() === $repaired->files[0]);
+        Probe::check($entry->symbol()->source_frontend() === $files->files[0]);
         Probe::check(Probe::rejects($repaired, $collection));
         Probe::check(Probe::rejects($files, $repair_symbols));
         $missing = new \parse\Frontend_Set();
@@ -117,7 +117,7 @@ final class Probe {
         Probe::check(Probe::rejects($truncated, $truncated_symbols));
         $named_rejected = false;
         try {
-            $wrong = new \resolve_types\Entry_Selection($collection->current, $collection->current->find_symbol('answer', \collect_symbols\SYMBOL_FUNCTION, 0));
+            $wrong = new \resolve_types\Entry_Selection($collection->current, $collection->current->find_symbol('answer', \collect_symbols\SYMBOL_FUNCTION, 0,''));
         } catch (\LogicException $error) { $named_rejected = true; }
         Probe::check($named_rejected);
     }

@@ -8,7 +8,9 @@ final class Resolution_Plan {
     public function __construct(public readonly \collect_symbols\Symbol_Store $symbols,
         public readonly Resolution_Set $previous, public readonly \type_model\Type_Catalog $catalog, bool $full) {
         for ($position = 0; $position < $symbols->size(); $position++) {
-            $owner = $symbols->record_at($position); $retained = false;
+            $owner = $symbols->record_at($position);
+            if (!$owner->is_source()) { continue; }
+            $retained = false;
             if (!$full) {
                 $old = $previous->for_symbol($owner->symbol_id);
                 if ($old !== null) { $retained = Resolution_Validity::is_current($old,$owner,$symbols,$catalog); }

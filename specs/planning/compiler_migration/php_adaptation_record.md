@@ -2185,3 +2185,77 @@ receiver passing. Storage fixtures test the carrier, not complete provider-packa
 acceptance. No converter or runtime-preparation changes are involved. A later union
 or layout optimization may reduce the five nullable handle fields, after this
 closed variant contract is integrated and profiled.
+
+
+## Shared source/provider symbol origins and qualified indexes
+
+Symbol_Record now contains exactly one Source_Declaration or Provider_Declaration.
+The source carrier owns the actual frontend and compact Declaration_Fact; provider
+records never carry empty/fabricated syntax. Checked source_frontend/source_fact and
+provider accessors replace direct source-only field reads across existing consumers.
+Semantic kind, template status and receiver constness are available independently
+of source presence. Ordinary published records remain immutable by authoring discipline;
+this does not introduce a new deep-freezing or copy-on-write mechanism.
+
+Symbol_Store keeps dense rows and stable IDs. Its name key now retains the prototype
+byte-length-prefixed namespace plus owner and kind; only source records enter file/entry indexes.
+All common/source/provider ownership checks precede mutation. A provider method must
+refer to the exact generic family carried by its existing parent symbol; same-name
+reconstructed families do not substitute. Namespace arguments are explicit because
+the converter does not currently accept ordinary method defaults. Existing source-only
+collect delegates through one shared with_providers implementation using an empty typed
+vector; there are not separate collection algorithms.
+
+The collector consumes a fixed ordered vector of authoritative provider declarations,
+with family declarations before their methods. Accepted package/family consumers will
+supply this vector; this boundary does not accept or authenticate package artifacts.
+It retains exact unchanged symbols, reuses regenerated member wrappers under their
+proved owner rules, reports removals, and keeps stable IDs for replacements at the
+same scope/category/name, including source/provider origin changes. Source diagnostics
+retain their existing path/span behavior; project/provider collisions reject the private
+candidate without modifying the baseline.
+
+Entry checks and resolution task selection/publication now count actual source owners.
+A provider cannot become a source worker task or a Symbol_Resolution. Source calls can
+still bind provider symbol IDs. Explicit provider template arguments use the declared
+generic-family arity (one for the prototype's storage/function forms) and type roles,
+without fabricated formal-parameter nodes. The source application's exact declaration
+association participates in incremental validity, so a reconstructed provider template
+owner invalidates its dependent resolution.
+
+The first focused native build passed 18 integrated scenarios without native correction.
+The expanded 23-scenario PHP proof additionally covers template arity errors, generic
+family references, provider-template dependency invalidation and source/provider
+replacement while retaining IDs and old snapshots. All 23 scenarios pass final focused native verification;
+cumulative native regression status is tracked in `results/symbol-origins-01`.
+The existing source collection's 97 outcomes remain unchanged. Ready-file counts do
+not increase: this is integration of existing owners, not another group of leaf records.
+
+Remaining provider work includes provided-record Name_Binding identity/lookup/reuse,
+prepared-package-to-declaration orchestration and full symbolic template workers.
+Package artifact hashing/executable verification and end-to-end coordinator execution
+remain separate unfinished dependencies. No prototype language functionality, v0.1
+code or src-runtime-preparation implementation is changed.
+
+Consolidation found the same source-only boundary in Template_Set: provider families
+do not require a source definition permission result. The prototype origin guard is
+restored, with a 24th integration scenario contrasting provider and source templates.
+The cumulative native suite must prove this final source state before commit.
+
+Optimization note: Source_Declaration currently adds one ordinary shared-class
+allocation per source symbol and checked access through that handle. It keeps compact
+Declaration_Fact fields inline inside the source payload and avoids pretending a
+provider has syntax. A later measured optimization can use dense origin payload
+tables/indices or a proved tagged value layout; do not flatten origins back into
+always-present fake fields merely to remove this allocation.
+
+The broad native gate caught stale dependency packaging in the older provider-family
+proof: Generic_Contracts now reads Named_Definition, but that harness had not gained
+the definition/storage/callable source closure. The fixture dependencies are corrected;
+no target or production behavior is changed by this repair. All 27 completed native
+stages had staged production bytes matching the current tree, so their proofs are
+retained and execution resumes at the failed stage instead of rebuilding them.
+
+The final 24-scenario integration proof and all 68 registered native stages pass.
+The cumulative certificate audits current production bytes, rather than treating
+older success reports as sufficient evidence after shared-model changes.

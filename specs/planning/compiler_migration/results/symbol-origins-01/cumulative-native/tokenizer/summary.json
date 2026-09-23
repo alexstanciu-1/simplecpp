@@ -1,0 +1,181 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "retained-unit",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/tokenizer/reuse_tests.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/reused.json"
+      ],
+      "seconds": 0.058,
+      "exit": 0
+    },
+    {
+      "label": "extra-oracle",
+      "command": [
+        "php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/extra_oracle.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/extra-inputs.json"
+      ],
+      "seconds": 0.053,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source"
+      ],
+      "seconds": 0.068,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source"
+      ],
+      "seconds": 0.243,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source/src/01_prepare_inputs/read_sources/data/buffer.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source/src/02_tokenize/structures.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source/src/02_tokenize/store.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source/src/02_tokenize/tokenize.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source/src/02_tokenize/main_tokenize.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source/probe.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source/main.php"
+      ],
+      "seconds": 0.32,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/phpp"
+      ],
+      "seconds": 0.134,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/source",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/phpp"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/symbol-origins-cumulative-01/tokenizer/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.052,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.007,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.041,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.162,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 24.18,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/symbol-origins-cumulative-01/tokenizer/phpp/.prism/build/main"
+      ],
+      "seconds": 0.258,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.027,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 304,
+  "reused_unit_cases": 41,
+  "production_files": [
+    "src/02_tokenize/structures.php",
+    "src/02_tokenize/store.php",
+    "src/02_tokenize/tokenize.php",
+    "src/02_tokenize/main_tokenize.php"
+  ],
+  "source_sha256": {
+    "src/01_prepare_inputs/read_sources/data/buffer.php": "806840885063fb61bd91700657756bb2e8e84a4f775be18ed866e770db01f583",
+    "src/02_tokenize/structures.php": "0b158c2c15618aecb1a8535a5d73cb7a282c0018995e1acda78282e5ca9a4f34",
+    "src/02_tokenize/store.php": "c4d81f32c641ab04fd75c69c9b782c437357e9df32f953545189ad8f979582a5",
+    "src/02_tokenize/tokenize.php": "de4fdc8891468187882e67b26a889e1e014a289fca9b8962ddd92820cfa96bc9",
+    "src/02_tokenize/main_tokenize.php": "1f0d3f4a769500886338016a52ebf6a6d6b34cf50b7892be0efd63a9ae973095"
+  }
+}

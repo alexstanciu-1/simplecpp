@@ -21,7 +21,7 @@ function rebuild(\resolve_symbols\Symbol_Resolution $r,array $parts): \resolve_s
 $store=\lexical_test\Probe::store('function answer($n int): int { $x int = $n; { $y int = $x; } return $x; } return answer(1);');
 $catalog=\load_runtime\Catalog_Syntax::parse(fs_read_text('inputs/catalog.json'));
 $before=serialize([$store,$catalog]);
-$id=$store->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0);
+$id=$store->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0,'');
 $worker=new \resolve_symbols\Resolution_Worker($store,$store->symbol_by_id($id),$catalog);
 $r=$worker->run()->result();
 check(serialize([$store,$catalog])===$before);

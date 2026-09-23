@@ -14,7 +14,7 @@ function resolve_set($symbols,$previous,$catalog,bool $full=false): \resolve_sym
 function semantic_export(\resolve_symbols\Resolution_Set $set): string {
     $out=[];
     for($i=0;$i<$set->size();$i++) {
-        $r=$set->at($i);$row=['symbol'=>$r->owner->symbol_id,'path'=>$r->owner->frontend->tokens->source->path];
+        $r=$set->at($i);$row=['symbol'=>$r->owner->symbol_id,'path'=>$r->owner->source_frontend()->tokens->source->path];
         foreach(['calls','scopes','locals','uses','parameters','constants','members'] as $name) {
             $row[$name]=[];
             for($j=0;$j<$r->{$name.'_count'}();$j++) { $row[$name][]=get_object_vars($r->{$name.'_at'}($j)); }
@@ -39,8 +39,8 @@ check(serialize([$symbols,$catalog,$cold])===$frozen);check(semantic_export($war
 for($i=0;$i<$cold->size();$i++) { check($warm->at($i)===$cold->at($i));check($full->at($i)!==$cold->at($i)); }
 $rebound=\resolution_test\Probe::file('/b.phs',$b->tokens->source->content);$rebound->tree=$b->tree;$rebound->tokens->source->mtime=1234;
 $changed=\resolution_test\Probe::collect([$a,$rebound],$symbols);$plan=new \resolve_symbols\Resolution_Plan($changed,$cold,$catalog,false);check($plan->task_count()===2);
-$changed_names=resolve_set($changed,$cold,$catalog);$answer=$changed->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0);
-check($changed_names->for_symbol($answer)->owner->frontend===$rebound);check($changed_names->for_symbol($answer)->owner->frontend->tokens->source->mtime===1234);
+$changed_names=resolve_set($changed,$cold,$catalog);$answer=$changed->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0,'');
+check($changed_names->for_symbol($answer)->owner->source_frontend()===$rebound);check($changed_names->for_symbol($answer)->owner->source_frontend()->tokens->source->mtime===1234);
 check(serialize([$symbols,$catalog,$cold])===$frozen);
 $removed=\resolution_test\Probe::collect([$a],$symbols);$failure=\resolve_symbols\Symbol_Resolver::resolve($removed,$cold,$catalog,false);
 check(!$failure->valid());check($failure->error_reason==="Unknown function 'answer'");rejects(fn()=>$failure->result());check(serialize([$symbols,$catalog,$cold])===$frozen);

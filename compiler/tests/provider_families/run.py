@@ -11,6 +11,7 @@ import time
 ROOT = Path(__file__).resolve().parents[3]
 FILES = ['src/04_analyze/type_model/data/families.php', 'src/04_analyze/type_model/data/source_families.php', 'src/04_analyze/type_model/family_contracts.php']
 DEPENDENCIES = ['src/04_analyze/type_model/data/semantic_modes.php', 'src/04_analyze/type_model/data/representations.php', 'src/04_analyze/type_model/data/lifecycle_roles.php', 'src/04_analyze/type_model/data/lifecycle.php', 'src/04_analyze/type_model/data/lifetime_contract.php', 'src/04_analyze/type_model/data/resources.php', 'src/04_analyze/type_model/data/generic.php', 'src/04_analyze/type_model/data/type_references.php', 'src/04_analyze/type_model/data/semantic_calls.php']
+DEPENDENCIES += ['src/04_analyze/type_model/data/callable_modes.php', 'src/04_analyze/type_model/data/callables.php', 'src/04_analyze/type_model/data/native_record_layout.php', 'src/04_analyze/type_model/data/definitions.php', 'src/04_analyze/type_model/data/storage.php']
 LOAD_ORDER = DEPENDENCIES + FILES
 
 

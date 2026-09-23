@@ -28,5 +28,5 @@ check(serialize([$bad,$bad_symbols])===$bad_before, 'Source rejection preserves 
 check(serialize([$files,$symbols])===$before, 'Source rejection preserves previous snapshot');
 try { \resolve_types\Entry_Preparation::prepare($bad,$symbols); throw new RuntimeException('Stale symbols accepted'); } catch (LogicException $e) {}
 check(serialize([$files,$symbols])===$before, 'Stale rejection preserves original inputs');
-check($entry->symbol()->frontend===$files->files[0], 'Earlier selection remains attached to old snapshot');
+check($entry->symbol()->source_frontend()===$files->files[0], 'Earlier selection remains attached to old snapshot');
 echo "Entry preparation purity: 9 assertions passed\n";

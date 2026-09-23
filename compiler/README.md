@@ -4,7 +4,7 @@ Doc Status: supporting
 This is the single active home for the stage-by-stage convertible-PHP rewrite.
 Input preparation, tokenization, parser grammar, structural queries and project parser
 reuse, source declarations, entry selection, representations, lifecycle contracts scalar catalog/entry binding project name resolution and canonical type storage cover **156 production files**
-with PHP/native proofs. Next is prepared-package consumption and shared provider symbol integration. No active compiler
+with PHP/native proofs. Shared source/provider symbols are integrated. Next are provided-record bindings and symbolic template interpretation; complete prepared-package consumption remains unfinished. No active compiler
 CLI or complete compilation pipeline exists yet.
 
 `src/` preserves the prototype's numbered stage layout. `src-runtime-preparation/`

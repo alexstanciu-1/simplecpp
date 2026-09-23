@@ -60,11 +60,11 @@ final class Probe {
         $definitions /** vector<\type_model\Named_Definition> */ = [$word]; $catalog=new \type_model\Type_Catalog('p','key','language_values',$definitions,$word,$word,null);
         $resolution=\resolve_symbols\Symbol_Resolver::resolve($symbols,new \resolve_symbols\Resolution_Set(null),$catalog,true);
         if (!$resolution->valid()) { throw new \LogicException($resolution->error_reason); }
-        $owner=$symbols->symbol_by_id($symbols->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0));
+        $owner=$symbols->symbol_by_id($symbols->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0,''));
         $bindings=$resolution->result()->for_symbol($owner->symbol_id);
         if ($bindings===null) { throw new \LogicException('Missing test bindings'); }
         $task=new \check_templates\Definition_Task($owner,$bindings); Probe::check($task->owner===$owner); Probe::check($task->bindings===$bindings);
-        $other=new \collect_symbols\Symbol_Record($owner->symbol_id,$owner->owner_symbol_id,$owner->name,$owner->frontend,$owner->declaration);
+        $other=\collect_symbols\Symbol_Record::from_source($owner->symbol_id,$owner->owner_symbol_id,$owner->name,$owner->source_frontend(),$owner->source_fact());
         $failed=false; try { $stale=new \check_templates\Definition_Task($other,$bindings); } catch (\LogicException $error) { $failed=true; } Probe::check($failed);
         $dependencies /** vector<\collect_symbols\Symbol_Record> */ = [$owner];
         $binding_rows /** vector<\resolve_symbols\Symbol_Resolution> */ = [$bindings];

@@ -15,7 +15,7 @@ final class Entry_Selection {
     ) {
         if ($selected_id === 0) { return; }
         $entry = $symbols->symbol_by_id($selected_id);
-        if ((int)$entry->declaration->kind !== \collect_symbols\SYMBOL_FILE_ENTRY) {
+        if ($entry->kind() !== \collect_symbols\SYMBOL_FILE_ENTRY) {
             throw new \LogicException('Selected entry must be a file entry');
         }
         $this->valid = true;

@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace resolve_symbols;
 trait Statement_Resolution {
     private function statements(Scope_Cursor $root): void {
-        $pending /** vector<Scope_Cursor> */ = [$root]; $used = 1; $tree = $this->owner->frontend->tree;
+        $pending /** vector<Scope_Cursor> */ = [$root]; $used = 1; $tree = $this->owner->source_frontend()->tree;
         while ($used > 0) {
             $cursor = $pending[$used-1]; $id = $cursor->next_statement_id;
             if ($id === 0) {
@@ -19,7 +19,7 @@ trait Statement_Resolution {
         }
     }
     private function statement(int $id, int $scope): ?Scope_Cursor {
-        $tree = $this->owner->frontend->tree; $node = $tree->row($id); $kind = (int)$node->kind;
+        $tree = $this->owner->source_frontend()->tree; $node = $tree->row($id); $kind = (int)$node->kind;
         if (($kind === \parse\SYNTAX_IF_STATEMENT) || ($kind === \parse\SYNTAX_WHILE_STATEMENT)
             || ($kind === \parse\SYNTAX_CONSTEXPR_IF_STATEMENT) || ($kind === \parse\SYNTAX_CONSTEVAL_IF_STATEMENT)) { return $this->control_statement($id,$scope); }
         if ($kind === \parse\SYNTAX_BLOCK) { return $this->enter($id,$scope); }
@@ -35,7 +35,7 @@ trait Statement_Resolution {
         return null;
     }
     private function control_statement(int $id, int $scope): Scope_Cursor {
-        $tree = $this->owner->frontend->tree; $parts = \parse\Syntax_Access::control_parts($tree,$id);
+        $tree = $this->owner->source_frontend()->tree; $parts = \parse\Syntax_Access::control_parts($tree,$id);
         if (!$this->owner->is_template()) {
             if ((int)$parts->alternative !== 0) {
                 if ((int)$tree->row((int)$parts->alternative)->kind !== \parse\SYNTAX_BLOCK) { $this->fail((int)$parts->alternative,'Else-if semantic resolution is not implemented; use a braced alternative'); }
@@ -46,8 +46,8 @@ trait Statement_Resolution {
         return new Scope_Cursor($scope,(int)$parts->body,false);
     }
     private function assignment_statement(int $id, int $scope): void {
-        $parts = \parse\Syntax_Access::assignment_parts($this->owner->frontend->tree,$id);
-        $root = \parse\Syntax_Access::place_root($this->owner->frontend->tree,(int)$parts->target_id);
+        $parts = \parse\Syntax_Access::assignment_parts($this->owner->source_frontend()->tree,$id);
+        $root = \parse\Syntax_Access::place_root($this->owner->source_frontend()->tree,(int)$parts->target_id);
         if ($root === 0) { $this->fail((int)$parts->target_id,'Assignment requires a local storage root'); }
         $this->bind_local($root,$scope,\resolve_symbols\LOCAL_WRITE,0);
         $indices = $this->place_indices((int)$parts->target_id);

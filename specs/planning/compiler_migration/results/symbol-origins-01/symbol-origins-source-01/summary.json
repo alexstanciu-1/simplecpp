@@ -1,0 +1,35 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "host-purity",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/tests/collect_symbols/purity.php"
+      ],
+      "seconds": 0.075,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-source-01/source"
+      ],
+      "seconds": 0.165,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-source-01/source"
+      ],
+      "seconds": 1.079,
+      "exit": 1
+    }
+  ],
+  "native_build_attempts": 0
+}

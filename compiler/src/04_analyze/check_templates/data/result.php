@@ -57,6 +57,7 @@ final class Template_Set {
         return $this->definitions[$id];
     }
     public function require_definition(\collect_symbols\Symbol_Record $owner, \resolve_symbols\Resolution_Set $names, \type_model\Type_Catalog $catalog): void {
+        if (!$owner->is_source()) { return; }
         if ($owner->is_template()) {
             $result=$this->for_definition($owner->symbol_id);
             if ($result===null) { throw new \LogicException('Source template requires its current definition permission result'); }

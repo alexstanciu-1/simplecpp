@@ -28,9 +28,9 @@ final class Probe {
         $frontends=new \parse\Frontend_Set(); $frontends->add($file); $frontends->entry_index=0;
         $refresh=\collect_symbols\Declaration_Collector::collect($frontends,new \collect_symbols\Symbol_Store(1),false);
         if (!$refresh->valid) { throw new \LogicException($refresh->error_reason); } $symbols=$refresh->current;
-        $plain=$symbols->symbol_by_id($symbols->find_symbol('plain',\collect_symbols\SYMBOL_FUNCTION,0));
-        $bag=$symbols->symbol_by_id($symbols->find_symbol('Bag',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0));
-        $method=$symbols->symbol_by_id($symbols->find_symbol('get',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,$bag->symbol_id));
+        $plain=$symbols->symbol_by_id($symbols->find_symbol('plain',\collect_symbols\SYMBOL_FUNCTION,0,''));
+        $bag=$symbols->symbol_by_id($symbols->find_symbol('Bag',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0,''));
+        $method=$symbols->symbol_by_id($symbols->find_symbol('get',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,$bag->symbol_id,''));
         $ordinary=\instantiate\Instance_Context::ordinary($plain);
         Probe::check($ordinary->context_id===$plain->symbol_id); Probe::check($ordinary->argument_count()===0);
         $type_arg=new \instantiate\Template_Argument($u8); $value_arg=new \instantiate\Template_Argument($u128,'340282366920938463463374607431768211455');

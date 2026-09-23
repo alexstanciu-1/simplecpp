@@ -3,9 +3,9 @@ declare(strict_types=1);
 namespace resolve_symbols;
 trait Name_Resolution {
     private function definition(): void {
-        $id = (int)$this->owner->declaration->declaration_node_id; if ($id === 0) { return; }
-        $tree = $this->owner->frontend->tree;
-        if ($this->owner->is_template()) { $this->template_scope((int)$this->owner->declaration->template_parameters_node_id); }
+        $id = (int)$this->owner->source_fact()->declaration_node_id; if ($id === 0) { return; }
+        $tree = $this->owner->source_frontend()->tree;
+        if ($this->owner->is_template()) { $this->template_scope((int)$this->owner->source_fact()->template_parameters_node_id); }
         $id = \parse\Syntax_Access::underlying_declaration($tree,$id); $kind = (int)$tree->row($id)->kind;
         if ($kind === \parse\SYNTAX_FUNCTION_DECLARATION) {
             $parts = \parse\Syntax_Access::function_parts($tree,$id); $this->annotation((int)$parts->return_type_id,0,'return');
@@ -13,7 +13,7 @@ trait Name_Resolution {
             $parts = \parse\Syntax_Access::struct_parts($tree,$id);
             if ($this->catalog->find_type($this->owner->name,'') !== null) { $this->fail((int)$parts->name_id,'Duplicate source/provider type: ' . $this->owner->name); }
             $fields /** hash<bool> */ = [];
-            $cursor = \parse\Syntax_Access::struct_members($tree,(int)$this->owner->declaration->declaration_node_id,\parse\SYNTAX_FIELD_DECLARATION);
+            $cursor = \parse\Syntax_Access::struct_members($tree,(int)$this->owner->source_fact()->declaration_node_id,\parse\SYNTAX_FIELD_DECLARATION);
             while ($cursor->advance()) {
                 $field = $cursor->current(); $member = \parse\Syntax_Access::field_declaration_parts($tree,$field);
                 $name = $this->text((int)$member->variable_id); $bare = string_byte_slice($name,1,string_byte_len($name)-1);
@@ -24,7 +24,7 @@ trait Name_Resolution {
         } elseif ($kind === \parse\SYNTAX_CONSTANT_DECLARATION) { $this->constant_initializer($id,0); }
     }
     private function template_scope(int $list): void {
-        $tree = $this->owner->frontend->tree; $id = (int)$tree->row($list)->first_child;
+        $tree = $this->owner->source_frontend()->tree; $id = (int)$tree->row($list)->first_child;
         while ($id !== 0) {
             $parts = \parse\Syntax_Access::template_parameter_parts($tree,$id); $name = $this->text((int)$parts->name_id);
             if (($name === $this->owner->name) || isset($this->parameter_names[$name])) { $this->fail((int)$parts->name_id,"Duplicate or conflicting template parameter '" . $name . "'"); }
@@ -68,14 +68,14 @@ trait Name_Resolution {
         return 0;
     }
     private function constant_declaration(int $id, int $scope): void {
-        $parts = \parse\Syntax_Access::constant_parts($this->owner->frontend->tree,$id); $name = $this->text((int)$parts->name_id);
+        $parts = \parse\Syntax_Access::constant_parts($this->owner->source_frontend()->tree,$id); $name = $this->text((int)$parts->name_id);
         if (isset($this->parameter_names[$name]) || ($this->scope_names[$scope-1]->constant($name) !== 0)) { $this->fail((int)$parts->name_id,"Duplicate or conflicting constant '" . $name . "'"); }
         $row = new Scoped_Constant(); $row->declaration_node_id = $id; $row->scope_id = $scope; $this->constants[] = $row;
         $this->scope_names[$scope-1]->add_constant($name,$id); $this->initializing_constant = $id;
         $this->constant_initializer($id,$scope); $this->initializing_constant = 0;
     }
     private function constant_initializer(int $id, int $scope): void {
-        $parts = \parse\Syntax_Access::constant_parts($this->owner->frontend->tree,$id);
+        $parts = \parse\Syntax_Access::constant_parts($this->owner->source_frontend()->tree,$id);
         if ((int)$parts->type_syntax_id !== 0) { $this->annotation((int)$parts->type_syntax_id,$scope,'constant'); }
         $this->expression((int)$parts->initializer_id,$scope,0,\resolve_symbols\NAME_VALUE,'annotation');
     }

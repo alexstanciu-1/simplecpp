@@ -35,10 +35,10 @@ final class Probe {
             Probe::check((int)$result->binding_for((int)$use->use_node_id)->local_id === $id);
         }
         Probe::check($result->calls_count() === 2);
-        Probe::check((int)$result->calls_at(0)->target_symbol_id === $store->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0));
-        Probe::check((int)$result->calls_at(1)->target_symbol_id === $store->find_symbol('value',\collect_symbols\SYMBOL_FUNCTION,0));
+        Probe::check((int)$result->calls_at(0)->target_symbol_id === $store->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0,''));
+        Probe::check((int)$result->calls_at(1)->target_symbol_id === $store->find_symbol('value',\collect_symbols\SYMBOL_FUNCTION,0,''));
         Probe::check($result->runtime_parameter_count() === 0);
-        $answer = Probe::bind($store,$store->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0));
+        $answer = Probe::bind($store,$store->find_symbol('answer',\collect_symbols\SYMBOL_FUNCTION,0,''));
         Probe::check($answer->locals_count() === 1); Probe::check((int)$answer->uses_at(0)->local_id === 1);
         $copy = $result->locals_at(0); $copy->scope_id = 999; Probe::check((int)$result->locals_at(0)->scope_id === 1);
         $copy_scope = $result->scopes_at(0); $copy_scope->parent_scope_id = 999; Probe::check((int)$result->scopes_at(0)->parent_scope_id === 0);
@@ -58,22 +58,22 @@ final class Probe {
         foreach ($places_ids as $index => $id) { Probe::check((int)$places->uses_at($index)->local_id === $id); }
         Probe::check((int)$places->uses_at(0)->access === \resolve_symbols\LOCAL_WRITE);
         $method_store = Probe::store('struct Box { public int $x; public function get($n int): int { return $this->x + $n; } } $b Box = new Box(); return $b->get(2);');
-        $box = $method_store->find_symbol('Box',\collect_symbols\SYMBOL_STRUCT,0);
-        $method = Probe::bind($method_store,$method_store->find_symbol('get',\collect_symbols\SYMBOL_FUNCTION,$box));
+        $box = $method_store->find_symbol('Box',\collect_symbols\SYMBOL_STRUCT,0,'');
+        $method = Probe::bind($method_store,$method_store->find_symbol('get',\collect_symbols\SYMBOL_FUNCTION,$box,''));
         Probe::check($method->runtime_parameter_count() === 2); Probe::check($method->parameter_for(1)->receiver);
         Probe::check(!$method->parameter_for(2)->receiver); Probe::check((int)$method->uses_at(0)->local_id === 1);
         $call = Probe::bind($method_store,$method_store->entry_symbol_id('/names.phs'));
         Probe::check($call->members_count() === 1); Probe::check($call->calls_count() === 0);
         Probe::check((int)$call->binding_for((int)$call->members_at(0)->receiver_node_id)->local_id === 1);
         $templates = Probe::store('template<typename T, T N> struct Box { public T $x; } template<typename T> function identity($x T): T { return $x; } $box Box<int, 3> = new Box<int, 3>(); return identity<int>(3);');
-        $template_binding = Probe::bind($templates,$templates->find_symbol('Box',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0));
+        $template_binding = Probe::bind($templates,$templates->find_symbol('Box',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0,''));
         Probe::check($template_binding->parameters_count() === 2); Probe::check((int)$template_binding->parameters_at(0)->contract === \type_model\GENERIC_COPYABLE_VALUE);
         Probe::check((int)$template_binding->parameters_at(1)->contract === \type_model\GENERIC_NONE);
         Probe::check($template_binding->names_at(0)->target_id === 0); Probe::check($template_binding->names_at(1)->target_id === 0);
         $template_entry = Probe::bind($templates,$templates->entry_symbol_id('/names.phs'));
         Probe::check($template_entry->applications_count() === 3);
-        Probe::check($template_entry->applications_at(0)->definition === $templates->symbol_by_id($templates->find_symbol('Box',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0)));
-        $function = Probe::bind($templates,$templates->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0));
+        Probe::check($template_entry->applications_at(0)->definition === $templates->symbol_by_id($templates->find_symbol('Box',\collect_symbols\SYMBOL_TEMPLATE_STRUCT,0,'')));
+        $function = Probe::bind($templates,$templates->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0,''));
         Probe::check($function->runtime_parameter_count() === 1); Probe::check($function->parameters_count() === 1);
         $constant_store = Probe::store('const N: int = 1; const K: int = N; { const N: int = 2; echo N; } return N;');
         $constants = Probe::bind($constant_store,$constant_store->entry_symbol_id('/names.phs'));
@@ -103,7 +103,7 @@ final class Probe {
     }
     public static function bad(string $path, string $owner, int $kind, int $start, int $length, string $reason): void {
         $store = Probe::store(fs_read_text($path)); $id = $store->entry_symbol_id('/names.phs');
-        if ($owner !== '') { $id = $store->find_symbol($owner,$kind,0); }
+        if ($owner !== '') { $id = $store->find_symbol($owner,$kind,0,''); }
         $worker = new \resolve_symbols\Resolution_Worker($store,$store->symbol_by_id($id),Probe::catalog()); $attempt = $worker->run();
         Probe::check(!$attempt->valid()); Probe::check($attempt->error_path === '/names.phs');
         Probe::check($attempt->error_start === $start); Probe::check($attempt->error_length === $length); Probe::check($attempt->error_reason === $reason);

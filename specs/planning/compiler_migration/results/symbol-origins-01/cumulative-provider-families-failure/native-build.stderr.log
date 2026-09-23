@@ -1,0 +1,10 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in src/04_analyze/type_model/data/generic.phs:10: member access into incomplete type 'scpp::type_model::Named_Definition'
+Generated location: .prism/generated/src/04_analyze/type_model/data/generic.cpp:18:22
+Compile note in around src/04_analyze/type_model/data/generic.phs:1: forward declaration of 'scpp::type_model::Named_Definition'
+Generated location: .prism/generated/src/04_analyze/type_model/data/generic.hpp:14:7
+Raw compiler excerpt:
+generic.cpp:18:22: error: member access into incomplete type 'scpp::type_model::Named_Definition'
+generic.hpp:14:7: note: forward declaration of 'scpp::type_model::Named_Definition'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

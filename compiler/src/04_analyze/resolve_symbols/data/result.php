@@ -116,7 +116,7 @@ final class Symbol_Resolution {
         if (($id < 1) || ($id > q_count($this->scopes))) { throw new \InvalidArgumentException('Invalid lexical scope'); }
     }
     private function validate(): void {
-        $tree = $this->owner->frontend->tree;
+        $tree = $this->owner->source_frontend()->tree;
         foreach ($this->calls as $position => $call) {
             $id = (int)$call->use_node_id;
             if (((int)$tree->row($id)->kind !== \parse\SYNTAX_NAME) || ((int)$call->target_symbol_id < 1) || ((int)$call->target_symbol_id > 4294967295)) { throw new \InvalidArgumentException('Invalid call binding'); }
@@ -130,7 +130,7 @@ final class Symbol_Resolution {
             if (isset($this->scope_index[$id])) { throw new \InvalidArgumentException('Duplicate resolved scope'); }
             $this->scope_index[$id] = $position;
         }
-        $body = (int)$this->owner->declaration->body_node_id;
+        $body = (int)$this->owner->source_fact()->body_node_id;
         if ($body === 0) {
             if (q_count($this->scopes) !== 0) { throw new \InvalidArgumentException('Non-body owner has scopes'); }
         } else {
@@ -144,7 +144,7 @@ final class Symbol_Resolution {
             $kind = (int)$tree->row($id)->kind;
             if ($local->receiver) {
                 if (($position !== 0) || ($scope !== 1) || ($kind !== \parse\SYNTAX_METHOD_DECLARATION)
-                    || ($id !== (int)$this->owner->declaration->declaration_node_id) || ($this->owner->owner_symbol_id === 0)) { throw new \InvalidArgumentException('Invalid implicit receiver'); }
+                    || ($id !== (int)$this->owner->source_fact()->declaration_node_id) || ($this->owner->owner_symbol_id === 0)) { throw new \InvalidArgumentException('Invalid implicit receiver'); }
                 $this->parameter_count++;
             } elseif ($kind === \parse\SYNTAX_PARAMETER_DECLARATION) {
                 if (($scope !== 1) || ($position !== $this->parameter_count)) { throw new \InvalidArgumentException('Parameters must be the root local prefix'); }

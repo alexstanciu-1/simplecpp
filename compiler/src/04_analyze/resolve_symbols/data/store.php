@@ -22,7 +22,11 @@ final class Resolution_Set {
     /** Atomic full membership publication; shared accepted results avoid a second structural walk. */
     public static function publish(\collect_symbols\Symbol_Store $symbols, \type_model\Type_Catalog $catalog,
         Resolution_Set $previous, array $results /** vector<Symbol_Resolution> */): Resolution_Set {
-        if (q_count($results) !== $symbols->size()) { throw new \LogicException('Incomplete resolution membership'); }
+        $source_count = 0;
+        for ($position = 0; $position < $symbols->size(); $position++) {
+            if ($symbols->record_at($position)->is_source()) { $source_count++; }
+        }
+        if (q_count($results) !== $source_count) { throw new \LogicException('Incomplete resolution membership'); }
         $out = new Resolution_Set($symbols);
         foreach ($results as $result) {
             $id = $result->owner->symbol_id;

@@ -1,0 +1,38 @@
+Transpiled PHP files: 19, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-json-240-probe
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/21] PCH app_pch.hpp.gch
+[2/21] CXX src/04_analyze/type_model/data/generic.o
+FAILED: src/04_analyze/type_model/data/generic.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-json-240-probe/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/069d19a8103102d0.hpp -MMD -MF src/04_analyze/type_model/data/generic.o.d -MT src/04_analyze/type_model/data/generic.o -c ../generated/src/04_analyze/type_model/data/generic.cpp -o src/04_analyze/type_model/data/generic.o
+../generated/src/04_analyze/type_model/data/generic.cpp:18:22: error: member access into incomplete type 'scpp::type_model::Named_Definition'
+   18 |         auto lifetime = type->lifetime;
+      |                             ^
+./../generated/__project_units/../src/04_analyze/type_model/data/generic.hpp:14:7: note: forward declaration of 'scpp::type_model::Named_Definition'
+   14 | class Named_Definition;
+      |       ^
+1 error generated.
+[3/21] CXX scpp_framework/exceptions.o
+[4/21] CXX scpp_framework/collections.o
+[5/21] CXX src/04_analyze/type_model/data/representations.o
+[6/21] CXX src/04_analyze/type_model/data/lifecycle_roles.o
+[7/21] CXX src/04_analyze/type_model/data/semantic_modes.o
+[8/21] CXX src/04_analyze/type_model/data/semantic_calls.o
+[9/21] CXX src/04_analyze/type_model/data/lifecycle.o
+[10/21] CXX scpp_framework/strings.o
+[11/21] CXX scpp_framework/filesystem.o
+[12/21] CXX src/04_analyze/type_model/data/resources.o
+[13/21] CXX src/04_analyze/type_model/data/lifetime_contract.o
+[14/21] CXX main.o
+[15/21] CXX scpp_framework/json_document.o
+[16/21] CXX src/04_analyze/type_model/data/families.o
+[17/21] CXX probe.o
+ninja: build stopped: subcommand failed.

@@ -18,15 +18,16 @@ final class Entry_Preparation {
             if ($frontends->find_path($path) !== $i) { throw new \LogicException('Inconsistent frontend membership'); }
             $id = $symbols->entry_symbol_id($path);
             if ($id === 0) { throw new \LogicException('Missing participating file entry'); }
-            if ($symbols->symbol_by_id($id)->frontend !== $file) { throw new \LogicException('Stale file entry snapshot'); }
+            if ($symbols->symbol_by_id($id)->source_frontend() !== $file) { throw new \LogicException('Stale file entry snapshot'); }
         }
         $entries = 0;
         for ($i /** int */ = 0; $i < $symbols->size(); ++$i) {
             $record = $symbols->record_at($i);
-            $position = $frontends->find_path($record->frontend->tokens->source->path);
+            if (!$record->is_source()) { continue; }
+            $position = $frontends->find_path($record->source_frontend()->tokens->source->path);
             if (($position < 0) || ($position >= $count)) { throw new \LogicException('Symbol outside participating sources'); }
-            if ($frontends->files[$position] !== $record->frontend) { throw new \LogicException('Stale source symbol snapshot'); }
-            if ((int)$record->declaration->kind === \collect_symbols\SYMBOL_FILE_ENTRY) { ++$entries; }
+            if ($frontends->files[$position] !== $record->source_frontend()) { throw new \LogicException('Stale source symbol snapshot'); }
+            if ($record->kind() === \collect_symbols\SYMBOL_FILE_ENTRY) { ++$entries; }
         }
         if ($entries !== $count) { throw new \LogicException('Incomplete file entry membership'); }
         $selected_file = $frontends->files[$selected];
@@ -34,7 +35,7 @@ final class Entry_Preparation {
         foreach ($frontends->files as $file) {
             $id = $symbols->entry_symbol_id($file->tokens->source->path);
             $entry = $symbols->symbol_by_id($id);
-            $body = $file->tree->row((int)$entry->declaration->body_node_id);
+            $body = $file->tree->row((int)$entry->source_fact()->body_node_id);
             if ((int)$body->kind !== \parse\SYNTAX_BLOCK) { throw new \LogicException('Missing file entry body'); }
             if ($id === $selected_id) { continue; }
             if ((int)$body->first_child !== 0) {

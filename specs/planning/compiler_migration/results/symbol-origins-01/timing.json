@@ -1,0 +1,36 @@
+{
+  "authoring_start_epoch": 1790129812.0,
+  "first_php_ready_epoch": 1790130212.4787111,
+  "authoring_to_php_ready_wall_seconds": 400.479,
+  "first_native_pass_epoch": 1790130318.0883904,
+  "php_ready_to_native_pass_wall_seconds": 105.61,
+  "native_build_attempts_to_first_pass": 1,
+  "native_correction_cycles": 0,
+  "checker_correction_cycles": 1,
+  "checker_corrections": [
+    "Ordinary method defaults unsupported: require explicit namespace arguments; source-only collect delegates to with_providers with an explicit empty typed vector"
+  ],
+  "host_harness_correction_cycles": 1,
+  "host_harness_corrections": [
+    "Restore provider_declaration dependency filename after renaming the new test runner"
+  ],
+  "final_verification_builds_started": 1,
+  "cumulative_native_status": "passed",
+  "cumulative_native_results": "/tmp/symbol-origins-cumulative-01",
+  "consolidation_start_epoch": 1790130378.8181453,
+  "final_verification_builds": 1,
+  "final_verification_passed": true,
+  "final_native_pass_epoch": 1790130438.1243954,
+  "fast_validation_passed": true,
+  "consolidation_refinement": "Restore prototype byte-length namespace keys instead of JSON quoting; changed before cumulative native source-collection stages began. Final cumulative native proof must cover this source hash.",
+  "consolidation_source_guard": "Restore prototype Template_Set provider-origin bypass; prove provider families do not require source permissions while source templates do. Native coverage pending cumulative suite.",
+  "cumulative_harness_corrections": [
+    "provider_families omitted the Named_Definition/storage/callable dependency closure now used by Generic_Contracts; include real source dependencies"
+  ],
+  "cumulative_reused_native_stages": 27,
+  "cumulative_native_completed_epoch": 1790133989.6143258,
+  "cumulative_recorded_command_seconds": 3202.978,
+  "regression_and_consolidation_wall_seconds": 3610.796,
+  "consolidation_end_epoch": 1790133989.6143324,
+  "overlapping_work_note": "Cumulative validation overlapped isolated provider-record and symbolic-interpreter authoring; wall duration is not exclusive effort."
+}

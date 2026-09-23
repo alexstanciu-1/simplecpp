@@ -1,0 +1,2 @@
+def build():
+    return ['membership', 'origin_guards', 'warm', 'full', 'member_wrappers', 'new_owners', 'removal', 'namespace', 'duplicate_provider', 'duplicate_source', 'wrong_owner', 'missing_owner', 'invalid_origin', 'entry_selection', 'resolution', 'template_resolution', 'provider_worker_rejected', 'incremental_resolution', 'template_incremental', 'template_arity', 'family_resolution', 'source_to_provider', 'provider_to_source', 'template_permissions']

@@ -1,0 +1,1122 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source"
+      ],
+      "seconds": 0.122,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source"
+      ],
+      "seconds": 0.967,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/context.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/lifetime_policy_codec.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/catalog.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/resolve_types/data/lifecycle_bodies.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/resolve_types/lifecycle_composition.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/type_record.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/result_contracts.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/type_model/data/store.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/04_analyze/resolve_types/utilities/type_cache.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/data/configuration.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/data/layout.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/utilities/layout_ids.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/data/layout_capture.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/layout_capture.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/utilities/llvm_storage.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/utilities/layout_order.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/data/layout_witness.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/src/05_generate_code/prepare_backend/native_layout.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/probe.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source/main.php"
+      ],
+      "seconds": 0.096,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/phpp"
+      ],
+      "seconds": 0.509,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/source",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/phpp"
+      ],
+      "seconds": 0.069,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.06,
+      "exit": 0
+    },
+    {
+      "label": "clang-version",
+      "command": [
+        "clang++-18",
+        "--version"
+      ],
+      "seconds": 0.04,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-3",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-3.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-3.ll"
+      ],
+      "seconds": 0.054,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-4",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-4.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-4.ll"
+      ],
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-4",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-4.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-4-folded.ll"
+      ],
+      "seconds": 0.046,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-5",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-5.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-5.ll"
+      ],
+      "seconds": 0.051,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-5",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-5.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-5-folded.ll"
+      ],
+      "seconds": 0.046,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-6",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-6.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-6.ll"
+      ],
+      "seconds": 0.05,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-6",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-6.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-6-folded.ll"
+      ],
+      "seconds": 0.044,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-7",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-7.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-7.ll"
+      ],
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-7",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-7.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-7-folded.ll"
+      ],
+      "seconds": 0.053,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-8",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-8.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-8.ll"
+      ],
+      "seconds": 0.049,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-8",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-8.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-8-folded.ll"
+      ],
+      "seconds": 0.043,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-9",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-9.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-9.ll"
+      ],
+      "seconds": 0.052,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-9",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-9.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-9-folded.ll"
+      ],
+      "seconds": 0.043,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-10",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-10.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-10.ll"
+      ],
+      "seconds": 0.047,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-10",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-10.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-10-folded.ll"
+      ],
+      "seconds": 0.044,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-11",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-11.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-11.ll"
+      ],
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-12",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-12.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-12.ll"
+      ],
+      "seconds": 0.047,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-18",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-18.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-18.ll"
+      ],
+      "seconds": 0.047,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-18",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-18.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-18-folded.ll"
+      ],
+      "seconds": 0.042,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-19",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-19.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-19.ll"
+      ],
+      "seconds": 0.049,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-19",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-19.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-19-folded.ll"
+      ],
+      "seconds": 0.043,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-20",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-20.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-20.ll"
+      ],
+      "seconds": 0.051,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-20",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-20.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-20-folded.ll"
+      ],
+      "seconds": 0.05,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-21",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-21.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-21.ll"
+      ],
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-21",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-21.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-21-folded.ll"
+      ],
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-22",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-22.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-22.ll"
+      ],
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-22",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-22.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-22-folded.ll"
+      ],
+      "seconds": 0.045,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-23",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-23.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-23.ll"
+      ],
+      "seconds": 0.047,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-24",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-24.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-24.ll"
+      ],
+      "seconds": 0.051,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-24",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-24.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-24-folded.ll"
+      ],
+      "seconds": 0.045,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-25",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-25.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-25.ll"
+      ],
+      "seconds": 0.048,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-25",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-25.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-25-folded.ll"
+      ],
+      "seconds": 0.045,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-26",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-26.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-26.ll"
+      ],
+      "seconds": 0.053,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-26",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-26.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-26-folded.ll"
+      ],
+      "seconds": 0.043,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-27",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-27.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-27.ll"
+      ],
+      "seconds": 0.05,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-27",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-27.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-27-folded.ll"
+      ],
+      "seconds": 0.047,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-28",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-28.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-28.ll"
+      ],
+      "seconds": 0.05,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-28",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-28.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-28-folded.ll"
+      ],
+      "seconds": 0.051,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-29",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-29.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-29.ll"
+      ],
+      "seconds": 0.054,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-30",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-30.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-30.ll"
+      ],
+      "seconds": 0.057,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-30",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-30.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-30-folded.ll"
+      ],
+      "seconds": 0.05,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-31",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-31.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-31.ll"
+      ],
+      "seconds": 0.046,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-31",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-31.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-31-folded.ll"
+      ],
+      "seconds": 0.051,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-32",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-32.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-32.ll"
+      ],
+      "seconds": 0.046,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-32",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-32.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-32-folded.ll"
+      ],
+      "seconds": 0.042,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-33",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-33.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-33.ll"
+      ],
+      "seconds": 0.046,
+      "exit": 0
+    },
+    {
+      "label": "llvm-primitive-33",
+      "command": [
+        "clang-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "ir",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-33.ll",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/primitive-33-folded.ll"
+      ],
+      "seconds": 0.042,
+      "exit": 0
+    },
+    {
+      "label": "clang-witness-34",
+      "command": [
+        "clang++-18",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-std=c++20",
+        "-S",
+        "-emit-llvm",
+        "-O2",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-34.cpp",
+        "-o",
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/witness-34.ll"
+      ],
+      "seconds": 0.049,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.01,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.027,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.147,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 44.295,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/symbol-origins-cumulative-resume-01/layout_witness/phpp/.prism/build/main"
+      ],
+      "seconds": 8.248,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.025,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790133410.26043,
+  "php_ready_sha256": {
+    "src/05_generate_code/prepare_backend/utilities/layout_order.php": "825e1f1d009c80db36924a67676e3cf52c68d0afa4b4025352695ccdb255c8e2",
+    "src/05_generate_code/prepare_backend/data/layout_witness.php": "78369f7defaa44bed16ebf09885f90fb1293d067e7379de431a0e137e372a1f6",
+    "src/05_generate_code/prepare_backend/native_layout.php": "c3933bf3407c9a903bc8b064e9265bdc1fc3994bc7a131ee1a66cf5ff2c6b7c4"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 35,
+  "layout_witness_outcomes": 35,
+  "production_files": [
+    "src/05_generate_code/prepare_backend/utilities/layout_order.php",
+    "src/05_generate_code/prepare_backend/data/layout_witness.php",
+    "src/05_generate_code/prepare_backend/native_layout.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+    "src/04_analyze/type_model/data/context.php": "bd432e78cda5becc5a5d209608bac8e239baf0fe578bac17f09402e37249392b",
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337",
+    "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f",
+    "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e",
+    "src/04_analyze/type_model/data/definitions.php": "6f4ee56c11e634bfdeeeb54a06f4405d35938e877f40f0696d9be599d3ac57df",
+    "src/04_analyze/type_model/data/catalog.php": "8fb6c3be42269bd9f396133a65c79cc649b5300859e6d6ef7f253689e722dae5",
+    "src/01_prepare_inputs/load_runtime/utilities/catalog_syntax.php": "2a4aeda1db5620f2f2ae5a35417a0bf686e5fc232868648d0d1e2a9c92ce247a",
+    "src/04_analyze/type_model/data/records.php": "9eb9dd43f9e40ec116fee6323da4b67e1ed450a0670f0aa54eedc3d285d24cdd",
+    "src/04_analyze/resolve_types/data/lifecycle_bodies.php": "a28ba6624df1cfe23d0ba91587d48ccb0d4e24442f674b7d4c0a1af1e0a24fdd",
+    "src/04_analyze/resolve_types/lifecycle_composition.php": "c86e166cbf1723d475c86435db1cdf175a702e9730cae6167e059164929e0993",
+    "src/04_analyze/type_model/data/type_references.php": "e70468cf04d1f87b34238d90f38ae886c52b9e1ed3f6e3d348c70dc85da639d1",
+    "src/04_analyze/type_model/data/semantic_calls.php": "4e962b92bca91cbb600e18b9d2139f085d4e4b17e1906ac50c3095c3b481b905",
+    "src/04_analyze/type_model/data/callable_modes.php": "49166d285f320e1b8e1c34ee2f9b4150474546dc42ef73366f6ca4ded2622895",
+    "src/04_analyze/type_model/data/callables.php": "2450e8479025d72917f1a8f3b2abe7edcb432c835ed6385fc107b0abdcb9f146",
+    "src/04_analyze/type_model/data/storage.php": "d95e447a3cf801067b35e06970857b9d79ef3962126dfbcd1a60a00dcc53a4cf",
+    "src/04_analyze/type_model/data/type_record.php": "e769dc4c6992ee00266ef37367a3e236fa07d12326cffb63ba83a126762e3808",
+    "src/04_analyze/type_model/result_contracts.php": "a7ef024e42fbc4cbb537a362149d984f818a460001320d912d82558a73e98e8f",
+    "src/04_analyze/type_model/data/store.php": "e74beda89e5c6800e1f64925a7bb86c4793f39816b6824b48179c83e0653994c",
+    "src/04_analyze/resolve_types/utilities/type_cache.php": "0254dae11d5eecc7adb16f51fa2e4c209bdc89b0911b5fc2d81e59762c8a0741",
+    "src/05_generate_code/prepare_backend/data/configuration.php": "cb66a88765b97568568b0e0bea47128a84f611c2eb7a5a50e6585b9efc0d0ab6",
+    "src/05_generate_code/prepare_backend/data/layout.php": "3ef779a50cb01672d7eb2d30ec96c2c60590e06eb7faeb04162038d2f0639e49",
+    "src/05_generate_code/prepare_backend/utilities/layout_ids.php": "ebc5ea5b812818782ef2c4aa0d0f9b7caeeacf9ed7faf2dd54d799e78948bbc3",
+    "src/05_generate_code/prepare_backend/data/layout_capture.php": "1a50359a355fb6d1eb1032ad361251dde576c71a46ad8ca3dea3aa793dc294fd",
+    "src/05_generate_code/prepare_backend/layout_capture.php": "85d6719d1cb801b5077d7378fca7e92ce0d81247f7696af77d4f680d68a87f4a",
+    "src/05_generate_code/prepare_backend/utilities/llvm_storage.php": "821f9cdfc29bff674e077849a8fc5ee45ee40992830d43f02f2721023d149e16",
+    "src/05_generate_code/prepare_backend/utilities/layout_order.php": "825e1f1d009c80db36924a67676e3cf52c68d0afa4b4025352695ccdb255c8e2",
+    "src/05_generate_code/prepare_backend/data/layout_witness.php": "78369f7defaa44bed16ebf09885f90fb1293d067e7379de431a0e137e372a1f6",
+    "src/05_generate_code/prepare_backend/native_layout.php": "c3933bf3407c9a903bc8b064e9265bdc1fc3994bc7a131ee1a66cf5ff2c6b7c4"
+  }
+}

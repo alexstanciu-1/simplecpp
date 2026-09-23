@@ -1,0 +1,192 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source"
+      ],
+      "seconds": 0.099,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source"
+      ],
+      "seconds": 0.67,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/semantic_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/representations.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/lifecycle_roles.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/lifecycle.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/lifetime_contract.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/resources.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/generic.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/type_references.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/semantic_calls.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/families.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/source_families.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/family_contracts.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/native_record_layout.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/definitions.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/records.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/catalog.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/callable_modes.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/callables.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/04_analyze/type_model/data/storage.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/src/01_prepare_inputs/load_runtime/family_adapter.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/probe.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source/main.php"
+      ],
+      "seconds": 0.057,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/phpp"
+      ],
+      "seconds": 0.283,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/source",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/phpp"
+      ],
+      "seconds": 0.054,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/phpp",
+        "--json",
+        "--filesystem"
+      ],
+      "seconds": 0.052,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.006,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.028,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.145,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 34.411,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/symbol-origins-cumulative-resume-01/provider_catalog/phpp/.prism/build/main"
+      ],
+      "seconds": 0.008,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.028,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_ready_epoch": 1790132066.4700754,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/family_adapter.php": "265f0a912189c3ee1449b1a7a9ce30d347e05910cd0fd9a79284d180a75f5685"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 30,
+  "provider_catalog_outcomes": 30,
+  "production_files": [
+    "src/01_prepare_inputs/load_runtime/family_adapter.php"
+  ],
+  "source_sha256": {
+    "src/04_analyze/type_model/data/semantic_modes.php": "a5175360de15387b2dbc842c84bbd6175b26a9076f0a61403597ae47cf873f20",
+    "src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/resources.php": "d3dcea0245584b9dc391dbf1d5bcb5c620b3fb1e1327812e61b71290ed484c2e",
+    "src/04_analyze/type_model/data/generic.php": "6506e4546b768fce74e2cc74422b7f7bbd1a9b69ce93fd27d6d5bb88a3f44026",
+    "src/04_analyze/type_model/data/type_references.php": "e70468cf04d1f87b34238d90f38ae886c52b9e1ed3f6e3d348c70dc85da639d1",
+    "src/04_analyze/type_model/data/semantic_calls.php": "4e962b92bca91cbb600e18b9d2139f085d4e4b17e1906ac50c3095c3b481b905",
+    "src/04_analyze/type_model/data/families.php": "3116b1601d88720d5dc0beba1afeccb1c217e3688465245545486639f9760cc7",
+    "src/04_analyze/type_model/data/source_families.php": "6f1fcaf2d3d028c79ba74cb81e6af444c1b27d804a2a86476a411d62e89c605e",
+    "src/04_analyze/type_model/family_contracts.php": "ebd6cbcbfd38fe4f9a7213c238de999a51efa15eb3038f261075d524cf80e2a0",
+    "src/04_analyze/type_model/data/native_record_layout.php": "6a97c7d562a63e965c8470666b9c9d781ad24890e71ed5c9c31d766dc187734f",
+    "src/04_analyze/type_model/data/definitions.php": "6f4ee56c11e634bfdeeeb54a06f4405d35938e877f40f0696d9be599d3ac57df",
+    "src/04_analyze/type_model/data/records.php": "9eb9dd43f9e40ec116fee6323da4b67e1ed450a0670f0aa54eedc3d285d24cdd",
+    "src/04_analyze/type_model/data/catalog.php": "8fb6c3be42269bd9f396133a65c79cc649b5300859e6d6ef7f253689e722dae5",
+    "src/04_analyze/type_model/data/callable_modes.php": "49166d285f320e1b8e1c34ee2f9b4150474546dc42ef73366f6ca4ded2622895",
+    "src/04_analyze/type_model/data/callables.php": "2450e8479025d72917f1a8f3b2abe7edcb432c835ed6385fc107b0abdcb9f146",
+    "src/04_analyze/type_model/data/storage.php": "d95e447a3cf801067b35e06970857b9d79ef3962126dfbcd1a60a00dcc53a4cf",
+    "src/01_prepare_inputs/load_runtime/family_adapter.php": "265f0a912189c3ee1449b1a7a9ce30d347e05910cd0fd9a79284d180a75f5685"
+  }
+}

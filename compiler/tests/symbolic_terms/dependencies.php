@@ -11,9 +11,9 @@ if (!$refresh->valid) { throw new RuntimeException($refresh->error_reason); }
 $symbols=$refresh->current;
 $resolve=fn()=>\resolve_symbols\Symbol_Resolver::resolve($symbols,new \resolve_symbols\Resolution_Set(null),$catalog,true)->result();
 $names=$resolve(); $fresh=$resolve();
-$owner=$symbols->symbol_by_id($symbols->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0));
+$owner=$symbols->symbol_by_id($symbols->find_symbol('identity',\collect_symbols\SYMBOL_TEMPLATE_FUNCTION,0,''));
 $task=new \check_templates\Definition_Task($owner,$names->for_symbol($owner->symbol_id));
-$other=new \collect_symbols\Symbol_Record($owner->symbol_id,$owner->owner_symbol_id,$owner->name,$owner->frontend,$owner->declaration);
+$other=\collect_symbols\Symbol_Record::from_source($owner->symbol_id,$owner->owner_symbol_id,$owner->name,$owner->source_frontend(),$owner->source_fact());
 $declaration_stale=new \check_templates\Definition_Result($task,$catalog,[$other],[],1);
 $binding_stale=new \check_templates\Definition_Result($task,$catalog,[],[$fresh->for_symbol($owner->symbol_id)],1);
 if ($declaration_stale->current($owner,$names,$catalog)) { throw new RuntimeException('Missed changed declaration dependency'); }

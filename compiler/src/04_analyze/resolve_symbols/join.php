@@ -15,7 +15,9 @@ final class Resolution_Join {
         if (q_count($replacements) !== $this->plan->task_count()) { throw new \LogicException('Incomplete resolution task batch'); }
         $current /** vector<Symbol_Resolution> */ = [];
         for ($position = 0; $position < $this->plan->symbols->size(); $position++) {
-            $owner = $this->plan->symbols->record_at($position); $id = $owner->symbol_id;
+            $owner = $this->plan->symbols->record_at($position);
+            if (!$owner->is_source()) { continue; }
+            $id = $owner->symbol_id;
             if (isset($replacements[$id])) { $current[] = $replacements[$id]; }
             else {
                 $old = $this->plan->previous->for_symbol($id);

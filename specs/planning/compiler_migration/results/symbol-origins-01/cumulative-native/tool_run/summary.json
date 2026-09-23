@@ -1,0 +1,191 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/source"
+      ],
+      "seconds": 0.054,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/source"
+      ],
+      "seconds": 0.125,
+      "exit": 0
+    },
+    {
+      "label": "php",
+      "command": [
+        "env",
+        "XDEBUG_MODE=off",
+        "php",
+        "-r",
+        "foreach(array_slice($argv,1) as $p) { require $p; }",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/source/src/05_generate_code/prepare_backend/tools/tool_run.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/source/probe.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/source/main.php"
+      ],
+      "seconds": 1.887,
+      "exit": 0
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/source",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/phpp"
+      ],
+      "seconds": 0.085,
+      "exit": 0
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/source",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/phpp"
+      ],
+      "seconds": 0.057,
+      "exit": 0
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/phpp",
+        "--json",
+        "--filesystem",
+        "--os"
+      ],
+      "seconds": 0.054,
+      "exit": 0
+    },
+    {
+      "label": "revision",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "rev-parse",
+        "HEAD"
+      ],
+      "seconds": 0.006,
+      "exit": 0
+    },
+    {
+      "label": "clean",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.027,
+      "exit": 0
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "seconds": 0.153,
+      "exit": 0
+    },
+    {
+      "label": "native-build",
+      "command": [
+        "php",
+        "/tmp/scpp-json-240-probe/bin/scpp.php",
+        "build",
+        "--build-runtime"
+      ],
+      "seconds": 22.53,
+      "exit": 0
+    },
+    {
+      "label": "native",
+      "command": [
+        "/tmp/symbol-origins-cumulative-resume-01/tool_run/phpp/.prism/build/main"
+      ],
+      "seconds": 1.344,
+      "exit": 0
+    },
+    {
+      "label": "clean-after",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/scpp-json-240-probe",
+        "status",
+        "--porcelain"
+      ],
+      "seconds": 0.026,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 1,
+  "php_descendant_cleanup": [
+    {
+      "case": "descendants-success",
+      "pid": 5995,
+      "stopped": true
+    },
+    {
+      "case": "descendants-failure",
+      "pid": 5997,
+      "stopped": true
+    },
+    {
+      "case": "descendants-timeout",
+      "pid": 5999,
+      "stopped": true
+    }
+  ],
+  "php_ready_epoch": 1790133571.3526042,
+  "php_ready_sha256": {
+    "src/05_generate_code/prepare_backend/tools/tool_run.php": "3348d4ce8d9d0f06a14a5b417026d9a187d1aa5efd8f6abccec3e8a6077a6a04"
+  },
+  "native_descendant_cleanup": [
+    {
+      "case": "descendants-success",
+      "pid": 6090,
+      "stopped": true
+    },
+    {
+      "case": "descendants-failure",
+      "pid": 6092,
+      "stopped": true
+    },
+    {
+      "case": "descendants-timeout",
+      "pid": 6094,
+      "stopped": true
+    }
+  ],
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a",
+  "native": true,
+  "cases": 16,
+  "tool_run_outcomes": 16,
+  "production_files": [
+    "src/05_generate_code/prepare_backend/tools/tool_run.php"
+  ],
+  "source_sha256": {
+    "src/05_generate_code/prepare_backend/tools/tool_run.php": "3348d4ce8d9d0f06a14a5b417026d9a187d1aa5efd8f6abccec3e8a6077a6a04"
+  }
+}
