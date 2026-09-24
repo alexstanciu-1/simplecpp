@@ -265,7 +265,7 @@ Do not do the following without checking the higher-level specs first:
 
 ### `specs/compiler_storage.md`
 Role:
-- native compiler-specific numeric/string Storage and position-based Storage_View contract
+- native compiler-specific Storage<T> and Keyed_Storage<T> object collection contract
 - records the current shared-record identity contract and the boundary to deferred source bindings
 
 Authority:

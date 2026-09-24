@@ -35,5 +35,5 @@
         "shared_identity",
         "lifetime"
     ],
-    "notes": "Derived from specs/compiler_storage.md: automatic shared_p record handles, no record copies, retained identity/lifetime and null rejection."
+    "notes": "Derived from specs/compiler_storage.md: simple shared object collection wrappers; native semantics only, source bindings pending."
 }
