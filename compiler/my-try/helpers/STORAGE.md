@@ -70,3 +70,11 @@ semantic ownership. See [MODEL.md](../MODEL.md#collection-choices-during-llvm-pr
 Host boot loads storage_abstract.php before storage.php and keyed_storage.php.
 Generic bindings and native class structure remain pending; PHP inheritance is
 code reuse, not proof of converter support for arbitrary inheritance.
+
+## PHP portability binding checkpoint
+
+Fields/locals/parameters/returns now retain explicit Storage<T>/Keyed_Storage<T>
+annotations. Constructions require `new Storage /** Storage<row> */(capacity)`
+(or Keyed_Storage) so the converter never infers T. See
+[the binding contract](../../../specs/portability/storage_collections.md).
+This is PHP/conversion coverage; the whole compiler has not passed native validation.

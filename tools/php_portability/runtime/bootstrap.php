@@ -13,6 +13,14 @@ require_once __DIR__ . "/lock_reservation.php";
 require_once __DIR__ . "/processes.php";
 require_once __DIR__ . "/datetime.php";
 
+/** Required identity-preserving object cast; target class stays literal in portable source. */
+function object_cast(?object $value, string $target): object {
+    if (!$value instanceof $target) {
+        throw new \RuntimeException('Object cast requires a present compatible object');
+    }
+    return $value;
+}
+
 function enum_name(\UnitEnum $value): string {
     return $value->name;
 }

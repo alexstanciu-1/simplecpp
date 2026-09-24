@@ -1,0 +1,18 @@
+{
+  "production_inputs": 29,
+  "conversion": true,
+  "php_tests": [
+    "tokenizer",
+    "ast",
+    "model",
+    "llvm",
+    "calls"
+  ],
+  "unchanged_llvm_files": 19,
+  "native_sample_executions": 28,
+  "native_compiler_build": false,
+  "stan_errors": 6,
+  "initialization_errors": 0,
+  "candidate_revision": "d8ddde93b04d0e23d295e30f662c3a81b0d50fd1",
+  "candidate_overlay": "../my-try-native-01/candidate-overlay.patch"
+}

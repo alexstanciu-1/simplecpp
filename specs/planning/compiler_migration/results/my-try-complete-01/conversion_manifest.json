@@ -1,0 +1,121 @@
+{
+    "version": 1,
+    "files": {
+        "01_prepare_inputs\/file.php": {
+            "input": "a336bd094663c0180dcba5f00ca21d51d22bccc7162ebaede3d9cf920875182d",
+            "output": "475dea0538eb16620dc604e446f201a8a47e53a1b63f0cf9d70aaee381f93fb0"
+        },
+        "01_prepare_inputs\/module.php": {
+            "input": "718d2969e8807af55d0061e4223d083072d5f3f7b92780e0a020b7af6fd40b27",
+            "output": "37e07e5870fc69f7cc06bd0e07a777663c12539165ec2afb98d45f673a735ee9"
+        },
+        "01_prepare_inputs\/structures.php": {
+            "input": "7b0e27800f98acf4eb8d6dbbf9a274625a0137c72f73bbc1c153d5064edc25a8",
+            "output": "e64c6eb896642f6c36a16a31c31b60994d49859fdd4613ea32f9da9ecd8b7f51"
+        },
+        "02_tokenize\/structures.php": {
+            "input": "8bed010318c14aeb92b55c38a2800c12390be39d3f269b4a1a20aa557b97f822",
+            "output": "de4a218ed779fdbb4e211eb0846e74cc897083252121bdbbf2205b146cdc3aa7"
+        },
+        "02_tokenize\/text.php": {
+            "input": "88d74a871e6c995535ddd17835bb76f2cb3e762361e6bf876e36d0a9a56cc914",
+            "output": "e85b4213e46307e047284debce8b58d06f6fdcf427119f92fc700ebf473661f1"
+        },
+        "02_tokenize\/tokens.php": {
+            "input": "18492c2d403ab3630a4221420d044aee00cb46afe199d75e2a75b5e64f05691c",
+            "output": "2f5a9bd2a9c532b4f6dffc4db26be32f6ff4bdde85fbe9576b72262859c3a7cb"
+        },
+        "03_parse\/parser.php": {
+            "input": "4095f1a718f1dbe889cfc8cb68e415bf80143fb674ab115186b0d905771ec9ca",
+            "output": "74b75e166615dbaf2e78c097d5b705aa9b4ba329bebc49239eec72caa9d206e0"
+        },
+        "03_parse\/structures.php": {
+            "input": "6b9827d5902b35019a264ebacbca7c5b174163d424c45417f46971e358759617",
+            "output": "730c20579f151ff651d0f053810c823880427d25d36c37ff42c9d0da7f9d63ae"
+        },
+        "03_parse\/syntax.php": {
+            "input": "e159dddb7ca48d48214b693b3600089a07f0571825eaeeb23fe33497a5abe1e1",
+            "output": "60c2e035f9b7521d7e2a2528600d82f7bf1a8f9117937e05bb0256b0de26d819"
+        },
+        "04_analyze\/collect\/collect.php": {
+            "input": "4bb950dde549770a98bddc70806613b3bc0cc300c5c98895889aab2703576597",
+            "output": "9994cd0b389b538a18c76d1980fea68f76065d146068478e589744ae55bb4127"
+        },
+        "04_analyze\/collect\/structures.php": {
+            "input": "be6ee20e029f751b30eb322915bbc3ebf6565bc874a16df965f78e1c81c9188a",
+            "output": "3c0214137753fbc588785c8aba6f0d6088a4100c93ceeab327c9dd6b275daaf0"
+        },
+        "04_analyze\/prepare.php": {
+            "input": "63c6a72869d0629970d8c0819ea0548de898810497684fb82e3fb50b539cb83b",
+            "output": "efeed006546fcefbe44ca580f6bbd660245ece7d4d82425ef69233083cd84feb"
+        },
+        "04_analyze\/structures.php": {
+            "input": "20861f6bb8eef9c25574fad723006c7606f5bcd9704cbd94c6f159438f671dc4",
+            "output": "f12b3612e760f48e3116be7d39b44435ab12db794692db9986e43ebee196d013"
+        },
+        "04_analyze\/templates.php": {
+            "input": "87ae74fedd766d7bb9b47ba8f1ed4da3dd7578cb95dc8be9315636aad1dfb90f",
+            "output": "5116ad970cbec99f539e4ee3c4b7a000da35e28f91a11c03a454f548b7eab8e3"
+        },
+        "05_llvm\/expressions.php": {
+            "input": "ea433bf8ed84db0c2134bdf0147f7ddb58fe1a0ed4baeb8f2e5f449bb97a27a3",
+            "output": "0617aa80eb6623eb276f0edc3b394fb51d0f3cc8d64309b4d26356c770819952"
+        },
+        "05_llvm\/functions.php": {
+            "input": "9f5cc9f40d7e69cd63603135293242e19ab97c3aa3a030975bc1778bc9b9bef1",
+            "output": "cb3d0917f2a96d1746f23698cdd976a5fa65e15b69139ba7df51ef1635e0577c"
+        },
+        "05_llvm\/generate.php": {
+            "input": "cb62d50cd794a150135fca14f337f8252148556bed9070982c8c06ffe514553b",
+            "output": "af42d7cfccdf5940afaf57a8ce8c3ea70f460e7183e4ab3170331cc64bf9f8d1"
+        },
+        "05_llvm\/names.php": {
+            "input": "ec33c58c4d0ff70c3e9ff29f2acde1ad2a1d59f256c82034b4284b5aaecb1d03",
+            "output": "ce19ec5d2521de6d2a94ba55d6ce4ba6cee6a972660a3ce5f24ca37d40a138a3"
+        },
+        "05_llvm\/prepare.php": {
+            "input": "5d38da39a00028100cda68fbed864a1fd04209a82faee8bf84c7545e669b4e02",
+            "output": "25804eef7f37a2de63f482fd1b6edd2596e1cd1076fe5108bbad913e0e75eb22"
+        },
+        "05_llvm\/statements.php": {
+            "input": "7519e3d698b6647fac583d2bacdc46c58732cc6fe606e097f648cf11addc7183",
+            "output": "55b03d7b123d38b8af81fde95a76680ec0bad8294832b7834cfc06538e0138da"
+        },
+        "05_llvm\/structs.php": {
+            "input": "af4eec9b5279fb2f25d7577dd151ffdfd382b654a3ee7d201bb8781c8f0036f0",
+            "output": "b39503d44f23b2b9cbbac7de3cc0bad99c20e3275026c76a284a87145786dc50"
+        },
+        "05_llvm\/structures.php": {
+            "input": "d78a330c5ef49e5db6d5f6c946c48e21e9cbd83208095eb12f78afcc19ee0f23",
+            "output": "d11ef08d5554687f00a5ee11464c122878680d1d287e532da8d903a10bd04501"
+        },
+        "05_llvm\/text.php": {
+            "input": "959ef18ebbf3351c6875127c2790f49e256943b161b8b526e70f0bfa3f811a5a",
+            "output": "d87699b6364cff893dfcd248752459d65aa4739305d9b62cb020c310daff318e"
+        },
+        "05_llvm\/write.php": {
+            "input": "debd4650c56c7e85749b44a644dcfb0eda0d2ca6904412f311e3344e492e3708",
+            "output": "6fb6adcba92dc94f3444672c87ddc2b9f50b6b0eb43ebf2d316d6753dd6d6c22"
+        },
+        "06_native\/run.php": {
+            "input": "4ee294d6359e7554898a217747c452c69a992a32c99b36099748f0a95dcc8664",
+            "output": "a6fdf78d3e101d97696319de57bf5e2c4206d0e4b4b8508a50b3b741bb51edce"
+        },
+        "06_native\/structures.php": {
+            "input": "2987410b24d1f1a00ca29ee60e1c68c05be37b6116ea47bd72a5b14ad5f6bd41",
+            "output": "11c923c74aaa13aa87e17d0e2bb3c931d20397914b35f779ee567568b6c81404"
+        },
+        "compile\/compile.php": {
+            "input": "35fd865dbf48c400733cb79ecf5616989f1fbb17679c7c3743177b7d18334e23",
+            "output": "b1cb7fe07a339a07d267a745c53093608353c1c8062605e2ac5c09746a627cba"
+        },
+        "compile\/host_report.php": {
+            "input": "003496badac37120ed9228f4b6b2ad849661bb30111c5592b66ef359bfb5f6cc",
+            "output": "8da19627e92266b11eee443f502363947df13b28dfd5fe9dcfd68fbe4e639cbb"
+        },
+        "compile\/model.php": {
+            "input": "ab7448c0c07ba4859e9f14b2df15d400f850bac7c373f48e17d9966574ba0146",
+            "output": "57cd71f7fb78ec946fdee4247c01f18b96930442fb18df14481aa904f7f80772"
+        }
+    }
+}

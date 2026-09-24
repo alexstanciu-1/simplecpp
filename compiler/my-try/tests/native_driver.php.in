@@ -1,0 +1,43 @@
+<?php
+namespace scpp\compiler;
+
+// Host harness supplies these two literal paths before conversion.
+$path = fs_read_text(__REQUEST_FILE__);
+$paths /** vector<string> */ = [$path];
+$compiler = new Compiler();
+$retained /** Storage<llvm_module> */ = new Storage /** Storage<llvm_module> */();
+$previous = '';
+try {
+    for ($attempt = 0; $attempt < 2; $attempt++) {
+        $compiler->init($paths);
+        $compiler->exec();
+        $outputs /** Storage<llvm_module> */ = Model::$llvm_files;
+        $trace = "OK\n";
+        foreach ($outputs as $output) {
+            $trace .= string_byte_len($output->file_name) . ':' . $output->file_name . string_byte_len($output->text) . ':' . $output->text;
+        }
+        if ($attempt === 1) {
+            if ($trace !== $previous) { throw new \LogicException('Repeated compilation changed output'); }
+            foreach ($retained as $index => $old) {
+                if ($old === $outputs[$index]) { throw new \LogicException('Rebuild reused an output record'); }
+                if ($old->text !== $outputs[$index]->text) { throw new \LogicException('Rebuild damaged retained output'); }
+            }
+        }
+        $previous = $trace;
+        $retained = $outputs;
+    }
+    echo $previous;
+} catch (\Throwable $error) {
+    $message = $error->getMessage();
+    $failed_outputs /** Storage<llvm_module> */ = Model::$llvm_files;
+    if (!$failed_outputs->is_empty()) { throw new \LogicException('Failed compilation published output'); }
+    $recovery_paths /** vector<string> */ = [__RECOVERY_DIR__];
+    $compiler->init($recovery_paths);
+    $compiler->exec();
+    $recovered /** Storage<llvm_module> */ = Model::$llvm_files;
+    if (q_count($recovered) !== 1) { throw new \LogicException('Recovery did not produce one module'); }
+    if ($recovered[0]->text !== "define i32 @main() {\n_Gb0:\n    ret i32 0\n}\n") {
+        throw new \LogicException('Recovery changed the expected output');
+    }
+    echo "ERROR\n", $message;
+}

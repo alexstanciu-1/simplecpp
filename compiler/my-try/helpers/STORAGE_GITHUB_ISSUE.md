@@ -4,7 +4,8 @@ Doc Status: historical
 This snapshot predates removal of views and the separate Keyed_Storage design.
 “Latest” and “current” below describe the publication checkpoint only. It is not
 the current local requirement. Use [the native brief](STORAGE_NATIVE_TASK.md) and
-[collection API](STORAGE.md); GitHub reconciliation remains pending.
+[collection API](STORAGE.md); GitHub was updated on 2026-09-24 with the replacement contract; this saved
+older body remains historical. See the native brief for the update link.
 
 Verified issue-body snapshot after the default shared-record update, 2026-09-24.
 Detailed follow-up: https://github.com/alexstanciu-1/simplecpp/issues/242#issuecomment-5812738509

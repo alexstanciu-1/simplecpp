@@ -2,8 +2,10 @@
 Doc Status: planning
 
 This local contract supersedes the earlier owner/view and hook-heavy design.
-Issue #242 / PR #243 have not yet been updated for this simplification. Their
-published API and tests are historical inputs, not the current compiler requirement.
+[Issue #242](https://github.com/alexstanciu-1/simplecpp/issues/242) was replaced with
+this simplified contract on 2026-09-24; [the worker notification](https://github.com/alexstanciu-1/simplecpp/issues/242#issuecomment-5813446910)
+requests replacement of the earlier storage-specific implementation and an update
+to PR #243. Delivery is pending. The previous native API/tests are historical inputs.
 
 Implement Storage<T> as a numeric shared object list and Keyed_Storage<T> as a
 string-keyed shared object collection. T names the record; elements
@@ -24,8 +26,11 @@ No Storage_View, read-only mode, internal_* methods, key-mode flag, key-position
 map, secondary-index hooks or generic ownership-policy arguments are required now.
 Dedicated compiler lookup indexes remain with their process/data owners. Do not
 implement serialization, automatic weakrefs/cycle collection or optimized inline
-record layouts in this slice. Existing richer native helpers may remain separate,
-but do not force their machinery into compiler authoring.
+record layouts in this slice. Revert/remove the earlier storage-specific implementation and rebuild thin wrappers
+around existing vector/hash facilities. Preserve unrelated runtime work and existing
+core containers/shared_p; no history rewrite is requested. A vector with empty slots
+can preserve numeric holes; keyed insertion order needs an ordered hash or a small
+ordering layer. Do not retain the old design as a compatibility requirement.
 
 Converter binding should recognize explicit Storage<T> and Keyed_Storage<T>
 annotations and capacity-only
@@ -48,7 +53,7 @@ Keyed_Storage has add(key, record) with duplicate rejection, [] keyed insertion 
 replacement, and common operations by string key. No numeric-position access or
 keyless append. Preserve exact string keys and insertion order; replacement keeps
 order, removal/reinsertion moves to the end. Both types hold shared_p<T> objects.
-The native issue needs this updated contract before integration. Current compiler
+The native issue now requests this contract; implementation and binding are pending. Current compiler
 uses include named struct types/fields, external targets and the instance registry.
 Sparse integer indexes, scope overload pools and scalar arrays retain their existing
 typed representation; see [collection inventory](../MODEL.md#collection-choices-during-llvm-preparation).

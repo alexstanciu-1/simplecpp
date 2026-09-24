@@ -9,11 +9,17 @@ namespace scpp\compiler;
 /** Explicit defaults for this experiment, not the full Simple C++ type/ABI contract. */
 final class llvm_policy {
 	/** Source type spelling to LLVM integer type. */
-	public array $types /** hash<string> */ = ['int' => 'i32', 'void' => 'void'];
+	public array $types /** hash<string> */ = [];
 	public string $integer_type = 'i32';
 	public string $integer_max = '2147483647';
 	public string $entry_name = 'main';
 	public string $entry_return_type = 'i32';
+
+	public function __construct()
+	{
+		$this->types['int'] = 'i32';
+		$this->types['void'] = 'void';
+	}
 }
 
 /** One textual LLVM output file; unused module sections stay empty. */
@@ -37,7 +43,7 @@ final class llvm_module
 
 	public function __construct()
 	{
-		$this->functions = new Storage();
+		$this->functions = new Storage /** Storage<llvm_function> */();
 	}
 }
 
@@ -59,8 +65,8 @@ final class llvm_function
 
 	public function __construct()
 	{
-		$this->parameters = new Storage();
-		$this->blocks = new Storage();
+		$this->parameters = new Storage /** Storage<llvm_operand> */();
+		$this->blocks = new Storage /** Storage<llvm_block> */();
 	}
 }
 
@@ -120,15 +126,17 @@ final class llvm_prepared_file {
 
 	public function __construct()
 	{
-		$this->struct_types = new Keyed_Storage();
-		$this->functions = new Storage();
-		$this->external_functions = new Keyed_Storage();
+		$this->struct_types = new Keyed_Storage /** Keyed_Storage<llvm_struct_type> */();
+		$this->functions = new Storage /** Storage<llvm_prepared_function> */();
+		$this->external_functions = new Keyed_Storage /** Keyed_Storage<llvm_prepared_function> */();
 	}
 }
 
 final class llvm_prepared_function
 {
-	/** @storage.reference collected_file.entries */
+	/** Null only for the synthesized top-level entry (is_entry=true).
+	 * @storage.reference collected_file.entries
+	 */
 	public ?collected_name $declaration = null;
 	/** @reference.source llvm_prepared_file
 	 * @reference.weak
@@ -162,7 +170,7 @@ final class llvm_prepared_function
 
 	public function __construct()
 	{
-		$this->parameters = new Storage();
+		$this->parameters = new Storage /** Storage<llvm_parameter> */();
 	}
 }
 
@@ -192,7 +200,7 @@ final class llvm_struct_type {
 
 	public function __construct()
 	{
-		$this->fields = new Keyed_Storage();
+		$this->fields = new Keyed_Storage /** Keyed_Storage<llvm_field> */();
 	}
 }
 

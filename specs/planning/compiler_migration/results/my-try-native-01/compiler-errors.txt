@@ -1,0 +1,102 @@
+../generated/03_parse/parser.cpp:26:23: error: member reference type '::scpp::compiler::Storage<scope>' is not a pointer; did you mean to use '.'?
+../generated/03_parse/parser.cpp:32:17: error: member reference type '::scpp::compiler::Storage<ast_node>' is not a pointer; did you mean to use '.'?
+../generated/03_parse/parser.cpp:35:71: error: no viable conversion from 'shared_p<block_specialization>' to 'nullable<shared_p<node_interface>>'
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/type_traits:3361:68: error: incomplete type 'scpp::scpp::compiler::scpp_portability_runtime_exception' used in type trait expression
+../generated/03_parse/parser.cpp:57:8: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:63:9: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:67:9: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:78:10: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:85:10: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:89:17: error: member reference type '::scpp::compiler::Storage<ast_node>' is not a pointer; did you mean to use '.'?
+../generated/03_parse/parser.cpp:89:80: error: no viable conversion from 'shared_p<field_specialization>' to 'nullable<shared_p<node_interface>>'
+../generated/03_parse/parser.cpp:92:63: error: no viable conversion from 'shared_p<struct_specialization>' to 'nullable<shared_p<node_interface>>'
+../generated/03_parse/parser.cpp:103:60: error: no viable conversion from 'shared_p<expression_statement_specialization>' to 'nullable<shared_p<node_interface>>'
+../generated/03_parse/parser.cpp:109:9: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:122:11: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:134:9: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:139:43: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+../generated/03_parse/parser.cpp:141:9: error: no matching function for call to 'make_thrown'
+../generated/03_parse/parser.cpp:144:22: error: member reference type '::scpp::compiler::Storage<scope>' is not a pointer; did you mean to use '.'?
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+../generated/05_llvm/generate.cpp:15:52: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:174:36: error: implicit instantiation of undefined template 'scpp::detail::condition_ternary_result<scpp::string_t, int>'
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::shared_p<scpp::scpp::compiler::collected_name>, scpp::null_t>'
+../generated/05_llvm/generate.cpp:56:69: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:59:51: error: member reference type 'int' is not a pointer
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::shared_p<scpp::scpp::compiler::llvm_prepared_function>, scpp::null_t>'
+../generated/05_llvm/generate.cpp:135:138: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:136:153: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:143:28: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:157:152: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:166:25: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:167:91: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:169:86: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:169:141: error: member reference type 'int' is not a pointer
+../generated/05_llvm/generate.cpp:184:28: error: member reference base type 'node_kind' is not a structure or union
+../generated/05_llvm/generate.cpp:185:38: error: expected expression
+../generated/05_llvm/generate.cpp:188:38: error: expected expression
+../generated/05_llvm/generate.cpp:191:38: error: expected expression
+../generated/05_llvm/generate.cpp:195:162: error: member reference type 'node_kind' is not a pointer
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+../generated/04_analyze/prepare.cpp:19:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/04_analyze/prepare.cpp:34:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/04_analyze/prepare.cpp:39:102: error: member reference type 'mixed_t' is not a pointer; did you mean to use '.'?
+../generated/04_analyze/prepare.cpp:39:104: error: no member named 'file' in 'scpp::mixed_t'
+../generated/04_analyze/prepare.cpp:42:124: error: member reference type 'mixed_t' is not a pointer; did you mean to use '.'?
+../generated/04_analyze/prepare.cpp:42:126: error: no member named 'token_index' in 'scpp::mixed_t'
+../generated/04_analyze/prepare.cpp:50:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/04_analyze/prepare.cpp:54:15: error: no viable overloaded '='
+../generated/04_analyze/prepare.cpp:68:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/05_llvm/structs.cpp:22:30: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/05_llvm/structs.cpp:52:17: error: member reference type '::scpp::compiler::Keyed_Storage<llvm_field>' is not a pointer; did you mean to use '.'?
+../generated/05_llvm/structs.cpp:54:60: error: member reference type '::scpp::compiler::Keyed_Storage<llvm_field>' is not a pointer; did you mean to use '.'?
+../generated/05_llvm/structs.cpp:69:37: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/operators/conditional/../../../../operators/conditional/condition_truthiness.hpp:117:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<bool>': unsupported scpp::condition_truthy input type
+../generated/02_tokenize/tokens.cpp:39:23: error: variable 'token' declared with deduced type 'auto' cannot appear in its own initializer
+../generated/04_analyze/collect/collect.cpp:26:40: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+../generated/04_analyze/collect/collect.cpp:32:42: error: member reference type '::scpp::compiler::Storage<collected_name>' is not a pointer; did you mean to use '.'?
+../generated/04_analyze/collect/collect.cpp:33:16: error: member reference base type 'collected_name_kind' is not a structure or union
+../generated/04_analyze/collect/collect.cpp:34:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:35:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:36:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:42:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:48:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:54:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:60:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:66:37: error: expected expression
+../generated/04_analyze/collect/collect.cpp:85:35: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/03_parse/syntax.cpp:17:144: error: member reference type 'node_kind' is not a pointer
+../generated/01_prepare_inputs/module.cpp:28:22: error: variable 'file' declared with deduced type 'auto' cannot appear in its own initializer
+../generated/04_analyze/templates.cpp:30:38: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/04_analyze/templates.cpp:35:19: error: no viable overloaded '='
+../generated/04_analyze/templates.cpp:48:17: error: no viable overloaded '='
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::int_t<>, scpp::null_t>'
+../generated/04_analyze/templates.cpp:89:42: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::string_t, scpp::null_t>'
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:174:36: error: implicit instantiation of undefined template 'scpp::detail::condition_ternary_result<int, scpp::string_t>'
+../generated/04_analyze/templates.cpp:109:57: error: no viable overloaded '='
+../generated/04_analyze/templates.cpp:162:70: error: type '::scpp::compiler::Storage<ast_node>' does not provide a subscript operator
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::string_t>': unsupported ternary_eval branch combination
+../generated/05_llvm/prepare.cpp:36:32: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+../generated/05_llvm/prepare.cpp:59:38: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::string_t, scpp::null_t>'
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::int_t<>, scpp::null_t>'
+../generated/05_llvm/prepare.cpp:128:48: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+../generated/05_llvm/prepare.cpp:143:43: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:174:36: error: implicit instantiation of undefined template 'scpp::detail::condition_ternary_result<scpp::null_t, scpp::shared_p<scpp::scpp::compiler::llvm_struct_type>>'
+../generated/05_llvm/prepare.cpp:159:301: error: member reference type 'int' is not a pointer
+../generated/05_llvm/prepare.cpp:166:22: error: no viable overloaded '='
+../generated/05_llvm/prepare.cpp:168:31: error: member reference type 'int' is not a pointer
+../generated/05_llvm/prepare.cpp:208:35: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<scpp::shared_p<scpp::scpp::compiler::collected_name>>': scpp::cast is not defined for this From/To pair
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::null_t>': unsupported ternary_eval branch combination
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::shared_p<scpp::scpp::compiler::llvm_struct_type>>': unsupported ternary_eval branch combination
+parser.cpp:26:23: error: member reference type '::scpp::compiler::Storage<scope>' is not a pointer; did you mean to use '.'?
+parser.cpp:32:17: error: member reference type '::scpp::compiler::Storage<ast_node>' is not a pointer; did you mean to use '.'?
+parser.cpp:35:71: error: no viable conversion from 'shared_p<block_specialization>' to 'nullable<shared_p<node_interface>>'

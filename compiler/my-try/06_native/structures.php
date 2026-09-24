@@ -14,5 +14,6 @@ final class native_process_result {
 
 final class native_result {
 	public native_process_result $build;
+	/** Null when compilation failed; host launch/capture failures throw instead. */
 	public ?native_process_result $execution = null;
 }

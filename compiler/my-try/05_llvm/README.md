@@ -13,7 +13,7 @@ Compiler::llvm()
             LLVM_Struct_Preparation::fields()
             register()                    [new concrete call targets]
     LLVM_Generator::generate()
-        to_llvm_function() -> to_llvm_block()
+        LLVM_Function_Generator::generate() -> to_llvm_block()
             expression()/expression_storage() -> loads, calls, checked addresses
             store_value() -> local/element/field stores
         LLVM_Writer::text()
@@ -33,7 +33,7 @@ indexes are interpreted within their concrete function instance. Generated addre
 the generator allocates `%_GvN` monotonically within each emitted function.
 These namespaces cannot collide and do not depend on source-name uniqueness.
 
-`functions.php`, `expressions.php` and `statements.php` are traits composed into `LLVM_Generator`.
+`functions.php`, `expressions.php` and `statements.php` are traits composed into `LLVM_Function_Generator`.
 They use prepared declaration targets, emit instructions, and return typed operands
 for expressions. The writer serializes the module without looking at source names.
 Preparation and generation leave source, AST and collected entries unchanged.
@@ -163,3 +163,13 @@ order while avoiding a repeated identity scan. Field insertion rejects duplicate
 Sparse declaration/token maps and LLVM text arrays remain typed arrays.
 See [the collection inventory](../MODEL.md#collection-choices-during-llvm-preparation)
 for ownership and index-maintenance rules.
+
+
+## Portability preparation
+
+LLVM_Names uses explicit byte helpers for exact reversible encoding, including
+non-UTF-8 bytes. LLVM_Writer joins typed string lists while preserving empty-item
+separators and section order; LLVM_Functions uses explicit concatenation. These
+files pass local conversion syntax checks. Native compilation and Storage consumer
+bindings remain unproved; see [conversion status](../docs/conversion_review.md).
+The PHP host boot loads the shared portability framework for these helpers.

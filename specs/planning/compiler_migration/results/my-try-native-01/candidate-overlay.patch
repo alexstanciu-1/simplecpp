@@ -1,0 +1,225 @@
+--- a/generators/php/src/Generator/Generator.php
++++ b/generators/php/src/Generator/Generator.php
+@@ -2521,6 +2521,9 @@
+ 		}
+ 		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
+ 		$this->appendHeaderLines($header, $this->code('public:', $class->line));
++		if ($class->isInterface && array_filter($class->methods, static fn(MethodDecl $method): bool => $method->name === '__destruct') === []) {
++			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'virtual ~' . $class->name . '() = default;', $class->line));
++		}
+ 		$lateStaticDispatchMethods = $this->collectLateStaticDispatchMethods($class, $namespacePhp);
+ 		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }', $class->line));
+ 		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static bool_t __scpp_static_accepts(const void* __scpp_token);', $class->line));
+@@ -2890,7 +2893,8 @@
+ 				return $className . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
+ 			}
+ 			if ($method->name === '__destruct' && $className !== null) {
+-				return '~' . $className . '()';
++				return ($classDecl instanceof ClassDecl && $classDecl->isInterface)
++					? 'virtual ~' . $className . '() = default' : '~' . $className . '()';
+ 			}
+ 			$prefix = $method->isStatic ? 'static ' : '';
+ 			if (
+@@ -7396,6 +7400,14 @@
+ 		}
+ 
+ 		$kind = $expr->kind ?? null;
++		if ($kind === AstKind::INSTANCEOF) {
++			$class = $expr->children['class'] ?? null;
++			if (!is_object($class) || ($class->kind ?? null) !== AstKind::NAME) {
++				throw new GenerationException('instanceof requires a literal class or interface name.');
++			}
++			return '::scpp::object_is<' . $this->renderClassName($class, $namespacePhp) . '>('
++				. $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp) . ')';
++		}
+ 		if ($kind === AstKind::CLOSURE) {
+ 			return $this->renderClosureExpr($expr, $namespacePhp);
+ 		}
+@@ -7630,6 +7642,10 @@
+ 			if ($this->isAsyncWaitCallName($nameExpr)) {
+ 				return $this->renderAsyncWaitCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+ 			}
++			if ($this->isObjectCastCallName($nameExpr)) {
++				return '::scpp::checked_object_cast<' . $this->objectCastTarget($args, $namespacePhp) . '>('
++					. $this->renderExpr($args[0], $namespacePhp) . ')';
++			}
+ 			if ($this->isTakeCallName($nameExpr)) {
+ 				return $this->renderTakeCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+ 			}
+@@ -8033,6 +8049,24 @@
+ 		return null;
+ 	}
+ 
++	/** Framework cast binding uses only its explicit class marker, with no type inference. */
++	private function isObjectCastCallName(mixed $expr): bool {
++		return is_object($expr) && ($expr->kind ?? null) === AstKind::NAME
++			&& strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'scpp_portability_object_cast';
++	}
++
++	private function objectCastTarget(array $args, ?string $namespacePhp): string {
++		if (count($args) !== 2 || !is_object($args[1]) || ($args[1]->kind ?? null) !== AstKind::CLASS_NAME) {
++			throw new GenerationException('object_cast requires value and literal Class::class target.');
++		}
++		$class = $args[1]->children['class'] ?? null;
++		if (!is_object($class) || ($class->kind ?? null) !== AstKind::NAME
++			|| in_array(strtolower((string) ($class->children['name'] ?? '')), ['self', 'parent', 'static'], true)) {
++			throw new GenerationException('object_cast requires a literal class or interface target.');
++		}
++		return $this->renderClassName($class, $namespacePhp);
++	}
++
+ 	private function isAsyncWaitCallName(mixed $expr): bool
+ 	{
+ 		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+@@ -8945,8 +8979,12 @@
+ 		}
+ 
+ 		$kind = $expr->kind ?? null;
++		if ($kind === AstKind::INSTANCEOF) { return 'bool_t'; }
+ 		if ($kind === AstKind::CALL) {
+ 			$nameExpr = $expr->children['expr'] ?? null;
++			if ($this->isObjectCastCallName($nameExpr)) {
++				return 'shared_p<' . $this->objectCastTarget($expr->children['args']->children ?? [], $namespacePhp) . '>';
++			}
+ 			if ($this->isTakeCallName($nameExpr)) {
+ 				return 'bool_t';
+ 			}
+@@ -9011,6 +9049,7 @@
+ 		}
+ 
+ 		$kind = $expr->kind ?? null;
++		if ($kind === AstKind::INSTANCEOF) { return 'bool_t'; }
+ 		if ($kind === AstKind::CONST) {
+ 			$nameNode = $expr->children['name'] ?? null;
+ 			$name = strtolower(ltrim(is_object($nameNode) ? (string) ($nameNode->children['name'] ?? '') : (string) $nameNode, '\\'));
+--- a/generators/php/src/PreTokenizer/TokenSiteScanner.php
++++ b/generators/php/src/PreTokenizer/TokenSiteScanner.php
+@@ -792,6 +792,8 @@
+ 
+ 	private function isAllowedTypeToken(string $text, int $depthAngles, int $depthParens): bool
+ 	{
++		// Expression operators must never be consumed as postfix type spellings.
++		if (strtolower($text) === 'instanceof') { return false; }
+ 		if ($text === '') {
+ 			return false;
+ 		}
+--- a/generators/php/src/Support/AstKindPhp84.php
++++ b/generators/php/src/Support/AstKindPhp84.php
+@@ -56,6 +56,7 @@
+ 	public const ENUM_CASE = 1026;
+ 	public const PROP_ELEM = 1027;
+ 	public const NEW = 527;
++	public const INSTANCEOF = 528;
+ 	public const STATIC_CALL = 770;
+ 	public const CALL = 516;
+ 	public const CLASS_CONST = 517;
+--- a/generators/php/src/Support/AstKindPhp85.php
++++ b/generators/php/src/Support/AstKindPhp85.php
+@@ -56,6 +56,7 @@
+ 	public const ENUM_CASE = 1026;
+ 	public const PROP_ELEM = 1027;
+ 	public const NEW = 527;
++	public const INSTANCEOF = 528;
+ 	public const STATIC_CALL = 770;
+ 	public const CALL = 516;
+ 	public const CLASS_CONST = 517;
+--- a/generators/php/src/Stan/StanDependencyResolver.php
++++ b/generators/php/src/Stan/StanDependencyResolver.php
+@@ -58,6 +58,8 @@
+ 	private function builtinFunctionNames(): array
+ 	{
+ 		return [
++			// Reserved portability binding; literal target validation belongs to lowering.
++			'scpp_portability_object_cast',
+ 			'async_sleep_ms',
+ 			'async_wait',
+ 			'enum_value',
+--- a/generators/php/src/Stan/StanExpressionTypeResolver.php
++++ b/generators/php/src/Stan/StanExpressionTypeResolver.php
+@@ -2409,6 +2409,15 @@
+ 				}
+ 			}
+ 		}
++		// The target is a literal class token, validated by the portability lowering.
++		$catalog['scpp_portability_object_cast'] = [
++			'name' => 'scpp_portability_object_cast',
++			'namespace' => null,
++			'params' => [['name' => 'value', 'type' => 'mixed'], ['name' => 'target', 'type' => 'mixed']],
++			'return_type' => 'mixed',
++			'line' => 0,
++			'is_static' => false,
++		];
+ 		$catalog['async_sleep_ms'] = [
+ 			'name' => 'async_sleep_ms',
+ 			'namespace' => null,
+--- a/runtime/include/scpp/lang/php.hpp
++++ b/runtime/include/scpp/lang/php.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ #include "scpp/runtime.hpp"
++#include "scpp/object_cast.hpp"
+ // Register lookup overloads before PHP forwarding templates bind qualified names.
+ #include "lang/php/php_compiler.hpp"
+ 
+--- /dev/null
++++ b/runtime/include/scpp/object_cast.hpp
+@@ -0,0 +1,58 @@
++#pragma once
++
++#include "scpp/shared_p.hpp"
++#include "scpp/nullable.hpp"
++
++namespace scpp {
++
++// Identity-preserving object tests. No record copies or ownership transfer.
++template <typename To, typename From>
++[[nodiscard]] bool_t object_is(const shared_p<From> &value) noexcept {
++	if constexpr (std::is_convertible_v<From *, To *>) {
++		return bool_t(value.get() != nullptr);
++	} else if constexpr (std::is_polymorphic_v<From>) {
++		return bool_t(dynamic_cast<To *>(value.get()) != nullptr);
++	} else {
++		static_assert(std::is_polymorphic_v<From>, "Object narrowing requires a polymorphic interface or base");
++		return bool_t(false);
++	}
++}
++
++template <typename To, typename From>
++[[nodiscard]] bool_t object_is(const nullable<shared_p<From>> &value) noexcept {
++	if (!static_cast<bool>(value.has_value())) { return bool_t(false); }
++	return object_is<To>(value.value());
++}
++
++template <typename To>
++[[nodiscard]] bool_t object_is(null_t) noexcept { return bool_t(false); }
++
++template <typename To>
++[[nodiscard]] shared_p<To> checked_object_cast(null_t) {
++	throw runtime_error("Object cast requires a present compatible object", "invalid_object_cast", "scpp::object_cast", "checked_object_cast");
++}
++
++// A required checked cast retains the original shared control block.
++template <typename To, typename From>
++[[nodiscard]] shared_p<To> checked_object_cast(const shared_p<From> &value) {
++	std::shared_ptr<To> result;
++	if constexpr (std::is_convertible_v<From *, To *>) {
++		result = std::static_pointer_cast<To>(value.native_value());
++	} else if constexpr (std::is_polymorphic_v<From>) {
++		result = std::dynamic_pointer_cast<To>(value.native_value());
++	} else {
++		static_assert(std::is_polymorphic_v<From>, "Object narrowing requires a polymorphic interface or base");
++	}
++	if (!result) {
++		throw runtime_error("Object cast requires a present compatible object", "invalid_object_cast", "scpp::object_cast", "checked_object_cast");
++	}
++	return shared_p<To>(std::move(result));
++}
++
++template <typename To, typename From>
++[[nodiscard]] shared_p<To> checked_object_cast(const nullable<shared_p<From>> &value) {
++	if (!static_cast<bool>(value.has_value())) { return checked_object_cast<To>(shared_p<From>{}); }
++	return checked_object_cast<To>(value.value());
++}
++
++} // namespace scpp

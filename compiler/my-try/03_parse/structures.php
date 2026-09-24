@@ -37,6 +37,15 @@ enum node_kind
 	case variable_binding_statement;
 }
 
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Node_Kind_Name
+{
+	public static function text(node_kind $kind): string
+	{
+		return enum_name($kind);
+	}
+}
+
 enum binding_kind {
 	case unresolved;
 	case declaration;
@@ -72,8 +81,8 @@ final class call_specialization implements node_interface
 
 	public function __construct()
 	{
-		$this->arguments = new Storage();
-		$this->template_arguments = new Storage();
+		$this->arguments = new Storage /** Storage<ast_node> */();
+		$this->template_arguments = new Storage /** Storage<ast_node> */();
 	}
 }
 
@@ -84,7 +93,8 @@ final class ast_node
 	/** @storage.boundary token_list.tokens */
 	public int $end_token_index;
 	public node_kind $kind;
-	/** Concrete payload owned directly by this node; validated against kind.
+	/** Concrete payload owned directly by this node; null only for payload-free kinds.
+	 * Kind/payload agreement is validated by Syntax_Nodes.
 	 * @ownership owner
 	 */
 	public ?node_interface $specialization = null;
@@ -147,13 +157,15 @@ final class function_specialization implements node_interface
 
 	public function __construct()
 	{
-		$this->parameters = new Storage();
+		$this->parameters = new Storage /** Storage<ast_node> */();
 	}
 }
 
 final class parameter_specialization implements node_interface {
 	public passing_mode $mode = passing_mode::value;
-	/** @storage.index token_list.tokens */
+	/** Null for value parameters; present exactly when mode is reference.
+	 * @storage.index token_list.tokens
+	 */
 	public ?int $reference_token_index = null;
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -181,7 +193,7 @@ final class block_specialization implements node_interface
 
 	public function __construct()
 	{
-		$this->children = new Storage();
+		$this->children = new Storage /** Storage<ast_node> */();
 	}
 }
 
@@ -209,6 +221,7 @@ final class expression_statement_specialization implements node_interface {
 	public int $semicolon_token_index;
 }
 
+/** expression is null for a bare return; keyword and semicolon remain required. */
 final class return_specialization implements node_interface {
 	/** @storage.index token_list.tokens */
 	public int $keyword_token_index;
@@ -220,7 +233,11 @@ final class return_specialization implements node_interface {
 	public int $semicolon_token_index;
 }
 
-/** Preserve ambiguous binding syntax while declaration/assignment classification is refined. */
+/** Preserve ambiguous binding syntax while declaration/assignment classification is refined.
+ * type_syntax is absent on untyped writes; target is present only for indexed/field writes.
+ * equals_token_index and value are either both present or both absent.
+ * A typed declaration may omit its initializer; an untyped write requires a value.
+ */
 final class binding_specialization implements node_interface
 {
 	public binding_kind $classification = binding_kind::unresolved;
@@ -266,7 +283,7 @@ final class array_literal_specialization implements node_interface
 
 	public function __construct()
 	{
-		$this->elements = new Storage();
+		$this->elements = new Storage /** Storage<ast_node> */();
 	}
 }
 
@@ -293,7 +310,7 @@ final class struct_specialization implements node_interface
 
 	public function __construct()
 	{
-		$this->fields = new Storage();
+		$this->fields = new Storage /** Storage<ast_node> */();
 	}
 }
 
@@ -338,6 +355,6 @@ final class parsed_file
 	/** Initialize owned stores only; parser operations populate them. */
 	public function __construct()
 	{
-		$this->scopes = new Storage();
+		$this->scopes = new Storage /** Storage<scope> */();
 	}
 }

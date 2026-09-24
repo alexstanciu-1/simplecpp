@@ -2,11 +2,55 @@
 
 /*
  * Role: lower prepared files to LLVM modules.
- * Call map: Compiler::llvm -> LLVM_Generator::generate -> to_llvm_function -> LLVM_Writer::text.
+ * Call map: Compiler::llvm -> LLVM_Generator::generate -> LLVM_Function_Generator::generate -> LLVM_Writer::text.
  */
 namespace scpp\compiler;
 
 final class LLVM_Generator
+{
+	/** Lower each prepared source into its own module, sharing one program entry.
+	 */
+	public function generate(Storage $files /** Storage<llvm_prepared_file> */, llvm_policy $policy): Storage /** Storage<llvm_module> */
+	{
+		$outputs /** Storage<llvm_module> */ = new Storage /** Storage<llvm_module> */();
+		$entry_count = 0;
+		foreach ($files as $prepared)
+		{
+			$module = new llvm_module();
+			$functions /** Storage<llvm_function> */ = $module->functions;
+			foreach ($prepared->struct_types as $type) {
+				$fields /** vector<string> */ = [];
+				foreach ($type->fields as $field) {
+					$fields[] = $field->type;
+				}
+				$module->types[] = $type->name . ' = type { ' . LLVM_Text::join($fields, ', ') . ' }';
+			}
+			$module->file_name = LLVM_Text::output_name($prepared->source->source->file->path);
+			foreach ($prepared->external_functions as $target) {
+				$types /** vector<string> */ = [];
+				foreach ($target->parameters as $parameter) {
+					$types[] = $parameter->incoming->type;
+				}
+				$signature = LLVM_Text::join($types, ', ');
+				$module->external_functions[] = ("declare " . $target->return_type . " @" . $target->name . "(" . $signature . ")");
+			}
+			foreach ($prepared->functions as $function) {
+				$entry_count = $entry_count + (int) $function->is_entry;
+				$functions[] = (new LLVM_Function_Generator($function, $policy))->generate();
+			}
+			$module->text = (new LLVM_Writer())->text($module);
+			$outputs[] = $module;
+		}
+		if ($entry_count !== 1) {
+			throw new \RuntimeException('LLVM experiment requires exactly one file with top-level executable code; other files may contain function definitions');
+		}
+		return $outputs;
+	}
+
+}
+
+/** One function emission owns its block, local initialization and temporary names. */
+final class LLVM_Function_Generator
 {
 	use LLVM_Expressions;
 	use LLVM_Statements;
@@ -21,55 +65,29 @@ final class LLVM_Generator
 	/** Initialized declaration indexes in this function. */
 	private array $initialized /** hash<bool, int> */ = [];
 
-	/** Lower each prepared source into its own module, sharing one program entry.
-	 */
-	public function generate(Storage $files /** Storage<llvm_prepared_file> */, llvm_policy $policy): Storage /** Storage<llvm_module> */
+	public function __construct(llvm_prepared_function $function, llvm_policy $policy)
 	{
+		$this->instance = $function;
+		$this->prepared = $function->file;
 		$this->policy = $policy;
-		$outputs /** Storage<llvm_module> */ = new Storage();
-		$entry_count = 0;
-		foreach ($files as $prepared)
-		{
-			$this->prepared = $prepared;
-			$module = new llvm_module();
-			foreach ($prepared->struct_types as $type) {
-				$fields /** vector<string> */ = [];
-				foreach ($type->fields as $field) {
-					$fields[] = $field->type;
-				}
-				$module->types[] = $type->name . ' = type { ' . implode(', ', $fields) . ' }';
-			}
-			$module->file_name = pathinfo($prepared->source->source->file->path, PATHINFO_FILENAME) . '.ll';
-			foreach ($prepared->external_functions as $target) {
-				$types /** vector<string> */ = [];
-				foreach ($target->parameters as $parameter) {
-					$types[] = $parameter->incoming->type;
-				}
-				$signature = implode(', ', $types);
-				$module->external_functions[] = "declare {$target->return_type} @{$target->name}({$signature})";
-			}
-			foreach ($prepared->functions as $function) {
-				$entry_count += (int) $function->is_entry;
-				$module->functions[] = $this->to_llvm_function($function);
-			}
-			$module->text = (new LLVM_Writer())->text($module);
-			$outputs[] = $module;
-		}
-		if ($entry_count !== 1) {
-			throw new \RuntimeException('LLVM experiment requires exactly one file with top-level executable code; other files may contain function definitions');
-		}
-		return $outputs;
+		$this->return_type = $function->return_type;
+		$this->block = new llvm_block();
+		$this->block->label = '_Gb0';
 	}
 
 	/** Dispatch expression kinds through the shared value and address lowering paths. */
 	private function expression(ast_node $node): llvm_operand
 	{
-		return match ($node->kind) {
-			node_kind::integer_literal => $this->to_llvm_integer_literal($node),
-			node_kind::variable_reference, node_kind::index_expression, node_kind::field_expression => $this->to_llvm_variable_reference($node),
-			node_kind::call_expression => $this->to_llvm_call_expression($node),
-			default => throw new \RuntimeException('Unsupported LLVM expression: ' . $node->kind->name),
-		};
+		if ($node->kind === node_kind::integer_literal) {
+			return $this->to_llvm_integer_literal($node);
+		}
+		if (($node->kind === node_kind::variable_reference) || ($node->kind === node_kind::index_expression) || ($node->kind === node_kind::field_expression)) {
+			return $this->to_llvm_variable_reference($node);
+		}
+		if ($node->kind === node_kind::call_expression) {
+			return $this->to_llvm_call_expression($node);
+		}
+		throw new \RuntimeException('Unsupported LLVM expression: ' . Node_Kind_Name::text($node->kind));
 	}
 
 	/** Allocate a unique generated value name within the current LLVM function. */

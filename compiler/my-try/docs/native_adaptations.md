@@ -1,0 +1,55 @@
+# Native build adaptations for review
+Doc Status: planning
+
+Active goal: build and run the ported compiler with PHP/native parity. These are
+source adaptations to the existing v0.1 toolchain, not new compiler features.
+
+- Collection receiver locals make Storage/Keyed_Storage templates explicit across
+  files. These wrappers retain shared membership; ordinary value containers are
+  not treated as aliases.
+- Constructor/per-invocation workers establish real initialized inputs. Public
+  reusable facades retain their existing reset and failure-publication behavior.
+- Parser `payload_node` accepts a required node_interface before forwarding it to
+  the optional-payload constructor. This separates concrete-to-interface conversion
+  from nullable wrapping without copying the payload.
+- Parser `error_message` formats a string; call sites construct RuntimeException.
+  This avoids returning the framework exception through a native signature whose
+  global namespace qualification is lost. Error text and exception family stay the same.
+- Enum dispatch uses explicit equality branches because cross-file enum switches
+  emitted scalar-wrapper access and unsupported case placeholders. Diagnostic names
+  use Node_Kind_Name beside the enum declaration.
+- Missing required map entries use isset guards then typed reads. Optional decisions
+  use branches instead of native-incompatible `?? null`/mixed ternaries. Declaration
+  type and binding-declaration helpers return checked required handles.
+- Scope parent traversal checks absence then uses an explicit identity-preserving
+  cast to recover the required handle. Unsupported nullable object-local annotations
+  were not added to the converter.
+- Template transient container resets use typed empty locals before field assignment.
+  An absent symbolic local uses an empty string only on the path that must reject it
+  as a type mismatch (valid symbolic types are never empty); this merits review.
+- Local module/file/token variables were renamed where they shadowed native record
+  type names in auto initializers.
+
+- Typed vector/hash emptiness uses count checks instead of comparing with bare `[]`,
+  which lowers to a different native container type. Storage keeps `is_empty()`.
+- Kind-dependent payload casts occur after a separate kind guard, avoiding eager
+  evaluation through native overloaded boolean operators.
+- Template formal keys and positions are captured before incrementing the parser
+  position. PHP/C++ evaluation order must not change the key being inserted.
+
+Validation completed: a fresh normal STAN-enabled build linked the native compiler.
+All 142 PHP/native comparisons passed (48 valid, 94 rejected); every valid emitted
+program also compiled with Clang and ran with its expected exit code. Repeated
+compilation preserved earlier output handles, and every rejection was followed by
+successful compilation in the same process. PHP helper/model suites passed too.
+
+This uses PR #244 revision d8ddde93b04d0e23d295e30f662c3a81b0d50fd1 plus the
+focused toolchain fixes committed in 0c28b96e. The verified target pin is unchanged.
+STAN reports zero build-blocking diagnostics, but 159 advisory errors and 33
+warnings remain; this is not a clean static-analysis report. Most are unresolved
+dependencies (120), including native collection types. Other categories still need
+individual review rather than blanket dismissal as false positives.
+
+The executable uses a serial test driver reading `build/native-01/request.txt`;
+it is not a packaged command-line release. See `tools/native_validate.py` and the
+saved `specs/planning/compiler_migration/results/my-try-native-success-01` evidence.

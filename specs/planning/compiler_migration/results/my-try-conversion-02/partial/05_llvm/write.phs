@@ -1,0 +1,49 @@
+
+/*
+ * Role: serialize LLVM records into module text.
+ * Call map: LLVM_Generator::generate -> LLVM_Writer::text.
+ */
+namespace scpp\compiler;
+
+final class LLVM_Writer {
+	/** Serialize the module model; no source lookup or semantic decisions happen here. */
+	public function text(llvm_module $module): string {
+		$sections vector<string> = [];
+		foreach ($module->types  as $text) { $sections[] = $text; }
+		foreach ($module->globals  as $text) { $sections[] = $text; }
+		foreach ($module->external_functions  as $text) { $sections[] = $text; }
+		foreach ($module->functions  as $function) {
+			$parameters vector<string> = [];
+			foreach ($function->parameters  as $parameter) {
+				$parameters[] = $parameter->type . ' ' . $parameter->text;
+			}
+			$signature = $this->join($parameters, ', ');
+			$lines vector<string> = [];
+			$lines[] = 'define ' . $function->return_type . ' @' . $function->name . '(' . $signature . ') {';
+			foreach ($function->blocks  as $block) {
+				if (!$block->terminated) {
+					throw new \scpp_portability_logic_exception('LLVM block has no terminator');
+				}
+				$lines[] = $block->label . ':';
+				foreach ($block->instructions  as $instruction) {
+					$lines[] = '    ' . $instruction;
+				}
+			}
+			$lines[] = '}';
+			$sections[] = $this->join($lines, "\n");
+		}
+		foreach ($module->metadata  as $text) { $sections[] = $text; }
+		return $this->join($sections, "\n\n") . "\n";
+	}
+
+	/** Preserve separators around empty items as well as nonempty sections. */
+	private function join($items vector<string>, string $separator): string {
+		$result = '';
+		$between = '';
+		foreach ($items  as $item) {
+			$result .= $between . $item;
+			$between = $separator;
+		}
+		return $result;
+	}
+}

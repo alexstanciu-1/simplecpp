@@ -26,10 +26,17 @@ def verify(root, output):
 
     storage = run(["php", str(root / "tests/storage.php")])
     (output / "storage.log").write_text(storage.stdout + storage.stderr)
+    tokenizer = run(["php", str(root / "tests/tokenizer.php")])
+    (output / "tokenizer.log").write_text(tokenizer.stdout + tokenizer.stderr)
     ast = run(["php", str(root / "tests/ast.php")])
     (output / "ast.log").write_text(ast.stdout + ast.stderr)
     model = run(["php", str(root / "tests/model.php")])
     (output / "model.log").write_text(model.stdout + model.stderr)
+
+    text = run(["php", str(root / "tests/llvm_text.php")])
+    (output / "llvm_text.log").write_text(text.stdout + text.stderr)
+    native = run(["php", str(root / "tests/native.php")])
+    (output / "native.log").write_text(native.stdout + native.stderr)
 
     for suite in ("llvm", "calls"):
         directory = output / suite

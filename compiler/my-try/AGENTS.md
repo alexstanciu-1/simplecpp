@@ -1,5 +1,11 @@
 # Small compiler intake and review
 
+Current native checkpoint: the normal STAN-enabled build passes 142 PHP/native
+comparisons (48 valid programs executed, 94 rejection/recovery cases). See
+`compiler/my-try/docs/native_adaptations.md` for changes and limitations. Earlier
+pending-build notes below describe historical checkpoints; advisory STAN diagnostics
+remain and the verified target pin has not changed.
+
 This folder is shared with the user's IDE. Reread current files immediately
 before editing. Preserve unrelated changes; do not refresh imported files by
 overwriting local work with upstream copies.
@@ -12,7 +18,7 @@ require a database, a generic ORM framework, stored IDs or immediate weakrefs.
 The agreed Model root uses static fields accessed as `Model::$field`; compiler
 instances share this data. Start a new compilation through `Compiler::init()`,
 which resets the model. Static-property conversion and required-field declarations are proved in focused
-fixtures; Storage template bindings remain a follow-up. Review native initialization
+fixtures; Storage templates have explicit PHP/conversion bindings; whole-compiler native proof remains a follow-up. Review native initialization
 checks at each worker boundary.
 
 Retained model data must not reference workers. Workers consume and return data
@@ -72,7 +78,7 @@ for directly owned records such as scopes; document their actual owners.
    collection. Both inherit Storage_Abstract for common behavior. Native records
    use shared_p<T>; capacity is an
    optional constructor argument. No key-mode or readonly template arguments remain.
-   Custom Storage conversion remains deferred; see helpers/STORAGE.md. AST nodes
+   Storage construction needs an explicit template comment: `new Storage /** Storage<token> */()`. See helpers/STORAGE.md and docs/conversion_review.md. AST nodes
    own payloads and nested Storage child lists; do not recreate parallel node/payload
    registries or Storage_View infrastructure without a concrete approved need.
 

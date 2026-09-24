@@ -9,26 +9,23 @@ namespace scpp\compiler;
 
 final class File_Loader
 {
-	/** Load the file's metadata and source content. */
+	/** Populate required fields after successful reads; invalidate any previous token backlink. */
 	public static function init(file $file, string $path): void
 	{
-		clearstatcache(true, $path);
-		/** @var array<int|string, int>|false $stat PHP stat result, including failure. */
-		$stat = stat($path);
-		if ($stat === false) {
-			throw new \RuntimeException("Cannot read file metadata: $path");
+		$mtime = 0;
+		$size = 0;
+		if (!take_false($mtime, fs_mtime($path))) {
+			throw new \RuntimeException('Cannot read file metadata: ' . $path);
 		}
-
-		/** @var string|false $read_result PHP read result, including failure. */
-		$read_result = file_get_contents($path);
-		if ($read_result === false) {
-			throw new \RuntimeException("Cannot read file content: $path");
+		if (!take_false($size, fs_size($path))) {
+			throw new \RuntimeException('Cannot read file metadata: ' . $path);
 		}
-		$content /** string */ = $read_result;
+		$content = fs_read_text($path);
 
 		$file->path = $path;
-		$file->mtime = $stat['mtime'];
-		$file->size = $stat['size'];
+		$file->mtime = $mtime;
+		$file->size = $size;
 		$file->content = $content;
+		$file->tokens = null;
 	}
 }

@@ -1,0 +1,171 @@
+[
+    {
+        "path": "01_prepare_inputs/file.php",
+        "original_sha256": "43503529551d768fed951a43ad2791c6c16e915999a530922da76ef571fc3003",
+        "projected_sha256": "43503529551d768fed951a43ad2791c6c16e915999a530922da76ef571fc3003",
+        "status": "rejected",
+        "diagnostic": "01_prepare_inputs/file.php:15: unsupported syntax: clearstatcache"
+    },
+    {
+        "path": "01_prepare_inputs/module.php",
+        "original_sha256": "c04d3af8d9b216a2537fad2318ef76a1d3c07712352e0c6b3159ea67905d239e",
+        "projected_sha256": "1b52591546ef593f4c0074f1ffb399f5d325544727b35d5b4b40e68f0f76cf0e",
+        "status": "rejected",
+        "diagnostic": "01_prepare_inputs/module.php:19: unsupported syntax: scandir"
+    },
+    {
+        "path": "01_prepare_inputs/structures.php",
+        "original_sha256": "14b987669d527fe295fd8065625c423b8e1912b711da01cc7aafec89063d7bcd",
+        "projected_sha256": "84b556ea9d11b2d03ddf796179d1a828375327e597c63f8a84f535399e704ce7",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "02_tokenize/structures.php",
+        "original_sha256": "b7e9aa4f7e04bea890e14df3f4b653a83b93ff94ed1a29fe0cdf6fa0a69604b6",
+        "projected_sha256": "55c89cb2aeb2dcf93f2418e3b8abcd1abf209c1309c65c40b6b141a5f4ca5ee3",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "02_tokenize/tokens.php",
+        "original_sha256": "c55f12e1b20a65aa3194872a7e6d4939a8035cf389790d58c2bad13e03e7af24",
+        "projected_sha256": "c55f12e1b20a65aa3194872a7e6d4939a8035cf389790d58c2bad13e03e7af24",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "03_parse/parser.php",
+        "original_sha256": "bebaf61c6d919d16de908cac49655cdec9919a99481406598302983d8369795c",
+        "projected_sha256": "bebaf61c6d919d16de908cac49655cdec9919a99481406598302983d8369795c",
+        "status": "rejected",
+        "diagnostic": "03_parse/parser.php:30: unsupported syntax: ??"
+    },
+    {
+        "path": "03_parse/structures.php",
+        "original_sha256": "d0ec1875141dfadbe05789b6d7be080e9c6214259202c1979dfe705ba7019c9b",
+        "projected_sha256": "e1c6c43bcd7ab3663511982218de261960254a8a661dbca3701f5d3afc449420",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "03_parse/syntax.php",
+        "original_sha256": "49977e09dd3bc6b4cc17d062ec602ddb94644c4f6b3759e123e86f68d6d956cb",
+        "projected_sha256": "49977e09dd3bc6b4cc17d062ec602ddb94644c4f6b3759e123e86f68d6d956cb",
+        "status": "rejected",
+        "diagnostic": "03_parse/syntax.php:14: unsupported syntax: match"
+    },
+    {
+        "path": "04_analyze/collect/collect.php",
+        "original_sha256": "cc8ac4463915c7efdbd317cfff92b382209c669d2d21c70ee112718dd2e6b13b",
+        "projected_sha256": "cc8ac4463915c7efdbd317cfff92b382209c669d2d21c70ee112718dd2e6b13b",
+        "status": "rejected",
+        "diagnostic": "04_analyze/collect/collect.php:29: unsupported syntax: str_starts_with"
+    },
+    {
+        "path": "04_analyze/collect/structures.php",
+        "original_sha256": "37663457ba5047d5a24e14ac721d48c93178d83d8da4372fa964cc454e36f671",
+        "projected_sha256": "9eeb696e157afd5a79708914824ed81286cba7a0b86b6362778ca7bb66d3eb66",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "04_analyze/prepare.php",
+        "original_sha256": "00fba141c5186ce77d9f0501736b2cfb559f1e1636f8130b11c4e8d867524857",
+        "projected_sha256": "00fba141c5186ce77d9f0501736b2cfb559f1e1636f8130b11c4e8d867524857",
+        "status": "rejected",
+        "diagnostic": "04_analyze/prepare.php:22: unsupported syntax: array_merge"
+    },
+    {
+        "path": "04_analyze/structures.php",
+        "original_sha256": "194c5b301eed8e1b4af38cce5ae3bc642921c1bae4b059425464b7d09e950c2f",
+        "projected_sha256": "194c5b301eed8e1b4af38cce5ae3bc642921c1bae4b059425464b7d09e950c2f",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "04_analyze/templates.php",
+        "original_sha256": "dbfb00180568b4faf921e50c3f026e9b570c7642258ad7985eae177ffc6303e8",
+        "projected_sha256": "a7a6fb1aba8ff869e3b766ea2d88653f6d55f03dad2893692185150af92d15a2",
+        "status": "rejected",
+        "diagnostic": "04_analyze/templates.php:37: unsupported syntax: array_keys"
+    },
+    {
+        "path": "05_llvm/expressions.php",
+        "original_sha256": "339a085c866dbf5af3c7ae1edbfee685d063c12292ebd7890306e34d578930e8",
+        "projected_sha256": "339a085c866dbf5af3c7ae1edbfee685d063c12292ebd7890306e34d578930e8",
+        "status": "rejected",
+        "diagnostic": "05_llvm/expressions.php:15: unsupported syntax: ltrim"
+    },
+    {
+        "path": "05_llvm/functions.php",
+        "original_sha256": "53a50f085db3a1a2eaf730309fae674fcfd5173c464db1213fbc1251615326b5",
+        "projected_sha256": "53a50f085db3a1a2eaf730309fae674fcfd5173c464db1213fbc1251615326b5",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "05_llvm/generate.php",
+        "original_sha256": "29046ea01fb31d1ad18a340cbb9532119646e8db969e56ebc6c1198adbff569f",
+        "projected_sha256": "4d48a1b4fb52edf31321d8af5da3c939db23a55f5f89a3480c6a9908bdd585f2",
+        "status": "rejected",
+        "diagnostic": "05_llvm/expressions.php:15: unsupported syntax: ltrim"
+    },
+    {
+        "path": "05_llvm/names.php",
+        "original_sha256": "8895df2d4ecc5811dbf619b5b4a5d39560bf6e496788290ae41c0e9fd7ce924a",
+        "projected_sha256": "8895df2d4ecc5811dbf619b5b4a5d39560bf6e496788290ae41c0e9fd7ce924a",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "05_llvm/prepare.php",
+        "original_sha256": "cf6dd8a1bf519085c673aee8732995976a77ca866c122c2b1f722b351bb3bf5c",
+        "projected_sha256": "0509abbecae636d8927e526225c4d5d1bc34c95ad688024b0363eb4f78fe4f86",
+        "status": "rejected",
+        "diagnostic": "05_llvm/prepare.php:53: unsupported syntax: in_array"
+    },
+    {
+        "path": "05_llvm/statements.php",
+        "original_sha256": "104a1105731ef84eee7c45a7db97289626c82c136f29a6293f892b580ee2e53e",
+        "projected_sha256": "104a1105731ef84eee7c45a7db97289626c82c136f29a6293f892b580ee2e53e",
+        "status": "rejected",
+        "diagnostic": "05_llvm/statements.php:16: unsupported syntax: in_array"
+    },
+    {
+        "path": "05_llvm/structs.php",
+        "original_sha256": "f40ab9f84503f1c6a2d7a69b2a29ab2bd8631ce7c423d5a54607a360c9f8d1bd",
+        "projected_sha256": "6ca1a9defe7a44192bcb53ef1a987580a503ded572161948b125574f5b3ab662",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "05_llvm/structures.php",
+        "original_sha256": "507e1b2c1f2f6cbe4252588f481aa4c5fa83a98f36a9dde072ae315b4e87f208",
+        "projected_sha256": "f76ac6b6daa4928c7e9ecd3e05ea6c5d44b3ec2fdedd8937b7d0e30cfd54f6a7",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "05_llvm/write.php",
+        "original_sha256": "b94102b77d2553b27d180cdde8f5a1dbae881e93a89cee95ab4207dfdd64fc1c",
+        "projected_sha256": "b94102b77d2553b27d180cdde8f5a1dbae881e93a89cee95ab4207dfdd64fc1c",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "06_native/run.php",
+        "original_sha256": "c47ec13d66af315811cb60500e4e16afc4bda42dec01eb020bb429e1a15394f2",
+        "projected_sha256": "98e2e08956f68495b690bcf7aea39fec94b449c7c31af145bbf191f0b73f1dca",
+        "status": "rejected",
+        "diagnostic": "06_native/run.php:16: unsupported syntax: json_decode"
+    },
+    {
+        "path": "06_native/structures.php",
+        "original_sha256": "ea4b903e16403831955fb763699b493d5b77b2f16814564c64835d3de26ee374",
+        "projected_sha256": "ea4b903e16403831955fb763699b493d5b77b2f16814564c64835d3de26ee374",
+        "status": "accepted_with_fake_storage"
+    },
+    {
+        "path": "compile/compile.php",
+        "original_sha256": "53aed4a022f8242a57f9dffc5d450ab35c5cdf30ed1f80aa2bf6804202ca314a",
+        "projected_sha256": "53aed4a022f8242a57f9dffc5d450ab35c5cdf30ed1f80aa2bf6804202ca314a",
+        "status": "rejected",
+        "diagnostic": "compile/compile.php:26: unsupported syntax: dbg"
+    },
+    {
+        "path": "compile/model.php",
+        "original_sha256": "5e39bee5f7cd530938b22cfc8fb2c1706f13dd4300875f6365abc14155290a76",
+        "projected_sha256": "0d4ff9db9af48397ac796d82a9a0033b8427189a3b075b5a97ed993d73572833",
+        "status": "accepted_with_fake_storage"
+    }
+]

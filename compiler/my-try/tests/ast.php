@@ -34,14 +34,24 @@ final class AST_Test
 		$file = new file();
 		$file->path = 'ast.phs';
 		$file->content = $content;
-		$scanner = new Tokenizer();
-		$scanner->init($file);
+		$scanner = new Tokenizer($file);
 		return $scanner->tokenize();
+	}
+
+	/** get_object_vars omits uninitialized fields, so check declarations explicitly. */
+	private static function initialized(object $record): void
+	{
+		foreach ((new \ReflectionClass($record))->getProperties() as $property) {
+			if (!$property->isInitialized($record)) {
+				throw new \LogicException('Uninitialized published field: ' . get_class($record) . '::$' . $property->getName());
+			}
+		}
 	}
 
 	/** Traverse syntax edges only, not collector/scope backlinks or owner stores. */
 	private static function visit(ast_node $node, parsed_file $syntax, \SplObjectStorage $nodes, \SplObjectStorage $payloads): void
 	{
+		self::initialized($node);
 		self::check(!$nodes->contains($node)); // This fixture's AST is a tree logically.
 		$nodes->attach($node);
 		self::check($node->token_index >= 0 && $node->end_token_index <= count($syntax->tokens->tokens));
@@ -49,6 +59,7 @@ final class AST_Test
 		$payload = $node->specialization;
 		Syntax_Nodes::validate_payload($node->kind, $payload);
 		if ($payload === null) { return; }
+		self::initialized($payload);
 		self::check(!$payloads->contains($payload));
 		$payloads->attach($payload);
 		foreach (get_object_vars($payload) as $value) {
@@ -68,6 +79,10 @@ final class AST_Test
 
 	private static function verify(parsed_file $syntax): \SplObjectStorage
 	{
+		self::initialized($syntax);
+		self::initialized($syntax->collection);
+		foreach ($syntax->scopes as $scope) { self::initialized($scope); }
+		self::initialized($syntax->root->specialization->scope);
 		self::check($syntax->collection->root === $syntax->root);
 		self::check($syntax->collection->source === $syntax->tokens);
 		$nodes = new \SplObjectStorage();
@@ -81,13 +96,92 @@ final class AST_Test
 			}
 		}
 		foreach ($syntax->collection->entries as $position => $entry) {
+			self::initialized($entry);
 			self::check($entry->local_index === $position && $nodes->contains($entry->node));
 		}
 		return $nodes;
 	}
 
+	/** Distinguish meaningful absent syntax from incomplete required fields. */
+	private static function optional_syntax(): void
+	{
+		$parser = new Parser(self::tokens('function f(int $a, int &$b): void { return; } $x int; $y int = 1; $x = 2; $items int[1] = []; $items[0] = 3;'));
+		$result = $parser->parse();
+		self::verify($result);
+		$children = $result->root->specialization->children;
+		$function = $children[0]->specialization;
+		$value = $function->parameters[0]->specialization;
+		$reference = $function->parameters[1]->specialization;
+		self::check($value->mode === passing_mode::value && $value->reference_token_index === null);
+		self::check($reference->mode === passing_mode::reference && $reference->reference_token_index !== null);
+		self::check($result->tokens->tokens[$reference->reference_token_index]->text === '&');
+		self::check($function->body->specialization->children[0]->specialization->expression === null);
+		$declaration = $children[1]->specialization;
+		self::check($declaration->type_syntax !== null && $declaration->target === null && $declaration->equals_token_index === null && $declaration->value === null);
+		$initialized = $children[2]->specialization;
+		self::check($initialized->type_syntax !== null && $initialized->target === null && $initialized->equals_token_index !== null && $initialized->value !== null);
+		$assignment = $children[3]->specialization;
+		self::check($assignment->type_syntax === null && $assignment->target === null && $assignment->equals_token_index !== null && $assignment->value !== null);
+		self::check($children[4]->specialization->value->specialization->elements->is_empty());
+		$indexed = $children[5]->specialization;
+		self::check($indexed->type_syntax === null && $indexed->target !== null && $indexed->equals_token_index !== null && $indexed->value !== null);
+	}
+
+	/** Failed files must not publish declarations to a caller-provided scope. */
+	private static function external_scope_reuse(): void
+	{
+		$scope = new scope();
+		$parser = new Parser(self::tokens('function kept(): void { return; }'), $scope);
+		$first = $parser->parse();
+		self::verify($first);
+		$before = serialize($scope);
+		$parser->init(self::tokens('struct Pending { int $x; } function broken(int $a): int { return $a;'), $scope);
+		$failed = false;
+		try { $parser->parse(); } catch (\RuntimeException $expected) { $failed = true; }
+		self::check($failed && serialize($scope) === $before);
+		$parser->init(self::tokens('function next(): void { return; }'), $scope);
+		$next = $parser->parse();
+		self::verify($next);
+		self::check($next->root->specialization->scope === $scope);
+		self::check($next->scopes[0]->parent === $scope);
+		self::check(count($scope->functions['kept']) === 1 && count($scope->functions['next']) === 1);
+		self::check(!isset($scope->functions['broken']) && !isset($scope->types['Pending']));
+		// Omitting the target on re-init must clear the previous external scope.
+		$parser->init(self::tokens(''));
+		$standalone = $parser->parse();
+		self::verify($standalone);
+		self::check($standalone->root->specialization->scope !== $scope);
+		self::check($standalone->scopes[0]->parent === null);
+	}
+
+	/** Finalization publishes once; rejected later operations must not duplicate indexes. */
+	private static function collector_finalization(): void
+	{
+		$tokens = self::tokens('$x int;');
+		$parser = new Parser($tokens);
+		$syntax = $parser->parse();
+		$node = $syntax->root->specialization->children[0];
+		$scope = new scope();
+		$collector = new Symbol_Collector($tokens);
+		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope);
+		self::check($scope->variables === []);
+		$result = $collector->finish($syntax->root);
+		self::initialized($result);
+		self::initialized($result->entries[$position]);
+		self::check($scope->variables['x'][0] === $result->entries[$position]);
+		$before = serialize($result);
+		$rejections = 0;
+		try { $collector->finish($syntax->root); } catch (\LogicException $expected) { ++$rejections; }
+		try { $collector->record($node, 0, collected_name_kind::variable_declaration, $scope); }
+		catch (\LogicException $expected) { ++$rejections; }
+		self::check($rejections === 2 && serialize($result) === $before && count($scope->variables['x']) === 1);
+	}
+
 	public static function run(): void
 	{
+		self::collector_finalization();
+		self::optional_syntax();
+		self::external_scope_reuse();
 		$source = <<<'PHS'
 struct Pair { int $first; int $second; }
 template<T> function identity(T $value): T { return $value; }
@@ -98,8 +192,7 @@ $pair->first = $values[0];
 identity<int>($pair->first);
 return pick($values[0], identity<int>(8));
 PHS;
-		$parser = new Parser();
-		$parser->init(self::tokens($source));
+		$parser = new Parser(self::tokens($source));
 		$first = $parser->parse();
 		$first_nodes = self::verify($first);
 		$types = [];
@@ -132,10 +225,8 @@ PHS;
 $file = new file();
 $file->path = 'repeat.phs';
 $file->content = 'function main(): int { return 1; }';
-$scanner = new Tokenizer();
-$scanner->init($file);
-$parser = new Parser();
-$parser->init($scanner->tokenize());
+$scanner = new Tokenizer($file);
+$parser = new Parser($scanner->tokenize());
 $first = $parser->parse();
 $second = $parser->parse();
 if (count($first->scopes) !== 2 || count($second->scopes) !== 2 || $first->scopes[0] === $second->scopes[0]) {

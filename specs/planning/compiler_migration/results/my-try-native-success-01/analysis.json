@@ -1,0 +1,80 @@
+{
+  "counts": {
+    "compile_error_count": 0,
+    "stan_error_count": 159,
+    "stan_warning_count": 33,
+    "stan_notice_count": 0
+  },
+  "categories": [
+    {
+      "code": "stan.unresolved_dependency",
+      "bucket": "stan-errors",
+      "count": 120
+    },
+    {
+      "code": "stan.unchecked_wrapper_boundary",
+      "bucket": "stan-errors",
+      "count": 1
+    },
+    {
+      "code": "stan.argument_type_mismatch",
+      "bucket": "stan-errors",
+      "count": 14
+    },
+    {
+      "code": "stan.unchecked_wrapper_argument",
+      "bucket": "stan-errors",
+      "count": 7
+    },
+    {
+      "code": "stan.return_chain_resolution_warning",
+      "bucket": "stan-warnings",
+      "count": 16
+    },
+    {
+      "code": "stan.expression_chain_resolution_warning",
+      "bucket": "stan-warnings",
+      "count": 4
+    },
+    {
+      "code": "stan.unresolved_property_read",
+      "bucket": "stan-errors",
+      "count": 5
+    },
+    {
+      "code": "stan.local_type_morph_warning",
+      "bucket": "stan-warnings",
+      "count": 2
+    },
+    {
+      "code": "stan.unresolved_property_write",
+      "bucket": "stan-errors",
+      "count": 2
+    },
+    {
+      "code": "stan.initialization_warning",
+      "bucket": "stan-warnings",
+      "count": 8
+    },
+    {
+      "code": "stan.unresolved_method_call",
+      "bucket": "stan-errors",
+      "count": 1
+    },
+    {
+      "code": "stan.override_declaration",
+      "bucket": "stan-errors",
+      "count": 7
+    },
+    {
+      "code": "stan.return_type_mismatch",
+      "bucket": "stan-warnings",
+      "count": 3
+    },
+    {
+      "code": "stan.argument_count_mismatch",
+      "bucket": "stan-errors",
+      "count": 2
+    }
+  ]
+}

@@ -98,6 +98,6 @@ final class collected_file
 
 	public function __construct()
 	{
-		$this->entries = new Storage();
+		$this->entries = new Storage /** Storage<collected_name> */();
 	}
 }

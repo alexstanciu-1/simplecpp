@@ -52,7 +52,9 @@ final class Model_Test
 		self::check_failure($compiler, '$', true);
 		self::check_failure($compiler, 'function unfinished(', false);
 		self::check_assigned_position();
+		self::check_source_initialization();
 		self::check_restarts($compiler);
+		self::check_preparation_recovery($compiler);
 		echo "Model: data-only graph, Storage boundaries, sharing, failure publication and reset passed\n";
 	}
 
@@ -63,7 +65,8 @@ final class Model_Test
 		$compiler->exec();
 		$preparation = new LLVM_Preparation();
 		$prepared = $preparation->prepare_program(Model::$collected_files, new llvm_policy());
-		$output = (new LLVM_Generator())->generate($prepared, new llvm_policy());
+		$generator = new LLVM_Generator();
+		$output = $generator->generate($prepared, new llvm_policy());
 		$incoming = new \SplObjectStorage();
 		foreach ($prepared as $prepared_file) {
 			foreach ($prepared_file->functions as $function) {
@@ -96,9 +99,13 @@ final class Model_Test
 				if (!$found) { throw new \LogicException('External target lost shared identity'); }
 			}
 		}
-		$regenerated = (new LLVM_Generator())->generate($prepared, new llvm_policy());
+		try {
+			$generator->generate(new Storage(), new llvm_policy());
+			throw new \LogicException('Expected generation failure for a program without an entry');
+		} catch (\RuntimeException $expected_error) { }
+		$regenerated = $generator->generate($prepared, new llvm_policy());
 		foreach ($output as $index => $file) {
-			if ($file->text !== $regenerated[$index]->text) {
+			if (($file === $regenerated[$index]) || ($file->functions[0] === $regenerated[$index]->functions[0]) || ($file->text !== $regenerated[$index]->text)) {
 				throw new \LogicException('Preparation reuse altered retained output');
 			}
 		}
@@ -135,6 +142,91 @@ final class Model_Test
 		$compiler->parse();
 		if (!Model::$llvm_files->is_empty() || count(Model::$syntax_files) !== 2) {
 			throw new \LogicException('Successful parse retained stale LLVM');
+		}
+	}
+
+	/** Reuse preparation after failures at different stages without damaging old results. */
+	private static function check_preparation_recovery(Compiler $compiler): void
+	{
+		$compiler->init([dirname(__DIR__) . '/samples/01_base']);
+		$compiler->exec();
+		$good = Model::$collected_files;
+		$worker = new LLVM_Preparation();
+		$prepared = $worker->prepare_program($good, new llvm_policy());
+		$before = serialize($prepared);
+		foreach (['struct Empty {} return 0;', '$x void; return 0;', 'missing(); return 0;'] as $content) {
+			$compiler->init([]);
+			$module = new module();
+			$module->path = 'memory';
+			$file = new file();
+			$file->path = 'memory/invalid.phs';
+			$file->mtime = 0;
+			$file->size = strlen($content);
+			$file->content = $content;
+			$module->files[] = $file;
+			Model::$modules[] = $module;
+			$compiler->tokenize();
+			$compiler->parse();
+			$failed = false;
+			try { $worker->prepare_program(Model::$collected_files, new llvm_policy()); }
+			catch (\RuntimeException $expected) { $failed = true; }
+			if (!$failed || serialize($prepared) !== $before || !Model::$llvm_files->is_empty()) {
+				throw new \LogicException('Failed preparation published output or altered retained results');
+			}
+			$recovered = $worker->prepare_program($good, new llvm_policy());
+			$seen = new \SplObjectStorage();
+			self::check_graph($recovered, $seen);
+			if ($recovered === $prepared || serialize($prepared) !== $before) {
+				throw new \LogicException('Preparation recovery reused or damaged an earlier result');
+			}
+			$output = (new LLVM_Generator())->generate($recovered, new llvm_policy());
+			if (count($output) !== 2) { throw new \LogicException('Recovery lost output modules'); }
+		}
+	}
+
+	/** Successful publication fills required fields; reload invalidates only the backlink. */
+	private static function check_source_initialization(): void
+	{
+		$path = tempnam(sys_get_temp_dir(), 'scpp-source-init-');
+		if ($path === false) { throw new \RuntimeException('Cannot create source fixture'); }
+		try {
+			file_put_contents($path, '$value = 12;');
+			$file = new file();
+			File_Loader::init($file, $path);
+			if (($file->path !== $path) || ($file->size !== 12) || ($file->mtime <= 0) || ($file->content !== '$value = 12;') || ($file->tokens !== null)) {
+				throw new \LogicException('Source published incomplete metadata or content');
+			}
+			$scanner = new Tokenizer($file);
+			$old = $scanner->tokenize();
+			$file->tokens = $old;
+			$expected = [[0, 6, '$value'], [7, 1, '='], [9, 2, '12'], [11, 1, ';']];
+			foreach ($old->tokens as $index => $token) {
+				if ([$token->offset, $token->length, $token->text] !== $expected[$index]) {
+					throw new \LogicException('Token published incomplete or incorrect span');
+				}
+			}
+			if ((count($old->tokens) !== 4) || ($old->file !== $file) || ($old->content !== '$value = 12;')) {
+				throw new \LogicException('Token result published incomplete source dependency');
+			}
+			$before = get_object_vars($file);
+			try {
+				@File_Loader::init($file, $path . '/missing');
+				throw new \LogicException('Expected failed source load');
+			} catch (\RuntimeException $expected_error) { }
+			if (get_object_vars($file) !== $before) {
+				throw new \LogicException('Failed load changed the previous source record');
+			}
+			file_put_contents($path, '');
+			File_Loader::init($file, $path);
+			if (($file->tokens !== null) || ($file->size !== 0) || ($file->content !== '')) {
+				throw new \LogicException('Successful reload retained stale token backlink');
+			}
+			$fresh = $scanner->tokenize();
+			if (!$fresh->tokens->is_empty() || ($fresh->content !== '') || ($fresh->file !== $file) || ($old->content !== '$value = 12;') || (count($old->tokens) !== 4)) {
+				throw new \LogicException('Scanner reuse damaged snapshots or rejected empty source');
+			}
+		} finally {
+			unlink($path);
 		}
 	}
 
@@ -192,9 +284,10 @@ final class Model_Test
 			if (($comment !== false) && str_contains($comment, 'Numeric storage of') && (!$property->isInitialized($value) || !$property->getValue($value) instanceof Storage)) {
 				throw new \RuntimeException('Uninitialized record storage: ' . $property->getName());
 			}
-			if ($property->isInitialized($value)) {
-				self::check_graph($property->getValue($value), $seen);
+			if (!$property->isInitialized($value)) {
+				throw new \LogicException('Uninitialized published field: ' . $type->getName() . '::$' . $property->getName());
 			}
+			self::check_graph($property->getValue($value), $seen);
 		}
 	}
 

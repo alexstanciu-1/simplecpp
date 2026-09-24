@@ -31,6 +31,6 @@ final class token_list
 
 	public function __construct()
 	{
-		$this->tokens = new Storage();
+		$this->tokens = new Storage /** Storage<token> */();
 	}
 }

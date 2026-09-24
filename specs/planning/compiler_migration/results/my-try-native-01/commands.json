@@ -1,0 +1,104 @@
+[
+  {
+    "name": "storage_bindings-php",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/storage_bindings.php"
+    ],
+    "seconds": 0.128,
+    "code": 0
+  },
+  {
+    "name": "storage_bindings-convert",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-native-collection-final/source",
+      "/tmp/scpp-native-collection-final/phpp"
+    ],
+    "seconds": 0.154,
+    "code": 0
+  },
+  {
+    "name": "init",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "seconds": 0.404,
+    "code": 0
+  },
+  {
+    "name": "storage_bindings-native",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "run",
+      "--build-runtime"
+    ],
+    "seconds": 37.232,
+    "code": 0
+  },
+  {
+    "name": "object_hashes-php",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/object_hashes.php"
+    ],
+    "seconds": 0.092,
+    "code": 0
+  },
+  {
+    "name": "object_hashes-convert",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-native-collection-final/source",
+      "/tmp/scpp-native-collection-final/phpp"
+    ],
+    "seconds": 0.088,
+    "code": 0
+  },
+  {
+    "name": "object_hashes-native",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "run"
+    ],
+    "seconds": 5.106,
+    "code": 0
+  },
+  {
+    "name": "object_casts-php",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/portability/object_casts.php"
+    ],
+    "seconds": 0.155,
+    "code": 0
+  },
+  {
+    "name": "object_casts-convert",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-native-collection-final/source",
+      "/tmp/scpp-native-collection-final/phpp"
+    ],
+    "seconds": 0.079,
+    "code": 0
+  },
+  {
+    "name": "object_casts-native",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "run"
+    ],
+    "seconds": 4.611,
+    "code": 0
+  }
+]

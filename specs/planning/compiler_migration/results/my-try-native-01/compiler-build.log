@@ -1,0 +1,242 @@
+STAN pre-build check failed: 79 compile-errors
+
+[compile-error] Property `$this->source` may be read before initialization in `scpp\compiler\Tokenizer::tokenize`.
+  at 02_tokenize/tokens.phs:18
+
+[compile-error] Property `$this->source` may be read before initialization in `scpp\compiler\Tokenizer::tokenize`.
+  at 02_tokenize/tokens.phs:20
+
+[compile-error] Function `scpp\compiler\Tokenizer::token_end` declared as `int` may exit without returning a value.
+  at 02_tokenize/tokens.phs:56
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:58
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:61
+
+[compile-error] Property `$this->source` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:63
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:68
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:71
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:77
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:80
+
+[compile-error] Property `$this->source` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:83
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:87
+
+[compile-error] Property `$this->content` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:93
+
+[compile-error] Property `$this->source` may be read before initialization in `scpp\compiler\Tokenizer::token_end`.
+  at 02_tokenize/tokens.phs:96
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::parse`.
+  at 03_parse/parser.phs:25
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::parse`.
+  at 03_parse/parser.phs:28
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::parse`.
+  at 03_parse/parser.phs:30
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::parse`.
+  at 03_parse/parser.phs:32
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::parse`.
+  at 03_parse/parser.phs:34
+
+[compile-error] Function `scpp\compiler\Parser::statement` declared as `ast_node` may exit without returning a value.
+  at 03_parse/parser.phs:45
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::struct_declaration`.
+  at 03_parse/parser.phs:88
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::struct_declaration`.
+  at 03_parse/parser.phs:88
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::struct_declaration`.
+  at 03_parse/parser.phs:98
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::struct_declaration`.
+  at 03_parse/parser.phs:98
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::function_declaration`.
+  at 03_parse/parser.phs:147
+
+[compile-error] Property `$this->syntax` may be read before initialization in `scpp\compiler\Parser::function_declaration`.
+  at 03_parse/parser.phs:152
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::function_declaration`.
+  at 03_parse/parser.phs:153
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::function_declaration`.
+  at 03_parse/parser.phs:180
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::function_declaration`.
+  at 03_parse/parser.phs:183
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::function_declaration`.
+  at 03_parse/parser.phs:183
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::parameter`.
+  at 03_parse/parser.phs:196
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::parameter`.
+  at 03_parse/parser.phs:206
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::block`.
+  at 03_parse/parser.phs:215
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::binding_statement`.
+  at 03_parse/parser.phs:251
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::binding_statement`.
+  at 03_parse/parser.phs:251
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::binding_statement`.
+  at 03_parse/parser.phs:262
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::binding_statement`.
+  at 03_parse/parser.phs:262
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::binding_statement`.
+  at 03_parse/parser.phs:280
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::binding_statement`.
+  at 03_parse/parser.phs:280
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::expression`.
+  at 03_parse/parser.phs:307
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::expression`.
+  at 03_parse/parser.phs:307
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::access_suffix`.
+  at 03_parse/parser.phs:358
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::access_suffix`.
+  at 03_parse/parser.phs:358
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::call_expression`.
+  at 03_parse/parser.phs:387
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::call_expression`.
+  at 03_parse/parser.phs:387
+
+[compile-error] Property `$this->collector` may be read before initialization in `scpp\compiler\Parser::call_expression`.
+  at 03_parse/parser.phs:410
+
+[compile-error] Property `$this->current_scope` may be read before initialization in `scpp\compiler\Parser::call_expression`.
+  at 03_parse/parser.phs:410
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::text`.
+  at 03_parse/parser.phs:427
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::error`.
+  at 03_parse/parser.phs:438
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::error`.
+  at 03_parse/parser.phs:439
+
+[compile-error] Property `$this->tokens` may be read before initialization in `scpp\compiler\Parser::error`.
+  at 03_parse/parser.phs:440
+
+[compile-error] Missing property read target `->name` on receiver type `scpp\compiler\node_kind` in `scpp\compiler\Syntax_Nodes::validate_payload` for `$kind->name`.
+  at 03_parse/syntax.phs:30
+
+[compile-error] Property `$this->file` may be read before initialization in `scpp\compiler\Template_Checker::statement`.
+  at 04_analyze/templates.phs:88
+
+[compile-error] Property `$this->file` may be read before initialization in `scpp\compiler\Template_Checker::statement`.
+  at 04_analyze/templates.phs:90
+
+[compile-error] Property `$this->file` may be read before initialization in `scpp\compiler\Template_Checker::expression`.
+  at 04_analyze/templates.phs:120
+
+[compile-error] Property `$this->file` may be read before initialization in `scpp\compiler\Template_Checker::expression`.
+  at 04_analyze/templates.phs:126
+
+[compile-error] Property `$this->file` may be read before initialization in `scpp\compiler\Template_Checker::expression`.
+  at 04_analyze/templates.phs:130
+
+[compile-error] Property `$this->files` may be read before initialization in `scpp\compiler\Template_Checker::expression`.
+  at 04_analyze/templates.phs:140
+
+[compile-error] Property `$this->prepared` may be read before initialization in `scpp\compiler\LLVM_Generator::to_llvm_integer_literal`.
+  at 05_llvm/generate.phs:12
+
+[compile-error] Property `$this->policy` may be read before initialization in `scpp\compiler\LLVM_Generator::to_llvm_integer_literal`.
+  at 05_llvm/generate.phs:15
+
+[compile-error] Property `$this->policy` may be read before initialization in `scpp\compiler\LLVM_Generator::to_llvm_integer_literal`.
+  at 05_llvm/generate.phs:20
+
+[compile-error] Property `$this->prepared` may be read before initialization in `scpp\compiler\LLVM_Generator::expression_storage`.
+  at 05_llvm/generate.phs:49
+
+[compile-error] Property `$this->instance` may be read before initialization in `scpp\compiler\LLVM_Generator::expression_storage`.
+  at 05_llvm/generate.phs:56
+
+[compile-error] Property `$this->instance` may be read before initialization in `scpp\compiler\LLVM_Generator::field_storage`.
+  at 05_llvm/generate.phs:69
+
+[compile-error] Property `$this->instance` may be read before initialization in `scpp\compiler\LLVM_Generator::to_llvm_call_expression`.
+  at 05_llvm/generate.phs:123
+
+[compile-error] Property `$this->prepared` may be read before initialization in `scpp\compiler\LLVM_Generator::to_llvm_variable_binding_statement`.
+  at 05_llvm/generate.phs:197
+
+[compile-error] Property `$this->instance` may be read before initialization in `scpp\compiler\LLVM_Generator::to_llvm_variable_binding_statement`.
+  at 05_llvm/generate.phs:203
+
+[compile-error] Missing property read target `->name` on receiver type `node_kind` in `scpp\compiler\LLVM_Generator::expression` for `$node->kind->name`.
+  at 05_llvm/generate.phs:344
+
+[compile-error] Property `$this->structs` may be read before initialization in `scpp\compiler\LLVM_Preparation::prepare_program`.
+  at 05_llvm/prepare.phs:41
+
+[compile-error] Property `$this->file_indexes` may be read before initialization in `scpp\compiler\LLVM_Preparation::register`.
+  at 05_llvm/prepare.phs:80
+
+[compile-error] Property `$this->instances` may be read before initialization in `scpp\compiler\LLVM_Preparation::register`.
+  at 05_llvm/prepare.phs:83
+
+[compile-error] Property `$this->policy` may be read before initialization in `scpp\compiler\LLVM_Preparation::register`.
+  at 05_llvm/prepare.phs:92
+
+[compile-error] Property `$this->policy` may be read before initialization in `scpp\compiler\LLVM_Preparation::register`.
+  at 05_llvm/prepare.phs:93
+
+[compile-error] Property `$this->file_indexes` may be read before initialization in `scpp\compiler\LLVM_Preparation::register`.
+  at 05_llvm/prepare.phs:100
+
+[compile-error] Property `$this->policy` may be read before initialization in `scpp\compiler\LLVM_Preparation::register`.
+  at 05_llvm/prepare.phs:103
+
+[compile-error] Property `$this->structs` may be read before initialization in `scpp\compiler\LLVM_Preparation::prepare_instance`.
+  at 05_llvm/prepare.phs:137
+
+[compile-error] Property `$this->policy` may be read before initialization in `scpp\compiler\LLVM_Preparation::prepare_instance`.
+  at 05_llvm/prepare.phs:141
+
+[compile-error] Property `$this->file_indexes` may be read before initialization in `scpp\compiler\LLVM_Preparation::prepare_instance`.
+  at 05_llvm/prepare.phs:168
+
+[compile-error] Property `$this->owners` may be read before initialization in `scpp\compiler\LLVM_Preparation::prepare_instance`.
+  at 05_llvm/prepare.phs:196
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

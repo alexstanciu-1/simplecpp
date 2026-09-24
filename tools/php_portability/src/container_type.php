@@ -19,7 +19,7 @@ final class Container_Type {
             $position += strlen($name[0]);
             $type = $name[1];
             if (($source[$position] ?? '') === '<') {
-                if (!in_array($type, ['vector', 'hash'], true)) { throw new \RuntimeException('unsupported container type ' . $type); }
+                if (!in_array($type, ['vector', 'hash', 'Storage', 'Keyed_Storage', 'shared'], true)) { throw new \RuntimeException('unsupported container type ' . $type); }
                 ++$position;
                 $arguments = [$read($depth + 1)];
                 while (($source[$position] ?? '') === ',') {
@@ -29,22 +29,25 @@ final class Container_Type {
                 if (($source[$position] ?? '') !== '>') { throw new \RuntimeException('expected closing container angle'); }
                 ++$position;
                 while (isset($source[$position]) && ctype_space($source[$position])) { ++$position; }
+                if ((in_array($type, ['Storage', 'Keyed_Storage', 'shared'], true)) && (count($arguments) !== 1 || str_contains($arguments[0], '<') || in_array(strtolower($arguments[0]), ['int', 'float', 'bool', 'string', 'uint8', 'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64', 'double'], true))) {
+                    throw new \RuntimeException('object container/wrapper requires exactly one literal record type');
+                }
                 if (($type === 'vector' && count($arguments) !== 1) || ($type === 'hash' && count($arguments) > 2)) {
                     throw new \RuntimeException('wrong container type argument count');
                 }
-                if ($type === 'hash' && isset($arguments[1]) && !in_array($arguments[1], ['int', 'string'], true)) {
-                    throw new \RuntimeException('hash key type must be int or string in this profile');
+                if ($type === 'hash' && isset($arguments[1]) && !in_array($arguments[1], ['int', 'string'], true) && !str_starts_with($arguments[1], 'shared<')) {
+                    throw new \RuntimeException('hash key type must be int, string or shared<Record> in this profile');
                 }
                 return $type . '<' . implode(', ', $arguments) . '>';
             }
-            if (in_array(strtolower($type), ['vector', 'hash', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
+            if (in_array(strtolower($type), ['vector', 'hash', 'storage', 'keyed_storage', 'shared', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
                 throw new \RuntimeException('unsupported container element type ' . $type);
             }
             return $type;
         };
         $type = $read();
-        if ($position !== strlen($source) || (!str_starts_with($type, 'vector<') && !str_starts_with($type, 'hash<'))) {
-            throw new \RuntimeException('expected one complete vector or hash annotation');
+        if ($position !== strlen($source) || (!str_starts_with($type, 'vector<') && !str_starts_with($type, 'hash<') && !str_starts_with($type, 'Storage<') && !str_starts_with($type, 'Keyed_Storage<'))) {
+            throw new \RuntimeException('expected one complete vector, hash or Storage annotation');
         }
         return $type;
     }

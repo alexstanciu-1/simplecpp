@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Role: statement emission methods on LLVM_Generator.
+ * Role: statement emission methods on LLVM_Function_Generator.
  * Call map: LLVM_Generator::to_llvm_block -> statement handlers -> expression.
  */
 namespace scpp\compiler;
@@ -11,20 +11,26 @@ trait LLVM_Statements
 	/** Emit executable block children; declarations are emitted as separate LLVM functions. */
 	private function to_llvm_block(ast_node $node): void
 	{
-		foreach ($node->specialization->children as $statement)
+		foreach (Syntax_Nodes::block_data($node)->children as $statement)
 		{
-			if (in_array($statement->kind, [node_kind::function_declaration, node_kind::struct_declaration], true)) {
+			if (($statement->kind === node_kind::function_declaration || $statement->kind === node_kind::struct_declaration)) {
 				continue;
 			}
 			if ($this->block->terminated) {
 				throw new \RuntimeException('LLVM experiment does not yet lower statements after return');
 			}
-			match ($statement->kind) {
-				node_kind::variable_binding_statement => $this->to_llvm_variable_binding_statement($statement),
-				node_kind::return_statement => $this->to_llvm_return_statement($statement),
-				node_kind::expression_statement => $this->to_llvm_expression_statement($statement),
-				default => throw new \RuntimeException('Unsupported LLVM statement: ' . $statement->kind->name),
-			};
+			if ($statement->kind === node_kind::variable_binding_statement) {
+				$this->to_llvm_variable_binding_statement($statement);
+			}
+			elseif ($statement->kind === node_kind::return_statement) {
+				$this->to_llvm_return_statement($statement);
+			}
+			elseif ($statement->kind === node_kind::expression_statement) {
+				$this->to_llvm_expression_statement($statement);
+			}
+			else {
+				throw new \RuntimeException('Unsupported LLVM statement: ' . Node_Kind_Name::text($statement->kind));
+			}
 		}
 		if (!$this->block->terminated) {
 			if ($this->return_type !== 'void') {
@@ -37,25 +43,20 @@ trait LLVM_Statements
 
 	private function to_llvm_expression_statement(ast_node $node): void
 	{
-		$this->expression($node->specialization->expression);
+		$this->expression(Syntax_Nodes::statement_data($node)->expression);
 	}
 
 	/** Initialize or assign through prepared storage, including borrowed parameter addresses. */
 	private function to_llvm_variable_binding_statement(ast_node $node): void
 	{
-		$binding = $node->specialization;
+		$binding = Syntax_Nodes::binding_data($node);
 		if ($binding->target !== null) {
 			$place = $this->expression_storage($binding->target);
 			$value = $this->expression($binding->value);
 			$this->store_value($place->type, $place->address, $value);
 			return;
 		}
-		$declaration = $binding->type_syntax !== null
-			? ($this->prepared->names->declarations[$node->token_index] ?? null)
-			: ($this->prepared->names->references[$node->token_index] ?? null);
-		if ($declaration === null) {
-			throw new \RuntimeException('LLVM store requires a prepared declaration and value');
-		}
+		$declaration = $this->binding_declaration($node, $binding->type_syntax !== null);
 		$local = $this->instance->locals[$declaration->local_index];
 		if ($local->struct_type !== null)
 		{
@@ -82,13 +83,28 @@ trait LLVM_Statements
 		$this->initialized[$declaration->local_index] = true;
 	}
 
+	/** A missing lookup is rejected before constructing a required handle. */
+	private function binding_declaration(ast_node $node, bool $declaring): collected_name
+	{
+		if ($declaring) {
+			if (!isset($this->prepared->names->declarations[$node->token_index])) {
+				throw new \RuntimeException('LLVM store requires a prepared declaration and value');
+			}
+			return $this->prepared->names->declarations[$node->token_index];
+		}
+		if (!isset($this->prepared->names->references[$node->token_index])) {
+			throw new \RuntimeException('LLVM store requires a prepared declaration and value');
+		}
+		return $this->prepared->names->references[$node->token_index];
+	}
+
 	/** All writes consume the same typed address/value contract. */
 	private function store_value(string $type, string $address, llvm_operand $value): void
 	{
 		if ($value->type !== $type) {
 			throw new \RuntimeException('LLVM experiment does not implement store conversions');
 		}
-		$this->emit("store {$type} {$value->text}, ptr {$address}");
+		$this->emit(("store " . $type . " " . $value->text . ", ptr " . $address));
 	}
 
 	/** End the current block with the entry function's explicitly typed return. */
@@ -96,21 +112,21 @@ trait LLVM_Statements
 	{
 		if ($this->return_type === 'void')
 		{
-			if ($node->specialization->expression !== null) {
+			if (Syntax_Nodes::return_data($node)->expression !== null) {
 				throw new \RuntimeException('A void function cannot return a value');
 			}
 			$this->emit('ret void');
 			$this->block->terminated = true;
 			return;
 		}
-		if ($node->specialization->expression === null) {
+		if (Syntax_Nodes::return_data($node)->expression === null) {
 			throw new \RuntimeException('LLVM experiment requires a return value');
 		}
-		$value = $this->expression($node->specialization->expression);
+		$value = $this->expression(Syntax_Nodes::return_data($node)->expression);
 		if ($value->type !== $this->return_type) {
 			throw new \RuntimeException('LLVM experiment does not implement return conversions');
 		}
-		$this->emit("ret {$value->type} {$value->text}");
+		$this->emit(("ret " . $value->type . " " . $value->text));
 		$this->block->terminated = true;
 	}
 }

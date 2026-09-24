@@ -1,0 +1,178 @@
+[
+    {
+        "path": "01_prepare_inputs/file.php",
+        "original_sha256": "903130cb1f41ab5df88840ad7bb13320ffdac277727da76ad5a93100869a1c31",
+        "projected_sha256": "903130cb1f41ab5df88840ad7bb13320ffdac277727da76ad5a93100869a1c31",
+        "status": "converted"
+    },
+    {
+        "path": "01_prepare_inputs/module.php",
+        "original_sha256": "5aac7ce389215484214c41acc412d3765c6528f9b64bfa81a45df48c40213da8",
+        "projected_sha256": "5aac7ce389215484214c41acc412d3765c6528f9b64bfa81a45df48c40213da8",
+        "status": "converted"
+    },
+    {
+        "path": "01_prepare_inputs/structures.php",
+        "original_sha256": "4bc40a7cce5a8e4147e1f1ed848e3999f1d076babdbf4378cc77748a8c32ad53",
+        "projected_sha256": "4bc40a7cce5a8e4147e1f1ed848e3999f1d076babdbf4378cc77748a8c32ad53",
+        "status": "converted"
+    },
+    {
+        "path": "02_tokenize/structures.php",
+        "original_sha256": "ac94beb2c2859149db1b985471646bf0dfdbe85bcc31fff3fc5494c4a56cbbf8",
+        "projected_sha256": "ac94beb2c2859149db1b985471646bf0dfdbe85bcc31fff3fc5494c4a56cbbf8",
+        "status": "converted"
+    },
+    {
+        "path": "02_tokenize/text.php",
+        "original_sha256": "b651e72821d560ee623a4e944d8cf7d6f0c0c17432c86e403e3216e8449ffe5b",
+        "projected_sha256": "b651e72821d560ee623a4e944d8cf7d6f0c0c17432c86e403e3216e8449ffe5b",
+        "status": "converted"
+    },
+    {
+        "path": "02_tokenize/tokens.php",
+        "original_sha256": "c55f12e1b20a65aa3194872a7e6d4939a8035cf389790d58c2bad13e03e7af24",
+        "projected_sha256": "c55f12e1b20a65aa3194872a7e6d4939a8035cf389790d58c2bad13e03e7af24",
+        "status": "converted"
+    },
+    {
+        "path": "03_parse/parser.php",
+        "original_sha256": "e53e2efb18624cb6944440e8ad7eee7585f43b3b4ecf8b8366fc2d27258f2a22",
+        "projected_sha256": "e53e2efb18624cb6944440e8ad7eee7585f43b3b4ecf8b8366fc2d27258f2a22",
+        "status": "converted"
+    },
+    {
+        "path": "03_parse/structures.php",
+        "original_sha256": "b69df960ee0f6c16efd9fba89f8080a0af771775a72a38d9e8a583ae78a79265",
+        "projected_sha256": "b69df960ee0f6c16efd9fba89f8080a0af771775a72a38d9e8a583ae78a79265",
+        "status": "converted"
+    },
+    {
+        "path": "03_parse/syntax.php",
+        "original_sha256": "49977e09dd3bc6b4cc17d062ec602ddb94644c4f6b3759e123e86f68d6d956cb",
+        "projected_sha256": "49977e09dd3bc6b4cc17d062ec602ddb94644c4f6b3759e123e86f68d6d956cb",
+        "status": "rejected",
+        "diagnostic": "03_parse/syntax.php:15: unsupported syntax: instanceof"
+    },
+    {
+        "path": "04_analyze/collect/collect.php",
+        "original_sha256": "0837a6980fcfc06f2a04f6625879e4c2cb0c7e13e2d106aa4c9bf7246d953900",
+        "projected_sha256": "0837a6980fcfc06f2a04f6625879e4c2cb0c7e13e2d106aa4c9bf7246d953900",
+        "status": "converted"
+    },
+    {
+        "path": "04_analyze/collect/structures.php",
+        "original_sha256": "e611e98ed5482bf0600a2ec2421fde2f643f3c07341f1a888412c4ac168723f3",
+        "projected_sha256": "e611e98ed5482bf0600a2ec2421fde2f643f3c07341f1a888412c4ac168723f3",
+        "status": "converted"
+    },
+    {
+        "path": "04_analyze/prepare.php",
+        "original_sha256": "c5369a9193498c721c91fe21cb2a7268d2ab121a93197cbdb52723775f9a26ac",
+        "projected_sha256": "c5369a9193498c721c91fe21cb2a7268d2ab121a93197cbdb52723775f9a26ac",
+        "status": "converted"
+    },
+    {
+        "path": "04_analyze/structures.php",
+        "original_sha256": "194c5b301eed8e1b4af38cce5ae3bc642921c1bae4b059425464b7d09e950c2f",
+        "projected_sha256": "194c5b301eed8e1b4af38cce5ae3bc642921c1bae4b059425464b7d09e950c2f",
+        "status": "converted"
+    },
+    {
+        "path": "04_analyze/templates.php",
+        "original_sha256": "cefa1b3c441c0055731d0a4a08fa814ab1a2ccc8c1fae77c85ac04524dd65ec6",
+        "projected_sha256": "cefa1b3c441c0055731d0a4a08fa814ab1a2ccc8c1fae77c85ac04524dd65ec6",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/expressions.php",
+        "original_sha256": "cca921c6f950ba472dd288a288cb2fc1200781da9b5fa40c380d22a4631ed98d",
+        "projected_sha256": "cca921c6f950ba472dd288a288cb2fc1200781da9b5fa40c380d22a4631ed98d",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/functions.php",
+        "original_sha256": "53a50f085db3a1a2eaf730309fae674fcfd5173c464db1213fbc1251615326b5",
+        "projected_sha256": "53a50f085db3a1a2eaf730309fae674fcfd5173c464db1213fbc1251615326b5",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/generate.php",
+        "original_sha256": "fb767691bb6b06cafa2c671dd91958f347d4aa0b7dafb2231958e5daaa5ea6ef",
+        "projected_sha256": "fb767691bb6b06cafa2c671dd91958f347d4aa0b7dafb2231958e5daaa5ea6ef",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/names.php",
+        "original_sha256": "8895df2d4ecc5811dbf619b5b4a5d39560bf6e496788290ae41c0e9fd7ce924a",
+        "projected_sha256": "8895df2d4ecc5811dbf619b5b4a5d39560bf6e496788290ae41c0e9fd7ce924a",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/prepare.php",
+        "original_sha256": "1b444fa2c67ce072c2355eb639698d52eb5f4dcde8d2b6d2c8b47273fe7ba7ff",
+        "projected_sha256": "1b444fa2c67ce072c2355eb639698d52eb5f4dcde8d2b6d2c8b47273fe7ba7ff",
+        "status": "rejected",
+        "diagnostic": "05_llvm/prepare.php:136: unsupported syntax: instanceof"
+    },
+    {
+        "path": "05_llvm/statements.php",
+        "original_sha256": "7ab254a424b1da0d79b290384d5ec5ee9993b8fbd4041bcb9fadd99202600bdb",
+        "projected_sha256": "7ab254a424b1da0d79b290384d5ec5ee9993b8fbd4041bcb9fadd99202600bdb",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/structs.php",
+        "original_sha256": "f40ab9f84503f1c6a2d7a69b2a29ab2bd8631ce7c423d5a54607a360c9f8d1bd",
+        "projected_sha256": "f40ab9f84503f1c6a2d7a69b2a29ab2bd8631ce7c423d5a54607a360c9f8d1bd",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/structures.php",
+        "original_sha256": "f4761447759e99b8b64e4f7b9ae8aae453594a04df5ec39d8a0dbbb8f4e1539a",
+        "projected_sha256": "f4761447759e99b8b64e4f7b9ae8aae453594a04df5ec39d8a0dbbb8f4e1539a",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/text.php",
+        "original_sha256": "5af3bf33b964c7e514746682a79c46508ce3830411ab3f08c8e609721c3986e8",
+        "projected_sha256": "5af3bf33b964c7e514746682a79c46508ce3830411ab3f08c8e609721c3986e8",
+        "status": "converted"
+    },
+    {
+        "path": "05_llvm/write.php",
+        "original_sha256": "b94102b77d2553b27d180cdde8f5a1dbae881e93a89cee95ab4207dfdd64fc1c",
+        "projected_sha256": "b94102b77d2553b27d180cdde8f5a1dbae881e93a89cee95ab4207dfdd64fc1c",
+        "status": "converted"
+    },
+    {
+        "path": "06_native/run.php",
+        "original_sha256": "e4313f5fd972a5f9a2ba9fbcdeda837595da5d14daa72032cb99c240a0a0d8ad",
+        "projected_sha256": "e4313f5fd972a5f9a2ba9fbcdeda837595da5d14daa72032cb99c240a0a0d8ad",
+        "status": "converted"
+    },
+    {
+        "path": "06_native/structures.php",
+        "original_sha256": "ea4b903e16403831955fb763699b493d5b77b2f16814564c64835d3de26ee374",
+        "projected_sha256": "ea4b903e16403831955fb763699b493d5b77b2f16814564c64835d3de26ee374",
+        "status": "converted"
+    },
+    {
+        "path": "compile/compile.php",
+        "original_sha256": "2006d8fdab1e258868da839cf8a4e89e42b481c830782c953d1979adcc53af91",
+        "projected_sha256": "2006d8fdab1e258868da839cf8a4e89e42b481c830782c953d1979adcc53af91",
+        "status": "converted"
+    },
+    {
+        "path": "compile/host_report.php",
+        "original_sha256": "c01225281f82e665fab767f506648b5788f884167f0067dcc48d7cbeeaba655c",
+        "projected_sha256": "c01225281f82e665fab767f506648b5788f884167f0067dcc48d7cbeeaba655c",
+        "status": "converted"
+    },
+    {
+        "path": "compile/model.php",
+        "original_sha256": "fc5d305f1b8ee1a01e14cf05cf8ecfaa7d467cb52e1306a7660a69c9f698a096",
+        "projected_sha256": "fc5d305f1b8ee1a01e14cf05cf8ecfaa7d467cb52e1306a7660a69c9f698a096",
+        "status": "converted"
+    }
+]

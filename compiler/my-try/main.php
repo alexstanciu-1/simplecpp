@@ -32,6 +32,9 @@ try
 		}
 	}
 	$compiler->exec();
+	$host = new Host_Report();
+	$host->show();
+	$host->run_native();
 	$report = ob_get_clean();
 	echo html_entity_decode($report, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }

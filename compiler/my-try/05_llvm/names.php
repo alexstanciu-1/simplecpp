@@ -12,17 +12,20 @@ final class LLVM_Names
 	public static function encode(string $source): string
 	{
 		$result = '';
-		for ($index = 0; $index < strlen($source); $index++)
+		$hex = '0123456789ABCDEF';
+		$length = string_byte_len($source);
+		for ($index = 0; $index < $length; $index++)
 		{
-			$byte = $source[$index];
-			if ($byte === '_') {
+			$byte = string_byte_at($source, $index);
+			if ($byte === 95) {
 				$result .= '__';
 			}
-			elseif (str_contains('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', $byte)) {
-				$result .= $byte;
+			elseif (self::digit($byte) || (($byte >= 65) && ($byte < 91)) || (($byte >= 97) && ($byte < 123))) {
+				$result .= string_byte_from_int($byte);
 			}
 			else {
-				$result .= sprintf('_x%02X_', ord($byte));
+				$result .= '_x' . string_byte_slice($hex, (int) ($byte / 16), 1)
+					. string_byte_slice($hex, $byte % 16, 1) . '_';
 			}
 		}
 		return $result;
@@ -32,39 +35,71 @@ final class LLVM_Names
 	public static function decode(string $encoded): string
 	{
 		$result = '';
-		for ($index = 0; $index < strlen($encoded);)
+		$length = string_byte_len($encoded);
+		for ($index = 0; $index < $length;)
 		{
-			$byte = $encoded[$index];
-			if ($byte !== '_') {
-				$result .= $byte;
+			$byte = string_byte_at($encoded, $index);
+			if ($byte !== 95) {
+				$result .= string_byte_from_int($byte);
 				$index++;
 				continue;
 			}
-			$tail = substr($encoded, $index);
-			if (str_starts_with($tail, '__')) {
+			if (string_byte_at($encoded, $index + 1) === 95) {
 				$result .= '_';
-				$index += 2;
+				$index = $index + 2;
+				continue;
 			}
-			elseif (preg_match('/^_x([0-9A-F]{2})_/', $tail, $match) === 1) {
-				$result .= chr(hexdec($match[1]));
-				$index += 5;
+			if (string_byte_at($encoded, $index + 1) === 120) {
+				$high = self::hex_digit(string_byte_at($encoded, $index + 2));
+				$low = self::hex_digit(string_byte_at($encoded, $index + 3));
+				if (($high >= 0) && ($low >= 0) && (string_byte_at($encoded, $index + 4) === 95)) {
+					$result .= string_byte_from_int($high * 16 + $low);
+					$index = $index + 5;
+					continue;
+				}
 			}
-			elseif (preg_match('/^_Gf[0-9]+d[0-9]+$/D', $tail) === 1) {
+			if (self::identity_suffix($encoded, $index)) {
 				break;
 			}
-			else {
-				throw new \InvalidArgumentException('Invalid encoded source name');
-			}
+			throw new \InvalidArgumentException('Invalid encoded source name');
 		}
 		return $result;
+	}
+
+	private static function digit(int $byte): bool
+	{
+		return ($byte >= 48) && ($byte < 58);
+	}
+
+	/** Return -1 for absent or non-uppercase-hex bytes. */
+	private static function hex_digit(int $byte): int
+	{
+		if (self::digit($byte)) { return $byte - 48; }
+		if (($byte >= 65) && ($byte < 71)) { return $byte - 55; }
+		return -1;
+	}
+
+	/** A suffix is exactly _Gf followed by digits, d and another nonempty digit run. */
+	private static function identity_suffix(string $source, int $start): bool
+	{
+		if (string_byte_slice($source, $start, 3) !== '_Gf') { return false; }
+		$index = $start + 3;
+		$first = $index;
+		while (self::digit(string_byte_at($source, $index))) { $index++; }
+		if ($index === $first) { return false; }
+		if (string_byte_at($source, $index) !== 100) { return false; }
+		$index++;
+		$first = $index;
+		while (self::digit(string_byte_at($source, $index))) { $index++; }
+		return ($index > $first) && ($index === string_byte_len($source));
 	}
 
 	/** Keep unique source names readable; preserve every colliding declaration with its identity. */
 	public static function declaration(collected_name $entry, int $file_index): string
 	{
-		$pool = $entry->kind === collected_name_kind::function_declaration ? $entry->scope->functions : $entry->scope->variables;
+		$pool /** hash<vector<collected_name>> */ = $entry->kind === collected_name_kind::function_declaration ? $entry->scope->functions : $entry->scope->variables;
 		$name = self::encode($entry->name);
-		if (count($pool[$entry->name]) > 1) {
+		if (q_count($pool[$entry->name]) > 1) {
 			$name .= '_Gf' . $file_index . 'd' . $entry->local_index;
 		}
 		return $name;

@@ -1,28 +1,25 @@
 <?php
 
 /*
- * Role: function emission methods on LLVM_Generator.
- * Call map: LLVM_Generator::generate -> to_llvm_function -> to_llvm_block.
+ * Role: function emission methods on LLVM_Function_Generator.
+ * Call map: LLVM_Generator::generate -> LLVM_Function_Generator::generate -> to_llvm_block.
  */
 namespace scpp\compiler;
 
 trait LLVM_Functions
 {
 	/** Each function gets independent locals, temporary names and termination state. */
-	private function to_llvm_function(llvm_prepared_function $prepared): llvm_function
+	public function generate(): llvm_function
 	{
-		$this->instance = $prepared;
-		$this->next_value = 0;
-		$this->initialized = [];
-		$this->return_type = $prepared->return_type;
-		$this->block = new llvm_block();
-		$this->block->label = '_Gb0';
+		$prepared = $this->instance;
 		foreach ($prepared->locals as $local) {
-			if (($local->declaration->scope === $prepared->body->specialization->scope) && !$local->borrowed) {
-				$this->emit("{$local->address} = alloca {$local->type}");
+			if (($local->declaration->scope === Syntax_Nodes::block_data($prepared->body)->scope) && !$local->borrowed) {
+				$this->emit($local->address . ' = alloca ' . $local->type);
 			}
 		}
 		$function = new llvm_function();
+		$parameters /** Storage<llvm_operand> */ = $function->parameters;
+		$blocks /** Storage<llvm_block> */ = $function->blocks;
 		foreach ($prepared->parameters as $parameter)
 		{
 			$local = $parameter->local;
@@ -30,9 +27,9 @@ trait LLVM_Functions
 			$operand = new llvm_operand();
 			$operand->type = $incoming->type;
 			$operand->text = $incoming->text;
-			$function->parameters[] = $operand;
+			$parameters[] = $operand;
 			if ($parameter->mode === passing_mode::value) {
-				$this->emit("store {$local->type} {$incoming->text}, ptr {$local->address}");
+				$this->emit('store ' . $local->type . ' ' . $incoming->text . ', ptr ' . $local->address);
 			}
 			$this->initialized[$local->declaration->local_index] = true;
 		}
@@ -40,7 +37,7 @@ trait LLVM_Functions
 		$function->name = $prepared->name;
 		$function->return_type = $prepared->return_type;
 		$function->is_entry = $prepared->is_entry;
-		$function->blocks[] = $this->block;
+		$blocks[] = $this->block;
 		return $function;
 	}
 }

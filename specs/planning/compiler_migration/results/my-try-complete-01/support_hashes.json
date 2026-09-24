@@ -1,0 +1,15 @@
+{
+  "tools/php_portability/src/converter.php": "b9217e2ce0859d44fd017d9be78e4592bee0fe7c68faf3d653e1b855cb61239a",
+  "tools/php_portability/src/container_type.php": "d12b89740dee0d2625e23732ddceeb03e38fc4a56a3450f12a3985b7a280fd43",
+  "tools/php_portability/function_map.php": "a885962a107d4fa0886ca15866fb1e8fb2af1fa83b415be9f266f0f11c99a6fe",
+  "tools/php_portability/runtime/bootstrap.php": "704bff961fa48aaf0daa552fe35f8b1260b53a71ff3cd86a15387b06875c222a",
+  "generators/php/src/Generator/Generator.php": "e107e16c80c61b5398ede46d9d0f4f8b8841660ca5139a5296f64cd3edec77c8",
+  "generators/php/src/PreTokenizer/TokenSiteScanner.php": "60fe900a6778a2375560bdf3c65c03ac3484b977cdce40d8a5c8684c5092f863",
+  "generators/php/src/Support/AstKindPhp84.php": "04ceb8d16550f0783e55ebcb3ed83c5927705815a4ce9f47db394bf6ebff5d5b",
+  "generators/php/src/Support/AstKindPhp85.php": "ddd915604bf6964a8a45c70e193a9930e771a84fd5eed45fb852f8f345bf7a89",
+  "runtime/include/scpp/object_cast.hpp": "c777d3e87571b3bde0d1519441104822656c051a2621b9fe39bd263608c18533",
+  "runtime/include/scpp/lang/php.hpp": "46fc0333a5441dee6f5512ad748126ed7f4db02a7e492e99aff1e4364730e867",
+  "tests/portability/object_casts.php": "ac18729a93d500d6d98928b421bbec42bc54140a8b6e4094ef9b6e9f9d8ba867",
+  "tests/portability/object_hashes.php": "176716b8e10afe937027628c39f980e9ecb1376c8dd5df0a204d04b3ae0bb39d",
+  "tests/portability/storage_bindings.php": "9ccacd1df515f5945f5fb9118facec61cf945d3171c157c2629b400b01873ac9"
+}

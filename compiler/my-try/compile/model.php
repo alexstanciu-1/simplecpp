@@ -45,14 +45,14 @@ final class Model
 	/** Start a fresh compilation without retaining output or indexes from an earlier run. */
 	public static function reset(): void
 	{
-		self::$modules = new Storage();
+		self::$modules = new Storage /** Storage<module> */();
 		self::reset_tokens();
 	}
 
 	/** Restart scanning: invalidate every dependent root and all source backlinks first. */
 	public static function reset_tokens(): void
 	{
-		self::$tokens = new Storage();
+		self::$tokens = new Storage /** Storage<token_list> */();
 		self::reset_syntax();
 		foreach (self::$modules as $module) {
 			foreach ($module->files as $file) {
@@ -64,14 +64,14 @@ final class Model
 	/** Restart parsing: old scopes, occurrences and generated output no longer apply. */
 	public static function reset_syntax(): void
 	{
-		self::$syntax_files = new Storage();
+		self::$syntax_files = new Storage /** Storage<parsed_file> */();
 		self::$global_scope = new scope();
-		self::$collected_files = new Storage();
+		self::$collected_files = new Storage /** Storage<collected_file> */();
 		self::reset_llvm();
 	}
 
 	public static function reset_llvm(): void
 	{
-		self::$llvm_files = new Storage();
+		self::$llvm_files = new Storage /** Storage<llvm_module> */();
 	}
 }

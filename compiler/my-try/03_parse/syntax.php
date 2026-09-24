@@ -30,7 +30,7 @@ final class Syntax_Nodes
 			node_kind::integer_literal, node_kind::variable_reference => $payload === null,
 		};
 		if (!$valid) {
-			throw new \LogicException('Invalid AST payload for ' . $kind->name);
+			throw new \LogicException('Invalid AST payload for ' . Node_Kind_Name::text($kind));
 		}
 	}
 
@@ -45,5 +45,83 @@ final class Syntax_Nodes
 			node_kind::block, node_kind::expression_statement,
 			node_kind::return_statement, node_kind::variable_binding_statement => node_category::statement,
 		};
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function block_data(ast_node $node): block_specialization
+	{
+		return object_cast($node->specialization, block_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function function_data(ast_node $node): function_specialization
+	{
+		return object_cast($node->specialization, function_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function parameter_data(ast_node $node): parameter_specialization
+	{
+		return object_cast($node->specialization, parameter_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function call_data(ast_node $node): call_specialization
+	{
+		return object_cast($node->specialization, call_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function binding_data(ast_node $node): binding_specialization
+	{
+		return object_cast($node->specialization, binding_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function return_data(ast_node $node): return_specialization
+	{
+		return object_cast($node->specialization, return_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function statement_data(ast_node $node): expression_statement_specialization
+	{
+		return object_cast($node->specialization, expression_statement_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function struct_data(ast_node $node): struct_specialization
+	{
+		return object_cast($node->specialization, struct_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function field_data(ast_node $node): field_specialization
+	{
+		return object_cast($node->specialization, field_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function field_access_data(ast_node $node): field_access_specialization
+	{
+		return object_cast($node->specialization, field_access_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function array_data(ast_node $node): array_literal_specialization
+	{
+		return object_cast($node->specialization, array_literal_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function array_type_data(ast_node $node): array_type_specialization
+	{
+		return object_cast($node->specialization, array_type_specialization::class);
+	}
+
+	/** Checked shared payload access; retains the node-owned record identity. */
+	public static function index_data(ast_node $node): index_specialization
+	{
+		return object_cast($node->specialization, index_specialization::class);
 	}
 }

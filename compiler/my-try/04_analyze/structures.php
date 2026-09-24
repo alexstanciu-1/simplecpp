@@ -29,3 +29,14 @@ final class prepared_names {
 	 */
 	public array $function_references /** hash<collected_name, int> */ = [];
 }
+
+/** One template-check invocation; published complete before file workers run. */
+final class template_check_context
+{
+	/** Shared policy supplied to Template_Checker::check. */
+	public llvm_policy $policy;
+	/** Index references the prepared files supplied to Template_Checker::check.
+	 * @reference.weak
+	 */
+	public \SplObjectStorage $files /** hash<llvm_prepared_file, shared<collected_file>> */;
+}

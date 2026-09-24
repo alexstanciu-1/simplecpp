@@ -40,7 +40,10 @@ See [Storage](helpers/STORAGE.md) and [ownership](docs/ownership.md).
 Required fields are nonnullable and must be assigned before read/publication.
 Nullable is explicit. file.tokens is an optional backlink initialized/reset to null.
 file.content is the input for the next scan; token_list.content is the retained
-source snapshot for existing token spans.
+source snapshot for existing token spans. Successful File_Loader reload clears the
+file token backlink; a failed read preserves the prior record. Direct loader calls
+do not invalidate Model roots; rebuild through the coordinator before using new
+stage results. See [the initialization audit](docs/initialization_audit.md).
 
 Compiler.init resets all roots before loading. Tokenization clears syntax,
 collection, global scope, LLVM and all file token backlinks before rebuilding.
@@ -58,8 +61,9 @@ Start with Storage<T> holding shared_p<T>. Per-file segmentation remains useful,
 but special allocation, compact payload stores, weak-reference machinery and bulk
 serialization are future native work. Strong object cycles still require deliberate
 cleanup/review. Ownership comments express intent, not implemented native weakrefs.
-The old native issue #242 / PR #243 API needs reconciliation with this simplified
-contract before integration; no native layout/binding is claimed by this change.
+Issue #242 now requests replacement of the old native API with simple vector/hash
+wrappers. Updated PR #243 delivery and bindings remain pending; no native
+layout/binding is claimed by this change.
 
 ## Collection choices during LLVM preparation
 
@@ -80,3 +84,21 @@ Collection type does not redefine record ownership: external targets and worker
 registries reference the functions belonging to prepared files. Struct definitions
 and imported uses share the same type object. Indexed fields/names must remain
 stable during a preparation run; rebuilding creates fresh collections and indexes.
+
+
+### Object-identity index conversion
+
+Transient SplObjectStorage indexes in template/LLVM preparation now explicitly
+bind to `hash<Value, shared<Key>>`. The PHP carrier preserves object identity;
+native uses its existing shared-pointer-key hash. Workers build/publish each index
+without depending on membership aliases after publication. This does not add IDs
+or change retained ownership. See [binding details](../../specs/portability/object_hashes.md).
+
+
+### Concrete payload access
+
+The optional node_interface payload remains directly node-owned. Syntax_Nodes now
+exposes typed *_data accessors using checked, identity-preserving object_cast.
+Compiler consumers use these accessors instead of implicitly reading concrete fields
+through an interface handle. Null or wrong payload types fail. PHP graph identity is
+unchanged; native interfaces are polymorphic for checked narrowing.

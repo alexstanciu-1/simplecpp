@@ -1,0 +1,50 @@
+Transpiled PHP files: 34, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-native-244
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: enabled
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/36] PCH app_pch.hpp.gch
+[2/36] CXX 04_analyze/structures.o
+[3/36] CXX 05_llvm/functions.o
+[4/36] CXX 03_parse/structures.o
+[5/36] CXX 02_tokenize/tokens.o
+[6/36] CXX 02_tokenize/text.o
+[7/36] CXX 05_llvm/expressions.o
+[8/36] CXX 01_prepare_inputs/file.o
+[9/36] CXX 04_analyze/collect/structures.o
+[10/36] CXX 02_tokenize/structures.o
+[11/36] CXX 01_prepare_inputs/module.o
+[12/36] CXX 01_prepare_inputs/structures.o
+[13/36] CXX 03_parse/syntax.o
+[14/36] CXX 04_analyze/collect/collect.o
+[15/36] CXX 04_analyze/prepare.o
+[16/36] CXX 05_llvm/statements.o
+[17/36] CXX 03_parse/parser.o
+[18/36] CXX 06_native/run.o
+[19/36] CXX 05_llvm/text.o
+[20/36] CXX 04_analyze/templates.o
+[21/36] CXX 06_native/structures.o
+[22/36] CXX 05_llvm/names.o
+[23/36] CXX 05_llvm/write.o
+[24/36] CXX compile/host_report.o
+[25/36] CXX compile/compile.o
+[26/36] CXX 05_llvm/structures.o
+[27/36] CXX compile/model.o
+[28/36] CXX scpp_framework/collections.o
+[29/36] CXX scpp_framework/exceptions.o
+[30/36] CXX 05_llvm/structs.o
+[31/36] CXX main.o
+[32/36] CXX scpp_framework/filesystem.o
+[33/36] CXX 05_llvm/generate.o
+[34/36] CXX scpp_framework/strings.o
+[35/36] CXX 05_llvm/prepare.o
+[36/36] LINK main
+Rebuilt outputs: .prism/build/01_prepare_inputs/file.o, .prism/build/01_prepare_inputs/module.o, .prism/build/01_prepare_inputs/structures.o, .prism/build/02_tokenize/structures.o, .prism/build/02_tokenize/text.o, .prism/build/02_tokenize/tokens.o, .prism/build/03_parse/parser.o, .prism/build/03_parse/structures.o, .prism/build/03_parse/syntax.o, .prism/build/04_analyze/collect/collect.o, .prism/build/04_analyze/collect/structures.o, .prism/build/04_analyze/prepare.o, .prism/build/04_analyze/structures.o, .prism/build/04_analyze/templates.o, .prism/build/05_llvm/expressions.o, .prism/build/05_llvm/functions.o, .prism/build/05_llvm/generate.o, .prism/build/05_llvm/names.o, .prism/build/05_llvm/prepare.o, .prism/build/05_llvm/statements.o, .prism/build/05_llvm/structs.o, .prism/build/05_llvm/structures.o, .prism/build/05_llvm/text.o, .prism/build/05_llvm/write.o, .prism/build/06_native/run.o, .prism/build/06_native/structures.o, .prism/build/app_pch.hpp.gch, .prism/build/compile/compile.o, .prism/build/compile/host_report.o, .prism/build/compile/model.o, .prism/build/main, .prism/build/main.o, .prism/build/scpp_framework/collections.o, .prism/build/scpp_framework/exceptions.o, .prism/build/scpp_framework/filesystem.o, .prism/build/scpp_framework/strings.o
+Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.
+Build completed: .prism/build/main

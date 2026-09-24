@@ -1,4 +1,10 @@
 # File-by-file review inventory
+
+Current native checkpoint: the normal STAN-enabled build passes 142 PHP/native
+comparisons (48 valid programs executed, 94 rejection/recovery cases). See
+`compiler/my-try/docs/native_adaptations.md` for changes and limitations. Earlier
+pending-build notes below describe historical checkpoints; advisory STAN diagnostics
+remain and the verified target pin has not changed.
 Doc Status: planning
 
 The full experiment is imported and runs in PHP. Namespace changes, short type
@@ -66,7 +72,11 @@ minimal reproductions. This is a review checkpoint, not conversion completion.
 
 ## Explicit nullability audit
 
-Status: agreed rule; audit and implementation pending.
+Status: PHP initialization/nullability passes completed for Model/source/token,
+AST/parser, collector, preparation and native-runner results. Native initialization
+proofs and host API adaptation remain part of conversion. See the
+[initialization audit](docs/initialization_audit.md) for field decisions, lifecycle
+preconditions and evidence. Successful source reload now clears file.tokens.
 
 Review retained model records, transient preparation records and worker fields,
 then their parameter/return boundaries. Mark every genuinely optional value with
@@ -99,5 +109,37 @@ keys. Both share Storage_Abstract. LLVM preparation uses both types; sparse inde
 and scalar collections remain typed arrays. AST nodes own payloads and child
 lists directly. Storage_View and duplicate node/payload stores are removed. Earlier
 native ownership/layout proposals are historical, not current conversion targets.
-Reconcile issue #242 / PR #243 with helpers/STORAGE_NATIVE_TASK.md before integrating
-native Storage. Preserve explicit types, nullability and collection identity.
+Issue #242 now carries helpers/STORAGE_NATIVE_TASK.md's simplified replacement
+request; wait for the updated implementation and bindings before native integration. Preserve explicit types, nullability and collection identity.
+
+
+## Host-only declaration proposal
+
+A doc-comment directive such as `@scpp-no-export` could omit an entire class or an
+individual method from generated output while keeping it executable in PHP.
+This is a proposal, not implemented or accepted annotation syntax. Establish its
+exact spelling, declaration scope and structural skip behavior before use. Retained
+code must not depend on omitted declarations; the converter must not be assumed to
+resolve such dependencies. Whole-class omission includes its members; method
+omission must not silently remove call sites or required interface implementations.
+Host entry/bootstrap/reporting files can remain outside conversion inputs meanwhile.
+No directive implementation is part of the storage reset.
+
+
+### Real conversion checkpoint
+
+Explicit Storage bindings, host declaration omission and portable source helpers
+are implemented and PHP-tested. Real diagnostic acceptance is 27/29 files, including
+omitted host declarations/expanded traits. Full atomic conversion still rejects AST
+instanceof checks. Payload narrowing and SplObjectStorage identity indexes need the
+next representation/native-boundary decision; see docs/conversion_review.md.
+No native compilation or target pin update was performed in this pass.
+
+
+### Complete conversion checkpoint
+
+The normal atomic converter now publishes all 29 implementation files, with 29/29
+incremental reuse. Typed Syntax_Nodes payload accessors and real object-key hash
+bindings remove the earlier conversion blockers. Native instanceof/cast emission is
+implemented and inspected in a focused fixture; native compilation is still deferred.
+See docs/conversion_review.md for output location, evidence and remaining native gates.

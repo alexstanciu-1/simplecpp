@@ -1,0 +1,8 @@
+
+/*
+ * Role: function emission methods on LLVM_Generator.
+ * Call map: LLVM_Generator::generate -> to_llvm_function -> to_llvm_block.
+ */
+namespace scpp\compiler;
+
+

@@ -43,7 +43,7 @@ method calls are now admitted; native/PHP checking owns method existence and typ
 
 Root qualification is required. The policy does not resolve aliases or infer user
 class ancestry. General exception subclasses, inherited constructors, union catches
-and finally remain unsupported by this converter slice. `Throwable` construction
+remain unsupported by this original slice. Finally now has structural coverage in [compiler syntax](compiler_syntax.md). `Throwable` construction
 is rejected. Reserved temporary and native-class prefixes cannot be authored.
 
 The target emits multiple PHP catch clauses as repeated catches of the same C++

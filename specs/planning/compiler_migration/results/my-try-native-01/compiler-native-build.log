@@ -1,0 +1,777 @@
+Transpiled PHP files: 1, skipped unchanged: 33
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-native-244
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: reuse existing artifact only
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/26] CXX 03_parse/parser.o
+FAILED: 03_parse/parser.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 03_parse/parser.o.d -MT 03_parse/parser.o -c ../generated/03_parse/parser.cpp -o 03_parse/parser.o
+../generated/03_parse/parser.cpp:26:23: error: member reference type '::scpp::compiler::Storage<scope>' is not a pointer; did you mean to use '.'?
+   26 |                 this->syntax->scopes->append(this->current_scope);
+      |                 ~~~~~~~~~~~~~~~~~~~~^~
+      |                                     .
+../generated/03_parse/parser.cpp:32:17: error: member reference type '::scpp::compiler::Storage<ast_node>' is not a pointer; did you mean to use '.'?
+   32 |                 body->children->append(this->statement());
+      |                 ~~~~~~~~~~~~~~^~
+      |                               .
+../generated/03_parse/parser.cpp:35:71: error: no viable conversion from 'shared_p<block_specialization>' to 'nullable<shared_p<node_interface>>'
+   35 |         result->root = this->node(node_kind::file, static_cast<int_t<> >(0), body);
+      |                                                                              ^~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'shared_p<block_specialization>' to 'const nullable<shared_p<node_interface>> &' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'shared_p<block_specialization>' to 'nullable<shared_p<node_interface>> &&' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:31:2: note: candidate constructor not viable: no known conversion from 'shared_p<block_specialization>' to 'null_t' for 1st argument
+   31 |         nullable(null_t) noexcept
+      |         ^        ~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:34:2: note: candidate constructor not viable: no known conversion from 'shared_p<block_specialization>' to 'nullopt_t' for 1st argument
+   34 |         nullable(nullopt_t) noexcept
+      |         ^        ~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:37:2: note: candidate constructor not viable: no known conversion from 'shared_p<block_specialization>' to 'const scpp::shared_p<scpp::scpp::compiler::node_interface> &' for 1st argument
+   37 |         nullable(const T &value)
+      |         ^        ~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:40:2: note: candidate constructor not viable: no known conversion from 'shared_p<block_specialization>' to 'scpp::shared_p<scpp::scpp::compiler::node_interface> &&' for 1st argument
+   40 |         nullable(T &&value) noexcept(std::is_nothrow_move_constructible_v<T>)
+      |         ^        ~~~~~~~~~
+./../generated/__project_units/../03_parse/parser.hpp:48:100: note: passing argument to parameter 'specialization' here
+   48 |         virtual shared_p<ast_node> node(node_kind kind, int_t<> start, nullable<shared_p<node_interface>> specialization = null);
+      |                                                                                                           ^
+In file included from ../generated/03_parse/parser.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:3:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/functional:49:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_function.h:60:
+In file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/move.h:37:
+/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/type_traits:3361:68: error: incomplete type 'scpp::scpp::compiler::scpp_portability_runtime_exception' used in type trait expression
+ 3361 |   inline constexpr bool is_base_of_v = __is_base_of(_Base, _Derived);
+      |                                                                    ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:16: note: in instantiation of variable template specialization 'std::is_base_of_v<scpp::php::throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' requested here
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                       ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: while substituting template arguments into constraint expression here
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../generated/03_parse/parser.cpp:57:8: note: while checking constraint satisfaction for template 'make_thrown<scpp::scpp::compiler::scpp_portability_runtime_exception>' required here
+   57 |         throw ::scpp::php::make_thrown(this->error(string_t("Expected a declaration, call or return statement")));
+      |               ^~
+../generated/03_parse/parser.cpp:57:8: note: in instantiation of function template specialization 'scpp::php::make_thrown<scpp::scpp::compiler::scpp_portability_runtime_exception>' requested here
+./../generated/__project_units/../03_parse/parser.hpp:16:7: note: forward declaration of 'scpp::scpp::compiler::scpp_portability_runtime_exception'
+   16 | class scpp_portability_runtime_exception;
+      |       ^
+../generated/03_parse/parser.cpp:57:8: error: no matching function for call to 'make_thrown'
+   57 |         throw ::scpp::php::make_thrown(this->error(string_t("Expected a declaration, call or return statement")));
+      |               ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:63:9: error: no matching function for call to 'make_thrown'
+   63 |                 throw ::scpp::php::make_thrown(this->error(string_t("Local struct declarations are not supported yet")));
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:67:9: error: no matching function for call to 'make_thrown'
+   67 |                 throw ::scpp::php::make_thrown(this->error(string_t("Expected struct name")));
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:78:10: error: no matching function for call to 'make_thrown'
+   78 |                         throw ::scpp::php::make_thrown(this->error(string_t("Expected field type")));
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:85:10: error: no matching function for call to 'make_thrown'
+   85 |                         throw ::scpp::php::make_thrown(this->error(string_t("Expected field variable name")));
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:89:17: error: member reference type '::scpp::compiler::Storage<ast_node>' is not a pointer; did you mean to use '.'?
+   89 |                 record->fields->append(this->node(node_kind::field_declaration, field_start, field));
+      |                 ~~~~~~~~~~~~~~^~
+      |                               .
+../generated/03_parse/parser.cpp:89:80: error: no viable conversion from 'shared_p<field_specialization>' to 'nullable<shared_p<node_interface>>'
+   89 |                 record->fields->append(this->node(node_kind::field_declaration, field_start, field));
+      |                                                                                              ^~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'shared_p<field_specialization>' to 'const nullable<shared_p<node_interface>> &' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'shared_p<field_specialization>' to 'nullable<shared_p<node_interface>> &&' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:31:2: note: candidate constructor not viable: no known conversion from 'shared_p<field_specialization>' to 'null_t' for 1st argument
+   31 |         nullable(null_t) noexcept
+      |         ^        ~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:34:2: note: candidate constructor not viable: no known conversion from 'shared_p<field_specialization>' to 'nullopt_t' for 1st argument
+   34 |         nullable(nullopt_t) noexcept
+      |         ^        ~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:37:2: note: candidate constructor not viable: no known conversion from 'shared_p<field_specialization>' to 'const scpp::shared_p<scpp::scpp::compiler::node_interface> &' for 1st argument
+   37 |         nullable(const T &value)
+      |         ^        ~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:40:2: note: candidate constructor not viable: no known conversion from 'shared_p<field_specialization>' to 'scpp::shared_p<scpp::scpp::compiler::node_interface> &&' for 1st argument
+   40 |         nullable(T &&value) noexcept(std::is_nothrow_move_constructible_v<T>)
+      |         ^        ~~~~~~~~~
+./../generated/__project_units/../03_parse/parser.hpp:48:100: note: passing argument to parameter 'specialization' here
+   48 |         virtual shared_p<ast_node> node(node_kind kind, int_t<> start, nullable<shared_p<node_interface>> specialization = null);
+      |                                                                                                           ^
+../generated/03_parse/parser.cpp:92:63: error: no viable conversion from 'shared_p<struct_specialization>' to 'nullable<shared_p<node_interface>>'
+   92 |         auto node = this->node(node_kind::struct_declaration, start, record);
+      |                                                                      ^~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'shared_p<struct_specialization>' to 'const nullable<shared_p<node_interface>> &' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'shared_p<struct_specialization>' to 'nullable<shared_p<node_interface>> &&' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:31:2: note: candidate constructor not viable: no known conversion from 'shared_p<struct_specialization>' to 'null_t' for 1st argument
+   31 |         nullable(null_t) noexcept
+      |         ^        ~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:34:2: note: candidate constructor not viable: no known conversion from 'shared_p<struct_specialization>' to 'nullopt_t' for 1st argument
+   34 |         nullable(nullopt_t) noexcept
+      |         ^        ~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:37:2: note: candidate constructor not viable: no known conversion from 'shared_p<struct_specialization>' to 'const scpp::shared_p<scpp::scpp::compiler::node_interface> &' for 1st argument
+   37 |         nullable(const T &value)
+      |         ^        ~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:40:2: note: candidate constructor not viable: no known conversion from 'shared_p<struct_specialization>' to 'scpp::shared_p<scpp::scpp::compiler::node_interface> &&' for 1st argument
+   40 |         nullable(T &&value) noexcept(std::is_nothrow_move_constructible_v<T>)
+      |         ^        ~~~~~~~~~
+./../generated/__project_units/../03_parse/parser.hpp:48:100: note: passing argument to parameter 'specialization' here
+   48 |         virtual shared_p<ast_node> node(node_kind kind, int_t<> start, nullable<shared_p<node_interface>> specialization = null);
+      |                                                                                                           ^
+../generated/03_parse/parser.cpp:103:60: error: no viable conversion from 'shared_p<expression_statement_specialization>' to 'nullable<shared_p<node_interface>>'
+  103 |         return this->node(node_kind::expression_statement, start, statement);
+      |                                                                   ^~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'shared_p<expression_statement_specialization>' to 'const nullable<shared_p<node_interface>> &' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'shared_p<expression_statement_specialization>' to 'nullable<shared_p<node_interface>> &&' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:31:2: note: candidate constructor not viable: no known conversion from 'shared_p<expression_statement_specialization>' to 'null_t' for 1st argument
+   31 |         nullable(null_t) noexcept
+      |         ^        ~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:34:2: note: candidate constructor not viable: no known conversion from 'shared_p<expression_statement_specialization>' to 'nullopt_t' for 1st argument
+   34 |         nullable(nullopt_t) noexcept
+      |         ^        ~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:37:2: note: candidate constructor not viable: no known conversion from 'shared_p<expression_statement_specialization>' to 'const scpp::shared_p<scpp::scpp::compiler::node_interface> &' for 1st argument
+   37 |         nullable(const T &value)
+      |         ^        ~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:40:2: note: candidate constructor not viable: no known conversion from 'shared_p<expression_statement_specialization>' to 'scpp::shared_p<scpp::scpp::compiler::node_interface> &&' for 1st argument
+   40 |         nullable(T &&value) noexcept(std::is_nothrow_move_constructible_v<T>)
+      |         ^        ~~~~~~~~~
+./../generated/__project_units/../03_parse/parser.hpp:48:100: note: passing argument to parameter 'specialization' here
+   48 |         virtual shared_p<ast_node> node(node_kind kind, int_t<> start, nullable<shared_p<node_interface>> specialization = null);
+      |                                                                                                           ^
+../generated/03_parse/parser.cpp:109:9: error: no matching function for call to 'make_thrown'
+  109 |                 throw ::scpp::php::make_thrown(this->error(string_t("Nested function declarations are not implemented")));
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:122:11: error: no matching function for call to 'make_thrown'
+  122 |                                 throw ::scpp::php::make_thrown(this->error(string_t("Expected a unique template type parameter")));
+      |                                       ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:134:9: error: no matching function for call to 'make_thrown'
+  134 |                 throw ::scpp::php::make_thrown(this->error(string_t("Expected function name")));
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:139:43: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+  139 |         auto function_name = this->tokens->tokens[function->name_token_index]->text;
+      |                              ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+../generated/03_parse/parser.cpp:141:9: error: no matching function for call to 'make_thrown'
+  141 |                 throw ::scpp::php::make_thrown(this->error(string_t("Template parameter conflicts with function name")));
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:61:29: note: candidate template ignored: constraints not satisfied [with T = scpp::scpp::compiler::scpp_portability_runtime_exception]
+   61 | [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
+      |                             ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php_exceptions.hpp:62:11: note: because 'std::is_base_of_v<throwable, scpp::scpp::compiler::scpp_portability_runtime_exception>' evaluated to false
+   62 |         requires std::is_base_of_v<throwable, T>
+      |                  ^
+../generated/03_parse/parser.cpp:144:22: error: member reference type '::scpp::compiler::Storage<scope>' is not a pointer; did you mean to use '.'?
+  144 |         this->syntax->scopes->append(local_scope);
+      |         ~~~~~~~~~~~~~~~~~~~~^~
+      |                             .
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+[2/26] CXX 05_llvm/generate.o
+FAILED: 05_llvm/generate.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 05_llvm/generate.o.d -MT 05_llvm/generate.o -c ../generated/05_llvm/generate.cpp -o 05_llvm/generate.o
+../generated/05_llvm/generate.cpp:15:52: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+   15 |         auto text = this->prepared->source->source->tokens[node->token_index]->text;
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from ../generated/05_llvm/generate.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:7:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:174:36: error: implicit instantiation of undefined template 'scpp::detail::condition_ternary_result<scpp::string_t, int>'
+  174 |         using result_t = typename detail::condition_ternary_result<then_t, else_t>::type;
+      |                                           ^
+../generated/05_llvm/generate.cpp:17:14: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/05_llvm/generate.cpp:17:27), (lambda at ../generated/05_llvm/generate.cpp:17:99), (lambda at ../generated/05_llvm/generate.cpp:17:150)>' requested here
+   17 |         text = php::ternary_eval([&]() -> decltype(auto) { return php::identical(text, string_t("")); }, [&]() -> decltype(auto) { return string_t("0"); }, [&]() -> decltype(auto) { return text; });
+      |                     ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:46:8: note: template is declared here
+   46 | struct condition_ternary_result;
+      |        ^
+In file included from ../generated/05_llvm/generate.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:4:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::shared_p<scpp::scpp::compiler::collected_name>, scpp::null_t>'
+  232 |                 using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+      |                                                   ^
+../generated/05_llvm/generate.cpp:52:26: note: in instantiation of function template specialization 'scpp::coalesce_eval<(lambda at ../generated/05_llvm/generate.cpp:52:40), (lambda at ../generated/05_llvm/generate.cpp:52:130)>' requested here
+   52 |         auto declaration = php::coalesce_eval([&]() -> decltype(auto) { return this->prepared->names->references[node->token_index]; }, [&]() -> decltype(auto) { return null; });
+      |                                 ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:63:8: note: template is declared here
+   63 | struct coalesce_result;
+      |        ^
+../generated/05_llvm/generate.cpp:56:69: error: member reference type 'int' is not a pointer
+   56 |         if (static_cast<bool>((!php::isset(this->initialized, declaration->local_index)))) {
+      |                                                               ~~~~~~~~~~~  ^
+../generated/05_llvm/generate.cpp:59:51: error: member reference type 'int' is not a pointer
+   59 |         auto local = this->instance->locals[declaration->local_index];
+      |                                             ~~~~~~~~~~~  ^
+In file included from ../generated/05_llvm/generate.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:4:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::shared_p<scpp::scpp::compiler::llvm_prepared_function>, scpp::null_t>'
+  232 |                 using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+      |                                                   ^
+../generated/05_llvm/generate.cpp:131:21: note: in instantiation of function template specialization 'scpp::coalesce_eval<(lambda at ../generated/05_llvm/generate.cpp:131:35), (lambda at ../generated/05_llvm/generate.cpp:131:113)>' requested here
+  131 |         auto target = php::coalesce_eval([&]() -> decltype(auto) { return this->instance->calls[node->token_index]; }, [&]() -> decltype(auto) { return null; });
+      |                            ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:63:8: note: template is declared here
+   63 | struct coalesce_result;
+      |        ^
+../generated/05_llvm/generate.cpp:135:138: error: member reference type 'int' is not a pointer
+  135 |         if (static_cast<bool>(php::condition_truthy(php::not_identical(php::count(Syntax_Nodes::call_data(node)->arguments), php::count(target->parameters))))) {
+      |                                                                                                                                         ~~~~~~  ^
+../generated/05_llvm/generate.cpp:136:153: error: member reference type 'int' is not a pointer
+  136 |                 throw ::scpp::php::make_thrown(create<::scpp::scpp_portability_runtime_exception>((string_t("Incorrect argument count for ") + cast<string_t>(target->name))));
+      |                                                                                                                                                               ~~~~~~  ^
+../generated/05_llvm/generate.cpp:143:28: error: member reference type 'int' is not a pointer
+  143 |                 auto parameter = target->parameters[index];
+      |                                  ~~~~~~  ^
+../generated/05_llvm/generate.cpp:157:152: error: member reference type 'int' is not a pointer
+  157 |                         throw ::scpp::php::make_thrown(create<::scpp::scpp_portability_runtime_exception>((string_t("Argument type mismatch for ") + cast<string_t>(target->name))));
+      |                                                                                                                                                                     ~~~~~~  ^
+../generated/05_llvm/generate.cpp:166:25: error: member reference type 'int' is not a pointer
+  166 |         result->type = target->return_type;
+      |                        ~~~~~~  ^
+../generated/05_llvm/generate.cpp:167:91: error: member reference type 'int' is not a pointer
+  167 |         result->text = php::ternary_eval([&]() -> decltype(auto) { return php::identical(target->return_type, string_t("void")); }, [&]() -> decltype(auto) { return string_t(""); }, [&]() -> decltype(auto) { return this->temporary(); });
+      |                                                                                          ~~~~~~  ^
+../generated/05_llvm/generate.cpp:169:86: error: member reference type 'int' is not a pointer
+  169 |         this->emit((cast<string_t>(assignment) + string_t("call ") + cast<string_t>(target->return_type) + string_t(" @") + cast<string_t>(target->name) + string_t("(") + cast<string_t>(argument_text) + string_t(")")));
+      |                                                                                     ~~~~~~  ^
+../generated/05_llvm/generate.cpp:169:141: error: member reference type 'int' is not a pointer
+  169 |         this->emit((cast<string_t>(assignment) + string_t("call ") + cast<string_t>(target->return_type) + string_t(" @") + cast<string_t>(target->name) + string_t("(") + cast<string_t>(argument_text) + string_t(")")));
+      |                                                                                                                                            ~~~~~~  ^
+../generated/05_llvm/generate.cpp:184:28: error: member reference base type 'node_kind' is not a structure or union
+  184 |                 switch ((statement->kind).native_value()) {
+      |                         ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+../generated/05_llvm/generate.cpp:185:38: error: expected expression
+  185 |                         case /* unsupported-switch-case */:
+      |                                                           ^
+../generated/05_llvm/generate.cpp:188:38: error: expected expression
+  188 |                         case /* unsupported-switch-case */:
+      |                                                           ^
+../generated/05_llvm/generate.cpp:191:38: error: expected expression
+  191 |                         case /* unsupported-switch-case */:
+      |                                                           ^
+../generated/05_llvm/generate.cpp:195:162: error: member reference type 'node_kind' is not a pointer
+  195 |                         throw ::scpp::php::make_thrown(create<::scpp::scpp_portability_runtime_exception>((string_t("Unsupported LLVM statement: ") + cast<string_t>(statement->kind->name))));
+      |                                                                                                                                                                      ~~~~~~~~~~~~~~~  ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+[3/26] CXX 04_analyze/prepare.o
+FAILED: 04_analyze/prepare.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 04_analyze/prepare.o.d -MT 04_analyze/prepare.o -c ../generated/04_analyze/prepare.cpp -o 04_analyze/prepare.o
+../generated/04_analyze/prepare.cpp:19:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   19 |                 auto entry = file->entries[index];
+      |                              ~~~~~~~~~~~~~^~~~~~
+../generated/04_analyze/prepare.cpp:34:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   34 |                 auto entry = file->entries[index];
+      |                              ~~~~~~~~~~~~~^~~~~~
+../generated/04_analyze/prepare.cpp:39:102: error: member reference type 'mixed_t' is not a pointer; did you mean to use '.'?
+   39 |                 if (static_cast<bool>(php::condition_truthy(php::not_identical(candidates[static_cast<int_t<> >(0)]->file, file)))) {
+      |                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~
+      |                                                                                                                    .
+../generated/04_analyze/prepare.cpp:39:104: error: no member named 'file' in 'scpp::mixed_t'
+   39 |                 if (static_cast<bool>(php::condition_truthy(php::not_identical(candidates[static_cast<int_t<> >(0)]->file, file)))) {
+      |                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ^
+../generated/04_analyze/prepare.cpp:42:124: error: member reference type 'mixed_t' is not a pointer; did you mean to use '.'?
+   42 |                 if (static_cast<bool>((php::identical(entry->kind, collected_name_kind::binding) && (candidates[static_cast<int_t<> >(0)]->token_index >= entry->token_index)))) {
+      |                                                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~
+      |                                                                                                                                          .
+../generated/04_analyze/prepare.cpp:42:126: error: no member named 'token_index' in 'scpp::mixed_t'
+   42 |                 if (static_cast<bool>((php::identical(entry->kind, collected_name_kind::binding) && (candidates[static_cast<int_t<> >(0)]->token_index >= entry->token_index)))) {
+      |                                                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ^
+../generated/04_analyze/prepare.cpp:50:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   50 |                 auto entry = file->entries[index];
+      |                              ~~~~~~~~~~~~~^~~~~~
+../generated/04_analyze/prepare.cpp:54:15: error: no viable overloaded '='
+   54 |                         candidates = php::coalesce_eval([&]() -> decltype(auto) { return scope->functions[entry->name]; }, [&]() -> decltype(auto) { return mixed_t{shared_table_()}; });
+      |                         ~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit copy assignment operator) not viable: no known conversion from 'mixed_t' to 'const vector_t<shared_p<collected_name>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit move assignment operator) not viable: no known conversion from 'mixed_t' to 'vector_t<shared_p<collected_name>>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+../generated/04_analyze/prepare.cpp:68:29: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   68 |                 auto entry = file->entries[index];
+      |                              ~~~~~~~~~~~~~^~~~~~
+9 errors generated.
+[4/26] CXX 05_llvm/structs.o
+FAILED: 05_llvm/structs.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 05_llvm/structs.o.d -MT 05_llvm/structs.o -c ../generated/05_llvm/structs.cpp -o 05_llvm/structs.o
+../generated/05_llvm/structs.cpp:22:30: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   22 |                         auto entry = file->entries[index];
+      |                                      ~~~~~~~~~~~~~^~~~~~
+../generated/05_llvm/structs.cpp:52:17: error: member reference type '::scpp::compiler::Keyed_Storage<llvm_field>' is not a pointer; did you mean to use '.'?
+   52 |                                 type->fields->add(name, field);
+      |                                 ~~~~~~~~~~~~^~
+      |                                             .
+../generated/05_llvm/structs.cpp:54:60: error: member reference type '::scpp::compiler::Keyed_Storage<llvm_field>' is not a pointer; did you mean to use '.'?
+   54 |                         if (static_cast<bool>(php::condition_truthy(type->fields->is_empty()))) {
+      |                                                                     ~~~~~~~~~~~~^~
+      |                                                                                 .
+../generated/05_llvm/structs.cpp:69:37: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   69 |                 auto entry = file->source->entries[index];
+      |                              ~~~~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from ../generated/05_llvm/structs.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:60:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/generated/operators.hpp:24:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/generated/operator_detail.hpp:18:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/operators/conditional/condition_truthiness.hpp:3:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/operators/conditional/../../../../operators/conditional/condition_truthiness.hpp:117:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<bool>': unsupported scpp::condition_truthy input type
+  117 |                 static_assert(::scpp::detail::always_false_v<value_t>, "unsupported scpp::condition_truthy input type");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/operators/conditional/../../../../operators/conditional/condition_truthiness.hpp:127:17: note: in instantiation of function template specialization 'scpp::detail::condition_truthy_impl<bool>' requested here
+  127 |         return detail::condition_truthy_impl(std::forward<Value>(value), "condition_truthy", "condition");
+      |                        ^
+../generated/05_llvm/structs.cpp:54:31: note: in instantiation of function template specialization 'scpp::condition_truthy<bool>' requested here
+   54 |                         if (static_cast<bool>(php::condition_truthy(type->fields->is_empty()))) {
+      |                                                    ^
+5 errors generated.
+[5/26] CXX 05_llvm/statements.o
+[6/26] CXX 02_tokenize/tokens.o
+FAILED: 02_tokenize/tokens.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 02_tokenize/tokens.o.d -MT 02_tokenize/tokens.o -c ../generated/02_tokenize/tokens.cpp -o 02_tokenize/tokens.o
+../generated/02_tokenize/tokens.cpp:39:23: error: variable 'token' declared with deduced type 'auto' cannot appear in its own initializer
+   39 |                 auto token = create<token>();
+      |                                     ^
+1 error generated.
+[7/26] CXX 06_native/run.o
+[8/26] CXX 04_analyze/collect/collect.o
+FAILED: 04_analyze/collect/collect.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 04_analyze/collect/collect.o.d -MT 04_analyze/collect/collect.o -c ../generated/04_analyze/collect/collect.cpp -o 04_analyze/collect/collect.o
+../generated/04_analyze/collect/collect.cpp:26:40: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+   26 |         auto text = this->file->source->tokens[token_index]->text;
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+../generated/04_analyze/collect/collect.cpp:32:42: error: member reference type '::scpp::compiler::Storage<collected_name>' is not a pointer; did you mean to use '.'?
+   32 |         entry->local_index = this->file->entries->append(entry);
+      |                              ~~~~~~~~~~~~~~~~~~~^~
+      |                                                 .
+../generated/04_analyze/collect/collect.cpp:33:16: error: member reference base type 'collected_name_kind' is not a structure or union
+   33 |         switch ((kind).native_value()) {
+      |                 ~~~~~~^~~~~~~~~~~~~
+../generated/04_analyze/collect/collect.cpp:34:37: error: expected expression
+   34 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:35:37: error: expected expression
+   35 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:36:37: error: expected expression
+   36 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:42:37: error: expected expression
+   42 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:48:37: error: expected expression
+   48 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:54:37: error: expected expression
+   54 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:60:37: error: expected expression
+   60 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:66:37: error: expected expression
+   66 |                 case /* unsupported-switch-case */:
+      |                                                   ^
+../generated/04_analyze/collect/collect.cpp:85:35: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   85 |                 auto entry = this->file->entries[index];
+      |                              ~~~~~~~~~~~~~~~~~~~^~~~~~
+12 errors generated.
+[9/26] CXX 03_parse/syntax.o
+FAILED: 03_parse/syntax.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 03_parse/syntax.o.d -MT 03_parse/syntax.o -c ../generated/03_parse/syntax.cpp -o 03_parse/syntax.o
+../generated/03_parse/syntax.cpp:17:144: error: member reference type 'node_kind' is not a pointer
+   17 |                 throw ::scpp::php::make_thrown(create<::scpp::scpp_portability_logic_exception>((string_t("Invalid AST payload for ") + cast<string_t>(kind->name))));
+      |                                                                                                                                                        ~~~~  ^
+1 error generated.
+[10/26] CXX 05_llvm/text.o
+[11/26] CXX 01_prepare_inputs/module.o
+FAILED: 01_prepare_inputs/module.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 01_prepare_inputs/module.o.d -MT 01_prepare_inputs/module.o -c ../generated/01_prepare_inputs/module.cpp -o 01_prepare_inputs/module.o
+../generated/01_prepare_inputs/module.cpp:28:22: error: variable 'file' declared with deduced type 'auto' cannot appear in its own initializer
+   28 |                 auto file = create<file>();
+      |                                    ^
+1 error generated.
+[12/26] CXX 04_analyze/templates.o
+FAILED: 04_analyze/templates.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 04_analyze/templates.o.d -MT 04_analyze/templates.o -c ../generated/04_analyze/templates.cpp -o 04_analyze/templates.o
+../generated/04_analyze/templates.cpp:30:38: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   30 |                         auto entry = file->source->entries[index];
+      |                                      ~~~~~~~~~~~~~~~~~~~~~^~~~~~
+../generated/04_analyze/templates.cpp:35:19: error: no viable overloaded '='
+   35 |                         this->bindings = mixed_t{shared_table_()};
+      |                         ~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit copy assignment operator) not viable: no known conversion from 'mixed_t' to 'const vector_t<string_t>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/vector_t.hpp:22:7: note: candidate function (the implicit move assignment operator) not viable: no known conversion from 'mixed_t' to 'vector_t<string_t>' for 1st argument
+   22 | class vector_t final {
+      |       ^~~~~~~~
+../generated/04_analyze/templates.cpp:48:17: error: no viable overloaded '='
+   48 |                         this->locals = mixed_t{shared_table_()};
+      |                         ~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/support/hash_t.hpp:504:10: note: candidate function not viable: no known conversion from 'mixed_t' to 'const hash_t<string_t, int_t<>>' for 1st argument
+  504 |         hash_t &operator=(const hash_t &other) requires(std::copyable<T_VALUE> && std::copyable<T_KEY>) {
+      |                 ^         ~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/support/hash_t.hpp:511:10: note: candidate function not viable: no known conversion from 'mixed_t' to 'hash_t<string_t, int_t<>>' for 1st argument
+  511 |         hash_t &operator=(hash_t &&) noexcept = default;
+      |                 ^         ~~~~~~~~~
+In file included from ../generated/04_analyze/templates.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:4:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::int_t<>, scpp::null_t>'
+  232 |                 using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+      |                                                   ^
+../generated/04_analyze/templates.cpp:82:19: note: in instantiation of function template specialization 'scpp::coalesce_eval<(lambda at ../generated/04_analyze/templates.cpp:82:33), (lambda at ../generated/04_analyze/templates.cpp:82:117)>' requested here
+   82 |         auto slot = php::coalesce_eval([&]() -> decltype(auto) { return file->names->template_slots[node->token_index]; }, [&]() -> decltype(auto) { return null; });
+      |                          ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:63:8: note: template is declared here
+   63 | struct coalesce_result;
+      |        ^
+../generated/04_analyze/templates.cpp:89:42: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+   89 |         auto name = file->source->source->tokens[node->token_index]->text;
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from ../generated/04_analyze/templates.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:4:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::string_t, scpp::null_t>'
+  232 |                 using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+      |                                                   ^
+../generated/04_analyze/templates.cpp:104:150: note: in instantiation of function template specialization 'scpp::coalesce_eval<(lambda at ../generated/04_analyze/templates.cpp:104:164), (lambda at ../generated/04_analyze/templates.cpp:104:258)>' requested here
+  104 |                 auto type = php::ternary_eval([&]() -> decltype(auto) { return php::identical(syntax->type_syntax, null); }, [&]() -> decltype(auto) { return php::coalesce_eval([&]() -> decltype(auto) { return this->locals.at(cast<int_t<>>(declaration->local_index)); }, [&]() -> decltype(auto) { return null; }); }, [&]() -> decltype(auto) { return this->type(this->file, syntax->type_syntax, this->bindings); });
+      |                                                                                                                                                                    ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:63:8: note: template is declared here
+   63 | struct coalesce_result;
+      |        ^
+In file included from ../generated/04_analyze/templates.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:7:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:174:36: error: implicit instantiation of undefined template 'scpp::detail::condition_ternary_result<int, scpp::string_t>'
+  174 |         using result_t = typename detail::condition_ternary_result<then_t, else_t>::type;
+      |                                           ^
+../generated/04_analyze/templates.cpp:104:20: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/04_analyze/templates.cpp:104:33), (lambda at ../generated/04_analyze/templates.cpp:104:112), (lambda at ../generated/04_analyze/templates.cpp:104:304)>' requested here
+  104 |                 auto type = php::ternary_eval([&]() -> decltype(auto) { return php::identical(syntax->type_syntax, null); }, [&]() -> decltype(auto) { return php::coalesce_eval([&]() -> decltype(auto) { return this->locals.at(cast<int_t<>>(declaration->local_index)); }, [&]() -> decltype(auto) { return null; }); }, [&]() -> decltype(auto) { return this->type(this->file, syntax->type_syntax, this->bindings); });
+      |                                  ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:46:8: note: template is declared here
+   46 | struct condition_ternary_result;
+      |        ^
+../generated/04_analyze/templates.cpp:109:57: error: no viable overloaded '='
+  109 |                 this->locals[cast<int_t<>>(declaration->local_index)] = type;
+      |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/string_t.hpp:14:7: note: candidate function (the implicit copy assignment operator) not viable: no known conversion from 'int' to 'const string_t' for 1st argument
+   14 | class string_t final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/string_t.hpp:14:7: note: candidate function (the implicit move assignment operator) not viable: no known conversion from 'int' to 'string_t' for 1st argument
+   14 | class string_t final {
+      |       ^~~~~~~~
+../generated/04_analyze/templates.cpp:162:70: error: type '::scpp::compiler::Storage<ast_node>' does not provide a subscript operator
+  162 |                 auto parameter = Syntax_Nodes::parameter_data(signature->parameters[index]);
+      |                                                               ~~~~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from ../generated/04_analyze/templates.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:45:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+   44 |                 static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:207:10: note: in instantiation of function template specialization 'scpp::cast<int, scpp::int_t<>>' requested here
+  207 |                 return cast<result_t>(std::forward<Value>(value));
+      |                        ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:234:19: note: in instantiation of function template specialization 'scpp::detail::normalize_coalesce_branch<int, scpp::int_t<> &>' requested here
+  234 |                         return detail::normalize_coalesce_branch<result_t>(left);
+      |                                        ^
+In file included from ../generated/04_analyze/templates.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:45:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+   44 |                 static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:207:10: note: in instantiation of function template specialization 'scpp::cast<int, scpp::null_t>' requested here
+  207 |                 return cast<result_t>(std::forward<Value>(value));
+      |                        ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:236:18: note: in instantiation of function template specialization 'scpp::detail::normalize_coalesce_branch<int, const scpp::null_t>' requested here
+  236 |                 return detail::normalize_coalesce_branch<result_t>(right_fn());
+      |                                ^
+In file included from ../generated/04_analyze/templates.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:45:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+   44 |                 static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:207:10: note: in instantiation of function template specialization 'scpp::cast<int, scpp::string_t>' requested here
+  207 |                 return cast<result_t>(std::forward<Value>(value));
+      |                        ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:234:19: note: in instantiation of function template specialization 'scpp::detail::normalize_coalesce_branch<int, scpp::string_t &>' requested here
+  234 |                         return detail::normalize_coalesce_branch<result_t>(left);
+      |                                        ^
+In file included from ../generated/04_analyze/templates.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:7:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::string_t>': unsupported ternary_eval branch combination
+  161 |                 static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported ternary_eval branch combination");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:178:17: note: in instantiation of function template specialization 'scpp::detail::normalize_ternary_branch<int, scpp::string_t>' requested here
+  178 |         return detail::normalize_ternary_branch<result_t>(else_fn());
+      |                        ^
+13 errors generated.
+[13/26] CXX 05_llvm/write.o
+[14/26] CXX 05_llvm/names.o
+[15/26] CXX 05_llvm/prepare.o
+FAILED: 05_llvm/prepare.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/b6e7b9c884e961b6.hpp -MMD -MF 05_llvm/prepare.o.d -MT 05_llvm/prepare.o -c ../generated/05_llvm/prepare.cpp -o 05_llvm/prepare.o
+../generated/05_llvm/prepare.cpp:36:32: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   36 |                         auto entry = source->entries[entry_index];
+      |                                      ~~~~~~~~~~~~~~~^~~~~~~~~~~~
+../generated/05_llvm/prepare.cpp:59:38: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+   59 |                         auto entry = file->source->entries[index];
+      |                                      ~~~~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from ../generated/05_llvm/prepare.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:4:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::string_t, scpp::null_t>'
+  232 |                 using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+      |                                                   ^
+../generated/05_llvm/prepare.cpp:83:71: note: in instantiation of function template specialization 'scpp::coalesce_eval<(lambda at ../generated/05_llvm/prepare.cpp:83:85), (lambda at ../generated/05_llvm/prepare.cpp:83:152)>' requested here
+   83 |                 if (static_cast<bool>(php::condition_truthy(php::not_identical(php::coalesce_eval([&]() -> decltype(auto) { return this->policy->types[argument]; }, [&]() -> decltype(auto) { return null; }), this->policy->integer_type)))) {
+      |                                                                                     ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:63:8: note: template is declared here
+   63 | struct coalesce_result;
+      |        ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:232:37: error: implicit instantiation of undefined template 'scpp::detail::coalesce_result<scpp::int_t<>, scpp::null_t>'
+  232 |                 using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+      |                                                   ^
+../generated/05_llvm/prepare.cpp:126:19: note: in instantiation of function template specialization 'scpp::coalesce_eval<(lambda at ../generated/05_llvm/prepare.cpp:126:33), (lambda at ../generated/05_llvm/prepare.cpp:126:129)>' requested here
+  126 |         auto slot = php::coalesce_eval([&]() -> decltype(auto) { return function->file->names->template_slots[syntax->token_index]; }, [&]() -> decltype(auto) { return null; });
+      |                          ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:63:8: note: template is declared here
+   63 | struct coalesce_result;
+      |        ^
+../generated/05_llvm/prepare.cpp:128:48: error: type '::scpp::compiler::Storage<token>' does not provide a subscript operator
+  128 |                 return function->file->source->source->tokens[syntax->token_index]->text;
+      |                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+../generated/05_llvm/prepare.cpp:143:43: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+  143 |                 auto declaration = file->source->entries[index];
+      |                                    ~~~~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from ../generated/05_llvm/prepare.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:7:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:174:36: error: implicit instantiation of undefined template 'scpp::detail::condition_ternary_result<scpp::null_t, scpp::shared_p<scpp::scpp::compiler::llvm_struct_type>>'
+  174 |         using result_t = typename detail::condition_ternary_result<then_t, else_t>::type;
+      |                                           ^
+../generated/05_llvm/prepare.cpp:155:22: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/05_llvm/prepare.cpp:155:35), (lambda at ../generated/05_llvm/prepare.cpp:155:113), (lambda at ../generated/05_llvm/prepare.cpp:155:155)>' requested here
+  155 |                 auto record = php::ternary_eval([&]() -> decltype(auto) { return php::identical(record_declaration, null); }, [&]() -> decltype(auto) { return null; }, [&]() -> decltype(auto) { return this->structs.at(cast<shared_p<collected_name>>(record_declaration)); });
+      |                                    ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:46:8: note: template is declared here
+   46 | struct condition_ternary_result;
+      |        ^
+../generated/05_llvm/prepare.cpp:159:301: error: member reference type 'int' is not a pointer
+  159 |                 auto type = php::ternary_eval([&]() -> decltype(auto) { return php::identical(record, null); }, [&]() -> decltype(auto) { return php::coalesce_eval([&]() -> decltype(auto) { return this->policy->types[name]; }, [&]() -> decltype(auto) { return null; }); }, [&]() -> decltype(auto) { return record->name; });
+      |                                                                                                                                                                                                                                                                                                                   ~~~~~~  ^
+../generated/05_llvm/prepare.cpp:166:22: error: no viable overloaded '='
+  166 |                 local->struct_type = record;
+      |                 ~~~~~~~~~~~~~~~~~~ ^ ~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:44:12: note: candidate function not viable: no known conversion from 'int' to 'null_t' for 1st argument
+   44 |         nullable &operator=(null_t) noexcept {
+      |                   ^         ~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:49:12: note: candidate function not viable: no known conversion from 'int' to 'nullopt_t' for 1st argument
+   49 |         nullable &operator=(nullopt_t) noexcept {
+      |                   ^         ~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:54:12: note: candidate function not viable: no known conversion from 'int' to 'const scpp::shared_p<scpp::scpp::compiler::llvm_struct_type>' for 1st argument
+   54 |         nullable &operator=(const T &value) {
+      |                   ^         ~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:59:12: note: candidate function not viable: no known conversion from 'int' to 'scpp::shared_p<scpp::scpp::compiler::llvm_struct_type>' for 1st argument
+   59 |         nullable &operator=(T &&value) noexcept(std::is_nothrow_move_assignable_v<T>) {
+      |                   ^         ~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate function (the implicit copy assignment operator) not viable: no known conversion from 'int' to 'const nullable<shared_p<llvm_struct_type>>' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/nullable.hpp:12:7: note: candidate function (the implicit move assignment operator) not viable: no known conversion from 'int' to 'nullable<shared_p<llvm_struct_type>>' for 1st argument
+   12 | class nullable final {
+      |       ^~~~~~~~
+../generated/05_llvm/prepare.cpp:168:31: error: member reference type 'int' is not a pointer
+  168 |                         file->struct_types[record->name] = record;
+      |                                            ~~~~~~  ^
+../generated/05_llvm/prepare.cpp:208:35: error: type '::scpp::compiler::Storage<collected_name>' does not provide a subscript operator
+  208 |                 auto use = file->source->entries[index];
+      |                            ~~~~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from ../generated/05_llvm/prepare.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:45:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+   44 |                 static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:207:10: note: in instantiation of function template specialization 'scpp::cast<int, scpp::string_t>' requested here
+  207 |                 return cast<result_t>(std::forward<Value>(value));
+      |                        ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:234:19: note: in instantiation of function template specialization 'scpp::detail::normalize_coalesce_branch<int, scpp::string_t &>' requested here
+  234 |                         return detail::normalize_coalesce_branch<result_t>(left);
+      |                                        ^
+In file included from ../generated/05_llvm/prepare.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:45:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+   44 |                 static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:207:10: note: in instantiation of function template specialization 'scpp::cast<int, scpp::null_t>' requested here
+  207 |                 return cast<result_t>(std::forward<Value>(value));
+      |                        ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:236:18: note: in instantiation of function template specialization 'scpp::detail::normalize_coalesce_branch<int, const scpp::null_t>' requested here
+  236 |                 return detail::normalize_coalesce_branch<result_t>(right_fn());
+      |                                ^
+In file included from ../generated/05_llvm/prepare.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:45:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<int>': scpp::cast is not defined for this From/To pair
+   44 |                 static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:207:10: note: in instantiation of function template specialization 'scpp::cast<int, scpp::int_t<>>' requested here
+  207 |                 return cast<result_t>(std::forward<Value>(value));
+      |                        ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/coalesce/coalesce.hpp:234:19: note: in instantiation of function template specialization 'scpp::detail::normalize_coalesce_branch<int, scpp::int_t<> &>' requested here
+  234 |                         return detail::normalize_coalesce_branch<result_t>(left);
+      |                                        ^
+In file included from ../generated/05_llvm/prepare.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/runtime.hpp:45:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/cast.hpp:44:17: error: static assertion failed due to requirement 'detail::always_false_v<scpp::shared_p<scpp::scpp::compiler::collected_name>>': scpp::cast is not defined for this From/To pair
+   44 |                 static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+../generated/05_llvm/prepare.cpp:155:205: note: in instantiation of function template specialization 'scpp::cast<scpp::shared_p<scpp::scpp::compiler::collected_name>, scpp::mixed_t>' requested here
+  155 |                 auto record = php::ternary_eval([&]() -> decltype(auto) { return php::identical(record_declaration, null); }, [&]() -> decltype(auto) { return null; }, [&]() -> decltype(auto) { return this->structs.at(cast<shared_p<collected_name>>(record_declaration)); });
+      |                                                                                                                                                                                                                           ^
+In file included from ../generated/05_llvm/prepare.cpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/app_pch.hpp:1:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/scpp/lang/php.hpp:9:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/php.hpp:3:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php.hpp:4:
+In file included from /tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/php_value.hpp:7:
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::null_t>': unsupported ternary_eval branch combination
+  161 |                 static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported ternary_eval branch combination");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:176:18: note: in instantiation of function template specialization 'scpp::detail::normalize_ternary_branch<int, const scpp::null_t>' requested here
+  176 |                 return detail::normalize_ternary_branch<result_t>(then_fn());
+      |                                ^
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:161:17: error: static assertion failed due to requirement '::scpp::detail::always_false_v<int, scpp::shared_p<scpp::scpp::compiler::llvm_struct_type>>': unsupported ternary_eval branch combination
+  161 |                 static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported ternary_eval branch combination");
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/scpp-native-proofs/compiler/phpp/.prism/build/../../../../../scpp-native-244/runtime/include/lang/php/support/../../../operators/conditional/conditional_selection.hpp:178:17: note: in instantiation of function template specialization 'scpp::detail::normalize_ternary_branch<int, scpp::shared_p<scpp::scpp::compiler::llvm_struct_type> &>' requested here
+  178 |         return detail::normalize_ternary_branch<result_t>(else_fn());
+      |                        ^
+17 errors generated.
+[16/26] CXX 05_llvm/structures.o
+ninja: build stopped: subcommand failed.
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in 03_parse/parser.phs:28: member reference type '::scpp::compiler::Storage<scope>' is not a pointer; did you mean to use '.'?
+Generated location: .prism/generated/03_parse/parser.cpp:26:23
+Compile error in 03_parse/parser.phs:35: member reference type '::scpp::compiler::Storage<ast_node>' is not a pointer; did you mean to use '.'?
+Generated location: .prism/generated/03_parse/parser.cpp:32:17
+Compile error in 03_parse/parser.phs:38: argument 1 passed to node expects nullable<shared_p<node_interface>>, got shared_p<block_specialization>
+Generated location: .prism/generated/03_parse/parser.cpp:35:71
+Additional remapped diagnostics: 88
+Raw compiler excerpt:
+parser.cpp:26:23: error: member reference type '::scpp::compiler::Storage<scope>' is not a pointer; did you mean to use '.'?
+parser.cpp:32:17: error: member reference type '::scpp::compiler::Storage<ast_node>' is not a pointer; did you mean to use '.'?
+parser.cpp:35:71: error: no viable conversion from 'shared_p<block_specialization>' to 'nullable<shared_p<node_interface>>'
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

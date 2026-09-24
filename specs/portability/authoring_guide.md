@@ -76,7 +76,7 @@ arities and target bindings. Arbitrary q_-prefixed PHP builtins are not supporte
 | Unit/integer enums and declaration-only interfaces | Narrow declaration forms; literal class `implements` lists now pass through ([Source_Set proof](compiler_source_set_slice.md)); do not assume enum reflection or general polymorphic bodies follow from declaration support. [Steps](compiler_step_slice.md). |
 | Bounded expressions, branches and loops | While loops now have a [production comparison proof](compiler_syntax_comparer_slice.md). Braced by-value `foreach`, bare break/continue, keyed `isset` and single hash-slot `unset` are now [proved](map_iteration.md). Use proved forms; accepting some operators is not complete PHP expression semantics. [Decimal algorithm](compiler_decimal_slice.md). |
 | Direct same-namespace method-only traits | No trait composition, adaptations, properties, constants, magic methods or method collisions. Shared direct consumers are allowed. [Trait contract](traits_and_incremental_index.md). |
-| Fixed handled exception family | Supported root exceptions and catch dispatch only; no general exception inheritance or portable `finally` yet. [Exception contract](compiler_exception_slice.md). |
+| Fixed handled exception family | Supported root exceptions and catch dispatch only; no general exception inheritance; `finally` is structurally preserved with [target restrictions](compiler_syntax.md). [Exception contract](compiler_exception_slice.md). |
 | Sequence/keyed map and filter | Explicit carrier policy and bounded typed `function` callbacks; [contract and candidate target](collection_helpers.md). |
 | Managed text and explicit byte helpers | Text helpers validate UTF-8 and use code points; byte helpers serve source offsets/binary data. [String contract](utf8_text_contract.md). |
 
@@ -96,8 +96,7 @@ Static fields now support the same initialized scalar, named-enum, nullable and
 annotated container forms as instance fields, with literal `Type::$field` and
 class-local `self::$field` access. See [static fields](static_properties.md) for
 construction limits, keyed operations and native proof. Explicit [required fields without initializers](required_fields.md) are also
-supported under an assign-before-read/publication contract. Custom Storage
-template bindings remain separate work.
+supported under an assign-before-read/publication contract. Explicit [Storage template bindings](storage_collections.md) now have PHP/conversion coverage; native compiler parity remains separate work.
 
 ## Examples anchored in existing proofs
 
@@ -303,3 +302,17 @@ For nullable constructor containers, unwrap into a concrete typed vector with
 `take_nullable` before `foreach`. A null guard alone does not unwrap the native
 nullable container. Normalized record catalog input proves this path in
 `specs/planning/compiler_migration/results/provider-catalog-01`.
+
+Host-only class/method declarations may use [@scpp-no-export](compiler_syntax.md).
+This omits declarations, never callers. Compiler-required match/switch/do-while,
+coalescing and finally now have structural conversion coverage; see that contract
+for native limitations and pending proofs.
+
+Compiler transient object indexes can use the explicit
+[SplObjectStorage-to-hash carrier](object_hashes.md). Its bounded publication and
+iteration rules matter: PHP map aliasing is not native hash value semantics.
+
+For interface-held compiler records, use [checked shared-object access](object_casts.md).
+Literal instanceof tests do not change the static type of a handle; payload accessors
+perform explicit object_cast calls. PHP and generated-C++ inspection are proved;
+native compilation remains pending.

@@ -13,29 +13,25 @@ final class Module_Loader
 	public static function init(module $module, string $path): void
 	{
 		$module->path = $path;
-		$module->files = new Storage();
+		$files /** Storage<file> */ = new Storage /** Storage<file> */();
+		$module->files = $files;
 
-		/** @var list<string>|false $scan_result PHP scan result, including failure. */
-		$scan_result = scandir($path);
-		if ($scan_result === false) {
-			throw new \RuntimeException("Cannot scan input folder: $path");
+		$names /** vector<string> */ = [];
+		if (!take_false($names, fs_scan($path))) {
+			throw new \RuntimeException('Cannot scan input folder: ' . $path);
 		}
-		$names /** vector<string> */ = $scan_result;
 
 		foreach ($names as $name)
 		{
 			$file_path = $path . '/' . $name;
-			if ((pathinfo($name, PATHINFO_EXTENSION) !== 'phs') || !is_file($file_path)) {
+			if (!string_byte_ends_with($name, '.phs') || !fs_is_file($file_path)) {
 				continue;
 			}
 
-			$file = new file();
-			File_Loader::init($file, $file_path);
-			$module->files[] = $file;
+			$loaded = new file();
+			File_Loader::init($loaded, $file_path);
+			$files[] = $loaded;
 
-			if (\dbg) {
-				echo "file: {$file_path}\n";
-			}
 		}
 	}
 }

@@ -1,0 +1,23 @@
+STAN pre-build check failed: 6 compile-errors
+
+[compile-error] Function `scpp\compiler\Tokenizer::token_end` declared as `int` may exit without returning a value.
+  at 02_tokenize/tokens.phs:60
+
+[compile-error] Function `scpp\compiler\Parser_Run::statement` declared as `ast_node` may exit without returning a value.
+  at 03_parse/parser.phs:62
+
+[compile-error] Missing property read target `->name` on receiver type `scpp\compiler\node_kind` in `scpp\compiler\Syntax_Nodes::validate_payload` for `$kind->name`.
+  at 03_parse/syntax.phs:30
+
+[compile-error] Missing property read target `->name` on receiver type `node_kind` in `scpp\compiler\LLVM_Function_Generator::to_llvm_block` for `$statement->kind->name`.
+  at 05_llvm/generate.phs:221
+
+[compile-error] Function `scpp\compiler\LLVM_Function_Generator::expression` declared as `llvm_operand` may exit without returning a value.
+  at 05_llvm/generate.phs:358
+
+[compile-error] Missing property read target `->name` on receiver type `node_kind` in `scpp\compiler\LLVM_Function_Generator::expression` for `$node->kind->name`.
+  at 05_llvm/generate.phs:369
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

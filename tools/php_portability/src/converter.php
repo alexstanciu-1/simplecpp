@@ -75,6 +75,29 @@ final class Converter {
 		return $this->emit($tree);
 	}
 
+	/** Omit only explicitly marked host declarations, never their callers. */
+	private function skipHostDeclaration(int $line, bool $member): void {
+		$token = $this->significant();
+		if ($member) {
+			if (!in_array($token[0], [T_PUBLIC, T_PROTECTED, T_PRIVATE], true)) { $this->fail($line, '@scpp-no-export requires a method declaration'); }
+			$token = $this->significant();
+			if ($token[0] === T_STATIC) { $token = $this->significant(); }
+			if ($token[0] !== T_FUNCTION) { $this->fail($line, '@scpp-no-export requires a method declaration'); }
+		} else {
+			if ($token[0] === T_FINAL) { $token = $this->significant(); }
+			if ($token[0] !== T_CLASS) { $this->fail($line, '@scpp-no-export requires a class declaration'); }
+		}
+		$depth = 0;
+		$opened = false;
+		while (isset($this->tokens[$this->position])) {
+			$t = $this->tokens[$this->position++];
+			if ($t[1] === '{' || $t[0] === T_DOLLAR_OPEN_CURLY_BRACES) { ++$depth; $opened = true; }
+			if ($t[1] === '}') { --$depth; if ($opened && $depth === 0) { return; } }
+			if (!$opened && $t[1] === ';') { $this->fail($line, '@scpp-no-export requires a declaration body'); }
+		}
+		$this->fail($line, 'unclosed host declaration');
+	}
+
 	private function fail(int $line, string $message): never {
 		throw new \RuntimeException("{$this->path}:{$line}: {$message}");
 	}
@@ -150,6 +173,7 @@ final class Converter {
 		while (isset($this->tokens[$this->position])) {
 			[$id, $text, $at] = $this->tokens[$this->position++];
 			if ($text === '}') { return new Node('enum', $name[1] . $backing, $line, $cases); }
+			if ($id === T_DOC_COMMENT && str_contains($text, '@scpp-no-export')) { $this->fail($at, '@scpp-no-export requires a class or concrete method declaration'); }
 			if (in_array($id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
 				$cases[] = new Node('comment', $text, $at);
 				continue;
@@ -179,6 +203,7 @@ final class Converter {
 		while (isset($this->tokens[$this->position])) {
 			[$id, $text, $at] = $this->tokens[$this->position++];
 			if ($text === '}') { return new Node('interface', $name[1], $line, $members); }
+			if ($id === T_DOC_COMMENT && str_contains($text, '@scpp-no-export')) { $this->fail($at, '@scpp-no-export requires a concrete method body'); }
 			if (in_array($id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
 				$members[] = new Node('comment', $text, $at);
 				continue;
@@ -205,7 +230,7 @@ final class Converter {
 			if (($this->tokens[$next][1] ?? '') === '(') { $this->fail($member[2], 'calls through static properties are unsupported'); }
 			return $type[1] . '::' . $member[1];
 		}
-		if ($member[0] !== T_STRING) { $this->fail($member[2], 'expected literal constant or member name'); }
+		if ($member[0] !== T_STRING && !($expression && $member[0] === T_CLASS)) { $this->fail($member[2], 'expected literal constant or member name'); }
 		$next = $this->nextSignificant($this->position);
 		if (!$expression && ($this->tokens[$next][1] ?? '') === '(') { $this->fail($member[2], 'static calls are unsupported in field defaults'); }
 		return $type[1] . '::' . $member[1];
@@ -227,6 +252,10 @@ final class Converter {
 		}
 		if ($nullable && strtolower($type[1]) === 'void') { $this->fail($type[2], 'nullable void is unsupported'); }
 		$mapped = Exception_Policy::name($type[1]);
+		if ($return && $mapped === '\\SplObjectStorage') { $mapped = $this->objectHashAnnotation($this->significant()); }
+		if ($return && in_array($mapped, ['Storage', 'Keyed_Storage'], true)) {
+			$mapped = $this->storageAnnotation($this->significant(), $mapped);
+		}
 		return $nullable ? 'nullable<' . $mapped . '>' : $mapped;
 	}
 
@@ -246,12 +275,20 @@ final class Converter {
 				$parameter = $this->significant();
 				if ($parameter[0] !== T_VARIABLE) { $this->fail($parameter[2], 'expected named parameter'); }
 				$parameterNames[] = $parameter[1];
+				$nullableStorage = in_array($type, ['nullable<Storage>', 'nullable<Keyed_Storage>'], true);
+				$family = $nullableStorage ? substr($type, 9, -1) : $type;
+				$storage = in_array($family, ['Storage', 'Keyed_Storage'], true);
+				if ($storage) {
+					if (!$containerReturn) { $this->fail($line, 'Storage interface signatures require a separately proved contract'); }
+					$type = $this->storageAnnotation($this->significant(), $family);
+					if ($nullableStorage) { $type = 'nullable<' . $type . '>'; }
+				}
 				if ($container) {
 					if (!$containerReturn) { $this->fail($line, 'container interface parameters require a separately proved contract'); }
 					$type = $this->containerAnnotation($this->significant());
 				}
 				$nullable = str_starts_with($type, 'nullable<');
-				$declaration = ($container || $nullable) ? $parameter[1] . ' ' . $type : $type . ' ' . $parameter[1];
+				$declaration = ($container || $storage || $nullable) ? $parameter[1] . ' ' . $type : $type . ' ' . $parameter[1];
 				$separator = $this->significant();
 				if ($separator[1] === '=') {
 					$value = $this->significant();
@@ -272,8 +309,8 @@ final class Converter {
 		}
 		$this->expect(':');
 		$return = $this->signatureType(true);
-		if (!$containerReturn && (str_starts_with($return, 'vector<') || str_starts_with($return, 'hash<') || str_starts_with($return, 'nullable<'))) {
-			$this->fail($line, 'container interface returns require native target support; unsupported on selected v0.1.76');
+		if (!$containerReturn && (str_starts_with($return, 'vector<') || str_starts_with($return, 'hash<') || str_starts_with($return, 'Storage<') || str_starts_with($return, 'Keyed_Storage<') || str_starts_with($return, 'nullable<'))) {
+			$this->fail($line, 'container interface returns require a separately proved native contract');
 		}
 		return $visibility . ($static ? ' static' : '') . ' function ' . $name[1] . '(' . implode(', ', $parameters) . '): ' . $return;
 	}
@@ -286,17 +323,42 @@ final class Converter {
 	}
 
 	/** Parse explicit recursive containers once for every supported declaration site. */
-	private function containerAnnotation(array $token): string {
+	private function containerAnnotation(array $token, bool $storage = false): string {
 		if ($token[0] !== T_DOC_COMMENT) { $this->fail($token[2], 'expected explicit container type annotation'); }
-		try { return Container_Type::parse($token[1]); }
+		try {
+			$type = Container_Type::parse($token[1]);
+			if (!$storage && !str_starts_with($type, 'vector<') && !str_starts_with($type, 'hash<')) {
+				$this->fail($token[2], 'PHP array requires a vector or hash annotation');
+			}
+			if (!$storage && str_contains($type, ', shared<')) {
+				$this->fail($token[2], 'object-keyed hashes require the SplObjectStorage PHP carrier');
+			}
+			return $type;
+		}
 		catch (\RuntimeException $error) { $this->fail($token[2], $error->getMessage()); }
+	}
+
+	/** SplObjectStorage is the PHP carrier for an explicitly object-keyed native hash. */
+	private function objectHashAnnotation(array $token): string {
+		$type = $this->containerAnnotation($token, true);
+		if (!preg_match('/^hash<.+, shared<[^<>]+>>$/D', $type)) {
+			$this->fail($token[2], 'SplObjectStorage requires hash<Value, shared<Key>>');
+		}
+		return $type;
+	}
+
+	/** Storage is a fixed native family; record types are explicit, never inferred. */
+	private function storageAnnotation(array $token, string $family): string {
+		$type = $this->containerAnnotation($token, true);
+		if (!str_starts_with($type, $family . '<')) { $this->fail($token[2], 'Storage annotation must match its declared family'); }
+		return $type;
 	}
 
 	/** Local type spelling only; declarations, assignability and identity belong to the target. */
 	private function localAnnotation(array $token): string {
 		$annotation = $token[1];
-		if (preg_match('~^/\*\*\s*(?:vector|hash)\s*<~', $annotation)) {
-			return $this->containerAnnotation($token);
+		if (preg_match('~^/\*\*\s*(?:vector|hash|Storage|Keyed_Storage)\s*<~', $annotation)) {
+			return $this->containerAnnotation($token, true);
 		}
 		if (preg_match('~^/\*\*\s*((?:(?:nullable|result_or_false|result_or_bool)<)?(?:int|uint32|bool|string)>?)\s*\*/$~D', $annotation, $match)) {
 			$type = $match[1];
@@ -309,7 +371,7 @@ final class Converter {
 			return $type;
 		}
 		if (preg_match('~^/\*\*\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*\*/$~D', $annotation, $match)
-			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
+			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
 			return Exception_Policy::name($match[1]);
 		}
 		$this->fail($token[2], 'unsupported local type annotation');
@@ -340,6 +402,9 @@ final class Converter {
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected promoted parameter name'); }
 			$parameterNames[] = $field[1];
+			if (in_array($mappedType, ['Storage', 'Keyed_Storage'], true)) {
+				$mappedType = $this->storageAnnotation($this->significant(), $mappedType);
+			}
 			if ($type[0] === T_ARRAY) {
 				$mappedType = $this->containerAnnotation($this->significant());
 			}
@@ -365,7 +430,7 @@ final class Converter {
 				}
 				$separator = $this->significant();
 			}
-			$annotated = $nullable || $type[0] === T_ARRAY;
+			$annotated = $nullable || $type[0] === T_ARRAY || in_array($type[1], ['Storage', 'Keyed_Storage'], true);
 			$property = $annotated
 				? ($readonly ? '/** PHP readonly; native usage contract. */ ' : '') . $visibility[1] . ' ' . $field[1] . ' ' . $typeName . ';'
 				: $visibility[1] . ' ' . ($readonly ? 'readonly ' : '') . $typeName . ' ' . $field[1] . ';';
@@ -493,6 +558,10 @@ final class Converter {
 				$this->inClass = $previousClass;
 				return new Node($final ? 'final_class' : 'class', $className, $line, $fields);
 			}
+			if ($id === T_DOC_COMMENT && trim($text) === '/** @scpp-no-export */') {
+				$this->skipHostDeclaration($at, true);
+				continue;
+			}
 			if (in_array($id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
 				if ($id === T_DOC_COMMENT && (str_contains($text, '@scpp-struct') || str_contains($text, '&ref'))) { $this->fail($at, 'misplaced record/reference metadata'); }
 				$fields[] = new Node('comment', $text, $at);
@@ -561,6 +630,21 @@ final class Converter {
 			}
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected named property'); }
+			if ($type[1] === '\\SplObjectStorage') {
+				if ($nullable) { $this->fail($at, 'nullable identity hashes require a separate contract'); }
+				$collection = $this->objectHashAnnotation($this->significant());
+				$this->expect(';');
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $collection . ';', $at);
+				continue;
+			}
+			if (in_array($type[1], ['Storage', 'Keyed_Storage'], true)) {
+				$collection = $this->storageAnnotation($this->significant(), $type[1]);
+				$initializer = '';
+				if ($nullable) { $this->expect('='); $this->expect('null'); $initializer = ' = null'; }
+				$this->expect(';');
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . ($nullable ? 'nullable<' . $collection . '>' : $collection) . $initializer . ';', $at);
+				continue;
+			}
 			if (!$nullable && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === ';') {
 				if (in_array(strtolower($type[1]), ['mixed', 'object', 'iterable', 'void', 'never', 'self', 'parent', 'static'], true)) {
 					$this->fail($at, 'required field needs a concrete scalar or named type');
@@ -620,17 +704,30 @@ final class Converter {
 			$children[] = new Node('catch_clause', $variable[1], $type[2], [
 				new Node('kind', (string) $kind, $type[2]), new Node('body', '', $type[2], $this->sequence('}'))]);
 		}
-		if (count($children) === 1) { $this->fail($line, 'try requires a supported catch; finally is not yet portable'); }
+		if (($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_FINALLY) {
+			$this->significant();
+			$this->expect('{');
+			$children[] = new Node('finally', '', $line, $this->sequence('}'));
+		}
+		if (count($children) === 1) { $this->fail($line, 'try requires a supported catch or finally'); }
 		return new Node('try', '$__scpp_portability_exception_' . ++$this->exceptionCounter, $line, $children);
 	}
 
 	private function emitTry(Node $node): string {
-		$result = 'try {' . $this->emit($node->children[0]) . '} catch (\\scpp_portability_exception ' . $node->text . ') {';
-		foreach (array_slice($node->children, 1) as $index => $catch) {
-			$result .= ($index === 0 ? 'if' : 'else if') . ' (' . $node->text . '->matches(' . $catch->children[0]->text . ')) {'
-				. $catch->text . ' = ' . $node->text . ';' . $this->emit($catch->children[1]) . '}';
+		$result = 'try {' . $this->emit($node->children[0]) . '}';
+		$catches = array_values(array_filter($node->children, static fn(Node $child): bool => $child->kind === 'catch_clause'));
+		if ($catches !== []) {
+			$result .= ' catch (\\scpp_portability_exception ' . $node->text . ') {';
+			foreach ($catches as $index => $catch) {
+				$result .= ($index === 0 ? 'if' : 'else if') . ' (' . $node->text . '->matches(' . $catch->children[0]->text . ')) {'
+					. $catch->text . ' = ' . $node->text . ';' . $this->emit($catch->children[1]) . '}';
+			}
+			$result .= 'else { throw ' . $node->text . '; }}';
 		}
-		return $result . 'else { throw ' . $node->text . '; }}';
+		foreach ($node->children as $child) {
+			if ($child->kind === 'finally') { $result .= ' finally {' . $this->emit(new Node('body', '', $child->line, $child->children)) . '}'; }
+		}
+		return $result;
 	}
 
 	/** By-value iteration with explicit bindings; container types remain authored. */
@@ -791,6 +888,11 @@ final class Converter {
 				$nodes[] = $this->valueRecord($line);
 				continue;
 			}
+			if ($id === T_DOC_COMMENT && trim($text) === '/** @scpp-no-export */') {
+				if ($closing !== null) { $this->fail($line, '@scpp-no-export is only valid on declarations'); }
+				$this->skipHostDeclaration($line, false);
+				continue;
+			}
 			if ($id === T_DOC_COMMENT && str_contains($text, '&ref')) { $this->fail($line, 'misplaced &ref annotation'); }
 			if ($id === T_FUNCTION) { $nodes[] = $this->closure($line, false); continue; }
 			if ($id === T_STATIC) {
@@ -873,10 +975,29 @@ final class Converter {
 				if (!in_array($name[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {
 					$this->fail($line, 'construction requires a literal class name');
 				}
+				if ($name[1] === '\\SplObjectStorage') {
+					$this->objectHashAnnotation($this->significant());
+					$this->expect('('); $this->expect(')');
+					$nodes[] = new Node('empty_hash', '[]', $line);
+					continue;
+				}
+				$storageName = null;
+				if (in_array($name[1], ['Storage', 'Keyed_Storage'], true)) {
+					$storageName = $this->storageAnnotation($this->significant(), $name[1]);
+				}
 				$this->expect('(');
-				try { $nativeName = Exception_Policy::constructionName($name[1]); }
+				try { $nativeName = $storageName ?? Exception_Policy::constructionName($name[1]); }
 				catch (\RuntimeException $error) { $this->fail($line, $error->getMessage()); }
 				$nodes[] = new Node('call', 'new ' . $nativeName, $line, $this->sequence(')'));
+				continue;
+			}
+			if ($id === T_INSTANCEOF) {
+				$name = $this->significant();
+				if (!in_array($name[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)
+					|| in_array(strtolower($name[1]), ['self', 'parent', 'static'], true)) {
+					$this->fail($line, 'instanceof requires a literal class or interface name');
+				}
+				$nodes[] = new Node('instanceof', 'instanceof ' . $name[1], $line);
 				continue;
 			}
 			if ($id === T_OBJECT_OPERATOR) {
@@ -949,6 +1070,16 @@ final class Converter {
 				if (!in_array($count, (array) $rule['arity'], true)) {
 					$this->fail($line, 'wrong argument count for ' . $text);
 				}
+				if (ltrim($name, '\\') === 'object_cast') {
+					$argument = []; $afterComma = false;
+					foreach ($children as $child) {
+						if ($child->kind === 'token' && $child->text === ',') { $afterComma = true; continue; }
+						if ($afterComma && trim($child->text) !== '' && $child->kind !== 'comment') { $argument[] = $child; }
+					}
+					if (count($argument) !== 1 || $argument[0]->kind !== 'named_constant' || !str_ends_with($argument[0]->text, '::class')) {
+						$this->fail($line, 'object_cast requires a literal Class::class target');
+					}
+				}
 				$nodes[] = new Node('call', $rule['targets'][$count] ?? $rule['target'], $line, $children);
 				continue;
 			}
@@ -957,7 +1088,7 @@ final class Converter {
 				continue;
 			}
 			$allowed = [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_VARIABLE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING,
-				T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
+				T_COALESCE, T_MATCH, T_SWITCH, T_CASE, T_DEFAULT, T_DOUBLE_ARROW, T_DO, T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
 			if ($id === T_STRING && in_array(strtolower($text), ['true', 'false', 'null'], true)) {
 				// Literal keywords only; arbitrary calls/names are outside this slice.
 			} elseif (!in_array($id, $allowed, true) && !($id === 0 && in_array($text, ['=', ';', ',', '?', ':', '!', '.', '+', '-', '*', '/', '%', '<', '>'], true))) {

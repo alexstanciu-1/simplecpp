@@ -1,0 +1,184 @@
+[
+    {
+        "path": "01_prepare_inputs/file.php",
+        "sha256": "43503529551d768fed951a43ad2791c6c16e915999a530922da76ef571fc3003",
+        "status": "rejected",
+        "diagnostic": "01_prepare_inputs/file.php:15: unsupported syntax: clearstatcache",
+        "seconds": 0.000484
+    },
+    {
+        "path": "01_prepare_inputs/module.php",
+        "sha256": "c04d3af8d9b216a2537fad2318ef76a1d3c07712352e0c6b3159ea67905d239e",
+        "status": "rejected",
+        "diagnostic": "01_prepare_inputs/module.php:19: unsupported syntax: scandir",
+        "seconds": 0.000526
+    },
+    {
+        "path": "01_prepare_inputs/structures.php",
+        "sha256": "14b987669d527fe295fd8065625c423b8e1912b711da01cc7aafec89063d7bcd",
+        "status": "rejected",
+        "diagnostic": "01_prepare_inputs/structures.php:32: expected =",
+        "seconds": 0.000521
+    },
+    {
+        "path": "02_tokenize/structures.php",
+        "sha256": "b7e9aa4f7e04bea890e14df3f4b653a83b93ff94ed1a29fe0cdf6fa0a69604b6",
+        "status": "rejected",
+        "diagnostic": "02_tokenize/structures.php:30: expected =",
+        "seconds": 0.000381
+    },
+    {
+        "path": "02_tokenize/tokens.php",
+        "sha256": "753a351d1cc12125c400ed411ba41bc22c1fe1c6947d860627182713f227a46f",
+        "status": "rejected",
+        "diagnostic": "02_tokenize/tokens.php:11: expected explicit scalar or named property type",
+        "seconds": 0.000877
+    },
+    {
+        "path": "03_parse/parser.php",
+        "sha256": "bebaf61c6d919d16de908cac49655cdec9919a99481406598302983d8369795c",
+        "status": "rejected",
+        "diagnostic": "03_parse/parser.php:30: unsupported syntax: ??",
+        "seconds": 0.002133
+    },
+    {
+        "path": "03_parse/structures.php",
+        "sha256": "d0ec1875141dfadbe05789b6d7be080e9c6214259202c1979dfe705ba7019c9b",
+        "status": "rejected",
+        "diagnostic": "03_parse/structures.php:66: expected =",
+        "seconds": 0.000979
+    },
+    {
+        "path": "03_parse/syntax.php",
+        "sha256": "49977e09dd3bc6b4cc17d062ec602ddb94644c4f6b3759e123e86f68d6d956cb",
+        "status": "rejected",
+        "diagnostic": "03_parse/syntax.php:14: unsupported syntax: match",
+        "seconds": 0.000634
+    },
+    {
+        "path": "04_analyze/collect/collect.php",
+        "sha256": "cc8ac4463915c7efdbd317cfff92b382209c669d2d21c70ee112718dd2e6b13b",
+        "status": "rejected",
+        "diagnostic": "04_analyze/collect/collect.php:29: unsupported syntax: str_starts_with",
+        "seconds": 0.001755
+    },
+    {
+        "path": "04_analyze/collect/structures.php",
+        "sha256": "37663457ba5047d5a24e14ac721d48c93178d83d8da4372fa964cc454e36f671",
+        "status": "rejected",
+        "diagnostic": "04_analyze/collect/structures.php:67: expected =",
+        "seconds": 0.00054
+    },
+    {
+        "path": "04_analyze/prepare.php",
+        "sha256": "00fba141c5186ce77d9f0501736b2cfb559f1e1636f8130b11c4e8d867524857",
+        "status": "rejected",
+        "diagnostic": "04_analyze/prepare.php:22: unsupported syntax: array_merge",
+        "seconds": 0.003587
+    },
+    {
+        "path": "04_analyze/structures.php",
+        "sha256": "194c5b301eed8e1b4af38cce5ae3bc642921c1bae4b059425464b7d09e950c2f",
+        "status": "converted",
+        "output_sha256": "f12b3612e760f48e3116be7d39b44435ab12db794692db9986e43ebee196d013",
+        "seconds": 0.002151
+    },
+    {
+        "path": "04_analyze/templates.php",
+        "sha256": "dbfb00180568b4faf921e50c3f026e9b570c7642258ad7985eae177ffc6303e8",
+        "status": "rejected",
+        "diagnostic": "04_analyze/templates.php:19: expected parameter separator",
+        "seconds": 0.00076
+    },
+    {
+        "path": "05_llvm/expressions.php",
+        "sha256": "339a085c866dbf5af3c7ae1edbfee685d063c12292ebd7890306e34d578930e8",
+        "status": "rejected",
+        "diagnostic": "05_llvm/expressions.php:15: unsupported syntax: ltrim",
+        "seconds": 0.001004
+    },
+    {
+        "path": "05_llvm/functions.php",
+        "sha256": "41c63dc297fcf21b175ef0bdfb3972f6dd56e11a13ee90fed22f5a7513e90441",
+        "status": "rejected",
+        "diagnostic": "05_llvm/functions.php:22: unsupported syntax: \"",
+        "seconds": 0.000969
+    },
+    {
+        "path": "05_llvm/generate.php",
+        "sha256": "29046ea01fb31d1ad18a340cbb9532119646e8db969e56ebc6c1198adbff569f",
+        "status": "rejected",
+        "diagnostic": "05_llvm/expressions.php:15: unsupported syntax: ltrim",
+        "seconds": 0.001852
+    },
+    {
+        "path": "05_llvm/names.php",
+        "sha256": "5ea94138d0cd979c4c467102885ca1da05d2f7aaad852c52c345a885e687d4bf",
+        "status": "rejected",
+        "diagnostic": "05_llvm/names.php:15: unsupported syntax: strlen",
+        "seconds": 0.000636
+    },
+    {
+        "path": "05_llvm/prepare.php",
+        "sha256": "cf6dd8a1bf519085c673aee8732995976a77ca866c122c2b1f722b351bb3bf5c",
+        "status": "rejected",
+        "diagnostic": "05_llvm/prepare.php:17: expected =",
+        "seconds": 0.000858
+    },
+    {
+        "path": "05_llvm/statements.php",
+        "sha256": "104a1105731ef84eee7c45a7db97289626c82c136f29a6293f892b580ee2e53e",
+        "status": "rejected",
+        "diagnostic": "05_llvm/statements.php:16: unsupported syntax: in_array",
+        "seconds": 0.000665
+    },
+    {
+        "path": "05_llvm/structs.php",
+        "sha256": "13949678ee1d28b44ee402373f7decacb7f5f09b0edd2b493897b5d5e9a6fb33",
+        "status": "rejected",
+        "diagnostic": "05_llvm/structs.php:13: expected parameter separator",
+        "seconds": 0.00051
+    },
+    {
+        "path": "05_llvm/structures.php",
+        "sha256": "734148f8c270b4ddd1b9e08f9de3afbafb41336d03d98fc8202e4730fc9ff35e",
+        "status": "rejected",
+        "diagnostic": "05_llvm/structures.php:12: expected ]",
+        "seconds": 0.000819
+    },
+    {
+        "path": "05_llvm/write.php",
+        "sha256": "e0ecd6242f13c65aa978c0fa36e2395562598627df19ff70e64cbfcb09e7ae4c",
+        "status": "rejected",
+        "diagnostic": "05_llvm/write.php:14: unsupported syntax: array_merge",
+        "seconds": 0.000558
+    },
+    {
+        "path": "06_native/run.php",
+        "sha256": "c47ec13d66af315811cb60500e4e16afc4bda42dec01eb020bb429e1a15394f2",
+        "status": "rejected",
+        "diagnostic": "06_native/run.php:13: expected parameter separator",
+        "seconds": 0.000597
+    },
+    {
+        "path": "06_native/structures.php",
+        "sha256": "ea4b903e16403831955fb763699b493d5b77b2f16814564c64835d3de26ee374",
+        "status": "converted",
+        "output_sha256": "11c923c74aaa13aa87e17d0e2bb3c931d20397914b35f779ee567568b6c81404",
+        "seconds": 0.00168
+    },
+    {
+        "path": "compile/compile.php",
+        "sha256": "53aed4a022f8242a57f9dffc5d450ab35c5cdf30ed1f80aa2bf6804202ca314a",
+        "status": "rejected",
+        "diagnostic": "compile/compile.php:26: unsupported syntax: dbg",
+        "seconds": 0.001122
+    },
+    {
+        "path": "compile/model.php",
+        "sha256": "5e39bee5f7cd530938b22cfc8fb2c1706f13dd4300875f6365abc14155290a76",
+        "status": "rejected",
+        "diagnostic": "compile/model.php:17: expected =",
+        "seconds": 0.000406
+    }
+]

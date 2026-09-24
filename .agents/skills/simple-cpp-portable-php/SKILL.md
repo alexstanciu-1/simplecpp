@@ -26,6 +26,11 @@ stable. These native wrappers alias membership; do not generalize that fact to
 vector/hash value containers, where a local copy may change mutation semantics.
 See the [two-file native proof](../../../specs/planning/compiler_migration/results/nested-storage-locals-01/README.md).
 Try explicit supported source boundaries before extending generator/STAN inference.
+Use is_empty() for Storage and count checks for typed vector/hash emptiness; a
+comparison with bare [] can become a comparison against a different native container
+type. Separate state-dependent key/index reads from mutations in the same expression
+(for example capture the key, assign the current position, then increment). PHP and
+C++ evaluation order must not determine the compiler's behavior differently.
 
 Read the [authoring guide](../../../specs/portability/authoring_guide.md) before
 editing. Follow its feature links as needed. The [function policy](../../../tools/php_portability/function_map.php)

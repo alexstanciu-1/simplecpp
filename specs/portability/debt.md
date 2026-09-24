@@ -117,7 +117,7 @@ unsupported-syntax errors rather than dedicated explanations.
 | Namespace/import policy | No namespace or one leading lowercase semicolon namespace, optionally preceded by strict declaration/comments. Reject bracketed, repeated or late namespaces, manual import aliases, modified managed imports and framework-name bypasses. |
 | Declaration index/traits | Reject duplicate declarations, missing or cross-namespace traits, trait composition, adaptation blocks (`as`/`insteadof`), repeated uses and method collisions. Current traits are method-only; fields, constants and magic methods are rejected. Indexing a declaration does not imply its body is convertible. |
 | Local conversion facts | Require supported explicit type/annotation shapes; reject unsupported annotations, dynamic calls/member names and unmapped operations. No receiver-type inference, remote signature/default lookup, inheritance analysis or general symbol resolution. |
-| Syntax coverage | Forms outside the implemented parser subset must fail, including named/unpacked call arguments and currently unsupported functions, closures, reference parameters, inheritance, constructor forms outside the explicit supported grammar and `finally`. These parser gaps are not blanket Simple C++ language limitations. Supported scalar/named method signatures with void returns, promoted constructors, bounded loops, vectors and fixed handled exceptions remain available. |
+| Syntax coverage | Forms outside the implemented parser subset must fail, including named/unpacked call arguments and currently unsupported functions, closures, reference parameters, inheritance, constructor forms outside the explicit supported grammar. These parser gaps are not blanket Simple C++ language limitations. Supported scalar/named method signatures with void returns, promoted constructors, bounded loops, vectors and fixed handled exceptions remain available. |
 | Literal representation | Reject NUL/invalid-UTF-8 string literals and unsupported Unicode escape spelling. Runtime binary input is a separate contract. |
 | Output/cache integrity | Reject invalid manifests/indexes, conflicting or modified owned support artifacts and unsafe symlink paths. A failed conversion does not make retained previous output current. |
 
@@ -145,7 +145,7 @@ immutability. Broader graph/container/value representations remain open below.
   target representation before changing compiler type-model owners.
 - Custom diagnostics/exceptions, native-originated failures and guaranteed cleanup:
   current fixed exception-family proofs do not cover arbitrary inheritance or
-  uncaught diagnostics. `finally` exists in the target but not yet in this converter.
+  uncaught diagnostics. `finally` now has structural conversion coverage; native parity for this new slice is pending (see compiler_syntax.md).
 - Enum names/values, byte scanning/search helpers and schema-based JSON adapters:
   define the selected operations as real slices need them, without receiver lookup.
 - Numeric boundaries and readonly/lifetime behavior: PHP execution is an
@@ -389,7 +389,7 @@ The [handled-exception slice](compiler_exception_slice.md) implements fixed root
 exception types, ordered catch dispatch, message/code/cause and an explicit identity
 helper. Native framework assembly has a separate owner/manifest. Eleven production
 files are ready. Uncaught messages, native-originated failures, user exception
-subclasses, finally and subtype-specific typed catch boundaries remain open.
+subclasses and subtype-specific typed catch boundaries remain open. Finally now has structural coverage; see compiler_syntax.md.
 
 [Quoted-byte decoding](compiler_byte_literals_slice.md) is proved independently of
 the remaining body checker. `string_byte_from_int` constructs one arbitrary byte

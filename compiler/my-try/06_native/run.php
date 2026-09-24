@@ -6,14 +6,18 @@
  */
 namespace scpp\compiler;
 
+/** @scpp-no-export */
 final class Native_Runner
 {
 	/** Compile/link all module files and execute, then remove temporary artifacts.
 	 */
 	public function run(Storage $modules /** Storage<llvm_module> */): native_result
 	{
-		/** @var array{clang: string} $config Host toolchain configuration. */
-		$config = json_decode(file_get_contents(__DIR__ . '/toolchain.json'), true, 512, JSON_THROW_ON_ERROR);
+		/** @var mixed $config Decoded host configuration must be validated before use. */
+		$config = json_decode($this->read_text(__DIR__ . '/toolchain.json'), true, 512, JSON_THROW_ON_ERROR);
+		if (!is_array($config) || !isset($config['clang']) || !is_string($config['clang']) || ($config['clang'] === '')) {
+			throw new \RuntimeException('Native toolchain requires a nonempty clang path');
+		}
 		$directory = sys_get_temp_dir() . '/my-try-native-' . bin2hex(random_bytes(12));
 		if (!mkdir($directory, 0700)) {
 			throw new \RuntimeException('Cannot create native build directory');
@@ -31,7 +35,7 @@ final class Native_Runner
 				}
 				$source = $folder . '/' . basename($module->file_name);
 				$sources[] = $source;
-				if (file_put_contents($source, $module->text) === false) {
+				if (file_put_contents($source, $module->text) !== strlen($module->text)) {
 					throw new \RuntimeException('Cannot write LLVM input');
 				}
 			}
@@ -77,9 +81,20 @@ final class Native_Runner
 		}
 		$result = new native_process_result();
 		$result->exit_code = proc_close($process);
-		$result->stdout = file_get_contents($directory . '/stdout');
-		$result->stderr = file_get_contents($directory . '/stderr');
+		$result->stdout = $this->read_text($directory . '/stdout');
+		$result->stderr = $this->read_text($directory . '/stderr');
 		return $result;
+	}
+
+	/** Empty output is valid; failed reads must never become empty strings. */
+	private function read_text(string $path): string
+	{
+		/** @var string|false $text Host read result, including failure. */
+		$text = file_get_contents($path);
+		if ($text === false) {
+			throw new \RuntimeException('Cannot read native input/output: ' . $path);
+		}
+		return $text;
 	}
 
 	/** Display compiler diagnostics and execution output safely within the page's pre block. */

@@ -11,15 +11,19 @@ final class LLVM_Writer
 	/** Serialize the module model; no source lookup or semantic decisions happen here. */
 	public function text(llvm_module $module): string
 	{
-		$sections /** vector<string> */ = array_merge($module->types, $module->globals, $module->external_functions);
+		$sections /** vector<string> */ = [];
+		foreach ($module->types as $text) { $sections[] = $text; }
+		foreach ($module->globals as $text) { $sections[] = $text; }
+		foreach ($module->external_functions as $text) { $sections[] = $text; }
 		foreach ($module->functions as $function)
 		{
 			$parameters /** vector<string> */ = [];
 			foreach ($function->parameters as $parameter) {
 				$parameters[] = $parameter->type . ' ' . $parameter->text;
 			}
-			$signature = implode(', ', $parameters);
-			$lines /** vector<string> */ = ["define {$function->return_type} @{$function->name}({$signature}) {"];
+			$signature = $this->join($parameters, ', ');
+			$lines /** vector<string> */ = [];
+			$lines[] = 'define ' . $function->return_type . ' @' . $function->name . '(' . $signature . ') {';
 			foreach ($function->blocks as $block)
 			{
 				if (!$block->terminated) {
@@ -31,8 +35,21 @@ final class LLVM_Writer
 				}
 			}
 			$lines[] = '}';
-			$sections[] = implode("\n", $lines);
+			$sections[] = $this->join($lines, "\n");
 		}
-		return implode("\n\n", array_merge($sections, $module->metadata)) . "\n";
+		foreach ($module->metadata as $text) { $sections[] = $text; }
+		return $this->join($sections, "\n\n") . "\n";
+	}
+
+	/** Preserve separators around empty items as well as nonempty sections. */
+	private function join(array $items /** vector<string> */, string $separator): string
+	{
+		$result = '';
+		$between = '';
+		foreach ($items as $item) {
+			$result .= $between . $item;
+			$between = $separator;
+		}
+		return $result;
 	}
 }

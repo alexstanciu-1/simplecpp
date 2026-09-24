@@ -33,6 +33,6 @@ final class module
 
 	public function __construct()
 	{
-		$this->files = new Storage();
+		$this->files = new Storage /** Storage<file> */();
 	}
 }

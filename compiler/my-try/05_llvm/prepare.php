@@ -9,60 +9,80 @@ namespace scpp\compiler;
 /** One rebuild registry; ordinary and template functions share concrete preparation. */
 final class LLVM_Preparation
 {
+	/** A fresh registry isolates every rebuild, including after a failed run. */
+	public function prepare_program(Storage $sources /** Storage<collected_file> */, llvm_policy $policy): Storage /** Storage<llvm_prepared_file> */
+	{
+		return (new LLVM_Preparation_Run($sources, $policy))->prepare_program($sources);
+	}
+}
+
+final class LLVM_Preparation_Run
+{
 	private llvm_policy $policy;
-	private \SplObjectStorage $structs;
-	private \SplObjectStorage $owners;
-	private \SplObjectStorage $file_indexes;
+	private \SplObjectStorage $structs /** hash<llvm_struct_type, shared<collected_name>> */;
+	private \SplObjectStorage $owners /** hash<llvm_prepared_file, shared<collected_name>> */;
+	private \SplObjectStorage $file_indexes /** hash<int, shared<llvm_prepared_file>> */;
 	/** Exact definition/argument keys; references to file.functions. */
 	private Keyed_Storage $instances /** Keyed_Storage<llvm_prepared_function> */;
 	/** Append-only work queue referencing file.functions; indexed traversal may grow it. */
 	private Storage $pending /** Storage<llvm_prepared_function> */;
 
-	/** Bind files first, register concrete roots, then process only newly demanded instances.
-	 */
-	public function prepare_program(Storage $sources /** Storage<collected_file> */, llvm_policy $policy): Storage /** Storage<llvm_prepared_file> */
+	public function __construct(Storage $sources /** Storage<collected_file> */, llvm_policy $policy)
 	{
 		$this->policy = $policy;
-		$this->instances = new Keyed_Storage();
-		$this->pending = new Storage();
-		$this->owners = new \SplObjectStorage();
-		$this->file_indexes = new \SplObjectStorage();
-		$this->structs = (new LLVM_Struct_Preparation())->prepare($sources, $policy);
-		$files /** Storage<llvm_prepared_file> */ = new Storage();
+		$this->instances = new Keyed_Storage /** Keyed_Storage<llvm_prepared_function> */();
+		$this->pending = new Storage /** Storage<llvm_prepared_function> */();
+		$owners /** hash<llvm_prepared_file, shared<collected_name>> */ = new \SplObjectStorage /** hash<llvm_prepared_file, shared<collected_name>> */();
+		$this->owners = $owners;
+		$file_indexes /** hash<int, shared<llvm_prepared_file>> */ = new \SplObjectStorage /** hash<int, shared<llvm_prepared_file>> */();
+		$this->file_indexes = $file_indexes;
+		$structs /** hash<llvm_struct_type, shared<collected_name>> */ = (new LLVM_Struct_Preparation())->prepare($sources, $policy);
+		$this->structs = $structs;
+	}
+
+	/** Bind files first, register roots, then process demanded instances. */
+	public function prepare_program(Storage $sources /** Storage<collected_file> */): Storage /** Storage<llvm_prepared_file> */
+	{
+		$files /** Storage<llvm_prepared_file> */ = new Storage /** Storage<llvm_prepared_file> */();
 		foreach ($sources as $index => $source)
 		{
 			$file = new llvm_prepared_file();
 			$file->source = $source;
 			$file->names = (new Name_Preparation())->prepare($source);
+			$entries /** Storage<collected_name> */ = $source->entries;
+			$struct_types /** Keyed_Storage<llvm_struct_type> */ = $file->struct_types;
 			$this->file_indexes[$file] = $index;
 			$files[] = $file;
 			foreach ($source->defined_elements as $entry_index)
 			{
-				$entry = $source->entries[$entry_index];
+				$entry = $entries[$entry_index];
 				$this->owners[$entry] = $file;
 				if ($entry->kind === collected_name_kind::struct_declaration) {
 					$type = $this->structs[$entry];
-					$file->struct_types[$type->name] = $type;
+					$struct_types[$type->name] = $type;
 				}
 			}
 		}
-		(new Template_Checker())->check($files, $policy);
+		(new Template_Checker())->check($files, $this->policy);
 		foreach ($files as $file)
 		{
-			foreach ($file->source->root->specialization->children as $statement) {
-				if (!in_array($statement->kind, [node_kind::function_declaration, node_kind::struct_declaration], true)) {
+			$entries /** Storage<collected_name> */ = $file->source->entries;
+			foreach (Syntax_Nodes::block_data($file->source->root)->children as $statement) {
+				if (!($statement->kind === node_kind::function_declaration || $statement->kind === node_kind::struct_declaration)) {
 					$this->register($file, null, []);
 					break;
 				}
 			}
 			foreach ($file->source->defined_elements as $index) {
-				$entry = $file->source->entries[$index];
-				if (($entry->kind === collected_name_kind::function_declaration) && ($entry->node->specialization->template_parameters === [])) {
-					$this->register($file, $entry, []);
+				$entry = $entries[$index];
+				if ($entry->kind === collected_name_kind::function_declaration) {
+					if (q_count(Syntax_Nodes::function_data($entry->node)->template_parameters) === 0) {
+						$this->register($file, $entry, []);
+					}
 				}
 			}
 		}
-		for ($index = 0; $index < count($this->pending); $index++) {
+		for ($index = 0; $index < q_count($this->pending); $index++) {
 			$this->prepare_instance($this->pending[$index]);
 		}
 		return $files;
@@ -71,16 +91,22 @@ final class LLVM_Preparation
 	/** Register before visiting the body so recursive calls reuse the same instance. */
 	private function register(llvm_prepared_file $file, ?collected_name $definition, array $arguments /** vector<string> */): llvm_prepared_function
 	{
-		$formals /** hash<int> */ = $definition?->node->specialization->template_parameters ?? [];
-		if (count($formals) !== count($arguments)) {
+		$formals /** hash<int> */ = [];
+		if ($definition !== null) { $formals = Syntax_Nodes::function_data($definition->node)->template_parameters; }
+		if (q_count($formals) !== q_count($arguments)) {
 			throw new \RuntimeException('Explicit template argument count mismatch');
 		}
 		foreach ($arguments as $argument) {
-			if (($this->policy->types[$argument] ?? null) !== $this->policy->integer_type) {
+			if (!isset($this->policy->types[$argument])) {
+				throw new \RuntimeException('Template proof currently supports int type arguments only');
+			}
+			if ($this->policy->types[$argument] !== $this->policy->integer_type) {
 				throw new \RuntimeException('Template proof currently supports int type arguments only');
 			}
 		}
-		$key = json_encode([$this->file_indexes[$file], $definition?->local_index, $arguments], JSON_THROW_ON_ERROR);
+		// Length-prefixed type arguments keep the internal identity unambiguous.
+		$key = 'f' . $this->file_indexes[$file] . ($definition === null ? ':entry' : ':d' . $definition->local_index);
+		foreach ($arguments as $argument) { $key .= ':' . string_byte_len($argument) . ':' . $argument; }
 		if (isset($this->instances[$key])) {
 			return $this->instances[$key];
 		}
@@ -89,7 +115,7 @@ final class LLVM_Preparation
 		$function->declaration = $definition;
 		$function->arguments = $arguments;
 		$function->is_entry = $definition === null;
-		$function->body = $definition?->node->specialization->body ?? $file->source->root;
+		$function->body = $definition === null ? $file->source->root : Syntax_Nodes::function_data($definition->node)->body;
 		if ($definition === null) {
 			$function->name = $this->policy->entry_name;
 			$function->return_type = $this->policy->entry_return_type;
@@ -100,66 +126,98 @@ final class LLVM_Preparation
 				throw new \RuntimeException('The entry function name is reserved');
 			}
 			$name = LLVM_Names::declaration($definition, $this->file_indexes[$file]);
-			$function->name = $arguments === [] ? $name : $name . LLVM_Names::encode('<' . implode(',', $arguments) . '>');
-			$type = $this->type_name($function, $definition->node->specialization->return_type);
-			$function->return_type = $this->policy->types[$type] ?? throw new \RuntimeException('Unsupported function return type');
+			$function->name = q_count($arguments) === 0 ? $name : $name . LLVM_Names::encode('<' . LLVM_Text::join($arguments, ',') . '>');
+			$type = $this->type_name($function, Syntax_Nodes::function_data($definition->node)->return_type);
+			if (!isset($this->policy->types[$type])) {
+				throw new \RuntimeException('Unsupported function return type');
+			}
+			$function->return_type = $this->policy->types[$type];
 		}
 		$this->instances[$key] = $function;
 		$this->pending[] = $function;
-		$file->functions[] = $function;
+		$functions /** Storage<llvm_prepared_function> */ = $file->functions;
+		$functions[] = $function;
 		return $function;
 	}
 
 	/** Interpret bound parameter slots without changing retained syntax or name bindings. */
 	private function type_name(llvm_prepared_function $function, ast_node $syntax): string
 	{
-		$slot = $function->file->names->template_slots[$syntax->token_index] ?? null;
-		return $slot === null ? $function->file->source->source->tokens[$syntax->token_index]->text
-			: ($function->arguments[$slot] ?? throw new \RuntimeException('Missing concrete template binding'));
+		if (!isset($function->file->names->template_slots[$syntax->token_index])) {
+			$tokens /** Storage<token> */ = $function->file->source->source->tokens;
+			return $tokens[$syntax->token_index]->text;
+		}
+		$slot /** int */ = $function->file->names->template_slots[$syntax->token_index];
+		if (!isset($function->arguments[$slot])) {
+			throw new \RuntimeException('Missing concrete template binding');
+		}
+		return $function->arguments[$slot];
+	}
+
+	/** A required declaration type is checked before the native nullable boundary. */
+	private function declaration_type(collected_name $declaration): ast_node
+	{
+		if ($declaration->node->kind === node_kind::parameter_declaration) {
+			return Syntax_Nodes::parameter_data($declaration->node)->type_syntax;
+		}
+		$binding = Syntax_Nodes::binding_data($declaration->node);
+		if ($binding->type_syntax === null) {
+			throw new \RuntimeException('LLVM preparation requires an explicitly typed variable');
+		}
+		return object_cast($binding->type_syntax, ast_node::class);
 	}
 
 	/** Prepare storage and calls in one concrete context; local source indexes remain unchanged. */
 	private function prepare_instance(llvm_prepared_function $function): void
 	{
 		$file = $function->file;
-		$scope = $function->body->specialization->scope;
+		$entries /** Storage<collected_name> */ = $file->source->entries;
+		$tokens /** Storage<token> */ = $file->source->source->tokens;
+		$struct_types /** Keyed_Storage<llvm_struct_type> */ = $file->struct_types;
+		$parameters /** Storage<llvm_parameter> */ = $function->parameters;
+		$external_functions /** Keyed_Storage<llvm_prepared_function> */ = $file->external_functions;
+		$scope = Syntax_Nodes::block_data($function->body)->scope;
 		foreach ($file->source->defined_elements as $index)
 		{
-			$declaration = $file->source->entries[$index];
+			$declaration = $entries[$index];
 			if (($declaration->kind !== collected_name_kind::variable_declaration) || ($declaration->scope !== $scope)) {
 				continue;
 			}
-			$binding = $declaration->node->specialization;
-			if ((!($binding instanceof binding_specialization) && !($binding instanceof parameter_specialization)) || ($binding->type_syntax === null)) {
-				throw new \RuntimeException('LLVM preparation requires an explicitly typed variable');
-			}
-			$type_syntax = $binding->type_syntax;
-			$array_syntax = $type_syntax->specialization;
+			$is_parameter = $declaration->node->kind === node_kind::parameter_declaration;
+			$type_syntax = $this->declaration_type($declaration);
+			$is_array = $type_syntax->kind === node_kind::array_type;
 			$name = $this->type_name($function, $type_syntax);
-			$record_declaration = $file->names->types[$type_syntax->token_index] ?? null;
-			$record = $record_declaration === null ? null : $this->structs[$record_declaration];
-			if (($record !== null) && (($array_syntax instanceof array_type_specialization) || ($binding instanceof parameter_specialization))) {
-				throw new \RuntimeException('Struct arrays and whole-struct parameters are not supported yet');
-			}
-			$type = $record?->name ?? ($this->policy->types[$name] ?? null);
-			if (($type === null) || ($type === 'void')) {
-				throw new \RuntimeException("LLVM experiment has no type mapping for $name");
-			}
 			$local = new llvm_local();
 			$local->declaration = $declaration;
-			$local->type = $type;
-			$local->struct_type = $record;
-			if ($record !== null) {
-				$file->struct_types[$record->name] = $record;
+			$type = '';
+			if (isset($file->names->types[$type_syntax->token_index])) {
+				$record_declaration /** collected_name */ = $file->names->types[$type_syntax->token_index];
+				$record /** llvm_struct_type */ = $this->structs[$record_declaration];
+				if ($is_array || $is_parameter) {
+					throw new \RuntimeException('Struct arrays and whole-struct parameters are not supported yet');
+				}
+				$type = $record->name;
+				$local->struct_type = $record;
+				$struct_types[$record->name] = $record;
+			} else {
+				if (!isset($this->policy->types[$name])) {
+					throw new \RuntimeException('LLVM experiment has no type mapping for ' . $name);
+				}
+				$type = $this->policy->types[$name];
+				if ($type === 'void') {
+					throw new \RuntimeException('LLVM experiment has no type mapping for ' . $name);
+				}
 			}
-			if ($array_syntax instanceof array_type_specialization)
+			$local->type = $type;
+			if ($is_array)
 			{
+				$array_syntax = Syntax_Nodes::array_type_data($type_syntax);
 				if ($type !== $this->policy->integer_type) {
 					throw new \RuntimeException('Fixed arrays currently require int elements');
 				}
-				$text = ltrim($file->source->source->tokens[$array_syntax->count->token_index]->text, '0');
-				$maximum = (string) PHP_INT_MAX;
-				if ((strlen($text) > strlen($maximum)) || ((strlen($text) === strlen($maximum)) && (strcmp($text, $maximum) > 0))) {
+				$text = LLVM_Text::decimal($tokens[$array_syntax->count->token_index]->text);
+				$maximum = '' . \PHP_INT_MAX;
+				if (LLVM_Text::decimal_exceeds($text, $maximum)) {
 					throw new \RuntimeException('Fixed array size exceeds compiler capacity');
 				}
 				$local->array_type = new llvm_array_type();
@@ -172,35 +230,35 @@ final class LLVM_Preparation
 		}
 		if ($function->declaration !== null)
 		{
-			foreach ($function->declaration->node->specialization->parameters as $index => $syntax)
+			foreach (Syntax_Nodes::function_data($function->declaration->node)->parameters as $index => $syntax)
 			{
-				$entry = $file->names->declarations[$syntax->specialization->name_token_index];
+				$entry = $file->names->declarations[Syntax_Nodes::parameter_data($syntax)->name_token_index];
 				$parameter = new llvm_parameter();
-				$parameter->mode = $syntax->specialization->mode;
+				$parameter->mode = Syntax_Nodes::parameter_data($syntax)->mode;
 				$parameter->local = $function->locals[$entry->local_index];
 				$parameter->local->borrowed = $parameter->mode === passing_mode::reference;
 				$parameter->incoming = new llvm_operand();
 				$parameter->incoming->type = $parameter->local->borrowed ? 'ptr' : $parameter->local->type;
 				$parameter->incoming->text = $parameter->local->borrowed ? $parameter->local->address : '%_Garg' . $index;
-				$function->parameters[] = $parameter;
+				$parameters[] = $parameter;
 			}
 		}
 		(new LLVM_Struct_Preparation())->fields($function);
 		foreach ($file->source->function_references as $index)
 		{
-			$use = $file->source->entries[$index];
+			$use = $entries[$index];
 			if ($use->scope !== $scope) {
 				continue;
 			}
 			$definition = $file->names->function_references[$use->token_index];
 			$arguments /** vector<string> */ = [];
-			foreach ($use->node->specialization->template_arguments as $argument) {
+			foreach (Syntax_Nodes::call_data($use->node)->template_arguments as $argument) {
 				$arguments[] = $this->type_name($function, $argument);
 			}
 			$target = $this->register($this->owners[$definition], $definition, $arguments);
 			$function->calls[$use->token_index] = $target;
 			if ($target->file !== $file) {
-				$file->external_functions[$target->name] = $target;
+				$external_functions[$target->name] = $target;
 			}
 		}
 	}
