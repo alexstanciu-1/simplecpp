@@ -14,6 +14,11 @@ include(FindPkgConfig)
 
 enable_testing()
 
+# Header-only compiler-owned data helpers; opt in explicitly from native consumers.
+add_library(scpp_compiler INTERFACE)
+target_include_directories(scpp_compiler INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_features(scpp_compiler INTERFACE cxx_std_23)
+
 add_library(scpp_json SHARED
 	include/modules/json/json.cpp
 )

@@ -4,6 +4,26 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "tests/runtime/compiler/level_01/runtime_compiler_002_string_storage.test-info.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
+                        "path": "specs/compiler_storage.md",
+                        "kind": "markdown",
+                        "doc_status": "normative"
+                    },
+                    {
+                        "path": "specs/planning/compiler_storage_native_slice.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
+                        "path": "tests/runtime/compiler/level_01/runtime_compiler_001_storage.test-info.json",
+                        "kind": "json",
+                        "doc_status": "derived"
+                    },
+                    {
                         "path":  "specs/builtins/filesystem/fs_read_snapshot.md",
                         "kind":  "markdown",
                         "doc_status":  "normative"
