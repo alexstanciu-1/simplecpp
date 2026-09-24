@@ -3911,7 +3911,7 @@ final class StanExpressionTypeResolver
 		$sourceTypes = $this->resolveExpressionDescriptorTypes($sourceDescriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 		$elementTypes = [];
 		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-			$carrier = StanRuntimeCallResolver::carrier($sourceType);
+			$carrier = StanRuntimeCallResolver::carrier($sourceType) ?? StanRuntimeCallResolver::storageCarrier($sourceType);
 			if ($carrier !== null) {
 				$elementTypes[] = $carrier['value'];
 			}
@@ -4712,6 +4712,7 @@ final class StanExpressionTypeResolver
 		$raw = trim($type, "\\ \t\n\r\0\x0B");
 		$nullableInner = $this->unwrapNullableType($raw);
 		$resolved = $nullableInner ?? $raw;
+		if (($storage = StanRuntimeCallResolver::storageClass($resolved)) !== null) return $storage;
 		$normalized = strtolower($resolved);
 		if ($normalized === '') {
 			return null;
@@ -5073,7 +5074,7 @@ final class StanExpressionTypeResolver
 			: [];
 		$types = [];
 		foreach ($this->normalizeTypeSet($sourceTypes) as $type) {
-			$carrier = StanRuntimeCallResolver::carrier($type);
+			$carrier = StanRuntimeCallResolver::carrier($type) ?? StanRuntimeCallResolver::storageCarrier($type);
 			if ($carrier !== null) {
 				$types[] = $carrier[$role === 'key' ? 'key' : 'value'];
 			}

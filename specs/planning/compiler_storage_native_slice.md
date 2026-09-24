@@ -34,8 +34,8 @@ and ordering, assignment aliasing, noncopyable record identity, old-handle lifet
 null/constructor validation, growth, reserve, allocation failure recovery, and
 acyclic last-handle destruction. Exhaustion tests exercise the same pre-write
 extent check as append, without attempting an INT64_MAX-sized allocation.
-Numeric/key/capacity coercion rejection is a native compile-time check; source
-runtime key diagnostics remain pending.
+Numeric/key/capacity coercion rejection is a native compile-time check. Source
+method misuse is also checked by STAN; no mixed/dynamic key coercion is provided.
 
 ## PHP/native behavior comparison
 
@@ -56,9 +56,41 @@ failures, null/negative-capacity rejection, exact keys (hex encoded), duplicate
 rejection and insertion order. Native sanitizers and fault injection separately
 check lifetime/allocation behavior that PHP comparison cannot prove.
 
-## Remaining acceptance work
+## Strict source binding acceptance
 
-Source/converter declarations, construction, methods, subscripts/append,
-isset/unset, count/is_empty and keyed foreach bindings are all pending, as is an
-end-to-end native execution of the compiler's real consumers. The native fixtures
-and host-PHP comparison are not evidence of converter integration. Keep #242 open.
+Run the actual strict PHS consumer and positive/negative source tests:
+
+```sh
+python3 tests/tools/test_scpp_compiler_storage.py
+php tests/tools/test_scpp_compiler_storage_typing.php
+```
+
+Or run the checked-in consumer directly:
+
+```sh
+cd tests/tools/fixtures/compiler_storage
+php ../../../../bin/scpp.php run --build-runtime
+```
+
+Expected final output: `compiler storage source bindings: ok`.
+The project enables strict PHP and the header-only compiler module. STAN remains
+enabled; no generated C++ edits or validation bypasses are used. The fixture proves
+fields/locals/parameters/returns, static roots, nested collections, aliases, old
+handle lifetime, holes, exact keys/order and runtime capacity. Its separate factory
+also checks collection return linkage across source files. The test driver proves
+runtime missing-member/null/duplicate/negative-capacity rejection and compile-time
+wrong-key/type/arity restrictions from PHS inputs.
+
+Focused regressions:
+
+```sh
+php generators/php/bin/check_pre_tokenizer_regressions.php
+php tests/tools/test_scpp_construction_references.php
+php tests/tools/test_scpp_collection_typing.php
+php tests/tools/run_tests.php run --suite=runtime --test=runtime_compiler_00 --jobs=3
+```
+
+Remaining limits are documented in `specs/compiler_storage.md`: explicit typed
+locals are needed for collection members or returns whose declarations are only
+in another file. No project-wide inference was added. Executable-PHP portability
+annotations/conversion and real compiler-consumer integration remain separate work.

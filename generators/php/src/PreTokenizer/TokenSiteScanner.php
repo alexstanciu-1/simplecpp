@@ -31,6 +31,11 @@ final class TokenSiteScanner
 		for ($i = 0; $i < $count; $i++) {
 			$token = $tokens[$i];
 
+			if (($token['id'] ?? null) === T_NEW) {
+				$site = $this->scanCollectionConstruction($source, $i);
+				if ($site !== null) $sites[] = $site;
+			}
+
 			if ($this->isFunctionKeyword($token)) {
 				foreach ($this->scanFunctionLike($source, $i) as $site) {
 					$sites[] = $site;
@@ -55,6 +60,36 @@ final class TokenSiteScanner
 
 		usort($sites, static fn (array $a, array $b): int => $a['rewriteStart'] <=> $b['rewriteStart']);
 		return $this->dedupeNestedSites($sites);
+	}
+
+	/** Preserve an explicit collection constructor through the host PHP parser. */
+	private function scanCollectionConstruction(LexedSource $source, int $start): ?array
+	{
+		$tokens = $source->tokens;
+		$i = $start + 1;
+		while (isset($tokens[$i]) && in_array($tokens[$i]['id'], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) ++$i;
+		if (!in_array($tokens[$i]['text'] ?? '', ['Storage', 'Keyed_Storage'], true)) return null;
+		$first = $i;
+		++$i;
+		while (isset($tokens[$i]) && $tokens[$i]['id'] === T_WHITESPACE) ++$i;
+		if (($tokens[$i]['text'] ?? '') !== '<') return null;
+		$depth = 0;
+		for (; isset($tokens[$i]); ++$i) {
+			$text = $tokens[$i]['text'];
+			$depth += substr_count($text, '<') - substr_count($text, '>');
+			if ($depth <= 0) break;
+		}
+		if (!isset($tokens[$i]) || $depth !== 0) return null;
+		$offset = $tokens[$first]['offset'];
+		$end = $tokens[$i]['offset'] + strlen($tokens[$i]['text']);
+		$type = substr($source->source, $offset, $end - $offset);
+		$name = '__scpp_collection_new_' . $offset;
+		return [
+			'kind' => 'collection_construction', 'name' => $name, 'type' => $type,
+			'line' => $tokens[$first]['line'], 'startOffset' => $offset, 'endOffset' => $end,
+			'rewriteStart' => $offset, 'rewriteEnd' => $end,
+			'replacement' => $name . str_repeat("\n", substr_count($type, "\n")),
+		];
 	}
 
 	/** @return list<array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}> */

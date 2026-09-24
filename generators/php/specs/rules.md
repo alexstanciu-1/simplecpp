@@ -1425,3 +1425,22 @@ lets C++ deduce templates. Dynamic result locals need an explicit `dynamic`
 annotation for subsequent shared-table subscript lowering. Generic PHS
 `dynamic<T,K>` remains unsupported. See `specs/builtins/collections.md` for the
 normative helper contract and callback discipline.
+
+## Compiler object collection bindings
+
+Strict PHS `Storage<T>` and `Keyed_Storage<T>` are explicitly mapped runtime value
+wrappers with shared collection state, not ordinary source classes wrapped again
+in `shared_p`. T is an authored record class name. The contract and accepted source
+forms are in `specs/compiler_storage.md`.
+
+The scanner preserves generic constructor type arguments through annotations and
+the input loader restores only those constructor nodes before IR construction.
+Lowering may inspect the explicitly spelled collection family, locally declared
+fields (including static fields), parameters, returns and typed locals to select
+required reads, validated assignment, unset and method result scalar wrappers.
+This is a narrow structural rule, not permission for general type inference.
+Iteration reuses `foreach_range` with value keys and shared record handles.
+Cross-file member metadata is not inferred; use explicit typed locals there.
+
+String literals containing NUL are emitted with an explicit byte length, so exact
+string keys retain their full bytes through the native boundary.
