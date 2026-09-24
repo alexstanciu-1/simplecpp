@@ -3,8 +3,9 @@ Doc Status: normative
 
 Scope: the opt-in native compiler module `scpp/compiler.hpp`, namespace
 `scpp::compiler`, CMake interface target `scpp_compiler`. This contract replaces
-the previous owner/view design for issue #242. Source/converter bindings are
-pending; these are currently native C++ helpers, not available PHS declarations.
+the previous owner/view design for issue #242. Strict PHS binds these wrappers
+through the PHP language adapter. Enable `"compiler"` in `runtime.modules`; this
+module is header-only and has no additional native link library.
 
 ## Public types and identity
 
@@ -28,7 +29,8 @@ Both constructors accept only an optional runtime capacity (default zero).
 `reserve(capacity)` is an allocation hint and changes neither membership nor count.
 Negative capacity throws `std::invalid_argument`. Native capacity and numeric-key
 arguments accept signed integral types; booleans, floats and strings do not match
-these methods. Source integer-wrapper adaptation and diagnostics remain pending.
+these methods. The same boundaries accept signed `scpp::int_t<Rep>` values;
+keyed boundaries accept `scpp::string_t` without losing embedded NUL bytes.
 
 ## Numeric collection
 
@@ -53,8 +55,7 @@ reclaim that extent. There is no separate position directory.
 ## Keyed collection
 
 - `add(key, record)` inserts uniquely; duplicates throw `std::invalid_argument`.
-- `set(key, record)` inserts or replaces, the native entry point for eventual
-  source keyed assignment. `replace(key, record)` requires existing membership.
+- `set(key, record)` inserts or replaces, the native keyed assignment operation. `replace(key, record)` requires existing membership.
 - `read`, `remove`, `unset`, `contains`, `count` and `is_empty` behave as above.
 - `for_each(callback)` passes copies of the original string key and record handle
   in insertion order. Replacement preserves order; removal/reinsertion goes last.
@@ -91,15 +92,86 @@ references, secondary-index automation, field/snapshot helpers, serialization,
 transactions, concurrency, ownership policies or layout specialization. Dedicated
 compiler indexes remain with their process/data owners.
 
-## Source binding boundary
+## Strict PHS source binding
 
-The future source forms are the two concrete types, capacity-only construction,
-method calls, numeric `[]` append, indexed reads/writes, `isset`, `unset`, `count`,
-`is_empty` and `foreach` with original keys. Numeric assignment maps to `replace`;
-keyed assignment maps to `set`; membership queries map to `contains`.
+Use the concrete types with a record class name as their single type argument:
 
-**None of these source/converter bindings are implemented by this native slice.**
-Native access currently uses the explicit methods above, without C++ subscript
-proxies. `for_each` proves iteration semantics but is not a generated source
-`foreach` binding. There is no `runtime.modules` registry entry yet. Issue #242
-remains incomplete until these paths are implemented and tested end to end.
+```php
+class Row {
+    public int $value = 0;
+    public $children Storage<Row>;
+    public $named Keyed_Storage<Row>;
+}
+class Roots {
+    public static $rows Storage<Row> = new Storage<Row>();
+}
+function retain(Storage<Row> $rows): Storage<Row> { return $rows; }
+$capacity int = 16;
+$rows Storage<Row> = new Storage<Row>($capacity);
+$named Keyed_Storage<Row> = new Keyed_Storage<Row>();
+$row Row = new Row();
+$position int = $rows->append($row);
+$rows[] = $row;
+$named->add("name", $row);
+$named["another"] = $row;
+$rows[0]->value = 7;
+$old Row = $rows[0];
+$rows[0] = new Row(); // $old still owns the previous record.
+foreach ($rows as $position => $record) { $record->value += 1; }
+foreach ($named as $key => $record) { $record->value += 1; }
+unset($rows[1]);
+$live int = count($rows);
+$present bool = isset($named["name"]);
+```
+
+Generic fields and locals use the existing PHS postfix annotation syntax shown
+above (attached type comments are also accepted). Parameters/returns use the
+existing typed signature syntax. Fields without initializers construct independent
+empty collections, including static fields. Explicit constructors require the
+record argument: `new Storage<Row>()` or `new Keyed_Storage<Row>($capacity)`.
+No capacity or key-mode template argument exists. Bare `new Storage()` does not
+infer T from an assignment target. Do not author `Storage<shared<Row>>`.
+
+Source methods are `append` (numeric), `add` (keyed), `replace`, `remove`,
+`reserve`, `is_empty`, and `count`. Numeric append returns source `int`;
+`is_empty` returns source `bool`. Keyed assignment inserts/replaces; numeric
+assignment requires existing membership. Both support required `[]` reads,
+`isset`, `unset`, `count`, `empty`, and by-value `foreach`, with optional keys.
+`foreach` values are owning record handles: field edits work without `&`.
+By-reference membership iteration is rejected. Iteration mutation remains unsupported.
+
+The generator recognizes only explicitly authored collection types and existing
+local declaration/return metadata. It emits the wrappers by value (their shared
+state supplies aliasing), required `read`, assignment `assign`, non-throwing
+membership `unset`, and the existing `foreach_range` protocol. Key/record validation
+stays in native typed operations. It does not infer general program types or
+perform inheritance/ownership analysis. Constructor type arguments survive the
+host PHP parser through scanner annotations restored before IR construction.
+
+STAN models the concrete methods and iteration/index element/key types. Its
+normal pre-build checks remain enabled; unsupported native key representations
+are also rejected by C++ constraints. Signed source integer widths are accepted;
+unsigned integers require an explicit conversion to the signed position/capacity
+domain. `mixed`/dynamic key coercion is not provided.
+
+### Current metadata limit
+
+The generator's class-member metadata remains local to a source file. Direct
+fluent access to collection fields (including static roots) declared only in a
+different file needs an explicit typed local in the consumer:
+
+```php
+$roots Storage<Row> = ExternalRoots::$rows;
+$children Storage<Row> = $record->children;
+$children[0]->value = 3;
+```
+
+These locals alias the original membership. Cross-file declarations, signatures
+and linkage work; this slice does not add a project-wide property or return-type
+inference catalog. An explicit typed local is likewise needed for a collection
+returned by a function whose declaration is outside the current source file.
+Executable-PHP portability annotations/conversion and the real PHP compiler rewrite
+are outside this slice.
+
+Reproduction and validation commands are in
+`specs/planning/compiler_storage_native_slice.md`.

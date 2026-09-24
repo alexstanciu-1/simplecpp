@@ -1,6 +1,8 @@
 #pragma once
 
 #include "scpp/runtime.hpp"
+// Register lookup overloads before PHP forwarding templates bind qualified names.
+#include "lang/php/php_compiler.hpp"
 
 #include "lang/php/php_exceptions.hpp"
 #include "lang/php/php.hpp"

@@ -1,0 +1,6 @@
+{
+  "config_version": 1,
+  "project_name": "compiler_storage",
+  "entrypoint": "main.phs",
+  "runtime": {"languages": {"php": {"profile": "strict"}}, "modules": ["compiler"]}
+}

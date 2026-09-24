@@ -1,0 +1,95 @@
+namespace CompilerFixture;
+
+class Row {
+    public int $value = 0;
+    public $children Storage<Row>;
+    public $named Keyed_Storage<Row>;
+}
+class Roots {
+    public static $rows Storage<Row>;
+    public static $named Keyed_Storage<Row>;
+}
+
+class CheckFailed extends \Exception {}
+function check(bool $condition, int $line): void {
+    if (!$condition) { echo "check failed at ", $line, "\n"; throw new CheckFailed(); }
+}
+function alias_list(Storage<Row> $rows): Storage<Row> { return $rows; }
+function alias_map(Keyed_Storage<Row> $rows): Keyed_Storage<Row> { return $rows; }
+$capacity int = 4;
+$rows Storage<Row> = new Storage<Row>($capacity);
+$map Keyed_Storage<Row> = new Keyed_Storage<Row>($capacity);
+$first Row = new Row();
+$first->value = 10;
+$second Row = new Row();
+$second->value = 20;
+$position int = $rows->append($first);
+check($position === 0, 25);
+$rows[] = $second;
+$rows[] = $first;
+$alias Storage<Row> = alias_list($rows);
+$old Row = $rows[0];
+$alias[0]->value = 11;
+check($old->value === 11, 31);
+$rows[0] = $second;
+check($old->value === 11 && $alias[0]->value === 20, 33);
+$rows->replace(2, $second);
+$rows->remove(1);
+unset($rows[99]);
+unset($rows[-1]);
+check(!isset($rows[1]) && !isset($rows[-1]), 38);
+$next int = $rows->append($old);
+check($next === 3 && count($rows) === 3, 40);
+$rows->reserve(64);
+$seen string = "";
+foreach ($rows as $key => $row) {
+    $seen .= (string)$key;
+    $row->value += 1;
+}
+check($seen === "023" && $second->value === 22 && $old->value === 12, 47);
+foreach ($rows as $row) { $row->value += 1; }
+check($second->value === 24 && $old->value === 13, 49);
+Roots::$rows = $rows;
+Roots::$rows[0]->children[] = $old;
+Roots::$rows[0]->children[0]->value = 14;
+check($old->value === 14, 53);
+Roots::$rows[0]->named["child"] = $old;
+Roots::$rows[0]->named["child"]->value = 15;
+check($old->value === 15 && count(Roots::$rows[0]->children) === 1, 56);
+$independent Storage<Row> = fresh_list(0);
+check($independent->is_empty(), 58);
+$independent[] = $old;
+$rows->remove(3);
+check(count($alias) === 2 && count($independent) === 1 && $old->value === 15, 61);
+$empty string = "";
+$zero string = "0";
+$map->add($empty, $old);
+$map->add($zero, $second);
+$map["00"] = $old;
+$map["a\0b"] = $old;
+$map["a"] = $second;
+$named_alias Keyed_Storage<Row> = alias_map($map);
+$previous Row = $map["0"];
+$map["0"] = $old;
+check($previous->value === 24, 72);
+$map->replace("00", $second);
+$map->remove("");
+$map[""] = $old;
+unset($map["missing"]);
+check(!isset($map["missing"]) && isset($map["a\0b"]), 77);
+$map->reserve(128);
+Roots::$named = $named_alias;
+check(count(Roots::$named) === 5 && !$named_alias->is_empty(), 80);
+$keys string = "";
+foreach (Roots::$named as $key => $row) { $keys .= bin2hex($key) . ":"; }
+check($keys === "30:3030:610062:61::", 83);
+Roots::$named["0"]->value = 16;
+check($old->value === 16 && $independent[0]->value === 16, 85);
+$map->remove("0");
+check(!isset($named_alias["0"]) && $old->value === 16, 87);
+unset(Roots::$rows[0]);
+check(count($rows) === 1 && $previous->value === 24, 89);
+$a = new Storage<Row>(); $b = new Keyed_Storage<Row>();
+check($a->is_empty() && $b->is_empty(), 91);
+check(empty($a) && empty($b) && !empty($rows) && empty($rows[999]), 92);
+echo "compiler storage source bindings: ok\n";

@@ -12743,7 +12743,7 @@ function resolve_runtime_build_config(array $config): array
 	$tasks = is_array($runtime['tasks'] ?? null) ? $runtime['tasks'] : [];
 	$tasksDefaultWorkerPoolSize = normalize_runtime_tasks_default_worker_pool_size($tasks['default_worker_pool_size'] ?? null);
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'process', 'ui', 'webview'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'process', 'compiler', 'ui', 'webview'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);

@@ -37,6 +37,7 @@ Normative rule:
 Currently countable:
 - `vector_t<T>`
 - `fixed_array_t<T, N>`
+- compiler-module `Storage<T>` and `Keyed_Storage<T>` (live membership, excluding holes)
 - `hash_t<T>`
 - `mixed_t` that currently carries a live hash/table-compatible value
 
@@ -144,3 +145,12 @@ At minimum, coverage must prove:
 - `isset(result_or_false(false-sentinel))` is `false`
 - `isset(result_or_bool(false-sentinel))` is `false`
 - no autovivification occurs during `isset(...)` / `empty(...)`
+
+## Compiler object collections
+
+The compiler module registers its two collections with the countable lookup
+protocol. `isset(collection, key)` tests live membership, since null records cannot
+be inserted. Required reads throw without insertion; `unset` tolerates absence.
+`empty(collection)` tests live count, and `empty(collection, key)` is true only
+for absent membership (present records are non-null object handles). See
+`specs/compiler_storage.md` for source syntax and iteration rules.

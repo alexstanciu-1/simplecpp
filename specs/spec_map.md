@@ -266,7 +266,7 @@ Do not do the following without checking the higher-level specs first:
 ### `specs/compiler_storage.md`
 Role:
 - native compiler-specific Storage<T> and Keyed_Storage<T> object collection contract
-- records the current shared-record identity contract and the boundary to deferred source bindings
+- records shared-record identity and the strict PHS source binding contract
 
 Authority:
 - normative within the explicitly scoped native compiler helper

@@ -68,6 +68,36 @@ final class StanRuntimeCallResolver
 		return ['return_type' => $result, 'errors' => []];
 	}
 
+	/** The compiler collections are object carriers, not map/filter input families. */
+	public static function storageCarrier(string $type): ?array
+	{
+		if (preg_match('/^(Storage|Keyed_Storage)\s*<(.+)>$/', trim($type), $parts) !== 1) return null;
+		return ['value' => trim($parts[2]), 'key' => $parts[1] === 'Storage' ? 'int' : 'string'];
+	}
+
+	/** Instantiate the runtime-owned method surface for one explicit record type. */
+	public static function storageClass(string $type): ?array
+	{
+		$carrier = self::storageCarrier($type);
+		if ($carrier === null) return null;
+		$key = ['name' => 'key', 'type' => $carrier['key']];
+		$record = ['name' => 'record', 'type' => $carrier['value']];
+		$methods = [
+			'replace' => ['void', [$key, $record]], 'remove' => ['void', [$key]],
+			'reserve' => ['void', [['name' => 'capacity', 'type' => 'int']]],
+			'is_empty' => ['bool', []], 'count' => ['int', []],
+		];
+		if ($carrier['key'] === 'int') $methods['append'] = ['int', [$record]];
+		else $methods['add'] = ['void', [$key, $record]];
+		$signatures = []; $returns = [];
+		foreach ($methods as $name => [$return, $params]) {
+			$signatures[$name] = ['name' => $name, 'params' => $params, 'return_type' => $return, 'is_static' => false, 'visibility' => 'public'];
+			$returns[$name] = $return;
+		}
+		return ['fqcn' => $type, 'name' => $type, 'method_signatures' => $signatures,
+			'method_return_types' => $returns, 'property_types' => [], 'ancestor_types' => []];
+	}
+
 	/** @return array<string,mixed>|null */
 	public static function carrier(string $type): ?array
 	{

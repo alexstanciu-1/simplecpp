@@ -270,6 +270,16 @@ final class Generator
 		return $this->code($text, $this->currentSourceLine, $this->currentSourceColumn);
 	}
 
+	private function renderStringLiteral(string $value): string
+	{
+		if (str_contains($value, "\0")) {
+			// Preserve exact binary keys: a C-string constructor would truncate at NUL.
+			$literal = str_replace("\0", '\\000', $this->cppStringLiteral($value));
+			return 'string_t(std::string(' . $literal . ', ' . strlen($value) . '))';
+		}
+		return 'string_t(' . json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')';
+	}
+
 	private function cppStringLiteral(string $value): string
 	{
 		$escaped = str_replace(
@@ -1921,7 +1931,7 @@ final class Generator
 			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out, $namespacePhp);
 			return;
 		}
-		if (preg_match('/^(?:vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(?:Storage|Keyed_Storage|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			foreach ($this->typeMapper->splitTopLevelGenericArgs($matches[1]) as $arg) {
 				$this->collectForwardClassNamesFromType(trim($arg), $out, $namespacePhp);
 			}
@@ -4374,7 +4384,7 @@ final class Generator
 						? $this->renderDimWriteAccess($baseExpr, $namespacePhp)
 						: $this->renderExpr($baseExpr, $namespacePhp);
 					$value = $this->renderExpr($exprNode, $namespacePhp);
-					$baseType = $this->inferExprType($baseExpr);
+					$baseType = $this->inferExprTypeWithNamespace($baseExpr, $namespacePhp);
 					$appendBase = $base;
 					if ($this->isUntypedTableHandleType($baseType)) {
 						$appendBase = '(' . $base . ')';
@@ -4393,6 +4403,9 @@ final class Generator
 							'(void) ' . $appendBase . $appendMethod . '(' . $storedTemp . ');',
 						'}',
 					]);
+				}
+				if ($this->storageTypeParts($this->inferExprTypeWithNamespace($varNode->children['expr'] ?? null, $namespacePhp)) !== null) {
+					return $this->statementCodeLines($statement, [$this->renderAssignmentExpr($varNode, $exprNode, $namespacePhp) . ';']);
 				}
 				$target = $this->renderDimWriteAccess($varNode, $namespacePhp);
 				$value = $this->renderExpr($exprNode, $namespacePhp);
@@ -4442,7 +4455,8 @@ final class Generator
 				$baseExpr = $targetNode->children['expr'] ?? null;
 				$base = $this->renderExpr($baseExpr, $namespacePhp);
 				$dim = $this->renderExpr($targetNode->children['dim'] ?? null, $namespacePhp);
-				$baseType = $this->inferExprType($baseExpr);
+				$baseType = $this->inferExprTypeWithNamespace($baseExpr, $namespacePhp);
+				if ($this->storageTypeParts($baseType) !== null) return $this->statementCodeLines($statement, [$base . '.unset(' . $dim . ');']);
 				if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 					return $this->statementCodeLines($statement, ['unset_keyed(' . $base . ', ' . $dim . ');']);
 				}
@@ -4971,11 +4985,13 @@ final class Generator
 
 		$entryName = '__scpp_foreach_entry_' . $statement->line;
 		$sourceType = $this->inferExprTypeWithNamespace($payload['expr'] ?? null, $namespacePhp);
+		$storage = $this->storageTypeParts($sourceType);
+		if ($storage !== null && $byRef) $this->fail('Storage foreach uses owning record handles; by-reference membership iteration is unsupported.');
 		$isVectorLikeForeach = $this->isForeachVectorLikeType($sourceType);
 		$hashTypeParts = $this->parseHashTypeParts($sourceType);
 		$isExplicitDynamicForeach = $sourceType === 'mixed_t';
 		$sourceTempName = $this->allocateGeneratedLocalName('__scpp_foreach_source_' . $statement->line);
-		$valueStoredType = null;
+		$valueStoredType = $storage['record'] ?? null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
 		} elseif (($fixedArrayParts = $this->parseMappedFixedArrayType($sourceType)) !== null) {
@@ -5001,9 +5017,9 @@ final class Generator
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
 			$lines[] = $this->code($this->indent(1) . 'auto&& ' . $keyCppName . ' = ' . $entryName . '.key();', $statement->line);
-			$keyStoredType = $isVectorLikeForeach
+			$keyStoredType = $storage['key'] ?? ($isVectorLikeForeach
 				? 'int_t<>'
-				: ($hashTypeParts !== null ? $hashTypeParts['key'] : ($isExplicitDynamicForeach ? 'mixed_t' : null));
+				: ($hashTypeParts !== null ? $hashTypeParts['key'] : ($isExplicitDynamicForeach ? 'mixed_t' : null)));
 			if ($keyStoredType !== null) {
 				$this->declaredLocalTypes[$keyName] = $keyStoredType;
 			}
@@ -5356,19 +5372,12 @@ final class Generator
 		return $name !== '' ? $name : null;
 	}
 
-	/**
-
-	 * Renders the left-hand side of an assignment for the currently supported assignment targets.
-
-	 *
-
-	 * Relationship to specs:
-
-	 * - preserves the subset and lowering rules documented for the prototype
-
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
-	 */
+	/** @return array{record:string,key:string}|null */
+	private function storageTypeParts(string $type): ?array
+	{
+		if (preg_match('/^::scpp::compiler::(Storage|Keyed_Storage)<(.+)>$/', trim($type), $parts) !== 1) return null;
+		return ['record' => 'shared_p<' . $parts[2] . '>', 'key' => $parts[1] === 'Storage' ? 'int_t<>' : 'string_t'];
+	}
 
 	private function renderDimAccess(mixed $expr, ?string $namespacePhp): string
 	{
@@ -5380,7 +5389,8 @@ final class Generator
 			return '/* unsupported-append-read */';
 		}
 		$dim = $this->renderExpr($dimNode, $namespacePhp);
-		$baseType = $this->inferExprType($baseExpr);
+		$baseType = $this->inferExprTypeWithNamespace($baseExpr, $namespacePhp);
+		if ($this->storageTypeParts($baseType) !== null) return $base . '.read(' . $dim . ')';
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
@@ -5518,8 +5528,11 @@ final class Generator
 				? $this->renderDimWriteAccess($baseExpr, $namespacePhp)
 				: $this->renderExpr($baseExpr, $namespacePhp);
 			$value = $this->renderExpr($valueNode, $namespacePhp);
-			$baseType = $this->inferExprType($baseExpr);
+			$baseType = $this->inferExprTypeWithNamespace($baseExpr, $namespacePhp);
 			$dimNode = $varNode->children['dim'] ?? null;
+			if ($dimNode !== null && $this->storageTypeParts($baseType) !== null) {
+				return $base . '.assign(' . $this->renderExpr($dimNode, $namespacePhp) . ', ' . $value . ')';
+			}
 			if ($dimNode === null) {
 				$appendBase = $base;
 				if ($this->isUntypedTableHandleType($baseType)) {
@@ -7292,7 +7305,7 @@ final class Generator
 			return '?' . ($this->qualifyDeclaredPhpType($inner, $namespacePhp) ?? $inner);
 		}
 
-		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|Storage|Keyed_Storage|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			$wrapper = $matches[1];
 			$args = $this->typeMapper->splitTopLevelGenericArgs($matches[2]);
 			$qualifiedArgs = [];
@@ -7375,7 +7388,7 @@ final class Generator
 			return 'static_cast<float_t>(' . $expr . ')';
 		}
 		if (is_string($expr)) {
-			return 'string_t(' . json_encode($expr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')';
+			return $this->renderStringLiteral($expr);
 		}
 		if (!is_object($expr)) {
 			$this->errors[] = 'Unsupported expression value in generator input. Category: generator lowering gap. Requirement: pass a scalar literal or AST node supported by the current lowering surface.';
@@ -7527,6 +7540,11 @@ final class Generator
 			return $class . '::' . $const;
 		}
 		if ($kind === AstKind::NEW) {
+			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
+			if ($this->typeMapper->isStorageType($authoredType)) {
+				$type = $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $namespacePhp));
+				return $type . '(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
+			}
 			if ($this->isStdClassNewExpr($expr)) {
 				return 'mixed_t{dynamic_()}';
 			}
@@ -7654,7 +7672,15 @@ final class Generator
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$method = (string) ($expr->children['method'] ?? 'call');
 			$args = $expr->children['args']->children ?? [];
-			$baseType = $this->inferExprType($baseExpr);
+			$baseType = $this->inferExprTypeWithNamespace($baseExpr, $namespacePhp);
+			if ($this->storageTypeParts($baseType) !== null) {
+				$call = $base . '.' . $this->cppIdentifier($method) . '(' . $this->renderArgs($args, $namespacePhp) . ')';
+				return match ($method) {
+					'is_empty' => 'bool_t(' . $call . ')',
+					'append', 'count' => 'int_t<>(' . $call . ')',
+					default => $call,
+				};
+			}
 			if (str_starts_with($baseType, 'result<') && $method === 'error' && count($args) === 0) {
 				return $base . '.error()';
 			}
@@ -7846,7 +7872,7 @@ final class Generator
 	private function renderStringOperand(mixed $expr, ?string $namespacePhp): string
 	{
 		if (is_string($expr)) {
-			return 'string_t(' . json_encode($expr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')';
+			return $this->renderStringLiteral($expr);
 		}
 
 		if (is_int($expr) || is_float($expr)) {
@@ -9000,6 +9026,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
+			if ($this->storageTypeParts($declared) !== null) return $declared;
 			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || $declared === 'dynamic_t<>' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'fixed_array_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
 			}
@@ -9033,6 +9060,8 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::NEW) {
+			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
+			if ($this->typeMapper->isStorageType($authoredType)) return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $this->currentNamespacePhp));
 			if ($this->isStdClassNewExpr($expr)) {
 				return 'dynamic_t<>';
 			}
@@ -9056,7 +9085,8 @@ final class Generator
 			return 'mixed_t';
 		}
 		if ($kind === AstKind::DIM) {
-			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
+			$baseType = $this->inferExprTypeWithNamespace($expr->children['expr'] ?? null, $this->currentNamespacePhp);
+			if (($storage = $this->storageTypeParts($baseType)) !== null) return $storage['record'];
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
 			}
@@ -9073,6 +9103,11 @@ final class Generator
 				return 'mixed_t';
 			}
 			return 'auto';
+		}
+		if ($kind === AstKind::STATIC_PROP) {
+			$class = $this->renderClassName($expr->children['class'] ?? null, $this->currentNamespacePhp);
+			$property = $this->lookupPropertyDeclByMappedBaseType($class, (string) ($expr->children['prop'] ?? ''));
+			if ($property instanceof PropertyDecl && $property->type !== null) return $this->typeMapper->mapDeclaredType($property->type);
 		}
 		if ($kind === AstKind::PROP) {
 			$baseExpr = $expr->children['expr'] ?? null;
