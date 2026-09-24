@@ -1,0 +1,12 @@
+{
+  "candidate_revision": "d8ddde93b04d0e23d295e30f662c3a81b0d50fd1",
+  "candidate_overlays": "Toolchain changes through 0c28b96e; verified target unchanged",
+  "typed_pass": true,
+  "direct_pass": false,
+  "stan_enabled": true,
+  "expected": "0:9:same\nremoved:9\n",
+  "source_hashes": {
+    "main.php": "4e832d827e4f10c00bd10ebf127239b1567dbe6dbec8a4ff32a9371fe85a214d",
+    "records.php": "774972575097ba6f40fb262930e95eb81c50e7f96c7e078a767364459ef74655"
+  }
+}

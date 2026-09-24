@@ -1,0 +1,45 @@
+Transpiled PHP files: 2, skipped unchanged: 0
+Generated Ninja file: .prism/build/build.ninja
+Using compiler: clang++-18 -fuse-ld=mold (gnu_like)
+Using build mode: debug
+Using build grouping policy: incremental (report_only)
+Object cache: disabled (default disabled)
+Using repo root: /tmp/scpp-native-244
+Resolved project dependency graph: 1 project(s)
+Runtime compilation: reuse existing artifact only
+Dependency compilation: reuse existing artifacts only
+ninja: Entering directory `.prism/build'
+[1/4] PCH app_pch.hpp.gch
+[2/4] CXX main.o
+FAILED: main.o 
+clang++-18 -std=c++23 -fPIC -O0 -g -pipe -I../../../../scpp-native-244/runtime/include -I../generated -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=0 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096 -Winvalid-pch -include app_pch.hpp -include ../generated/__project_units/f4d3f9413e1f7ba3.hpp -MMD -MF main.o.d -MT main.o -c ../generated/main.cpp -o main.o
+../generated/main.cpp:17:28: error: member reference type '::scpp::compiler::Storage<Nested_Row>' is not a pointer; did you mean to use '.'?
+   17 |         auto position = root->rows->append(row);
+      |                         ~~~~~~~~~~^~
+      |                                   .
+../generated/main.cpp:18:13: error: type '::scpp::compiler::Keyed_Storage<Nested_Row>' does not provide a subscript operator
+   18 |         root->names[string_t("01")] = root->rows[position];
+      |         ~~~~~~~~~~~^~~~~~~~~~~~~~~
+../generated/main.cpp:18:42: error: type '::scpp::compiler::Storage<Nested_Row>' does not provide a subscript operator
+   18 |         root->names[string_t("01")] = root->rows[position];
+      |                                       ~~~~~~~~~~^~~~~~~~~
+../generated/main.cpp:19:13: error: type '::scpp::compiler::Keyed_Storage<Nested_Row>' does not provide a subscript operator
+   19 |         root->names[string_t("01")]->value = static_cast<int_t<> >(9);
+      |         ~~~~~~~~~~~^~~~~~~~~~~~~~~
+4 errors generated.
+[3/4] CXX records.o
+ninja: build stopped: subcommand failed.
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in main.phs:6: member reference type '::scpp::compiler::Storage<Nested_Row>' is not a pointer; did you mean to use '.'?
+Generated location: .prism/generated/main.cpp:17:28
+Compile error in main.phs:7: type '::scpp::compiler::Keyed_Storage<Nested_Row>' does not provide a subscript operator
+Generated location: .prism/generated/main.cpp:18:13
+Compile error in main.phs:7: type '::scpp::compiler::Storage<Nested_Row>' does not provide a subscript operator
+Generated location: .prism/generated/main.cpp:18:42
+Additional remapped diagnostics: 1
+Raw compiler excerpt:
+main.cpp:17:28: error: member reference type '::scpp::compiler::Storage<Nested_Row>' is not a pointer; did you mean to use '.'?
+main.cpp:18:13: error: type '::scpp::compiler::Keyed_Storage<Nested_Row>' does not provide a subscript operator
+main.cpp:18:42: error: type '::scpp::compiler::Storage<Nested_Row>' does not provide a subscript operator
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

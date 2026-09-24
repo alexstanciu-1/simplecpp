@@ -10,6 +10,23 @@ Author executable `.php`; PHP++ is generated. Adapt unsuitable PHP deliberately.
 The converter is structural: it does not resolve symbols or infer whole-program
 types. Direct same-namespace trait indexing is the agreed narrow exception.
 
+Design authored PHP for its Simple C++ shape from the outset: record handles versus
+value containers, explicit nullable boundaries, block-local variables, and complete
+worker initialization. PHP execution checks behavior; successful PHP or conversion
+alone does not establish native support. The v0.1 S2S generator is deliberately
+type-blind and STAN provides limited assistance; do not rely on either to infer
+remote property chains or implicit multi-step conversions.
+
+For nested/cross-file Storage operations, bind the receiver to an explicitly typed
+local before append, subscripting, mutation or other collection operations:
+`$children /** Storage<ast_node> */ = $body->children;` then
+`$children->append($node);`. Use the analogous Keyed_Storage<T> form. Place the local
+at its actual lifetime boundary and reuse it while the collection identity remains
+stable. These native wrappers alias membership; do not generalize that fact to
+vector/hash value containers, where a local copy may change mutation semantics.
+See the [two-file native proof](../../../specs/planning/compiler_migration/results/nested-storage-locals-01/README.md).
+Try explicit supported source boundaries before extending generator/STAN inference.
+
 Read the [authoring guide](../../../specs/portability/authoring_guide.md) before
 editing. Follow its feature links as needed. The [function policy](../../../tools/php_portability/function_map.php)
 owns bindings and arities; the [constraint summary](../../../specs/portability/debt.md#current-constraint-consolidation)
