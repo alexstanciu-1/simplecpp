@@ -757,6 +757,8 @@ final class TokenSiteScanner
 
 	private function isAllowedTypeToken(string $text, int $depthAngles, int $depthParens): bool
 	{
+		// Expression operators must never be consumed as postfix type spellings.
+		if (strtolower($text) === 'instanceof') { return false; }
 		if ($text === '') {
 			return false;
 		}

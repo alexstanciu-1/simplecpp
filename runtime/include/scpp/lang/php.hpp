@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scpp/runtime.hpp"
+#include "scpp/object_cast.hpp"
 
 #include "lang/php/php_exceptions.hpp"
 #include "lang/php/php.hpp"

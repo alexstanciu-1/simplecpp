@@ -56,6 +56,7 @@ class AstKindPhp85
 	public const ENUM_CASE = 1026;
 	public const PROP_ELEM = 1027;
 	public const NEW = 527;
+	public const INSTANCEOF = 528;
 	public const STATIC_CALL = 770;
 	public const CALL = 516;
 	public const CLASS_CONST = 517;

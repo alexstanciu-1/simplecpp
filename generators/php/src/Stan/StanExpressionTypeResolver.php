@@ -2379,6 +2379,15 @@ final class StanExpressionTypeResolver
 				}
 			}
 		}
+		// The target is a literal class token, validated by the portability lowering.
+		$catalog['scpp_portability_object_cast'] = [
+			'name' => 'scpp_portability_object_cast',
+			'namespace' => null,
+			'params' => [['name' => 'value', 'type' => 'mixed'], ['name' => 'target', 'type' => 'mixed']],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
 		$catalog['async_sleep_ms'] = [
 			'name' => 'async_sleep_ms',
 			'namespace' => null,

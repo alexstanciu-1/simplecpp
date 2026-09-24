@@ -1896,42 +1896,92 @@ final class FrontEndSymbolExtractor
 		return $flat;
 	}
 
-	/** @param list<\Scpp\S2S\IR\Statement> $statements */
+	/** A required result is satisfied by a return or by exceptional termination.
+	 * @param list<\Scpp\S2S\IR\Statement> $statements
+	 */
 	private function statementsReturnOnAllPaths(array $statements): bool
 	{
-		foreach ($statements as $statement) {
-			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
-				continue;
-			}
-			if ($statement->kind === 'return') {
-				return true;
-			}
-			if ($statement->kind === 'if' && is_array($statement->payload) && $this->ifStatementReturnsOnAllPaths($statement->payload)) {
-				return true;
-			}
-		}
-		return false;
+		$exits = $this->statementSequenceExits($statements);
+		return !isset($exits['next']) && !isset($exits['break']) && !isset($exits['continue']) && !isset($exits['jump']);
 	}
 
-	/** @param list<array<string,mixed>> $branches */
-	private function ifStatementReturnsOnAllPaths(array $branches): bool
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return array<string,true> */
+	private function statementSequenceExits(array $statements): array
 	{
-		if ($branches === []) {
-			return false;
+		$exits = ['next' => true];
+		foreach ($statements as $statement) {
+			if (!isset($exits['next'])) { break; }
+			unset($exits['next']);
+			$exits += $this->statementExits($statement);
 		}
-		$hasElse = false;
-		foreach ($branches as $branch) {
-			if (!is_array($branch) || !array_key_exists('cond', $branch) || !is_array($branch['stmts'] ?? null)) {
-				return false;
-			}
-			if ($branch['cond'] === null) {
-				$hasElse = true;
-			}
-			if (!$this->statementsReturnOnAllPaths($branch['stmts'])) {
-				return false;
-			}
+		return $exits;
+	}
+
+	/** Structural control flow only: no expression evaluation or callee inference.
+	 * @return array<string,true>
+	 */
+	private function statementExits(\Scpp\S2S\IR\Statement $statement): array
+	{
+		$kind = $statement->kind;
+		if (in_array($kind, ['break', 'continue'], true) && $statement->payload !== null && $statement->payload !== 1) {
+			return ['jump' => true]; // Multi-level transfer is not proved by this local analysis.
 		}
-		return $hasElse;
+		if (in_array($kind, ['return', 'throw', 'break', 'continue'], true)) {
+			return [$kind => true];
+		}
+		$payload = $statement->payload;
+		if (!is_array($payload)) { return ['next' => true]; }
+		if ($kind === 'if') {
+			$exits = [];
+			$hasElse = false;
+			foreach ($payload as $branch) {
+				$hasElse = $hasElse || ($branch['cond'] === null);
+				$exits += $this->statementSequenceExits($branch['stmts']);
+			}
+			if (!$hasElse) { $exits['next'] = true; }
+			return $exits;
+		}
+		if ($kind === 'switch') {
+			$cases = $payload['cases'] ?? [];
+			$hasDefault = false;
+			$exits = [];
+			$following = ['next' => true];
+			// Each case is an entry point; normal completion falls into the next case.
+			foreach (array_reverse($cases) as $case) {
+				$hasDefault = $hasDefault || ($case['cond'] === null);
+				$current = $this->statementSequenceExits($case['stmts']);
+				if (isset($current['next'])) {
+					unset($current['next']);
+					$current += $following;
+				}
+				$following = $current;
+				$exits += $current;
+			}
+			if (!$hasDefault || isset($exits['break']) || isset($exits['continue'])) {
+				$exits['next'] = true;
+			}
+			unset($exits['break'], $exits['continue']);
+			return $exits;
+		}
+		if (in_array($kind, ['while', 'do_while', 'for', 'foreach'], true)) {
+			$exits = $this->statementSequenceExits($payload['stmts'] ?? []);
+			// Deliberately do not prove loop execution or nontermination here.
+			unset($exits['break'], $exits['continue']);
+			$exits['next'] = true;
+			return $exits;
+		}
+		if ($kind === 'try') {
+			// Conservatively retain fallthrough; do not infer catch/finally completion.
+			$exits = ['next' => true];
+			foreach (['try', 'finally'] as $part) {
+				$exits += $this->statementSequenceExits($payload[$part] ?? []);
+			}
+			foreach ($payload['catches'] ?? [] as $catch) {
+				$exits += $this->statementSequenceExits($catch['stmts'] ?? []);
+			}
+			return $exits;
+		}
+		return ['next' => true];
 	}
 
 	/** @param list<array<string,mixed>> $calls */

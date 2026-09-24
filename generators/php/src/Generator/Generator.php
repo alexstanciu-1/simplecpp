@@ -2507,6 +2507,9 @@ final class Generator
 		}
 		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
 		$this->appendHeaderLines($header, $this->code('public:', $class->line));
+		if ($class->isInterface && array_filter($class->methods, static fn(MethodDecl $method): bool => $method->name === '__destruct') === []) {
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'virtual ~' . $class->name . '() = default;', $class->line));
+		}
 		$lateStaticDispatchMethods = $this->collectLateStaticDispatchMethods($class, $namespacePhp);
 		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }', $class->line));
 		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static bool_t __scpp_static_accepts(const void* __scpp_token);', $class->line));
@@ -2876,7 +2879,8 @@ final class Generator
 				return $className . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
 			}
 			if ($method->name === '__destruct' && $className !== null) {
-				return '~' . $className . '()';
+				return ($classDecl instanceof ClassDecl && $classDecl->isInterface)
+					? 'virtual ~' . $className . '() = default' : '~' . $className . '()';
 			}
 			$prefix = $method->isStatic ? 'static ' : '';
 			if (
@@ -7379,6 +7383,14 @@ final class Generator
 		}
 
 		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::INSTANCEOF) {
+			$class = $expr->children['class'] ?? null;
+			if (!is_object($class) || ($class->kind ?? null) !== AstKind::NAME) {
+				throw new GenerationException('instanceof requires a literal class or interface name.');
+			}
+			return '::scpp::object_is<' . $this->renderClassName($class, $namespacePhp) . '>('
+				. $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp) . ')';
+		}
 		if ($kind === AstKind::CLOSURE) {
 			return $this->renderClosureExpr($expr, $namespacePhp);
 		}
@@ -7607,6 +7619,10 @@ final class Generator
 			$args = $expr->children['args']->children ?? [];
 			if ($this->isAsyncWaitCallName($nameExpr)) {
 				return $this->renderAsyncWaitCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isObjectCastCallName($nameExpr)) {
+				return '::scpp::checked_object_cast<' . $this->objectCastTarget($args, $namespacePhp) . '>('
+					. $this->renderExpr($args[0], $namespacePhp) . ')';
 			}
 			if ($this->isTakeCallName($nameExpr)) {
 				return $this->renderTakeCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
@@ -8001,6 +8017,24 @@ final class Generator
 		}
 		$this->errors[] = 'Layout field probes expect a bare field name at line ' . $line . '.';
 		return null;
+	}
+
+	/** Framework cast binding uses only its explicit class marker, with no type inference. */
+	private function isObjectCastCallName(mixed $expr): bool {
+		return is_object($expr) && ($expr->kind ?? null) === AstKind::NAME
+			&& strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'scpp_portability_object_cast';
+	}
+
+	private function objectCastTarget(array $args, ?string $namespacePhp): string {
+		if (count($args) !== 2 || !is_object($args[1]) || ($args[1]->kind ?? null) !== AstKind::CLASS_NAME) {
+			throw new GenerationException('object_cast requires value and literal Class::class target.');
+		}
+		$class = $args[1]->children['class'] ?? null;
+		if (!is_object($class) || ($class->kind ?? null) !== AstKind::NAME
+			|| in_array(strtolower((string) ($class->children['name'] ?? '')), ['self', 'parent', 'static'], true)) {
+			throw new GenerationException('object_cast requires a literal class or interface target.');
+		}
+		return $this->renderClassName($class, $namespacePhp);
 	}
 
 	private function isAsyncWaitCallName(mixed $expr): bool
@@ -8899,8 +8933,12 @@ final class Generator
 		}
 
 		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::INSTANCEOF) { return 'bool_t'; }
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
+			if ($this->isObjectCastCallName($nameExpr)) {
+				return 'shared_p<' . $this->objectCastTarget($expr->children['args']->children ?? [], $namespacePhp) . '>';
+			}
 			if ($this->isTakeCallName($nameExpr)) {
 				return 'bool_t';
 			}
@@ -8965,6 +9003,7 @@ final class Generator
 		}
 
 		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::INSTANCEOF) { return 'bool_t'; }
 		if ($kind === AstKind::CONST) {
 			$nameNode = $expr->children['name'] ?? null;
 			$name = strtolower(ltrim(is_object($nameNode) ? (string) ($nameNode->children['name'] ?? '') : (string) $nameNode, '\\'));

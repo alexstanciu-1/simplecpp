@@ -58,6 +58,8 @@ final class StanDependencyResolver
 	private function builtinFunctionNames(): array
 	{
 		return [
+			// Reserved portability binding; literal target validation belongs to lowering.
+			'scpp_portability_object_cast',
 			'async_sleep_ms',
 			'async_wait',
 			'enum_value',
