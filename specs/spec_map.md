@@ -266,7 +266,7 @@ Do not do the following without checking the higher-level specs first:
 ### `specs/compiler_storage.md`
 Role:
 - native compiler-specific numeric/string Storage and position-based Storage_View contract
-- records the agreed inline-value lifetime revision and the boundary to deferred source bindings
+- records the current shared-record identity contract and the boundary to deferred source bindings
 
 Authority:
 - normative within the explicitly scoped native compiler helper

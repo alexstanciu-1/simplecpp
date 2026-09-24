@@ -79,7 +79,7 @@ public:
 		return position >= 0 && static_cast<std::uint64_t>(position) < rows_.size()
 			&& rows_[static_cast<std::size_t>(position)] != absent;
 	}
-	T snapshot(storage_position position) const { return values_[row(position)]; }
+	T copy_at(storage_position position) const { return values_[row(position)]; }
 
 	// Requires successful preparation; supported T makes the commit non-throwing.
 	storage_position append(T value) {
@@ -102,12 +102,7 @@ public:
 		positions_.pop_back();
 		rows_[static_cast<std::size_t>(position)] = absent;
 	}
-	template<class R, class M>
-	M field(storage_position position, M R::*member) const { return values_[row(position)].*member; }
-	template<class R, class M>
-	void set_field(storage_position position, M R::*member, M value) {
-		values_[row(position)].*member = std::move(value);
-	}
+
 };
 
 // Shared mutation protocol for owners and views. Validation/preparation happens

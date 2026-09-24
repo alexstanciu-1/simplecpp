@@ -57,7 +57,7 @@ public:
 		}
 	}
 	std::string candidate(storage_position, const std::optional<std::string> &key) const { return *key; }
-	std::string key_at(storage_position position) const { return keys_.snapshot(position); }
+	std::string key_at(storage_position position) const { return keys_.copy_at(position); }
 	void append(storage_position position, const std::string &key) {
 		// Node/key allocation is inside the guarded write phase. A failure leaves
 		// the owner failed, even if this particular insertion changed no entries.

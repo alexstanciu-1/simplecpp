@@ -6,69 +6,90 @@ Scope: the opt-in native compiler helper in `scpp/compiler.hpp`, under namespace
 conversion binding or `runtime.modules` registry entry yet.
 Native CMake consumers link the header-only `scpp_compiler` interface target.
 
-## Agreed ownership revision
+## Shared record identity (2026-09-24 direction update)
 
-Issue #242 separates owning Storage from position-based Storage_View. The user
-subsequently approved a compiler-specific initial implementation with explicit
-element types, actual values rather than nullable record slots, and relationships
-expressed as owner-local positions. This supersedes the issue's blanket guarantee
-that every retrieved record independently survives removal/replacement for this
-native slice. The PHP helper still has PHP object identity semantics.
+The latest direction in issue #242 supersedes the initial inline-value contract
+in ce1885b9. Public T is the record type: `Storage<node>` automatically uses the
+existing `scpp::shared_p<node>` as its record handle. `Storage<shared_p<node>>` is
+rejected rather than double wrapped. There is no ownership-policy parameter.
+Inline record layouts, bounded borrows and weak row references are deferred.
 
-`Storage<T, UseStringKey=false>` stores exactly T. It adds no per-record shared pointer. The
-initial native implementation requires copy-constructible T with non-throwing
-move construction, move assignment and destruction. This is a bounded first
-implementation, not a promise to support every compiler record type already.
-Snapshots preserve T's own copy semantics; value records are copied, explicit
-shared handles share their pointee. No snapshot is a write-back alias.
+Append, assign and replacement accept an existing non-null shared record handle.
+They preserve its identity, never copy/move T and never allocate another record.
+T need not be copyable or movable. Empty/null handles reject before hooks or
+membership writes; validation failure does not consume a position or fail the owner.
 
-Native owner/view objects cannot be copied or moved. Their identity is aliased
-through shared owner handles (`std::shared_ptr` in this standalone native slice).
-Views retain one strong owner handle, and contain numeric owner positions, not
-record copies or per-membership pointers. Source handle binding is deferred.
-Embedding such a view in a record of its own owner can create an ownership cycle.
-This slice does not reclaim cycles or claim bounded memory for the complete AST;
-actual nested-view ownership needs review during model integration.
+`read(position)` and string-mode `read(key)` return a shared handle, as do view
+reads and iteration. A handle copy aliases the same record; it is not an independent
+snapshot. The former public `snapshot` API is removed. No generic record clone or
+deep-copy API is promised. `owner.read(p)->field = value` and
+`view.read(v)->field = value` edit the same record, including through read-only views.
+The `field`/`set_field` conveniences remain: field copies the selected field value,
+while set_field edits the shared record through the guarded owner API.
 
-No native pointer/reference to an interior row is exported. `snapshot(position)`
-returns a value copy; `field(position, &record::field)` returns a field copy.
-`set_field(position, &record::field, value)` edits an unindexed field in place.
-Indexed fields must use replacement with a new record, preserving old index keys
-for hooks. These native member helpers apply to inline records; explicit handle
-elements are accessed by copying their handle with snapshot. Fluent source field
-access is not implemented by these helpers.
+Growth, reserve and physical handle-slot relocation do not move records or invalidate
+retrieved handles. Replacement selects a new record for future reads of that
+position, including view reads; old handles continue referring to the old record.
+Removal drops the owner's handle and membership; previously retrieved handles keep
+the record alive until the last owning handle is released. Dangling view membership
+still throws when read and never retargets after a primary key is reinserted.
+A failed owner cannot revoke previously retrieved record handles.
+
+Native owner/view objects themselves cannot be copied or moved. Their identity is
+aliased through shared owner handles (`std::shared_ptr` for backing owners in this
+native slice). Views retain one strong owner handle and contain owner positions,
+not per-membership record handles. Record ownership and backing-owner ownership are
+separate; source owner-handle binding is still deferred.
+
+Shared records do not solve ownership cycles. A stored record containing a view of
+its own owner can form a cycle. The initial compiler port relies on deliberate
+lifecycle cleanup/code discipline; this helper makes no bounded-memory claim for
+the complete compiler graph and adds no automatic cycle collection or weak lowering.
+
+No native reference/pointer to a container's handle slot is exported. Access to the
+record through its shared handle follows the existing runtime lifetime rules.
+Indexed fields require replacement with a new record so hooks receive the old index
+keys. Direct edits through retained handles bypass collection guards and hooks;
+callers must obey the before-hook purity and indexed-field rules. Shared ownership
+provides lifetime, not transaction isolation or rollback of record edits.
 
 ## Owner positions and mutation protocol
 
 Positions are signed 64-bit, monotonic, start at zero and are never reused.
 INT64_MAX is the exhausted next-position state. Checked native allocation limits
-may reject sooner. Removal destroys the stored value and leaves an absent public
+may reject sooner. Removal releases the stored handle and leaves an absent public
 position. Replacing requires an existing position. Reads never insert. Negative
 positions are absent, not coerced to unsigned indexes. Missing reads/removes throw;
 unset of an absent position is a no-op. `find_position` returns optional absence
 as a lookup result only; optional/null slots are not used in the record buffer.
 
-Records are physically dense. A directory maps historical public positions to
+Record handles are physically dense; the pointed-to records need not be contiguous.
+A directory maps historical public positions to
 current physical rows, and a reverse directory permits moving the last physical
 row into a removed row's space. This is physical relocation, not public-position
 compaction. Iteration follows the historical directory and skips absent positions.
-Record destruction releases any owned payload; historical position metadata stays.
+Record destruction occurs when its last shared handle is released; historical
+position metadata stays.
 
 `reserve(total_slots)` does not shrink or change membership. Append has geometric
-growth; prepared numeric commits use only non-throwing moves. Capacity allocation and
-record-copy preparation occur before writes, and may leave larger capacities on
+growth; prepared numeric commits use non-throwing handle copies/moves. Capacity allocation and
+handle/key preparation occur before writes, and may leave larger capacities on
 failure but no logical changes. Six before/after hooks receive position, primary
-key, and candidate/old snapshots. Hook arguments refer to call-local snapshots,
-not interior storage. Before hooks may read but must not mutate records, indexes
+key, and candidate/old shared handles. Hook arguments refer to call-local handle
+copies that preserve record identity, not references to interior handle slots.
+Before hooks may read but must not mutate records, indexes
 or external state. A before rejection leaves the owner usable without consuming
 a position. Escaping after-hook errors permanently fail the owner, preserve the
 original exception and release the guard. Derived index queries must call
 `assert_usable()`.
 
-Every mutation, including field writes, reserve and absent unset, rejects
+Every collection mutation, including guarded set_field calls, reserve and absent
+unset, rejects
 same-owner reentrancy. All subsequent owner operations reject failed state.
-`for_each` provides position and value snapshots, and rejects structural or field
-mutation of that same collection during traversal. Reads during hooks are allowed.
+`for_each` provides the primary key and a shared record handle, and rejects
+structural mutation or guarded set_field calls on that same collection during
+traversal. Direct unindexed record edits through shared handles remain possible.
+Reads during hooks are allowed.
 Destructors must remain non-throwing.
 
 ## Primary key modes
@@ -86,7 +107,7 @@ strings retain their exact byte identity. Duplicate append rejects before hooks.
 key or replaces an existing row at the same position through the same guarded
 mutation and hooks. Numeric mode rejects it. No native [] adapter is added yet.
 
-`contains`, `snapshot`, `field`, `set_field` and `unset` accept positions in both
+`contains`, `read`, `field`, `set_field` and `unset` accept positions in both
 modes, and string primary keys in string mode. `replace`/`remove` are positional.
 `find_position`/`position_of` accept only the selected primary-key family, so an
 integer passed to either lookup in string mode throws invalid_argument. The native
@@ -148,14 +169,15 @@ alternative virtual representations are outside this slice.
 
 There is no clone/reset, source []/foreach adapter, generic ownership
 policy, weak backlink machinery, persistence, whole-AST migration or claim of
-whole-compiler convertibility. Source conversion must not silently treat snapshots
-as the PHP reference's persistent object handles.
+whole-compiler convertibility. Native reads now preserve shared record identity,
+but this does not implement
+source construction/indexing/iteration bindings or prove whole-compiler conversion.
 
 Numeric access and removal are O(1), append amortized O(1). Iteration is O(historical
-positions), including after heavy deletion. Live records occupy a dense vector;
+positions), including after heavy deletion. Live record handles occupy a dense vector;
 each live row also has a reverse position and each historical position a native
 row index. Automatic growth tracks live-record and historical-directory extents
-independently; historical churn does not grow unused record capacity. Capacities
+independently; historical churn does not grow unused handle capacity. Capacities
 remain allocated after deletion. This favors a straightforward
 compiler-lifetime implementation; no measured performance advantage is claimed.
 String primary-key lookup/update is expected O(1) plus key hashing/copy costs;
@@ -163,7 +185,9 @@ string mode has additional key buffers and hash node allocations. Positional rea
 still use direct directory lookup. Key-slot growth also tracks live and historical
 extents separately. These costs need measurement before optimizing representations.
 
-Native proofs: `tests/runtime/compiler/level_01/runtime_compiler_001_storage.cpp`
-and `runtime_compiler_002_string_storage.cpp` in the same folder.
+Native proofs: `tests/runtime/compiler/level_01/runtime_compiler_001_storage.cpp`,
+`runtime_compiler_002_string_storage.cpp` and `runtime_compiler_003_shared_records.cpp`
+in the same folder. The shared-record fixture uses noncopyable/nonmovable records
+and checks identity, null rejection, retained lifetime and final destruction.
 Build/run instructions and remaining delivery work are in
 `specs/planning/compiler_storage_native_slice.md`.

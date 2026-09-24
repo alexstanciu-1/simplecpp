@@ -9,6 +9,9 @@ namespace scpp::compiler {
 // compile-time key mode; view membership always stores numeric owner positions.
 template<class T, bool ReadOnly = true>
 class Storage_View_Abstract {
+public:
+	using record_handle = typename Storage<T>::record_handle;
+private:
 	std::variant<std::shared_ptr<Storage<T, false>>, std::shared_ptr<Storage<T, true>>> storage_;
 	detail::position_store<storage_position> members_;
 	detail::mutation_state state_;
@@ -43,11 +46,11 @@ public:
 	bool is_empty() const { return count() == 0; }
 	bool contains(storage_position position) const { assert_access(); return members_.has(position); }
 	storage_position storage_position_at(storage_position position) const {
-		assert_access(); return members_.snapshot(position);
+		assert_access(); return members_.copy_at(position);
 	}
-	T snapshot(storage_position position) const {
+	record_handle read(storage_position position) const {
 		const auto target = storage_position_at(position);
-		return with_storage([&](const auto &storage) { return storage.snapshot(target); });
+		return with_storage([&](const auto &storage) { return storage.read(target); });
 	}
 	template<class R, class M>
 	M field(storage_position position, M R::*member) const {
@@ -93,7 +96,7 @@ public:
 		}
 		internal_remove(position);
 	}
-	storage_position storage_append(T record, std::optional<std::string> key = std::nullopt) {
+	storage_position storage_append(record_handle record, std::optional<std::string> key = std::nullopt) {
 		detail::mutation_state::mutation mutation(state_);
 		assert_access();
 		members_.prepare_append();
@@ -107,7 +110,7 @@ public:
 		assert_access();
 		detail::mutation_state::traversal traversal(state_);
 		for (storage_position position = 0; position < members_.next_position(); ++position)
-			if (contains(position)) fn(position, snapshot(position));
+			if (contains(position)) fn(position, read(position));
 		assert_access();
 	}
 };

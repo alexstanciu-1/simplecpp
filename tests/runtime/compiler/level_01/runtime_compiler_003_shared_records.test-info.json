@@ -1,0 +1,39 @@
+{
+    "id": "runtime_compiler_003_shared_records",
+    "suite": "runtime",
+    "group": "compiler",
+    "level": "level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "build": {
+        "compiler": "g++",
+        "language_standard": "c++23",
+        "flags": [
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror"
+        ]
+    },
+    "expect": {
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "runtime",
+        "compiler",
+        "storage",
+        "shared_identity",
+        "lifetime"
+    ],
+    "notes": "Derived from specs/compiler_storage.md: automatic shared_p record handles, no record copies, retained identity/lifetime and null rejection."
+}

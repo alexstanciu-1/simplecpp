@@ -14,6 +14,10 @@ add_executable(test_compiler_string_storage ../compiler/level_01/runtime_compile
 target_link_libraries(test_compiler_string_storage PRIVATE scpp_compiler)
 add_test(NAME scpp_test_compiler_string_storage COMMAND test_compiler_string_storage)
 
+add_executable(test_compiler_shared_records ../compiler/level_01/runtime_compiler_003_shared_records.cpp)
+target_link_libraries(test_compiler_shared_records PRIVATE scpp_compiler)
+add_test(NAME scpp_test_compiler_shared_records COMMAND test_compiler_shared_records)
+
 # Core wrapper smoke coverage.
 add_executable(test_core test_core.cpp)
 target_link_libraries(test_core PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)

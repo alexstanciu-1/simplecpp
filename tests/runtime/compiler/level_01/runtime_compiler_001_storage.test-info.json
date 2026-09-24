@@ -16,5 +16,5 @@
         "run": {"success": true, "exit_code": 0, "stdout": "", "stderr": ""}
     },
     "tags": ["runtime", "compiler", "storage", "view", "allocation_failure"],
-    "notes": "Derived from specs/compiler_storage.md; native inline-value lifetime contract, not PHP object-handle parity."
+    "notes": "Derived from specs/compiler_storage.md; numeric owner/view behavior using noncopyable shared records."
 }
