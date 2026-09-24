@@ -1,0 +1,22 @@
+function helper(int $first, int $second): int
+{
+    $a int = $second;
+    return $a;
+}
+
+function change(int &$value, int $next): void
+{
+    $value = $next;
+}
+
+struct point {
+    public int $x;
+    public int $y;
+}
+
+template<T>
+function identity(T $value): T
+{
+    $copy T = $value;
+    return $copy;
+}

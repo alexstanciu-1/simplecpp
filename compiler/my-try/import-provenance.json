@@ -1,0 +1,29 @@
+{
+    "source": "/home/alexv/__AI/scpp_compiler_3/prototype/my-try",
+    "date": "2026-09-24",
+    "sha256_original_files": {
+        "06_native/toolchain.json": "14f2c95c87a055c0b750981ecaa9cc8d639d7bb5b01cbab888294cbae706a3a8",
+        "06_native/run.php": "5f6e62532d9510b5ab212833333a82db24a9fa1118c376199b39e9592d93d97a",
+        "02_tokenize/token.php": "53bfe0ec609e73a65fd44bfaec9cb9b9cb6a8575d725b9db9895095ccced9df3",
+        "02_tokenize/tokens.php": "224ad8992328707d4cfcf4720ff005c0745158006ffbe723c5d5c5e81521e19a",
+        "04_analyze/collect/structures.php": "63ce424e16c5945fed749ee4436884360fa6607d8b825c03320e8de86d595a21",
+        "04_analyze/collect/collect.php": "5dccf670d23339228220daf8f63039d748c55b1efca9a9b556bcd2e8872d82f7",
+        "04_analyze/README.md": "f2c472966e356b1268a2fa2eaeefbd80553c43df51d313805c4792eccbb72ab4",
+        "04_analyze/prepare.php": "53ec7a8da97a90b31ea6a7818c60c6920abfc24ce4223054da36975b9acf80c2",
+        "04_analyze/templates.php": "b828090492ed6d5e16f13b6b1e4d6467ac3983bdbaae55c5ced3cc740fb725de",
+        "03_parse/structures.php": "c8df62e854987b04e4132ab6f7b005735ea1b1d1eff24424856d5f0805c0da8d",
+        "03_parse/parser.php": "4696d9dbaf732ef679783102df1c3ba3119268a99d26cd522297655f0d5f9354",
+        "05_llvm/functions.php": "cbc16f49b778b7a51e215d88f2fb63e3a4ce1400bcbcb6b4dfd8759c750e91a5",
+        "05_llvm/README.md": "f43a508d544ce32d6806b24ecfb39dc5251341f94bc40970ed44f390ba378e8c",
+        "05_llvm/structs.php": "563490bfbf63360cdbcc1de2bc8b538a30154bd152f39d8c045334d3772f7be7",
+        "05_llvm/write.php": "c3256db648997d87433558e71f3181f562688007c3d30be46815023a720d078d",
+        "05_llvm/expressions.php": "83e05eef18ae68afbfbd4e04fefdd020110121da64defb317fcfa27d0257d5f1",
+        "05_llvm/structures.php": "e28bfbac4437d538b5c509d9718838fdee15e32a134e9d18ac859b4629e24015",
+        "05_llvm/prepare.php": "a250dc7e2929b64f601b1eaccebfb7f5a61f4864d9965664c59d18ac6af4c875",
+        "05_llvm/generate.php": "58e6ed482399212f9d06e75e12143a9891556e9300b982df15437cacc98ab824",
+        "05_llvm/names.php": "4f97e13a077ea66afd3af7ec34c597e114bb7a3061659a9a6cabddef9d6f94d5",
+        "05_llvm/statements.php": "8e05c951db9b01cfba1aea969ad5f2547bb834fe95f6104c8e3a33af573f54ba",
+        "tests/calls.php": "d549630489a5dfaf208b18ef14684e46195f4c968113fda451a7968a71a4bad4",
+        "tests/llvm.php": "d8fda98389d837f5d443f60de20ff0fbb0a04351f4a0f66460bfb0afb9ae0d01"
+    }
+}

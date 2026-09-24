@@ -70,7 +70,7 @@ def main():
             ('interface Bad { public function f(): ?Thing; }', 'interface returns'),
             ('enum_name();', 'wrong argument count'),
             ('class Bad { public function f(array $items): void {} }', 'container'),
-            ('class Bad { public function f(array $items /** vector<int> */ = []): void {} }', 'parameter separator'),
+            ('class Bad { public function f(array $items /** vector<int> */ = []): void {} }', 'defaults require an explicit nullable type and null'),
             ('class Bad { public function f(array &$items /** vector<int> */): void {} }', 'named parameter'),
             ('interface Bad { public function f(array $items /** vector<int> */): void; }', 'container interface parameters'),
             ('class Bad { public function __construct(public array $items /** vector<int> */ = []) {} }', 'constructor containers require explicit arguments'),

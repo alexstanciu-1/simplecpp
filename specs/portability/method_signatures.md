@@ -24,6 +24,8 @@ works in a void method through the existing statement path.
 
 Later slices add annotated concrete container parameters/returns and
 [nullable concrete returns and ordinary constructors](compiler_token_store_slice.md).
+The [nullable-parameter slice](nullable_parameters.md) adds explicit nullable scalar/named
+parameters, with optional null defaults, including interface declarations.
 The remaining list below describes this original slice only.
 
 Originally outside this slice: untyped parameters, nullable/union/intersection types,

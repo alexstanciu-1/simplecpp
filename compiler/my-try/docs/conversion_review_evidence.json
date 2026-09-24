@@ -1,0 +1,124 @@
+{
+  "status": "review evidence; isolated checker acceptance is not whole-program/native proof",
+  "date": "2026-09-24",
+  "repository_commit": "bdc2916f6acab507a25da20d253c7707273b937e",
+  "command": "Copy each listed file unchanged into its own temporary directory; php tools/php_portability/check.php TEMP_DIRECTORY",
+  "files": [
+    {
+      "file": "compile/model.php",
+      "sha256": "987132c357b245b11ef4f30f2bc16c2996149dd925535373b24b545160923142",
+      "exit_code": 1,
+      "seconds": 0.09,
+      "diagnostic": "model.php:17: expected function"
+    },
+    {
+      "file": "helpers/storage.php",
+      "sha256": "c8029946c6096c2cf0eafc9981d9a006cd484ef8b1e3cba742d807856ce4ecd6",
+      "exit_code": 1,
+      "seconds": 0.093,
+      "diagnostic": "storage.php:13: expected explicit container type annotation"
+    },
+    {
+      "file": "helpers/storage_view_iface.php",
+      "sha256": "24ae566e0330e6988a5039cdade88b9c011ee921d105ead024e8244f74893d30",
+      "exit_code": 1,
+      "seconds": 0.077,
+      "diagnostic": "storage_view_iface.php:6: expected {"
+    },
+    {
+      "file": "helpers/storage_view_abstract.php",
+      "sha256": "765cdcf104d9067e9cbc2f30bcdda6d39a48c15661022f0d196fd288bb38cccd",
+      "exit_code": 1,
+      "seconds": 0.092,
+      "diagnostic": "storage_view_abstract.php:10: unsupported syntax: abstract"
+    },
+    {
+      "file": "helpers/storage_view.php",
+      "sha256": "e5392950e0d5ab66f7c3e175654c4eca5e23f8965fc92b88234dd9489fff7b17",
+      "exit_code": 1,
+      "seconds": 0.079,
+      "diagnostic": "storage_view.php:5: expected {"
+    },
+    {
+      "file": "01_prepare_inputs/structures.php",
+      "sha256": "c5ba77a492d082f2059af006b2cf95a478a9fa953a3e103d5affdaad04cea2de",
+      "exit_code": 1,
+      "seconds": 0.083,
+      "diagnostic": "structures.php:12: expected ="
+    },
+    {
+      "file": "02_tokenize/structures.php",
+      "sha256": "d9bea9ffbda1accbab7cfbe058cd5ab1fae485a1715cadbca189f878a955bec9",
+      "exit_code": 1,
+      "seconds": 0.084,
+      "diagnostic": "structures.php:10: expected ="
+    },
+    {
+      "file": "03_parse/structures.php",
+      "sha256": "8b5a71f450cf1a728193a663e9b85a02fc5949f8697569107a5a279c4816ab27",
+      "exit_code": 1,
+      "seconds": 0.088,
+      "diagnostic": "structures.php:57: expected ="
+    },
+    {
+      "file": "04_analyze/collect/structures.php",
+      "sha256": "d496338daff7d2f95cb76b1688bbf996b2b13f00f2501b9b343755724594bed5",
+      "exit_code": 1,
+      "seconds": 0.083,
+      "diagnostic": "structures.php:29: expected ="
+    },
+    {
+      "file": "04_analyze/structures.php",
+      "sha256": "97f9b11fc7a39e11dc0e0a2509b315e8238ee913d8008a94031c6697afb5e694",
+      "exit_code": 0,
+      "seconds": 0.082,
+      "diagnostic": "{\"checked\":1,\"cache\":{\"listed_directories\":1,\"read_sources\":1,\"tokenized\":1,\"loaded_tokens\":0}}"
+    },
+    {
+      "file": "05_llvm/structures.php",
+      "sha256": "6d8ba43496b4554d4d7cd04d2b688b8d77cf2ae7beae1a9bcc8d888fb889dae2",
+      "exit_code": 1,
+      "seconds": 0.094,
+      "diagnostic": "structures.php:12: expected ]"
+    },
+    {
+      "file": "03_parse/syntax.php",
+      "sha256": "49977e09dd3bc6b4cc17d062ec602ddb94644c4f6b3759e123e86f68d6d956cb",
+      "exit_code": 1,
+      "seconds": 0.102,
+      "diagnostic": "syntax.php:12: expected explicit scalar or named method type"
+    }
+  ],
+  "focused_probes": [
+    {
+      "name": "storage_annotation",
+      "source": "<?php\nnamespace scpp\\compiler;\nfinal class Probe { public ?Storage $rows /** Storage<token, false> */ = null; }\n",
+      "exit_code": 1,
+      "diagnostic": "probe.php:3: expected ="
+    },
+    {
+      "name": "static_scalar",
+      "source": "<?php\nnamespace scpp\\compiler;\nfinal class Probe { public static int $count = 0; }\n",
+      "exit_code": 1,
+      "diagnostic": "probe.php:3: expected function"
+    },
+    {
+      "name": "required_scalar",
+      "source": "<?php\nnamespace scpp\\compiler;\nfinal class Probe { public int $offset; }\n",
+      "exit_code": 1,
+      "diagnostic": "probe.php:3: expected ="
+    },
+    {
+      "name": "nullable_parameter",
+      "source": "<?php\nnamespace scpp\\compiler;\nfinal class Probe { public static function check(?node_interface $payload): void {} }\n",
+      "exit_code": 1,
+      "diagnostic": "probe.php:3: expected explicit scalar or named method type"
+    },
+    {
+      "name": "object_unset",
+      "source": "<?php\nnamespace scpp\\compiler;\nfinal class Probe { public static function clear(file $source): void { unset($source->tokens); } }\n",
+      "exit_code": 1,
+      "diagnostic": "probe.php:3: unset supports one hash slot, not variable removal"
+    }
+  ]
+}

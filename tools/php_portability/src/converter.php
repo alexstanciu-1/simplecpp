@@ -23,6 +23,7 @@ final class Converter {
 	private array $tokens = [];
 	private int $position = 0;
 	private string $path = '';
+	private bool $inClass = false;
 	private int $exceptionCounter = 0;
 	private array $seenLocals = [];
 	private array $borrowedLocals = [];
@@ -54,6 +55,7 @@ final class Converter {
 	public function convertTokens(array $tokens, string $path): string {
 		$this->path = $path;
 		$this->exceptionCounter = 0;
+		$this->inClass = false;
 		$this->seenLocals = [];
 		$this->borrowedLocals = [];
 		$this->parameterLocals = [];
@@ -189,26 +191,32 @@ final class Converter {
 		$this->fail($line, 'unclosed interface');
 	}
 
-	/** Literal Type::member syntax only; the target owns member existence/type checks. */
-	private function namedConstant(array $type, bool $allowCall = false): string {
+	/** Literal type/self members; expression access adds fields/calls to constant defaults. */
+	private function staticMember(array $type, bool $expression = false): string {
 		if (!in_array($type[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)
-			|| in_array(strtolower($type[1]), ['self', 'parent', 'static'], true)) {
+			|| in_array(strtolower($type[1]), ['parent', 'static'], true)
+			|| (strtolower($type[1]) === 'self' && (!$expression || !$this->inClass))) {
 			$this->fail($type[2], 'expected literal type name');
 		}
 		$this->expect('::');
 		$member = $this->significant();
-		if ($member[0] !== T_STRING) { $this->fail($member[2], 'expected literal constant name'); }
+		if ($expression && $member[0] === T_VARIABLE) {
+			$next = $this->nextSignificant($this->position);
+			if (($this->tokens[$next][1] ?? '') === '(') { $this->fail($member[2], 'calls through static properties are unsupported'); }
+			return $type[1] . '::' . $member[1];
+		}
+		if ($member[0] !== T_STRING) { $this->fail($member[2], 'expected literal constant or member name'); }
 		$next = $this->nextSignificant($this->position);
-		if (!$allowCall && ($this->tokens[$next][1] ?? '') === '(') { $this->fail($member[2], 'static calls are unsupported in field defaults'); }
+		if (!$expression && ($this->tokens[$next][1] ?? '') === '(') { $this->fail($member[2], 'static calls are unsupported in field defaults'); }
 		return $type[1] . '::' . $member[1];
 	}
 
 	/** Explicit signature spelling only; named types are left for target resolution. */
-	private function signatureType(bool $return): string {
+	private function signatureType(bool $return, bool $nullableParameter = false): string {
 		$type = $this->significant();
-		$nullable = $return && $type[1] === '?';
+		$nullable = ($return || $nullableParameter) && $type[1] === '?';
 		if ($nullable) { $type = $this->significant(); }
-		if ($nullable && $type[0] === T_ARRAY) { $this->fail($type[2], 'nullable container returns are not supported'); }
+		if ($nullable && $type[0] === T_ARRAY) { $this->fail($type[2], 'nullable containers are unsupported at this signature site'); }
 		if ($return && $type[0] === T_ARRAY) { return $this->containerAnnotation($this->significant()); }
 		$excluded = ['mixed', 'object', 'iterable', 'never', 'self', 'parent', 'static',
 			'null', 'false', 'true', 'array', 'callable'];
@@ -229,11 +237,12 @@ final class Converter {
 		if ($name[0] !== T_STRING) { $this->fail($line, 'expected method name'); }
 		$this->expect('(');
 		$parameters = [];
+		$optionalSeen = false;
 		if (($this->tokens[$this->nextSignificant($this->position)][1] ?? '') !== ')') {
 			do {
 				$container = ($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_ARRAY;
 				if ($container) { $this->significant(); $type = ''; }
-				else { $type = $this->signatureType(false); }
+				else { $type = $this->signatureType(false, true); }
 				$parameter = $this->significant();
 				if ($parameter[0] !== T_VARIABLE) { $this->fail($parameter[2], 'expected named parameter'); }
 				$parameterNames[] = $parameter[1];
@@ -241,8 +250,21 @@ final class Converter {
 					if (!$containerReturn) { $this->fail($line, 'container interface parameters require a separately proved contract'); }
 					$type = $this->containerAnnotation($this->significant());
 				}
-				$parameters[] = $container ? $parameter[1] . ' ' . $type : $type . ' ' . $parameter[1];
+				$nullable = str_starts_with($type, 'nullable<');
+				$declaration = ($container || $nullable) ? $parameter[1] . ' ' . $type : $type . ' ' . $parameter[1];
 				$separator = $this->significant();
+				if ($separator[1] === '=') {
+					$value = $this->significant();
+					if (!$nullable || strtolower($value[1]) !== 'null') {
+						$this->fail($value[2], 'method parameter defaults require an explicit nullable type and null');
+					}
+					$declaration .= ' = null';
+					$optionalSeen = true;
+					$separator = $this->significant();
+				} elseif ($optionalSeen) {
+					$this->fail($parameter[2], 'required parameter cannot follow an optional parameter');
+				}
+				$parameters[] = $declaration;
 			} while ($separator[1] === ',');
 			if ($separator[1] !== ')') { $this->fail($separator[2], 'expected parameter separator'); }
 		} else {
@@ -337,7 +359,7 @@ final class Converter {
 				} elseif ($type[1] === 'string' && $value[0] === T_CONSTANT_ENCAPSED_STRING) {
 					$default = ' = ' . $this->stringLiteral($value);
 				} elseif (!in_array($type[1], ['int', 'bool', 'string'], true)) {
-					$default = ' = ' . $this->namedConstant($value);
+					$default = ' = ' . $this->staticMember($value);
 				} else {
 					$this->fail($value[2], 'unsupported promoted parameter default');
 				}
@@ -443,7 +465,7 @@ final class Converter {
 		return new Node('reference_local', $name . ($type === '' ? '' : ' ref ' . $type) . ' = &' . $source[1] . ';', $line);
 	}
 
-	/** A reference class with explicit initialized public fields; no value-record inference. */
+	/** Reference-class fields preserve explicit types; no value-record or nullability inference. */
 	private function referenceClass(int $line, bool $final = false): Node {
 		$name = $this->significant();
 		if ($name[0] !== T_STRING) { $this->fail($line, 'expected class name'); }
@@ -459,13 +481,18 @@ final class Converter {
 				if ($next === ',') { $this->significant(); }
 			} while ($next === ',');
 		}
+		$previousClass = $this->inClass;
+		$this->inClass = true;
 		$className = $name[1] . ($implements === [] ? '' : ' implements ' . implode(', ', $implements));
 		$this->expect('{');
 		$fields = [];
 		while (isset($this->tokens[$this->position])) {
 			$this->path = $this->tokens[$this->position][3] ?? $this->path;
 			[$id, $text, $at] = $this->tokens[$this->position++];
-			if ($text === '}') { return new Node($final ? 'final_class' : 'class', $className, $line, $fields); }
+			if ($text === '}') {
+				$this->inClass = $previousClass;
+				return new Node($final ? 'final_class' : 'class', $className, $line, $fields);
+			}
 			if (in_array($id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
 				if ($id === T_DOC_COMMENT && (str_contains($text, '@scpp-struct') || str_contains($text, '&ref'))) { $this->fail($at, 'misplaced record/reference metadata'); }
 				$fields[] = new Node('comment', $text, $at);
@@ -484,12 +511,20 @@ final class Converter {
 				}
 				continue;
 			}
-			if ($type[0] === T_STATIC) {
-				$fields[] = $this->method($at, $visibility, true);
-				continue;
+			$static = $type[0] === T_STATIC;
+			if ($static) {
+				$next = $this->nextSignificant($this->position);
+				if (($this->tokens[$next][0] ?? null) === T_FUNCTION) {
+					$fields[] = $this->method($at, $visibility, true);
+					continue;
+				}
+				// Static fields use the same explicit type/default grammar as instance fields.
+				$visibility .= ' static';
+				$type = $this->significant();
 			}
 			// Explicit readonly scalar fields are initialized by the authored constructor.
 			if ($type[0] === T_READONLY) {
+				if ($static) { $this->fail($at, 'static readonly fields are unsupported'); }
 				$type = $this->significant();
 				if (!in_array($type[1], ['bool', 'int', 'string'], true)) { $this->fail($at, 'readonly fields currently require scalar types'); }
 				$field = $this->significant();
@@ -504,12 +539,21 @@ final class Converter {
 				$field = $this->significant();
 				if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected named list property'); }
 				$vector = $this->containerAnnotation($this->significant());
+				if (!$nullable && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === ';') {
+					$this->expect(';');
+					$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $vector . ';', $at);
+					continue;
+				}
 				$this->expect('=');
 				if ($nullable) { $this->expect('null'); }
 				else { $this->expect('['); $this->expect(']'); }
 				$this->expect(';');
 				$nativeType = $nullable ? 'nullable<' . $vector . '>' : $vector;
-				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $nativeType . ' = ' . ($nullable ? 'null' : '[]') . ';', $at);
+				// Native default construction is the same empty hash. An explicit static
+				// hash literal currently lowers to an invalid namespace-scope capturing lambda.
+				$initializer = ($static && !$nullable && str_starts_with($vector, 'hash<'))
+					? '' : ' = ' . ($nullable ? 'null' : '[]');
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $nativeType . $initializer . ';', $at);
 				continue;
 			}
 			if (!in_array($type[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {
@@ -517,6 +561,14 @@ final class Converter {
 			}
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected named property'); }
+			if (!$nullable && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === ';') {
+				if (in_array(strtolower($type[1]), ['mixed', 'object', 'iterable', 'void', 'never', 'self', 'parent', 'static'], true)) {
+					$this->fail($at, 'required field needs a concrete scalar or named type');
+				}
+				$this->expect(';');
+				$fields[] = new Node('property', $visibility . ' ' . $type[1] . ' ' . $field[1] . ';', $at);
+				continue;
+			}
 			$this->expect('=');
 			$value = $this->significant();
 			if ($nullable) {
@@ -539,7 +591,7 @@ final class Converter {
 				default => false,
 			};
 			if (!in_array($type[1], ['bool', 'int', 'string'], true)) {
-				$value[1] = $this->namedConstant($value);
+				$value[1] = $this->staticMember($value);
 				$valid = true;
 			}
 			if (!$valid) { $this->fail($value[2], 'property default must be a matching scalar literal'); }
@@ -602,12 +654,19 @@ final class Converter {
 		return new Node('foreach', $binding, $line, [new Node('body', '', $line, $iterable), new Node('body', '', $line, $this->sequence('}'))]);
 	}
 
+	/** Collection paths start at a local or a literal static field, without type lookup. */
+	private function collectionRoot(array $root): string {
+		if ($root[0] === T_VARIABLE) { return $root[1]; }
+		$text = $this->staticMember($root, true);
+		if (!str_contains($text, '::$')) { $this->fail($root[2], 'collection path requires a variable or static field'); }
+		return $text;
+	}
+
 	/** One non-mutating keyed path; no calls, assignments or multiple operands. */
 	private function issetProbe(int $line): Node {
 		$this->expect('(');
 		$root = $this->significant();
-		if ($root[0] !== T_VARIABLE) { $this->fail($line, 'isset requires one keyed variable path'); }
-		$text = $root[1];
+		$text = $this->collectionRoot($root);
 		$keyed = false;
 		while (true) {
 			$next = $this->significant();
@@ -640,8 +699,7 @@ final class Converter {
 	private function keyedRemoval(int $line): Node {
 		$this->expect('(');
 		$root = $this->significant();
-		if ($root[0] !== T_VARIABLE) { $this->fail($line, 'unset requires one keyed variable or fixed-field path'); }
-		$text = $root[1]; $next = $this->significant();
+		$text = $this->collectionRoot($root); $next = $this->significant();
 		while ($next[0] === T_OBJECT_OPERATOR) {
 			$member = $this->significant();
 			if ($member[0] !== T_STRING) { $this->fail($member[2], 'unset requires a fixed member name'); }
@@ -789,7 +847,7 @@ final class Converter {
 			}
 			if (in_array($id, [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)
 				&& ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === '::') {
-				$name = $this->namedConstant([$id, $text, $line], true);
+				$name = $this->staticMember([$id, $text, $line], true);
 				$next = $this->nextSignificant($this->position);
 				if (($this->tokens[$next][1] ?? '') === '(') {
 					$this->position = $next + 1;

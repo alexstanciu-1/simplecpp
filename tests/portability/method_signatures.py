@@ -84,7 +84,7 @@ echo $row->value, ":", $other->value, ":", $returned === $row ? "same" : "differ
         src = Path(temp) / 'php'; src.mkdir()
         for signature in ['f($x): int', 'f(array $x): int', 'f(int &$x): int',
                           'f(int ...$x): int', 'f(int $x = 1): int',
-                          'f(?\\data\\Record $x): int', 'f(int|string $x): int',
+                          'f(int|string $x): int',
                           'f(int $x): mixed', 'f(int $x): self']:
             (src / 'bad.php').write_text('<?php\nclass Bad { public function ' + signature + ' { return 1; } }\n')
             run(['php', TOOLS / 'sync_imports.php', src])

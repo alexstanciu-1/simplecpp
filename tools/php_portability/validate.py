@@ -17,6 +17,9 @@ NATIVE = {
     'os': TESTS / 'os_native.py',
     'compiler': TESTS / 'compiler_context/run.py',
     'methods': TESTS / 'method_signatures.py',
+    'static': TESTS / 'static_properties.py',
+    'nullable-parameters': TESTS / 'nullable_parameters.py',
+    'required-fields': TESTS / 'required_fields.py',
     'snapshots': TESTS / 'collection_snapshots.py',
     'containers': TESTS / 'container_annotations.py',
     'iteration': TESTS / 'map_iteration.py',
@@ -96,6 +99,9 @@ def main():
         run('global-functions', ['php', ROOT / 'tools/php_portability/generate_global_functions.php', '--check'])
         run('process-launch-ack', [sys.executable, TESTS / 'process_launch_ack.py', '--results', results / 'process-launch-ack'])
         run('collections-php', ['php', TESTS / 'collections_php.php'])
+        run('required-fields-php', [sys.executable, TESTS / 'required_fields.py', '--results', results / 'required-fields-php'])
+        run('nullable-parameters-php', [sys.executable, TESTS / 'nullable_parameters.py', '--results', results / 'nullable-parameters-php'])
+        run('static-properties-php', [sys.executable, TESTS / 'static_properties.py', '--results', results / 'static-properties-php'])
         run('value-records-php', [sys.executable, TESTS / 'value_records.py', '--results', results / 'value-records-php'])
         for label, script in [('foundation', 'run.py'), ('check-regressions', 'check.py'),
                               ('prologues', 'prologues.py'),
