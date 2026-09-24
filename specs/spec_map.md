@@ -263,6 +263,14 @@ Do not do the following without checking the higher-level specs first:
 
 ## 9. Document roles
 
+### `specs/compiler_storage.md`
+Role:
+- native compiler-specific Storage<T> and Keyed_Storage<T> object collection contract
+- records the current shared-record identity contract and the boundary to deferred source bindings
+
+Authority:
+- normative within the explicitly scoped native compiler helper
+
 ### `specs/dynamic_types.md`
 Role:
 - primary language/spec authority for dynamic typing
