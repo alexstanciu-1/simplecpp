@@ -86,3 +86,30 @@ selective semantic invalidation is added. Clang/LLVM behavior is unchanged.
 
 PHP proof: tests/incremental.php. Native-driver preflight exercises additions, body
 updates, unchanged caller reuse, duplicate retention/removal and deleted-file lookup.
+
+## On-demand development check
+
+Run the small smoke when editing code that could affect synchronization, collection,
+publication, resolution or generation:
+
+```sh
+php compiler/my-try/tests/incremental_smoke.php
+```
+
+It performs one full PHP-hosted compilation and one incremental update in the same
+session, checks changed output, flags, unchanged caller reuse and refreshed binding,
+then restores the temporary source. It does not invoke Clang or rebuild the native
+compiler. Working samples are never edited; cleanup runs in finally on failure too.
+This smoke is deliberately not registered as another automatic full-suite step.
+
+For the explicit restoration regression:
+
+```sh
+php compiler/my-try/tests/incremental_smoke.php --restore
+```
+
+This additionally compiles the restored file incrementally and compares all generated
+filenames/text with both the initial full build and a fresh full compilation of the
+restored source. It requires one extra incremental and one extra full compilation;
+those are optional, not the normal development loop. The existing incremental.php
+suite remains the broader multi-update/deletion/failure regression test.
