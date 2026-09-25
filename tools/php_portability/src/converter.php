@@ -630,6 +630,22 @@ final class Converter {
 			}
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected named property'); }
+			$annotationAt = $this->nextSignificant($this->position);
+			$annotation = $this->tokens[$annotationAt] ?? [0, '', $at];
+			if ($annotation[0] === T_DOC_COMMENT && preg_match('~^/\*\*\s*weak\s*<~', $annotation[1])) {
+				if (!preg_match('~^/\*\*\s*weak<([^<>]+)>\s*\*/$~D', $annotation[1], $match)) {
+					$this->fail($at, 'weak field requires one literal object type');
+				}
+				$element = $this->localAnnotation([T_DOC_COMMENT, '/** ' . trim($match[1]) . ' */', $at]);
+				if ($element !== $type[1] || in_array($element, ['int', 'uint32', 'float', 'bool', 'string'], true)) {
+					$this->fail($at, 'weak field annotation must match its named PHP object type');
+				}
+				$this->position = $annotationAt + 1;
+				if ($nullable) { $this->expect('='); $this->expect('null'); }
+				$this->expect(';');
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' weak<' . $element . '>' . ($nullable ? ' = null' : '') . ';', $at);
+				continue;
+			}
 			if ($type[1] === '\\SplObjectStorage') {
 				if ($nullable) { $this->fail($at, 'nullable identity hashes require a separate contract'); }
 				$collection = $this->objectHashAnnotation($this->significant());

@@ -9,7 +9,7 @@ namespace scpp\compiler;
 final class Syntax_Nodes
 {
 	/** Reject inconsistent kind/payload pairs at the parser construction boundary. */
-	public static function validate_payload(node_kind $kind, ?node_interface $payload): void
+	public static function validate_payload(node_kind $kind, ?node_specialization $payload): void
 	{
 		$valid = match ($kind)
 		{
@@ -32,6 +32,53 @@ final class Syntax_Nodes
 		};
 		if (!$valid) {
 			throw new \LogicException('Invalid AST payload for ' . Node_Kind_Name::text($kind));
+		}
+
+		// Check local field relationships once, before the parser publishes the node.
+		// Children were validated when constructed; do not traverse the subtree again.
+		if ($kind === node_kind::variable_binding_statement) {
+			self::validate_binding(object_cast($payload, binding_specialization::class));
+		}
+		elseif ($kind === node_kind::parameter_declaration) {
+			self::validate_parameter(object_cast($payload, parameter_specialization::class));
+		}
+	}
+
+	/** Preserve the distinction between declarations, unresolved names and explicit target writes. */
+	private static function validate_binding(binding_specialization $binding): void
+	{
+		$has_type = $binding->type_syntax !== null;
+		$has_target = $binding->target !== null;
+		$has_value = $binding->value !== null;
+		$has_equals = $binding->equals_token_index !== null;
+
+		if ($has_equals !== $has_value) {
+			throw new \LogicException('Invalid binding: equals token and value must appear together');
+		}
+		if (($has_type) && ($has_target)) {
+			throw new \LogicException('Invalid binding: a declaration cannot have an assignment target');
+		}
+		if ((!$has_type) && (!$has_value)) {
+			throw new \LogicException('Invalid binding: an untyped write requires a value');
+		}
+
+		if (($binding->classification === binding_kind::declaration) !== $has_type) {
+			throw new \LogicException('Invalid binding: declaration classification must agree with type syntax');
+		}
+		if ($has_target) {
+			if ($binding->classification !== binding_kind::assignment) {
+				throw new \LogicException('Invalid binding: an explicit target requires assignment classification');
+			}
+		}
+	}
+
+	/** A reference parameter carries its ampersand token; a value parameter never does. */
+	private static function validate_parameter(parameter_specialization $parameter): void
+	{
+		$is_reference = $parameter->mode === passing_mode::reference;
+		$has_reference_token = $parameter->reference_token_index !== null;
+		if ($is_reference !== $has_reference_token) {
+			throw new \LogicException('Invalid parameter: reference mode and ampersand token must agree');
 		}
 	}
 

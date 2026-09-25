@@ -112,7 +112,8 @@ final class LLVM_Names
 	/** Keep unique source names readable; preserve every colliding declaration with its identity. */
 	public static function declaration(collected_name $entry, int $file_index): string
 	{
-		$pool /** hash<vector<collected_name>> */ = $entry->kind === collected_name_kind::function_declaration ? $entry->scope->functions : $entry->scope->variables;
+		$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
+		$pool /** hash<vector<collected_name>> */ = $entry->kind === collected_name_kind::function_declaration ? $entry_scope->functions : $entry_scope->variables;
 		$name = self::encode($entry->name);
 		if (q_count($pool[$entry->name]) > 1) {
 			$name .= '_Gf' . $file_index . 'd' . $entry->local_index;

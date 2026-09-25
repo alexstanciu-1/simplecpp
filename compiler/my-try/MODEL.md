@@ -97,8 +97,14 @@ or change retained ownership. See [binding details](../../specs/portability/obje
 
 ### Concrete payload access
 
-The optional node_interface payload remains directly node-owned. Syntax_Nodes now
+The optional node_specialization payload remains directly node-owned. Syntax_Nodes now
 exposes typed *_data accessors using checked, identity-preserving object_cast.
 Compiler consumers use these accessors instead of implicitly reading concrete fields
 through an interface handle. Null or wrong payload types fail. PHP graph identity is
 unchanged; native interfaces are polymorphic for checked narrowing.
+
+Direct scope links (`scope.parent`, `block_specialization.scope`,
+`collected_name.scope`) now carry adjacent `weak<scope>` annotations for native
+conversion. PHP keeps strong references; native consumers explicitly acquire live
+handles. Keep the owning parsed file/model alive when scope access is required.
+Other weak-intent tags remain documentary. See docs/ownership.md.

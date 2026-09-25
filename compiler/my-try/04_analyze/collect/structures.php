@@ -37,7 +37,7 @@ final class collected_name
 	 * @storage.reference parsed_file.scopes
 	 * @reference.weak
 	 */
-	public scope $scope;
+	public scope $scope /** weak<scope> */;
 	/**
 	 * Occurrence syntax in the same parsed file.
 	 * @reference.source parsed_file.root (syntax graph)

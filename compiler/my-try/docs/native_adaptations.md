@@ -9,7 +9,7 @@ source adaptations to the existing v0.1 toolchain, not new compiler features.
   not treated as aliases.
 - Constructor/per-invocation workers establish real initialized inputs. Public
   reusable facades retain their existing reset and failure-publication behavior.
-- Parser `payload_node` accepts a required node_interface before forwarding it to
+- Parser `payload_node` accepts a required node_specialization before forwarding it to
   the optional-payload constructor. This separates concrete-to-interface conversion
   from nullable wrapping without copying the payload.
 - Parser `error_message` formats a string; call sites construct RuntimeException.
@@ -64,3 +64,18 @@ Validation: `build/native-token-uint32-01` passed all 142 PHP/native comparisons
 executed 48 emitted programs. The final private-field rename to `$_text` was then
 checked by incremental native rebuild and sample parity. Required-field conversion
 regressions and the portability regression suite also passed.
+
+AST contract follow-up: the payload interface is `node_specialization`.
+`Syntax_Nodes` now rejects inconsistent binding optional fields/classification and
+parameter reference-token presence before parser publication. Checks are local;
+children are not traversed again. PHP tests enumerate 48 binding states and four
+parameter states.
+
+Three direct scope links opt into native `weak<scope>` fields: scope.parent,
+block_specialization.scope and collected_name.scope. Consumers explicitly acquire
+through `weakref_get`; PHP's facade preserves ordinary strong references. This does
+not convert every documentary weak tag or reclaim every model cycle. STAN now knows
+the existing runtime weakref_get primitive. Candidate analysis reports zero blocking
+diagnostics, 154 advisory errors and 45 warnings. PHP and conversion/emission tests
+passed; no native build/run was performed for this change. See
+`specs/portability/weak_fields.md` for the expiration/owner-lifetime contract.

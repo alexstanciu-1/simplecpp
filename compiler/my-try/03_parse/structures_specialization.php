@@ -7,7 +7,7 @@
  */
 namespace scpp\compiler;
 
-final class call_specialization implements node_interface
+final class call_specialization implements node_specialization
 {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -34,7 +34,7 @@ final class call_specialization implements node_interface
 }
 
 /** The body block references a file-owned local scope and an ordered statement list. */
-final class function_specialization implements node_interface
+final class function_specialization implements node_specialization
 {
 	/** Ordered formal names and declaration token indexes. */
 	public array $template_parameters /** hash<int> */ = [];
@@ -60,7 +60,7 @@ final class function_specialization implements node_interface
 	}
 }
 
-final class parameter_specialization implements node_interface {
+final class parameter_specialization implements node_specialization {
 	public passing_mode $mode = passing_mode::value;
 	/** Null for value parameters; present exactly when mode is reference.
 	 * @storage.index token_list.tokens
@@ -75,7 +75,7 @@ final class parameter_specialization implements node_interface {
 }
 
 /** Shared payload for a file body or a block that introduces a scope. */
-final class block_specialization implements node_interface
+final class block_specialization implements node_specialization
 {
 	/**
 	 * Ordered object list of child nodes.
@@ -88,7 +88,7 @@ final class block_specialization implements node_interface
 	 * @storage.reference parsed_file.scopes
 	 * @reference.weak
 	 */
-	public scope $scope;
+	public scope $scope /** weak<scope> */;
 
 	public function __construct()
 	{
@@ -97,7 +97,7 @@ final class block_specialization implements node_interface
 }
 
 /** Binary and assignment expressions share operands; their node kinds retain the distinction. */
-final class binary_specialization implements node_interface {
+final class binary_specialization implements node_specialization {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -111,7 +111,7 @@ final class binary_specialization implements node_interface {
 }
 
 /** An expression used as a statement owns its terminating semicolon here. */
-final class expression_statement_specialization implements node_interface {
+final class expression_statement_specialization implements node_specialization {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -121,7 +121,7 @@ final class expression_statement_specialization implements node_interface {
 }
 
 /** expression is null for a bare return; keyword and semicolon remain required. */
-final class return_specialization implements node_interface {
+final class return_specialization implements node_specialization {
 	/** @storage.index token_list.tokens */
 	public int $keyword_token_index;
 	/** Syntax child owned through this link.
@@ -137,7 +137,7 @@ final class return_specialization implements node_interface {
  * equals_token_index and value are either both present or both absent.
  * A typed declaration may omit its initializer; an untyped write requires a value.
  */
-final class binding_specialization implements node_interface
+final class binding_specialization implements node_specialization
 {
 	public binding_kind $classification = binding_kind::unresolved;
 	/** @storage.index token_list.tokens */
@@ -161,7 +161,7 @@ final class binding_specialization implements node_interface
 }
 
 /** Fixed extent is syntax until preparation checks and normalizes it. */
-final class array_type_specialization implements node_interface {
+final class array_type_specialization implements node_specialization {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -172,7 +172,7 @@ final class array_type_specialization implements node_interface {
 	public ast_node $count;
 }
 
-final class array_literal_specialization implements node_interface {
+final class array_literal_specialization implements node_specialization {
 	/**
 	 * Ordered object list of child nodes.
 	 * @storage.owner
@@ -185,7 +185,7 @@ final class array_literal_specialization implements node_interface {
 	}
 }
 
-final class index_specialization implements node_interface {
+final class index_specialization implements node_specialization {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -196,7 +196,7 @@ final class index_specialization implements node_interface {
 	public ast_node $index;
 }
 
-final class struct_specialization implements node_interface
+final class struct_specialization implements node_specialization
 {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -212,7 +212,7 @@ final class struct_specialization implements node_interface
 	}
 }
 
-final class field_specialization implements node_interface {
+final class field_specialization implements node_specialization {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
 	/** Syntax child owned through this link.
@@ -221,7 +221,7 @@ final class field_specialization implements node_interface {
 	public ast_node $type_syntax;
 }
 
-final class field_access_specialization implements node_interface {
+final class field_access_specialization implements node_specialization {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */

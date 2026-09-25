@@ -64,6 +64,8 @@ final class StanDependencyResolver
 			'async_wait',
 			'enum_value',
 			'enum_name',
+			// Runtime catalog: weakref_get(weak_p<T>) locks to a possibly empty shared handle.
+			'weakref_get',
 			'enum_from_value',
 			'vector_reserve',
 			'vector_capacity',

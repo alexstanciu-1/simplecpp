@@ -13,6 +13,11 @@ require_once __DIR__ . "/lock_reservation.php";
 require_once __DIR__ . "/processes.php";
 require_once __DIR__ . "/datetime.php";
 
+/** PHP retains ordinary references; native weakref_get locks the annotated weak field. */
+function weakref_get(?object $value): ?object {
+    return $value;
+}
+
 /** Required identity-preserving object cast; target class stays literal in portable source. */
 function object_cast(?object $value, string $target): object {
     if (!$value instanceof $target) {

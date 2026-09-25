@@ -23,7 +23,7 @@ final class LLVM_Struct_Preparation
 				if ($entry->kind !== collected_name_kind::struct_declaration) {
 					continue;
 				}
-				if (isset($policy->types[$entry->name]) || (q_count($entry->scope->types[$entry->name]) !== 1)) {
+				if (isset($policy->types[$entry->name]) || (q_count(object_cast(weakref_get($entry->scope), scope::class)->types[$entry->name]) !== 1)) {
 					throw new \RuntimeException('Conflicting struct type: ' . $entry->name);
 				}
 				$type = new llvm_struct_type();
@@ -68,7 +68,7 @@ final class LLVM_Struct_Preparation
 		foreach ($file->source->field_references as $index)
 		{
 			$entry = $entries[$index];
-			if ($entry->scope !== Syntax_Nodes::block_data($function->body)->scope) {
+			if (object_cast(weakref_get($entry->scope), scope::class) !== object_cast(weakref_get(Syntax_Nodes::block_data($function->body)->scope), scope::class)) {
 				continue;
 			}
 			$base = Syntax_Nodes::field_access_data($entry->node)->base;

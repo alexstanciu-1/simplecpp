@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 // Fixed global authoring names; php is the internal implementation, target the native binding.
 return [
+	'weakref_get' => array ('php' => 'scpp\\weakref_get', 'target' => 'weakref_get', 'arity' => 1),
 	'object_cast' => array ('php' => 'scpp\\object_cast', 'target' => 'scpp_portability_object_cast', 'arity' => 2),
 	'dt_sleep_ms' => array ( 'php' => 'scpp\\dt_sleep_ms', 'target' => 'dt_sleep_ms', 'arity' => 1, ),
 	'fs_read_snapshot' => array ( 'php' => 'scpp\\fs_read_snapshot', 'target' => 'scpp_portability_fs_read_snapshot', 'arity' => 3, ),

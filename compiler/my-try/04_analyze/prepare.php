@@ -13,9 +13,11 @@ final class Name_Preparation
 	{
 		$result = new prepared_names();
 		$entries /** Storage<collected_name> */ = $file->entries;
-		foreach ($file->defined_elements as $index) {
+		foreach ($file->defined_elements as $index)
+		{
 			$entry = $entries[$index];
-			if (($entry->kind === collected_name_kind::variable_declaration) && isset($entry->scope->template_parameters[$entry->name])) {
+			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
+			if (($entry->kind === collected_name_kind::variable_declaration) && isset($entry_scope->template_parameters[$entry->name])) {
 				throw new \RuntimeException('Variable conflicts with template parameter: ' . $entry->name);
 			}
 			$result->declarations[$entry->token_index] = $entry;
@@ -27,9 +29,10 @@ final class Name_Preparation
 		foreach ($references as $index)
 		{
 			$entry = $entries[$index];
+			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$candidates /** vector<collected_name> */ = [];
-			if (isset($entry->scope->variables[$entry->name])) {
-				$candidates = $entry->scope->variables[$entry->name];
+			if (isset($entry_scope->variables[$entry->name])) {
+				$candidates = $entry_scope->variables[$entry->name];
 			}
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("LLVM experiment needs one same-file declaration for " . $entry->name . " at token " . $entry->token_index));
@@ -45,7 +48,8 @@ final class Name_Preparation
 		foreach ($file->function_references as $index)
 		{
 			$entry = $entries[$index];
-			$current_scope = $entry->scope;
+			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
+			$current_scope = $entry_scope;
 			$candidates /** vector<collected_name> */ = [];
 			while (true)
 			{
@@ -56,10 +60,11 @@ final class Name_Preparation
 				if (q_count($candidates) !== 0) {
 					break;
 				}
-				if ($current_scope->parent === null) {
+				$parent = weakref_get($current_scope->parent);
+				if ($parent === null) {
 					break;
 				}
-				$current_scope = object_cast($current_scope->parent, scope::class);
+				$current_scope = object_cast($parent, scope::class);
 			}
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("Expected one function target for " . $entry->name . " at " . $file->source->file->path . ": token " . $entry->token_index));
@@ -69,7 +74,8 @@ final class Name_Preparation
 		foreach ($file->type_references as $index)
 		{
 			$entry = $entries[$index];
-			$current_scope = $entry->scope;
+			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
+			$current_scope = $entry_scope;
 			while (true)
 			{
 				if (isset($current_scope->template_parameters[$entry->name])) {
@@ -87,10 +93,11 @@ final class Name_Preparation
 					$result->types[$entry->token_index] = $type_candidates[0];
 					break;
 				}
-				if ($current_scope->parent === null) {
+				$parent = weakref_get($current_scope->parent);
+				if ($parent === null) {
 					break;
 				}
-				$current_scope = object_cast($current_scope->parent, scope::class);
+				$current_scope = object_cast($parent, scope::class);
 			}
 		}
 		return $result;

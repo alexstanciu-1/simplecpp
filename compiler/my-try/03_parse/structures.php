@@ -56,7 +56,8 @@ enum passing_mode {
 	case reference;
 }
 
-interface node_interface {
+/** Marker for the concrete payload owned by an AST node. */
+interface node_specialization {
 }
 
 final class ast_node {
@@ -69,7 +70,7 @@ final class ast_node {
 	 * Kind/payload agreement is validated by Syntax_Nodes.
 	 * @ownership owner
 	 */
-	public ?node_interface $specialization = null;
+	public ?node_specialization $specialization = null;
 }
 
 final class scope
@@ -80,7 +81,7 @@ final class scope
 	 * @storage.reference parsed_file.scopes
 	 * @reference.weak
 	 */
-	public ?scope $parent = null;
+	public ?scope $parent /** weak<scope> */ = null;
 	public bool $function_boundary = false;
 	/** Template name to owner-local slot. */
 	public array $template_parameters /** hash<int> */ = [];

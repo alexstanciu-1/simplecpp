@@ -316,3 +316,7 @@ For interface-held compiler records, use [checked shared-object access](object_c
 Literal instanceof tests do not change the static type of a handle; payload accessors
 perform explicit object_cast calls. PHP and generated-C++ inspection are proved;
 native compilation remains pending.
+
+For native-only non-retaining links, see [weak object fields](weak_fields.md).
+PHP keeps ordinary references; use explicit `weakref_get` acquisition in portable
+source and maintain a real strong owner for the target's required lifetime.

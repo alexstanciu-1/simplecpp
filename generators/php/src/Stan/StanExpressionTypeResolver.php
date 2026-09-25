@@ -2388,6 +2388,16 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
+		// Generic runtime acquisition. Arity is known; the native template owns T.
+		// Do not pretend STAN inferred the result's record type from a weak field.
+		$catalog['weakref_get'] = [
+			'name' => 'weakref_get',
+			'namespace' => null,
+			'params' => [['name' => 'value', 'type' => 'mixed']],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
 		$catalog['async_sleep_ms'] = [
 			'name' => 'async_sleep_ms',
 			'namespace' => null,

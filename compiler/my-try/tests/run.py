@@ -31,6 +31,8 @@ def verify(root, output):
     (output / "tokenizer.log").write_text(tokenizer.stdout + tokenizer.stderr)
     ast = run(["php", str(root / "tests/ast.php")])
     (output / "ast.log").write_text(ast.stdout + ast.stderr)
+    invariants = run(["php", str(root / "tests/ast_invariants.php")])
+    (output / "ast_invariants.log").write_text(invariants.stdout + invariants.stderr)
     model = run(["php", str(root / "tests/model.php")])
     (output / "model.log").write_text(model.stdout + model.stderr)
 

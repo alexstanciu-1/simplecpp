@@ -1,7 +1,7 @@
 # Checked shared-object access
 Doc Status: supporting
 
-The compiler retains `ast_node.specialization` as an optional `node_interface`
+The compiler retains `ast_node.specialization` as an optional `node_specialization`
 handle. Syntax_Nodes owns concrete payload accessors. Each returns the same object
 through an explicit checked cast; it does not copy data or alter the AST graph.
 
@@ -31,7 +31,7 @@ A present nullable object is accepted; empty nullable fails. The native narrowin
 path requires a polymorphic interface/base (or an ordinary statically valid upcast).
 Unsupported nonpolymorphic narrowing fails at C++ instantiation rather than guessing
 object layout. Generated interfaces now have a virtual destructor, including empty
-interfaces such as node_interface. This adds normal polymorphic-object overhead to
+interfaces such as node_specialization. This adds normal polymorphic-object overhead to
 implementations; no compact AST layout claim is made.
 
 ## instanceof

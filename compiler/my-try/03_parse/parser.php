@@ -465,13 +465,13 @@ final class Parser_Run
 	}
 
 	/** Stabilize the concrete payload as an interface before nullable wrapping. */
-	private function payload_node(node_kind $kind, int $start, node_interface $specialization): ast_node
+	private function payload_node(node_kind $kind, int $start, node_specialization $specialization): ast_node
 	{
 		return $this->node($kind, $start, $specialization);
 	}
 
 	/** Construct a node with its directly owned specialization. */
-	private function node(node_kind $kind, int $start, ?node_interface $specialization = null): ast_node
+	private function node(node_kind $kind, int $start, ?node_specialization $specialization = null): ast_node
 	{
 		Syntax_Nodes::validate_payload($kind, $specialization);
 		$node = new ast_node();

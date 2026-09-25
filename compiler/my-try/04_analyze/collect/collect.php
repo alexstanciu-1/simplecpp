@@ -67,14 +67,15 @@ final class Symbol_Collector
 		foreach ($this->file->defined_elements as $index)
 		{
 			$entry = $entries[$index];
+			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			if ($entry->kind === collected_name_kind::function_declaration) {
-				$entry->scope->functions[$entry->name][] = $entry;
+				$entry_scope->functions[$entry->name][] = $entry;
 			}
 			elseif ($entry->kind === collected_name_kind::struct_declaration) {
-				$entry->scope->types[$entry->name][] = $entry;
+				$entry_scope->types[$entry->name][] = $entry;
 			}
 			else {
-				$entry->scope->variables[$entry->name][] = $entry;
+				$entry_scope->variables[$entry->name][] = $entry;
 			}
 		}
 		$this->finished = true;
