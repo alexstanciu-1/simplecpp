@@ -130,7 +130,7 @@ final class Model_Test
 		$old_tokens->file->content = $old_content;
 		$compiler->exec();
 		// Corrupt the first token only to exercise parse failure after a successful run.
-		Model::$tokens[0]->tokens[0]->text = ')';
+		Model::$tokens[0]->tokens[0] = new token(0, 1, ')');
 		try {
 			$compiler->parse();
 			throw new \LogicException('Expected parse failure');
@@ -201,7 +201,7 @@ final class Model_Test
 			$file->tokens = $old;
 			$expected = [[0, 6, '$value'], [7, 1, '='], [9, 2, '12'], [11, 1, ';']];
 			foreach ($old->tokens as $index => $token) {
-				if ([$token->offset, $token->length, $token->text] !== $expected[$index]) {
+				if ([$token->offset, $token->length, $token->text()] !== $expected[$index]) {
 					throw new \LogicException('Token published incomplete or incorrect span');
 				}
 			}
@@ -234,8 +234,7 @@ final class Model_Test
 	private static function check_assigned_position(): void
 	{
 		$source = new token_list();
-		$token = new token();
-		$token->text = 'name';
+		$token = new token(0, 4, 'name');
 		$source->tokens[] = $token;
 		$collector = new Symbol_Collector($source);
 		$node = new ast_node();

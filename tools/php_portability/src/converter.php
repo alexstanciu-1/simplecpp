@@ -645,6 +645,14 @@ final class Converter {
 				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . ($nullable ? 'nullable<' . $collection . '>' : $collection) . $initializer . ';', $at);
 				continue;
 			}
+			// Explicit compact required integer fields; PHP retains its int carrier.
+			if (!$nullable && $type[1] === 'int' && ($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_DOC_COMMENT) {
+				$annotation = $this->significant();
+				if ($this->localAnnotation($annotation) !== 'uint32') { $this->fail($annotation[2], 'integer field annotation must be uint32'); }
+				$this->expect(';');
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' uint32;', $at);
+				continue;
+			}
 			if (!$nullable && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === ';') {
 				if (in_array(strtolower($type[1]), ['mixed', 'object', 'iterable', 'void', 'never', 'self', 'parent', 'static'], true)) {
 					$this->fail($at, 'required field needs a concrete scalar or named type');

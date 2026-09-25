@@ -7,10 +7,22 @@
 namespace scpp\compiler;
 
 final class token {
-	public int $offset;
-	public int $length;
-	# only in PHP, if we move to PHP++ text will be virtual via a string view
-	public string $text;
+	public int $offset /** uint32 */;
+	public int $length /** uint32 */;
+	// Retained spelling for now; a native string view is a future representation.
+	protected string $_text;
+
+	public function __construct(int $offset, int $length, string $text)
+	{
+		$this->offset = $offset;
+		$this->length = $length;
+		$this->_text = $text;
+	}
+
+	public function text(): string
+	{
+		return $this->_text;
+	}
 }
 
 /** One file's retained source and ordered token records; no scanner state. */

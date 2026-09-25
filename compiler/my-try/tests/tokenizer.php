@@ -19,7 +19,7 @@ for ($value = 0; $value < 256; $value++) {
 		token_check(token_scan($byte)->tokens->is_empty());
 	} elseif (str_contains($single, $byte)) {
 		$tokens = token_scan($byte)->tokens;
-		token_check(count($tokens) === 1 && $tokens[0]->offset === 0 && $tokens[0]->length === 1 && $tokens[0]->text === $byte);
+		token_check(count($tokens) === 1 && $tokens[0]->offset === 0 && $tokens[0]->length === 1 && $tokens[0]->text() === $byte);
 	} else {
 		$failed = false;
 		try { token_scan($byte); } catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'bytes.phs: byte 0'); }
@@ -31,7 +31,7 @@ $expected = [[4, 7, '$abc_09'], [11, 1, '='], [12, 3, '007'], [15, 1, ';'], [16,
 $tokens = token_scan($input)->tokens;
 token_check(count($tokens) === count($expected));
 foreach ($tokens as $index => $token) {
-	token_check([$token->offset, $token->length, $token->text] === $expected[$index]);
+	token_check([$token->offset, $token->length, $token->text()] === $expected[$index]);
 }
 foreach (['$', '$0', '12a', '1.', '==', '=>', '-', "\0", "\xc3\xa9"] as $invalid) {
 	$failed = false;

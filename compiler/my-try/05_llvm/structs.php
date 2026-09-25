@@ -33,9 +33,9 @@ final class LLVM_Struct_Preparation
 				foreach (Syntax_Nodes::struct_data($entry->node)->fields as $field_node)
 				{
 					$syntax = Syntax_Nodes::field_data($field_node);
-					$spelling = $tokens[$syntax->name_token_index]->text;
+					$spelling = $tokens[$syntax->name_token_index]->text();
 					$name = string_byte_slice($spelling, 1, string_byte_len($spelling) - 1);
-					$source_type = $tokens[$syntax->type_syntax->token_index]->text;
+					$source_type = $tokens[$syntax->type_syntax->token_index]->text();
 					if (!isset($policy->types[$source_type])) {
 						throw new \RuntimeException('Struct proof supports only int fields');
 					}

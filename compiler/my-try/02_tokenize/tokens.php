@@ -45,10 +45,8 @@ final class Tokenizer
 
 			$start = $offset;
 			$offset = $this->token_end($start);
-			$span = new token();
-			$span->offset = $start;
-			$span->length = $offset - $start;
-			$span->text = string_byte_slice($this->content, $start, $span->length);
+			$span_length = $offset - $start;
+			$span = new token($start, $span_length, string_byte_slice($this->content, $start, $span_length));
 			$tokens[] = $span;
 		}
 		return $result;

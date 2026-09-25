@@ -179,7 +179,7 @@ final class Parser_Run
 		$parameters /** Storage<ast_node> */ = $function->parameters;
 		$function->name_token_index = $this->position++;
 		$function->template_parameters = $formals;
-		$function_name = $token_rows[$function->name_token_index]->text;
+		$function_name = $token_rows[$function->name_token_index]->text();
 		if (isset($formals[$function_name])) {
 			throw new \RuntimeException($this->error_message('Template parameter conflicts with function name'));
 		}
@@ -484,7 +484,7 @@ final class Parser_Run
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
 		if (!isset($token_rows[$this->position])) { return ''; }
-		return $token_rows[$this->position]->text;
+		return $token_rows[$this->position]->text();
 	}
 
 	private function expect(string $text): int

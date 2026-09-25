@@ -36,7 +36,7 @@ def main():
 enum Phase { case ready; }
 final class Row { public int $value; }
 final class Record {
-    public int $offset;
+    public int $offset /** uint32 */;
     public bool $complete;
     public string $label;
     public Phase $phase;
@@ -111,6 +111,7 @@ echo $record->ratio < $next->ratio ? 'float' : 'bad', "\n";
     run(['php', TOOLS / 'check.php', source])
     run(['php', TOOLS / 'convert.php', source, output])
     generated = (output / 'model.phs').read_text()
+    assert 'public $offset uint32;' in generated
     assert 'public Row $row;' in generated
     assert 'public static Record $root;' in generated
     assert 'public $rows vector<Row>;' in generated
@@ -119,6 +120,8 @@ echo $record->ratio < $next->ratio ? 'float' : 'bad', "\n";
     with tempfile.TemporaryDirectory(prefix='scpp-required-field-reject-') as temp:
         bad = Path(temp) / 'php'; bad.mkdir()
         cases = [
+            'class Bad { public int $value /** string */; }',
+            'class Bad { public int $value /** uint32 */ = 0; }',
             'class Bad { public $value; }',
             'class Bad { public mixed $value; }',
             'class Bad { public object $value; }',

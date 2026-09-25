@@ -53,3 +53,14 @@ individual review rather than blanket dismissal as false positives.
 The executable uses a serial test driver reading `build/native-01/request.txt`;
 it is not a packaged command-line release. See `tools/native_validate.py` and the
 saved `specs/planning/compiler_migration/results/my-try-native-success-01` evidence.
+
+Token representation follow-up: offset and length now use required `uint32` field
+annotations (PHP `int`, native unsigned 32-bit). The converter accepts that explicit
+field shape. Protected `$_text` is initialized with both spans in the token
+constructor and exposed by `text()`. No string-view representation is implemented
+in this change. Callers must keep span values within 0..4294967295.
+
+Validation: `build/native-token-uint32-01` passed all 142 PHP/native comparisons and
+executed 48 emitted programs. The final private-field rename to `$_text` was then
+checked by incremental native rebuild and sample parity. Required-field conversion
+regressions and the portability regression suite also passed.

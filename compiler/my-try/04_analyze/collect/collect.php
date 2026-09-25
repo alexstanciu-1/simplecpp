@@ -26,7 +26,7 @@ final class Symbol_Collector
 		$entry = new collected_name();
 		$entry->file = $this->file;
 		$tokens /** Storage<token> */ = $this->file->source->tokens;
-		$text = $tokens[$token_index]->text;
+		$text = $tokens[$token_index]->text();
 		$entry->name = string_byte_starts_with($text, '$') ? string_byte_slice($text, 1, string_byte_len($text) - 1) : $text;
 		$entry->kind = $kind;
 		$entry->scope = $scope;

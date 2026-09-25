@@ -12,7 +12,7 @@ trait LLVM_Expressions
 	private function to_llvm_integer_literal(ast_node $node): llvm_operand
 	{
 		$tokens /** Storage<token> */ = $this->prepared->source->source->tokens;
-		$text = $tokens[$node->token_index]->text;
+		$text = $tokens[$node->token_index]->text();
 		$text = LLVM_Text::decimal($text);
 		$text = $text === '' ? '0' : $text;
 		$maximum = $this->policy->integer_max;

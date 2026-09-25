@@ -7,10 +7,15 @@ an initializer. Visibility is preserved; no type resolution is added.
 
 ```php
 public int $offset;
+public int $compact_offset /** uint32 */;
 public Row $row;
 public array $rows /** vector<Row> */;
 public static Record $root;
 ```
+
+The optional `uint32` annotation on a required nonnullable `int` field emits an
+unsigned 32-bit native field; PHP retains its `int` carrier. Authors must keep values
+within 0..4294967295. This annotation currently requires an omitted initializer.
 
 These emit native declarations with the same nonnullable types and no explicit
 initializer. Native type default construction supplies the initial storage state;

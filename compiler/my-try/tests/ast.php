@@ -114,7 +114,7 @@ final class AST_Test
 		$reference = $function->parameters[1]->specialization;
 		self::check($value->mode === passing_mode::value && $value->reference_token_index === null);
 		self::check($reference->mode === passing_mode::reference && $reference->reference_token_index !== null);
-		self::check($result->tokens->tokens[$reference->reference_token_index]->text === '&');
+		self::check($result->tokens->tokens[$reference->reference_token_index]->text() === '&');
 		self::check($function->body->specialization->children[0]->specialization->expression === null);
 		$declaration = $children[1]->specialization;
 		self::check($declaration->type_syntax !== null && $declaration->target === null && $declaration->equals_token_index === null && $declaration->value === null);

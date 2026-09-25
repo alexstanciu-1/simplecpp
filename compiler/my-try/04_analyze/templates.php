@@ -96,7 +96,7 @@ final class Template_File_Checker
 			return $bindings[$slot];
 		}
 		$tokens /** Storage<token> */ = $file->source->source->tokens;
-		$name = $tokens[$node->token_index]->text;
+		$name = $tokens[$node->token_index]->text();
 		if (!isset($this->context->policy->types[$name])) {
 			throw new \RuntimeException('Template proof supports only int, void and bound type parameters');
 		}

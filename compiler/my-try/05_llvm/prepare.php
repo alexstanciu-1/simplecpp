@@ -145,7 +145,7 @@ final class LLVM_Preparation_Run
 	{
 		if (!isset($function->file->names->template_slots[$syntax->token_index])) {
 			$tokens /** Storage<token> */ = $function->file->source->source->tokens;
-			return $tokens[$syntax->token_index]->text;
+			return $tokens[$syntax->token_index]->text();
 		}
 		$slot /** int */ = $function->file->names->template_slots[$syntax->token_index];
 		if (!isset($function->arguments[$slot])) {
@@ -215,7 +215,7 @@ final class LLVM_Preparation_Run
 				if ($type !== $this->policy->integer_type) {
 					throw new \RuntimeException('Fixed arrays currently require int elements');
 				}
-				$text = LLVM_Text::decimal($tokens[$array_syntax->count->token_index]->text);
+				$text = LLVM_Text::decimal($tokens[$array_syntax->count->token_index]->text());
 				$maximum = '' . \PHP_INT_MAX;
 				if (LLVM_Text::decimal_exceeds($text, $maximum)) {
 					throw new \RuntimeException('Fixed array size exceeds compiler capacity');
