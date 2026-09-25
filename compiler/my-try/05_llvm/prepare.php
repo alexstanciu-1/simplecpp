@@ -43,7 +43,7 @@ final class LLVM_Preparation_Run
 	/** Bind files first, register roots, then process demanded instances. */
 	public function prepare_program(Storage $sources /** Storage<collected_file> */): Storage /** Storage<llvm_prepared_file> */
 	{
-		$files /** Storage<llvm_prepared_file> */ = new Storage /** Storage<llvm_prepared_file> */();
+		$files /** Storage<llvm_prepared_file> */ = new Storage();
 		foreach ($sources as $index => $source)
 		{
 			$file = new llvm_prepared_file();

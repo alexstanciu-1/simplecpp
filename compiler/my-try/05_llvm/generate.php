@@ -12,7 +12,7 @@ final class LLVM_Generator
 	 */
 	public function generate(Storage $files /** Storage<llvm_prepared_file> */, llvm_policy $policy): Storage /** Storage<llvm_module> */
 	{
-		$outputs /** Storage<llvm_module> */ = new Storage /** Storage<llvm_module> */();
+		$outputs /** Storage<llvm_module> */ = new Storage();
 		$entry_count = 0;
 		foreach ($files as $prepared)
 		{

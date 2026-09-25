@@ -13,7 +13,7 @@ final class Module_Loader
 	public static function init(module $module, string $path): void
 	{
 		$module->path = $path;
-		$files /** Storage<file> */ = new Storage /** Storage<file> */();
+		$files /** Storage<file> */ = new Storage();
 		$module->files = $files;
 
 		$names /** vector<string> */ = [];

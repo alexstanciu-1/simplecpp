@@ -78,7 +78,7 @@ for directly owned records such as scopes; document their actual owners.
    collection. Both inherit Storage_Abstract for common behavior. Native records
    use shared_p<T>; capacity is an
    optional constructor argument. No key-mode or readonly template arguments remain.
-   Storage construction needs an explicit template comment: `new Storage /** Storage<token> */()`. See helpers/STORAGE.md and docs/conversion_review.md. AST nodes
+   Prefer `$tokens /** Storage<token> */ = new Storage();` for direct local construction. The repeated construction annotation remains accepted. Property assignments and other construction sites still need `new Storage /** Storage<token> */()`. See helpers/STORAGE.md and docs/conversion_review.md. AST nodes
    own payloads and nested Storage child lists; do not recreate parallel node/payload
    registries or Storage_View infrastructure without a concrete approved need.
 
