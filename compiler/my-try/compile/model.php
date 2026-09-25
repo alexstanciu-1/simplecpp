@@ -3,7 +3,8 @@
 /*
  * Role: shared owner of the retained compiler object graph.
  * Used by: Compiler stages, host reporting and behavioral tests.
- * Flow: modules -> tokens -> parsing/collection -> LLVM output.
+ * Flow: modules -> tokens -> parsing/collection -> preparation -> C++ output.
+ * Experimental LLVM output remains separate.
  * Graph boundaries and mutation owners are documented in ../MODEL.md.
  */
 namespace scpp\compiler;
@@ -31,6 +32,8 @@ final class Model
 	 * Directly owned record; not an element of a Storage.
 	 */
 	public static scope $global_scope;
+	/** Built-in and runtime definitions; parent of global scope. @ownership owner */
+	public static scope $language_scope;
 	/**
 	 * Numeric storage of collected_file records.
 	 * @storage.owner
@@ -41,6 +44,10 @@ final class Model
 	 * @storage.owner
 	 */
 	public static Storage $llvm_files /** Storage<llvm_module> */;
+	/** Complete source preparation for C++ generation. @storage.owner */
+	public static Storage $prepared_files /** Storage<prepared_file> */;
+	/** Final C++ artifacts. @storage.owner */
+	public static Storage $cpp_files /** Storage<cpp_module> */;
 
 	/** Start a fresh compilation without retaining output or indexes from an earlier run. */
 	public static function reset(): void
@@ -65,9 +72,19 @@ final class Model
 	public static function reset_syntax(): void
 	{
 		self::$syntax_files = new Storage /** Storage<parsed_file> */();
+		self::$language_scope = new scope();
+		Language_Types::install(self::$language_scope);
 		self::$global_scope = new scope();
+		self::$global_scope->set_parent(self::$language_scope);
 		self::$collected_files = new Storage /** Storage<collected_file> */();
 		self::reset_llvm();
+		self::reset_cpp();
+	}
+
+	public static function reset_cpp(): void
+	{
+		self::$prepared_files = new Storage /** Storage<prepared_file> */();
+		self::$cpp_files = new Storage /** Storage<cpp_module> */();
 	}
 
 	public static function reset_llvm(): void

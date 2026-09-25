@@ -38,7 +38,7 @@ try
 
 	file_put_contents($definition, 'function value(): int { return 2; }');
 	$compiler->update([$definition]);
-	$targets = Scope_Lookup::live(Model::$global_scope->functions['value']);
+	$targets = Scope_Lookup::live(Model::$global_scope->functions_named('value'));
 	smoke_require(count($targets) === 1, 'Update lost unique function target');
 	smoke_require($targets[0]->changes === SYNC_BODY_CHANGED, 'Wrong body-change flags');
 	smoke_require(Model::$syntax_files[0] !== $old_syntax, 'Changed syntax was reused');

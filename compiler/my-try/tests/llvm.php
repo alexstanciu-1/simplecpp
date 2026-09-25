@@ -45,8 +45,8 @@ final class LLVM_Test
 			}
 			foreach ($file->defined_elements as $index) {
 				$entry = $file->entries[$index];
-				$pool = $entry->kind === collected_name_kind::function_declaration ? $entry->scope->functions : $entry->scope->variables;
-				if (!in_array($entry, $pool[$entry->name], true)) {
+				$pool = $entry->kind === collected_name_kind::function_declaration ? $entry->scope->functions_named($entry->name) : $entry->scope->variables_named($entry->name);
+				if (!in_array($entry, $pool, true)) {
 					throw new \RuntimeException('Declaration collection changed');
 				}
 			}
@@ -176,9 +176,9 @@ final class LLVM_Test
 	private static function check_function_scope(collected_file $file, llvm_module $module): void
 	{
 		$global = $file->root->structure->scope;
-		$function = $global->functions['example'][0]->node->structure;
+		$function = $global->functions_named('example')[0]->node->structure;
 		$local = $function->body->structure->scope;
-		if (($function->body->kind !== node_kind::block) || ($local === $global) || ($local->parent !== $global) || !$local->function_boundary || (count($global->variables['a']) !== 1) || (count($local->variables['a']) !== 1)) {
+		if (($function->body->kind !== node_kind::block) || ($local === $global) || ($local->parent_scope() !== $global) || !$local->is_function() || (count($global->variables_named('a')) !== 1) || (count($local->variables_named('a')) !== 1)) {
 			throw new \RuntimeException('Incorrect block or scope ownership');
 		}
 		if ((count($module->functions) !== 2) || ($module->functions[1]->return_type !== 'void') || str_contains($module->text, 'call ')) {

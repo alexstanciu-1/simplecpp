@@ -39,3 +39,30 @@ final class template_check_context {
 	 */
 	public \SplObjectStorage $files /** hash<llvm_prepared_file, shared<collected_file>> */;
 }
+
+/** Resolved expression facts; syntax and declaration links reference the retained source. */
+final class prepared_expression {
+	public ast_node $syntax;
+	public type_definition $type;
+	/** Decimal value for integer literals; empty for other expressions. */
+	public string $literal = '';
+	public ?collected_name $declaration = null;
+}
+
+/** Declaration identity survives every use within this preparation invocation. */
+final class prepared_binding {
+	public ast_node $syntax;
+	public collected_name $declaration;
+	public binding_kind $classification;
+	public type_definition $type;
+	public prepared_expression $initializer;
+}
+
+/** Complete per-file facts; keys are existing source token positions, not persistent IDs. */
+final class prepared_file {
+	public collected_file $source;
+	/** Owns prepared expression records. */
+	public array $expressions /** hash<prepared_expression, int> */ = [];
+	/** Owns prepared binding records. */
+	public array $bindings /** hash<prepared_binding, int> */ = [];
+}

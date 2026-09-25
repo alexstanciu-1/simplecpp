@@ -6,12 +6,10 @@ semantics or blanket implementation authorization. Read current files before edi
 
 ## Next action
 
-Read [the catalog workflow](../catalog/README.md), then discuss
-[LIT-INT-001](../catalog/01_literals_locals.md#lit-int-001): `$a = 10;`.
-Do not start by implementing classes or redesigning the whole compiler. Agree the
-source behavior, required type facts, intended C++ and bounded proof for this first
-item with the user before implementation. Its first-assignment/inference behavior
-must be inspected; existing integer-literal parsing does not prove the entire row.
+The first `LIT-INT-001` slice is implemented; read
+[the integer S2S slice](s2s_integer_slice.md) and the completion evidence below.
+Continue the catalog discussion one item at a time. Do not infer broader literal,
+function, composite-type or multi-file support from this bounded implementation.
 
 Follow the existing chapter order. Pick one item, discuss it, split combined
 requirements, implement the agreed slice, record proof, and move on. If an item is
@@ -85,10 +83,84 @@ latency study's main gain was less native recompilation. Do not benchmark every
 literal spelling or assume shorter C++ is faster. The study's 1.5-second frontend
 allowance was assumed, not measured with this frontend.
 
+## Agreed multi-language direction
+
+Agreed 2026-09-25: PHS/PHP++ is the reference surface for the full canonical
+Simple C++ language model. Other source languages shape their ASTs toward that
+model and may expose subsets of it. This is a design direction, not a claim that
+every PHS feature is already implemented.
+
+Pipeline: source language -> canonical PHS-shaped AST -> shared preparation ->
+C++ emission. Develop one canonical model led by PHS/PHP++; no separate universal
+language abstraction is planned. The canonical AST represents language concepts,
+not incidental PHP token spelling. Frontends own source syntax and its mapping
+to those concepts; shared preparation and emission own the common generation path.
+
+Mappings must preserve the intended source behavior. A differing source operation
+must be expressed through supported canonical operations; if that is impossible,
+discuss extending the canonical model or leave the feature unsupported rather than
+silently changing its meaning.
+
+Current work develops this path through strict PHP++ / PHS examples, accepting
+straightforward legacy forms that fit the same model. Other frontend implementations
+are later work. Generation remains the first pass; comprehensive validation and
+semantic invalidation remain the second. This decision does not authorize a broad
+AST refactor or settle the first literal card's target C++.
+
+## Agreed type and scope direction
+
+Agreed 2026-09-25 during the first literal discussion:
+
+- Follow the Simple C++ type contract. LLVM was an experiment and does not define
+  canonical types, numeric defaults or the new S2S data model.
+- Hard-code language-defined types; runtime/library definitions can be loaded from
+  JSON using existing project conventions where applicable.
+- Keep native data compact, using supported fixed-width fields such as uint32 and
+  enums for categories, origins and strategies. Use strings for actual names and
+  spellings. Expand the model for future features only when they affect current work.
+- Encapsulate scope access behind methods so callers do not depend on its storage.
+  Keep scope lookup as the common name-resolution path; do not add a competing
+  type-name registry. The global scope has a LANGUAGE+RUNTIME scope as parent.
+  Preserve the distinction between lexical parents and file publication links.
+- For this generation pass, use ordinary lookup from the current scope through
+  its parents. Do not add special reserved-name or shadowing rejection to this slice.
+  Restrictions on declarations conflicting with defined/reserved language names
+  belong to the later validation/STAN pass; this is deferred enforcement, not a
+  permanent language guarantee that those declarations are legal.
+- Existing AST structures suffice for `$a = 10;`. Add shared resolved expression
+  types and binding results during preparation; keep C++ representation mapping
+  with generation. Constructed-type machinery is outside this slice.
+- Defer spelling-level compile-time optimizations to a final pass. The one-off
+  Clang comparison is evidence only, not a selected lowering policy.
+
+## First integer S2S completion
+
+Implemented the agreed compact type/scope model and `LIT-INT-001`. See
+[the slice notes](s2s_integer_slice.md) and
+[saved PHP/native evidence](../../../specs/planning/results/s2s_integer_01/README.md).
+Scope storage is private; global scope has a language/runtime parent. Built-in `int`
+is canonical signed 64-bit with a uint32 width field and enum categories. Source
+and built-in definitions have truthful provenance. Preparation retains resolved
+expression types and binding identities without changing the AST.
+
+`Compiler::exec_cpp` / `update_cpp` and host `s2s.php` select the new path. The old
+`exec` / `update` LLVM entrypoints remain regression infrastructure. Current C++
+coverage is one file of straight-line integer locals/reads/assignments and optional
+entry returns. Output uses typed literals with `auto`; no spelling optimization was
+adopted. Other literal forms and JSON import are not included.
+
+Proof: nine generated-C++ executions (including two independent int64 value/type
+probes), PHP source-purity/scope/update tests, native compiler S2S byte parity and
+execution, and all 142 existing native comparisons passed. Normal STAN-enabled
+native build: zero blocking compile errors, 294 advisory errors, 117 warnings.
+The candidate is the fingerprinted unversioned `/tmp/scpp-native-244` overlay;
+no new verified release pin is claimed. Final artifacts remain in memory/stdout;
+physical publication and build caching are outside this first slice.
+
 ## Current retained model and execution
 
-Model owns static module, token-list, parsed-file, collected-file, global-scope and
-LLVM-output roots. Storage is a numeric shared-object list; Keyed_Storage is the
+Model owns static module, token-list, parsed-file, collected-file, language/global
+scopes, prepared-file and C++/LLVM-output roots. Storage is a numeric shared-object list; Keyed_Storage is the
 string-keyed counterpart. No Storage_View layer remains. AST nodes are concrete
 subclasses of abstract ast_node, with attached node_structure data and private
 traversal links. Native weak scope/backlinks have explicit conversion support;
@@ -156,7 +228,7 @@ Run PHP lint and `python3 compiler/my-try/tools/style_check.py` for relevant edi
 Use focused conversion and native proofs at meaningful new-feature boundaries.
 Do not claim native support based only on successful PHP or conversion.
 
-Last full native evidence:
+Earlier full native evidence (superseded by the integer S2S proof above):
 [results/file-sync-native-01](../../../specs/planning/compiler_migration/results/file-sync-native-01/README.md).
 Normal STAN-enabled build passed 142 PHP/native comparisons (48 valid, 94 rejected),
 with all 48 valid LLVM outputs compiled/executed. Native preflight includes repeated

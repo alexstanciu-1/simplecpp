@@ -2,8 +2,8 @@
 
 /*
  * Role: coordinate the currently imported compiler stages.
- * Call map: init -> exec/update -> sync (private read/tokenize/parse, locked replacement) -> llvm.
- * Output: retained sources, syntax, collection and per-source LLVM modules.
+ * Call map: init -> exec/update -> sync (private read/tokenize/parse, locked replacement) -> cpp/llvm.
+ * Output: retained sources, syntax, collection and separately selected C++/LLVM artifacts.
  */
 namespace scpp\compiler;
 
@@ -30,8 +30,22 @@ final class Compiler
 			Model::$modules[] = $input_module;
 		}
 	}
-	/** Run the source pipeline through collection and the initial LLVM pass. */
+	/** Experimental LLVM entry remains available for existing regression callers. */
 	public function exec(): void
+	{
+		$this->sync_live();
+		$this->llvm();
+	}
+
+	/** Run the initial v0.2 C++ path without invoking LLVM preparation or emission. */
+	public function exec_cpp(): void
+	{
+		$this->sync_live();
+		$this->cpp();
+	}
+
+	/** Initial generation paths share the same source synchronization. */
+	private function sync_live(): void
 	{
 		$paths /** vector<string> */ = [];
 		foreach (Model::$modules as $input_module) {
@@ -42,7 +56,6 @@ final class Compiler
 			}
 		}
 		$this->sync($paths);
-		$this->llvm();
 	}
 
 	/** Apply file notifications, then rerun all existing resolution/preparation and generation. */
@@ -52,6 +65,12 @@ final class Compiler
 		$this->llvm();
 	}
 
+	public function update_cpp(array $paths /** vector<string> */): void
+	{
+		$this->sync($paths);
+		$this->cpp();
+	}
+
 	/** Initial compilation and later updates share private work and the same publication path. */
 	public function sync(array $paths /** vector<string> */): void
 	{
@@ -59,6 +78,7 @@ final class Compiler
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		Model::reset_llvm();
+		Model::reset_cpp();
 		foreach (Model::$modules as $input_module) {
 			foreach ($input_module->files as $source) {
 				$source->changes = $source->changes === \scpp\compiler\SYNC_DELETED ? \scpp\compiler\SYNC_DELETED : 0;
@@ -344,9 +364,7 @@ final class Compiler
 		}
 		// Remove replaced live references; keep actual deletions as tombstones in global indexes.
 		$global = Model::$global_scope;
-		$global->functions = self::retain_other($global->functions, $source->path);
-		$global->types = self::retain_other($global->types, $source->path);
-		$global->variables = self::retain_other($global->variables, $source->path);
+		$global->replace_source($source->path);
 		if ($position >= 0) {
 			$syntax->replace($position, $candidate);
 		}
@@ -377,26 +395,6 @@ final class Compiler
 			}
 		}
 		self::order_roots();
-	}
-
-	/** A replacement drops obsolete live references, never other files or deleted candidates. */
-	private static function retain_other(array $index /** hash<vector<collected_name>> */, string $path): array /** hash<vector<collected_name>> */
-	{
-		$result /** hash<vector<collected_name>> */ = [];
-		foreach ($index as $name => $entries)
-		{
-			foreach ($entries as $entry)
-			{
-				if ($entry->changes === \scpp\compiler\SYNC_DELETED) {
-					$result[$name][] = $entry;
-					continue;
-				}
-				if ($entry->file->source->file->path !== $path) {
-					$result[$name][] = $entry;
-				}
-			}
-		}
-		return $result;
 	}
 
 	/** Restore module/file order using a temporary identity index, including retained deleted files. */
@@ -537,32 +535,26 @@ final class Compiler
 	private static function publish_scope(parsed_file $parsed): void
 	{
 		$root_scope = object_cast(weakref_get(Syntax_Nodes::block_data($parsed->root)->scope), scope::class);
-		if (weakref_get($root_scope->publication) !== null) {
-			throw new \LogicException('Parsed file was already published');
-		}
-		$global = Model::$global_scope;
-		$entries /** Storage<collected_name> */ = $parsed->collection->entries;
-		foreach ($parsed->collection->defined_elements as $index)
-		{
-			$entry = $entries[$index];
-			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
-				continue;
-			}
-			$entry_scope = object_cast(weakref_get($entry->scope), scope::class);
-			if ($entry_scope !== $root_scope) {
-				continue;
-			}
-			if ($entry->kind === collected_name_kind::function_declaration) {
-				$global->functions[$entry->name][] = $entry;
-			}
-			elseif ($entry->kind === collected_name_kind::struct_declaration) {
-				$global->types[$entry->name][] = $entry;
-			}
-			else {
-				$global->variables[$entry->name][] = $entry;
+		scope::publish($root_scope, Model::$global_scope);
+	}
+
+	/** Publish complete preparation and C++ together; unsupported input leaves no stale output. */
+	public function cpp(): void
+	{
+		Model::reset_cpp();
+		$sources /** Storage<collected_file> */ = new Storage();
+		foreach (Model::$collected_files as $source) {
+			if ($source->source->file->changes !== \scpp\compiler\SYNC_DELETED) {
+				$sources->append($source);
 			}
 		}
-		$root_scope->publication = $global;
+		if (q_count($sources) !== 1) {
+			throw new \RuntimeException('The first C++ slice requires exactly one source file');
+		}
+		$prepared = (new Binding_Preparation($sources[0], Model::$language_scope))->prepare();
+		$output = (new CPP_Generator())->generate($prepared);
+		Model::$prepared_files[] = $prepared;
+		Model::$cpp_files[] = $output;
 	}
 
 	/** Prepare all sources and emit one LLVM module per source file. */

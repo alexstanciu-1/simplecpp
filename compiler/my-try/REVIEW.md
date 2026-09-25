@@ -29,6 +29,15 @@ that each PHP form is already supported by the portability converter.
 | `06_native/` | Host JSON, resource/process APIs and cleanup; keep configured Clang and separate build/execution results. |
 | `compile/` and `main.php` | Debug constant, dynamic-property report groups, report escaping/buffering, retained coordinator state and error reporting. |
 
+## v0.2 deferred reserved-name enforcement
+
+Agreed 2026-09-25: the LANGUAGE+RUNTIME parent of global scope participates
+in ordinary parent-chain lookup. During the generation pass, do not add special
+shadowing/reserved-name rejection. The later validation/STAN pass must apply the
+owning language contracts to declarations that conflict with defined/reserved names.
+This deferral does not establish unrestricted shadowing as permanent language semantics.
+See [the handoff decisions](docs/handoff_catalog_v02.md#agreed-type-and-scope-direction).
+
 ## Representation discipline
 
 - Ordered object lists use `Storage<T>`; string-keyed object collections use

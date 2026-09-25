@@ -29,7 +29,7 @@ store or Storage_View remains. Collection files own occurrence entries and work 
 LLVM modules own functions; functions own operands and blocks; blocks own text.
 
 file.tokens and parsed_file.collection are convenience links to Model results.
-collected_file.root mirrors parsed_file.root. collected_name.file/scope and scope.parent
+collected_file.root mirrors parsed_file.root. collected_name.file/scope and scope.enclosing
 are backward/context links; scope name maps index collection entries. AST operands
 and type syntax are direct child relationships. Collection/preparation node references
 point into parsed_file.root's syntax graph, not a nonexistent parsed_file.nodes store.
@@ -45,7 +45,7 @@ owner remains future work. Emission copies operand values into independent outpu
 
 ## Native scope observers
 
-`scope.parent`, `block_structure.scope` and `collected_name.scope` are native
+`scope.enclosing`, `block_structure.scope` and `collected_name.scope` are native
 weak fields. `parsed_file.scopes` and `Model.global_scope` remain strong owners.
 Assignments accept the existing shared records; reads use `weakref_get` to acquire
 a shared handle. Required block/occurrence scopes then use `object_cast` to reject
@@ -83,3 +83,19 @@ Their native weak `publication` link points to Model.global_scope after compiler
 publication. Global symbol pools reference the original collected_file entries;
 they do not move/copy declarations. Scope_Lookup preserves shared-global lookup
 rules. See work_queue.md; publication currently requires a serialized caller.
+
+## v0.2 scope/type ownership
+
+Scope fields are private. `parent_scope()` and `published_scope()` acquire the
+native weak observers; setters/publication methods preserve the existing owners.
+Model strongly owns the language/runtime scope and global scope. Global scope's
+parent observer reaches the language/runtime scope. Parsed-file scopes remain owned
+by parsed_file.scopes. Type definitions live in scope-owned Storage; publication
+shares their identity rather than manufacturing a second source definition.
+
+Canonical type links in prepared expression/binding records retain their definitions.
+Source links refer to the existing AST/occurrence graph; prepared records never point
+to a worker. Model owns complete prepared-file results and independent C++ artifacts.
+The preparation worker's source-order scope is transient and does not alter source
+scope membership. Parent lookup considers live source definitions before ascending,
+with reserved-name restrictions deferred to validation/STAN.

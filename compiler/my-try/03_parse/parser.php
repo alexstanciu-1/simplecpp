@@ -93,7 +93,7 @@ final class Parser_Run
 	/** Collect a named record and retain its ordered fields; no layout work belongs in parsing. */
 	private function struct_declaration(): ast_node
 	{
-		if ($this->current_scope->function_boundary) {
+		if ($this->current_scope->is_function()) {
 			throw new \RuntimeException($this->error_message('Local struct declarations are not supported yet'));
 		}
 		$start = $this->expect('struct');
@@ -146,7 +146,7 @@ final class Parser_Run
 	private function function_declaration(): ast_node
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
-		if ($this->current_scope->function_boundary) {
+		if ($this->current_scope->is_function()) {
 			throw new \RuntimeException($this->error_message('Nested function declarations are not implemented'));
 		}
 		$start = $this->position;
@@ -189,14 +189,14 @@ final class Parser_Run
 		$local_scope = new scope();
 		$scopes /** Storage<scope> */ = $this->syntax->scopes;
 		$scopes->append($local_scope);
-		$local_scope->parent = $this->current_scope;
-		$local_scope->function_boundary = true;
+		$local_scope->set_parent($this->current_scope);
+		$local_scope->mark_function();
 		$slots /** hash<int> */ = [];
 		$slot = 0;
 		foreach ($formals as $name => $token_index) {
 			$slots[$name] = $slot++;
 		}
-		$local_scope->template_parameters = $slots;
+		$local_scope->set_templates($slots);
 		$this->expect('(');
 		if ($this->text() !== ')')
 		{

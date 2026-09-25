@@ -71,15 +71,7 @@ final class Symbol_Collector
 				continue;
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
-			if ($entry->kind === collected_name_kind::function_declaration) {
-				$entry_scope->functions[$entry->name][] = $entry;
-			}
-			elseif ($entry->kind === collected_name_kind::struct_declaration) {
-				$entry_scope->types[$entry->name][] = $entry;
-			}
-			else {
-				$entry_scope->variables[$entry->name][] = $entry;
-			}
+			$entry_scope->register($entry);
 		}
 		$this->finished = true;
 		return $this->file;

@@ -176,15 +176,15 @@ final class AST_Test
 		$next = $parser->parse();
 		self::verify($next);
 		self::check($next->root->structure->scope === $scope);
-		self::check($next->scopes[0]->parent === $scope);
-		self::check(count($scope->functions['kept']) === 1 && count($scope->functions['next']) === 1);
-		self::check(!isset($scope->functions['broken']) && !isset($scope->types['Pending']));
+		self::check($next->scopes[0]->parent_scope() === $scope);
+		self::check(count($scope->functions_named('kept')) === 1 && count($scope->functions_named('next')) === 1);
+		self::check((count($scope->functions_named('broken')) === 0) && (count($scope->types_named('Pending')) === 0));
 		// Omitting the target on re-init must clear the previous external scope.
 		$parser->init(self::tokens(''));
 		$standalone = $parser->parse();
 		self::verify($standalone);
 		self::check($standalone->root->structure->scope !== $scope);
-		self::check($standalone->scopes[0]->parent === null);
+		self::check($standalone->scopes[0]->parent_scope() === null);
 	}
 
 	/** Finalization publishes once; rejected later operations must not duplicate indexes. */
@@ -197,11 +197,11 @@ final class AST_Test
 		$scope = new scope();
 		$collector = new Symbol_Collector($tokens);
 		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope);
-		self::check($scope->variables === []);
+		self::check(!$scope->has_variables());
 		$result = $collector->finish($syntax->root);
 		self::initialized($result);
 		self::initialized($result->entries[$position]);
-		self::check($scope->variables['x'][0] === $result->entries[$position]);
+		self::check($scope->variables_named('x')[0] === $result->entries[$position]);
 		$before = serialize($result);
 		$rejections = 0;
 		try {
@@ -216,7 +216,7 @@ final class AST_Test
 		catch (\LogicException $expected) {
 			++$rejections;
 		}
-		self::check($rejections === 2 && serialize($result) === $before && count($scope->variables['x']) === 1);
+		self::check($rejections === 2 && serialize($result) === $before && count($scope->variables_named('x')) === 1);
 	}
 
 	/** Exercise payload coverage, retained syntax identity, and parser reuse across failures. */

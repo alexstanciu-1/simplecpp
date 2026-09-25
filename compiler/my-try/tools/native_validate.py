@@ -15,7 +15,7 @@ import time
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
-STAGES = ['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_llvm', '06_native', 'compile']
+STAGES = ['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_cpp', '05_llvm', '06_native', 'compile']
 
 
 def php_literal(text):
@@ -43,10 +43,15 @@ def main():
     parser.add_argument('--target-checkout', required=True, type=Path)
     parser.add_argument('--candidate-revision', required=True)
     parser.add_argument('--results', required=True, type=Path)
+    parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
     args = parser.parse_args()
     target, results = args.target_checkout.resolve(), args.results.resolve()
-    results.mkdir(parents=True, exist_ok=False)
+    results.mkdir(parents=True, exist_ok=args.resume)
     logs = results / 'logs'
+    attempt = 1
+    while logs.exists():
+        attempt += 1
+        logs = results / f'logs-{attempt}'
     logs.mkdir()
     commands = []
 
@@ -57,24 +62,26 @@ def main():
         (logs / (name + '.stderr')).write_bytes(process.stderr)
         commands.append(dict(name=name, command=[str(x) for x in command], cwd=str(cwd),
                              seconds=round(time.monotonic() - start, 3), code=process.returncode))
+        (logs / 'commands.json').write_text(json.dumps(commands, indent=2) + '\n')
         (results / 'commands.json').write_text(json.dumps(commands, indent=2) + '\n')
         if process.returncode != expected:
             raise RuntimeError(f'{name}: expected exit {expected}, got {process.returncode}; see {logs}')
         return process.stdout
 
     source = results / 'source'
-    source.mkdir()
+    source.mkdir(exist_ok=args.resume)
     for stage in STAGES:
-        shutil.copytree(APP / stage, source / stage)
+        shutil.copytree(APP / stage, source / stage, dirs_exist_ok=args.resume)
     request = results / 'request.txt'
     recovery = results / 'recovery'
-    recovery.mkdir()
+    recovery.mkdir(exist_ok=args.resume)
     (recovery / 'main.phs').write_text('return 0;')
     pipeline = results / 'pipeline'
-    pipeline.mkdir()
+    pipeline.mkdir(exist_ok=args.resume)
     (pipeline / 'a.phs').write_text('function ready(): int { return 1; }')
     (pipeline / 'b.phs').write_text('$')
     driver = (APP / 'tests/native_driver.php.in').read_text()
+    shutil.copyfile(APP / 'tests/s2s_proof.php', source / 's2s_proof.php')
     driver = driver.replace('__REQUEST_FILE__', php_literal(request)).replace('__RECOVERY_DIR__', php_literal(recovery)).replace('__PIPELINE_DIR__', php_literal(pipeline))
     (source / 'main.php').write_text(driver)
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
@@ -90,8 +97,9 @@ def main():
     run('convert', ['php', ROOT / 'tools/php_portability/convert.php', source, project])
     run('framework', ['php', ROOT / 'tools/php_portability/install_native_runtime.php', project, '--filesystem'])
     cli = target / 'bin/scpp.php'
-    run('init', ['php', cli, 'init', '--php-profile=strict'], project)
     config_path = project / 'prism.json'
+    if not config_path.exists():
+        run('init', ['php', cli, 'init', '--php-profile=strict'], project)
     config = json.loads(config_path.read_text())
     config['build']['cxx'] = 'clang++-18'
     config['runtime']['modules'] = ['compiler', 'filesystem', 'tasks']
@@ -103,10 +111,10 @@ def main():
     for suite in ['storage', 'tokenizer', 'ast', 'model', 'llvm_text']:
         run('php-' + suite, ['php', APP / 'tests' / (suite + '.php')])
     fixtures = results / 'fixtures'
-    fixtures.mkdir()
+    fixtures.mkdir(exist_ok=args.resume)
     for suite in ['llvm', 'calls']:
         folder = fixtures / suite
-        folder.mkdir()
+        folder.mkdir(exist_ok=args.resume)
         run('php-' + suite, ['php', APP / 'tests' / (suite + '.php'), folder])
     expected_exits = {}
     for item in json.loads((fixtures / 'llvm/executions.json').read_text()):
@@ -118,7 +126,16 @@ def main():
     cases = [(suite + '/' + path.name, path) for suite in ['llvm', 'calls']
              for path in sorted((fixtures / suite).iterdir()) if path.is_dir()]
     cases.append(('sample/01_base', APP / 'samples/01_base'))
-    php_code = 'require ' + php_literal(APP / 'boot.php') + '; require ' + php_literal(source / 'main.php') + ';'
+    php_code = 'require ' + php_literal(APP / 'boot.php') + '; require ' + php_literal(APP / 'tests/s2s_proof.php') + '; require ' + php_literal(source / 'main.php') + ';'
+    # Compile generated C++ from both host implementations, independently of LLVM parity.
+    request.write_text('s2s-proof')
+    expected_cpp = run('s2s-host', ['php', '-r', php_code])
+    native_cpp = run('s2s-native', [executable])
+    if native_cpp != expected_cpp:
+        raise RuntimeError('Native C++ emission differs from PHP')
+    (results / 's2s.cpp').write_bytes(native_cpp)
+    run('s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include', results / 's2s.cpp', '-o', results / 's2s-program'])
+    run('s2s-execute', [results / 's2s-program'], expected=10)
     outcomes = []
     for name, path in cases:
         request.write_text(str(path))
@@ -130,7 +147,7 @@ def main():
         valid = name in expected_exits
         if valid:
             folder = results / 'programs' / key
-            folder.mkdir(parents=True)
+            folder.mkdir(parents=True, exist_ok=args.resume)
             files = []
             for filename, llvm in modules(native_trace):
                 if Path(filename).name != filename or not filename.endswith('.ll'):

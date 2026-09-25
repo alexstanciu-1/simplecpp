@@ -20,7 +20,7 @@ final class Name_Preparation
 				continue;
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
-			if (($entry->kind === collected_name_kind::variable_declaration) && isset($entry_scope->template_parameters[$entry->name])) {
+			if (($entry->kind === collected_name_kind::variable_declaration) && $entry_scope->has_template($entry->name)) {
 				throw new \RuntimeException('Variable conflicts with template parameter: ' . $entry->name);
 			}
 			$result->declarations[$entry->token_index] = $entry;
@@ -38,9 +38,7 @@ final class Name_Preparation
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$candidates /** vector<collected_name> */ = [];
 			$variable_scope = Scope_Lookup::visible($entry_scope);
-			if (isset($variable_scope->variables[$entry->name])) {
-				$candidates = Scope_Lookup::live($variable_scope->variables[$entry->name]);
-			}
+			$candidates = Scope_Lookup::live($variable_scope->variables_named($entry->name));
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("LLVM experiment needs one same-file declaration for " . $entry->name . " at token " . $entry->token_index));
 			}
@@ -65,13 +63,11 @@ final class Name_Preparation
 			{
 				$current_scope = Scope_Lookup::visible($current_scope);
 				$candidates = [];
-				if (isset($current_scope->functions[$entry->name])) {
-					$candidates = Scope_Lookup::live($current_scope->functions[$entry->name]);
-				}
+				$candidates = Scope_Lookup::live($current_scope->functions_named($entry->name));
 				if (q_count($candidates) !== 0) {
 					break;
 				}
-				$parent = weakref_get($current_scope->parent);
+				$parent = $current_scope->parent_scope();
 				if ($parent === null) {
 					break;
 				}
@@ -93,14 +89,12 @@ final class Name_Preparation
 			while (true)
 			{
 				$current_scope = Scope_Lookup::visible($current_scope);
-				if (isset($current_scope->template_parameters[$entry->name])) {
-					$result->template_slots[$entry->token_index] = $current_scope->template_parameters[$entry->name];
+				if ($current_scope->has_template($entry->name)) {
+					$result->template_slots[$entry->token_index] = $current_scope->template_slot($entry->name);
 					break;
 				}
 				$type_candidates /** vector<collected_name> */ = [];
-				if (isset($current_scope->types[$entry->name])) {
-					$type_candidates = Scope_Lookup::live($current_scope->types[$entry->name]);
-				}
+				$type_candidates = Scope_Lookup::live($current_scope->source_types_named($entry->name));
 				if (q_count($type_candidates) !== 0) {
 					if (q_count($type_candidates) !== 1) {
 						throw new \RuntimeException('Ambiguous struct type: ' . $entry->name);
@@ -108,7 +102,7 @@ final class Name_Preparation
 					$result->types[$entry->token_index] = $type_candidates[0];
 					break;
 				}
-				$parent = weakref_get($current_scope->parent);
+				$parent = $current_scope->parent_scope();
 				if ($parent === null) {
 					break;
 				}
@@ -134,9 +128,40 @@ final class Scope_Lookup
 		return $result;
 	}
 
+	/** Resolve the nearest live type pool, including the language/runtime parent. */
+	public static function types(scope $start, string $name): array /** vector<type_definition> */
+	{
+		$current_scope = $start;
+		$result /** vector<type_definition> */ = [];
+		while (true)
+		{
+			$current_scope = self::visible($current_scope);
+			$result = [];
+			foreach ($current_scope->types_named($name) as $definition)
+			{
+				if ($definition->declaration !== null) {
+					$entry = object_cast($definition->declaration, collected_name::class);
+					if ($entry->changes === \scpp\compiler\SYNC_DELETED) {
+						continue;
+					}
+				}
+				$result[] = $definition;
+			}
+			if (q_count($result) !== 0) {
+				break;
+			}
+			$parent = $current_scope->parent_scope();
+			if ($parent === null) {
+				break;
+			}
+			$current_scope = object_cast($parent, scope::class);
+		}
+		return $result;
+	}
+
 	public static function visible(scope $local_scope): scope
 	{
-		$published = weakref_get($local_scope->publication);
+		$published = $local_scope->published_scope();
 		if ($published === null) {
 			return $local_scope;
 		}

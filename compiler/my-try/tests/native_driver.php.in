@@ -16,7 +16,7 @@ catch (\RuntimeException $expected) {
 if ((!$pipeline_failed) || (q_count(Model::$syntax_files) !== 1) || (q_count(Model::$tokens) !== 1)) {
 	throw new \LogicException('Frontend retained a whole-project tokenization barrier');
 }
-if (!isset(Model::$global_scope->functions['ready'])) {
+if (q_count(Model::$global_scope->functions_named('ready')) === 0) {
 	throw new \LogicException('Earlier parsed file was not published before the later scan failed');
 }
 // Explicit stage entrypoints remain available for inspection and tests.
@@ -51,7 +51,7 @@ $sync_compiler = new Compiler();
 $sync_compiler->exec();
 $syntax_before /** Storage<parsed_file> */ = Model::$syntax_files;
 $kept_caller = $syntax_before[1];
-$first_candidates /** vector<collected_name> */ = Model::$global_scope->functions['answer'];
+$first_candidates /** vector<collected_name> */ = Model::$global_scope->functions_named('answer');
 $first_function = $first_candidates[0];
 if ($first_function->changes !== \scpp\compiler\SYNC_ADDED) {
 	throw new \LogicException('Initial sync did not mark additions');
@@ -61,127 +61,136 @@ $current_inputs[0]->content = 'function answer(): int { return 8; }';
 $changed_paths /** vector<string> */ = ['/sync-proof/a.phs'];
 $sync_compiler->update($changed_paths);
 $syntax_after /** Storage<parsed_file> */ = Model::$syntax_files;
-$next_candidates /** vector<collected_name> */ = Model::$global_scope->functions['answer'];
+$next_candidates /** vector<collected_name> */ = Model::$global_scope->functions_named('answer');
 $next_function = $next_candidates[0];
 if (($next_function->changes !== \scpp\compiler\SYNC_BODY_CHANGED) || ($next_function->node === $first_function->node) || ($syntax_after[1] !== $kept_caller)) {
 	throw new \LogicException('Native sync lost body flags or reparsed the unchanged caller');
 }
 $current_inputs[0]->content = 'function answer(): int { return 8; } function answer(): int { return 9; }';
 $sync_compiler->sync($changed_paths);
-$duplicates /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions['answer']);
+$duplicates /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions_named('answer'));
 if (q_count($duplicates) !== 2) {
 	throw new \LogicException('Native sync merged duplicate declarations');
 }
 $current_inputs[0]->content = 'function answer(): int { return 9; }';
 $sync_compiler->update($changed_paths);
-$survivors /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions['answer']);
+$survivors /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions_named('answer'));
 if ((q_count($survivors) !== 1) || ($survivors[0]->changes !== 0)) {
 	throw new \LogicException('Native sync failed exact duplicate matching or tombstone filtering');
 }
 $current_inputs[0]->disk_source = true; // Absent path represents deletion of the published source.
 $sync_compiler->sync($changed_paths);
-$survivors = Scope_Lookup::live(Model::$global_scope->functions['answer']);
+$survivors = Scope_Lookup::live(Model::$global_scope->functions_named('answer'));
 if (q_count($survivors) !== 0) {
 	throw new \LogicException('Native sync resolved a deleted file');
 }
 
+// The same portable S2S proof runs in PHP and in this native executable.
+$cpp_proof = S2S_Proof::run();
+
 // Host harness supplies literal paths before conversion.
 $path = fs_read_text(__REQUEST_FILE__);
-$paths /** vector<string> */ = [$path];
-$compiler = new Compiler();
-$retained /** Storage<llvm_module> */ = new Storage();
-$previous = '';
-try
-{
-	for ($attempt = 0; $attempt < 2; $attempt++)
-	{
-		$compiler->init($paths);
-		$compiler->exec();
-		// Exercise private-link traversal natively as well as the named syntax aliases.
-		$syntax_files /** Storage<parsed_file> */ = Model::$syntax_files;
-		foreach ($syntax_files as $syntax_file)
-		{
-			$queue /** Storage<ast_node> */ = new Storage();
-			$queue->append($syntax_file->root);
-			for ($node_index = 0; $node_index < q_count($queue); $node_index++)
-			{
-				$syntax_node = $queue[$node_index];
-				$children /** Storage<ast_node> */ = $syntax_node->children();
-				$named /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($syntax_node);
-				if (q_count($children) !== q_count($named)) {
-					throw new \LogicException('AST traversal lost named children');
-				}
-				foreach ($children as $child_index => $child)
-				{
-					if (($child !== $named[$child_index]) || ($child->child_position() !== $child_index) || ($child->parent() !== $syntax_node)) {
-						throw new \LogicException('AST child identity or parent position changed');
-					}
-					if ($child_index === 0) {
-						if (($child->prev() !== null) || ($syntax_node->first_child() !== $child)) {
-							throw new \LogicException('Invalid AST first child');
-						}
-					}
-					else {
-						if ($child->prev() !== $children[$child_index - 1]) {
-							throw new \LogicException('Invalid AST previous sibling');
-						}
-					}
-					if ($child_index + 1 === q_count($children)) {
-						if ($child->next() !== null) {
-							throw new \LogicException('Invalid AST last child');
-						}
-					}
-					else {
-						if ($child->next() !== $children[$child_index + 1]) {
-							throw new \LogicException('Invalid AST next sibling');
-						}
-					}
-					$queue->append($child);
-				}
-			}
-		}
-
-		$outputs /** Storage<llvm_module> */ = Model::$llvm_files;
-		$trace = "OK\n";
-		foreach ($outputs as $output) {
-			$trace .= string_byte_len($output->file_name) . ':' . $output->file_name . string_byte_len($output->text) . ':' . $output->text;
-		}
-		if ($attempt === 1)
-		{
-			if ($trace !== $previous) {
-				throw new \LogicException('Repeated compilation changed output');
-			}
-			foreach ($retained as $index => $old)
-			{
-				if ($old === $outputs[$index]) {
-					throw new \LogicException('Rebuild reused an output record');
-				}
-				if ($old->text !== $outputs[$index]->text) {
-					throw new \LogicException('Rebuild damaged retained output');
-				}
-			}
-		}
-		$previous = $trace;
-		$retained = $outputs;
-	}
-	echo $previous;
+if ($path === 's2s-proof') {
+	echo $cpp_proof;
 }
-catch (\Throwable $error)
+else
 {
-	$message = $error->getMessage();
-	$failed_outputs /** Storage<llvm_module> */ = Model::$llvm_files;
-	if (!$failed_outputs->is_empty()) {
-		throw new \LogicException('Failed compilation published output');
+	$paths /** vector<string> */ = [$path];
+	$compiler = new Compiler();
+	$retained /** Storage<llvm_module> */ = new Storage();
+	$previous = '';
+	try
+	{
+		for ($attempt = 0; $attempt < 2; $attempt++)
+		{
+			$compiler->init($paths);
+			$compiler->exec();
+			// Exercise private-link traversal natively as well as the named syntax aliases.
+			$syntax_files /** Storage<parsed_file> */ = Model::$syntax_files;
+			foreach ($syntax_files as $syntax_file)
+			{
+				$queue /** Storage<ast_node> */ = new Storage();
+				$queue->append($syntax_file->root);
+				for ($node_index = 0; $node_index < q_count($queue); $node_index++)
+				{
+					$syntax_node = $queue[$node_index];
+					$children /** Storage<ast_node> */ = $syntax_node->children();
+					$named /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($syntax_node);
+					if (q_count($children) !== q_count($named)) {
+						throw new \LogicException('AST traversal lost named children');
+					}
+					foreach ($children as $child_index => $child)
+					{
+						if (($child !== $named[$child_index]) || ($child->child_position() !== $child_index) || ($child->parent() !== $syntax_node)) {
+							throw new \LogicException('AST child identity or parent position changed');
+						}
+						if ($child_index === 0) {
+							if (($child->prev() !== null) || ($syntax_node->first_child() !== $child)) {
+								throw new \LogicException('Invalid AST first child');
+							}
+						}
+						else {
+							if ($child->prev() !== $children[$child_index - 1]) {
+								throw new \LogicException('Invalid AST previous sibling');
+							}
+						}
+						if ($child_index + 1 === q_count($children)) {
+							if ($child->next() !== null) {
+								throw new \LogicException('Invalid AST last child');
+							}
+						}
+						else {
+							if ($child->next() !== $children[$child_index + 1]) {
+								throw new \LogicException('Invalid AST next sibling');
+							}
+						}
+						$queue->append($child);
+					}
+				}
+			}
+
+			$outputs /** Storage<llvm_module> */ = Model::$llvm_files;
+			$trace = "OK\n";
+			foreach ($outputs as $output) {
+				$trace .= string_byte_len($output->file_name) . ':' . $output->file_name . string_byte_len($output->text) . ':' . $output->text;
+			}
+			if ($attempt === 1)
+			{
+				if ($trace !== $previous) {
+					throw new \LogicException('Repeated compilation changed output');
+				}
+				foreach ($retained as $index => $old)
+				{
+					if ($old === $outputs[$index]) {
+						throw new \LogicException('Rebuild reused an output record');
+					}
+					if ($old->text !== $outputs[$index]->text) {
+						throw new \LogicException('Rebuild damaged retained output');
+					}
+				}
+			}
+			$previous = $trace;
+			$retained = $outputs;
+		}
+		echo $previous;
 	}
-	$recovery_paths /** vector<string> */ = [__RECOVERY_DIR__];
-	$compiler->init($recovery_paths);
-	$compiler->exec();
-	$recovered /** Storage<llvm_module> */ = Model::$llvm_files;
-	if (q_count($recovered) !== 1) {
-		throw new \LogicException('Recovery did not produce one module');
+	catch (\Throwable $error)
+	{
+		$message = $error->getMessage();
+		$failed_outputs /** Storage<llvm_module> */ = Model::$llvm_files;
+		if (!$failed_outputs->is_empty()) {
+			throw new \LogicException('Failed compilation published output');
+		}
+		$recovery_paths /** vector<string> */ = [__RECOVERY_DIR__];
+		$compiler->init($recovery_paths);
+		$compiler->exec();
+		$recovered /** Storage<llvm_module> */ = Model::$llvm_files;
+		if (q_count($recovered) !== 1) {
+			throw new \LogicException('Recovery did not produce one module');
+		}
+		if ($recovered[0]->text !== "define i32 @main() {\n_Gb0:\n    ret i32 0\n}\n") {
+			throw new \LogicException('Recovery changed the expected output');
+		}
+		echo "ERROR\n", $message;
 	}
-	if ($recovered[0]->text !== "define i32 @main() {\n_Gb0:\n    ret i32 0\n}\n") {
-		throw new \LogicException('Recovery changed the expected output');
-	}
-	echo "ERROR\n", $message;
 }

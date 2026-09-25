@@ -42,7 +42,7 @@ $output = $argv[1];
 mkdir($output, 0777, true);
 file_put_contents($output . '/DO_NOT_BUILD.txt', $fake ? "Fake Storage diagnostic projection. Never build this output.\n" : "Partial conversion diagnostic; no native type checking or build. Use the atomic converter to publish a complete result.\n");
 $hashes = [];
-foreach (['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_llvm', '06_native', 'compile'] as $directory)
+foreach (['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_cpp', '05_llvm', '06_native', 'compile'] as $directory)
 {
 	foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__) . '/' . $directory, FilesystemIterator::SKIP_DOTS)) as $file)
 	{

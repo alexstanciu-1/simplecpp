@@ -1,0 +1,56 @@
+[
+  {
+    "case": "literal",
+    "exit_code": 0,
+    "sha256": "105e186f1b7131a5838a97039045b38a8374ae7e2bb52794ccbdb2c685f9911b",
+    "passed": true
+  },
+  {
+    "case": "value",
+    "exit_code": 10,
+    "sha256": "d0652dc63fe52cb9530fe21204064448c4ddb10b21131cc039ff0463899c75ab",
+    "passed": true
+  },
+  {
+    "case": "explicit",
+    "exit_code": 10,
+    "sha256": "d0652dc63fe52cb9530fe21204064448c4ddb10b21131cc039ff0463899c75ab",
+    "passed": true
+  },
+  {
+    "case": "copy",
+    "exit_code": 10,
+    "sha256": "7e436adb0e87111dccb0b6a6d3d87318bec12d6772b5d321ac6390677323a7cb",
+    "passed": true
+  },
+  {
+    "case": "wide",
+    "exit_code": 7,
+    "sha256": "b5f6976c208bdcca425db4019ebc901b68285c32bec3dcfa3c73980af2627681",
+    "passed": true
+  },
+  {
+    "case": "wide_value",
+    "exit_code": 7,
+    "sha256": "f60968236147adf8d0b015bfa47926eba1e355adc7455a2a899ebe8aff5fabef",
+    "passed": true
+  },
+  {
+    "case": "maximum",
+    "exit_code": 9,
+    "sha256": "a44db5c53c2c7bc29fe7a6b0c638b33fd80b29a245005ad49214221c8493497b",
+    "passed": true
+  },
+  {
+    "case": "maximum_value",
+    "exit_code": 9,
+    "sha256": "0de7248fde1f88e4580af7f259d931bb66658797865184243c445c6bdf2986d4",
+    "passed": true
+  },
+  {
+    "case": "keyword",
+    "exit_code": 10,
+    "sha256": "d0652dc63fe52cb9530fe21204064448c4ddb10b21131cc039ff0463899c75ab",
+    "passed": true
+  }
+]

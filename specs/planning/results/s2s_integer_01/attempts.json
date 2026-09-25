@@ -1,0 +1,195 @@
+[
+  {
+    "attempt": "/tmp/scpp-s2s-native-01/commands.json",
+    "seconds": 0.511,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.511,
+        "code": 1
+      }
+    ]
+  },
+  {
+    "attempt": "/tmp/scpp-s2s-native-02/commands.json",
+    "seconds": 0.572,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.572,
+        "code": 1
+      }
+    ]
+  },
+  {
+    "attempt": "/tmp/scpp-s2s-native-03/commands.json",
+    "seconds": 2.345,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.611,
+        "code": 0
+      },
+      {
+        "name": "framework",
+        "seconds": 0.064,
+        "code": 0
+      },
+      {
+        "name": "init",
+        "seconds": 0.157,
+        "code": 0
+      },
+      {
+        "name": "native-build",
+        "seconds": 1.513,
+        "code": 1
+      }
+    ]
+  },
+  {
+    "attempt": "/tmp/scpp-s2s-native-04/commands.json",
+    "seconds": 49.05,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.598,
+        "code": 0
+      },
+      {
+        "name": "framework",
+        "seconds": 0.053,
+        "code": 0
+      },
+      {
+        "name": "init",
+        "seconds": 0.168,
+        "code": 0
+      },
+      {
+        "name": "native-build",
+        "seconds": 48.231,
+        "code": 1
+      }
+    ]
+  },
+  {
+    "attempt": "/tmp/scpp-s2s-native-05/commands.json",
+    "seconds": 59.071,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.569,
+        "code": 0
+      },
+      {
+        "name": "framework",
+        "seconds": 0.055,
+        "code": 0
+      },
+      {
+        "name": "init",
+        "seconds": 0.152,
+        "code": 0
+      },
+      {
+        "name": "native-build",
+        "seconds": 58.295,
+        "code": 1
+      }
+    ]
+  },
+  {
+    "attempt": "/tmp/scpp-s2s-native-06/commands.json",
+    "seconds": 75.046,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.587,
+        "code": 0
+      },
+      {
+        "name": "framework",
+        "seconds": 0.055,
+        "code": 0
+      },
+      {
+        "name": "init",
+        "seconds": 0.165,
+        "code": 0
+      },
+      {
+        "name": "native-build",
+        "seconds": 74.239,
+        "code": 1
+      }
+    ]
+  },
+  {
+    "attempt": "/tmp/scpp-s2s-native-06/logs-2/commands.json",
+    "seconds": 0.264,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.081,
+        "code": 0
+      },
+      {
+        "name": "framework",
+        "seconds": 0.053,
+        "code": 0
+      },
+      {
+        "name": "init",
+        "seconds": 0.13,
+        "code": 1
+      }
+    ]
+  },
+  {
+    "attempt": "/tmp/scpp-s2s-native-06/logs-3/commands.json",
+    "seconds": 29.47,
+    "commands": [
+      {
+        "name": "convert",
+        "seconds": 0.061,
+        "code": 0
+      },
+      {
+        "name": "framework",
+        "seconds": 0.05,
+        "code": 0
+      },
+      {
+        "name": "native-build",
+        "seconds": 5.234,
+        "code": 0
+      },
+      {
+        "name": "s2s-host",
+        "seconds": 0.065,
+        "code": 0
+      },
+      {
+        "name": "s2s-native",
+        "seconds": 0.015,
+        "code": 0
+      },
+      {
+        "name": "s2s-clang",
+        "seconds": 0.968,
+        "code": 0
+      },
+      {
+        "name": "s2s-execute",
+        "seconds": 0.003,
+        "code": 10
+      },
+      {
+        "name": "incremental-build",
+        "seconds": 0.808,
+        "code": 0
+      }
+    ]
+  }
+]

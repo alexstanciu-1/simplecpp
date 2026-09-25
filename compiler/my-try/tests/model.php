@@ -348,7 +348,7 @@ final class Model_Test
 		catch (\RuntimeException $error) {
 			$failed = true;
 		}
-		if (!$failed || !Model::$syntax_files->is_empty() || !Model::$collected_files->is_empty() || !empty(Model::$global_scope->functions)) {
+		if (!$failed || !Model::$syntax_files->is_empty() || !Model::$collected_files->is_empty() || Model::$global_scope->has_functions()) {
 			throw new \RuntimeException('Failed file published parse output');
 		}
 		if ($lexical && (!Model::$tokens->is_empty() || ($file->tokens !== null))) {

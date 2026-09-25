@@ -51,7 +51,7 @@ echo "    $group\n";
 					if ($entry->changes === SYNC_DELETED) {
 						continue;
 					}
-					$scope_label = $entry->scope->function_boundary ? 'function-local' : 'global';
+					$scope_label = $entry->scope->is_function() ? 'function-local' : 'global';
 					echo "      entry {$entry->local_index} " . $entry->kind->name . ': ' . htmlspecialchars($entry->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . " at token {$entry->token_index} ($scope_label)\n";
 				}
 			}

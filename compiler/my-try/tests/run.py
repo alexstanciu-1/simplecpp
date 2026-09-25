@@ -60,6 +60,17 @@ def verify(root, output):
         run([clang, "-Wno-override-module", "-x", "ir", str(source), "-o", str(executable)])
         run([str(executable)], fixture["exit_code"])
 
+    s2s = output / "s2s"
+    s2s.mkdir()
+    proof = run(["php", str(root / "tests/s2s.php"), str(s2s)])
+    (output / "s2s.log").write_text(proof.stdout + proof.stderr)
+    s2s_cases = json.loads((s2s / "executions.json").read_text())
+    for fixture in s2s_cases:
+        source = Path(fixture["path"])
+        executable = source.with_suffix(".program")
+        run(["clang++", "-std=c++20", "-I", str(root.parents[1] / "runtime/include"), str(source), "-o", str(executable)])
+        run([str(executable)], fixture["exit_code"])
+
     sample = run(["php", str(root / "main.php")])
     (output / "sample.log").write_text(sample.stdout + sample.stderr)
     if "Native build: exit 0\n" not in sample.stdout or "Executable exit code: 9\n" not in sample.stdout:
@@ -67,7 +78,7 @@ def verify(root, output):
 
     calls = (output / "calls.log").read_text().count("dependencies verified, native exit")
     summary = {"php_lint_files": len(php_files), "llvm_executions": len(executions),
-               "call_executions": calls, "sample_exit": 9}
+               "call_executions": calls, "sample_exit": 9, "s2s_executions": len(s2s_cases)}
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary))
 

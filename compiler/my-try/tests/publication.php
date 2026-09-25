@@ -14,13 +14,13 @@ function parse_private(string $name, string $content): parsed_file
 Model::reset();
 $first = parse_private('first.phs', 'function exported(): int { $private int = 4; return $private; }');
 $second = parse_private('second.phs', 'return exported();');
-if (!Model::$syntax_files->is_empty() || !empty(Model::$global_scope->functions)) {
+if (!Model::$syntax_files->is_empty() || Model::$global_scope->has_functions()) {
 	throw new \LogicException('Private parsing published global state');
 }
 // Deliberately publish the use before its definition.
 Compiler::publish_parsed($second);
 Compiler::publish_parsed($first);
-if (count(Model::$global_scope->functions['exported']) !== 1 || isset(Model::$global_scope->variables['private'])) {
+if (count(Model::$global_scope->functions_named('exported')) !== 1 || (count(Model::$global_scope->variables_named('private')) !== 0)) {
 	throw new \LogicException('Publication lost an export or exposed function locals');
 }
 $resolved = (new Name_Preparation())->prepare($second->collection);
@@ -34,7 +34,7 @@ try {
 }
 catch (\LogicException $expected) {
 }
-if (count(Model::$global_scope->functions['exported']) !== 1) {
+if (count(Model::$global_scope->functions_named('exported')) !== 1) {
 	throw new \LogicException('Duplicate publication damaged indexes');
 }
 // A local definition must not hide a conflicting published declaration.
