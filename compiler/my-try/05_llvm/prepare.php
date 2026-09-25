@@ -7,8 +7,7 @@
 namespace scpp\compiler;
 
 /** One rebuild registry; ordinary and template functions share concrete preparation. */
-final class LLVM_Preparation
-{
+final class LLVM_Preparation {
 	/** A fresh registry isolates every rebuild, including after a failed run. */
 	public function prepare_program(Storage $sources /** Storage<collected_file> */, llvm_policy $policy): Storage /** Storage<llvm_prepared_file> */
 	{
@@ -27,6 +26,7 @@ final class LLVM_Preparation_Run
 	/** Append-only work queue referencing file.functions; indexed traversal may grow it. */
 	private Storage $pending /** Storage<llvm_prepared_function> */;
 
+	/** Create invocation-local instance queues and identity indexes before preparing functions. */
 	public function __construct(Storage $sources /** Storage<collected_file> */, llvm_policy $policy)
 	{
 		$this->policy = $policy;
@@ -68,12 +68,13 @@ final class LLVM_Preparation_Run
 		{
 			$entries /** Storage<collected_name> */ = $file->source->entries;
 			foreach (Syntax_Nodes::block_data($file->source->root)->children as $statement) {
-				if (!($statement->kind === node_kind::function_declaration || $statement->kind === node_kind::struct_declaration)) {
+				if (!(($statement->kind === node_kind::function_declaration) || ($statement->kind === node_kind::struct_declaration))) {
 					$this->register($file, null, []);
 					break;
 				}
 			}
-			foreach ($file->source->defined_elements as $index) {
+			foreach ($file->source->defined_elements as $index)
+			{
 				$entry = $entries[$index];
 				if ($entry->kind === collected_name_kind::function_declaration) {
 					if (q_count(Syntax_Nodes::function_data($entry->node)->template_parameters) === 0) {
@@ -92,11 +93,14 @@ final class LLVM_Preparation_Run
 	private function register(llvm_prepared_file $file, ?collected_name $definition, array $arguments /** vector<string> */): llvm_prepared_function
 	{
 		$formals /** hash<int> */ = [];
-		if ($definition !== null) { $formals = Syntax_Nodes::function_data($definition->node)->template_parameters; }
+		if ($definition !== null) {
+			$formals = Syntax_Nodes::function_data($definition->node)->template_parameters;
+		}
 		if (q_count($formals) !== q_count($arguments)) {
 			throw new \RuntimeException('Explicit template argument count mismatch');
 		}
-		foreach ($arguments as $argument) {
+		foreach ($arguments as $argument)
+		{
 			if (!isset($this->policy->types[$argument])) {
 				throw new \RuntimeException('Template proof currently supports int type arguments only');
 			}
@@ -106,7 +110,9 @@ final class LLVM_Preparation_Run
 		}
 		// Length-prefixed type arguments keep the internal identity unambiguous.
 		$key = 'f' . $this->file_indexes[$file] . ($definition === null ? ':entry' : ':d' . $definition->local_index);
-		foreach ($arguments as $argument) { $key .= ':' . string_byte_len($argument) . ':' . $argument; }
+		foreach ($arguments as $argument) {
+			$key .= ':' . string_byte_len($argument) . ':' . $argument;
+		}
 		if (isset($this->instances[$key])) {
 			return $this->instances[$key];
 		}
@@ -190,16 +196,19 @@ final class LLVM_Preparation_Run
 			$local = new llvm_local();
 			$local->declaration = $declaration;
 			$type = '';
-			if (isset($file->names->types[$type_syntax->token_index])) {
+			if (isset($file->names->types[$type_syntax->token_index]))
+			{
 				$record_declaration /** collected_name */ = $file->names->types[$type_syntax->token_index];
 				$record /** llvm_struct_type */ = $this->structs[$record_declaration];
-				if ($is_array || $is_parameter) {
+				if (($is_array) || ($is_parameter)) {
 					throw new \RuntimeException('Struct arrays and whole-struct parameters are not supported yet');
 				}
 				$type = $record->name;
 				$local->struct_type = $record;
 				$struct_types[$record->name] = $record;
-			} else {
+			}
+			else
+			{
 				if (!isset($this->policy->types[$name])) {
 					throw new \RuntimeException('LLVM experiment has no type mapping for ' . $name);
 				}

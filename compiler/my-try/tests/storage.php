@@ -4,11 +4,19 @@ require_once dirname(__DIR__) . '/helpers/storage_abstract.php';
 require_once dirname(__DIR__) . '/helpers/storage.php';
 require_once dirname(__DIR__) . '/helpers/keyed_storage.php';
 
-function check(bool $value): void {
-	if (!$value) { throw new \RuntimeException('Storage assertion failed'); }
+function check(bool $value): void
+{
+	if (!$value) {
+		throw new \RuntimeException('Storage assertion failed');
+	}
 }
-function rejects(\Closure $operation, string $type): void {
-	try { $operation(); } catch (\Throwable $error) {
+/** Require the operation to fail with the requested exception family. */
+function rejects(\Closure $operation, string $type): void
+{
+	try {
+		$operation();
+	}
+	catch (\Throwable $error) {
 		check($error instanceof $type);
 		return;
 	}
@@ -34,7 +42,9 @@ $items->reserve(100);
 check(array_keys(iterator_to_array($items)) === [0, 2]);
 $pairs = 0;
 foreach ($items as $outer) {
-	foreach ($items as $inner) { $pairs++; }
+	foreach ($items as $inner) {
+		$pairs++;
+	}
 }
 check($pairs === 4);
 unset($items[99]);
@@ -66,7 +76,9 @@ $named['0'] = $row;
 $named[''] = $replacement;
 $named["\0key"] = $row;
 $keys = [];
-foreach ($named as $key => $record) { $keys[] = $key; }
+foreach ($named as $key => $record) {
+	$keys[] = $key;
+}
 check($keys === ['first', '0', '', "\0key"]);
 check($named['0'] === $row && $named['first'] === $row);
 $held = $named['first'];
@@ -79,17 +91,19 @@ rejects(fn() => $named['missing'], \OutOfBoundsException::class);
 rejects(fn() => $named->replace('missing', $row), \OutOfBoundsException::class);
 rejects(fn() => $named->remove('missing'), \OutOfBoundsException::class);
 foreach ([0, false, 0.0, null] as $key) {
-    rejects(fn() => $named->offsetGet($key), \InvalidArgumentException::class);
-    rejects(fn() => $named->offsetSet($key, $row), \InvalidArgumentException::class);
-    rejects(fn() => $named->offsetExists($key), \InvalidArgumentException::class);
-    rejects(fn() => $named->offsetUnset($key), \InvalidArgumentException::class);
+	rejects(fn() => $named->offsetGet($key), \InvalidArgumentException::class);
+	rejects(fn() => $named->offsetSet($key, $row), \InvalidArgumentException::class);
+	rejects(fn() => $named->offsetExists($key), \InvalidArgumentException::class);
+	rejects(fn() => $named->offsetUnset($key), \InvalidArgumentException::class);
 }
 rejects(fn() => $named->offsetSet('bad', null), \InvalidArgumentException::class);
 $named->remove('first');
 unset($named['missing']);
 $named['first'] = $row;
 $keys = [];
-foreach ($named as $key => $record) { $keys[] = $key; }
+foreach ($named as $key => $record) {
+	$keys[] = $key;
+}
 check($keys === ['0', '', "\0key", 'first']);
 check(count($named) === 4 && $held === $row);
 check($items instanceof Storage_Abstract && $named instanceof Storage_Abstract);

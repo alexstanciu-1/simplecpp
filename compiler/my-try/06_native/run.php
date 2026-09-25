@@ -100,13 +100,13 @@ final class Native_Runner
 	/** Display compiler diagnostics and execution output safely within the page's pre block. */
 	public function dump(native_result $result): void
 	{
-		echo "\nNative build: exit {$result->build->exit_code}\n";
+echo "\nNative build: exit {$result->build->exit_code}\n";
 		$this->dump_streams($result->build);
 		if ($result->execution === null) {
 			echo "Executable was not run because compilation failed.\n";
 			return;
 		}
-		echo "Executable exit code: {$result->execution->exit_code}\n";
+echo "Executable exit code: {$result->execution->exit_code}\n";
 		$this->dump_streams($result->execution);
 	}
 

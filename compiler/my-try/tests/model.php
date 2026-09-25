@@ -70,13 +70,18 @@ final class Model_Test
 		$incoming = new \SplObjectStorage();
 		foreach ($prepared as $prepared_file) {
 			foreach ($prepared_file->functions as $function) {
-				foreach ($function->parameters as $parameter) { $incoming->attach($parameter->incoming); }
+				foreach ($function->parameters as $parameter) {
+					$incoming->attach($parameter->incoming);
+				}
 			}
 		}
-		foreach ($output as $output_file) {
+		foreach ($output as $output_file)
+		{
 			foreach ($output_file->functions as $function) {
 				foreach ($function->parameters as $parameter) {
-					if ($incoming->contains($parameter)) { throw new \LogicException('Output borrowed preparation operand'); }
+					if ($incoming->contains($parameter)) {
+						throw new \LogicException('Output borrowed preparation operand');
+					}
 				}
 			}
 		}
@@ -87,22 +92,30 @@ final class Model_Test
 		}
 		$seen = new \SplObjectStorage();
 		self::check_graph($prepared, $seen);
-		foreach ($prepared as $file) {
-			foreach ($file->external_functions as $name => $target) {
+		foreach ($prepared as $file)
+		{
+			foreach ($file->external_functions as $name => $target)
+			{
 				if (($name !== $target->name) || ($target->file === $file)) {
 					throw new \LogicException('External target key or provenance changed');
 				}
 				$found = false;
 				foreach ($target->file->functions as $owned) {
-					if ($owned === $target) { $found = true; }
+					if ($owned === $target) {
+						$found = true;
+					}
 				}
-				if (!$found) { throw new \LogicException('External target lost shared identity'); }
+				if (!$found) {
+					throw new \LogicException('External target lost shared identity');
+				}
 			}
 		}
 		try {
 			$generator->generate(new Storage(), new llvm_policy());
 			throw new \LogicException('Expected generation failure for a program without an entry');
-		} catch (\RuntimeException $expected_error) { }
+		}
+		catch (\RuntimeException $expected_error) {
+		}
 		$regenerated = $generator->generate($prepared, new llvm_policy());
 		foreach ($output as $index => $file) {
 			if (($file === $regenerated[$index]) || ($file->functions[0] === $regenerated[$index]->functions[0]) || ($file->text !== $regenerated[$index]->text)) {
@@ -117,12 +130,18 @@ final class Model_Test
 		try {
 			$compiler->tokenize();
 			throw new \LogicException('Expected lexical failure');
-		} catch (\RuntimeException $expected) { }
+		}
+		catch (\RuntimeException $expected) {
+		}
 		foreach ([Model::$tokens, Model::$syntax_files, Model::$collected_files, Model::$llvm_files] as $store) {
-			if (!$store->is_empty()) { throw new \LogicException('Stale downstream result'); }
+			if (!$store->is_empty()) {
+				throw new \LogicException('Stale downstream result');
+			}
 		}
 		foreach (Model::$modules[0]->files as $file) {
-			if (($file->tokens !== null)) { throw new \LogicException('Stale token backlink'); }
+			if (($file->tokens !== null)) {
+				throw new \LogicException('Stale token backlink');
+			}
 		}
 		if (($old_tokens->content !== $old_content) || ($old_scope === Model::$global_scope) || count($old_output) !== 2) {
 			throw new \LogicException('Restart damaged retained results');
@@ -134,7 +153,9 @@ final class Model_Test
 		try {
 			$compiler->parse();
 			throw new \LogicException('Expected parse failure');
-		} catch (\RuntimeException $expected) { }
+		}
+		catch (\RuntimeException $expected) {
+		}
 		if (!Model::$syntax_files->is_empty() || !Model::$collected_files->is_empty() || !Model::$llvm_files->is_empty()) {
 			throw new \LogicException('Parse failure retained stale output');
 		}
@@ -154,7 +175,8 @@ final class Model_Test
 		$worker = new LLVM_Preparation();
 		$prepared = $worker->prepare_program($good, new llvm_policy());
 		$before = serialize($prepared);
-		foreach (['struct Empty {} return 0;', '$x void; return 0;', 'missing(); return 0;'] as $content) {
+		foreach (['struct Empty {} return 0;', '$x void; return 0;', 'missing(); return 0;'] as $content)
+		{
 			$compiler->init([]);
 			$module = new module();
 			$module->path = 'memory';
@@ -168,8 +190,12 @@ final class Model_Test
 			$compiler->tokenize();
 			$compiler->parse();
 			$failed = false;
-			try { $worker->prepare_program(Model::$collected_files, new llvm_policy()); }
-			catch (\RuntimeException $expected) { $failed = true; }
+			try {
+				$worker->prepare_program(Model::$collected_files, new llvm_policy());
+			}
+			catch (\RuntimeException $expected) {
+				$failed = true;
+			}
 			if (!$failed || serialize($prepared) !== $before || !Model::$llvm_files->is_empty()) {
 				throw new \LogicException('Failed preparation published output or altered retained results');
 			}
@@ -180,7 +206,9 @@ final class Model_Test
 				throw new \LogicException('Preparation recovery reused or damaged an earlier result');
 			}
 			$output = (new LLVM_Generator())->generate($recovered, new llvm_policy());
-			if (count($output) !== 2) { throw new \LogicException('Recovery lost output modules'); }
+			if (count($output) !== 2) {
+				throw new \LogicException('Recovery lost output modules');
+			}
 		}
 	}
 
@@ -188,8 +216,11 @@ final class Model_Test
 	private static function check_source_initialization(): void
 	{
 		$path = tempnam(sys_get_temp_dir(), 'scpp-source-init-');
-		if ($path === false) { throw new \RuntimeException('Cannot create source fixture'); }
-		try {
+		if ($path === false) {
+			throw new \RuntimeException('Cannot create source fixture');
+		}
+		try
+		{
 			file_put_contents($path, '$value = 12;');
 			$file = new file();
 			File_Loader::init($file, $path);
@@ -212,7 +243,9 @@ final class Model_Test
 			try {
 				@File_Loader::init($file, $path . '/missing');
 				throw new \LogicException('Expected failed source load');
-			} catch (\RuntimeException $expected_error) { }
+			}
+			catch (\RuntimeException $expected_error) {
+			}
 			if (get_object_vars($file) !== $before) {
 				throw new \LogicException('Failed load changed the previous source record');
 			}
@@ -225,7 +258,8 @@ final class Model_Test
 			if (!$fresh->tokens->is_empty() || ($fresh->content !== '') || ($fresh->file !== $file) || ($old->content !== '$value = 12;') || (count($old->tokens) !== 4)) {
 				throw new \LogicException('Scanner reuse damaged snapshots or rejected empty source');
 			}
-		} finally {
+		}
+		finally {
 			unlink($path);
 		}
 	}
@@ -278,7 +312,8 @@ final class Model_Test
 		if (basename($type->getFileName()) !== 'structures.php') {
 			throw new \RuntimeException('Worker retained in model: ' . $type->getName());
 		}
-		foreach ($type->getProperties() as $property) {
+		foreach ($type->getProperties() as $property)
+		{
 			$comment = $property->getDocComment();
 			if (($comment !== false) && str_contains($comment, 'Numeric storage of') && (!$property->isInitialized($value) || !$property->getValue($value) instanceof Storage)) {
 				throw new \RuntimeException('Uninitialized record storage: ' . $property->getName());
@@ -295,7 +330,9 @@ final class Model_Test
 	{
 		$compiler->init([]);
 		$file = new file();
-		if ($file->tokens !== null) { throw new \LogicException('New source has a token backlink'); }
+		if ($file->tokens !== null) {
+			throw new \LogicException('New source has a token backlink');
+		}
 		$file->path = 'invalid.phs';
 		$file->content = $content;
 		$module = new module();

@@ -31,8 +31,7 @@ final class prepared_names {
 }
 
 /** One template-check invocation; published complete before file workers run. */
-final class template_check_context
-{
+final class template_check_context {
 	/** Shared policy supplied to Template_Checker::check. */
 	public llvm_policy $policy;
 	/** Index references the prepared files supplied to Template_Checker::check.

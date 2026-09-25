@@ -38,8 +38,7 @@ enum node_kind
 }
 
 /** Keep enum reflection beside its declaration for native lowering. */
-final class Node_Kind_Name
-{
+final class Node_Kind_Name {
 	public static function text(node_kind $kind): string
 	{
 		return enum_name($kind);
@@ -86,8 +85,7 @@ final class call_specialization implements node_interface
 	}
 }
 
-final class ast_node
-{
+final class ast_node {
 	/** @storage.index token_list.tokens */
 	public int $token_index;
 	/** @storage.boundary token_list.tokens */
@@ -98,7 +96,6 @@ final class ast_node
 	 * @ownership owner
 	 */
 	public ?node_interface $specialization = null;
-
 }
 
 final class scope
@@ -273,8 +270,7 @@ final class array_type_specialization implements node_interface {
 	public ast_node $count;
 }
 
-final class array_literal_specialization implements node_interface
-{
+final class array_literal_specialization implements node_interface {
 	/**
 	 * Ordered object list of child nodes.
 	 * @storage.owner

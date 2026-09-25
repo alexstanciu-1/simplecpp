@@ -31,7 +31,6 @@ final class Module_Loader
 			$loaded = new file();
 			File_Loader::init($loaded, $file_path);
 			$files[] = $loaded;
-
 		}
 	}
 }

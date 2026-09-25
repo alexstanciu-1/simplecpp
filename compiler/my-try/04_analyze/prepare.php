@@ -21,12 +21,16 @@ final class Name_Preparation
 			$result->declarations[$entry->token_index] = $entry;
 		}
 		$references /** vector<int> */ = $file->variable_references;
-		foreach ($file->pending_bindings as $index) { $references[] = $index; }
+		foreach ($file->pending_bindings as $index) {
+			$references[] = $index;
+		}
 		foreach ($references as $index)
 		{
 			$entry = $entries[$index];
 			$candidates /** vector<collected_name> */ = [];
-			if (isset($entry->scope->variables[$entry->name])) { $candidates = $entry->scope->variables[$entry->name]; }
+			if (isset($entry->scope->variables[$entry->name])) {
+				$candidates = $entry->scope->variables[$entry->name];
+			}
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("LLVM experiment needs one same-file declaration for " . $entry->name . " at token " . $entry->token_index));
 			}
@@ -43,13 +47,18 @@ final class Name_Preparation
 			$entry = $entries[$index];
 			$current_scope = $entry->scope;
 			$candidates /** vector<collected_name> */ = [];
-			while (true) {
+			while (true)
+			{
 				$candidates = [];
-				if (isset($current_scope->functions[$entry->name])) { $candidates = $current_scope->functions[$entry->name]; }
+				if (isset($current_scope->functions[$entry->name])) {
+					$candidates = $current_scope->functions[$entry->name];
+				}
 				if (q_count($candidates) !== 0) {
 					break;
 				}
-				if ($current_scope->parent === null) { break; }
+				if ($current_scope->parent === null) {
+					break;
+				}
 				$current_scope = object_cast($current_scope->parent, scope::class);
 			}
 			if (q_count($candidates) !== 1) {
@@ -68,7 +77,9 @@ final class Name_Preparation
 					break;
 				}
 				$type_candidates /** vector<collected_name> */ = [];
-				if (isset($current_scope->types[$entry->name])) { $type_candidates = $current_scope->types[$entry->name]; }
+				if (isset($current_scope->types[$entry->name])) {
+					$type_candidates = $current_scope->types[$entry->name];
+				}
 				if (q_count($type_candidates) !== 0) {
 					if (q_count($type_candidates) !== 1) {
 						throw new \RuntimeException('Ambiguous struct type: ' . $entry->name);
@@ -76,7 +87,9 @@ final class Name_Preparation
 					$result->types[$entry->token_index] = $type_candidates[0];
 					break;
 				}
-				if ($current_scope->parent === null) { break; }
+				if ($current_scope->parent === null) {
+					break;
+				}
 				$current_scope = object_cast($current_scope->parent, scope::class);
 			}
 		}

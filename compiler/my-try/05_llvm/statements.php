@@ -13,7 +13,7 @@ trait LLVM_Statements
 	{
 		foreach (Syntax_Nodes::block_data($node)->children as $statement)
 		{
-			if (($statement->kind === node_kind::function_declaration || $statement->kind === node_kind::struct_declaration)) {
+			if ((($statement->kind === node_kind::function_declaration) || ($statement->kind === node_kind::struct_declaration))) {
 				continue;
 			}
 			if ($this->block->terminated) {
@@ -77,8 +77,8 @@ trait LLVM_Statements
 			throw new \RuntimeException('Whole-array assignment is not supported yet');
 		}
 		$value = $local->array_type !== null
-			? $this->array_initializer($binding->value, $local)
-			: $this->expression($binding->value);
+		? $this->array_initializer($binding->value, $local)
+		: $this->expression($binding->value);
 		$this->store_value($local->type, $local->address, $value);
 		$this->initialized[$declaration->local_index] = true;
 	}

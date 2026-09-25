@@ -7,7 +7,8 @@
 namespace scpp\compiler;
 
 /** Explicit defaults for this experiment, not the full Simple C++ type/ABI contract. */
-final class llvm_policy {
+final class llvm_policy
+{
 	/** Source type spelling to LLVM integer type. */
 	public array $types /** hash<string> */ = [];
 	public string $integer_type = 'i32';
@@ -106,7 +107,8 @@ final class llvm_parameter {
 	public llvm_operand $incoming;
 }
 
-final class llvm_prepared_file {
+final class llvm_prepared_file
+{
 	/** @storage.reference model.collected_files */
 	public collected_file $source;
 	/** @ownership owner */
@@ -191,7 +193,8 @@ final class llvm_place {
 }
 
 /** Ordered field shape and exact-name lookup belong to the prepared source type. */
-final class llvm_struct_type {
+final class llvm_struct_type
+{
 	/** @storage.reference collected_file.entries */
 	public collected_name $declaration;
 	public string $name;

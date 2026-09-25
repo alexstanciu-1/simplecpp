@@ -6,9 +6,11 @@
  */
 namespace scpp\compiler;
 
-final class token {
+final class token
+{
 	public int $offset /** uint32 */;
 	public int $length /** uint32 */;
+
 	// Retained spelling for now; a native string view is a future representation.
 	protected string $_text;
 
@@ -33,8 +35,10 @@ final class token_list
 	 * @storage.reference module.files
 	 */
 	public file $file;
+
 	/** Authoritative source snapshot for this token list and all its spans. */
 	public string $content;
+
 	/**
 	 * Numeric storage of token records.
 	 * @storage.owner

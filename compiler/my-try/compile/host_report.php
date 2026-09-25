@@ -34,7 +34,7 @@ final class Host_Report
 			echo '  ' . htmlspecialchars($file->source->file->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			foreach (['defined_elements', 'type_references', 'variable_references', 'function_references', 'field_references', 'pending_bindings'] as $group)
 			{
-				echo "    $group\n";
+echo "    $group\n";
 				foreach ($file->$group as $index) {
 					$entry = $file->entries[$index];
 					$scope_label = $entry->scope->function_boundary ? 'function-local' : 'global';
@@ -68,7 +68,7 @@ final class Host_Report
 		for ($index = $node->token_index; $index < $node->end_token_index; $index++) {
 			$words[] = $tokens->tokens[$index]->text();
 		}
-		echo str_repeat('  ', $depth) . $label . " [{$node->token_index}, {$node->end_token_index}) " . htmlspecialchars(implode(' ', $words), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
+echo str_repeat('  ', $depth) . $label . " [{$node->token_index}, {$node->end_token_index}) " . htmlspecialchars(implode(' ', $words), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 
 		if ($payload instanceof block_specialization) {
 			foreach ($payload->children as $child) {

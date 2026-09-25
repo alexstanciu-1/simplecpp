@@ -39,6 +39,16 @@ backlinks and non-owning indexes @reference.weak. These are design annotations f
 the Simple C++ port, not implemented weak-reference lowering. Do not invent a store
 for directly owned records such as scopes; document their actual owners.
 
+## Mandatory writing checks
+
+Read [code_style.md](docs/code_style.md) before editing PHP/PHP++ here. The rules
+are required for new and touched code, including tests and helpers. Do not copy an
+existing one-line block or missing purpose comment as a precedent. Before finishing,
+run `python3 compiler/my-try/tools/style_check.py` and review meaningful grouping,
+comments, expression parentheses and method order. The standard PHP test runner
+also enforces the mechanical checks. Generated files and saved historical evidence
+are excluded; do not reformat them.
+
 ## Default procedure for each imported slice
 
 1. The initial full import from

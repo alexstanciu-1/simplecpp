@@ -25,7 +25,7 @@ final class LLVM_Names
 			}
 			else {
 				$result .= '_x' . string_byte_slice($hex, (int) ($byte / 16), 1)
-					. string_byte_slice($hex, $byte % 16, 1) . '_';
+				. string_byte_slice($hex, $byte % 16, 1) . '_';
 			}
 		}
 		return $result;
@@ -49,7 +49,8 @@ final class LLVM_Names
 				$index = $index + 2;
 				continue;
 			}
-			if (string_byte_at($encoded, $index + 1) === 120) {
+			if (string_byte_at($encoded, $index + 1) === 120)
+			{
 				$high = self::hex_digit(string_byte_at($encoded, $index + 2));
 				$low = self::hex_digit(string_byte_at($encoded, $index + 3));
 				if (($high >= 0) && ($low >= 0) && (string_byte_at($encoded, $index + 4) === 95)) {
@@ -74,23 +75,37 @@ final class LLVM_Names
 	/** Return -1 for absent or non-uppercase-hex bytes. */
 	private static function hex_digit(int $byte): int
 	{
-		if (self::digit($byte)) { return $byte - 48; }
-		if (($byte >= 65) && ($byte < 71)) { return $byte - 55; }
+		if (self::digit($byte)) {
+			return $byte - 48;
+		}
+		if (($byte >= 65) && ($byte < 71)) {
+			return $byte - 55;
+		}
 		return -1;
 	}
 
 	/** A suffix is exactly _Gf followed by digits, d and another nonempty digit run. */
 	private static function identity_suffix(string $source, int $start): bool
 	{
-		if (string_byte_slice($source, $start, 3) !== '_Gf') { return false; }
+		if (string_byte_slice($source, $start, 3) !== '_Gf') {
+			return false;
+		}
 		$index = $start + 3;
 		$first = $index;
-		while (self::digit(string_byte_at($source, $index))) { $index++; }
-		if ($index === $first) { return false; }
-		if (string_byte_at($source, $index) !== 100) { return false; }
+		while (self::digit(string_byte_at($source, $index))) {
+			$index++;
+		}
+		if ($index === $first) {
+			return false;
+		}
+		if (string_byte_at($source, $index) !== 100) {
+			return false;
+		}
 		$index++;
 		$first = $index;
-		while (self::digit(string_byte_at($source, $index))) { $index++; }
+		while (self::digit(string_byte_at($source, $index))) {
+			$index++;
+		}
 		return ($index > $first) && ($index === string_byte_len($source));
 	}
 

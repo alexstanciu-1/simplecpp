@@ -26,7 +26,8 @@ final class LLVM_Generator
 				$module->types[] = $type->name . ' = type { ' . LLVM_Text::join($fields, ', ') . ' }';
 			}
 			$module->file_name = LLVM_Text::output_name($prepared->source->source->file->path);
-			foreach ($prepared->external_functions as $target) {
+			foreach ($prepared->external_functions as $target)
+			{
 				$types /** vector<string> */ = [];
 				foreach ($target->parameters as $parameter) {
 					$types[] = $parameter->incoming->type;
@@ -46,7 +47,6 @@ final class LLVM_Generator
 		}
 		return $outputs;
 	}
-
 }
 
 /** One function emission owns its block, local initialization and temporary names. */
@@ -65,6 +65,7 @@ final class LLVM_Function_Generator
 	/** Initialized declaration indexes in this function. */
 	private array $initialized /** hash<bool, int> */ = [];
 
+	/** Capture one function and establish its initial block before emitting instructions. */
 	public function __construct(llvm_prepared_function $function, llvm_policy $policy)
 	{
 		$this->instance = $function;

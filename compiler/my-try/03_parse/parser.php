@@ -39,6 +39,7 @@ final class Parser_Run
 	private Symbol_Collector $collector;
 	private int $position = 0;
 
+	/** Create a parse candidate and own its root scope only when no caller scope was supplied. */
 	public function __construct(token_list $tokens, ?scope $target_scope = null)
 	{
 		$this->tokens = $tokens;
@@ -74,7 +75,7 @@ final class Parser_Run
 		if ($this->text() === 'struct') {
 			return $this->struct_declaration();
 		}
-		if (($this->text() === 'function' || $this->text() === 'template')) {
+		if ((($this->text() === 'function') || ($this->text() === 'template'))) {
 			return $this->function_declaration();
 		}
 		if ($this->text() === 'return') {
@@ -172,7 +173,7 @@ final class Parser_Run
 			$this->expect('>');
 		}
 		$this->expect('function');
-		if (!$this->identifier() || ($this->text() === 'function' || $this->text() === 'return' || $this->text() === 'void')) {
+		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return') || ($this->text() === 'void'))) {
 			throw new \RuntimeException($this->error_message('Expected function name'));
 		}
 		$function = new function_specialization();
@@ -208,7 +209,7 @@ final class Parser_Run
 		}
 		$this->expect(')');
 		$this->expect(':');
-		if (!$this->identifier() || ($this->text() === 'function' || $this->text() === 'return')) {
+		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected return type name'));
 		}
 		$type_start = $this->position++;
@@ -224,7 +225,7 @@ final class Parser_Run
 	private function parameter(scope $scope): ast_node
 	{
 		$start = $this->position;
-		if (!$this->identifier() || ($this->text() === 'function' || $this->text() === 'return')) {
+		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected parameter type'));
 		}
 		$this->position++;
@@ -289,7 +290,7 @@ final class Parser_Run
 		$start = $this->position;
 		$binding = new binding_specialization();
 		$binding->name_token_index = $this->position++;
-		if (($this->text() === '[' || $this->text() === '->')) {
+		if ((($this->text() === '[') || ($this->text() === '->'))) {
 			$base = $this->node(node_kind::variable_reference, $start);
 			$this->collector->record($base, $start, collected_name_kind::variable_reference, $this->current_scope);
 			$binding->target = $this->access_suffix($base);
@@ -297,7 +298,7 @@ final class Parser_Run
 		}
 
 		// A named element type may have one fixed-array suffix.
-		if (($binding->target === null) && !($this->text() === 'return' || $this->text() === 'function') && $this->identifier())
+		if (($binding->target === null) && !(($this->text() === 'return') || ($this->text() === 'function')) && $this->identifier())
 		{
 			$type_start = $this->position++;
 			$type_node = $this->node(node_kind::identifier, $type_start);
@@ -337,7 +338,8 @@ final class Parser_Run
 		$start = $this->position;
 		$text = $this->text();
 		$kind = node_kind::variable_reference;
-		if (!string_byte_starts_with($text, '$')) {
+		if (!string_byte_starts_with($text, '$'))
+		{
 			if (($text !== '') && Source_Text::digits($text)) {
 				$kind = node_kind::integer_literal;
 			}
@@ -391,7 +393,7 @@ final class Parser_Run
 	/** Member and index access retain a base expression so reads, writes and references share one shape. */
 	private function access_suffix(ast_node $base): ast_node
 	{
-		while (($this->text() === '[' || $this->text() === '->'))
+		while ((($this->text() === '[') || ($this->text() === '->')))
 		{
 			if ($this->text() === '->')
 			{
@@ -483,7 +485,9 @@ final class Parser_Run
 	private function text(): string
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
-		if (!isset($token_rows[$this->position])) { return ''; }
+		if (!isset($token_rows[$this->position])) {
+			return '';
+		}
 		return $token_rows[$this->position]->text();
 	}
 
@@ -495,12 +499,14 @@ final class Parser_Run
 		return $this->position++;
 	}
 
+	/** Describe the current source position without publishing incomplete syntax. */
 	private function error_message(string $message): string
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
 		$offset = string_byte_len($this->tokens->content);
-		if (isset($token_rows[$this->position])) { $offset = $token_rows[$this->position]->offset; }
+		if (isset($token_rows[$this->position])) {
+			$offset = $token_rows[$this->position]->offset;
+		}
 		return $message . " at " . $this->tokens->file->path . ": byte " . $offset;
 	}
-
 }

@@ -35,8 +35,7 @@ final class Compiler
 
 		foreach (Model::$modules as $m)
 		{
-			foreach ($m->files as $file)
-			{
+			foreach ($m->files as $file) {
 				$tok = new Tokenizer($file);
 				$tokens = $tok->tokenize();
 				$file->tokens = $tokens;
@@ -66,5 +65,4 @@ final class Compiler
 		$prepared_files = (new LLVM_Preparation())->prepare_program(Model::$collected_files, $policy);
 		Model::$llvm_files = (new LLVM_Generator())->generate($prepared_files, $policy);
 	}
-
 }

@@ -43,8 +43,7 @@ final class LLVM_Test
 			if ($file->source->content !== $source) {
 				throw new \RuntimeException('Source content changed');
 			}
-			foreach ($file->defined_elements as $index)
-			{
+			foreach ($file->defined_elements as $index) {
 				$entry = $file->entries[$index];
 				$pool = $entry->kind === collected_name_kind::function_declaration ? $entry->scope->functions : $entry->scope->variables;
 				if (!in_array($entry, $pool[$entry->name], true)) {
@@ -201,8 +200,7 @@ final class LLVM_Test
 		try {
 			$compiler->exec();
 		}
-		catch (\Throwable $error)
-		{
+		catch (\Throwable $error) {
 			if (!Model::$llvm_files->is_empty()) {
 				throw new \LogicException('Failed generation published output', 0, $error);
 			}

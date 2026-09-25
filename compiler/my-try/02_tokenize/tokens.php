@@ -24,11 +24,13 @@ final class Tokenizer
 	/** Scan the source into token spans, skipping whitespace without changing offsets. */
 	public function tokenize(): token_list
 	{
+		// Retain the exact source snapshot used by every token span.
 		$this->content = $this->source->content;
 		$result = new token_list();
 		$tokens /** Storage<token> */ = $result->tokens;
 		$result->file = $this->source;
 		$result->content = $this->content;
+
 		$length = string_byte_len($this->content);
 		$offset = 0;
 
@@ -36,7 +38,9 @@ final class Tokenizer
 		{
 			while ($offset < $length) {
 				$byte = string_byte_at($this->content, $offset);
-				if (($byte !== 32) && ($byte !== 9) && ($byte !== 13) && ($byte !== 10)) { break; }
+				if (($byte !== 32) && ($byte !== 9) && ($byte !== 13) && ($byte !== 10)) {
+					break;
+				}
 				$offset++;
 			}
 			if ($offset === $length) {
@@ -49,6 +53,7 @@ final class Tokenizer
 			$span = new token($start, $span_length, string_byte_slice($this->content, $start, $span_length));
 			$tokens[] = $span;
 		}
+
 		return $result;
 	}
 
@@ -74,7 +79,8 @@ final class Tokenizer
 				throw new \RuntimeException('Expected variable name at ' . $this->source->path . ': byte ' . $start);
 			}
 		}
-		if (self::letter($byte)) {
+		if (self::letter($byte))
+		{
 			$offset++;
 			$next = string_byte_at($this->content, $offset);
 			while (self::letter($next) || self::digit($next)) {
@@ -83,7 +89,8 @@ final class Tokenizer
 			}
 			return $offset;
 		}
-		if (self::digit($byte)) {
+		if (self::digit($byte))
+		{
 			$offset++;
 			$next = string_byte_at($this->content, $offset);
 			while (self::digit($next)) {
@@ -95,14 +102,20 @@ final class Tokenizer
 			}
 			return $offset;
 		}
-		if (string_byte_slice($this->content, $offset, 2) === '->') { return $offset + 2; }
+		if (string_byte_slice($this->content, $offset, 2) === '->') {
+			return $offset + 2;
+		}
 		$punctuation = ';(){}:,&[]<>';
 		for ($index = 0; $index < string_byte_len($punctuation); $index++) {
-			if ($byte === string_byte_at($punctuation, $index)) { return $offset + 1; }
+			if ($byte === string_byte_at($punctuation, $index)) {
+				return $offset + 1;
+			}
 		}
 		if ($byte === 61) {
 			$next = string_byte_at($this->content, $offset + 1);
-			if (($next !== 61) && ($next !== 62)) { return $offset + 1; }
+			if (($next !== 61) && ($next !== 62)) {
+				return $offset + 1;
+			}
 		}
 		throw new \RuntimeException('Unsupported token at ' . $this->source->path . ': byte ' . $start);
 	}

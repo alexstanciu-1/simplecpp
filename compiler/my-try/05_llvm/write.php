@@ -12,9 +12,15 @@ final class LLVM_Writer
 	public function text(llvm_module $module): string
 	{
 		$sections /** vector<string> */ = [];
-		foreach ($module->types as $text) { $sections[] = $text; }
-		foreach ($module->globals as $text) { $sections[] = $text; }
-		foreach ($module->external_functions as $text) { $sections[] = $text; }
+		foreach ($module->types as $text) {
+			$sections[] = $text;
+		}
+		foreach ($module->globals as $text) {
+			$sections[] = $text;
+		}
+		foreach ($module->external_functions as $text) {
+			$sections[] = $text;
+		}
 		foreach ($module->functions as $function)
 		{
 			$parameters /** vector<string> */ = [];
@@ -37,7 +43,9 @@ final class LLVM_Writer
 			$lines[] = '}';
 			$sections[] = $this->join($lines, "\n");
 		}
-		foreach ($module->metadata as $text) { $sections[] = $text; }
+		foreach ($module->metadata as $text) {
+			$sections[] = $text;
+		}
 		return $this->join($sections, "\n\n") . "\n";
 	}
 

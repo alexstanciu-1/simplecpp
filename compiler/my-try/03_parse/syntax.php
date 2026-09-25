@@ -11,7 +11,8 @@ final class Syntax_Nodes
 	/** Reject inconsistent kind/payload pairs at the parser construction boundary. */
 	public static function validate_payload(node_kind $kind, ?node_interface $payload): void
 	{
-		$valid = match ($kind) {
+		$valid = match ($kind)
+		{
 			node_kind::file, node_kind::block => $payload instanceof block_specialization,
 			node_kind::function_declaration => $payload instanceof function_specialization,
 			node_kind::parameter_declaration => $payload instanceof parameter_specialization,
@@ -37,7 +38,8 @@ final class Syntax_Nodes
 	/** Derive the category from the node kind so classifications cannot disagree. */
 	public static function category(ast_node $node): node_category
 	{
-		return match ($node->kind) {
+		return match ($node->kind)
+		{
 			node_kind::struct_declaration, node_kind::field_declaration, node_kind::array_type, node_kind::file, node_kind::function_declaration, node_kind::parameter_declaration, node_kind::identifier, node_kind::punctuation,
 			node_kind::comment => node_category::syntax,
 			node_kind::field_expression, node_kind::array_literal, node_kind::index_expression, node_kind::integer_literal, node_kind::variable_reference,

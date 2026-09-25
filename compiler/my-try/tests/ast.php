@@ -26,7 +26,9 @@ final class AST_Test
 
 	private static function check(bool $condition): void
 	{
-		if (!$condition) { throw new \RuntimeException('AST ownership assertion failed'); }
+		if (!$condition) {
+			throw new \RuntimeException('AST ownership assertion failed');
+		}
 	}
 
 	private static function tokens(string $content): token_list
@@ -58,40 +60,53 @@ final class AST_Test
 		self::check($node->token_index <= $node->end_token_index);
 		$payload = $node->specialization;
 		Syntax_Nodes::validate_payload($node->kind, $payload);
-		if ($payload === null) { return; }
+		if ($payload === null) {
+			return;
+		}
 		self::initialized($payload);
 		self::check(!$payloads->contains($payload));
 		$payloads->attach($payload);
-		foreach (get_object_vars($payload) as $value) {
+		foreach (get_object_vars($payload) as $value)
+		{
 			if ($value instanceof ast_node) {
 				self::visit($value, $syntax, $nodes, $payloads);
-			} elseif ($value instanceof Storage) {
+			}
+			elseif ($value instanceof Storage)
+			{
 				$start = -1;
 				foreach ($value as $position => $child) {
 					self::check($child->token_index >= $start);
 					$start = $child->token_index;
 					self::visit($child, $syntax, $nodes, $payloads);
 				}
-
 			}
 		}
 	}
 
+	/** Verify initialized ownership and shared references throughout one completed syntax graph. */
 	private static function verify(parsed_file $syntax): \SplObjectStorage
 	{
 		self::initialized($syntax);
 		self::initialized($syntax->collection);
-		foreach ($syntax->scopes as $scope) { self::initialized($scope); }
+		foreach ($syntax->scopes as $scope) {
+			self::initialized($scope);
+		}
 		self::initialized($syntax->root->specialization->scope);
 		self::check($syntax->collection->root === $syntax->root);
 		self::check($syntax->collection->source === $syntax->tokens);
 		$nodes = new \SplObjectStorage();
 		$payloads = new \SplObjectStorage();
 		self::visit($syntax->root, $syntax, $nodes, $payloads);
-		foreach ($payloads as $payload) {
-			if ($payload instanceof block_specialization && $payload->scope !== $syntax->root->specialization->scope) {
+		foreach ($payloads as $payload)
+		{
+			if ($payload instanceof block_specialization && $payload->scope !== $syntax->root->specialization->scope)
+			{
 				$found = false;
-				foreach ($syntax->scopes as $owned) { if ($owned === $payload->scope) { $found = true; } }
+				foreach ($syntax->scopes as $owned) {
+					if ($owned === $payload->scope) {
+						$found = true;
+					}
+				}
 				self::check($found);
 			}
 		}
@@ -137,7 +152,12 @@ final class AST_Test
 		$before = serialize($scope);
 		$parser->init(self::tokens('struct Pending { int $x; } function broken(int $a): int { return $a;'), $scope);
 		$failed = false;
-		try { $parser->parse(); } catch (\RuntimeException $expected) { $failed = true; }
+		try {
+			$parser->parse();
+		}
+		catch (\RuntimeException $expected) {
+			$failed = true;
+		}
 		self::check($failed && serialize($scope) === $before);
 		$parser->init(self::tokens('function next(): void { return; }'), $scope);
 		$next = $parser->parse();
@@ -171,12 +191,22 @@ final class AST_Test
 		self::check($scope->variables['x'][0] === $result->entries[$position]);
 		$before = serialize($result);
 		$rejections = 0;
-		try { $collector->finish($syntax->root); } catch (\LogicException $expected) { ++$rejections; }
-		try { $collector->record($node, 0, collected_name_kind::variable_declaration, $scope); }
-		catch (\LogicException $expected) { ++$rejections; }
+		try {
+			$collector->finish($syntax->root);
+		}
+		catch (\LogicException $expected) {
+			++$rejections;
+		}
+		try {
+			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope);
+		}
+		catch (\LogicException $expected) {
+			++$rejections;
+		}
 		self::check($rejections === 2 && serialize($result) === $before && count($scope->variables['x']) === 1);
 	}
 
+	/** Exercise payload coverage, retained syntax identity, and parser reuse across failures. */
 	public static function run(): void
 	{
 		self::collector_finalization();
@@ -197,7 +227,9 @@ PHS;
 		$first_nodes = self::verify($first);
 		$types = [];
 		foreach ($first_nodes as $node) {
-			if ($node->specialization !== null) { $types[get_class($node->specialization)] = true; }
+			if ($node->specialization !== null) {
+				$types[get_class($node->specialization)] = true;
+			}
 		}
 		foreach (self::PAYLOADS as $field => $type) {
 			self::check($field === 'binaries' ? !isset($types[$type]) : isset($types[$type]));
@@ -206,12 +238,19 @@ PHS;
 		$parser->init(self::tokens($source));
 		$second = $parser->parse();
 		$second_nodes = self::verify($second);
-		foreach ($second_nodes as $node) { self::check(!$first_nodes->contains($node)); }
+		foreach ($second_nodes as $node) {
+			self::check(!$first_nodes->contains($node));
+		}
 		self::check(serialize($first) === $before);
 
 		$parser->init(self::tokens('function broken(): int { return 1;'));
 		$failed = false;
-		try { $parser->parse(); } catch (\RuntimeException $expected) { $failed = true; }
+		try {
+			$parser->parse();
+		}
+		catch (\RuntimeException $expected) {
+			$failed = true;
+		}
 		self::check($failed && serialize($first) === $before);
 		$parser->init(self::tokens(''));
 		$empty = $parser->parse();
@@ -235,9 +274,13 @@ if (count($first->scopes) !== 2 || count($second->scopes) !== 2 || $first->scope
 try {
 	Syntax_Nodes::validate_payload(node_kind::integer_literal, new binary_specialization());
 	throw new \RuntimeException('Invalid payload accepted');
-} catch (\LogicException $expected) { }
+}
+catch (\LogicException $expected) {
+}
 try {
 	Syntax_Nodes::validate_payload(node_kind::block, null);
 	throw new \RuntimeException('Missing payload accepted');
-} catch (\LogicException $expected) { }
+}
+catch (\LogicException $expected) {
+}
 AST_Test::run();

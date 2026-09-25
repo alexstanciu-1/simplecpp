@@ -12,28 +12,36 @@ final class LLVM_Text
 		$length = string_byte_len($name);
 		$end = $length;
 		for ($index = 0; $index < $length; $index++) {
-			if (string_byte_at($name, $index) === 46) { $end = $index; }
+			if (string_byte_at($name, $index) === 46) {
+				$end = $index;
+			}
 		}
 		return string_byte_slice($name, 0, $end) . '.ll';
 	}
 
+	/** Join already encoded fragments without leading or trailing separators. */
 	public static function join(array $parts /** vector<string> */, string $separator): string
 	{
 		$result = '';
 		$first = true;
 		foreach ($parts as $part) {
-			if (!$first) { $result .= $separator; }
+			if (!$first) {
+				$result .= $separator;
+			}
 			$result .= $part;
 			$first = false;
 		}
 		return $result;
 	}
 
+	/** Canonicalize lexer-validated decimal digits, retaining one zero for an all-zero token. */
 	public static function decimal(string $text): string
 	{
 		$length = string_byte_len($text);
 		$start = 0;
-		while (string_byte_at($text, $start) === 48) { $start++; }
+		while (string_byte_at($text, $start) === 48) {
+			$start++;
+		}
 		return $start === $length ? '0' : string_byte_slice($text, $start, $length - $start);
 	}
 
@@ -41,11 +49,15 @@ final class LLVM_Text
 	public static function decimal_exceeds(string $text, string $maximum): bool
 	{
 		$length = string_byte_len($text);
-		if ($length !== string_byte_len($maximum)) { return $length > string_byte_len($maximum); }
+		if ($length !== string_byte_len($maximum)) {
+			return $length > string_byte_len($maximum);
+		}
 		for ($index = 0; $index < $length; $index++) {
 			$left = string_byte_at($text, $index);
 			$right = string_byte_at($maximum, $index);
-			if ($left !== $right) { return $left > $right; }
+			if ($left !== $right) {
+				return $left > $right;
+			}
 		}
 		return false;
 	}

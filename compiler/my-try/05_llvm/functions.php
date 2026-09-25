@@ -13,7 +13,7 @@ trait LLVM_Functions
 	{
 		$prepared = $this->instance;
 		foreach ($prepared->locals as $local) {
-			if (($local->declaration->scope === Syntax_Nodes::block_data($prepared->body)->scope) && !$local->borrowed) {
+			if (($local->declaration->scope === Syntax_Nodes::block_data($prepared->body)->scope) && (!$local->borrowed)) {
 				$this->emit($local->address . ' = alloca ' . $local->type);
 			}
 		}

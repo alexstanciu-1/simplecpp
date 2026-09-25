@@ -2,27 +2,40 @@
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 
-function token_scan(string $text): token_list {
+function token_scan(string $text): token_list
+{
 	$file = new file();
 	$file->path = 'bytes.phs';
 	$file->content = $text;
 	$scanner = new Tokenizer($file);
 	return $scanner->tokenize();
 }
-function token_check(bool $ok): void {
-	if (!$ok) { throw new \LogicException('Tokenizer byte contract failed'); }
+function token_check(bool $ok): void
+{
+	if (!$ok) {
+		throw new \LogicException('Tokenizer byte contract failed');
+	}
 }
 $single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=';
-for ($value = 0; $value < 256; $value++) {
+for ($value = 0; $value < 256; $value++)
+{
 	$byte = chr($value);
 	if (str_contains(" \t\r\n", $byte)) {
 		token_check(token_scan($byte)->tokens->is_empty());
-	} elseif (str_contains($single, $byte)) {
+	}
+	elseif (str_contains($single, $byte)) {
 		$tokens = token_scan($byte)->tokens;
 		token_check(count($tokens) === 1 && $tokens[0]->offset === 0 && $tokens[0]->length === 1 && $tokens[0]->text() === $byte);
-	} else {
+	}
+	else
+	{
 		$failed = false;
-		try { token_scan($byte); } catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'bytes.phs: byte 0'); }
+		try {
+			token_scan($byte);
+		}
+		catch (\RuntimeException $error) {
+			$failed = str_contains($error->getMessage(), 'bytes.phs: byte 0');
+		}
 		token_check($failed);
 	}
 }
@@ -33,9 +46,15 @@ token_check(count($tokens) === count($expected));
 foreach ($tokens as $index => $token) {
 	token_check([$token->offset, $token->length, $token->text()] === $expected[$index]);
 }
-foreach (['$', '$0', '12a', '1.', '==', '=>', '-', "\0", "\xc3\xa9"] as $invalid) {
+foreach (['$', '$0', '12a', '1.', '==', '=>', '-', "\0", "\xc3\xa9"] as $invalid)
+{
 	$failed = false;
-	try { token_scan('  ' . $invalid); } catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'bytes.phs: byte 2'); }
+	try {
+		token_scan('  ' . $invalid);
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), 'bytes.phs: byte 2');
+	}
 	token_check($failed);
 }
 token_check(token_scan('')->tokens->is_empty());

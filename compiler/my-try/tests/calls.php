@@ -167,7 +167,7 @@ final class Calls_Test
 			if (($result->build->exit_code !== 0) || ($result->execution?->exit_code !== $expected_exit)) {
 				throw new \RuntimeException('Native call test failed: ' . $name . ' ' . $result->build->stderr);
 			}
-			echo "$name: dependencies verified, native exit $expected_exit\n";
+echo "$name: dependencies verified, native exit $expected_exit\n";
 		}
 	}
 }

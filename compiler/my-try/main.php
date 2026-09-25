@@ -25,9 +25,9 @@ try
 
 	echo "Simple C++ — PHP compiler\n\n";
 	foreach (Model::$modules as $module) {
-		echo "Module: {$module->path}\n";
+echo "Module: {$module->path}\n";
 		foreach ($module->files as $file) {
-			echo "\nSource: {$file->path}\n";
+echo "\nSource: {$file->path}\n";
 			echo htmlspecialchars($file->content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), "\n";
 		}
 	}

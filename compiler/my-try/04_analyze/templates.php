@@ -9,13 +9,18 @@ namespace scpp\compiler;
 /** Bounded symbolic checks run even for unused definitions; substitution grants no permissions. */
 final class Template_Checker
 {
+	/** Index prepared files once and check every template against the shared symbolic policy. */
 	public function check(Storage $files /** Storage<llvm_prepared_file> */, llvm_policy $policy): void
 	{
 		$file_index /** hash<llvm_prepared_file, shared<collected_file>> */ = new \SplObjectStorage /** hash<llvm_prepared_file, shared<collected_file>> */();
-		foreach ($files as $file) { $file_index[$file->source] = $file; }
+		foreach ($files as $file) {
+			$file_index[$file->source] = $file;
+		}
+
 		$context = new template_check_context();
 		$context->files = $file_index;
 		$context->policy = $policy;
+
 		foreach ($files as $file) {
 			(new Template_File_Checker($file, $context))->check();
 		}
@@ -36,6 +41,7 @@ final class Template_File_Checker
 		$this->context = $context;
 	}
 
+	/** Validate each template with fresh bindings and locals, including unused definitions. */
 	public function check(): void
 	{
 		$file = $this->file;
@@ -43,11 +49,15 @@ final class Template_File_Checker
 		foreach ($file->source->defined_elements as $index)
 		{
 			$entry = $entries[$index];
-			if ($entry->kind !== collected_name_kind::function_declaration) { continue; }
+			if ($entry->kind !== collected_name_kind::function_declaration) {
+				continue;
+			}
 			if (q_count(Syntax_Nodes::function_data($entry->node)->template_parameters) === 0) {
 				continue;
 			}
 			$syntax = Syntax_Nodes::function_data($entry->node);
+
+			// Each definition starts a new symbolic environment.
 			$bindings /** vector<string> */ = [];
 			$this->bindings = $bindings;
 			foreach ($syntax->template_parameters as $name => $token_index) {
@@ -67,6 +77,7 @@ final class Template_File_Checker
 				$declaration = $file->names->declarations[Syntax_Nodes::parameter_data($parameter)->name_token_index];
 				$this->locals[$declaration->local_index] = $type;
 			}
+
 			$return_type = $this->type($file, $syntax->return_type, $this->bindings);
 			$return_typeed = false;
 			foreach (Syntax_Nodes::block_data($syntax->body)->children as $statement) {
@@ -74,9 +85,9 @@ final class Template_File_Checker
 					throw new \RuntimeException('Statements after return are not supported in template definitions');
 				}
 				$this->statement($statement, $return_type);
-				$return_typeed = $statement->kind === node_kind::return_statement;
+				$return_typeed = ($statement->kind === node_kind::return_statement);
 			}
-			if (($return_type !== 'void') && !$return_typeed) {
+			if (($return_type !== 'void') && (!$return_typeed)) {
 				throw new \RuntimeException('Template definition requires an explicit value return');
 			}
 		}
@@ -113,11 +124,14 @@ final class Template_File_Checker
 				throw new \RuntimeException('Template proof requires explicit value initialization and simple variable stores');
 			}
 			$declaration = $syntax->type_syntax === null
-				? $this->file->names->references[$node->token_index] : $this->file->names->declarations[$node->token_index];
+			? $this->file->names->references[$node->token_index] : $this->file->names->declarations[$node->token_index];
 			$type = '';
 			if ($syntax->type_syntax === null) {
-				if (isset($this->locals[$declaration->local_index])) { $type = $this->locals[$declaration->local_index]; }
-			} else {
+				if (isset($this->locals[$declaration->local_index])) {
+					$type = $this->locals[$declaration->local_index];
+				}
+			}
+			else {
 				$type = $this->type($this->file, $syntax->type_syntax, $this->bindings);
 			}
 			$value = $this->expression($syntax->value);
