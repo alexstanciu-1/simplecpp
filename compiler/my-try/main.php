@@ -22,6 +22,7 @@ try
 	$paths /** vector<string> */ = [__DIR__ . '/samples/01_base'];
 	$compiler = new Compiler();
 	$compiler->init($paths);
+	$compiler->exec();
 
 	echo "Simple C++ — PHP compiler\n\n";
 	foreach (Model::$modules as $module) {
@@ -31,7 +32,6 @@ echo "\nSource: {$file->path}\n";
 			echo htmlspecialchars($file->content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), "\n";
 		}
 	}
-	$compiler->exec();
 	$host = new Host_Report();
 	$host->show();
 	$host->run_native();

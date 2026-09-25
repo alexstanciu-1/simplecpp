@@ -2,7 +2,7 @@
 
 /*
  * Role: scan source bytes into token spans.
- * Call map: Compiler::tokenize -> Tokenizer::__construct -> Tokenizer::tokenize -> token_end.
+ * Call map: Compiler::frontend -> Tokenizer::tokenize -> File_Loader / token_end.
  */
 namespace scpp\compiler;
 
@@ -24,6 +24,10 @@ final class Tokenizer
 	/** Scan the source into token spans, skipping whitespace without changing offsets. */
 	public function tokenize(): token_list
 	{
+		// Disk reads belong to this file's worker; in-memory callers supply their own bytes.
+		if ($this->source->disk_source) {
+			File_Loader::init($this->source, $this->source->path);
+		}
 		// Retain the exact source snapshot used by every token span.
 		$this->content = $this->source->content;
 		$result = new token_list();

@@ -2,7 +2,7 @@
 
 /*
  * Role: coordinate the currently imported compiler stages.
- * Call map: main.php -> init -> exec -> tokenize -> parse -> llvm.
+ * Call map: main.php -> init -> exec -> frontend (read/tokenize/parse per file) -> llvm.
  * Output: retained sources, syntax, collection and per-source LLVM modules.
  */
 namespace scpp\compiler;
@@ -10,7 +10,7 @@ namespace scpp\compiler;
 final class Compiler
 {
 	public int $jobs = 1;
-	/** Load one module per input folder, retaining the requested order. */
+	/** Discover one module per input folder, retaining the requested order. */
 	public function init(array $paths /** vector<string> */): void
 	{
 		Model::reset();
@@ -24,46 +24,61 @@ final class Compiler
 	/** Run the source pipeline through collection and the initial LLVM pass. */
 	public function exec(): void
 	{
-		$this->tokenize();
-		$this->parse();
+		$this->frontend(true, true);
 		$this->llvm();
 	}
 
-	/** Tokenize each module's files and retain the completed collections. */
+	/** Standalone parallel scanning; exec uses the combined pipeline without this barrier. */
 	public function tokenize(): void
 	{
-		Model::reset_tokens();
-
-		foreach (Model::$modules as $m)
-		{
-			foreach ($m->files as $file) {
-				$tok = new Tokenizer($file);
-				$tokens = $tok->tokenize();
-				$file->tokens = $tokens;
-				Model::$tokens[] = $tokens;
-			}
-		}
+		$this->frontend(true, false);
 	}
 
-	/** Parse privately, then publish each completed file through the compiler. */
+	/** Explicitly reparse existing snapshots without rereading their source files. */
 	public function parse(): void
 	{
-		Model::reset_syntax();
+		$this->frontend(false, true);
+	}
+
+	/** One bounded worker reads, tokenizes and immediately parses its file before publication. */
+	private function frontend(bool $scan, bool $parse): void
+	{
+		if ($scan) {
+			Model::reset_tokens();
+		}
+		else {
+			Model::reset_syntax();
+		}
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');
 		}
-
-		$queue = new Parse_Work_Queue();
-		foreach (Model::$tokens as $tokens) {
-			$queue->enqueue($tokens);
+		$queue = new Source_Work_Queue();
+		if ($scan) {
+			foreach (Model::$modules as $input_module) {
+				foreach ($input_module->files as $source) {
+					$queue->enqueue($source);
+				}
+			}
 		}
-		$items /** vector<parse_work> */ = $queue->items();
+		else {
+			foreach (Model::$tokens as $tokens) {
+				$queue->enqueue($tokens->file, $tokens);
+			}
+		}
+		$items /** vector<source_work> */ = $queue->items();
 		$published = task_run_publish_unordered($items, $this->jobs,
-		function (parse_work $work) use ($queue): parse_work
+		function (source_work $work) use ($queue, $scan, $parse): source_work
 		{
 			$queue->start($work);
-			try {
-				$work->result = (new Parser($work->tokens))->parse();
+			try
+			{
+				if ($scan) {
+					$work->tokens = (new Tokenizer($work->source))->tokenize();
+				}
+				if ($parse) {
+					$tokens = object_cast($work->tokens, token_list::class);
+					$work->result = (new Parser($tokens))->parse();
+				}
 			}
 			catch (\Throwable $error) {
 				$queue->fail($work);
@@ -71,24 +86,44 @@ final class Compiler
 			}
 			return $work;
 		},
-		function (parse_work $work) use ($queue): bool {
-			Compiler::publish_parsed(object_cast($work->result, parsed_file::class));
+		function (source_work $work) use ($queue, $scan, $parse): bool
+		{
+			if ($scan) {
+				$tokens = object_cast($work->tokens, token_list::class);
+				$work->source->tokens = $tokens;
+				Model::$tokens[] = $tokens;
+			}
+			if ($parse) {
+				Compiler::publish_parsed(object_cast($work->result, parsed_file::class));
+			}
 			$queue->complete($work);
 			return true;
 		});
 		if (($published !== q_count($items)) || (!$queue->finished())) {
-			throw new \LogicException('Parsing barrier reached before work completed');
+			throw new \LogicException('Frontend barrier reached before work completed');
 		}
-		// Publication happens immediately; retained output order follows input order only after joining.
+		// Work is unordered; restore retained file order only after every worker has joined.
+		$token_files /** Storage<token_list> */ = new Storage();
 		$syntax_files /** Storage<parsed_file> */ = new Storage();
 		$collected_files /** Storage<collected_file> */ = new Storage();
-		foreach ($items as $work) {
-			$parsed = object_cast($work->result, parsed_file::class);
-			$syntax_files->append($parsed);
-			$collected_files->append($parsed->collection);
+		foreach ($items as $work)
+		{
+			if ($scan) {
+				$token_files->append(object_cast($work->tokens, token_list::class));
+			}
+			if ($parse) {
+				$parsed = object_cast($work->result, parsed_file::class);
+				$syntax_files->append($parsed);
+				$collected_files->append($parsed->collection);
+			}
 		}
-		Model::$syntax_files = $syntax_files;
-		Model::$collected_files = $collected_files;
+		if ($scan) {
+			Model::$tokens = $token_files;
+		}
+		if ($parse) {
+			Model::$syntax_files = $syntax_files;
+			Model::$collected_files = $collected_files;
+		}
 	}
 
 	/** Publication boundary: caller serializes this operation; parser workers never edit global indexes. */

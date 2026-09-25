@@ -1,7 +1,38 @@
 <?php
 namespace scpp\compiler;
 
-// Host harness supplies these two literal paths before conversion.
+// A one-slot run must publish A's parse before B fails tokenization.
+$pipeline_compiler = new Compiler();
+$pipeline_paths /** vector<string> */ = [__PIPELINE_DIR__];
+$pipeline_compiler->init($pipeline_paths);
+$pipeline_failed = false;
+try {
+	$pipeline_compiler->exec();
+}
+catch (\RuntimeException $expected) {
+	$pipeline_failed = true;
+}
+if ((!$pipeline_failed) || (q_count(Model::$syntax_files) !== 1) || (q_count(Model::$tokens) !== 1)) {
+	throw new \LogicException('Frontend retained a whole-project tokenization barrier');
+}
+if (!isset(Model::$global_scope->functions['ready'])) {
+	throw new \LogicException('Earlier parsed file was not published before the later scan failed');
+}
+// Explicit stage entrypoints remain available for inspection and tests.
+$stage_paths /** vector<string> */ = [__RECOVERY_DIR__];
+$pipeline_compiler->init($stage_paths);
+$pipeline_compiler->jobs = 3;
+$pipeline_compiler->tokenize();
+$stage_syntax /** Storage<parsed_file> */ = Model::$syntax_files;
+if ((q_count(Model::$tokens) !== 1) || (!$stage_syntax->is_empty())) {
+	throw new \LogicException('Standalone tokenization did not stop at its requested boundary');
+}
+$pipeline_compiler->parse();
+if (q_count(Model::$syntax_files) !== 1) {
+	throw new \LogicException('Standalone parsing lost its input snapshot');
+}
+
+// Host harness supplies literal paths before conversion.
 $path = fs_read_text(__REQUEST_FILE__);
 $paths /** vector<string> */ = [$path];
 $compiler = new Compiler();

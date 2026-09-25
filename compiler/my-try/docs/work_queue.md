@@ -1,14 +1,20 @@
-# Compiler parse work queue and publication
+# Compiler source work queue and publication
 Doc Status: supporting
 
 This slice adds no incremental compilation, revisions, cache reuse or replacement
-policy. Compiler.init continues to reset Model. Discovery/reading and tokenization
-remain their existing stages; the first queue processes parsing work only.
+policy. Compiler.init continues to reset Model. Folder discovery remains synchronous
+and records paths without reading source bytes.
+The queue processes each file through reading, tokenization and parsing.
 
 ## Work and execution
 
-Compiler.parse owns a transient Parse_Work_Queue of token snapshots and work records.
-Membership is sealed before dispatch. Each work record moves from queued to running,
+Compiler owns a transient Source_Work_Queue of file work records. exec dispatches
+one read/tokenize/parse chain per file: parsing begins immediately after that file
+is tokenized, without a project-wide tokenization barrier. A worker holds its slot
+for the whole chain, so these stages share one concurrency budget.
+Membership is sealed before dispatch. The same source record cannot be queued
+twice, preventing concurrent writes to its metadata/content. Parse-only snapshots
+must belong to the queued source. Each work record moves from queued to running,
 then published (only after publication) or failed. Completion verifies queue
 membership and state. The queue never enters the retained Model.
 
@@ -68,6 +74,20 @@ slow earlier job on publication of a later job, proving completion-order publica
 it also checks exclusion, concurrency bounds and joining after work/publisher errors.
 The native compiler harness checks PHP/output parity, repeated runs and recovery.
 
-Subsequent queue slices can add discovery/read/tokenize orders and dynamically
-schedule dependent work. This implementation processes the fixed parse batch only;
-it does not claim a complete streaming pipeline or incremental compiler.
+Compiler.tokenize is an explicit read/tokenize-only batch for callers that want a
+stage boundary; Compiler.parse reparses retained snapshots without disk reads.
+Compiler.exec uses the combined chain instead of calling these two batch APIs.
+Tokens and parsing results are published together after a successful full-chain job.
+A parse failure in exec therefore does not publish that job's private token result;
+explicit tokenize() followed by parse() retains the already published token batch.
+
+Module discovery sets disk_source=true. Tokenizer then invokes File_Loader before
+scanning. In-memory callers retain disk_source=false and supply content directly.
+Discovered file records have empty content and zero metadata placeholders until the
+worker reads them; those placeholders are not authoritative filesystem observations.
+The host report displays source text after execution. Disk contents are reread on
+each scan; this is not caching or incremental compilation.
+
+Directory discovery must still complete before dispatch. Dynamic discovery and
+independent stage queues/work stealing remain possible later work. This slice uses
+a fixed batch of per-file chains and adds no incremental behavior.

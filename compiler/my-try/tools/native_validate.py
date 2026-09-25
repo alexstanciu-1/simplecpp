@@ -70,8 +70,12 @@ def main():
     recovery = results / 'recovery'
     recovery.mkdir()
     (recovery / 'main.phs').write_text('return 0;')
+    pipeline = results / 'pipeline'
+    pipeline.mkdir()
+    (pipeline / 'a.phs').write_text('function ready(): int { return 1; }')
+    (pipeline / 'b.phs').write_text('$')
     driver = (APP / 'tests/native_driver.php.in').read_text()
-    driver = driver.replace('__REQUEST_FILE__', php_literal(request)).replace('__RECOVERY_DIR__', php_literal(recovery))
+    driver = driver.replace('__REQUEST_FILE__', php_literal(request)).replace('__RECOVERY_DIR__', php_literal(recovery)).replace('__PIPELINE_DIR__', php_literal(pipeline))
     (source / 'main.php').write_text(driver)
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')

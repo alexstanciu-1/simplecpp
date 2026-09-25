@@ -118,3 +118,13 @@ local ownership or hiding cross-file duplicate candidates. Function locals remai
 private. The transient compiler parse queue is not retained in Model.
 See [work queue](docs/work_queue.md) for the sequential PHP executor and
 bounded native execution with locked completion-order publication. No revision tracking or reuse exists.
+
+## Per-file frontend pipeline
+
+Module discovery now publishes paths only. A discovered file has disk_source=true;
+its initially empty content/zero metadata are pending placeholders. Tokenizer reads
+those files in the worker, then scans their bytes. Explicit in-memory records keep
+disk_source=false. Each Compiler.exec work order immediately parses its own token
+result and publishes the completed file under the existing lock. Model token/syntax
+roots return to input order after all jobs join. See docs/work_queue.md for explicit
+stage entrypoints and failure/publication boundaries.

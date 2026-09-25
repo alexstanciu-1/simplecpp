@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Role: discover and load a module's immediate PHS files.
- * Call map: host -> Module_Loader::init -> File_Loader::init.
+ * Role: discover a module's immediate PHS files.
+ * Call map: Compiler::init -> Module_Loader::init.
  * Flow: sorted directory names -> ordered module file records.
  */
 namespace scpp\compiler;
@@ -29,7 +29,8 @@ final class Module_Loader
 			}
 
 			$loaded = new file();
-			File_Loader::init($loaded, $file_path);
+			$loaded->path = $file_path;
+			$loaded->disk_source = true;
 			$files[] = $loaded;
 		}
 	}

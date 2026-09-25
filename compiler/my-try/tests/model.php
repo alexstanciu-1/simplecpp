@@ -126,6 +126,7 @@ final class Model_Test
 		$old_scope = Model::$global_scope;
 		$old_tokens = Model::$tokens[0];
 		$old_content = $old_tokens->content;
+		$old_tokens->file->disk_source = false; // Deliberately supply a broken in-memory snapshot.
 		$old_tokens->file->content = '$';
 		try {
 			$compiler->tokenize();
@@ -147,6 +148,7 @@ final class Model_Test
 			throw new \LogicException('Restart damaged retained results');
 		}
 		$old_tokens->file->content = $old_content;
+		$old_tokens->file->disk_source = true;
 		$compiler->exec();
 		// Corrupt the first token only to exercise parse failure after a successful run.
 		Model::$tokens[0]->tokens[0] = new token(0, 1, ')');

@@ -109,3 +109,12 @@ was introduced. See docs/work_queue.md and
 specs/planning/compiler_migration/results/parse-queue-native-01 for the 142-case
 native proof and dedicated concurrency/error-join tests. STAN retains 217 advisory
 errors and 85 warnings, with zero build blockers.
+
+Per-file frontend follow-up: discovery records paths; Tokenizer reads disk_source
+files inside each worker. Compiler.exec now runs one read/tokenize/parse chain per
+file, with the existing job limit and locked publication. Source_Work_Queue rejects
+aliased source records and mismatched token snapshots. Standalone tokenize/parse
+remain explicit stage entrypoints. The native test driver proves that an earlier
+parse publishes before a later scan fails; all 142 PHP/native comparisons and 48
+program executions pass. See source-pipeline-native-01 under the migration results.
+STAN retains 223 advisory errors and 87 warnings, with zero blockers.

@@ -2,8 +2,8 @@
 
 /*
  * Role: load metadata and source bytes into a file record.
- * Call map: Module_Loader::init -> File_Loader::init.
- * Filesystem calls remain PHP host operations pending conversion review.
+ * Call map: Tokenizer::tokenize -> File_Loader::init.
+ * Gather metadata and bytes before assigning the loaded fields.
  */
 namespace scpp\compiler;
 

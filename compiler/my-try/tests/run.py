@@ -33,6 +33,8 @@ def verify(root, output):
     (output / "ast.log").write_text(ast.stdout + ast.stderr)
     invariants = run(["php", str(root / "tests/ast_invariants.php")])
     (output / "ast_invariants.log").write_text(invariants.stdout + invariants.stderr)
+    pipeline = run(["php", str(root / "tests/pipeline.php")])
+    (output / "pipeline.log").write_text(pipeline.stdout + pipeline.stderr)
     publication = run(["php", str(root / "tests/publication.php")])
     (output / "publication.log").write_text(publication.stdout + publication.stderr)
     model = run(["php", str(root / "tests/model.php")])

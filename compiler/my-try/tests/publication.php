@@ -52,9 +52,9 @@ catch (\RuntimeException $expected) {
 echo "Publication: isolation, reversed completion, visibility, identity and duplicate rejection passed\n";
 
 
-$queue = new Parse_Work_Queue();
-$queue->enqueue($first->tokens);
-$queue->enqueue($second->tokens);
+$queue = new Source_Work_Queue();
+$queue->enqueue($first->tokens->file, $first->tokens);
+$queue->enqueue($second->tokens->file, $second->tokens);
 $items = $queue->items();
 $a = $items[0];
 $b = $items[1];
@@ -64,8 +64,8 @@ $queue->complete($b);
 if ($queue->finished()) {
 	throw new \LogicException('Queue crossed barrier with running work');
 }
-$foreign = new Parse_Work_Queue();
-$foreign->enqueue($first->tokens);
+$foreign = new Source_Work_Queue();
+$foreign->enqueue($first->tokens->file, $first->tokens);
 $d = $foreign->items()[0];
 $foreign->start($d);
 try {
@@ -85,7 +85,7 @@ try {
 catch (\LogicException $expected) {
 }
 try {
-	$queue->enqueue($first->tokens);
+	$queue->enqueue($first->tokens->file, $first->tokens);
 	throw new \RuntimeException('Enqueue after sealing accepted');
 }
 catch (\LogicException $expected) {
@@ -95,3 +95,19 @@ if ($foreign->finished()) {
 	throw new \LogicException('Failed queue crossed successful barrier');
 }
 echo "Queue: out-of-order completion, sealed membership, ownership and failure barrier passed\n";
+
+$unique = new Source_Work_Queue();
+$unique->enqueue($first->tokens->file);
+try {
+	$unique->enqueue($first->tokens->file);
+	throw new \RuntimeException('Duplicate source worker accepted');
+}
+catch (\LogicException $expected) {
+}
+try {
+	$unique->enqueue($second->tokens->file, $first->tokens);
+	throw new \RuntimeException('Mismatched snapshot accepted');
+}
+catch (\LogicException $expected) {
+}
+echo "Queue: exclusive source ownership and snapshot provenance passed\n";

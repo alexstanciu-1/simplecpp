@@ -8,12 +8,15 @@
  */
 namespace scpp\compiler;
 
-final class file {
+final class file
+{
 	public string $path;
-	public int $mtime;
-	public int $size;
+	public int $mtime = 0;
+	public int $size = 0;
 	/** Input for the next tokenization; existing token lists retain their own snapshot. */
-	public string $content;
+	public string $content = '';
+	/** Discovered paths are read by the tokenizer; false selects supplied in-memory bytes. */
+	public bool $disk_source = false;
 	/**
 	 * Convenience backlink to the completed tokenization result; not its owner.
 	 * @storage.reference model.tokens
