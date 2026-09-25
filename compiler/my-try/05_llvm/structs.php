@@ -20,10 +20,13 @@ final class LLVM_Struct_Preparation
 			foreach ($file->defined_elements as $index)
 			{
 				$entry = $entries[$index];
+				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+					continue;
+				}
 				if ($entry->kind !== collected_name_kind::struct_declaration) {
 					continue;
 				}
-				if (isset($policy->types[$entry->name]) || (q_count(Scope_Lookup::visible(object_cast(weakref_get($entry->scope), scope::class))->types[$entry->name]) !== 1)) {
+				if (isset($policy->types[$entry->name]) || (q_count(Scope_Lookup::live(Scope_Lookup::visible(object_cast(weakref_get($entry->scope), scope::class))->types[$entry->name])) !== 1)) {
 					throw new \RuntimeException('Conflicting struct type: ' . $entry->name);
 				}
 				$type = new llvm_struct_type();
@@ -68,6 +71,9 @@ final class LLVM_Struct_Preparation
 		foreach ($file->source->field_references as $index)
 		{
 			$entry = $entries[$index];
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				continue;
+			}
 			if (object_cast(weakref_get($entry->scope), scope::class) !== object_cast(weakref_get(Syntax_Nodes::block_data($function->body)->scope), scope::class)) {
 				continue;
 			}

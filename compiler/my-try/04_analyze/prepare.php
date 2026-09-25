@@ -16,6 +16,9 @@ final class Name_Preparation
 		foreach ($file->defined_elements as $index)
 		{
 			$entry = $entries[$index];
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				continue;
+			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			if (($entry->kind === collected_name_kind::variable_declaration) && isset($entry_scope->template_parameters[$entry->name])) {
 				throw new \RuntimeException('Variable conflicts with template parameter: ' . $entry->name);
@@ -29,11 +32,14 @@ final class Name_Preparation
 		foreach ($references as $index)
 		{
 			$entry = $entries[$index];
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				continue;
+			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$candidates /** vector<collected_name> */ = [];
 			$variable_scope = Scope_Lookup::visible($entry_scope);
 			if (isset($variable_scope->variables[$entry->name])) {
-				$candidates = $variable_scope->variables[$entry->name];
+				$candidates = Scope_Lookup::live($variable_scope->variables[$entry->name]);
 			}
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("LLVM experiment needs one same-file declaration for " . $entry->name . " at token " . $entry->token_index));
@@ -49,6 +55,9 @@ final class Name_Preparation
 		foreach ($file->function_references as $index)
 		{
 			$entry = $entries[$index];
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				continue;
+			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$current_scope = $entry_scope;
 			$candidates /** vector<collected_name> */ = [];
@@ -57,7 +66,7 @@ final class Name_Preparation
 				$current_scope = Scope_Lookup::visible($current_scope);
 				$candidates = [];
 				if (isset($current_scope->functions[$entry->name])) {
-					$candidates = $current_scope->functions[$entry->name];
+					$candidates = Scope_Lookup::live($current_scope->functions[$entry->name]);
 				}
 				if (q_count($candidates) !== 0) {
 					break;
@@ -76,6 +85,9 @@ final class Name_Preparation
 		foreach ($file->type_references as $index)
 		{
 			$entry = $entries[$index];
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				continue;
+			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$current_scope = $entry_scope;
 			while (true)
@@ -87,7 +99,7 @@ final class Name_Preparation
 				}
 				$type_candidates /** vector<collected_name> */ = [];
 				if (isset($current_scope->types[$entry->name])) {
-					$type_candidates = $current_scope->types[$entry->name];
+					$type_candidates = Scope_Lookup::live($current_scope->types[$entry->name]);
 				}
 				if (q_count($type_candidates) !== 0) {
 					if (q_count($type_candidates) !== 1) {
@@ -110,6 +122,18 @@ final class Name_Preparation
 /** File-local ownership does not introduce a separate language-level global scope. */
 final class Scope_Lookup
 {
+	/** Tombstones remain indexed for update consumers but are never resolution candidates. */
+	public static function live(array $entries /** vector<collected_name> */): array /** vector<collected_name> */
+	{
+		$result /** vector<collected_name> */ = [];
+		foreach ($entries as $entry) {
+			if ($entry->changes !== \scpp\compiler\SYNC_DELETED) {
+				$result[] = $entry;
+			}
+		}
+		return $result;
+	}
+
 	public static function visible(scope $local_scope): scope
 	{
 		$published = weakref_get($local_scope->publication);

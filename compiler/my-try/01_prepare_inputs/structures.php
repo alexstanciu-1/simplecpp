@@ -8,8 +8,15 @@
  */
 namespace scpp\compiler;
 
+/** Flags describe the current update; deleted rows remain until explicit cleanup. */
+const SYNC_ADDED = 1;
+const SYNC_CHANGED = 2;
+const SYNC_BODY_CHANGED = 4;
+const SYNC_DELETED = 8;
+
 final class file
 {
+	public int $changes = 0;
 	public string $path;
 	public int $mtime = 0;
 	public int $size = 0;

@@ -1,0 +1,727 @@
+{
+  "analysis": {
+    "compile_error_count": 0,
+    "stan_error_count": 260,
+    "stan_warning_count": 104,
+    "stan_notice_count": 0
+  },
+  "passed": true,
+  "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-sync-06/phpp/.prism/build/main",
+  "request_file": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-sync-06/request.txt",
+  "cases": 142,
+  "valid": 48,
+  "rejected": 94,
+  "repeated_compile_and_recovery": true,
+  "outcomes": [
+    {
+      "name": "llvm/after_entry_return",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/array_copy_element",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/array_read",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/array_scope",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/array_write",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/bare_return",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/copy",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/discard_result",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/duplicate_names",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/empty_array",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/empty_function",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/escaped_names",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/function_scope",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/literal",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/maximum",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/return_call",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/sample",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_0",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_1",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_10",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_11",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_12",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_13",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_14",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_15",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_16",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_17",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_18",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_19",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_2",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_20",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_21",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_22",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_23",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_24",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_25",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_26",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_27",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_28",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_29",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_3",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_30",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_31",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_32",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_33",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_34",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_35",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_36",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_37",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_38",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_39",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_4",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_40",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_41",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_42",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_43",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_44",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_45",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_46",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_47",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_48",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_49",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_5",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_50",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_51",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_52",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_53",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_54",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_55",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_56",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_57",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_58",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_59",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_6",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_60",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_61",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_62",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_63",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_64",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_65",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_66",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_67",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_68",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_69",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_7",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_70",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_71",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_72",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_73",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_74",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_75",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_76",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_77",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_78",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_79",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_8",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_80",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_81",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_82",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_83",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_84",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_85",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_86",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_87",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_88",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_89",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_9",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_90",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_91",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_92",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/unsupported_93",
+      "valid": false,
+      "passed": true
+    },
+    {
+      "name": "llvm/value_initializer",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "llvm/zero",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/array_reference",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/array_value_argument",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/function_body",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/local_forward",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/mixed_evaluation",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/multiple_arguments",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/nested_arguments",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/parameter_forwarding",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/reference_aliasing",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/reference_forwarding",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/reference_mutation",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/repeated",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/return_chain",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/struct_and_array",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/struct_default",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/struct_fields",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/struct_local_isolation",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/struct_reference",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/struct_value_argument",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/template_forward",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/template_multi",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/template_recursive_registration",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/template_reuse",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/template_unused",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/unused",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/value_initializer",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/value_isolation",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "calls/void_parameters",
+      "valid": true,
+      "passed": true
+    },
+    {
+      "name": "sample/01_base",
+      "valid": true,
+      "passed": true
+    }
+  ]
+}

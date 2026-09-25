@@ -7,7 +7,11 @@ final class Host_Report
 	/** PHP browser/CLI presentation and optional sample execution stay outside the compiler. */
 	public function show(): void
 	{
-		foreach (Model::$tokens as $tokens) {
+		foreach (Model::$tokens as $tokens)
+		{
+			if ($tokens->file->changes === SYNC_DELETED) {
+				continue;
+			}
 			echo "\nTokens: " . htmlspecialchars($tokens->file->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			echo "offset\tlength\ttext\n";
 			foreach ($tokens->tokens as $token) {
@@ -15,6 +19,9 @@ final class Host_Report
 			}
 		}
 		foreach (Model::$syntax_files as $syntax) {
+			if ($syntax->tokens->file->changes === SYNC_DELETED) {
+				continue;
+			}
 			echo "\nAST: " . htmlspecialchars($syntax->tokens->file->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			$this->dump_node($syntax->root, 0, $syntax->tokens);
 		}
@@ -31,12 +38,19 @@ final class Host_Report
 		echo "\nCollected names (global and function-local scopes)\n";
 		foreach (Model::$collected_files as $file)
 		{
+			if ($file->source->file->changes === SYNC_DELETED) {
+				continue;
+			}
 			echo '  ' . htmlspecialchars($file->source->file->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			foreach (['defined_elements', 'type_references', 'variable_references', 'function_references', 'field_references', 'pending_bindings'] as $group)
 			{
 echo "    $group\n";
-				foreach ($file->$group as $index) {
+				foreach ($file->$group as $index)
+				{
 					$entry = $file->entries[$index];
+					if ($entry->changes === SYNC_DELETED) {
+						continue;
+					}
 					$scope_label = $entry->scope->function_boundary ? 'function-local' : 'global';
 					echo "      entry {$entry->local_index} " . $entry->kind->name . ': ' . htmlspecialchars($entry->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . " at token {$entry->token_index} ($scope_label)\n";
 				}

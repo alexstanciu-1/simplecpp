@@ -56,6 +56,9 @@ final class LLVM_Preparation_Run
 			foreach ($source->defined_elements as $entry_index)
 			{
 				$entry = $entries[$entry_index];
+				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+					continue;
+				}
 				$this->owners[$entry] = $file;
 				if ($entry->kind === collected_name_kind::struct_declaration) {
 					$type = $this->structs[$entry];
@@ -76,6 +79,9 @@ final class LLVM_Preparation_Run
 			foreach ($file->source->defined_elements as $index)
 			{
 				$entry = $entries[$index];
+				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+					continue;
+				}
 				if ($entry->kind === collected_name_kind::function_declaration) {
 					if (q_count(Syntax_Nodes::function_data($entry->node)->template_parameters) === 0) {
 						$this->register($file, $entry, []);

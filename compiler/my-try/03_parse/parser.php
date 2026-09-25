@@ -122,7 +122,9 @@ final class Parser_Run
 			}
 			$field->name_token_index = $this->position++;
 			$this->expect(';');
-			$fields->append($this->payload_node(node_kind::field_declaration, $field_start, $field));
+			$field_node = $this->payload_node(node_kind::field_declaration, $field_start, $field);
+			$fields->append($field_node);
+			$this->collector->record($field_node, $field->name_token_index, collected_name_kind::field_declaration, $this->current_scope);
 		}
 		$this->expect('}');
 		$node = $this->payload_node(node_kind::struct_declaration, $start, $record);

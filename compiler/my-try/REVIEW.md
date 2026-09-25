@@ -143,3 +143,10 @@ incremental reuse. Typed Syntax_Nodes payload accessors and real object-key hash
 bindings remove the earlier conversion blockers. Native instanceof/cast emission is
 implemented and inspected in a focused fixture; native compilation is still deferred.
 See docs/conversion_review.md for output location, evidence and remaining native gates.
+
+## Incremental cleanup debt
+
+See [file synchronization](docs/incremental.md). Physical tombstone removal and
+release of deleted records' old syntax/source references are deferred. Transient
+flags already reset between updates. Bidirectional semantic-use dependencies and
+selective re-resolution remain deferred; current preparation reruns completely.

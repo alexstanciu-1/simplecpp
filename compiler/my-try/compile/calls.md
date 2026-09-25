@@ -2,20 +2,18 @@
 Doc Status: supporting
 
 ```text
-main.php
-  Compiler::init(paths)                         compile.php
-    [each path] Module_Loader::init(module, path) ../01_prepare_inputs/module.php
-      [each PHS file] File_Loader::init(file, path) ../01_prepare_inputs/file.php
-  [action] display retained modules and source content
-  Compiler::exec()                              compile.php
-    Compiler::tokenize() -> Tokenizer           ../02_tokenize/tokens.php
-    Compiler::parse() -> Parser                 ../03_parse/parser.php
-      Symbol_Collector::record / finish         ../04_analyze/collect/collect.php
-    Compiler::llvm()
-      LLVM_Preparation::prepare_program        ../05_llvm/prepare.php
-      LLVM_Generator::generate                  ../05_llvm/generate.php
-    [if dbg] Compiler::run_native()
-      Native_Runner::run -> dump                ../06_native/run.php
+Compiler::init(paths) -> Model::reset + Module_Loader discovery (no reads)
+Compiler::exec() -> sync(all live paths) -> llvm()
+Compiler::update(paths) -> sync(notified paths) -> llvm()
+Compiler::sync(paths)
+  private file -> worker read/tokenize -> parse/collect
+  locked publish_update -> compare declarations -> replace file + update globals
+  join -> restore model root order
+Compiler::llvm() -> full live-program preparation -> generation
+
+Standalone inspection: tokenize() / parse() retain explicit stage/reset behavior.
+Module changes: init(complete module list), then exec().
+Host_Report owns display and optional native sample execution.
 ```
 
 Collection occurs during parsing. Preparation resolves names, checks symbolic

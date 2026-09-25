@@ -128,3 +128,11 @@ disk_source=false. Each Compiler.exec work order immediately parses its own toke
 result and publishes the completed file under the existing lock. Model token/syntax
 roots return to input order after all jobs join. See docs/work_queue.md for explicit
 stage entrypoints and failure/publication boundaries.
+
+## File synchronization
+
+See [incremental sync](docs/incremental.md). file and collected_name carry only a
+changes field; tokens and AST have no flags and are replaced completely. Existing
+root stores retain deleted files; global candidate vectors retain deleted symbols.
+Consumers must filter tombstones before accessing their old syntax/scopes. No new
+change-record store or persistent identity layer is introduced.

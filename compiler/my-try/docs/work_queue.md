@@ -1,8 +1,9 @@
 # Compiler source work queue and publication
 Doc Status: supporting
 
-This slice adds no incremental compilation, revisions, cache reuse or replacement
-policy. Compiler.init continues to reset Model. Folder discovery remains synchronous
+File synchronization now uses this queue; see [incremental.md](incremental.md) for
+replacement, flags and deletion rules. Compiler.init continues to reset Model.
+Folder discovery remains synchronous
 and records paths without reading source bytes.
 The queue processes each file through reading, tokenization and parsing.
 
@@ -41,7 +42,8 @@ file root and nested scopes. Symbol_Collector writes only those private scopes.
 The legacy direct Parser API accepting an external scope remains available; it is
 not used by compiler workers.
 
-Compiler.publish_parsed installs references to root-scope declarations in
+Compiler.publish_scope (shared by initial publication and sync replacement) installs
+references to root-scope declarations in
 Model.global_scope, retains the completed parse/collection, and records the root
 scope's native weak publication link. Function locals are not exported. Declaration
 records remain file-owned. Duplicate publication is rejected before index writes.
@@ -78,7 +80,7 @@ The native compiler harness checks PHP/output parity, repeated runs and recovery
 
 Compiler.tokenize is an explicit read/tokenize-only batch for callers that want a
 stage boundary; Compiler.parse reparses retained snapshots without disk reads.
-Compiler.exec uses the combined chain instead of calling these two batch APIs.
+Compiler.exec uses sync, the combined update chain, instead of these two batch APIs.
 Tokens and parsing results are published together after a successful full-chain job.
 A parse failure in exec therefore does not publish that job's private token result;
 explicit tokenize() followed by parse() retains the already published token batch.
@@ -87,9 +89,8 @@ Module discovery sets disk_source=true. Tokenizer then invokes File_Loader befor
 scanning. In-memory callers retain disk_source=false and supply content directly.
 Discovered file records have empty content and zero metadata placeholders until the
 worker reads them; those placeholders are not authoritative filesystem observations.
-The host report displays source text after execution. Disk contents are reread on
-each scan; this is not caching or incremental compilation.
+The host report displays source text after execution. Disk contents are reread for each notified file; unchanged files retain their parse.
 
 Directory discovery must still complete before dispatch. Dynamic discovery and
 independent stage queues/work stealing remain possible later work. This slice uses
-a fixed batch of per-file chains and adds no incremental behavior.
+a fixed batch of per-file chains per update.

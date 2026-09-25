@@ -118,3 +118,14 @@ remain explicit stage entrypoints. The native test driver proves that an earlier
 parse publishes before a later scan fails; all 142 PHP/native comparisons and 48
 program executions pass. See source-pipeline-native-01 under the migration results.
 STAN retains 223 advisory errors and 87 warnings, with zero blockers.
+
+File-sync follow-up: existing file/collected_name records carry one changes field.
+Candidate source bytes and syntax stay private until locked publication. Full builds
+and updates share Compiler.sync; live-program preparation still reruns completely.
+No toolchain/runtime patch was needed. The portable subset does not currently accept
+bitwise expressions or nullable object local annotations: deletion is an exclusive
+flag value, independent change bits are added once, and typed nullable lookup methods
+provide optional previous records. Compiler.jobs has a zero field initializer for
+the current STAN initialization check; its constructor installs DEFAULT_COMPILER_JOBS
+(12) before dispatch. Native proof uses that default. See docs/incremental.md and
+the file-sync-native-01 evidence under specs/planning/compiler_migration/results.

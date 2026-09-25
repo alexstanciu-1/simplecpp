@@ -26,7 +26,7 @@ final class Model
 	 */
 	public static Storage $syntax_files /** Storage<parsed_file> */;
 	/**
-	 * Established by reset; parsing replaces it before collecting declarations.
+	 * Established by reset; sync updates candidate lists while retaining deleted entries.
 	 * @ownership owner
 	 * Directly owned record; not an element of a Storage.
 	 */

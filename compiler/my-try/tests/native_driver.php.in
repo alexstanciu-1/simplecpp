@@ -33,6 +33,58 @@ if (q_count(Model::$syntax_files) !== 1) {
 	throw new \LogicException('Standalone parsing lost its input snapshot');
 }
 
+// The native proof reuses the same session across updates, with in-memory source input.
+Model::reset();
+$sync_module = new module();
+$sync_module->path = '/sync-proof';
+$sync_inputs /** Storage<file> */ = $sync_module->files;
+$definition = new file();
+$definition->path = '/sync-proof/a.phs';
+$definition->content = 'function answer(): int { return 7; }';
+$use_file = new file();
+$use_file->path = '/sync-proof/b.phs';
+$use_file->content = 'return answer();';
+$sync_inputs->append($definition);
+$sync_inputs->append($use_file);
+Model::$modules[] = $sync_module;
+$sync_compiler = new Compiler();
+$sync_compiler->exec();
+$syntax_before /** Storage<parsed_file> */ = Model::$syntax_files;
+$kept_caller = $syntax_before[1];
+$first_candidates /** vector<collected_name> */ = Model::$global_scope->functions['answer'];
+$first_function = $first_candidates[0];
+if ($first_function->changes !== \scpp\compiler\SYNC_ADDED) {
+	throw new \LogicException('Initial sync did not mark additions');
+}
+$current_inputs /** Storage<file> */ = $sync_module->files;
+$current_inputs[0]->content = 'function answer(): int { return 8; }';
+$changed_paths /** vector<string> */ = ['/sync-proof/a.phs'];
+$sync_compiler->update($changed_paths);
+$syntax_after /** Storage<parsed_file> */ = Model::$syntax_files;
+$next_candidates /** vector<collected_name> */ = Model::$global_scope->functions['answer'];
+$next_function = $next_candidates[0];
+if (($next_function->changes !== \scpp\compiler\SYNC_BODY_CHANGED) || ($next_function->node === $first_function->node) || ($syntax_after[1] !== $kept_caller)) {
+	throw new \LogicException('Native sync lost body flags or reparsed the unchanged caller');
+}
+$current_inputs[0]->content = 'function answer(): int { return 8; } function answer(): int { return 9; }';
+$sync_compiler->sync($changed_paths);
+$duplicates /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions['answer']);
+if (q_count($duplicates) !== 2) {
+	throw new \LogicException('Native sync merged duplicate declarations');
+}
+$current_inputs[0]->content = 'function answer(): int { return 9; }';
+$sync_compiler->update($changed_paths);
+$survivors /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions['answer']);
+if ((q_count($survivors) !== 1) || ($survivors[0]->changes !== 0)) {
+	throw new \LogicException('Native sync failed exact duplicate matching or tombstone filtering');
+}
+$current_inputs[0]->disk_source = true; // Absent path represents deletion of the published source.
+$sync_compiler->sync($changed_paths);
+$survivors = Scope_Lookup::live(Model::$global_scope->functions['answer']);
+if (q_count($survivors) !== 0) {
+	throw new \LogicException('Native sync resolved a deleted file');
+}
+
 // Host harness supplies literal paths before conversion.
 $path = fs_read_text(__REQUEST_FILE__);
 $paths /** vector<string> */ = [$path];

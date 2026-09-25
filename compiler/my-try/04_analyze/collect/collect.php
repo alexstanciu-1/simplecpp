@@ -34,7 +34,7 @@ final class Symbol_Collector
 		$entry->token_index = $token_index;
 		$entries /** Storage<collected_name> */ = $this->file->entries;
 		$entry->local_index = $entries->append($entry);
-		if (($kind === collected_name_kind::struct_declaration) || ($kind === collected_name_kind::variable_declaration) || ($kind === collected_name_kind::function_declaration)) {
+		if (($kind === collected_name_kind::field_declaration) || ($kind === collected_name_kind::struct_declaration) || ($kind === collected_name_kind::variable_declaration) || ($kind === collected_name_kind::function_declaration)) {
 			$this->file->defined_elements[] = $entry->local_index;
 		}
 		elseif ($kind === collected_name_kind::field_reference) {
@@ -67,6 +67,9 @@ final class Symbol_Collector
 		foreach ($this->file->defined_elements as $index)
 		{
 			$entry = $entries[$index];
+			if ($entry->kind === collected_name_kind::field_declaration) {
+				continue;
+			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			if ($entry->kind === collected_name_kind::function_declaration) {
 				$entry_scope->functions[$entry->name][] = $entry;

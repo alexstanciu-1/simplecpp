@@ -49,6 +49,9 @@ final class Template_File_Checker
 		foreach ($file->source->defined_elements as $index)
 		{
 			$entry = $entries[$index];
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				continue;
+			}
 			if ($entry->kind !== collected_name_kind::function_declaration) {
 				continue;
 			}

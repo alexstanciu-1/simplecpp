@@ -9,6 +9,7 @@ namespace scpp\compiler;
 enum collected_name_kind
 {
 	case struct_declaration;
+	case field_declaration;
 	case field_reference;
 	case variable_declaration;
 	case function_declaration;
@@ -21,6 +22,8 @@ enum collected_name_kind
 /** Identity is the owning file collection plus its append-only local index. */
 final class collected_name
 {
+	/** Current-update flags; deleted entries must not be dereferenced by consumers. */
+	public int $changes = 0;
 	/**
 	 * Backlink to the owning occurrence collection.
 	 * @storage.reference model.collected_files
@@ -47,7 +50,7 @@ final class collected_name
 	public int $token_index;
 }
 
-/** One parse's occurrence list; entries retain their order and never merge by name. */
+/** One parse's occurrences plus retained deleted declarations; duplicate names never merge. */
 final class collected_file
 {
 	/**
@@ -66,7 +69,8 @@ final class collected_file
 	 */
 	public Storage $entries /** Storage<collected_name> */;
 	/**
-	 * Local indexes of explicit declarations with known identity.
+	 * Positions in this entries store, including retained deleted declarations.
+	 * Deleted rows retain old provenance; inspect changes before other fields.
 	 * @storage.index collected_file.entries
 	 */
 	public array $defined_elements /** vector<int> */ = [];
