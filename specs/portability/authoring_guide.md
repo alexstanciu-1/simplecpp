@@ -334,3 +334,11 @@ C++ abstractness for a base without a pure virtual member; construct concrete
 subclasses only. Reference-class uint32 properties can also use a decimal literal
 default in 0..4294967295. Convert uint32 reads to int explicitly when passing them
 to signed index maps or method parameters. See compiler/my-try/docs/ast_layout.md.
+
+For a fixed batch with completion-order publication,
+`task_run_publish_unordered(items, workers, work, publish)` binds to the native
+tasks module. Supply an explicit vector and one-argument typed callbacks; PHP runs
+them sequentially. Native work is concurrent, publication is mutex-serialized, and
+return/rethrow joins workers. Work may only mutate its private result; shared writes
+belong in publish. Do not mutate batch membership during execution. See
+[builtin contract](../builtins/tasks/unordered_publication.md).

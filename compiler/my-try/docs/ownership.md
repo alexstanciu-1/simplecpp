@@ -77,3 +77,9 @@ Stage invalidation and source-snapshot authority are described in ../MODEL.md.
 No strong cycle reclamation, rollback, concurrent mutation or snapshot machinery is
 introduced by this cleanup. Retaining a PHP object can retain other linked records;
 future native optimizations must preserve needed behavior or state the change.
+
+File root scopes now remain owned by parsed_file.scopes on the compiler path.
+Their native weak `publication` link points to Model.global_scope after compiler
+publication. Global symbol pools reference the original collected_file entries;
+they do not move/copy declarations. Scope_Lookup preserves shared-global lookup
+rules. See work_queue.md; publication currently requires a serialized caller.

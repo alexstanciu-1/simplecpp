@@ -108,3 +108,13 @@ Direct scope links (`scope.parent`, `block_structure.scope`,
 conversion. PHP keeps strong references; native consumers explicitly acquire live
 handles. Keep the owning parsed file/model alive when scope access is required.
 Other weak-intent tags remain documentary. See docs/ownership.md.
+
+## Private parsing and compiler publication
+
+The compiler now parses each file into its own root scope. It publishes completed
+root declarations as references in global_scope. A file root's native weak
+`publication` link directs semantic lookup to that shared index without changing
+local ownership or hiding cross-file duplicate candidates. Function locals remain
+private. The transient compiler parse queue is not retained in Model.
+See [work queue](docs/work_queue.md) for the sequential PHP executor and
+bounded native execution with locked completion-order publication. No revision tracking or reuse exists.

@@ -201,6 +201,11 @@ final class scope
 	 * @reference.weak
 	 */
 	public ?scope $parent /** weak<scope> */ = null;
+	/** File-local root declarations are visible through this shared publication index.
+	 * @reference.source model.global_scope
+	 * @reference.weak
+	 */
+	public ?scope $publication /** weak<scope> */ = null;
 	public bool $function_boundary = false;
 	/** Template name to owner-local slot. */
 	public array $template_parameters /** hash<int> */ = [];

@@ -103,6 +103,7 @@ def main():
         run('storage-bindings', ['php', TESTS / 'storage_bindings.php'])
         run('weak-fields', ['php', TESTS / 'weak_fields.php'])
         run('class-inheritance', ['php', TESTS / 'class_inheritance.php'])
+        run('tasks', ['php', TESTS / 'tasks.php'])
         run('compiler-syntax', ['php', TESTS / 'compiler_syntax.php'])
         run('collections-php', ['php', TESTS / 'collections_php.php'])
         run('required-fields-php', [sys.executable, TESTS / 'required_fields.py', '--results', results / 'required-fields-php'])

@@ -2120,6 +2120,26 @@ inline void configure_publish_try_lock(const bool_t &)
 
 #endif
 
+// Publication order follows completion rather than input position. Reuse run's
+// bounded workers and join/error protocol; user work never holds this mutex.
+template <typename TItem, typename TWork, typename TPublish>
+[[nodiscard]] int_t<> run_publish_unordered(const vector_t<TItem> &items, const int_t<> &workers, TWork work, TPublish publish)
+{
+	if (workers.native_value() < 1) {
+		throw runtime_error("task_run_publish_unordered(): workers must be positive", "invalid_workers", "scpp::tasks", "task_run_publish_unordered");
+	}
+	std::mutex publication;
+	std::int64_t published = 0;
+	(void) run(items, workers, [&](TItem item) -> bool_t {
+		auto result = work(item);
+		std::lock_guard<std::mutex> guard(publication);
+		(void) publish(result);
+		++published;
+		return bool_t(true);
+	});
+	return int_t<>(published);
+}
+
 } // namespace scpp::tasks
 
 namespace scpp {

@@ -99,3 +99,13 @@ parent/sibling/position checks, and executed all 48 valid emitted programs.
 STAN has zero blockers, 210 advisory errors and 78 warnings; those advisories have
 not been eliminated. See docs/ast_layout.md for limits, including the v0.1 native
 emitter's lack of abstract-base enforcement when no method is pure virtual.
+
+Compiler parse-queue follow-up: each parser owns its file root scope. Compiler
+publication exports root declarations under the unordered task executor's lock;
+Scope_Lookup preserves shared-global lookup and duplicate rules. The native driver
+uses three jobs, while PHP executes the same interface sequentially. A final join
+restores retained input order before semantic preparation. No incremental policy
+was introduced. See docs/work_queue.md and
+specs/planning/compiler_migration/results/parse-queue-native-01 for the 142-case
+native proof and dedicated concurrency/error-join tests. STAN retains 217 advisory
+errors and 85 warnings, with zero build blockers.

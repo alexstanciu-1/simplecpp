@@ -37,5 +37,7 @@ require_once __DIR__ . '/05_llvm/generate.php';
 require_once __DIR__ . '/06_native/structures.php';
 require_once __DIR__ . '/06_native/run.php';
 require_once __DIR__ . '/compile/model.php';
+require_once __DIR__ . '/compile/structures.php';
+require_once __DIR__ . '/compile/work_queue.php';
 require_once __DIR__ . '/compile/compile.php';
 require_once __DIR__ . '/compile/host_report.php';

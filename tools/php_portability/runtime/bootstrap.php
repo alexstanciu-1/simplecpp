@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace scpp {
 
 require_once __DIR__ . "/strings.php";
+require_once __DIR__ . "/tasks.php";
 require_once __DIR__ . "/filesystem.php";
 require_once __DIR__ . "/snapshot.php";
 require_once __DIR__ . "/json_document.php";

@@ -90,7 +90,7 @@ def main():
     config_path = project / 'prism.json'
     config = json.loads(config_path.read_text())
     config['build']['cxx'] = 'clang++-18'
-    config['runtime']['modules'] = ['compiler', 'filesystem']
+    config['runtime']['modules'] = ['compiler', 'filesystem', 'tasks']
     config_path.write_text(json.dumps(config, indent=2) + '\n')
     print('Building native compiler with normal STAN...', flush=True)
     run('native-build', ['php', cli, 'build', '--build-runtime'], project, timeout=600)

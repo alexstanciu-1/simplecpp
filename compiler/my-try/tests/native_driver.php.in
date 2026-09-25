@@ -5,6 +5,7 @@ namespace scpp\compiler;
 $path = fs_read_text(__REQUEST_FILE__);
 $paths /** vector<string> */ = [$path];
 $compiler = new Compiler();
+$compiler->jobs = 3;
 $retained /** Storage<llvm_module> */ = new Storage();
 $previous = '';
 try

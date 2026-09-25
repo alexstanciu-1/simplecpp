@@ -50,6 +50,8 @@ foreach ([
     $converted = $converter->convert(file_get_contents(__DIR__ . '/../../compiler/my-try/' . $path), $path);
     ensure(str_contains($converted, $declaration), 'Scope link lost its weak annotation: ' . $path);
 }
+$scopeOutput = $converter->convert(file_get_contents(__DIR__ . '/../../compiler/my-try/03_parse/structures.php'), 'structures.php');
+ensure(str_contains($scopeOutput, 'public $publication weak<scope> = null;'), 'File scope publication link is not weak');
 $lookup = (new Scpp\S2S\Stan\StanDependencyResolver())->buildResolutionLookup([]);
 ensure(isset($lookup['function|weakref_get']), 'STAN does not recognize the runtime weak acquisition primitive');
 $result = (new Scpp\S2S\Transpiler())->transpile('/tmp/weak-fields-proof.phs', false, false, $out);

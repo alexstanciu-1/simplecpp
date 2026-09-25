@@ -31,8 +31,9 @@ final class Name_Preparation
 			$entry = $entries[$index];
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$candidates /** vector<collected_name> */ = [];
-			if (isset($entry_scope->variables[$entry->name])) {
-				$candidates = $entry_scope->variables[$entry->name];
+			$variable_scope = Scope_Lookup::visible($entry_scope);
+			if (isset($variable_scope->variables[$entry->name])) {
+				$candidates = $variable_scope->variables[$entry->name];
 			}
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("LLVM experiment needs one same-file declaration for " . $entry->name . " at token " . $entry->token_index));
@@ -53,6 +54,7 @@ final class Name_Preparation
 			$candidates /** vector<collected_name> */ = [];
 			while (true)
 			{
+				$current_scope = Scope_Lookup::visible($current_scope);
 				$candidates = [];
 				if (isset($current_scope->functions[$entry->name])) {
 					$candidates = $current_scope->functions[$entry->name];
@@ -78,6 +80,7 @@ final class Name_Preparation
 			$current_scope = $entry_scope;
 			while (true)
 			{
+				$current_scope = Scope_Lookup::visible($current_scope);
 				if (isset($current_scope->template_parameters[$entry->name])) {
 					$result->template_slots[$entry->token_index] = $current_scope->template_parameters[$entry->name];
 					break;
@@ -101,5 +104,18 @@ final class Name_Preparation
 			}
 		}
 		return $result;
+	}
+}
+
+/** File-local ownership does not introduce a separate language-level global scope. */
+final class Scope_Lookup
+{
+	public static function visible(scope $local_scope): scope
+	{
+		$published = weakref_get($local_scope->publication);
+		if ($published === null) {
+			return $local_scope;
+		}
+		return object_cast($published, scope::class);
 	}
 }
