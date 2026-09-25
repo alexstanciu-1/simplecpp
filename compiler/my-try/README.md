@@ -28,7 +28,8 @@ Data now lives in `01_prepare_inputs/structures.php`; `File_Loader::init()` and
 `Module_Loader::init()` populate caller-owned records. All use `scpp\compiler`.
 The full PHP pipeline is imported: loading, tokenization, parsing/collection,
 name/template preparation, LLVM generation and Clang execution. Data records live
-in each process's `structures.php`; processing owners use capitalized names.
+in each process's `structures.php`; AST payloads are grouped separately in
+`03_parse/structures_specialization.php`. Processing owners use capitalized names.
 [Import provenance](import-provenance.json) records the original remaining files.
 These components are not yet registered or proved convertible-PHP components.
 

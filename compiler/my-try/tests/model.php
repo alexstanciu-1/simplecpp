@@ -309,7 +309,7 @@ final class Model_Test
 			return;
 		}
 		$type = new \ReflectionClass($value);
-		if (basename($type->getFileName()) !== 'structures.php') {
+		if (!in_array(basename($type->getFileName()), ['structures.php', 'structures_specialization.php'], true)) {
 			throw new \RuntimeException('Worker retained in model: ' . $type->getName());
 		}
 		foreach ($type->getProperties() as $property)

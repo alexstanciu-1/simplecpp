@@ -16,6 +16,7 @@ require_once __DIR__ . '/02_tokenize/structures.php';
 require_once __DIR__ . '/02_tokenize/text.php';
 require_once __DIR__ . '/02_tokenize/tokens.php';
 require_once __DIR__ . '/03_parse/structures.php';
+require_once __DIR__ . '/03_parse/structures_specialization.php';
 require_once __DIR__ . '/03_parse/syntax.php';
 require_once __DIR__ . '/03_parse/parser.php';
 require_once __DIR__ . '/04_analyze/collect/structures.php';
