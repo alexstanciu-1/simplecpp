@@ -7,12 +7,12 @@ source binding is provided by the compiler runtime module in PR #244 (candidate
 not been advanced. This document records PHP/conversion coverage, not a native
 proof of the complete compiler.
 
-Explicit spellings:
+Preferred spellings (avoid repeating the construction type for direct local initializers):
 
 ```php
 public static Storage $rows /** Storage<Row> */;
 public Keyed_Storage $names /** Keyed_Storage<Row> */;
-$rows /** Storage<Row> */ = new Storage /** Storage<Row> */(8);
+$rows /** Storage<Row> */ = new Storage(8);
 public function alias(Storage $rows /** Storage<Row> */): Storage /** Storage<Row> */ {
     return $rows;
 }
@@ -20,8 +20,15 @@ public function alias(Storage $rows /** Storage<Row> */): Storage /** Storage<Ro
 
 Conversion emits `Storage<Row>` / `Keyed_Storage<Row>` at each declaration and
 `new Storage<Row>(8)` at construction. Capacity stays a constructor argument.
-The comment after the constructed class name is mandatory: the converter does not
-infer a template argument from an assignment target. Short names are the fixed
+For a direct annotated local initializer (`$rows /** Storage<Row> */ = new Storage(...)`),
+the converter reuses the declaration type when the constructed family matches.
+An explicit comment after the constructed class name remains supported and takes
+precedence; assignability remains the target's responsibility. Reuse is local to
+that exact `new` token, not the last annotation anywhere in the file. It does not
+reach later assignments, properties, call arguments, nested constructions, ternaries
+or other expressions. Those sites still require a construction annotation.
+This is structural annotation reuse, not symbol lookup or generic type inference.
+Short names are the fixed
 binding spellings; the element may be a qualified literal record name. PHP `array`
 properties/parameters/returns continue to require vector/hash annotations.
 

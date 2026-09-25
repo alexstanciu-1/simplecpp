@@ -875,6 +875,8 @@ final class Converter {
 	/** @return list<Node> */
 	private function sequence(?string $closing): array {
 		$nodes = [];
+		// Declaration-local hints belong to one exact initializer token, never later uses.
+		$constructionTypes = [];
 		while (isset($this->tokens[$this->position])) {
 			$this->path = $this->tokens[$this->position][3] ?? $this->path;
 			[$id, $text, $line] = $this->tokens[$this->position++];
@@ -971,6 +973,8 @@ final class Converter {
 				continue;
 			}
 			if ($id === T_NEW) {
+				$destinationType = $constructionTypes[$this->position - 1] ?? null;
+				unset($constructionTypes[$this->position - 1]);
 				$name = $this->significant();
 				if (!in_array($name[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {
 					$this->fail($line, 'construction requires a literal class name');
@@ -983,7 +987,14 @@ final class Converter {
 				}
 				$storageName = null;
 				if (in_array($name[1], ['Storage', 'Keyed_Storage'], true)) {
-					$storageName = $this->storageAnnotation($this->significant(), $name[1]);
+					$annotationAt = $this->nextSignificant($this->position);
+					if (($this->tokens[$annotationAt][0] ?? null) === T_DOC_COMMENT) {
+						$storageName = $this->storageAnnotation($this->significant(), $name[1]);
+					} elseif ($destinationType !== null && str_starts_with($destinationType, $name[1] . '<')) {
+						$storageName = $destinationType;
+					} else {
+						$this->fail($line, 'construction requires an explicit annotation or a matching immediately assigned local declaration');
+					}
 				}
 				$this->expect('(');
 				try { $nativeName = $storageName ?? Exception_Policy::constructionName($name[1]); }
@@ -1030,6 +1041,12 @@ final class Converter {
 					$after = $this->nextSignificant($at + 1);
 					if (!in_array($this->tokens[$after][1] ?? '', ['=', ';'], true)) {
 						$this->fail($line, 'annotation must describe a local declaration');
+					}
+					if (($this->tokens[$after][1] ?? '') === '=') {
+						$initializer = $this->nextSignificant($after + 1);
+						if (($this->tokens[$initializer][0] ?? null) === T_NEW) {
+							$constructionTypes[$initializer] = $type;
+						}
 					}
 					$this->position = $at + 1;
 					$nodes[] = new Node('local', $text . ' ' . $type, $line);

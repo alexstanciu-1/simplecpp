@@ -26,7 +26,7 @@ final class Binding_Root {
     public function optional_alias(?Storage $rows /** Storage<Binding_Row> */ = null): ?Storage /** Storage<Binding_Row> */ { return $rows; }
     public function alias(Storage $rows /** Storage<Binding_Row> */): Storage /** Storage<Binding_Row> */ { return $rows; }
 }
-$rows /** Storage<Binding_Row> */ = new Storage /** Storage<Binding_Row> */(8);
+$rows /** Storage<Binding_Row> */ = new Storage(8);
 $row = new Binding_Row();
 $row->value = 7;
 $rows[] = $row;
@@ -52,6 +52,19 @@ ob_start();
 eval(substr($source, 5));
 $trace = ob_get_clean();
 ensure($trace === "9:1:hole\n01:9\n1:9\nalias:9\n", 'Wrong shared collection behavior: ' . $trace);
+// Both spellings must produce identical PHS, including constructor arguments.
+$explicit = str_replace('new Storage(8)', 'new Storage /** Storage<Binding_Row> */(8)', $source);
+ensure($out === $converter->convert($explicit, 'storage.php'), 'Destination reuse changed emitted PHS');
+foreach ([
+    '$names /** Keyed_Storage<Row> */ = new Keyed_Storage(4);',
+    '$rows /** Storage<other\\Row> */ = /* initializer */ new Storage();',
+] as $body) {
+    $converted = $converter->convert('<?php ' . $body, 'reuse.php');
+    ensure(str_contains($converted, 'new Keyed_Storage<Row>(4)') || str_contains($converted, 'new Storage<other\\Row>()'), 'Missing reused construction type');
+}
+// An explicit construction annotation retains precedence; target checks assignability.
+$override = $converter->convert('<?php $rows /** Storage<Row> */ = new Storage /** Storage<Other> */();', 'explicit.php');
+ensure(str_contains($override, 'new Storage<Other>()'), 'Explicit construction annotation was overwritten');
 $bad = [
     'class Bad { public Storage $rows; }',
     'interface Bad { public function items(): Storage /** Storage<Row> */; }',
@@ -59,6 +72,14 @@ $bad = [
     'class Bad { public array $rows /** Storage<Row> */; }',
     'class Bad { public Storage $rows /** Keyed_Storage<Row> */; }',
     '$rows = new Storage();',
+    '$rows /** Storage<Row> */ = new Keyed_Storage();',
+    '$rows /** Storage<Row> */ = []; $other = new Storage();',
+    '$rows /** Storage<Row> */; $rows = new Storage();',
+    '$rows /** Storage<Row> */ = new Storage(); $other = new Storage();',
+    '$rows /** Storage<Row> */ = new Storage(new Storage());',
+    '$rows /** Storage<Row> */ = [new Storage()];',
+    '$rows /** Storage<Row> */ = true ? new Storage() : null;',
+    'class Bad { public Storage $rows /** Storage<Row> */; public function run(): void { $x = new Storage(); } }',
     '$rows = new Storage /** Keyed_Storage<Row> */();',
     '$rows /** Storage<int> */ = new Storage /** Storage<int> */();',
     '$rows /** Storage<vector<Row>> */ = new Storage /** Storage<vector<Row>> */();',

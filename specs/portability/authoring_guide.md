@@ -96,7 +96,7 @@ Static fields now support the same initialized scalar, named-enum, nullable and
 annotated container forms as instance fields, with literal `Type::$field` and
 class-local `self::$field` access. See [static fields](static_properties.md) for
 construction limits, keyed operations and native proof. Explicit [required fields without initializers](required_fields.md) are also
-supported under an assign-before-read/publication contract. Explicit [Storage template bindings](storage_collections.md) now have PHP/conversion coverage; native compiler parity remains separate work.
+supported under an assign-before-read/publication contract. For [Storage template bindings](storage_collections.md), prefer `$rows /** Storage<Row> */ = new Storage();` at direct local initializers. Repeating the annotation after `new Storage` remains accepted; other construction sites still need it.
 
 ## Examples anchored in existing proofs
 
