@@ -19,7 +19,8 @@ as discovery; normalization and overlapping module aliases are not introduced he
 The only added record property is int changes on file and collected_name. Constants
 are SYNC_ADDED=1, SYNC_CHANGED=2, SYNC_BODY_CHANGED=4 and SYNC_DELETED=8. Zero means
 unchanged. Declaration and body changes can combine (6); added/deleted are exclusive
-states. Each update clears transient flags; retained tombstones keep DELETED.
+states. Each update clears transient flags on files and declaration inventory rows;
+ordinary use/reference rows need no reset. Retained tombstones keep DELETED.
 There are no declaration-change records, persistent declaration IDs or historical
 version mapping. Only live previous declarations participate in matching.
 
@@ -76,8 +77,9 @@ selective semantic invalidation is added. Clang/LLVM behavior is unchanged.
   source references. Memory can grow over a long session; tombstones are not history.
 - Consolidate cleanup after all consumers have observed flags. Transient flags are
   already reset before each update because stale flags would be incorrect.
-- Replace repeated file/root scans and declaration candidate scans with deliberate
-  indexes if measurements justify them. This implementation prioritizes the agreed
+- Replace remaining file lookups and declaration candidate scans with deliberate
+  indexes if measurements justify them. Root ordering already uses a temporary
+  source-identity index instead of scanning all parses for every source. This implementation prioritizes the agreed
   minimal record shape; there are no new persistent lookup properties.
 - Track resolved type/use/call/return dependencies in both directions later. Until
   then full preparation is the correctness path.

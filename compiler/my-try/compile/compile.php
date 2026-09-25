@@ -65,7 +65,9 @@ final class Compiler
 			}
 		}
 		foreach (Model::$collected_files as $collection) {
-			foreach ($collection->entries as $entry) {
+			$entries /** Storage<collected_name> */ = $collection->entries;
+			foreach ($collection->defined_elements as $position) {
+				$entry = $entries[$position];
 				$entry->changes = $entry->changes === \scpp\compiler\SYNC_DELETED ? \scpp\compiler\SYNC_DELETED : 0;
 			}
 		}
@@ -397,9 +399,13 @@ final class Compiler
 		return $result;
 	}
 
-	/** Rebuild root membership in module/file order; deleted files keep their last complete records. */
+	/** Restore module/file order using a temporary identity index, including retained deleted files. */
 	private static function order_roots(): void
 	{
+		$by_source /** hash<parsed_file, shared<file>> */ = new \SplObjectStorage /** hash<parsed_file, shared<file>> */();
+		foreach (Model::$syntax_files as $parsed) {
+			$by_source[$parsed->tokens->file] = $parsed;
+		}
 		$syntax /** Storage<parsed_file> */ = new Storage();
 		$tokens /** Storage<token_list> */ = new Storage();
 		$collections /** Storage<collected_file> */ = new Storage();
@@ -407,15 +413,13 @@ final class Compiler
 		{
 			foreach ($input_module->files as $source)
 			{
-				foreach (Model::$syntax_files as $parsed)
-				{
-					if ($parsed->tokens->file === $source) {
-						$syntax->append($parsed);
-						$tokens->append($parsed->tokens);
-						$collections->append($parsed->collection);
-						break;
-					}
+				if (!isset($by_source[$source])) {
+					continue;
 				}
+				$parsed /** parsed_file */ = $by_source[$source];
+				$syntax->append($parsed);
+				$tokens->append($parsed->tokens);
+				$collections->append($parsed->collection);
 			}
 		}
 		Model::$syntax_files = $syntax;
