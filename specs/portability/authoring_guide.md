@@ -47,6 +47,11 @@ replacement object to hide that identity mismatch. See
 Keep field and method names distinct within a class: PHP permits `$selected` plus
 `selected()`, but both become the same C++ member name.
 
+Keep local names distinct from record types used in the same scope. For example,
+use `$function_scope /** scope */ = object_cast(weakref_get(...), scope::class)`;
+`$scope` would hide the native `scope` type in the cast template argument, including
+inside that local's own initializer.
+
 On the pinned target, avoid a factory method named `create` when its body constructs
 objects: emitted unqualified `create<T>()` calls can bind to that member instead of
 the runtime helper. Use a descriptive factory name such as `prepare` or `from_source`.

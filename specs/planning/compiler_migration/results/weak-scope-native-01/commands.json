@@ -1,0 +1,4003 @@
+[
+  {
+    "name": "convert",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.351,
+    "code": 0
+  },
+  {
+    "name": "framework",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp",
+      "--filesystem"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.048,
+    "code": 0
+  },
+  {
+    "name": "init",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp",
+    "seconds": 0.127,
+    "code": 0
+  },
+  {
+    "name": "native-build",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "build",
+      "--build-runtime"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp",
+    "seconds": 38.863,
+    "code": 0
+  },
+  {
+    "name": "php-storage",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/storage.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.047,
+    "code": 0
+  },
+  {
+    "name": "php-tokenizer",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/tokenizer.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "php-ast",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/ast.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.069,
+    "code": 0
+  },
+  {
+    "name": "php-model",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.141,
+    "code": 0
+  },
+  {
+    "name": "php-llvm_text",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/llvm_text.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.071,
+    "code": 0
+  },
+  {
+    "name": "php-llvm",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/llvm.php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/fixtures/llvm"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.284,
+    "code": 0
+  },
+  {
+    "name": "php-calls",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/calls.php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/fixtures/calls"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.587,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-after_entry_return/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-after_entry_return/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.092,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-after_entry_return/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.001,
+    "code": 5
+  },
+  {
+    "name": "llvm-array_copy_element-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_copy_element-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_copy_element-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_copy_element/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_copy_element/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.094,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_copy_element-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_copy_element/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 8
+  },
+  {
+    "name": "llvm-array_read-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_read-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_read-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_read/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_read/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.106,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_read-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_read/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "llvm-array_scope-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.082,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_scope-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_scope-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_scope/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_scope/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.178,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_scope-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_scope/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.003,
+    "code": 6
+  },
+  {
+    "name": "llvm-array_write-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.1,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_write-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_write-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_write/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_write/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.165,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_write-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-array_write/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-bare_return-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.09,
+    "code": 0
+  },
+  {
+    "name": "llvm-bare_return-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.01,
+    "code": 0
+  },
+  {
+    "name": "llvm-bare_return-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-bare_return/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-bare_return/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.112,
+    "code": 0
+  },
+  {
+    "name": "llvm-bare_return-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-bare_return/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 4
+  },
+  {
+    "name": "llvm-copy-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-copy-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-copy-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-copy/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-copy/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.095,
+    "code": 0
+  },
+  {
+    "name": "llvm-copy-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-copy/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-discard_result-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-discard_result-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-discard_result-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-discard_result/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-discard_result/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.093,
+    "code": 0
+  },
+  {
+    "name": "llvm-discard_result-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-discard_result/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "llvm-duplicate_names-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-duplicate_names-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-duplicate_names-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-duplicate_names/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-duplicate_names/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.096,
+    "code": 0
+  },
+  {
+    "name": "llvm-duplicate_names-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-duplicate_names/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-empty_array-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_array-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_array-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-empty_array/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-empty_array/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_array-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-empty_array/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-empty_function/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-empty_function/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.095,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-empty_function/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.003,
+    "code": 3
+  },
+  {
+    "name": "llvm-escaped_names-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-escaped_names-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-escaped_names-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-escaped_names/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-escaped_names/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-escaped_names-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-escaped_names/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.001,
+    "code": 1
+  },
+  {
+    "name": "llvm-function_scope-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-function_scope-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-function_scope-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-function_scope/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-function_scope/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.1,
+    "code": 0
+  },
+  {
+    "name": "llvm-function_scope-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-function_scope/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "llvm-literal-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "llvm-literal-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-literal-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-literal/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-literal/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.098,
+    "code": 0
+  },
+  {
+    "name": "llvm-literal-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-literal/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "llvm-maximum-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-maximum-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-maximum-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-maximum/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-maximum/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-maximum-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-maximum/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 255
+  },
+  {
+    "name": "llvm-return_call-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-return_call-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-return_call-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-return_call/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-return_call/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.095,
+    "code": 0
+  },
+  {
+    "name": "llvm-return_call-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-return_call/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-sample-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-sample-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-sample-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-sample/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-sample/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.094,
+    "code": 0
+  },
+  {
+    "name": "llvm-sample-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-sample/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "llvm-unsupported_0-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_0-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_1-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_1-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_10-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.064,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_10-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_11-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_11-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_12-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_12-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_13-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_13-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_14-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_14-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_15-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_15-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_16-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_16-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_17-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_17-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_18-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_18-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_19-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_19-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_2-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_2-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_20-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_20-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_21-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_21-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_22-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_22-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_23-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_23-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_24-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_24-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_25-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.061,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_25-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_26-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_26-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_27-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_27-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_28-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_28-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_29-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_29-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_3-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_3-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_30-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_30-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_31-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_31-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_32-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_32-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_33-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_33-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_34-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_34-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_35-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_35-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_36-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_36-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_37-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_37-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_38-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_38-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_39-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_39-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_4-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_4-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_40-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_40-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_41-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_41-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_42-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_42-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_43-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_43-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_44-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_44-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_45-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_45-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_46-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_46-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_47-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_47-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_48-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_48-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_49-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_49-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_5-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_5-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_50-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_50-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_51-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_51-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_52-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_52-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_53-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_53-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_54-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_54-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_55-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_55-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_56-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.063,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_56-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_57-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_57-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_58-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_58-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_59-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_59-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_6-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_6-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_60-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_60-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_61-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.064,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_61-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_62-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.063,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_62-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_63-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_63-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_64-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_64-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_65-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_65-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_66-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_66-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_67-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_67-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_68-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_68-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_69-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_69-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_7-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_7-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_70-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_70-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_71-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_71-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_72-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.065,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_72-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_73-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.06,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_73-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_74-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.061,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_74-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_75-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.06,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_75-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_76-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_76-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_77-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_77-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_78-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_78-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_79-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_79-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_8-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_8-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_80-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_80-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_81-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_81-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_82-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_82-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_83-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_83-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_84-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_84-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_85-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_85-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_86-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.063,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_86-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_87-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_87-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_88-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_88-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_89-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_89-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_9-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.061,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_9-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_90-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_90-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_91-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_91-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_92-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_92-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_93-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.05,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_93-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-value_initializer/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-value_initializer/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.092,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-value_initializer/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "llvm-zero-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-zero-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-zero-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-zero/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-zero/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-zero-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/llvm-zero/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.001,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_reference/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_reference/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_reference/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.127,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_reference/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "calls-array_value_argument-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "calls-array_value_argument-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-array_value_argument-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_value_argument/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_value_argument/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_value_argument/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.13,
+    "code": 0
+  },
+  {
+    "name": "calls-array_value_argument-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-array_value_argument/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.001,
+    "code": 8
+  },
+  {
+    "name": "calls-function_body-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "calls-function_body-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "calls-function_body-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-function_body/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-function_body/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-function_body/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-function_body-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-function_body/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-local_forward-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "calls-local_forward-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "calls-local_forward-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-local_forward/caller.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-local_forward/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.094,
+    "code": 0
+  },
+  {
+    "name": "calls-local_forward-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-local_forward/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-mixed_evaluation-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "calls-mixed_evaluation-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-mixed_evaluation-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-mixed_evaluation/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-mixed_evaluation/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-mixed_evaluation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.126,
+    "code": 0
+  },
+  {
+    "name": "calls-mixed_evaluation-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-mixed_evaluation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-multiple_arguments-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "calls-multiple_arguments-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-multiple_arguments-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-multiple_arguments/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-multiple_arguments/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-multiple_arguments/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.126,
+    "code": 0
+  },
+  {
+    "name": "calls-multiple_arguments-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-multiple_arguments/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-nested_arguments-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "calls-nested_arguments-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-nested_arguments-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-nested_arguments/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-nested_arguments/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-nested_arguments/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.137,
+    "code": 0
+  },
+  {
+    "name": "calls-nested_arguments-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-nested_arguments/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 8
+  },
+  {
+    "name": "calls-parameter_forwarding-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.062,
+    "code": 0
+  },
+  {
+    "name": "calls-parameter_forwarding-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-parameter_forwarding-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-parameter_forwarding/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-parameter_forwarding/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-parameter_forwarding/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.133,
+    "code": 0
+  },
+  {
+    "name": "calls-parameter_forwarding-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-parameter_forwarding/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 6
+  },
+  {
+    "name": "calls-reference_aliasing-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.062,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_aliasing-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_aliasing-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_aliasing/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_aliasing/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_aliasing/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.13,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_aliasing-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_aliasing/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "calls-reference_forwarding-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_forwarding-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_forwarding-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_forwarding/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_forwarding/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_forwarding/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.127,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_forwarding-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_forwarding/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 8
+  },
+  {
+    "name": "calls-reference_mutation-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_mutation-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_mutation-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_mutation/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_mutation/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_mutation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.126,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_mutation-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-reference_mutation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-repeated-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "calls-repeated-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-repeated-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-repeated/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-repeated/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-repeated/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.137,
+    "code": 0
+  },
+  {
+    "name": "calls-repeated-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-repeated/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-return_chain-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "calls-return_chain-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-return_chain-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-return_chain/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-return_chain/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-return_chain/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.147,
+    "code": 0
+  },
+  {
+    "name": "calls-return_chain-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-return_chain/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-struct_and_array-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_and_array-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_and_array-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_and_array/caller.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_and_array/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.108,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_and_array-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_and_array/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-struct_default-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_default-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_default-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_default/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_default/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_default/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.139,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_default-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_default/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.06,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_fields/caller.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_fields/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.108,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_fields/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 4
+  },
+  {
+    "name": "calls-struct_local_isolation-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.06,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_local_isolation-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_local_isolation-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_local_isolation/caller.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_local_isolation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.096,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_local_isolation-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_local_isolation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "calls-struct_reference-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_reference-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_reference-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_reference/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_reference/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_reference/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_reference-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_reference/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "calls-struct_value_argument-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_value_argument-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_value_argument-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_value_argument/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_value_argument/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_value_argument/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_value_argument-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-struct_value_argument/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 6
+  },
+  {
+    "name": "calls-template_forward-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "calls-template_forward-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-template_forward-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_forward/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_forward/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_forward/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.127,
+    "code": 0
+  },
+  {
+    "name": "calls-template_forward-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_forward/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 8
+  },
+  {
+    "name": "calls-template_multi-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "calls-template_multi-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-template_multi-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_multi/caller.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_multi/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.095,
+    "code": 0
+  },
+  {
+    "name": "calls-template_multi-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_multi/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-template_recursive_registration-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "calls-template_recursive_registration-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-template_recursive_registration-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_recursive_registration/caller.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_recursive_registration/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.093,
+    "code": 0
+  },
+  {
+    "name": "calls-template_recursive_registration-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_recursive_registration/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-template_reuse-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "calls-template_reuse-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-template_reuse-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_reuse/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_reuse/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_reuse/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.126,
+    "code": 0
+  },
+  {
+    "name": "calls-template_reuse-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_reuse/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "calls-template_unused-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "calls-template_unused-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "calls-template_unused-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_unused/caller.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_unused/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.094,
+    "code": 0
+  },
+  {
+    "name": "calls-template_unused-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-template_unused/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-unused-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "calls-unused-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-unused-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-unused/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-unused/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-unused/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.126,
+    "code": 0
+  },
+  {
+    "name": "calls-unused-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-unused/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-value_initializer-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "calls-value_initializer-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-value_initializer-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_initializer/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_initializer/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_initializer/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.13,
+    "code": 0
+  },
+  {
+    "name": "calls-value_initializer-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_initializer/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "calls-value_isolation-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "calls-value_isolation-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-value_isolation-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_isolation/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_isolation/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_isolation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.13,
+    "code": 0
+  },
+  {
+    "name": "calls-value_isolation-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-value_isolation/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-void_parameters-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "calls-void_parameters-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "calls-void_parameters-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-void_parameters/caller.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-void_parameters/provider.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-void_parameters/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.126,
+    "code": 0
+  },
+  {
+    "name": "calls-void_parameters-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/calls-void_parameters/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 5
+  },
+  {
+    "name": "sample-01_base-php",
+    "command": [
+      "php",
+      "-r",
+      "require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php'; require '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/source/main.php';"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.063,
+    "code": 0
+  },
+  {
+    "name": "sample-01_base-native",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.01,
+    "code": 0
+  },
+  {
+    "name": "sample-01_base-link",
+    "command": [
+      "clang-18",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/sample-01_base/helper.ll",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/sample-01_base/main.ll",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/sample-01_base/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.127,
+    "code": 0
+  },
+  {
+    "name": "sample-01_base-execute",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/programs/sample-01_base/program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "incremental-build",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "build"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/build/native-weak-scopes-01/phpp",
+    "seconds": 0.621,
+    "code": 0
+  }
+]

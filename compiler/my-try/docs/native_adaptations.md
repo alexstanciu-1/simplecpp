@@ -79,3 +79,10 @@ the existing runtime weakref_get primitive. Candidate analysis reports zero bloc
 diagnostics, 154 advisory errors and 45 warnings. PHP and conversion/emission tests
 passed; no native build/run was performed for this change. See
 `specs/portability/weak_fields.md` for the expiration/owner-lifetime contract.
+
+Weak-scope native follow-up: renamed the function-body scope local to
+`$function_scope`; `$scope` hid the native type in `checked_object_cast<scope>`.
+No cast/runtime change was needed. A fresh normal build and incremental rebuild
+passed all 142 PHP/native comparisons and executed all 48 valid emitted programs.
+STAN reports zero blocking diagnostics, 159 advisory errors and 47 warnings.
+See `specs/planning/compiler_migration/results/weak-scope-native-01` for evidence.

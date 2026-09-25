@@ -29,5 +29,7 @@ add dependent generic return-type inference to STAN.
 
 `php tests/portability/weak_fields.php` checks PHP identity, rejected declarations,
 the three compiler scope annotations, STAN registration and generated C++ spelling.
-This is not a native compilation or expiration proof. Native execution is deferred
-at the user's request.
+The compiler's native build now passes all 142 PHP/native comparisons, including
+48 valid emitted programs compiled and executed. See
+[weak-scope native evidence](../planning/compiler_migration/results/weak-scope-native-01/README.md).
+This exercises live-owner access, not standalone expiration behavior.
