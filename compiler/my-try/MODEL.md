@@ -54,7 +54,7 @@ Parsing clears syntax/collection/global scope/LLVM; LLVM generation clears old o
 Completed files can publish before a later file fails: this is not atomic rollback.
 Static roots are shared between Compiler instances, not isolated compilation sessions.
 
-Preparation records remain transient. Generated output owns copies of incoming
+Experimental LLVM preparation records remain transient; S2S preparation records are retained in Model::$prepared_files. Generated output owns copies of incoming
 operands and does not depend on preparation lifetime. Existing source/AST purity,
 failed-stage behavior and native sample execution remain regression requirements.
 
@@ -106,7 +106,7 @@ Compiler consumers use these accessors instead of implicitly reading concrete fi
 through an interface handle. Null or wrong payload types fail. PHP graph identity is
 unchanged; native interfaces are polymorphic for checked narrowing.
 
-Direct scope links (`scope.parent`, `block_structure.scope`,
+Direct scope links (`scope.enclosing`, `block_structure.scope`,
 `collected_name.scope`) now carry adjacent `weak<scope>` annotations for native
 conversion. PHP keeps strong references; native consumers explicitly acquire live
 handles. Keep the owning parsed file/model alive when scope access is required.
@@ -156,7 +156,7 @@ origins and emission strategies use enums; no native byte-size claim is made for
 PHP objects or converted enum layouts. Runtime/library JSON import is not implemented
 in this slice. No secondary global type-name registry or constructed-type model was added.
 
-`Binding_Preparation` owns a transient source-order scope and returns a fresh
+`File_Preparation` owns a transient source-order scope and returns a fresh
 `prepared_file`. Its token-keyed maps own prepared expression/binding records;
 those records reference source syntax, collected occurrences and canonical type
 definitions. An inferred declaration uses its existing binding occurrence as its

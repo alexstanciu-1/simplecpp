@@ -18,7 +18,7 @@ LLVM experiment does not provide type policy for this path.
 - Each scope owns a Storage of type definitions. Source type records point at their
   real collected declaration; built-ins have no fabricated AST. Global publication
   retains the same source definition objects. There is no second global type registry.
-- `Binding_Preparation` uses a fresh transient scope to establish local declarations
+- `File_Preparation` uses a fresh transient scope to establish local declarations
   in source order. The first untyped assignment becomes a prepared declaration;
   later reads and assignments retain that occurrence identity. Explicit `int` locals
   resolve through source scopes and converge on the same canonical definition.

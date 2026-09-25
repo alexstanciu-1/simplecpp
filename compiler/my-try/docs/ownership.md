@@ -99,3 +99,35 @@ to a worker. Model owns complete prepared-file results and independent C++ artif
 The preparation worker's source-order scope is transient and does not alter source
 scope membership. Parent lookup considers live source definitions before ascending,
 with reserved-name restrictions deferred to validation/STAN.
+
+## Process and file responsibilities
+
+`Compiler` selects stages, schedules per-file work and enforces completion barriers.
+`compile/frontend.php` performs each private scan/parse operation; an enum identifies
+scan-only, parse-only and synchronization work. `compile/sync/sources.php` plans
+source candidates and resets notification flags; `compile/sync/declarations.php`
+compares declaration inventories. `compile/publication.php` publishes completed
+work and restores retained root ordering. It owns the replacement policy: remove
+superseded live references, retain deletion evidence. Scope performs the private
+index mutation requested by that owner.
+
+`scopes/structures.php` encapsulates the shared scope representation;
+`scopes/lookup.php` owns ordinary parent/publication lookup. The parser supplies
+canonical occurrence names to the collector, including removal of PHS variable
+sigils. The collector registers completed declarations and obtains source type
+definitions from `04_analyze/types/source.php`; scope insertion does not manufacture
+type definitions. `04_analyze/literals.php` prepares integer literals;
+`04_analyze/file.php` prepares supported file expressions and bindings;
+`05_cpp/types.php` maps canonical types to C++ representations.
+
+Deliberate retained boundaries: `Model::reset_syntax` establishes a complete usable
+root graph, including installing built-ins through `Language_Types`. Every reset
+caller needs that invariant; no second bootstrap path is introduced. Tokenizer's
+public operation continues to acquire disk bytes through `File_Loader` as well as
+accepting in-memory input. The frontend worker preserves that per-file chain;
+standalone reparse consumes existing snapshots without reading disk. Host reporting
+and experimental execution remain in the existing host adapter and Native_Runner.
+
+Experimental name preparation, template checking and source-only type projection
+remain regression infrastructure. Their further isolation and parser name-rule
+validation belong to the deferred work, not this ownership refactor.

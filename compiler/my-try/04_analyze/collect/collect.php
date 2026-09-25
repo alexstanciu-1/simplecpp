@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Role: collect occurrences and publish declaration pools.
+ * Role: collect canonical occurrences and register file-local declarations.
  * Call map: Parser -> Symbol_Collector::record -> Symbol_Collector::finish.
  */
 namespace scpp\compiler;
@@ -18,16 +18,14 @@ final class Symbol_Collector
 	}
 
 	/** Append one occurrence during parsing; never look up, merge or reject a name. */
-	public function record(ast_node $node, int $token_index, collected_name_kind $kind, scope $scope): int
+	public function record(ast_node $node, int $token_index, collected_name_kind $kind, scope $scope, string $name): int
 	{
 		if ($this->finished) {
 			throw new \LogicException('Collection is already finished');
 		}
 		$entry = new collected_name();
 		$entry->file = $this->file;
-		$tokens /** Storage<token> */ = $this->file->source->tokens;
-		$text = $tokens[$token_index]->text();
-		$entry->name = string_byte_starts_with($text, '$') ? string_byte_slice($text, 1, string_byte_len($text) - 1) : $text;
+		$entry->name = $name;
 		$entry->kind = $kind;
 		$entry->scope = $scope;
 		$entry->node = $node;
@@ -71,7 +69,12 @@ final class Symbol_Collector
 				continue;
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
-			$entry_scope->register($entry);
+			if ($entry->kind === collected_name_kind::struct_declaration) {
+				$entry_scope->register_type(Source_Types::definition($entry));
+			}
+			else {
+				$entry_scope->register($entry);
+			}
 		}
 		$this->finished = true;
 		return $this->file;

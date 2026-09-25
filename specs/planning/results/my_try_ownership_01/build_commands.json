@@ -1,0 +1,79 @@
+[
+  {
+    "name": "convert",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/scpp-ownership-native-01/source",
+      "/tmp/scpp-ownership-native-01/phpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.61,
+    "code": 0
+  },
+  {
+    "name": "framework",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/scpp-ownership-native-01/phpp",
+      "--filesystem"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "init",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "init",
+      "--php-profile=strict"
+    ],
+    "cwd": "/tmp/scpp-ownership-native-01/phpp",
+    "seconds": 0.163,
+    "code": 0
+  },
+  {
+    "name": "native-build",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "build",
+      "--build-runtime"
+    ],
+    "cwd": "/tmp/scpp-ownership-native-01/phpp",
+    "seconds": 61.356,
+    "code": 0
+  },
+  {
+    "name": "s2s-native",
+    "command": [
+      "/tmp/scpp-ownership-native-01/phpp/.prism/build/main"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.016,
+    "code": 0
+  },
+  {
+    "name": "s2s-execute",
+    "command": [
+      "/tmp/scpp-ownership-native-01/s2s-program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.003,
+    "code": 10
+  },
+  {
+    "name": "incremental-build",
+    "command": [
+      "php",
+      "/tmp/scpp-native-244/bin/scpp.php",
+      "build"
+    ],
+    "cwd": "/tmp/scpp-ownership-native-01/phpp",
+    "seconds": 0.815,
+    "code": 0
+  }
+]

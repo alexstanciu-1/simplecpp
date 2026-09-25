@@ -116,7 +116,7 @@ final class Parser_Run
 			$field = new field_structure();
 			$type_start = $this->position++;
 			$field->type_syntax = $this->node(node_kind::identifier, $type_start);
-			$this->collector->record($field->type_syntax, $type_start, collected_name_kind::type_reference, $this->current_scope);
+			$this->record_name($field->type_syntax, $type_start, collected_name_kind::type_reference, $this->current_scope);
 			if (!string_byte_starts_with($this->text(), '$')) {
 				throw new \RuntimeException($this->error_message('Expected field variable name'));
 			}
@@ -124,11 +124,11 @@ final class Parser_Run
 			$this->expect(';');
 			$field_node = $this->payload_node(node_kind::field_declaration, $field_start, $field);
 			$fields->append($field_node);
-			$this->collector->record($field_node, $field->name_token_index, collected_name_kind::field_declaration, $this->current_scope);
+			$this->record_name($field_node, $field->name_token_index, collected_name_kind::field_declaration, $this->current_scope);
 		}
 		$this->expect('}');
 		$node = $this->payload_node(node_kind::struct_declaration, $start, $record);
-		$this->collector->record($node, $record->name_token_index, collected_name_kind::struct_declaration, $this->current_scope);
+		$this->record_name($node, $record->name_token_index, collected_name_kind::struct_declaration, $this->current_scope);
 		return $node;
 	}
 
@@ -216,10 +216,10 @@ final class Parser_Run
 		}
 		$type_start = $this->position++;
 		$function->return_type = $this->node(node_kind::identifier, $type_start);
-		$this->collector->record($function->return_type, $type_start, collected_name_kind::type_reference, $local_scope);
+		$this->record_name($function->return_type, $type_start, collected_name_kind::type_reference, $local_scope);
 		$function->body = $this->block($local_scope);
 		$node = $this->payload_node(node_kind::function_declaration, $start, $function);
-		$this->collector->record($node, $function->name_token_index, collected_name_kind::function_declaration, $this->current_scope);
+		$this->record_name($node, $function->name_token_index, collected_name_kind::function_declaration, $this->current_scope);
 		return $node;
 	}
 
@@ -233,7 +233,7 @@ final class Parser_Run
 		$this->position++;
 		$parameter = new parameter_structure();
 		$parameter->type_syntax = $this->node(node_kind::identifier, $start);
-		$this->collector->record($parameter->type_syntax, $start, collected_name_kind::type_reference, $scope);
+		$this->record_name($parameter->type_syntax, $start, collected_name_kind::type_reference, $scope);
 		if ($this->text() === '&') {
 			$parameter->mode = passing_mode::reference;
 			$parameter->reference_token_index = $this->position++;
@@ -243,7 +243,7 @@ final class Parser_Run
 		}
 		$parameter->name_token_index = $this->position++;
 		$node = $this->payload_node(node_kind::parameter_declaration, $start, $parameter);
-		$this->collector->record($node, $parameter->name_token_index, collected_name_kind::variable_declaration, $scope);
+		$this->record_name($node, $parameter->name_token_index, collected_name_kind::variable_declaration, $scope);
 		return $node;
 	}
 
@@ -294,7 +294,7 @@ final class Parser_Run
 		$binding->name_token_index = $this->position++;
 		if ((($this->text() === '[') || ($this->text() === '->'))) {
 			$base = $this->node(node_kind::variable_reference, $start);
-			$this->collector->record($base, $start, collected_name_kind::variable_reference, $this->current_scope);
+			$this->record_name($base, $start, collected_name_kind::variable_reference, $this->current_scope);
 			$binding->target = $this->access_suffix($base);
 			$binding->classification = binding_kind::assignment;
 		}
@@ -305,7 +305,7 @@ final class Parser_Run
 			$type_start = $this->position++;
 			$type_node = $this->node(node_kind::identifier, $type_start);
 			$binding->type_syntax = $type_node;
-			$this->collector->record($binding->type_syntax, $type_start, collected_name_kind::type_reference, $this->current_scope);
+			$this->record_name($binding->type_syntax, $type_start, collected_name_kind::type_reference, $this->current_scope);
 			$binding->classification = binding_kind::declaration;
 			if ($this->text() === '[') {
 				$binding->type_syntax = $this->array_type($type_node);
@@ -323,7 +323,7 @@ final class Parser_Run
 		$node = $this->payload_node(node_kind::variable_binding_statement, $start, $binding);
 		$kind = $binding->classification === binding_kind::declaration ? collected_name_kind::variable_declaration : collected_name_kind::binding;
 		if ($binding->target === null) {
-			$this->collector->record($node, $start, $kind, $this->current_scope);
+			$this->record_name($node, $start, $kind, $this->current_scope);
 		}
 		return $node;
 	}
@@ -352,7 +352,7 @@ final class Parser_Run
 		$this->position++;
 		$node = $this->node($kind, $start);
 		if ($kind === node_kind::variable_reference) {
-			$this->collector->record($node, $start, collected_name_kind::variable_reference, $this->current_scope);
+			$this->record_name($node, $start, collected_name_kind::variable_reference, $this->current_scope);
 		}
 		return $this->access_suffix($node);
 	}
@@ -407,7 +407,7 @@ final class Parser_Run
 				$field->base = $base;
 				$field->name_token_index = $this->position++;
 				$base = $this->payload_node(node_kind::field_expression, (int) $base->token_index, $field);
-				$this->collector->record($base, $field->name_token_index, collected_name_kind::field_reference, $this->current_scope);
+				$this->record_name($base, $field->name_token_index, collected_name_kind::field_reference, $this->current_scope);
 				continue;
 			}
 			$this->position++;
@@ -439,7 +439,7 @@ final class Parser_Run
 				$type_start = $this->position++;
 				$type = $this->node(node_kind::identifier, $type_start);
 				$template_arguments->append($type);
-				$this->collector->record($type, $type_start, collected_name_kind::type_reference, $this->current_scope);
+				$this->record_name($type, $type_start, collected_name_kind::type_reference, $this->current_scope);
 				if ($this->text() !== ',') {
 					break;
 				}
@@ -462,7 +462,7 @@ final class Parser_Run
 		}
 		$call->right_parenthesis_token_index = $this->expect(')');
 		$node = $this->payload_node(node_kind::call_expression, $start, $call);
-		$this->collector->record($node, $start, collected_name_kind::function_reference, $this->current_scope);
+		$this->record_name($node, $start, collected_name_kind::function_reference, $this->current_scope);
 		return $node;
 	}
 
@@ -481,6 +481,15 @@ final class Parser_Run
 		$children /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($node);
 		ast_node::link_children($node, $children);
 		return $node;
+	}
+
+	/** Normalize PHS name spelling before entering the shared occurrence model. */
+	private function record_name(ast_node $node, int $index, collected_name_kind $kind, scope $scope): int
+	{
+		$tokens /** Storage<token> */ = $this->tokens->tokens;
+		$text = $tokens[$index]->text();
+		$name = string_byte_starts_with($text, '$') ? string_byte_slice($text, 1, string_byte_len($text) - 1) : $text;
+		return $this->collector->record($node, $index, $kind, $scope, $name);
 	}
 
 	private function text(): string

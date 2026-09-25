@@ -196,12 +196,13 @@ final class AST_Test
 		$node = $syntax->root->structure->children[0];
 		$scope = new scope();
 		$collector = new Symbol_Collector($tokens);
-		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope);
+		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
 		self::check(!$scope->has_variables());
+		// Canonical names come from the frontend, independently of the source token '$x'.
 		$result = $collector->finish($syntax->root);
 		self::initialized($result);
 		self::initialized($result->entries[$position]);
-		self::check($scope->variables_named('x')[0] === $result->entries[$position]);
+		self::check($scope->variables_named('canonical_name')[0] === $result->entries[$position]);
 		$before = serialize($result);
 		$rejections = 0;
 		try {
@@ -211,12 +212,12 @@ final class AST_Test
 			++$rejections;
 		}
 		try {
-			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope);
+			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
 		}
 		catch (\LogicException $expected) {
 			++$rejections;
 		}
-		self::check($rejections === 2 && serialize($result) === $before && count($scope->variables_named('x')) === 1);
+		self::check($rejections === 2 && serialize($result) === $before && count($scope->variables_named('canonical_name')) === 1);
 	}
 
 	/** Exercise payload coverage, retained syntax identity, and parser reuse across failures. */

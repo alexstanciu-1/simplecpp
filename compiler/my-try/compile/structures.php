@@ -20,3 +20,10 @@ final class source_work {
 	public int $position;
 	public work_state $state = work_state::queued;
 }
+
+/** A per-file operation; publication policy stays with the coordinator's caller. */
+enum frontend_operation {
+	case scan;
+	case parse;
+	case synchronize;
+}

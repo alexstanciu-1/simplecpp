@@ -79,368 +79,39 @@ final class Compiler
 		}
 		Model::reset_llvm();
 		Model::reset_cpp();
-		foreach (Model::$modules as $input_module) {
-			foreach ($input_module->files as $source) {
-				$source->changes = $source->changes === \scpp\compiler\SYNC_DELETED ? \scpp\compiler\SYNC_DELETED : 0;
-			}
-		}
-		foreach (Model::$collected_files as $collection) {
-			$entries /** Storage<collected_name> */ = $collection->entries;
-			foreach ($collection->defined_elements as $position) {
-				$entry = $entries[$position];
-				$entry->changes = $entry->changes === \scpp\compiler\SYNC_DELETED ? \scpp\compiler\SYNC_DELETED : 0;
-			}
-		}
-		$queue = new Source_Work_Queue();
-		$seen /** hash<bool> */ = [];
-		foreach ($paths as $path)
-		{
-			if (isset($seen[$path])) {
-				continue;
-			}
-			$seen[$path] = true;
-			$owner_found = false;
-			$previous = self::find_source($path);
-			foreach (Model::$modules as $input_module) {
-				if ($input_module->path === fs_dirname($path)) {
-					$owner_found = true;
-				}
-			}
-			if (!$owner_found) {
-				throw new \LogicException('Module membership changed: call init with the complete module list, then exec');
-			}
-			$candidate = new file();
-			$candidate->path = $path;
-			$candidate->disk_source = true;
-			if ($previous !== null) {
-				$old = object_cast($previous, file::class);
-				$candidate->disk_source = $old->disk_source;
-				$candidate->content = $old->content;
-			}
-			if ($candidate->disk_source)
-			{
-				if (!fs_is_file($path))
-				{
-					if ($previous !== null) {
-						$old = object_cast($previous, file::class);
-						if ($old->tokens !== null) {
-							$candidate->changes = \scpp\compiler\SYNC_DELETED;
-						}
-					}
-				}
-			}
-			$queue->enqueue($candidate);
-		}
+		$queue = Source_Synchronization::plan($paths);
 		$items /** vector<source_work> */ = $queue->items();
 		$published = task_run_publish_unordered($items, $this->jobs,
-		function (source_work $work) use ($queue): source_work
-		{
-			$queue->start($work);
-			try {
-				if ($work->source->changes !== \scpp\compiler\SYNC_DELETED) {
-					$work->tokens = (new Tokenizer($work->source))->tokenize();
-					$work->result = (new Parser(object_cast($work->tokens, token_list::class)))->parse();
-				}
-			}
-			catch (\Throwable $error) {
-				$queue->fail($work);
-				throw $error;
-			}
-			return $work;
+		function (source_work $work) use ($queue): source_work {
+			return Source_Frontend::run($work, $queue, frontend_operation::synchronize);
 		},
 		function (source_work $work) use ($queue): bool {
-			Compiler::publish_update($work);
+			Source_Publication::publish_update($work);
 			$queue->complete($work);
 			return true;
 		});
 		if (($published !== q_count($items)) || (!$queue->finished())) {
 			throw new \LogicException('Update barrier reached before publication completed');
 		}
-		self::order_roots();
-	}
-
-	/** Locate a live source by its module-qualified path; tombstones never participate. */
-	private static function find_source(string $path): ?file
-	{
-		foreach (Model::$modules as $input_module) {
-			foreach ($input_module->files as $source) {
-				if (($source->path === $path) && ($source->changes !== \scpp\compiler\SYNC_DELETED)) {
-					return $source;
-				}
-			}
-		}
-		return null;
-	}
-
-	/** Return only the previous live syntax; retained deletions are not a version history. */
-	private static function find_syntax(string $path): ?parsed_file
-	{
-		foreach (Model::$syntax_files as $parsed) {
-			if (($parsed->tokens->file->path === $path) && ($parsed->tokens->file->changes !== \scpp\compiler\SYNC_DELETED)) {
-				return $parsed;
-			}
-		}
-		return null;
-	}
-
-	/** Compare significant token spellings within AST-selected declaration/body boundaries. */
-	private static function spelling(token_list $tokens, int $start, int $end): string
-	{
-		$rows /** Storage<token> */ = $tokens->tokens;
-		$result = '';
-		for ($index = $start; $index < $end; $index++) {
-			$text = $rows[$index]->text();
-			$result .= string_byte_len($text) . ':' . $text;
-		}
-		return $result;
-	}
-
-	/** Function headers and bodies are independent; other declarations compare their full syntax. */
-	private static function declaration_text(collected_name $entry, bool $body): string
-	{
-		$node = $entry->node;
-		$start = (int) $node->token_index;
-		$end = (int) $node->end_token_index;
-		if ($node->kind === node_kind::function_declaration)
-		{
-			$function = Syntax_Nodes::function_data($node);
-			if ($body) {
-				$start = (int) $function->body->token_index;
-			}
-			else {
-				$end = (int) $function->body->token_index;
-			}
-		}
-		elseif ($body) {
-			return '';
-		}
-		return self::spelling($entry->file->source, $start, $end);
-	}
-
-	/** Names identify candidate groups; enclosing syntax distinguishes members and function locals. */
-	private static function declaration_key(collected_name $entry): string
-	{
-		$key = Node_Kind_Name::text($entry->node->kind) . ':' . $entry->name;
-		$parent = $entry->node->parent();
-		$tokens /** Storage<token> */ = $entry->file->source->tokens;
-		while ($parent !== null)
-		{
-			$node = object_cast($parent, ast_node::class);
-			if ($node->kind === node_kind::function_declaration) {
-				$index = Syntax_Nodes::function_data($node)->name_token_index;
-				$key = 'function:' . $tokens[$index]->text() . '/' . $key;
-			}
-			elseif ($node->kind === node_kind::struct_declaration) {
-				$index = Syntax_Nodes::struct_data($node)->name_token_index;
-				$key = 'struct:' . $tokens[$index]->text() . '/' . $key;
-			}
-			$parent = $node->parent();
-		}
-		return $key;
-	}
-
-	/** Match equal duplicates first, then unambiguous remaining keys; retain unmatched old rows deleted. */
-	private static function compare_declarations(parsed_file $previous, parsed_file $candidate): void
-	{
-		$old_entries /** Storage<collected_name> */ = $previous->collection->entries;
-		$new_entries /** Storage<collected_name> */ = $candidate->collection->entries;
-		$matched /** hash<bool, int> */ = [];
-		$paired /** hash<bool, int> */ = [];
-		for ($pass = 0; $pass < 2; $pass++)
-		{
-			foreach ($candidate->collection->defined_elements as $new_index)
-			{
-				if (isset($paired[$new_index])) {
-					continue;
-				}
-				$entry = $new_entries[$new_index];
-				$key = self::declaration_key($entry);
-				$found = -1;
-				$count = 0;
-				foreach ($previous->collection->defined_elements as $old_index)
-				{
-					$old = $old_entries[$old_index];
-					if (isset($matched[$old_index]) || ($old->changes === \scpp\compiler\SYNC_DELETED)) {
-						continue;
-					}
-					if (self::declaration_key($old) !== $key) {
-						continue;
-					}
-					if ($pass === 0) {
-						if ((self::declaration_text($old, false) !== self::declaration_text($entry, false)) || (self::declaration_text($old, true) !== self::declaration_text($entry, true))) {
-							continue;
-						}
-					}
-					$found = $old_index;
-					$count++;
-					if ($pass === 0) {
-						break;
-					}
-				}
-				if ($count !== 1) {
-					continue;
-				}
-				if ($pass === 1)
-				{
-					$remaining = 0;
-					foreach ($candidate->collection->defined_elements as $other_index) {
-						if (!isset($paired[$other_index])) {
-							if (self::declaration_key($new_entries[$other_index]) === $key) {
-								$remaining++;
-							}
-						}
-					}
-					if ($remaining !== 1) {
-						continue;
-					}
-				}
-				$old = $old_entries[$found];
-				$entry->changes = 0;
-				if (self::declaration_text($old, false) !== self::declaration_text($entry, false)) {
-					$entry->changes = $entry->changes + \scpp\compiler\SYNC_CHANGED;
-				}
-				if (self::declaration_text($old, true) !== self::declaration_text($entry, true)) {
-					$entry->changes = $entry->changes + \scpp\compiler\SYNC_BODY_CHANGED;
-				}
-				$paired[$new_index] = true;
-				$matched[$found] = true;
-			}
-		}
-		foreach ($previous->collection->defined_elements as $old_index)
-		{
-			if (isset($matched[$old_index])) {
-				continue;
-			}
-			$old = $old_entries[$old_index];
-			$old->changes = \scpp\compiler\SYNC_DELETED;
-			$position = $new_entries->append($old);
-			$candidate->collection->defined_elements[] = $position;
-		}
-	}
-
-	/** Replace only one file; old deleted declarations remain observable but are never resolved. */
-	private static function publish_update(source_work $work): void
-	{
-		$source = $work->source;
-		$syntax /** Storage<parsed_file> */ = Model::$syntax_files;
-		$previous = self::find_syntax($source->path);
-		$position = -1;
-		foreach ($syntax as $index => $parsed)
-		{
-			if ($parsed->tokens->file->path === $source->path) {
-				if ($parsed->tokens->file->changes !== \scpp\compiler\SYNC_DELETED) {
-					$previous = $parsed;
-					$position = $index;
-				}
-			}
-		}
-		if ($source->changes === \scpp\compiler\SYNC_DELETED)
-		{
-			if ($previous !== null)
-			{
-				$old = object_cast($previous, parsed_file::class);
-				$old->tokens->file->changes = \scpp\compiler\SYNC_DELETED;
-				$entries /** Storage<collected_name> */ = $old->collection->entries;
-				foreach ($old->collection->defined_elements as $index) {
-					$entries[$index]->changes = \scpp\compiler\SYNC_DELETED;
-				}
-			}
-			return;
-		}
-		$candidate = object_cast($work->result, parsed_file::class);
-		$entries /** Storage<collected_name> */ = $candidate->collection->entries;
-		foreach ($candidate->collection->defined_elements as $index) {
-			$entries[$index]->changes = \scpp\compiler\SYNC_ADDED;
-		}
-		$source->changes = \scpp\compiler\SYNC_ADDED;
-		if ($previous !== null)
-		{
-			$old = object_cast($previous, parsed_file::class);
-			self::compare_declarations($old, $candidate);
-			$source->changes = 0;
-			if ($old->tokens->content !== $candidate->tokens->content) {
-				$source->changes = \scpp\compiler\SYNC_CHANGED;
-			}
-		}
-		// Remove replaced live references; keep actual deletions as tombstones in global indexes.
-		$global = Model::$global_scope;
-		$global->replace_source($source->path);
-		if ($position >= 0) {
-			$syntax->replace($position, $candidate);
-		}
-		else {
-			$syntax->append($candidate);
-		}
-		self::publish_scope($candidate);
-		$source->tokens = $candidate->tokens;
-		foreach (Model::$modules as $input_module)
-		{
-			$files /** Storage<file> */ = $input_module->files;
-			foreach ($files as $index => $old_source)
-			{
-				if ($old_source->path === $source->path) {
-					if ($old_source->changes !== \scpp\compiler\SYNC_DELETED) {
-						$files->replace($index, $source);
-						self::order_roots();
-						return;
-					}
-				}
-			}
-		}
-		foreach (Model::$modules as $input_module) {
-			if ($input_module->path === fs_dirname($source->path)) {
-				$files /** Storage<file> */ = $input_module->files;
-				$files->append($source);
-				break;
-			}
-		}
-		self::order_roots();
-	}
-
-	/** Restore module/file order using a temporary identity index, including retained deleted files. */
-	private static function order_roots(): void
-	{
-		$by_source /** hash<parsed_file, shared<file>> */ = new \SplObjectStorage /** hash<parsed_file, shared<file>> */();
-		foreach (Model::$syntax_files as $parsed) {
-			$by_source[$parsed->tokens->file] = $parsed;
-		}
-		$syntax /** Storage<parsed_file> */ = new Storage();
-		$tokens /** Storage<token_list> */ = new Storage();
-		$collections /** Storage<collected_file> */ = new Storage();
-		foreach (Model::$modules as $input_module)
-		{
-			foreach ($input_module->files as $source)
-			{
-				if (!isset($by_source[$source])) {
-					continue;
-				}
-				$parsed /** parsed_file */ = $by_source[$source];
-				$syntax->append($parsed);
-				$tokens->append($parsed->tokens);
-				$collections->append($parsed->collection);
-			}
-		}
-		Model::$syntax_files = $syntax;
-		Model::$tokens = $tokens;
-		Model::$collected_files = $collections;
+		Source_Publication::order_roots();
 	}
 
 	/** Standalone parallel scanning; exec uses the combined pipeline without this barrier. */
 	public function tokenize(): void
 	{
-		$this->frontend(true, false);
+		$this->frontend(frontend_operation::scan);
 	}
 
 	/** Explicitly reparse existing snapshots without rereading their source files. */
 	public function parse(): void
 	{
-		$this->frontend(false, true);
+		$this->frontend(frontend_operation::parse);
 	}
 
 	/** One bounded worker reads, tokenizes and immediately parses its file before publication. */
-	private function frontend(bool $scan, bool $parse): void
+	private function frontend(frontend_operation $operation): void
 	{
-		if ($scan) {
+		if ($operation === frontend_operation::scan) {
 			Model::reset_tokens();
 		}
 		else {
@@ -450,7 +121,7 @@ final class Compiler
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		$queue = new Source_Work_Queue();
-		if ($scan) {
+		if ($operation === frontend_operation::scan) {
 			foreach (Model::$modules as $input_module) {
 				foreach ($input_module->files as $source) {
 					$queue->enqueue($source);
@@ -464,78 +135,24 @@ final class Compiler
 		}
 		$items /** vector<source_work> */ = $queue->items();
 		$published = task_run_publish_unordered($items, $this->jobs,
-		function (source_work $work) use ($queue, $scan, $parse): source_work
-		{
-			$queue->start($work);
-			try
-			{
-				if ($scan) {
-					$work->tokens = (new Tokenizer($work->source))->tokenize();
-				}
-				if ($parse) {
-					$tokens = object_cast($work->tokens, token_list::class);
-					$work->result = (new Parser($tokens))->parse();
-				}
-			}
-			catch (\Throwable $error) {
-				$queue->fail($work);
-				throw $error;
-			}
-			return $work;
+		function (source_work $work) use ($queue, $operation): source_work {
+			return Source_Frontend::run($work, $queue, $operation);
 		},
-		function (source_work $work) use ($queue, $scan, $parse): bool
-		{
-			if ($scan) {
-				$tokens = object_cast($work->tokens, token_list::class);
-				$work->source->tokens = $tokens;
-				Model::$tokens[] = $tokens;
-			}
-			if ($parse) {
-				Compiler::publish_parsed(object_cast($work->result, parsed_file::class));
-			}
+		function (source_work $work) use ($queue, $operation): bool {
+			Source_Publication::publish_stage($work, $operation);
 			$queue->complete($work);
 			return true;
 		});
 		if (($published !== q_count($items)) || (!$queue->finished())) {
 			throw new \LogicException('Frontend barrier reached before work completed');
 		}
-		// Work is unordered; restore retained file order only after every worker has joined.
-		$token_files /** Storage<token_list> */ = new Storage();
-		$syntax_files /** Storage<parsed_file> */ = new Storage();
-		$collected_files /** Storage<collected_file> */ = new Storage();
-		foreach ($items as $work)
-		{
-			if ($scan) {
-				$token_files->append(object_cast($work->tokens, token_list::class));
-			}
-			if ($parse) {
-				$parsed = object_cast($work->result, parsed_file::class);
-				$syntax_files->append($parsed);
-				$collected_files->append($parsed->collection);
-			}
-		}
-		if ($scan) {
-			Model::$tokens = $token_files;
-		}
-		if ($parse) {
-			Model::$syntax_files = $syntax_files;
-			Model::$collected_files = $collected_files;
-		}
+		Source_Publication::order_stage($items, $operation);
 	}
 
-	/** Publication boundary: caller serializes this operation; parser workers never edit global indexes. */
+	/** Compatibility entry for callers publishing a completed parse under serialization. */
 	public static function publish_parsed(parsed_file $parsed): void
 	{
-		self::publish_scope($parsed);
-		Model::$syntax_files[] = $parsed;
-		Model::$collected_files[] = $parsed->collection;
-	}
-
-	/** Export live file-root declarations; duplicate candidates remain separate entries. */
-	private static function publish_scope(parsed_file $parsed): void
-	{
-		$root_scope = object_cast(weakref_get(Syntax_Nodes::block_data($parsed->root)->scope), scope::class);
-		scope::publish($root_scope, Model::$global_scope);
+		Source_Publication::publish_parsed($parsed);
 	}
 
 	/** Publish complete preparation and C++ together; unsupported input leaves no stale output. */
@@ -551,7 +168,7 @@ final class Compiler
 		if (q_count($sources) !== 1) {
 			throw new \RuntimeException('The first C++ slice requires exactly one source file');
 		}
-		$prepared = (new Binding_Preparation($sources[0], Model::$language_scope))->prepare();
+		$prepared = (new File_Preparation($sources[0], Model::$language_scope))->prepare();
 		$output = (new CPP_Generator())->generate($prepared);
 		Model::$prepared_files[] = $prepared;
 		Model::$cpp_files[] = $output;

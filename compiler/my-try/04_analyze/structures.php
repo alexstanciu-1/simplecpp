@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Role: resolved source-local declaration bindings.
- * Used by: Name_Preparation and LLVM_Preparation.
+ * Role: retained S2S preparation facts and experimental name/check invocation records.
+ * Used by: File_Preparation; experimental Name_Preparation, LLVM_Preparation and template checking.
  */
 namespace scpp\compiler;
 

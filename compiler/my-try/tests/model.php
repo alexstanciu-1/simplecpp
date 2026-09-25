@@ -275,13 +275,13 @@ final class Model_Test
 		$collector = new Symbol_Collector($source);
 		$node = new identifier_node();
 		$scope = new scope();
-		$collector->record($node, 0, collected_name_kind::variable_reference, $scope);
+		$collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
 		// Host test access only: the compiler still builds occurrence lists append-only.
 		$property = new \ReflectionProperty(Symbol_Collector::class, 'file');
 		$file = $property->getValue($collector);
 		$file->entries->remove(0);
 		$file->variable_references = [];
-		$position = $collector->record($node, 0, collected_name_kind::variable_reference, $scope);
+		$position = $collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
 		$result = $collector->finish($node);
 		if (($position !== 1) || ($result->entries[1]->local_index !== 1) || ($result->variable_references !== [1]) || isset($result->entries[0])) {
 			throw new \RuntimeException('Occurrence index did not use the assigned storage position');

@@ -15,7 +15,7 @@ import time
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
-STAGES = ['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_cpp', '05_llvm', '06_native', 'compile']
+STAGES = ['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_cpp', '05_llvm', '06_native', 'compile', 'scopes']
 
 
 def php_literal(text):
