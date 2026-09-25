@@ -56,21 +56,140 @@ enum passing_mode {
 	case reference;
 }
 
-/** Marker for the concrete payload owned by an AST node. */
-interface node_specialization {
+/** Marker for additional data owned by a concrete AST node. */
+interface node_structure {
 }
 
-final class ast_node {
+/** Common syntax header; links are private so native storage may later use positions. */
+abstract class ast_node
+{
 	/** @storage.index token_list.tokens */
-	public int $token_index;
-	/** @storage.boundary token_list.tokens */
-	public int $end_token_index;
+	public int $token_index /** uint32 */;
+	/** Exclusive token boundary. @storage.boundary token_list.tokens */
+	public int $end_token_index /** uint32 */;
 	public node_kind $kind;
-	/** Concrete payload owned directly by this node; null only for payload-free kinds.
-	 * Kind/payload agreement is validated by Syntax_Nodes.
-	 * @ownership owner
-	 */
-	public ?node_specialization $specialization = null;
+	/** Extra syntax data owned by this node. @ownership owner */
+	public ?node_structure $structure = null;
+	/** @reference.source parsed_file.root @reference.weak */
+	private ?ast_node $parent_node /** weak<ast_node> */ = null;
+	/** @reference.source parsed_file.root @reference.weak */
+	private ?ast_node $previous_node /** weak<ast_node> */ = null;
+	/** @ownership owner */
+	private ?ast_node $next_node = null;
+	/** @ownership owner */
+	private ?ast_node $first_node = null;
+	private int $position /** uint32 */ = 0;
+
+	/** Initialize the compact header before the node is linked or published. */
+	public function initialize(int $start, int $end, ?node_structure $data): void
+	{
+		if (($start < 0) || ($end < $start) || ($end > 4294967295)) {
+			throw new \LogicException('AST token span exceeds uint32 bounds');
+		}
+		$this->token_index = $start;
+		$this->end_token_index = $end;
+		$this->position = 0;
+		$this->structure = $data;
+	}
+
+	public function next(): ?ast_node
+	{
+		return $this->next_node;
+	}
+
+	public function prev(): ?ast_node
+	{
+		$previous = weakref_get($this->previous_node);
+		if ($previous === null) {
+			return null;
+		}
+		return object_cast($previous, ast_node::class);
+	}
+
+	public function parent(): ?ast_node
+	{
+		$owner = weakref_get($this->parent_node);
+		if ($owner === null) {
+			return null;
+		}
+		return object_cast($owner, ast_node::class);
+	}
+
+	public function first_child(): ?ast_node
+	{
+		return $this->first_node;
+	}
+
+	public function child_position(): int
+	{
+		return (int) $this->position;
+	}
+
+	public function has_children(): bool
+	{
+		return $this->first_node !== null;
+	}
+
+	/** Return a membership snapshot; traversal itself does not require a stored collection. */
+	public function children(): Storage /** Storage<ast_node> */
+	{
+		$result /** Storage<ast_node> */ = new Storage();
+		$current = $this->first_node;
+		while ($current !== null) {
+			$child = object_cast($current, ast_node::class);
+			$result->append($child);
+			$current = $child->next();
+		}
+		return $result;
+	}
+
+	/** Link a complete child list once; explicit handles avoid manufacturing ownership from $this. */
+	public static function link_children(ast_node $owner, Storage $children /** Storage<ast_node> */): void
+	{
+		if ($owner->first_node !== null) {
+			throw new \LogicException('AST children already linked');
+		}
+		if (q_count($children) > 4294967295) {
+			throw new \LogicException('AST child positions exceed uint32 bounds');
+		}
+		// Validate before publishing any links, including duplicate membership.
+		$seen /** hash<bool, shared<ast_node>> */ = new \SplObjectStorage /** hash<bool, shared<ast_node>> */();
+		foreach ($children as $child)
+		{
+			if (($child === $owner) || ($child->parent() !== null)) {
+				throw new \LogicException('AST child already belongs to a parent');
+			}
+			if (isset($seen[$child])) {
+				throw new \LogicException('Duplicate AST child');
+			}
+			$ancestor = $owner->parent();
+			while ($ancestor !== null) {
+				$ancestor_node = object_cast($ancestor, ast_node::class);
+				if ($ancestor_node === $child) {
+					throw new \LogicException('AST links would form a cycle');
+				}
+				$ancestor = $ancestor_node->parent();
+			}
+			$seen[$child] = true;
+		}
+		$previous = $owner->first_node;
+		$position = 0;
+		foreach ($children as $child)
+		{
+			$child->parent_node = $owner;
+			$child->position = $position;
+			if ($previous === null) {
+				$owner->first_node = $child;
+			}
+			else {
+				$prior = object_cast($previous, ast_node::class);
+				$prior->next_node = $child;
+				$child->previous_node = $prior;
+			}
+			$previous = $child;
+			$position++;
+		}
+	}
 }
 
 final class scope

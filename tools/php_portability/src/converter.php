@@ -531,10 +531,17 @@ final class Converter {
 	}
 
 	/** Reference-class fields preserve explicit types; no value-record or nullability inference. */
-	private function referenceClass(int $line, bool $final = false): Node {
+	private function referenceClass(int $line, bool $final = false, bool $abstract = false): Node {
 		$name = $this->significant();
 		if ($name[0] !== T_STRING) { $this->fail($line, 'expected class name'); }
 		if (str_starts_with(strtolower($name[1]), 'scpp_portability_')) { $this->fail($line, 'reserved native framework class prefix'); }
+		$base = '';
+		if (($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_EXTENDS) {
+			$this->significant();
+			$parent = $this->significant();
+			if (!in_array($parent[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) { $this->fail($parent[2], 'expected literal parent class name'); }
+			$base = ' extends ' . $parent[1];
+		}
 		$implements = [];
 		if (($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_IMPLEMENTS) {
 			$this->significant();
@@ -548,7 +555,7 @@ final class Converter {
 		}
 		$previousClass = $this->inClass;
 		$this->inClass = true;
-		$className = $name[1] . ($implements === [] ? '' : ' implements ' . implode(', ', $implements));
+		$className = $name[1] . $base . ($implements === [] ? '' : ' implements ' . implode(', ', $implements));
 		$this->expect('{');
 		$fields = [];
 		while (isset($this->tokens[$this->position])) {
@@ -556,7 +563,7 @@ final class Converter {
 			[$id, $text, $at] = $this->tokens[$this->position++];
 			if ($text === '}') {
 				$this->inClass = $previousClass;
-				return new Node($final ? 'final_class' : 'class', $className, $line, $fields);
+				return new Node($abstract ? 'abstract_class' : ($final ? 'final_class' : 'class'), $className, $line, $fields);
 			}
 			if ($id === T_DOC_COMMENT && trim($text) === '/** @scpp-no-export */') {
 				$this->skipHostDeclaration($at, true);
@@ -665,8 +672,15 @@ final class Converter {
 			if (!$nullable && $type[1] === 'int' && ($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_DOC_COMMENT) {
 				$annotation = $this->significant();
 				if ($this->localAnnotation($annotation) !== 'uint32') { $this->fail($annotation[2], 'integer field annotation must be uint32'); }
+				$initializer = '';
+				if (($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === '=') {
+					$this->significant();
+					$value = $this->significant();
+					if ($value[0] !== T_LNUMBER || !preg_match('/^(0|[1-9][0-9]*)$/D', $value[1]) || (float) $value[1] > 4294967295) { $this->fail($value[2], 'uint32 initializer must be a decimal literal in range'); }
+					$initializer = ' = ' . $value[1];
+				}
 				$this->expect(';');
-				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' uint32;', $at);
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' uint32' . $initializer . ';', $at);
 				continue;
 			}
 			if (!$nullable && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === ';') {
@@ -985,6 +999,12 @@ final class Converter {
 				}
 				continue;
 			}
+			if ($id === T_ABSTRACT) {
+				if ($closing !== null) { $this->fail($line, 'class declarations must be at file scope'); }
+				$this->expect('class');
+				$nodes[] = $this->referenceClass($line, false, true);
+				continue;
+			}
 			if ($id === T_FINAL) {
 				if ($closing !== null) { $this->fail($line, 'class declarations must be at file scope'); }
 				$this->expect('class');
@@ -1151,6 +1171,7 @@ final class Converter {
 			'enum' => 'enum ' . $node->text . ' {' . $body . '}',
 			'method' => $node->text . ' {' . $body . '}',
 			'interface' => 'interface ' . $node->text . ' {' . $body . '}',
+			'abstract_class' => 'abstract class ' . $node->text . ' {' . $body . '}',
 			'final_class' => 'final class ' . $node->text . ' {' . $body . '}',
 			'struct' => 'struct ' . $node->text . ' {' . $body . '}',
 			'class' => 'class ' . $node->text . ' {' . $body . '}',

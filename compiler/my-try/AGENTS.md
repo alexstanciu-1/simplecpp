@@ -88,8 +88,9 @@ are excluded; do not reformat them.
    collection. Both inherit Storage_Abstract for common behavior. Native records
    use shared_p<T>; capacity is an
    optional constructor argument. No key-mode or readonly template arguments remain.
-   Prefer `$tokens /** Storage<token> */ = new Storage();` for direct local construction. The repeated construction annotation remains accepted. Property assignments and other construction sites still need `new Storage /** Storage<token> */()`. See helpers/STORAGE.md and docs/conversion_review.md. AST nodes
-   own payloads and nested Storage child lists; do not recreate parallel node/payload
+   Prefer `$tokens /** Storage<token> */ = new Storage();` for direct local construction. The repeated construction annotation remains accepted. Property assignments and other construction sites still need `new Storage /** Storage<token> */()`. See helpers/STORAGE.md and docs/conversion_review.md. AST nodes inherit the abstract base and own extra structures plus private
+   traversal links. Named structure child lists remain retaining aliases; see
+   docs/ast_layout.md. Do not recreate parallel node/payload
    registries or Storage_View infrastructure without a concrete approved need.
 
 6. Follow compiler 3's formatting, purpose comments and method-order conventions

@@ -325,3 +325,12 @@ native compilation remains pending.
 For native-only non-retaining links, see [weak object fields](weak_fields.md).
 PHP keeps ordinary references; use explicit `weakref_get` acquisition in portable
 source and maintain a real strong owner for the target's required lifetime.
+
+Ordinary reference classes now preserve `abstract class` and one literal `extends`
+clause. This adds no inheritance resolution, abstract-method conversion, override
+validation or parent-constructor inference. The linked AST proves inherited fields
+and concrete methods on the candidate native target. That emitter does not enforce
+C++ abstractness for a base without a pure virtual member; construct concrete
+subclasses only. Reference-class uint32 properties can also use a decimal literal
+default in 0..4294967295. Convert uint32 reads to int explicitly when passing them
+to signed index maps or method parameters. See compiler/my-try/docs/ast_layout.md.

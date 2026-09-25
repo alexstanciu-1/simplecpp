@@ -149,11 +149,12 @@ final class LLVM_Preparation_Run
 	/** Interpret bound parameter slots without changing retained syntax or name bindings. */
 	private function type_name(llvm_prepared_function $function, ast_node $syntax): string
 	{
-		if (!isset($function->file->names->template_slots[$syntax->token_index])) {
+		$lookup_token_index /** int */ = (int) $syntax->token_index;
+		if (!isset($function->file->names->template_slots[$lookup_token_index])) {
 			$tokens /** Storage<token> */ = $function->file->source->source->tokens;
-			return $tokens[$syntax->token_index]->text();
+			return $tokens[(int) $syntax->token_index]->text();
 		}
-		$slot /** int */ = $function->file->names->template_slots[$syntax->token_index];
+		$slot /** int */ = $function->file->names->template_slots[(int) $syntax->token_index];
 		if (!isset($function->arguments[$slot])) {
 			throw new \RuntimeException('Missing concrete template binding');
 		}
@@ -196,9 +197,10 @@ final class LLVM_Preparation_Run
 			$local = new llvm_local();
 			$local->declaration = $declaration;
 			$type = '';
-			if (isset($file->names->types[$type_syntax->token_index]))
+			$lookup_token_index /** int */ = (int) $type_syntax->token_index;
+			if (isset($file->names->types[$lookup_token_index]))
 			{
-				$record_declaration /** collected_name */ = $file->names->types[$type_syntax->token_index];
+				$record_declaration /** collected_name */ = $file->names->types[(int) $type_syntax->token_index];
 				$record /** llvm_struct_type */ = $this->structs[$record_declaration];
 				if (($is_array) || ($is_parameter)) {
 					throw new \RuntimeException('Struct arrays and whole-struct parameters are not supported yet');
@@ -224,7 +226,7 @@ final class LLVM_Preparation_Run
 				if ($type !== $this->policy->integer_type) {
 					throw new \RuntimeException('Fixed arrays currently require int elements');
 				}
-				$text = LLVM_Text::decimal($tokens[$array_syntax->count->token_index]->text());
+				$text = LLVM_Text::decimal($tokens[(int) $array_syntax->count->token_index]->text());
 				$maximum = '' . \PHP_INT_MAX;
 				if (LLVM_Text::decimal_exceeds($text, $maximum)) {
 					throw new \RuntimeException('Fixed array size exceeds compiler capacity');

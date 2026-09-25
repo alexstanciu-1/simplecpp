@@ -9,7 +9,7 @@ source adaptations to the existing v0.1 toolchain, not new compiler features.
   not treated as aliases.
 - Constructor/per-invocation workers establish real initialized inputs. Public
   reusable facades retain their existing reset and failure-publication behavior.
-- Parser `payload_node` accepts a required node_specialization before forwarding it to
+- Parser `payload_node` accepts a required node_structure before forwarding it to
   the optional-payload constructor. This separates concrete-to-interface conversion
   from nullable wrapping without copying the payload.
 - Parser `error_message` formats a string; call sites construct RuntimeException.
@@ -65,14 +65,14 @@ executed 48 emitted programs. The final private-field rename to `$_text` was the
 checked by incremental native rebuild and sample parity. Required-field conversion
 regressions and the portability regression suite also passed.
 
-AST contract follow-up: the payload interface is `node_specialization`.
+AST contract follow-up: the payload interface is `node_structure`.
 `Syntax_Nodes` now rejects inconsistent binding optional fields/classification and
 parameter reference-token presence before parser publication. Checks are local;
 children are not traversed again. PHP tests enumerate 48 binding states and four
 parameter states.
 
 Three direct scope links opt into native `weak<scope>` fields: scope.parent,
-block_specialization.scope and collected_name.scope. Consumers explicitly acquire
+block_structure.scope and collected_name.scope. Consumers explicitly acquire
 through `weakref_get`; PHP's facade preserves ordinary strong references. This does
 not convert every documentary weak tag or reclaim every model cycle. STAN now knows
 the existing runtime weakref_get primitive. Candidate analysis reports zero blocking
@@ -86,3 +86,16 @@ No cast/runtime change was needed. A fresh normal build and incremental rebuild
 passed all 142 PHP/native comparisons and executed all 48 valid emitted programs.
 STAN reports zero blocking diagnostics, 159 advisory errors and 47 warnings.
 See `specs/planning/compiler_migration/results/weak-scope-native-01` for evidence.
+
+Linked AST follow-up: abstract ast_node now has one concrete subclass per kind,
+optional node_structure, uint32 spans and private parent/previous/next/first-child
+links plus a uint32 child position. The converter preserves literal inheritance
+and accepts bounded decimal uint32 property defaults. Required signed lookup/argument
+boundaries explicitly cast compact token indexes to int. Named structure child
+lists remain retaining aliases; children() returns a membership snapshot.
+
+`build/native-linked-ast-04` passed 142 PHP/native comparisons, including native
+parent/sibling/position checks, and executed all 48 valid emitted programs.
+STAN has zero blockers, 210 advisory errors and 78 warnings; those advisories have
+not been eliminated. See docs/ast_layout.md for limits, including the v0.1 native
+emitter's lack of abstract-base enforcement when no method is pure virtual.

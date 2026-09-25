@@ -22,8 +22,9 @@ serialization follows from these tags.
 
 Model owns modules, tokenization/parse/collection/output results and global scope.
 Modules own files. Token lists own token objects and captured source text. Parsed
-files own their root AST and local scopes. AST nodes own concrete payloads; payloads
-own single child nodes and Storage<ast_node> child lists. No shared backing node
+files own their root AST and local scopes. AST nodes own additional structures and first-child/next-sibling chains. Native
+parent/previous backlinks are weak. Named structure child fields and lists remain
+retaining aliases during this migration; see ast_layout.md. No shared backing node
 store or Storage_View remains. Collection files own occurrence entries and work lists.
 LLVM modules own functions; functions own operands and blocks; blocks own text.
 
@@ -44,7 +45,7 @@ owner remains future work. Emission copies operand values into independent outpu
 
 ## Native scope observers
 
-`scope.parent`, `block_specialization.scope` and `collected_name.scope` are native
+`scope.parent`, `block_structure.scope` and `collected_name.scope` are native
 weak fields. `parsed_file.scopes` and `Model.global_scope` remain strong owners.
 Assignments accept the existing shared records; reads use `weakref_get` to acquire
 a shared handle. Required block/occurrence scopes then use `object_cast` to reject

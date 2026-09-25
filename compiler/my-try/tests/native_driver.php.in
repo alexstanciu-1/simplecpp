@@ -13,6 +13,50 @@ try
 	{
 		$compiler->init($paths);
 		$compiler->exec();
+		// Exercise private-link traversal natively as well as the named syntax aliases.
+		$syntax_files /** Storage<parsed_file> */ = Model::$syntax_files;
+		foreach ($syntax_files as $syntax_file)
+		{
+			$queue /** Storage<ast_node> */ = new Storage();
+			$queue->append($syntax_file->root);
+			for ($node_index = 0; $node_index < q_count($queue); $node_index++)
+			{
+				$syntax_node = $queue[$node_index];
+				$children /** Storage<ast_node> */ = $syntax_node->children();
+				$named /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($syntax_node);
+				if (q_count($children) !== q_count($named)) {
+					throw new \LogicException('AST traversal lost named children');
+				}
+				foreach ($children as $child_index => $child)
+				{
+					if (($child !== $named[$child_index]) || ($child->child_position() !== $child_index) || ($child->parent() !== $syntax_node)) {
+						throw new \LogicException('AST child identity or parent position changed');
+					}
+					if ($child_index === 0) {
+						if (($child->prev() !== null) || ($syntax_node->first_child() !== $child)) {
+							throw new \LogicException('Invalid AST first child');
+						}
+					}
+					else {
+						if ($child->prev() !== $children[$child_index - 1]) {
+							throw new \LogicException('Invalid AST previous sibling');
+						}
+					}
+					if ($child_index + 1 === q_count($children)) {
+						if ($child->next() !== null) {
+							throw new \LogicException('Invalid AST last child');
+						}
+					}
+					else {
+						if ($child->next() !== $children[$child_index + 1]) {
+							throw new \LogicException('Invalid AST next sibling');
+						}
+					}
+					$queue->append($child);
+				}
+			}
+		}
+
 		$outputs /** Storage<llvm_module> */ = Model::$llvm_files;
 		$trace = "OK\n";
 		foreach ($outputs as $output) {

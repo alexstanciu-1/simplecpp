@@ -12,7 +12,7 @@ trait LLVM_Expressions
 	private function to_llvm_integer_literal(ast_node $node): llvm_operand
 	{
 		$tokens /** Storage<token> */ = $this->prepared->source->source->tokens;
-		$text = $tokens[$node->token_index]->text();
+		$text = $tokens[(int) $node->token_index]->text();
 		$text = LLVM_Text::decimal($text);
 		$text = $text === '' ? '0' : $text;
 		$maximum = $this->policy->integer_max;
@@ -51,10 +51,11 @@ trait LLVM_Expressions
 		if ($node->kind !== node_kind::variable_reference) {
 			throw new \RuntimeException('Reference argument requires writable variable storage');
 		}
-		if (!isset($this->prepared->names->references[$node->token_index])) {
+		$lookup_token_index /** int */ = (int) $node->token_index;
+		if (!isset($this->prepared->names->references[$lookup_token_index])) {
 			throw new \RuntimeException('Missing prepared variable target');
 		}
-		$declaration /** collected_name */ = $this->prepared->names->references[$node->token_index];
+		$declaration /** collected_name */ = $this->prepared->names->references[(int) $node->token_index];
 		if (!isset($this->initialized[$declaration->local_index])) {
 			throw new \RuntimeException('Variable must be initialized before reading or passing by reference');
 		}
@@ -129,10 +130,11 @@ trait LLVM_Expressions
 	/** Emit a call using only its prepared signature and name; void supplies no value operand. */
 	private function to_llvm_call_expression(ast_node $node): llvm_operand
 	{
-		if (!isset($this->instance->calls[$node->token_index])) {
+		$lookup_token_index /** int */ = (int) $node->token_index;
+		if (!isset($this->instance->calls[$lookup_token_index])) {
 			throw new \RuntimeException('Missing prepared function target');
 		}
-		$target /** llvm_prepared_function */ = $this->instance->calls[$node->token_index];
+		$target /** llvm_prepared_function */ = $this->instance->calls[(int) $node->token_index];
 		if (q_count(Syntax_Nodes::call_data($node)->arguments) !== q_count($target->parameters)) {
 			throw new \RuntimeException(("Incorrect argument count for " . $target->name));
 		}

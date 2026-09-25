@@ -87,15 +87,17 @@ trait LLVM_Statements
 	private function binding_declaration(ast_node $node, bool $declaring): collected_name
 	{
 		if ($declaring) {
-			if (!isset($this->prepared->names->declarations[$node->token_index])) {
+			$lookup_token_index /** int */ = (int) $node->token_index;
+			if (!isset($this->prepared->names->declarations[$lookup_token_index])) {
 				throw new \RuntimeException('LLVM store requires a prepared declaration and value');
 			}
-			return $this->prepared->names->declarations[$node->token_index];
+			return $this->prepared->names->declarations[(int) $node->token_index];
 		}
-		if (!isset($this->prepared->names->references[$node->token_index])) {
+		$lookup_token_index /** int */ = (int) $node->token_index;
+		if (!isset($this->prepared->names->references[$lookup_token_index])) {
 			throw new \RuntimeException('LLVM store requires a prepared declaration and value');
 		}
-		return $this->prepared->names->references[$node->token_index];
+		return $this->prepared->names->references[(int) $node->token_index];
 	}
 
 	/** All writes consume the same typed address/value contract. */

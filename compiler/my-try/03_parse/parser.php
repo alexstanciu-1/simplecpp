@@ -57,7 +57,7 @@ final class Parser_Run
 	/** Publish the completed file only after successful parsing and collection. */
 	public function parse(): parsed_file
 	{
-		$body = new block_specialization();
+		$body = new block_structure();
 		$children /** Storage<ast_node> */ = $body->children;
 		$body->scope = $this->current_scope;
 		while ($this->position < q_count($this->tokens->tokens)) {
@@ -100,7 +100,7 @@ final class Parser_Run
 		if (!$this->identifier()) {
 			throw new \RuntimeException($this->error_message('Expected struct name'));
 		}
-		$record = new struct_specialization();
+		$record = new struct_structure();
 		$fields /** Storage<ast_node> */ = $record->fields;
 		$record->name_token_index = $this->position++;
 		$this->expect('{');
@@ -113,7 +113,7 @@ final class Parser_Run
 			if (!$this->identifier()) {
 				throw new \RuntimeException($this->error_message('Expected field type'));
 			}
-			$field = new field_specialization();
+			$field = new field_structure();
 			$type_start = $this->position++;
 			$field->type_syntax = $this->node(node_kind::identifier, $type_start);
 			$this->collector->record($field->type_syntax, $type_start, collected_name_kind::type_reference, $this->current_scope);
@@ -134,7 +134,7 @@ final class Parser_Run
 	private function expression_statement(): ast_node
 	{
 		$start = $this->position;
-		$statement = new expression_statement_specialization();
+		$statement = new expression_statement_structure();
 		$statement->expression = $this->expression();
 		$statement->semicolon_token_index = $this->expect(';');
 		return $this->payload_node(node_kind::expression_statement, $start, $statement);
@@ -176,7 +176,7 @@ final class Parser_Run
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return') || ($this->text() === 'void'))) {
 			throw new \RuntimeException($this->error_message('Expected function name'));
 		}
-		$function = new function_specialization();
+		$function = new function_structure();
 		$parameters /** Storage<ast_node> */ = $function->parameters;
 		$function->name_token_index = $this->position++;
 		$function->template_parameters = $formals;
@@ -229,7 +229,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected parameter type'));
 		}
 		$this->position++;
-		$parameter = new parameter_specialization();
+		$parameter = new parameter_structure();
 		$parameter->type_syntax = $this->node(node_kind::identifier, $start);
 		$this->collector->record($parameter->type_syntax, $start, collected_name_kind::type_reference, $scope);
 		if ($this->text() === '&') {
@@ -249,7 +249,7 @@ final class Parser_Run
 	private function block(scope $scope): ast_node
 	{
 		$start = $this->expect('{');
-		$body = new block_specialization();
+		$body = new block_structure();
 		$children /** Storage<ast_node> */ = $body->children;
 		$body->scope = $scope;
 		$enclosing = $this->current_scope;
@@ -275,7 +275,7 @@ final class Parser_Run
 	private function return_statement(): ast_node
 	{
 		$start = $this->position;
-		$return_node = new return_specialization();
+		$return_node = new return_structure();
 		$return_node->keyword_token_index = $this->position++;
 		if ($this->text() !== ';') {
 			$return_node->expression = $this->expression();
@@ -288,7 +288,7 @@ final class Parser_Run
 	private function binding_statement(): ast_node
 	{
 		$start = $this->position;
-		$binding = new binding_specialization();
+		$binding = new binding_structure();
 		$binding->name_token_index = $this->position++;
 		if ((($this->text() === '[') || ($this->text() === '->'))) {
 			$base = $this->node(node_kind::variable_reference, $start);
@@ -359,21 +359,21 @@ final class Parser_Run
 	private function array_type(ast_node $element): ast_node
 	{
 		$this->expect('[');
-		$type = new array_type_specialization();
+		$type = new array_type_structure();
 		$type->element_type = $element;
 		$type->count = $this->expression();
 		if ($type->count->kind !== node_kind::integer_literal) {
 			throw new \RuntimeException($this->error_message('Fixed array size must be a nonnegative integer literal'));
 		}
 		$this->expect(']');
-		return $this->payload_node(node_kind::array_type, $element->token_index, $type);
+		return $this->payload_node(node_kind::array_type, (int) $element->token_index, $type);
 	}
 
 	/** Keep initializer elements as syntax; preparation/lowering checks their allowed forms. */
 	private function array_literal(): ast_node
 	{
 		$start = $this->expect('[');
-		$literal = new array_literal_specialization();
+		$literal = new array_literal_structure();
 		$elements /** Storage<ast_node> */ = $literal->elements;
 		if ($this->text() !== ']')
 		{
@@ -401,19 +401,19 @@ final class Parser_Run
 				if (!$this->identifier()) {
 					throw new \RuntimeException($this->error_message('Expected field name'));
 				}
-				$field = new field_access_specialization();
+				$field = new field_access_structure();
 				$field->base = $base;
 				$field->name_token_index = $this->position++;
-				$base = $this->payload_node(node_kind::field_expression, $base->token_index, $field);
+				$base = $this->payload_node(node_kind::field_expression, (int) $base->token_index, $field);
 				$this->collector->record($base, $field->name_token_index, collected_name_kind::field_reference, $this->current_scope);
 				continue;
 			}
 			$this->position++;
-			$access = new index_specialization();
+			$access = new index_structure();
 			$access->base = $base;
 			$access->index = $this->expression();
 			$this->expect(']');
-			$base = $this->payload_node(node_kind::index_expression, $base->token_index, $access);
+			$base = $this->payload_node(node_kind::index_expression, (int) $base->token_index, $access);
 		}
 		return $base;
 	}
@@ -422,7 +422,7 @@ final class Parser_Run
 	private function call_expression(): ast_node
 	{
 		$start = $this->position;
-		$call = new call_specialization();
+		$call = new call_structure();
 		$template_arguments /** Storage<ast_node> */ = $call->template_arguments;
 		$arguments /** Storage<ast_node> */ = $call->arguments;
 		$call->name_token_index = $this->position++;
@@ -465,20 +465,19 @@ final class Parser_Run
 	}
 
 	/** Stabilize the concrete payload as an interface before nullable wrapping. */
-	private function payload_node(node_kind $kind, int $start, node_specialization $specialization): ast_node
+	private function payload_node(node_kind $kind, int $start, node_structure $structure): ast_node
 	{
-		return $this->node($kind, $start, $specialization);
+		return $this->node($kind, $start, $structure);
 	}
 
-	/** Construct a node with its directly owned specialization. */
-	private function node(node_kind $kind, int $start, ?node_specialization $specialization = null): ast_node
+	/** Construct the concrete node, attach its extra data and publish navigation links. */
+	private function node(node_kind $kind, int $start, ?node_structure $structure = null): ast_node
 	{
-		Syntax_Nodes::validate_payload($kind, $specialization);
-		$node = new ast_node();
-		$node->token_index = $start;
-		$node->end_token_index = $this->position;
-		$node->kind = $kind;
-		$node->specialization = $specialization;
+		Syntax_Nodes::validate_payload($kind, $structure);
+		$node = Syntax_Nodes::allocate($kind);
+		$node->initialize($start, $this->position, $structure);
+		$children /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($node);
+		ast_node::link_children($node, $children);
 		return $node;
 	}
 

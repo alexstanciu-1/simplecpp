@@ -35,7 +35,7 @@ final class LLVM_Struct_Preparation
 					$syntax = Syntax_Nodes::field_data($field_node);
 					$spelling = $tokens[$syntax->name_token_index]->text();
 					$name = string_byte_slice($spelling, 1, string_byte_len($spelling) - 1);
-					$source_type = $tokens[$syntax->type_syntax->token_index]->text();
+					$source_type = $tokens[(int) $syntax->type_syntax->token_index]->text();
 					if (!isset($policy->types[$source_type])) {
 						throw new \RuntimeException('Struct proof supports only int fields');
 					}
@@ -75,7 +75,7 @@ final class LLVM_Struct_Preparation
 			if ($base->kind !== node_kind::variable_reference) {
 				throw new \RuntimeException('Nested aggregate field access is not supported yet');
 			}
-			$declaration = $file->names->references[$base->token_index];
+			$declaration = $file->names->references[(int) $base->token_index];
 			$type = $function->locals[$declaration->local_index]->struct_type;
 			if ($type === null) {
 				throw new \RuntimeException('Field access requires a struct');

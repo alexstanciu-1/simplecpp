@@ -8,20 +8,20 @@ require_once dirname(__DIR__) . '/boot.php';
 final class AST_Test
 {
 	private const PAYLOADS = [
-		'blocks' => block_specialization::class,
-		'functions' => function_specialization::class,
-		'parameters' => parameter_specialization::class,
-		'calls' => call_specialization::class,
-		'binaries' => binary_specialization::class,
-		'expression_statements' => expression_statement_specialization::class,
-		'returns' => return_specialization::class,
-		'bindings' => binding_specialization::class,
-		'array_types' => array_type_specialization::class,
-		'array_literals' => array_literal_specialization::class,
-		'indexes' => index_specialization::class,
-		'structs' => struct_specialization::class,
-		'fields' => field_specialization::class,
-		'field_accesses' => field_access_specialization::class,
+		'blocks' => block_structure::class,
+		'functions' => function_structure::class,
+		'parameters' => parameter_structure::class,
+		'calls' => call_structure::class,
+		'binaries' => binary_structure::class,
+		'expression_statements' => expression_statement_structure::class,
+		'returns' => return_structure::class,
+		'bindings' => binding_structure::class,
+		'array_types' => array_type_structure::class,
+		'array_literals' => array_literal_structure::class,
+		'indexes' => index_structure::class,
+		'structs' => struct_structure::class,
+		'fields' => field_structure::class,
+		'field_accesses' => field_access_structure::class,
 	];
 
 	private static function check(bool $condition): void
@@ -56,9 +56,22 @@ final class AST_Test
 		self::initialized($node);
 		self::check(!$nodes->contains($node)); // This fixture's AST is a tree logically.
 		$nodes->attach($node);
+		self::check(get_class($node) === __NAMESPACE__ . '\\' . $node->kind->name . '_node');
+		$children = $node->children();
+		$expected = Syntax_Nodes::child_nodes($node);
+		self::check(count($children) === count($expected));
+		self::check($node->has_children() === (count($children) > 0));
+		foreach ($children as $position => $child) {
+			self::check($child === $expected[$position]);
+			self::check($child->parent() === $node && $child->child_position() === $position);
+			self::check($child->prev() === ($position === 0 ? null : $children[$position - 1]));
+			self::check($child->next() === ($position + 1 === count($children) ? null : $children[$position + 1]));
+		}
+		self::check($node->first_child() === ($children->is_empty() ? null : $children[0]));
+
 		self::check($node->token_index >= 0 && $node->end_token_index <= count($syntax->tokens->tokens));
 		self::check($node->token_index <= $node->end_token_index);
-		$payload = $node->specialization;
+		$payload = $node->structure;
 		Syntax_Nodes::validate_payload($node->kind, $payload);
 		if ($payload === null) {
 			return;
@@ -91,7 +104,7 @@ final class AST_Test
 		foreach ($syntax->scopes as $scope) {
 			self::initialized($scope);
 		}
-		self::initialized($syntax->root->specialization->scope);
+		self::initialized($syntax->root->structure->scope);
 		self::check($syntax->collection->root === $syntax->root);
 		self::check($syntax->collection->source === $syntax->tokens);
 		$nodes = new \SplObjectStorage();
@@ -99,7 +112,7 @@ final class AST_Test
 		self::visit($syntax->root, $syntax, $nodes, $payloads);
 		foreach ($payloads as $payload)
 		{
-			if ($payload instanceof block_specialization && $payload->scope !== $syntax->root->specialization->scope)
+			if ($payload instanceof block_structure && $payload->scope !== $syntax->root->structure->scope)
 			{
 				$found = false;
 				foreach ($syntax->scopes as $owned) {
@@ -123,22 +136,22 @@ final class AST_Test
 		$parser = new Parser(self::tokens('function f(int $a, int &$b): void { return; } $x int; $y int = 1; $x = 2; $items int[1] = []; $items[0] = 3;'));
 		$result = $parser->parse();
 		self::verify($result);
-		$children = $result->root->specialization->children;
-		$function = $children[0]->specialization;
-		$value = $function->parameters[0]->specialization;
-		$reference = $function->parameters[1]->specialization;
+		$children = $result->root->structure->children;
+		$function = $children[0]->structure;
+		$value = $function->parameters[0]->structure;
+		$reference = $function->parameters[1]->structure;
 		self::check($value->mode === passing_mode::value && $value->reference_token_index === null);
 		self::check($reference->mode === passing_mode::reference && $reference->reference_token_index !== null);
 		self::check($result->tokens->tokens[$reference->reference_token_index]->text() === '&');
-		self::check($function->body->specialization->children[0]->specialization->expression === null);
-		$declaration = $children[1]->specialization;
+		self::check($function->body->structure->children[0]->structure->expression === null);
+		$declaration = $children[1]->structure;
 		self::check($declaration->type_syntax !== null && $declaration->target === null && $declaration->equals_token_index === null && $declaration->value === null);
-		$initialized = $children[2]->specialization;
+		$initialized = $children[2]->structure;
 		self::check($initialized->type_syntax !== null && $initialized->target === null && $initialized->equals_token_index !== null && $initialized->value !== null);
-		$assignment = $children[3]->specialization;
+		$assignment = $children[3]->structure;
 		self::check($assignment->type_syntax === null && $assignment->target === null && $assignment->equals_token_index !== null && $assignment->value !== null);
-		self::check($children[4]->specialization->value->specialization->elements->is_empty());
-		$indexed = $children[5]->specialization;
+		self::check($children[4]->structure->value->structure->elements->is_empty());
+		$indexed = $children[5]->structure;
 		self::check($indexed->type_syntax === null && $indexed->target !== null && $indexed->equals_token_index !== null && $indexed->value !== null);
 	}
 
@@ -162,7 +175,7 @@ final class AST_Test
 		$parser->init(self::tokens('function next(): void { return; }'), $scope);
 		$next = $parser->parse();
 		self::verify($next);
-		self::check($next->root->specialization->scope === $scope);
+		self::check($next->root->structure->scope === $scope);
 		self::check($next->scopes[0]->parent === $scope);
 		self::check(count($scope->functions['kept']) === 1 && count($scope->functions['next']) === 1);
 		self::check(!isset($scope->functions['broken']) && !isset($scope->types['Pending']));
@@ -170,7 +183,7 @@ final class AST_Test
 		$parser->init(self::tokens(''));
 		$standalone = $parser->parse();
 		self::verify($standalone);
-		self::check($standalone->root->specialization->scope !== $scope);
+		self::check($standalone->root->structure->scope !== $scope);
 		self::check($standalone->scopes[0]->parent === null);
 	}
 
@@ -180,7 +193,7 @@ final class AST_Test
 		$tokens = self::tokens('$x int;');
 		$parser = new Parser($tokens);
 		$syntax = $parser->parse();
-		$node = $syntax->root->specialization->children[0];
+		$node = $syntax->root->structure->children[0];
 		$scope = new scope();
 		$collector = new Symbol_Collector($tokens);
 		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope);
@@ -227,8 +240,8 @@ PHS;
 		$first_nodes = self::verify($first);
 		$types = [];
 		foreach ($first_nodes as $node) {
-			if ($node->specialization !== null) {
-				$types[get_class($node->specialization)] = true;
+			if ($node->structure !== null) {
+				$types[get_class($node->structure)] = true;
 			}
 		}
 		foreach (self::PAYLOADS as $field => $type) {
@@ -255,7 +268,7 @@ PHS;
 		$parser->init(self::tokens(''));
 		$empty = $parser->parse();
 		self::check(count(self::verify($empty)) === 1);
-		self::check($empty->root->specialization->children->is_empty());
+		self::check($empty->root->structure->children->is_empty());
 		echo "AST: object graph, child lists, payload coverage, order, collection identity and parser reuse passed\n";
 	}
 }
@@ -272,7 +285,7 @@ if (count($first->scopes) !== 2 || count($second->scopes) !== 2 || $first->scope
 	throw new \LogicException('Standalone parser scope ownership failed');
 }
 try {
-	Syntax_Nodes::validate_payload(node_kind::integer_literal, new binary_specialization());
+	Syntax_Nodes::validate_payload(node_kind::integer_literal, new binary_structure());
 	throw new \RuntimeException('Invalid payload accepted');
 }
 catch (\LogicException $expected) {

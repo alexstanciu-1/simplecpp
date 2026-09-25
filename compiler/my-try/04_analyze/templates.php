@@ -99,15 +99,16 @@ final class Template_File_Checker
 		if ($node->kind !== node_kind::identifier) {
 			throw new \RuntimeException('Aggregate types in template definitions are not supported yet');
 		}
-		if (isset($file->names->template_slots[$node->token_index])) {
-			$slot /** int */ = $file->names->template_slots[$node->token_index];
+		$lookup_token_index /** int */ = (int) $node->token_index;
+		if (isset($file->names->template_slots[$lookup_token_index])) {
+			$slot /** int */ = $file->names->template_slots[(int) $node->token_index];
 			if (!isset($bindings[$slot])) {
 				throw new \RuntimeException('Missing symbolic template binding');
 			}
 			return $bindings[$slot];
 		}
 		$tokens /** Storage<token> */ = $file->source->source->tokens;
-		$name = $tokens[$node->token_index]->text();
+		$name = $tokens[(int) $node->token_index]->text();
 		if (!isset($this->context->policy->types[$name])) {
 			throw new \RuntimeException('Template proof supports only int, void and bound type parameters');
 		}
@@ -124,7 +125,7 @@ final class Template_File_Checker
 				throw new \RuntimeException('Template proof requires explicit value initialization and simple variable stores');
 			}
 			$declaration = $syntax->type_syntax === null
-			? $this->file->names->references[$node->token_index] : $this->file->names->declarations[$node->token_index];
+			? $this->file->names->references[(int) $node->token_index] : $this->file->names->declarations[(int) $node->token_index];
 			$type = '';
 			if ($syntax->type_syntax === null) {
 				if (isset($this->locals[$declaration->local_index])) {
@@ -163,7 +164,7 @@ final class Template_File_Checker
 			return 'int';
 		}
 		if ($node->kind === node_kind::variable_reference) {
-			$declaration = $this->file->names->references[$node->token_index];
+			$declaration = $this->file->names->references[(int) $node->token_index];
 			if (!isset($this->locals[$declaration->local_index])) {
 				throw new \RuntimeException('Generic variable is not initialized');
 			}
@@ -172,7 +173,7 @@ final class Template_File_Checker
 		if ($node->kind !== node_kind::call_expression) {
 			throw new \RuntimeException('Generic member/index operations are not permitted by the current proof');
 		}
-		$target = $this->file->names->function_references[$node->token_index];
+		$target = $this->file->names->function_references[(int) $node->token_index];
 		$signature = Syntax_Nodes::function_data($target->node);
 		$parameters /** Storage<ast_node> */ = $signature->parameters;
 		$arguments /** vector<string> */ = [];

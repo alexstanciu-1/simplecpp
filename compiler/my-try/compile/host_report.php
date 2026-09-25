@@ -60,8 +60,8 @@ echo "    $group\n";
 	private function dump_node(ast_node $node, int $depth, token_list $tokens): void
 	{
 		$label = $node->kind->name;
-		$payload = $node->specialization;
-		if ($payload instanceof binding_specialization) {
+		$payload = $node->structure;
+		if ($payload instanceof binding_structure) {
 			$label .= ' (' . $payload->classification->name . ')';
 		}
 		$words /** vector<string> */ = [];
@@ -70,54 +70,54 @@ echo "    $group\n";
 		}
 echo str_repeat('  ', $depth) . $label . " [{$node->token_index}, {$node->end_token_index}) " . htmlspecialchars(implode(' ', $words), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 
-		if ($payload instanceof block_specialization) {
+		if ($payload instanceof block_structure) {
 			foreach ($payload->children as $child) {
 				$this->dump_node($child, $depth + 1, $tokens);
 			}
 		}
-		elseif ($payload instanceof expression_statement_specialization) {
+		elseif ($payload instanceof expression_statement_structure) {
 			$this->dump_node($payload->expression, $depth + 1, $tokens);
 		}
-		elseif ($payload instanceof function_specialization) {
+		elseif ($payload instanceof function_structure) {
 			foreach ($payload->parameters as $parameter) {
 				$this->dump_node($parameter, $depth + 1, $tokens);
 			}
 			$this->dump_node($payload->return_type, $depth + 1, $tokens);
 			$this->dump_node($payload->body, $depth + 1, $tokens);
 		}
-		elseif ($payload instanceof parameter_specialization) {
+		elseif ($payload instanceof parameter_structure) {
 			$this->dump_node($payload->type_syntax, $depth + 1, $tokens);
 		}
-		elseif ($payload instanceof call_specialization) {
+		elseif ($payload instanceof call_structure) {
 			foreach ($payload->arguments as $argument) {
 				$this->dump_node($argument, $depth + 1, $tokens);
 			}
 		}
-		elseif ($payload instanceof struct_specialization) {
+		elseif ($payload instanceof struct_structure) {
 			foreach ($payload->fields as $field) {
 				$this->dump_node($field, $depth + 1, $tokens);
 			}
 		}
-		elseif ($payload instanceof field_specialization) {
+		elseif ($payload instanceof field_structure) {
 			$this->dump_node($payload->type_syntax, $depth + 1, $tokens);
 		}
-		elseif ($payload instanceof field_access_specialization) {
+		elseif ($payload instanceof field_access_structure) {
 			$this->dump_node($payload->base, $depth + 1, $tokens);
 		}
-		elseif ($payload instanceof array_type_specialization) {
+		elseif ($payload instanceof array_type_structure) {
 			$this->dump_node($payload->element_type, $depth + 1, $tokens);
 			$this->dump_node($payload->count, $depth + 1, $tokens);
 		}
-		elseif ($payload instanceof array_literal_specialization) {
+		elseif ($payload instanceof array_literal_structure) {
 			foreach ($payload->elements as $element) {
 				$this->dump_node($element, $depth + 1, $tokens);
 			}
 		}
-		elseif ($payload instanceof index_specialization) {
+		elseif ($payload instanceof index_structure) {
 			$this->dump_node($payload->base, $depth + 1, $tokens);
 			$this->dump_node($payload->index, $depth + 1, $tokens);
 		}
-		elseif ($payload instanceof binding_specialization)
+		elseif ($payload instanceof binding_structure)
 		{
 			if ($payload->target !== null) {
 				$this->dump_node($payload->target, $depth + 1, $tokens);
@@ -129,7 +129,7 @@ echo str_repeat('  ', $depth) . $label . " [{$node->token_index}, {$node->end_to
 				$this->dump_node($payload->value, $depth + 1, $tokens);
 			}
 		}
-		elseif (($payload instanceof return_specialization) && ($payload->expression !== null)) {
+		elseif (($payload instanceof return_structure) && ($payload->expression !== null)) {
 			$this->dump_node($payload->expression, $depth + 1, $tokens);
 		}
 	}

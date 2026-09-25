@@ -110,7 +110,7 @@ compilation was performed. See the saved real-binding checkpoint in
 
 ### Decisions recorded at that checkpoint
 
-* AST: `ast_node.specialization` is `?node_specialization`. Consumers access concrete
+* AST: `ast_node.specialization` is `?node_structure`. Consumers access concrete
   fields through it. Replacing the instanceof predicate alone does not establish
   safe typed access. Keep the graph and add a proved checked narrowing operation
   (recommended), or redesign the payload representation. The latter touches AST

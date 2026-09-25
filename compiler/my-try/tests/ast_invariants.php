@@ -11,11 +11,11 @@ function check_binding_invariants(): void
 	{
 		for ($mask = 0; $mask < 16; $mask++)
 		{
-			$binding = new binding_specialization();
+			$binding = new binding_structure();
 			$binding->classification = $kind;
-			$binding->type_syntax = ($mask & 1) !== 0 ? new ast_node() : null;
-			$binding->target = ($mask & 2) !== 0 ? new ast_node() : null;
-			$binding->value = ($mask & 4) !== 0 ? new ast_node() : null;
+			$binding->type_syntax = ($mask & 1) !== 0 ? new identifier_node() : null;
+			$binding->target = ($mask & 2) !== 0 ? new identifier_node() : null;
+			$binding->value = ($mask & 4) !== 0 ? new identifier_node() : null;
 			$binding->equals_token_index = ($mask & 8) !== 0 ? 2 : null;
 
 			// Enumerate valid shapes independently of the validator's predicates.
@@ -45,7 +45,7 @@ function check_parameter_invariants(): void
 	{
 		foreach ([null, 0] as $index)
 		{
-			$parameter = new parameter_specialization();
+			$parameter = new parameter_structure();
 			$parameter->mode = $mode;
 			$parameter->reference_token_index = $index;
 			$valid = true;
@@ -66,3 +66,46 @@ function check_parameter_invariants(): void
 check_binding_invariants();
 check_parameter_invariants();
 echo "AST invariants: 48 binding combinations and four parameter combinations passed\n";
+
+// Rejected graph edits must leave all links unchanged.
+$parent = new block_node();
+$parent->initialize(0, 3, new block_structure());
+$first = new identifier_node();
+$first->initialize(0, 1, null);
+$last = new integer_literal_node();
+$last->initialize(2, 3, null);
+$children = new Storage();
+$children->append($first);
+$children->append($last);
+ast_node::link_children($parent, $children);
+$before = serialize($parent);
+$attempts = [[$parent, $children], [$first, $children]];
+$cycle = new Storage();
+$cycle->append($parent);
+$attempts[] = [$last, $cycle];
+$duplicate = new Storage();
+$unused = new identifier_node();
+$unused->initialize(0, 1, null);
+$duplicate->append($unused);
+$duplicate->append($unused);
+$attempts[] = [$last, $duplicate];
+foreach ($attempts as [$owner, $members])
+{
+	try {
+		ast_node::link_children($owner, $members);
+		throw new \RuntimeException('Invalid AST graph edit accepted');
+	}
+	catch (\LogicException $expected) {
+	}
+	if (serialize($parent) !== $before) {
+		throw new \RuntimeException('Rejected AST edit changed links');
+	}
+}
+if (!(new \ReflectionClass(ast_node::class))->isAbstract()) {
+	throw new \RuntimeException('AST base must be abstract');
+}
+$children->remove(0);
+if (($parent->first_child() !== $first) || ($last->prev() !== $first)) {
+	throw new \RuntimeException('Changing input membership changed linked children');
+}
+echo "AST links: concrete nodes, cycle/duplicate/reparent rejection and membership independence passed\n";

@@ -1,0 +1,1962 @@
+[
+  {
+    "name": "convert",
+    "seconds": 0.405,
+    "code": 0
+  },
+  {
+    "name": "framework",
+    "seconds": 0.048,
+    "code": 0
+  },
+  {
+    "name": "init",
+    "seconds": 0.132,
+    "code": 0
+  },
+  {
+    "name": "native-build",
+    "seconds": 36.006,
+    "code": 0
+  },
+  {
+    "name": "php-storage",
+    "seconds": 0.049,
+    "code": 0
+  },
+  {
+    "name": "php-tokenizer",
+    "seconds": 0.06,
+    "code": 0
+  },
+  {
+    "name": "php-ast",
+    "seconds": 0.065,
+    "code": 0
+  },
+  {
+    "name": "php-model",
+    "seconds": 0.128,
+    "code": 0
+  },
+  {
+    "name": "php-llvm_text",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "php-llvm",
+    "seconds": 0.255,
+    "code": 0
+  },
+  {
+    "name": "php-calls",
+    "seconds": 3.529,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-link",
+    "seconds": 0.093,
+    "code": 0
+  },
+  {
+    "name": "llvm-after_entry_return-execute",
+    "seconds": 0.002,
+    "code": 5
+  },
+  {
+    "name": "llvm-array_copy_element-php",
+    "seconds": 0.06,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_copy_element-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_copy_element-link",
+    "seconds": 0.1,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_copy_element-execute",
+    "seconds": 0.001,
+    "code": 8
+  },
+  {
+    "name": "llvm-array_read-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_read-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_read-link",
+    "seconds": 0.098,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_read-execute",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "llvm-array_scope-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_scope-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_scope-link",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_scope-execute",
+    "seconds": 0.002,
+    "code": 6
+  },
+  {
+    "name": "llvm-array_write-php",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_write-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_write-link",
+    "seconds": 0.096,
+    "code": 0
+  },
+  {
+    "name": "llvm-array_write-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-bare_return-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-bare_return-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-bare_return-link",
+    "seconds": 0.096,
+    "code": 0
+  },
+  {
+    "name": "llvm-bare_return-execute",
+    "seconds": 0.002,
+    "code": 4
+  },
+  {
+    "name": "llvm-copy-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-copy-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-copy-link",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-copy-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-discard_result-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-discard_result-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-discard_result-link",
+    "seconds": 0.098,
+    "code": 0
+  },
+  {
+    "name": "llvm-discard_result-execute",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "llvm-duplicate_names-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-duplicate_names-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-duplicate_names-link",
+    "seconds": 0.11,
+    "code": 0
+  },
+  {
+    "name": "llvm-duplicate_names-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-empty_array-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_array-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_array-link",
+    "seconds": 0.094,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_array-execute",
+    "seconds": 0.002,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-link",
+    "seconds": 0.095,
+    "code": 0
+  },
+  {
+    "name": "llvm-empty_function-execute",
+    "seconds": 0.003,
+    "code": 3
+  },
+  {
+    "name": "llvm-escaped_names-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-escaped_names-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-escaped_names-link",
+    "seconds": 0.102,
+    "code": 0
+  },
+  {
+    "name": "llvm-escaped_names-execute",
+    "seconds": 0.003,
+    "code": 1
+  },
+  {
+    "name": "llvm-function_scope-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-function_scope-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-function_scope-link",
+    "seconds": 0.095,
+    "code": 0
+  },
+  {
+    "name": "llvm-function_scope-execute",
+    "seconds": 0.001,
+    "code": 1
+  },
+  {
+    "name": "llvm-literal-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-literal-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-literal-link",
+    "seconds": 0.102,
+    "code": 0
+  },
+  {
+    "name": "llvm-literal-execute",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "llvm-maximum-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-maximum-native",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-maximum-link",
+    "seconds": 0.094,
+    "code": 0
+  },
+  {
+    "name": "llvm-maximum-execute",
+    "seconds": 0.002,
+    "code": 255
+  },
+  {
+    "name": "llvm-return_call-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-return_call-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-return_call-link",
+    "seconds": 0.093,
+    "code": 0
+  },
+  {
+    "name": "llvm-return_call-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "llvm-sample-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-sample-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-sample-link",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-sample-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "llvm-unsupported_0-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_0-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_1-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_1-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_10-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_10-native",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_11-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_11-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_12-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_12-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_13-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_13-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_14-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_14-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_15-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_15-native",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_16-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_16-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_17-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_17-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_18-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_18-native",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_19-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_19-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_2-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_2-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_20-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_20-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_21-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_21-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_22-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_22-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_23-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_23-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_24-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_24-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_25-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_25-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_26-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_26-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_27-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_27-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_28-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_28-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_29-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_29-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_3-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_3-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_30-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_30-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_31-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_31-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_32-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_32-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_33-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_33-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_34-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_34-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_35-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_35-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_36-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_36-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_37-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_37-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_38-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_38-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_39-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_39-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_4-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_4-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_40-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_40-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_41-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_41-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_42-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_42-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_43-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_43-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_44-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_44-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_45-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_45-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_46-php",
+    "seconds": 0.051,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_46-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_47-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_47-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_48-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_48-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_49-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_49-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_5-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_5-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_50-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_50-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_51-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_51-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_52-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_52-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_53-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_53-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_54-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_54-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_55-php",
+    "seconds": 0.061,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_55-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_56-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_56-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_57-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_57-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_58-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_58-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_59-php",
+    "seconds": 0.061,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_59-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_6-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_6-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_60-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_60-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_61-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_61-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_62-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_62-native",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_63-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_63-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_64-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_64-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_65-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_65-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_66-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_66-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_67-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_67-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_68-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_68-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_69-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_69-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_7-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_7-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_70-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_70-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_71-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_71-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_72-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_72-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_73-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_73-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_74-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_74-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_75-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_75-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_76-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_76-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_77-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_77-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_78-php",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_78-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_79-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_79-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_8-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_8-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_80-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_80-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_81-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_81-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_82-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_82-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_83-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_83-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_84-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_84-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_85-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_85-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_86-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_86-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_87-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_87-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_88-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_88-native",
+    "seconds": 0.009,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_89-php",
+    "seconds": 0.052,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_89-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_9-php",
+    "seconds": 0.053,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_9-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_90-php",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_90-native",
+    "seconds": 0.004,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_91-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_91-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_92-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_92-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_93-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "llvm-unsupported_93-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-link",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-value_initializer-execute",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "llvm-zero-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "llvm-zero-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "llvm-zero-link",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "llvm-zero-execute",
+    "seconds": 0.002,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-link",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-array_reference-execute",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "calls-array_value_argument-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "calls-array_value_argument-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-array_value_argument-link",
+    "seconds": 0.13,
+    "code": 0
+  },
+  {
+    "name": "calls-array_value_argument-execute",
+    "seconds": 0.003,
+    "code": 8
+  },
+  {
+    "name": "calls-function_body-php",
+    "seconds": 0.062,
+    "code": 0
+  },
+  {
+    "name": "calls-function_body-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-function_body-link",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-function_body-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-local_forward-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "calls-local_forward-native",
+    "seconds": 0.005,
+    "code": 0
+  },
+  {
+    "name": "calls-local_forward-link",
+    "seconds": 0.093,
+    "code": 0
+  },
+  {
+    "name": "calls-local_forward-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-mixed_evaluation-php",
+    "seconds": 0.064,
+    "code": 0
+  },
+  {
+    "name": "calls-mixed_evaluation-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-mixed_evaluation-link",
+    "seconds": 0.132,
+    "code": 0
+  },
+  {
+    "name": "calls-mixed_evaluation-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-multiple_arguments-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "calls-multiple_arguments-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-multiple_arguments-link",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-multiple_arguments-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-nested_arguments-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "calls-nested_arguments-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-nested_arguments-link",
+    "seconds": 0.128,
+    "code": 0
+  },
+  {
+    "name": "calls-nested_arguments-execute",
+    "seconds": 0.002,
+    "code": 8
+  },
+  {
+    "name": "calls-parameter_forwarding-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "calls-parameter_forwarding-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-parameter_forwarding-link",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-parameter_forwarding-execute",
+    "seconds": 0.002,
+    "code": 6
+  },
+  {
+    "name": "calls-reference_aliasing-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_aliasing-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_aliasing-link",
+    "seconds": 0.131,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_aliasing-execute",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "calls-reference_forwarding-php",
+    "seconds": 0.061,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_forwarding-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_forwarding-link",
+    "seconds": 0.135,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_forwarding-execute",
+    "seconds": 0.002,
+    "code": 8
+  },
+  {
+    "name": "calls-reference_mutation-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_mutation-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_mutation-link",
+    "seconds": 0.131,
+    "code": 0
+  },
+  {
+    "name": "calls-reference_mutation-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-repeated-php",
+    "seconds": 0.055,
+    "code": 0
+  },
+  {
+    "name": "calls-repeated-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-repeated-link",
+    "seconds": 0.135,
+    "code": 0
+  },
+  {
+    "name": "calls-repeated-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-return_chain-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "calls-return_chain-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-return_chain-link",
+    "seconds": 0.129,
+    "code": 0
+  },
+  {
+    "name": "calls-return_chain-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-struct_and_array-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_and_array-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_and_array-link",
+    "seconds": 0.099,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_and_array-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-struct_default-php",
+    "seconds": 0.057,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_default-native",
+    "seconds": 0.006,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_default-link",
+    "seconds": 0.132,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_default-execute",
+    "seconds": 0.002,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-php",
+    "seconds": 0.058,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-link",
+    "seconds": 0.097,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_fields-execute",
+    "seconds": 0.002,
+    "code": 4
+  },
+  {
+    "name": "calls-struct_local_isolation-php",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_local_isolation-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_local_isolation-link",
+    "seconds": 0.093,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_local_isolation-execute",
+    "seconds": 0.003,
+    "code": 3
+  },
+  {
+    "name": "calls-struct_reference-php",
+    "seconds": 0.056,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_reference-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_reference-link",
+    "seconds": 0.134,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_reference-execute",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "calls-struct_value_argument-php",
+    "seconds": 0.059,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_value_argument-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_value_argument-link",
+    "seconds": 0.132,
+    "code": 0
+  },
+  {
+    "name": "calls-struct_value_argument-execute",
+    "seconds": 0.002,
+    "code": 6
+  },
+  {
+    "name": "calls-template_forward-php",
+    "seconds": 0.066,
+    "code": 0
+  },
+  {
+    "name": "calls-template_forward-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-template_forward-link",
+    "seconds": 0.148,
+    "code": 0
+  },
+  {
+    "name": "calls-template_forward-execute",
+    "seconds": 0.002,
+    "code": 8
+  },
+  {
+    "name": "calls-template_multi-php",
+    "seconds": 0.06,
+    "code": 0
+  },
+  {
+    "name": "calls-template_multi-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-template_multi-link",
+    "seconds": 0.109,
+    "code": 0
+  },
+  {
+    "name": "calls-template_multi-execute",
+    "seconds": 0.002,
+    "code": 7
+  },
+  {
+    "name": "calls-template_recursive_registration-php",
+    "seconds": 0.074,
+    "code": 0
+  },
+  {
+    "name": "calls-template_recursive_registration-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-template_recursive_registration-link",
+    "seconds": 0.121,
+    "code": 0
+  },
+  {
+    "name": "calls-template_recursive_registration-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-template_reuse-php",
+    "seconds": 0.084,
+    "code": 0
+  },
+  {
+    "name": "calls-template_reuse-native",
+    "seconds": 0.009,
+    "code": 0
+  },
+  {
+    "name": "calls-template_reuse-link",
+    "seconds": 0.23,
+    "code": 0
+  },
+  {
+    "name": "calls-template_reuse-execute",
+    "seconds": 0.003,
+    "code": 3
+  },
+  {
+    "name": "calls-template_unused-php",
+    "seconds": 0.073,
+    "code": 0
+  },
+  {
+    "name": "calls-template_unused-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-template_unused-link",
+    "seconds": 0.121,
+    "code": 0
+  },
+  {
+    "name": "calls-template_unused-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-unused-php",
+    "seconds": 0.079,
+    "code": 0
+  },
+  {
+    "name": "calls-unused-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-unused-link",
+    "seconds": 0.169,
+    "code": 0
+  },
+  {
+    "name": "calls-unused-execute",
+    "seconds": 0.002,
+    "code": 1
+  },
+  {
+    "name": "calls-value_initializer-php",
+    "seconds": 0.054,
+    "code": 0
+  },
+  {
+    "name": "calls-value_initializer-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-value_initializer-link",
+    "seconds": 0.148,
+    "code": 0
+  },
+  {
+    "name": "calls-value_initializer-execute",
+    "seconds": 0.002,
+    "code": 3
+  },
+  {
+    "name": "calls-value_isolation-php",
+    "seconds": 0.067,
+    "code": 0
+  },
+  {
+    "name": "calls-value_isolation-native",
+    "seconds": 0.007,
+    "code": 0
+  },
+  {
+    "name": "calls-value_isolation-link",
+    "seconds": 0.165,
+    "code": 0
+  },
+  {
+    "name": "calls-value_isolation-execute",
+    "seconds": 0.003,
+    "code": 1
+  },
+  {
+    "name": "calls-void_parameters-php",
+    "seconds": 0.071,
+    "code": 0
+  },
+  {
+    "name": "calls-void_parameters-native",
+    "seconds": 0.008,
+    "code": 0
+  },
+  {
+    "name": "calls-void_parameters-link",
+    "seconds": 0.151,
+    "code": 0
+  },
+  {
+    "name": "calls-void_parameters-execute",
+    "seconds": 0.002,
+    "code": 5
+  },
+  {
+    "name": "sample-01_base-php",
+    "seconds": 0.072,
+    "code": 0
+  },
+  {
+    "name": "sample-01_base-native",
+    "seconds": 0.012,
+    "code": 0
+  },
+  {
+    "name": "sample-01_base-link",
+    "seconds": 0.154,
+    "code": 0
+  },
+  {
+    "name": "sample-01_base-execute",
+    "seconds": 0.002,
+    "code": 9
+  },
+  {
+    "name": "incremental-build",
+    "seconds": 0.76,
+    "code": 0
+  }
+]

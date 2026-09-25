@@ -1,13 +1,13 @@
 <?php
 
 /*
- * Role: concrete AST payloads owned by syntax nodes.
+ * Role: node-specific structures and concrete AST node subclasses.
  * Used by: Parser, Syntax_Nodes, Symbol_Collector and LLVM preparation/generation.
- * Flow: ast_node.specialization owns one payload; payloads own their syntax children.
+ * Flow: ast_node.structure owns extra data; named children retain aliases of linked nodes.
  */
 namespace scpp\compiler;
 
-final class call_specialization implements node_specialization
+final class call_structure implements node_structure
 {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -34,7 +34,7 @@ final class call_specialization implements node_specialization
 }
 
 /** The body block references a file-owned local scope and an ordered statement list. */
-final class function_specialization implements node_specialization
+final class function_structure implements node_structure
 {
 	/** Ordered formal names and declaration token indexes. */
 	public array $template_parameters /** hash<int> */ = [];
@@ -60,7 +60,7 @@ final class function_specialization implements node_specialization
 	}
 }
 
-final class parameter_specialization implements node_specialization {
+final class parameter_structure implements node_structure {
 	public passing_mode $mode = passing_mode::value;
 	/** Null for value parameters; present exactly when mode is reference.
 	 * @storage.index token_list.tokens
@@ -75,7 +75,7 @@ final class parameter_specialization implements node_specialization {
 }
 
 /** Shared payload for a file body or a block that introduces a scope. */
-final class block_specialization implements node_specialization
+final class block_structure implements node_structure
 {
 	/**
 	 * Ordered object list of child nodes.
@@ -97,7 +97,7 @@ final class block_specialization implements node_specialization
 }
 
 /** Binary and assignment expressions share operands; their node kinds retain the distinction. */
-final class binary_specialization implements node_specialization {
+final class binary_structure implements node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -111,7 +111,7 @@ final class binary_specialization implements node_specialization {
 }
 
 /** An expression used as a statement owns its terminating semicolon here. */
-final class expression_statement_specialization implements node_specialization {
+final class expression_statement_structure implements node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -121,7 +121,7 @@ final class expression_statement_specialization implements node_specialization {
 }
 
 /** expression is null for a bare return; keyword and semicolon remain required. */
-final class return_specialization implements node_specialization {
+final class return_structure implements node_structure {
 	/** @storage.index token_list.tokens */
 	public int $keyword_token_index;
 	/** Syntax child owned through this link.
@@ -137,7 +137,7 @@ final class return_specialization implements node_specialization {
  * equals_token_index and value are either both present or both absent.
  * A typed declaration may omit its initializer; an untyped write requires a value.
  */
-final class binding_specialization implements node_specialization
+final class binding_structure implements node_structure
 {
 	public binding_kind $classification = binding_kind::unresolved;
 	/** @storage.index token_list.tokens */
@@ -161,7 +161,7 @@ final class binding_specialization implements node_specialization
 }
 
 /** Fixed extent is syntax until preparation checks and normalizes it. */
-final class array_type_specialization implements node_specialization {
+final class array_type_structure implements node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -172,7 +172,7 @@ final class array_type_specialization implements node_specialization {
 	public ast_node $count;
 }
 
-final class array_literal_specialization implements node_specialization {
+final class array_literal_structure implements node_structure {
 	/**
 	 * Ordered object list of child nodes.
 	 * @storage.owner
@@ -185,7 +185,7 @@ final class array_literal_specialization implements node_specialization {
 	}
 }
 
-final class index_specialization implements node_specialization {
+final class index_structure implements node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -196,7 +196,7 @@ final class index_specialization implements node_specialization {
 	public ast_node $index;
 }
 
-final class struct_specialization implements node_specialization
+final class struct_structure implements node_structure
 {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -212,7 +212,7 @@ final class struct_specialization implements node_specialization
 	}
 }
 
-final class field_specialization implements node_specialization {
+final class field_structure implements node_structure {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
 	/** Syntax child owned through this link.
@@ -221,11 +221,179 @@ final class field_specialization implements node_specialization {
 	public ast_node $type_syntax;
 }
 
-final class field_access_specialization implements node_specialization {
+final class field_access_structure implements node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
 	public ast_node $base;
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
+}
+
+/** Concrete struct_declaration syntax node. */
+final class struct_declaration_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::struct_declaration;
+	}
+}
+
+/** Concrete field_declaration syntax node. */
+final class field_declaration_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::field_declaration;
+	}
+}
+
+/** Concrete field_expression syntax node. */
+final class field_expression_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::field_expression;
+	}
+}
+
+/** Concrete file syntax node. */
+final class file_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::file;
+	}
+}
+
+/** Concrete function_declaration syntax node. */
+final class function_declaration_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::function_declaration;
+	}
+}
+
+/** Concrete parameter_declaration syntax node. */
+final class parameter_declaration_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::parameter_declaration;
+	}
+}
+
+/** Concrete block syntax node. */
+final class block_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::block;
+	}
+}
+
+/** Concrete identifier syntax node. */
+final class identifier_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::identifier;
+	}
+}
+
+/** Concrete punctuation syntax node. */
+final class punctuation_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::punctuation;
+	}
+}
+
+/** Concrete comment syntax node. */
+final class comment_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::comment;
+	}
+}
+
+/** Concrete array_type syntax node. */
+final class array_type_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::array_type;
+	}
+}
+
+/** Concrete array_literal syntax node. */
+final class array_literal_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::array_literal;
+	}
+}
+
+/** Concrete index_expression syntax node. */
+final class index_expression_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::index_expression;
+	}
+}
+
+/** Concrete integer_literal syntax node. */
+final class integer_literal_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::integer_literal;
+	}
+}
+
+/** Concrete variable_reference syntax node. */
+final class variable_reference_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::variable_reference;
+	}
+}
+
+/** Concrete binary_expression syntax node. */
+final class binary_expression_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::binary_expression;
+	}
+}
+
+/** Concrete assignment_expression syntax node. */
+final class assignment_expression_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::assignment_expression;
+	}
+}
+
+/** Concrete call_expression syntax node. */
+final class call_expression_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::call_expression;
+	}
+}
+
+/** Concrete expression_statement syntax node. */
+final class expression_statement_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::expression_statement;
+	}
+}
+
+/** Concrete return_statement syntax node. */
+final class return_statement_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::return_statement;
+	}
+}
+
+/** Concrete variable_binding_statement syntax node. */
+final class variable_binding_statement_node extends ast_node {
+	public function __construct()
+	{
+		$this->kind = node_kind::variable_binding_statement;
+	}
 }

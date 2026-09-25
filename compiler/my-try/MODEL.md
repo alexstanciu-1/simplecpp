@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 Model owns the shared compiler roots. Workers process records; retained records
-contain data and collection initialization only. Storage<T> is the numeric shared
+contain data, initialization and representation-level access/navigation methods. Storage<T> is the numeric shared
 object-list boundary; scalar lists and name indexes remain explicit typed arrays.
 Storage and Keyed_Storage share Storage_Abstract. Root collections remain numeric;
 Keyed_Storage is used for named object collections during LLVM preparation.
@@ -18,12 +18,12 @@ Keyed_Storage is used for named object collections during LLVM preparation.
 
 ## AST graph
 
-parsed_file.root owns its ast_node. Each node owns its optional concrete payload.
-Payload child collections use Storage<ast_node>: block children, function parameters,
-call arguments/template arguments, array elements and struct fields. Single children
-(body, operands, type syntax, etc.) are direct object links. No node positions or
-per-file node/payload registries are needed. Parser productions return ast_node.
-Node-kind/payload compatibility is checked at construction by Syntax_Nodes.
+parsed_file.root owns its concrete ast_node subclass. The abstract base owns an
+optional node_structure and private first-child/next-sibling links, with native
+weak parent/previous links and a uint32 child ordinal. Node token spans are uint32.
+Named structure child fields/lists remain retaining aliases for existing workers.
+The parser validates and links completed children before publishing each node.
+See [AST layout](docs/ast_layout.md) for child order, traversal and mutation rules.
 
 parsed_file.scopes remains the uniform owner of local scopes and a standalone
 parser's root scope. Blocks reference the appropriate local/global scope. Global
@@ -97,13 +97,13 @@ or change retained ownership. See [binding details](../../specs/portability/obje
 
 ### Concrete payload access
 
-The optional node_specialization payload remains directly node-owned. Syntax_Nodes now
+The optional node_structure payload remains directly node-owned. Syntax_Nodes now
 exposes typed *_data accessors using checked, identity-preserving object_cast.
 Compiler consumers use these accessors instead of implicitly reading concrete fields
 through an interface handle. Null or wrong payload types fail. PHP graph identity is
 unchanged; native interfaces are polymorphic for checked narrowing.
 
-Direct scope links (`scope.parent`, `block_specialization.scope`,
+Direct scope links (`scope.parent`, `block_structure.scope`,
 `collected_name.scope`) now carry adjacent `weak<scope>` annotations for native
 conversion. PHP keeps strong references; native consumers explicitly acquire live
 handles. Keep the owning parsed file/model alive when scope access is required.
