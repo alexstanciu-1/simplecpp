@@ -7,9 +7,17 @@
  */
 namespace scpp\compiler;
 
+/** Shared default concurrency budget for the per-file frontend pipeline. */
+const DEFAULT_COMPILER_JOBS = 12;
+
 final class Compiler
 {
-	public int $jobs = 1;
+	public int $jobs;
+	public function __construct()
+	{
+		$this->jobs = \scpp\compiler\DEFAULT_COMPILER_JOBS;
+	}
+
 	/** Discover one module per input folder, retaining the requested order. */
 	public function init(array $paths /** vector<string> */): void
 	{

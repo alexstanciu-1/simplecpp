@@ -18,7 +18,8 @@ must belong to the queued source. Each work record moves from queued to running,
 then published (only after publication) or failed. Completion verifies queue
 membership and state. The queue never enters the retained Model.
 
-Compiler.jobs is the positive native concurrency limit (default 1):
+Compiler.jobs is the positive native concurrency limit, initialized from the
+namespace constant DEFAULT_COMPILER_JOBS (currently 12). Callers may override it:
 
 ```php
 $compiler = new Compiler();
@@ -66,7 +67,8 @@ Global declaration pools keep every candidate; scheduling cannot select a winner
 `task_run_publish_unordered` is the narrow operation used here. Existing ordered
 `task_run_publish` is unchanged. See specs/builtins/tasks/unordered_publication.md.
 The tasks runtime module must be enabled for native builds. The compiler native
-harness enables it and exercises three jobs per parse pass.
+harness enables it and uses the default worker limit, except for the explicitly
+single-worker pipeline-order check.
 
 PHP tests exercise reversed publication, cross-file identity, local visibility,
 duplicates, sealed membership and failure barriers. A native runtime probe gates a

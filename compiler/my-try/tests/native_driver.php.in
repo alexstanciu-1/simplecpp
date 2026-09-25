@@ -3,6 +3,7 @@ namespace scpp\compiler;
 
 // A one-slot run must publish A's parse before B fails tokenization.
 $pipeline_compiler = new Compiler();
+$pipeline_compiler->jobs = 1;
 $pipeline_paths /** vector<string> */ = [__PIPELINE_DIR__];
 $pipeline_compiler->init($pipeline_paths);
 $pipeline_failed = false;
@@ -21,7 +22,7 @@ if (!isset(Model::$global_scope->functions['ready'])) {
 // Explicit stage entrypoints remain available for inspection and tests.
 $stage_paths /** vector<string> */ = [__RECOVERY_DIR__];
 $pipeline_compiler->init($stage_paths);
-$pipeline_compiler->jobs = 3;
+$pipeline_compiler->jobs = \scpp\compiler\DEFAULT_COMPILER_JOBS;
 $pipeline_compiler->tokenize();
 $stage_syntax /** Storage<parsed_file> */ = Model::$syntax_files;
 if ((q_count(Model::$tokens) !== 1) || (!$stage_syntax->is_empty())) {
@@ -36,7 +37,6 @@ if (q_count(Model::$syntax_files) !== 1) {
 $path = fs_read_text(__REQUEST_FILE__);
 $paths /** vector<string> */ = [$path];
 $compiler = new Compiler();
-$compiler->jobs = 3;
 $retained /** Storage<llvm_module> */ = new Storage();
 $previous = '';
 try
