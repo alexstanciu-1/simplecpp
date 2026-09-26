@@ -79,16 +79,16 @@ final class LLVM_Function_Generator
 	/** Dispatch expression kinds through the shared value and address lowering paths. */
 	private function expression(ast_node $node): llvm_operand
 	{
-		if ($node->kind === node_kind::integer_literal) {
+		if ($node->kind() === node_kind::integer_literal) {
 			return $this->to_llvm_integer_literal($node);
 		}
-		if (($node->kind === node_kind::variable_reference) || ($node->kind === node_kind::index_expression) || ($node->kind === node_kind::field_expression)) {
+		if (($node->kind() === node_kind::variable_reference) || ($node->kind() === node_kind::index_expression) || ($node->kind() === node_kind::field_expression)) {
 			return $this->to_llvm_variable_reference($node);
 		}
-		if ($node->kind === node_kind::call_expression) {
+		if ($node->kind() === node_kind::call_expression) {
 			return $this->to_llvm_call_expression($node);
 		}
-		throw new \RuntimeException('Unsupported LLVM expression: ' . Node_Kind_Name::text($node->kind));
+		throw new \RuntimeException('Unsupported LLVM expression: ' . Node_Kind_Name::text($node->kind()));
 	}
 
 	/** Allocate a unique generated value name within the current LLVM function. */

@@ -74,11 +74,11 @@ final class LLVM_Struct_Preparation
 			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
 				continue;
 			}
-			if (object_cast(weakref_get($entry->scope), scope::class) !== object_cast(weakref_get(Syntax_Nodes::block_data($function->body)->scope), scope::class)) {
+			if (object_cast(weakref_get($entry->scope), scope::class) !== Syntax_Nodes::block_data($function->body)->lexical_scope()) {
 				continue;
 			}
 			$base = Syntax_Nodes::field_access_data($entry->node)->base;
-			if ($base->kind !== node_kind::variable_reference) {
+			if ($base->kind() !== node_kind::variable_reference) {
 				throw new \RuntimeException('Nested aggregate field access is not supported yet');
 			}
 			$declaration = $file->names->references[(int) $base->token_index];

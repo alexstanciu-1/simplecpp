@@ -30,7 +30,7 @@ final class Scope_Lookup
 			foreach ($current_scope->types_named($name) as $definition)
 			{
 				if ($definition->declaration !== null) {
-					$entry = object_cast($definition->declaration, collected_name::class);
+					$entry /** collected_name */ = $definition->declaration;
 					if ($entry->changes === \scpp\compiler\SYNC_DELETED) {
 						continue;
 					}
@@ -44,7 +44,8 @@ final class Scope_Lookup
 			if ($parent === null) {
 				break;
 			}
-			$current_scope = object_cast($parent, scope::class);
+			$parent_scope /** scope */ = $parent;
+			$current_scope = $parent_scope;
 		}
 		return $result;
 	}
@@ -55,6 +56,6 @@ final class Scope_Lookup
 		if ($published === null) {
 			return $local_scope;
 		}
-		return object_cast($published, scope::class);
+		return $published;
 	}
 }

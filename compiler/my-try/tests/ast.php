@@ -8,6 +8,8 @@ require_once dirname(__DIR__) . '/boot.php';
 final class AST_Test
 {
 	private const PAYLOADS = [
+		'integers' => integer_literal_structure::class,
+		'references' => variable_reference_structure::class,
 		'blocks' => block_structure::class,
 		'functions' => function_structure::class,
 		'parameters' => parameter_structure::class,
@@ -56,7 +58,7 @@ final class AST_Test
 		self::initialized($node);
 		self::check(!$nodes->contains($node)); // This fixture's AST is a tree logically.
 		$nodes->attach($node);
-		self::check(get_class($node) === __NAMESPACE__ . '\\' . $node->kind->name . '_node');
+		self::check(get_class($node) === ast_node::class);
 		$children = $node->children_snapshot();
 		$expected = Syntax_Nodes::child_nodes($node);
 		self::check(count($children) === count($expected));
@@ -72,7 +74,7 @@ final class AST_Test
 		self::check($node->token_index >= 0 && $node->end_token_index <= count($syntax->tokens->tokens));
 		self::check($node->token_index <= $node->end_token_index);
 		$payload = $node->payload();
-		Syntax_Nodes::validate_payload($node->kind, $payload);
+		Syntax_Nodes::validate_payload($node->kind(), $payload);
 		if ($payload === null) {
 			return;
 		}
@@ -104,7 +106,7 @@ final class AST_Test
 		foreach ($syntax->scopes as $scope) {
 			self::initialized($scope);
 		}
-		self::initialized($syntax->root->payload()->scope);
+		self::initialized($syntax->root->payload()->lexical_scope());
 		self::check($syntax->collection->root === $syntax->root);
 		self::check($syntax->collection->token_snapshot() === $syntax->tokens);
 		$nodes = new \SplObjectStorage();
@@ -112,11 +114,11 @@ final class AST_Test
 		self::visit($syntax->root, $syntax, $nodes, $payloads);
 		foreach ($payloads as $payload)
 		{
-			if ($payload instanceof block_structure && $payload->scope !== $syntax->root->payload()->scope)
+			if ($payload instanceof block_structure && $payload->lexical_scope() !== $syntax->root->payload()->lexical_scope())
 			{
 				$found = false;
 				foreach ($syntax->scopes as $owned) {
-					if ($owned === $payload->scope) {
+					if ($owned === $payload->lexical_scope()) {
 						$found = true;
 					}
 				}
@@ -175,7 +177,7 @@ final class AST_Test
 		$parser->init(self::tokens('function next(): void { return; }'), $scope);
 		$next = $parser->parse();
 		self::verify($next);
-		self::check($next->root->payload()->scope === $scope);
+		self::check($next->root->payload()->lexical_scope() === $scope);
 		self::check($next->scopes[0]->parent_scope() === $scope);
 		self::check(count($scope->functions_named('kept')) === 1 && count($scope->functions_named('next')) === 1);
 		self::check((count($scope->functions_named('broken')) === 0) && (count($scope->types_named('Pending')) === 0));
@@ -183,7 +185,7 @@ final class AST_Test
 		$parser->init(self::tokens(''));
 		$standalone = $parser->parse();
 		self::verify($standalone);
-		self::check($standalone->root->payload()->scope !== $scope);
+		self::check($standalone->root->payload()->lexical_scope() !== $scope);
 		self::check($standalone->scopes[0]->parent_scope() === null);
 	}
 

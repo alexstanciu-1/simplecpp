@@ -23,7 +23,7 @@ final class Declaration_Changes
 		$node = $entry->node;
 		$start = (int) $node->token_index;
 		$end = (int) $node->end_token_index;
-		if ($node->kind === node_kind::function_declaration)
+		if ($node->kind() === node_kind::function_declaration)
 		{
 			$function = Syntax_Nodes::function_data($node);
 			if ($body) {
@@ -42,17 +42,17 @@ final class Declaration_Changes
 	/** Names identify candidate groups; enclosing syntax distinguishes members and function locals. */
 	private static function declaration_key(collected_name $entry): string
 	{
-		$key = Node_Kind_Name::text($entry->node->kind) . ':' . $entry->name;
+		$key = Node_Kind_Name::text($entry->node->kind()) . ':' . $entry->name;
 		$parent = $entry->node->parent();
 		$tokens /** Storage<token> */ = $entry->token_snapshot()->tokens;
 		while ($parent !== null)
 		{
-			$node = object_cast($parent, ast_node::class);
-			if ($node->kind === node_kind::function_declaration) {
+			$node /** ast_node */ = $parent;
+			if ($node->kind() === node_kind::function_declaration) {
 				$index = Syntax_Nodes::function_data($node)->name_token_index;
 				$key = 'function:' . $tokens[$index]->text() . '/' . $key;
 			}
-			elseif ($node->kind === node_kind::struct_declaration) {
+			elseif ($node->kind() === node_kind::struct_declaration) {
 				$index = Syntax_Nodes::struct_data($node)->name_token_index;
 				$key = 'struct:' . $tokens[$index]->text() . '/' . $key;
 			}

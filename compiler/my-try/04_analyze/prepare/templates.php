@@ -88,7 +88,7 @@ final class Template_File_Checker
 					throw new \RuntimeException('Statements after return are not supported in template definitions');
 				}
 				$this->statement($statement, $return_type);
-				$return_typeed = ($statement->kind === node_kind::return_statement);
+				$return_typeed = ($statement->kind() === node_kind::return_statement);
 			}
 			if (($return_type !== 'void') && (!$return_typeed)) {
 				throw new \RuntimeException('Template definition requires an explicit value return');
@@ -99,7 +99,7 @@ final class Template_File_Checker
 	/** Symbolic type terms retain parameter slots; unknown coverage fails before specialization. */
 	private function type(llvm_prepared_file $file, ast_node $node, array $bindings /** vector<string> */): string
 	{
-		if ($node->kind !== node_kind::identifier) {
+		if ($node->kind() !== node_kind::identifier) {
 			throw new \RuntimeException('Aggregate types in template definitions are not supported yet');
 		}
 		$lookup_token_index /** int */ = (int) $node->token_index;
@@ -121,7 +121,7 @@ final class Template_File_Checker
 	/** Check stores and returns against symbolic types, keeping initialization separate from assignment. */
 	private function statement(ast_node $node, string $return_type): void
 	{
-		if ($node->kind === node_kind::variable_binding_statement)
+		if ($node->kind() === node_kind::variable_binding_statement)
 		{
 			$syntax = Syntax_Nodes::binding_data($node);
 			if (($syntax->target !== null) || ($syntax->value === null)) {
@@ -144,14 +144,14 @@ final class Template_File_Checker
 			}
 			$this->locals[$declaration->local_index] = $type;
 		}
-		elseif ($node->kind === node_kind::return_statement) {
+		elseif ($node->kind() === node_kind::return_statement) {
 			$syntax = Syntax_Nodes::return_data($node);
 			$type = $syntax->expression === null ? 'void' : $this->expression($syntax->expression);
 			if (($return_type !== $type) || (($return_type === 'void') && ($syntax->expression !== null))) {
 				throw new \RuntimeException('Generic return requires matching symbolic types');
 			}
 		}
-		elseif ($node->kind === node_kind::expression_statement) {
+		elseif ($node->kind() === node_kind::expression_statement) {
 			$syntax = Syntax_Nodes::statement_data($node);
 			$this->expression($syntax->expression);
 		}
@@ -163,17 +163,17 @@ final class Template_File_Checker
 	/** Call checking reads declared signatures only, allowing recursion without entering another body. */
 	private function expression(ast_node $node): string
 	{
-		if ($node->kind === node_kind::integer_literal) {
+		if ($node->kind() === node_kind::integer_literal) {
 			return 'int';
 		}
-		if ($node->kind === node_kind::variable_reference) {
+		if ($node->kind() === node_kind::variable_reference) {
 			$declaration = $this->file->names->references[(int) $node->token_index];
 			if (!isset($this->locals[$declaration->local_index])) {
 				throw new \RuntimeException('Generic variable is not initialized');
 			}
 			return $this->locals[$declaration->local_index];
 		}
-		if ($node->kind !== node_kind::call_expression) {
+		if ($node->kind() !== node_kind::call_expression) {
 			throw new \RuntimeException('Generic member/index operations are not permitted by the current proof');
 		}
 		$target = $this->file->names->function_references[(int) $node->token_index];
@@ -200,7 +200,7 @@ final class Template_File_Checker
 			if (($actual === 'void') || ($actual !== $expected)) {
 				throw new \RuntimeException('Generic call requires matching symbolic types');
 			}
-			if (($parameter->mode === passing_mode::reference) && (($argument->kind !== node_kind::variable_reference) || string_byte_starts_with($actual, 'parameter:'))) {
+			if (($parameter->mode === passing_mode::reference) && (($argument->kind() !== node_kind::variable_reference) || string_byte_starts_with($actual, 'parameter:'))) {
 				throw new \RuntimeException('Generic reference call is unsupported');
 			}
 		}

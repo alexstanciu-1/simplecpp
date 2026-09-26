@@ -87,7 +87,7 @@ passed all 142 PHP/native comparisons and executed all 48 valid emitted programs
 STAN reports zero blocking diagnostics, 159 advisory errors and 47 warnings.
 See `specs/planning/compiler_migration/results/weak-scope-native-01` for evidence.
 
-Linked AST follow-up: abstract ast_node now has one concrete subclass per kind,
+Historical linked AST checkpoint: abstract ast_node had one concrete subclass per kind,
 optional node_structure, uint32 spans and private parent/previous/next/first-child
 links plus a uint32 child position. The converter preserves literal inheritance
 and accepts bounded decimal uint32 property defaults. Required signed lookup/argument
@@ -97,8 +97,9 @@ lists remain retaining aliases; children() returns a membership snapshot.
 `build/native-linked-ast-04` passed 142 PHP/native comparisons, including native
 parent/sibling/position checks, and executed all 48 valid emitted programs.
 STAN has zero blockers, 210 advisory errors and 78 warnings; those advisories have
-not been eliminated. See docs/architecture/ast_layout.md for limits, including the v0.1 native
-emitter's lack of abstract-base enforcement when no method is pure virtual.
+not been eliminated. This checkpoint predates the final common ast_node and
+specialization-owned facts. See docs/architecture/ast_layout.md for the current
+representation and the final-node verification below for its native evidence.
 
 Compiler parse-queue follow-up: each parser owns its file root scope. Compiler
 publication exports root declarations under the unordered task executor's lock;
@@ -129,3 +130,44 @@ provide optional previous records. Compiler.jobs has a zero field initializer fo
 the current STAN initialization check; its constructor installs DEFAULT_COMPILER_JOBS
 (12) before dispatch. Native proof uses that default. See docs/lifecycle/incremental.md and
 the file-sync-native-01 evidence under specs/planning/compiler_migration/results.
+
+
+## Final common-node verification
+
+On 2026-09-26, the user explicitly requested native verification after the final
+`ast_node` refactor. Conversion and a normal STAN-enabled build passed on the
+existing `/tmp/scpp-native-244` candidate (`unversioned-d8ddde93-overlay`); the
+verified target pin and toolchain sources were not changed.
+
+This pass found and repaired source-level portability issues:
+
+- Publication uses the retained storage position to retrieve the previous parsed
+  file, removing an unsupported nullable local annotation and redundant state.
+- Parser_Run owns in-progress scopes and constructs parsed_file only when its
+  required tokens, root, collection and scopes are ready. Block scopes and collected
+  occurrence provenance are constructor inputs before accessors can read them.
+- Block scope storage is private `scope_reference`, accessed through lexical_scope().
+  This also avoids the native field/type name collision with `scope`.
+- The syntax-only cleanup method has an explicit void return: the candidate's STAN
+  misclassifies its empty body as abstract. This keeps the intended no-op behavior.
+- Scope-index and C++-header resets use typed empty hash locals so lowering preserves
+  their concrete container types.
+- The native test driver uses children_snapshot(), matching the renamed traversal API.
+
+All 142 PHP/native comparisons passed: 48 valid programs and 94 rejection/recovery
+cases. All 48 valid emitted programs compiled and executed with expected results.
+The native C++ S2S proof matched PHP bytes, compiled, and exited with the expected
+code 10; it also checks repeated preparation, cleanup, incremental replacement and
+failure recovery. The final incremental compiler rebuild passed. The ordinary PHP
+suite passed separately, including its nine generated C++ execution cases.
+
+STAN reports zero compile-blocking diagnostics, 299 advisory errors and 108 warnings;
+this is not an assertion that static analysis is clean.
+
+Evidence: `/tmp/scpp-final-ast-native-01/summary.json`, source hashes, candidate hashes
+and per-attempt command/build logs. There were five harness attempts: the first
+stopped at conversion, the second at STAN, the next two at C++ compilation, and the
+fifth passed. Native-build commands took 1.448s, 33.776s, 22.610s and 25.005s; the
+final incremental rebuild took 1.065s. These resumed-build timings are diagnostic
+history, not a clean-build performance comparison. PHP regression evidence is in
+`/tmp/scpp-final-ast-native-php-01/summary.json`.

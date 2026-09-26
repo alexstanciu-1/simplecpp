@@ -31,6 +31,13 @@ excluded. They do not import compiler 3's lifecycle or join architecture.
   helpers. Keep existing ownership and an already clear order; do not move methods
   between classes or invent wrappers to satisfy presentation preferences.
 
+Use an explicit local annotation for a same-type nullable value after checking it,
+e.g. `$node /** ast_node */ = $child;` inside `while ($child !== null)`.
+Keep `object_cast` for concrete class narrowing and required-state checks where
+null or an incompatible object must be rejected; annotations alone do not check PHP values.
+For now, retain narrowing casts even inside matching `instanceof` or `kind` branches;
+removing their repeated checks is [debt for the new S2S generator](architecture/ast_layout.md#deferred-narrowing-after-a-type-or-kind-check).
+
 Use tabs for block indentation, matching the active compiler sources. Keep required
 conversion annotations next to their declarations. Formatting must not rewrite
 strings, embedded sample programs or other executable content.

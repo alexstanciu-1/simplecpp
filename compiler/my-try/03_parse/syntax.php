@@ -8,73 +8,28 @@ namespace scpp\compiler;
 
 final class Syntax_Nodes
 {
-	/** Allocate the concrete node corresponding to a parser production. */
-	public static function allocate(node_kind $kind): ast_node
+	/** Construct a complete kind/payload pair and link its direct syntax children once. */
+	public static function make(node_kind $kind, int $start, int $end, ?node_structure $data = null): ast_node
 	{
-		if ($kind === node_kind::struct_declaration) {
-			return new struct_declaration_node();
+		if ($data === null)
+		{
+			if ($kind === node_kind::integer_literal) {
+				$data = new integer_literal_structure();
+			}
+			elseif ($kind === node_kind::variable_reference) {
+				$data = new variable_reference_structure();
+			}
 		}
-		if ($kind === node_kind::field_declaration) {
-			return new field_declaration_node();
-		}
-		if ($kind === node_kind::field_expression) {
-			return new field_expression_node();
-		}
-		if ($kind === node_kind::file) {
-			return new file_node();
-		}
-		if ($kind === node_kind::function_declaration) {
-			return new function_declaration_node();
-		}
-		if ($kind === node_kind::parameter_declaration) {
-			return new parameter_declaration_node();
-		}
-		if ($kind === node_kind::block) {
-			return new block_node();
-		}
-		if ($kind === node_kind::identifier) {
-			return new identifier_node();
-		}
-		if ($kind === node_kind::punctuation) {
-			return new punctuation_node();
-		}
-		if ($kind === node_kind::comment) {
-			return new comment_node();
-		}
-		if ($kind === node_kind::array_type) {
-			return new array_type_node();
-		}
-		if ($kind === node_kind::array_literal) {
-			return new array_literal_node();
-		}
-		if ($kind === node_kind::index_expression) {
-			return new index_expression_node();
-		}
-		if ($kind === node_kind::integer_literal) {
-			return new integer_literal_node();
-		}
-		if ($kind === node_kind::variable_reference) {
-			return new variable_reference_node();
-		}
-		if ($kind === node_kind::binary_expression) {
-			return new binary_expression_node();
-		}
-		if ($kind === node_kind::assignment_expression) {
-			return new assignment_expression_node();
-		}
-		if ($kind === node_kind::call_expression) {
-			return new call_expression_node();
-		}
-		if ($kind === node_kind::expression_statement) {
-			return new expression_statement_node();
-		}
-		if ($kind === node_kind::return_statement) {
-			return new return_statement_node();
-		}
-		if ($kind === node_kind::variable_binding_statement) {
-			return new variable_binding_statement_node();
-		}
-		throw new \LogicException("Unknown AST node kind");
+		self::validate_payload($kind, $data);
+		$node = new ast_node($kind, $start, $end, $data);
+		$children /** Storage<ast_node> */ = self::child_nodes($node);
+		ast_node::link_children($node, $children);
+		return $node;
+	}
+
+	public static function expression_data(ast_node $node): expression_structure
+	{
+		return object_cast($node->payload(), expression_structure::class);
 	}
 
 	/** Enumerate direct syntax children in grammar order before publishing navigation links. */
@@ -130,10 +85,12 @@ final class Syntax_Nodes
 			$result->append($data->expression);
 			return $result;
 		}
-		if ($node->payload() instanceof return_structure) {
+		if ($node->payload() instanceof return_structure)
+		{
 			$data = object_cast($node->payload(), return_structure::class);
 			if ($data->expression !== null) {
-				$result->append(object_cast($data->expression, ast_node::class));
+				$expression /** ast_node */ = $data->expression;
+				$result->append($expression);
 			}
 			return $result;
 		}
@@ -141,13 +98,16 @@ final class Syntax_Nodes
 		{
 			$data = object_cast($node->payload(), binding_structure::class);
 			if ($data->type_syntax !== null) {
-				$result->append(object_cast($data->type_syntax, ast_node::class));
+				$type_syntax /** ast_node */ = $data->type_syntax;
+				$result->append($type_syntax);
 			}
 			if ($data->target !== null) {
-				$result->append(object_cast($data->target, ast_node::class));
+				$target /** ast_node */ = $data->target;
+				$result->append($target);
 			}
 			if ($data->value !== null) {
-				$result->append(object_cast($data->value, ast_node::class));
+				$value /** ast_node */ = $data->value;
+				$result->append($value);
 			}
 			return $result;
 		}
@@ -213,8 +173,9 @@ final class Syntax_Nodes
 			node_kind::struct_declaration => $payload instanceof struct_structure,
 			node_kind::field_declaration => $payload instanceof field_structure,
 			node_kind::field_expression => $payload instanceof field_access_structure,
-			node_kind::identifier, node_kind::punctuation, node_kind::comment,
-			node_kind::integer_literal, node_kind::variable_reference => $payload === null,
+			node_kind::identifier, node_kind::punctuation, node_kind::comment => $payload === null,
+			node_kind::integer_literal => $payload instanceof integer_literal_structure,
+			node_kind::variable_reference => $payload instanceof variable_reference_structure,
 		};
 		if (!$valid) {
 			throw new \LogicException('Invalid AST payload for ' . Node_Kind_Name::text($kind));
@@ -271,7 +232,7 @@ final class Syntax_Nodes
 	/** Derive the category from the node kind so classifications cannot disagree. */
 	public static function category(ast_node $node): node_category
 	{
-		return match ($node->kind)
+		return match ($node->kind())
 		{
 			node_kind::struct_declaration, node_kind::field_declaration, node_kind::array_type, node_kind::file, node_kind::function_declaration, node_kind::parameter_declaration, node_kind::identifier, node_kind::punctuation,
 			node_kind::comment => node_category::syntax,

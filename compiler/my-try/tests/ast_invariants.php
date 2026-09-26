@@ -13,9 +13,9 @@ function check_binding_invariants(): void
 		{
 			$binding = new binding_structure();
 			$binding->syntax_kind = $kind;
-			$binding->type_syntax = ($mask & 1) !== 0 ? new identifier_node() : null;
-			$binding->target = ($mask & 2) !== 0 ? new identifier_node() : null;
-			$binding->value = ($mask & 4) !== 0 ? new identifier_node() : null;
+			$binding->type_syntax = ($mask & 1) !== 0 ? Syntax_Nodes::make(node_kind::identifier, 0, 1) : null;
+			$binding->target = ($mask & 2) !== 0 ? Syntax_Nodes::make(node_kind::identifier, 0, 1) : null;
+			$binding->value = ($mask & 4) !== 0 ? Syntax_Nodes::make(node_kind::identifier, 0, 1) : null;
 			$binding->equals_token_index = ($mask & 8) !== 0 ? 2 : null;
 
 			// Enumerate valid shapes independently of the validator's predicates.
@@ -63,17 +63,34 @@ function check_parameter_invariants(): void
 	}
 }
 
+/** Kind/payload disagreement must fail before a node can be linked or published. */
+function check_node_construction(): void
+{
+	$payload = new integer_literal_structure();
+	$literal = Syntax_Nodes::make(node_kind::integer_literal, 2, 3, $payload);
+	if (($literal->kind() !== node_kind::integer_literal) || ($literal->payload() !== $payload)) {
+		throw new \LogicException('Node construction lost its kind or specialization identity');
+	}
+	foreach ([node_kind::identifier, node_kind::variable_reference, node_kind::return_statement] as $kind)
+	{
+		try {
+			Syntax_Nodes::make($kind, 2, 3, $payload);
+			throw new \RuntimeException('Mismatched node specialization accepted');
+		}
+		catch (\LogicException $expected) {
+		}
+	}
+}
+
+check_node_construction();
 check_binding_invariants();
 check_parameter_invariants();
 echo "AST invariants: 48 binding combinations and four parameter combinations passed\n";
 
 // Rejected graph edits must leave all links unchanged.
-$parent = new block_node();
-$parent->initialize(0, 3, new block_structure());
-$first = new identifier_node();
-$first->initialize(0, 1, null);
-$last = new integer_literal_node();
-$last->initialize(2, 3, null);
+$parent = Syntax_Nodes::make(node_kind::block, 0, 3, new block_structure(new scope()));
+$first = Syntax_Nodes::make(node_kind::identifier, 0, 1, null);
+$last = Syntax_Nodes::make(node_kind::integer_literal, 2, 3, null);
 $children = new Storage();
 $children->append($first);
 $children->append($last);
@@ -84,8 +101,7 @@ $cycle = new Storage();
 $cycle->append($parent);
 $attempts[] = [$last, $cycle];
 $duplicate = new Storage();
-$unused = new identifier_node();
-$unused->initialize(0, 1, null);
+$unused = Syntax_Nodes::make(node_kind::identifier, 0, 1, null);
 $duplicate->append($unused);
 $duplicate->append($unused);
 $attempts[] = [$last, $duplicate];
@@ -101,11 +117,11 @@ foreach ($attempts as [$owner, $members])
 		throw new \RuntimeException('Rejected AST edit changed links');
 	}
 }
-if (!(new \ReflectionClass(ast_node::class))->isAbstract()) {
-	throw new \RuntimeException('AST base must be abstract');
+if (!(new \ReflectionClass(ast_node::class))->isFinal()) {
+	throw new \RuntimeException('Common AST node must be final');
 }
 $children->remove(0);
 if (($parent->first_child() !== $first) || ($last->prev() !== $first)) {
 	throw new \RuntimeException('Changing input membership changed linked children');
 }
-echo "AST links: concrete nodes, cycle/duplicate/reparent rejection and membership independence passed\n";
+echo "AST links: common final node, cycle/duplicate/reparent rejection and membership independence passed\n";

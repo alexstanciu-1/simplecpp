@@ -35,15 +35,16 @@ final class File_Preparation
 			$child = $this->collection->root->first_child();
 			while ($child !== null)
 			{
-				$node = object_cast($child, ast_node::class);
+				$node /** ast_node */ = $child;
 				$child = $node->next();
-				if ($node->kind === node_kind::variable_binding_statement) {
-					$this->binding(object_cast($node, variable_binding_statement_node::class));
+				if ($node->kind() === node_kind::variable_binding_statement) {
+					$this->binding(Syntax_Nodes::binding_data($node));
 				}
-				elseif ($node->kind === node_kind::return_statement) {
-					$return_node = object_cast($node, return_statement_node::class);
-					if ($return_node->expression() !== null) {
-						$this->expression(object_cast($return_node->expression(), ast_node::class));
+				elseif ($node->kind() === node_kind::return_statement) {
+					$return_data = Syntax_Nodes::return_data($node);
+					if ($return_data->expression !== null) {
+						$expression /** ast_node */ = $return_data->expression;
+						$this->expression($expression);
 					}
 				}
 				else {
@@ -61,20 +62,21 @@ final class File_Preparation
 	}
 
 	/** Explicit types resolve through source scopes; inference uses the initializer's type. */
-	private function binding(variable_binding_statement_node $node): void
+	private function binding(binding_structure $syntax): void
 	{
-		if (($node->target() !== null) || ($node->initializer() === null)) {
+		if (($syntax->target !== null) || ($syntax->value === null)) {
 			throw new \RuntimeException('S2S currently requires a local binding with an initializer');
 		}
-		$entry = $this->occurrences[(int) $node->name_index()];
-		$value = $this->expression(object_cast($node->initializer(), ast_node::class));
+		$entry = $this->occurrences[(int) $syntax->name_token_index];
+		$initializer /** ast_node */ = $syntax->value;
+		$value = $this->expression($initializer);
 		$binding = new prepared_binding();
 		$binding->type = $value->type;
 		$previous /** vector<collected_name> */ = $this->locals->variables_named($entry->name);
-		if ($node->declared_type() !== null)
+		if ($syntax->type_syntax !== null)
 		{
-			$type_node = object_cast($node->declared_type(), ast_node::class);
-			if ($type_node->kind !== node_kind::identifier) {
+			$type_node /** ast_node */ = $syntax->type_syntax;
+			if ($type_node->kind() !== node_kind::identifier) {
 				throw new \RuntimeException('S2S constructed types are not supported yet');
 			}
 			$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
@@ -84,7 +86,7 @@ final class File_Preparation
 			}
 			$binding->type = $types[0];
 		}
-		if (($node->declared_type() !== null) || (q_count($previous) === 0)) {
+		if (($syntax->type_syntax !== null) || (q_count($previous) === 0)) {
 			$binding->resolved_kind = binding_kind::declaration;
 			$binding->declaration = $entry;
 			$this->locals->register($entry);
@@ -96,25 +98,23 @@ final class File_Preparation
 			}
 			$binding->resolved_kind = binding_kind::assignment;
 			$binding->declaration = $previous[0];
-			$binding->type = object_cast($previous[0]->node, variable_binding_statement_node::class)->require_preparation()->type;
+			$binding->type = Syntax_Nodes::binding_data($previous[0]->node)->require_preparation()->type;
 		}
 		if (($binding->type !== $this->integer) || ($value->type !== $this->integer)) {
 			throw new \RuntimeException('S2S binding lowering currently supports canonical int only');
 		}
-		$node->set_preparation($binding);
+		$syntax->set_preparation($binding);
 	}
 
 	/** Literal and reference expressions share resolved type identity before emission. */
 	private function expression(ast_node $node): prepared_expression
 	{
 		$value = new prepared_expression();
-		if ($node->kind === node_kind::integer_literal) {
+		if ($node->kind() === node_kind::integer_literal) {
 			$value->literal = Integer_Literals::decimal($this->collection->token_snapshot()->text_at((int) $node->token_index));
 			$value->type = $this->integer;
-			$literal = object_cast($node, integer_literal_node::class);
-			$literal->set_preparation($value);
 		}
-		elseif ($node->kind === node_kind::variable_reference)
+		elseif ($node->kind() === node_kind::variable_reference)
 		{
 			$entry = $this->occurrences[(int) $node->token_index];
 			$targets /** vector<collected_name> */ = $this->locals->variables_named($entry->name);
@@ -122,13 +122,12 @@ final class File_Preparation
 				throw new \RuntimeException('S2S needs an established local declaration for ' . $entry->name);
 			}
 			$value->declaration = $targets[0];
-			$value->type = object_cast($targets[0]->node, variable_binding_statement_node::class)->require_preparation()->type;
-			$reference = object_cast($node, variable_reference_node::class);
-			$reference->set_preparation($value);
+			$value->type = Syntax_Nodes::binding_data($targets[0]->node)->require_preparation()->type;
 		}
 		else {
 			throw new \RuntimeException('S2S expression lowering is not implemented for this form');
 		}
+		Syntax_Nodes::expression_data($node)->set_preparation($value);
 		return $value;
 	}
 }

@@ -34,7 +34,8 @@ final class Scope_Publication
 		{
 			$keep = true;
 			if ($definition->declaration !== null) {
-				$keep = self::retain(object_cast($definition->declaration, collected_name::class), $path);
+				$declaration /** collected_name */ = $definition->declaration;
+				$keep = self::retain($declaration, $path);
 			}
 			if ($keep) {
 				$definitions[] = $definition;

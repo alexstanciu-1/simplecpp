@@ -1,17 +1,23 @@
 # AST node layout and traversal
 Doc Status: supporting
 
-`ast_node` is an abstract PHP base. Each node_kind has one concrete final
-`<kind>_node` subclass. The subclass constructor sets its kind. The parser's single
-publication path allocates that subclass, validates the additional structure and
-local invariants, checks/sets its span, and links its complete child list.
+`ast_node` is the single final syntax-node class. Its private kind tag selects
+its specialization; there are no AST node subclasses. `kind()` and `payload()`
+expose the tag and owned record without allowing their replacement.
 
-The base retains uint32 token_index and end_token_index (exclusive end), kind and
-a private optional node_structure. Extra syntax data uses named *_structure records.
-Leaf kinds have no payload. Concrete nodes provide named structural accessors;
-Syntax_Nodes retains typed *_data accessors as the experimental LLVM bridge.
-An intermediate expression_node owns optional expression facts; binding nodes own
-their distinct binding facts. Constructors and these accessors perform no preparation.
+`Syntax_Nodes::make` is the construction boundary: it supplies leaf-expression
+records, validates the kind/payload pair and existing local invariants, constructs
+the common header, and links the complete child list. The node constructor only
+initializes representation and checks span bounds; parser and test callers use
+this factory.
+
+The header retains uint32 token_index and end_token_index (exclusive end), kind,
+and a private optional node_structure. Named *_structure records hold specialized
+syntax. Identifier, punctuation and comment nodes have no payload. Integer literals
+and variable references have small expression records so their prepared facts have
+a specialized owner. `expression_structure` supplies the expression-fact slot;
+`binding_structure` owns its distinct binding-fact slot. `node_structure` supplies
+no-op local cleanup for syntax-only records. None of these records performs preparation.
 
 ## Fixed navigation fields
 
@@ -47,9 +53,8 @@ retained as navigation state. Linking uses one pass to validate and another to
 publish. Parser children are complete before their parent is built.
 
 This is a build-once tree. No insertion, removal, moving, relinking or automatic
-synchronization after publication is supported. Public kind/span fields
-and payload contents/named child aliases must not be rewritten to contradict the published tree.
-initialize() belongs only to construction, before linking/publication.
+synchronization after publication is supported. The kind and payload handle are fixed at construction. Public span fields and
+payload contents/named child aliases must not be rewritten to contradict the published tree.
 
 The child/sibling chain provides uniform ownership and traversal. For this first
 migration, the existing named child fields and Storage lists in structures remain
@@ -80,31 +85,45 @@ return type follows its parameters. Syntax_Nodes::child_nodes owns this mapping.
 
 The intended optimization is preallocated owned blocks and positional links behind
 these methods. Stable positions and an explicit absent sentinel will be required;
-different concrete node sizes need an allocation strategy (for example fixed
-headers/separate structures or per-specialization stores). This migration does not
+specialization records still need an allocation strategy alongside the fixed headers. This migration does not
 implement an arena, serialization, weak collections, packed layout, or iterative
 release. Long shared sibling chains can still produce deep destruction chains.
 
-The converter now preserves abstract class declarations and one literal extends
-clause. It does not resolve inheritance or validate overrides. The v0.1 native
-emitter currently emits this abstract base as a polymorphic C++ class without a
-pure virtual member; native abstractness enforcement is not claimed. Application
-construction goes exclusively through concrete subclasses.
-
-See the linked-AST native evidence under
-specs/planning/compiler_migration/results/linked-ast-native-01.
+The earlier linked-AST native evidence under
+specs/planning/compiler_migration/results/linked-ast-native-01 predates this final
+common-node representation. The final-node follow-up passed conversion, a STAN-enabled native compiler build,
+142 PHP/native comparisons and execution of all 48 valid emitted programs plus
+the C++ S2S proof. See [native verification](../portability/native_adaptations.md#final-common-node-verification).
+Compiling the compiler itself remains opt-in for subsequent changes.
 
 ## Access and preparation
 
 Use first_child()/next() for an allocation-free walk, and children_snapshot() when
 independent membership is needed. Preparation, C++ emission and cleanup traverse
-the published links. Named methods such as initializer(), expression(), body(),
-arguments() and declared_type() expose grammar roles without exposing payload layout.
-Returned named Storage lists are retaining aliases, not independent snapshots; callers
-must not edit them after publication or reorder source-defined children.
+the published links. Typed `Syntax_Nodes::*_data` accessors return the node's
+specialization record for all consumers, including preparation and C++ emission.
+Named child fields and Storage lists retain grammar roles and shared identity;
+callers must not edit them after publication or reorder source-defined children.
 
-preparation() returns nullable facts, require_preparation() requires them, and
-set_preparation() attaches a processor's result. clear_preparation() only clears
-that node's slot; Preparation_Cleanup owns walking the tree. Fact access does not
-select a backend, infer types or start processing. The earlier Prepared_Nodes
-kind-dispatch helper is no longer needed.
+On a specialization, preparation() returns nullable facts, require_preparation()
+requires them, and set_preparation() attaches a processor's result. The common
+node's clear_preparation() delegates local cleanup to its payload;
+Preparation_Cleanup owns walking the tree. Fact access does not select a backend,
+infer types or start processing. Facts have no reverse link to their syntax node.
+
+## Deferred: narrowing after a type or kind check
+
+User decision, 2026-09-26: retain checked `object_cast` calls that narrow a
+specialization record, including calls after a matching `instanceof` or kind
+branch. All AST handles now have the same final type, so node downcasts are gone.
+The remaining kind contract relates the tag to the payload class, established by
+`Syntax_Nodes::make` and its validator.
+
+Neither a kind nor an instanceof check currently changes the generated variable's
+static type. A typed alias from a base handle to a derived payload handle emits an
+unsupported implicit C++ downcast. The new S2S generator should reuse established
+type facts while preserving null behavior and identity; this refactor does not
+extend the current converter or runtime to implement that optimization.
+
+Same-type nullable access after a null guard can already use explicit typed
+assignments. Required-state checks and unguarded narrowing remain checked operations.

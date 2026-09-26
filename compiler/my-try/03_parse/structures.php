@@ -56,18 +56,22 @@ enum passing_mode {
 	case reference;
 }
 
-/** Marker for additional data owned by a concrete AST node. */
-interface node_structure {
+/** Specialized data owns local cleanup; tree traversal belongs to preparation. */
+abstract class node_structure {
+	public function clear_preparation(): void
+	{
+		return;
+	}
 }
 
 /** Common syntax header; links are private so native storage may later use positions. */
-abstract class ast_node
+final class ast_node
 {
 	/** @storage.index token_list.tokens */
 	public int $token_index /** uint32 */;
 	/** Exclusive token boundary. @storage.boundary token_list.tokens */
 	public int $end_token_index /** uint32 */;
-	public node_kind $kind;
+	private node_kind $syntax_kind;
 	/** Extra syntax data owned by this node. @ownership owner */
 	private ?node_structure $payload_data = null;
 	/** @reference.source parsed_file.root @reference.weak */
@@ -81,26 +85,36 @@ abstract class ast_node
 	private int $position /** uint32 */ = 0;
 
 	/** Initialize the compact header before the node is linked or published. */
-	public function initialize(int $start, int $end, ?node_structure $data): void
+	public function __construct(node_kind $kind, int $start, int $end, ?node_structure $data)
 	{
 		if (($start < 0) || ($end < $start) || ($end > 4294967295)) {
 			throw new \LogicException('AST token span exceeds uint32 bounds');
 		}
+		$this->syntax_kind = $kind;
 		$this->token_index = $start;
 		$this->end_token_index = $end;
 		$this->position = 0;
 		$this->payload_data = $data;
 	}
 
-	/** Construction/debug access; processing uses the specialized node's named accessors. */
+	public function kind(): node_kind
+	{
+		return $this->syntax_kind;
+	}
+
+	/** Access the specialization owned by this node. */
 	public function payload(): ?node_structure
 	{
 		return $this->payload_data;
 	}
 
-	/** Specialized nodes discard their own derived facts; syntax-only nodes have none. */
+	/** Delegate local fact cleanup to the specialization without traversing children. */
 	public function clear_preparation(): void
 	{
+		if ($this->payload_data !== null) {
+			$data /** node_structure */ = $this->payload_data;
+			$data->clear_preparation();
+		}
 	}
 
 	public function next(): ?ast_node
@@ -114,7 +128,7 @@ abstract class ast_node
 		if ($previous === null) {
 			return null;
 		}
-		return object_cast($previous, ast_node::class);
+		return $previous;
 	}
 
 	public function parent(): ?ast_node
@@ -123,7 +137,7 @@ abstract class ast_node
 		if ($owner === null) {
 			return null;
 		}
-		return object_cast($owner, ast_node::class);
+		return $owner;
 	}
 
 	public function first_child(): ?ast_node
@@ -147,7 +161,7 @@ abstract class ast_node
 		$result /** Storage<ast_node> */ = new Storage();
 		$current = $this->first_node;
 		while ($current !== null) {
-			$child = object_cast($current, ast_node::class);
+			$child /** ast_node */ = $current;
 			$result->append($child);
 			$current = $child->next();
 		}
@@ -175,7 +189,7 @@ abstract class ast_node
 			}
 			$ancestor = $owner->parent();
 			while ($ancestor !== null) {
-				$ancestor_node = object_cast($ancestor, ast_node::class);
+				$ancestor_node /** ast_node */ = $ancestor;
 				if ($ancestor_node === $child) {
 					throw new \LogicException('AST links would form a cycle');
 				}
@@ -193,7 +207,7 @@ abstract class ast_node
 				$owner->first_node = $child;
 			}
 			else {
-				$prior = object_cast($previous, ast_node::class);
+				$prior /** ast_node */ = $previous;
 				$prior->next_node = $child;
 				$child->previous_node = $prior;
 			}
@@ -222,10 +236,13 @@ final class parsed_file
 	 */
 	public Storage $scopes /** Storage<scope> */;
 
-	/** Initialize owned stores only; parser operations populate them. */
-	public function __construct()
+	/** Publish a completed parse with initialized syntax, provenance and owned scopes. */
+	public function __construct(token_list $tokens, ast_node $root, collected_file $collection, Storage $scopes /** Storage<scope> */)
 	{
-		$this->scopes = new Storage /** Storage<scope> */();
+		$this->tokens = $tokens;
+		$this->root = $root;
+		$this->collection = $collection;
+		$this->scopes = $scopes;
 	}
 
 	public function source_file(): file
@@ -235,6 +252,6 @@ final class parsed_file
 
 	public function root_scope(): scope
 	{
-		return object_cast($this->root, file_node::class)->lexical_scope();
+		return object_cast($this->root->payload(), block_structure::class)->lexical_scope();
 	}
 }

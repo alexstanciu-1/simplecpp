@@ -40,7 +40,7 @@ final class template_check_context {
 	public \SplObjectStorage $files /** hash<llvm_prepared_file, shared<collected_file>> */;
 }
 
-/** Facts owned by the specialized expression node; no reverse syntax reference. */
+/** Facts owned by the expression specialization; no reverse syntax reference. */
 final class prepared_expression {
 	public type_definition $type;
 	/** Decimal value for integer literals; empty for other expressions. */
@@ -49,7 +49,7 @@ final class prepared_expression {
 	public ?collected_name $declaration /** weak<collected_name> */ = null;
 }
 
-/** Facts owned by the binding node; declaration identity is a non-owning reference. */
+/** Facts owned by the binding specialization; declaration identity is a non-owning reference. */
 final class prepared_binding {
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_name $declaration /** weak<collected_name> */;

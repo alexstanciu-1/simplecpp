@@ -34,7 +34,7 @@ final class Parser
 final class Parser_Run
 {
 	private token_list $tokens;
-	private parsed_file $syntax;
+	private Storage $scopes /** Storage<scope> */;
 	private scope $current_scope;
 	private Symbol_Collector $collector;
 	private int $position = 0;
@@ -43,12 +43,11 @@ final class Parser_Run
 	public function __construct(token_list $tokens, ?scope $target_scope = null)
 	{
 		$this->tokens = $tokens;
-		$this->syntax = new parsed_file();
-		$this->syntax->tokens = $tokens;
+		$this->scopes = new Storage /** Storage<scope> */();
 		$current_scope /** scope */ = $target_scope ?? new scope();
 		$this->current_scope = $current_scope;
 		if ($target_scope === null) {
-			$scopes /** Storage<scope> */ = $this->syntax->scopes;
+			$scopes /** Storage<scope> */ = $this->scopes;
 			$scopes->append($this->current_scope);
 		}
 		$this->collector = new Symbol_Collector($tokens);
@@ -57,16 +56,14 @@ final class Parser_Run
 	/** Publish the completed file only after successful parsing and collection. */
 	public function parse(): parsed_file
 	{
-		$body = new block_structure();
+		$body = new block_structure($this->current_scope);
 		$children /** Storage<ast_node> */ = $body->children;
-		$body->scope = $this->current_scope;
 		while ($this->position < q_count($this->tokens->tokens)) {
 			$children->append($this->statement());
 		}
-		$result = $this->syntax;
-		$result->root = $this->payload_node(node_kind::file, 0, $body);
-		$result->collection = $this->collector->finish($result->root);
-		return $result;
+		$root = $this->payload_node(node_kind::file, 0, $body);
+		$collection = $this->collector->finish($root);
+		return new parsed_file($this->tokens, $root, $collection, $this->scopes);
 	}
 
 	/** Select a statement from its leading syntax; names are never looked up here. */
@@ -187,7 +184,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Template parameter conflicts with function name'));
 		}
 		$local_scope = new scope();
-		$scopes /** Storage<scope> */ = $this->syntax->scopes;
+		$scopes /** Storage<scope> */ = $this->scopes;
 		$scopes->append($local_scope);
 		$local_scope->set_parent($this->current_scope);
 		$local_scope->mark_function();
@@ -251,9 +248,8 @@ final class Parser_Run
 	private function block(scope $scope): ast_node
 	{
 		$start = $this->expect('{');
-		$body = new block_structure();
+		$body = new block_structure($scope);
 		$children /** Storage<ast_node> */ = $body->children;
-		$body->scope = $scope;
 		$enclosing = $this->current_scope;
 		$this->current_scope = $scope;
 		try {
@@ -364,7 +360,7 @@ final class Parser_Run
 		$type = new array_type_structure();
 		$type->element_type = $element;
 		$type->count = $this->expression();
-		if ($type->count->kind !== node_kind::integer_literal) {
+		if ($type->count->kind() !== node_kind::integer_literal) {
 			throw new \RuntimeException($this->error_message('Fixed array size must be a nonnegative integer literal'));
 		}
 		$this->expect(']');
@@ -475,12 +471,7 @@ final class Parser_Run
 	/** Construct the concrete node, attach its extra data and publish navigation links. */
 	private function node(node_kind $kind, int $start, ?node_structure $structure = null): ast_node
 	{
-		Syntax_Nodes::validate_payload($kind, $structure);
-		$node = Syntax_Nodes::allocate($kind);
-		$node->initialize($start, $this->position, $structure);
-		$children /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($node);
-		ast_node::link_children($node, $children);
-		return $node;
+		return Syntax_Nodes::make($kind, $start, $this->position, $structure);
 	}
 
 	/** Normalize PHS name spelling before entering the shared occurrence model. */

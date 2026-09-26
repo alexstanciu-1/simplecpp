@@ -114,7 +114,7 @@ else
 				for ($node_index = 0; $node_index < q_count($queue); $node_index++)
 				{
 					$syntax_node = $queue[$node_index];
-					$children /** Storage<ast_node> */ = $syntax_node->children();
+					$children /** Storage<ast_node> */ = $syntax_node->children_snapshot();
 					$named /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($syntax_node);
 					if (q_count($children) !== q_count($named)) {
 						throw new \LogicException('AST traversal lost named children');

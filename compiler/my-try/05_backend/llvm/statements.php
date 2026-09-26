@@ -13,23 +13,23 @@ trait LLVM_Statements
 	{
 		foreach (Syntax_Nodes::block_data($node)->children as $statement)
 		{
-			if ((($statement->kind === node_kind::function_declaration) || ($statement->kind === node_kind::struct_declaration))) {
+			if ((($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::struct_declaration))) {
 				continue;
 			}
 			if ($this->block->terminated) {
 				throw new \RuntimeException('LLVM experiment does not yet lower statements after return');
 			}
-			if ($statement->kind === node_kind::variable_binding_statement) {
+			if ($statement->kind() === node_kind::variable_binding_statement) {
 				$this->to_llvm_variable_binding_statement($statement);
 			}
-			elseif ($statement->kind === node_kind::return_statement) {
+			elseif ($statement->kind() === node_kind::return_statement) {
 				$this->to_llvm_return_statement($statement);
 			}
-			elseif ($statement->kind === node_kind::expression_statement) {
+			elseif ($statement->kind() === node_kind::expression_statement) {
 				$this->to_llvm_expression_statement($statement);
 			}
 			else {
-				throw new \RuntimeException('Unsupported LLVM statement: ' . Node_Kind_Name::text($statement->kind));
+				throw new \RuntimeException('Unsupported LLVM statement: ' . Node_Kind_Name::text($statement->kind()));
 			}
 		}
 		if (!$this->block->terminated) {

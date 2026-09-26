@@ -42,13 +42,13 @@ trait LLVM_Expressions
 	/** Obtain writable storage from a resolved expression; calls and literals have no address. */
 	private function expression_storage(ast_node $node): llvm_place
 	{
-		if ($node->kind === node_kind::field_expression) {
+		if ($node->kind() === node_kind::field_expression) {
 			return $this->field_storage($node);
 		}
-		if ($node->kind === node_kind::index_expression) {
+		if ($node->kind() === node_kind::index_expression) {
 			return $this->index_storage($node);
 		}
-		if ($node->kind !== node_kind::variable_reference) {
+		if ($node->kind() !== node_kind::variable_reference) {
 			throw new \RuntimeException('Reference argument requires writable variable storage');
 		}
 		$lookup_token_index /** int */ = (int) $node->token_index;
@@ -89,7 +89,7 @@ trait LLVM_Expressions
 		if ($base->array_type === null) {
 			throw new \RuntimeException('Indexing requires a fixed array');
 		}
-		if ($syntax->index->kind !== node_kind::integer_literal) {
+		if ($syntax->index->kind() !== node_kind::integer_literal) {
 			throw new \RuntimeException('Dynamic indexes require runtime bounds checks and are not supported yet');
 		}
 		$index = $this->to_llvm_integer_literal($syntax->index);
@@ -106,7 +106,7 @@ trait LLVM_Expressions
 	/** Build a constant aggregate only for an exact-length integer literal initializer. */
 	private function array_initializer(ast_node $node, llvm_local $local): llvm_operand
 	{
-		if ($node->kind !== node_kind::array_literal) {
+		if ($node->kind() !== node_kind::array_literal) {
 			throw new \RuntimeException('Fixed arrays require an exact-length literal initializer');
 		}
 		$elements /** Storage<ast_node> */ = Syntax_Nodes::array_data($node)->elements;
@@ -115,7 +115,7 @@ trait LLVM_Expressions
 		}
 		$values /** vector<string> */ = [];
 		foreach ($elements as $element) {
-			if ($element->kind !== node_kind::integer_literal) {
+			if ($element->kind() !== node_kind::integer_literal) {
 				throw new \RuntimeException('Fixed array initializer elements must be integer literals');
 			}
 			$value = $this->to_llvm_integer_literal($element);

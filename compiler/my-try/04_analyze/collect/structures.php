@@ -49,6 +49,11 @@ final class collected_name
 	/** @storage.index token_list.tokens */
 	public int $token_index;
 
+	public function __construct(collected_file $collection)
+	{
+		$this->collection = $collection;
+	}
+
 	public function source_file(): file
 	{
 		return $this->collection->source_file();

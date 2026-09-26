@@ -73,8 +73,8 @@ foreach (['$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; $b = $missing;');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
-$first_node = $children[0];
-$first_literal = Syntax_Nodes::binding_data($first_node)->value;
+$first_data = Syntax_Nodes::binding_data($children[0]);
+$first_literal_data = Syntax_Nodes::expression_data($first_data->value);
 $before = serialize($syntax);
 $failed = false;
 try {
@@ -83,7 +83,7 @@ try {
 catch (\RuntimeException $expected) {
 	$failed = true;
 }
-if ((!$failed) || ($first_node->preparation() !== null) || ($first_literal->preparation() !== null) || (serialize($syntax) !== $before)) {
+if ((!$failed) || ($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null) || (serialize($syntax) !== $before)) {
 	throw new \LogicException('Standalone failure left prepared facts or changed syntax');
 }
 
@@ -91,8 +91,8 @@ if ((!$failed) || ($first_node->preparation() !== null) || ($first_literal->prep
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
-$first_node = $children[0];
-$first_literal = Syntax_Nodes::binding_data($first_node)->value;
+$first_data = Syntax_Nodes::binding_data($children[0]);
+$first_literal_data = Syntax_Nodes::expression_data($first_data->value);
 Language_Types::integer(Model::$language_scope)->value_bits = 32;
 $failed = false;
 try {
@@ -101,24 +101,24 @@ try {
 catch (\RuntimeException $expected) {
 	$failed = true;
 }
-if ((!$failed) || ($first_node->preparation() !== null) || ($first_literal->preparation() !== null) || (!Model::$prepared_files->is_empty()) || (!Model::$cpp_files->is_empty())) {
+if ((!$failed) || ($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null) || (!Model::$prepared_files->is_empty()) || (!Model::$cpp_files->is_empty())) {
 	throw new \LogicException('Emission failure left prepared facts or output');
 }
 
-// The cleanup traversal reaches nested specialized nodes through syntax-only parents.
+// The cleanup traversal reaches nested expression specializations through syntax-only parents.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('function nested(): int { return 7; }');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $body = Syntax_Nodes::function_data($children[0])->body;
 $statements = Syntax_Nodes::block_data($body)->children;
-$nested_literal = Syntax_Nodes::return_data($statements[0])->expression;
+$nested_literal_data = Syntax_Nodes::expression_data(Syntax_Nodes::return_data($statements[0])->expression);
 $before = serialize($syntax);
 $facts = new prepared_expression();
 $facts->type = Language_Types::integer(Model::$language_scope);
 $facts->literal = '7';
-$nested_literal->set_preparation($facts);
+$nested_literal_data->set_preparation($facts);
 Compiler_Lifecycle::reset_cpp();
-if (($nested_literal->preparation() !== null) || (serialize($syntax) !== $before)) {
+if (($nested_literal_data->preparation() !== null) || (serialize($syntax) !== $before)) {
 	throw new \LogicException('Nested node cleanup changed syntax or missed attached facts');
 }
 
@@ -127,17 +127,17 @@ Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
 (new Compiler())->cpp();
 $children = Syntax_Nodes::block_data($syntax->root)->children;
-$first_node = $children[0];
-$first_literal = Syntax_Nodes::binding_data($first_node)->value;
+$first_data = Syntax_Nodes::binding_data($children[0]);
+$first_literal_data = Syntax_Nodes::expression_data($first_data->value);
 Compiler_Lifecycle::reset_syntax();
-if (($first_node->preparation() !== null) || ($first_literal->preparation() !== null)) {
+if (($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null)) {
 	throw new \LogicException('Syntax reset dropped roots before cleaning their nodes');
 }
 
 // Ordinary parent traversal permits source shadowing; reserved-name enforcement is deferred.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('struct int { int $field; }');
-$root = Syntax_Nodes::block_data($syntax->root)->scope;
+$root = Syntax_Nodes::block_data($syntax->root)->lexical_scope();
 $local = new scope();
 $local->set_parent($root);
 $found = Scope_Lookup::types($local, 'int');

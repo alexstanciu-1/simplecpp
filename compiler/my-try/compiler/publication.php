@@ -23,22 +23,19 @@ final class Source_Publication
 	{
 		$source = $work->source;
 		$syntax /** Storage<parsed_file> */ = Model::$syntax_files;
-		$previous /** ?parsed_file */ = null;
 		$position = -1;
-		foreach ($syntax as $index => $parsed)
-		{
+		foreach ($syntax as $index => $parsed) {
 			if ($parsed->source_file()->path === $source->path) {
 				if ($parsed->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
-					$previous = $parsed;
 					$position = $index;
 				}
 			}
 		}
 		if ($source->changes === \scpp\compiler\SYNC_DELETED)
 		{
-			if ($previous !== null)
+			if ($position >= 0)
 			{
-				$old = object_cast($previous, parsed_file::class);
+				$old /** parsed_file */ = $syntax[$position];
 				$old->source_file()->changes = \scpp\compiler\SYNC_DELETED;
 				$entries /** Storage<collected_name> */ = $old->collection->entries;
 				foreach ($old->collection->defined_elements as $index) {
@@ -53,9 +50,9 @@ final class Source_Publication
 			$entries[$index]->changes = \scpp\compiler\SYNC_ADDED;
 		}
 		$source->changes = \scpp\compiler\SYNC_ADDED;
-		if ($previous !== null)
+		if ($position >= 0)
 		{
-			$old = object_cast($previous, parsed_file::class);
+			$old /** parsed_file */ = $syntax[$position];
 			Declaration_Changes::compare($old, $candidate);
 			$source->changes = 0;
 			if ($old->tokens->content !== $candidate->tokens->content) {

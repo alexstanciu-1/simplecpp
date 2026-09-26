@@ -42,7 +42,7 @@ final class Source_Synchronization
 			$candidate->path = $path;
 			$candidate->disk_source = true;
 			if ($previous !== null) {
-				$old = object_cast($previous, file::class);
+				$old /** file */ = $previous;
 				$candidate->disk_source = $old->disk_source;
 				$candidate->content = $old->content;
 			}
@@ -51,7 +51,7 @@ final class Source_Synchronization
 				if (!fs_is_file($path))
 				{
 					if ($previous !== null) {
-						$old = object_cast($previous, file::class);
+						$old /** file */ = $previous;
 						if ($old->tokens !== null) {
 							$candidate->changes = \scpp\compiler\SYNC_DELETED;
 						}

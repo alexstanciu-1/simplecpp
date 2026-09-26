@@ -71,7 +71,8 @@ final class Name_Preparation
 				if ($parent === null) {
 					break;
 				}
-				$current_scope = object_cast($parent, scope::class);
+				$parent_scope /** scope */ = $parent;
+				$current_scope = $parent_scope;
 			}
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("Expected one function target for " . $entry->name . " at " . $file->source_file()->path . ": token " . $entry->token_index));
@@ -106,7 +107,8 @@ final class Name_Preparation
 				if ($parent === null) {
 					break;
 				}
-				$current_scope = object_cast($parent, scope::class);
+				$parent_scope /** scope */ = $parent;
+				$current_scope = $parent_scope;
 			}
 		}
 		return $result;

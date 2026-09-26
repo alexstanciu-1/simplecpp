@@ -114,7 +114,7 @@ are excluded; do not reformat them.
    collection. Both inherit Storage_Abstract for common behavior. Native records
    use shared_p<T>; capacity is an
    optional constructor argument. No key-mode or readonly template arguments remain.
-   Prefer `$tokens /** Storage<token> */ = new Storage();` for direct local construction. The repeated construction annotation remains accepted. Property assignments and other construction sites still need `new Storage /** Storage<token> */()`. See [storage](storage/STORAGE.md) and [conversion review](portability/conversion_review.md). AST nodes inherit the abstract base and own extra structures plus private
+   Prefer `$tokens /** Storage<token> */ = new Storage();` for direct local construction. The repeated construction annotation remains accepted. Property assignments and other construction sites still need `new Storage /** Storage<token> */()`. See [storage](storage/STORAGE.md) and [conversion review](portability/conversion_review.md). AST nodes use one final ast_node class with a kind tag, specialization records and private
    traversal links. Named structure child lists remain retaining aliases; see
    docs/architecture/ast_layout.md. Do not recreate parallel node/payload
    registries or Storage_View infrastructure without a concrete approved need.
@@ -157,7 +157,6 @@ Keep compiler decisions outside retained structures. Structures may initialize d
 maintain local representation invariants, expose typed access/navigation and simple
 queries, and clear their own derived fields. Stage sequencing and tree cleanup belong
 to Compiler_Lifecycle/Preparation_Cleanup; scope publication and replacement policy
-belong to Scope_Publication. Prefer named node accessors and first_child()/next()
-over payload chains. children_snapshot() explicitly copies membership. Preserve source
+belong to Scope_Publication. Prefer typed specialization access and first_child()/next() over untyped payload chains. children_snapshot() explicitly copies membership. Preserve source
 order and stable storage positions; do not sort AST/storage membership as a convenience.
 See [the model boundary](architecture/MODEL.md#structure-and-processing-boundary).

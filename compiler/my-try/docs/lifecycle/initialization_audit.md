@@ -40,14 +40,14 @@ scanner reuse and old source-snapshot retention.
 ## AST and parser pass
 
 No missing production initialization or additional nullable fields were found.
-`Parser.node` assigns kind, start/end positions and payload before returning a node;
+`Syntax_Nodes::make` constructs the final node with kind, span and payload;
 its caller completes each emitted payload before passing it to that boundary.
 Constructors initialize every child collection. Empty lists remain valid required
 objects, including empty bodies, parameter/argument lists and array literals.
 
 | Optional field | Meaning |
 | --- | --- |
-| ast_node.specialization | Null for leaf/payload-free kinds; required for the other kinds by Syntax_Nodes validation. |
+| ast_node.payload_data | Null for identifiers, punctuation and comments; expressions including literals have specialization records. |
 | scope.parent | Null for a root; function-local scopes receive their parent before parsing their parameters/body. |
 | parameter.reference_token_index | Null for value passing; present for reference passing and points to the ampersand. |
 | return.expression | Null for a bare return; keyword and semicolon are always initialized. |
@@ -58,8 +58,9 @@ objects, including empty bodies, parameter/argument lists and array literals.
 
 Function return type/body, parameter and field types, block scope, array extent and
 index/field base references remain required. parsed_file.tokens/root/collection are
-required even though root and collection are assigned at the end of parsing. The
-weak convenience collection link is not optional on a completed result.
+constructor inputs. Parser_Run owns scopes during parsing and constructs parsed_file
+only after its root and collection are complete. block_structure takes its required
+lexical scope in its constructor. The weak convenience collection link is not optional.
 
 Parser.init must precede parse. Each parse resets position, result, collector and
 current scope. Worker fields are assigned before dependent calls; this PHP audit
@@ -81,7 +82,8 @@ its required fields were inspected but are not claimed as parser-executed covera
 ## Collector and preparation pass
 
 Completed occurrence and preparation records need no additional nullable fields.
-Collector construction initializes its source and lists. record assigns entry
+Collector construction initializes its source and lists. collected_name construction
+requires its collection backlink before provenance access; record assigns the remaining entry
 references/name/kind/token position, appends, then assigns the returned local_index
 before exposing that index to its caller or work lists. That brief incomplete
 state is private construction, not external publication; no stored ID is guessed

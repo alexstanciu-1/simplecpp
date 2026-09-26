@@ -11,7 +11,7 @@ final class Preparation_Cleanup
 		$root->clear_preparation();
 		$child = $root->first_child();
 		while ($child !== null) {
-			$node = object_cast($child, ast_node::class);
+			$node /** ast_node */ = $child;
 			self::tree($node);
 			$child = $node->next();
 		}

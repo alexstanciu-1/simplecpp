@@ -273,7 +273,7 @@ final class Model_Test
 		$token = new token(0, 4, 'name');
 		$source->tokens[] = $token;
 		$collector = new Symbol_Collector($source);
-		$node = new identifier_node();
+		$node = Syntax_Nodes::make(node_kind::identifier, 0, 1);
 		$scope = new scope();
 		$collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
 		// Host test access only: the compiler still builds occurrence lists append-only.

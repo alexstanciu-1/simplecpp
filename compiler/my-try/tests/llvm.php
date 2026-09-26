@@ -175,10 +175,10 @@ final class LLVM_Test
 	/** Prove that the independent body block owns locals and declarations emit no call. */
 	private static function check_function_scope(collected_file $file, llvm_module $module): void
 	{
-		$global = $file->root->payload()->scope;
+		$global = $file->root->payload()->lexical_scope();
 		$function = $global->functions_named('example')[0]->node->payload();
-		$local = $function->body->payload()->scope;
-		if (($function->body->kind !== node_kind::block) || ($local === $global) || ($local->parent_scope() !== $global) || !$local->is_function() || (count($global->variables_named('a')) !== 1) || (count($local->variables_named('a')) !== 1)) {
+		$local = $function->body->payload()->lexical_scope();
+		if (($function->body->kind() !== node_kind::block) || ($local === $global) || ($local->parent_scope() !== $global) || !$local->is_function() || (count($global->variables_named('a')) !== 1) || (count($local->variables_named('a')) !== 1)) {
 			throw new \RuntimeException('Incorrect block or scope ownership');
 		}
 		if ((count($module->functions) !== 2) || ($module->functions[1]->return_type !== 'void') || str_contains($module->text, 'call ')) {

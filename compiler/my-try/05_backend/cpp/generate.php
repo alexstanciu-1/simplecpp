@@ -10,11 +10,12 @@ final class CPP_Generator
 	/** Emit only after preparation succeeds; generated names cannot collide with C++ keywords. */
 	public function generate(prepared_file $prepared): cpp_module
 	{
-		$this->headers = [];
+		$empty /** hash<bool> */ = [];
+		$this->headers = $empty;
 		$body = "\nint main()\n{\n";
 		$child = $prepared->source->root->first_child();
 		while ($child !== null) {
-			$node = object_cast($child, ast_node::class);
+			$node /** ast_node */ = $child;
 			$body .= $this->statement($node);
 			$child = $node->next();
 		}
@@ -33,22 +34,22 @@ final class CPP_Generator
 	/** Binding classification and declaration identity come from preparation, not C++ heuristics. */
 	private function statement(ast_node $node): string
 	{
-		if ($node->kind === node_kind::variable_binding_statement)
+		if ($node->kind() === node_kind::variable_binding_statement)
 		{
-			$binding_node = object_cast($node, variable_binding_statement_node::class);
-			$binding = $binding_node->require_preparation();
-			$initializer = object_cast($binding_node->initializer(), ast_node::class);
+			$binding_data = Syntax_Nodes::binding_data($node);
+			$binding = $binding_data->require_preparation();
+			$initializer = object_cast($binding_data->value, ast_node::class);
 			$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
 			$prefix = $binding->resolved_kind === binding_kind::declaration ? 'auto ' : '';
 			return "\t" . $prefix . self::local_name($declaration) . ' = ' . $this->expression($initializer) . ";\n";
 		}
-		if ($node->kind === node_kind::return_statement)
+		if ($node->kind() === node_kind::return_statement)
 		{
-			$return_node = object_cast($node, return_statement_node::class);
-			if ($return_node->expression() === null) {
+			$return_data = Syntax_Nodes::return_data($node);
+			if ($return_data->expression === null) {
 				return "\treturn 0;\n";
 			}
-			$syntax = object_cast($return_node->expression(), ast_node::class);
+			$syntax /** ast_node */ = $return_data->expression;
 			return "\treturn static_cast<int>((" . $this->expression($syntax) . ").native_value());\n";
 		}
 		throw new \RuntimeException('C++ statement emission is not implemented for this form');
@@ -57,10 +58,10 @@ final class CPP_Generator
 	/** Integer spelling supplies an exact native carrier before constructing the runtime value. */
 	private function expression(ast_node $node): string
 	{
-		$expression = object_cast($node, expression_node::class)->require_preparation();
+		$expression = Syntax_Nodes::expression_data($node)->require_preparation();
 		$mapping = CPP_Types::representation($expression->type);
 		$this->headers[$mapping->header] = true;
-		if ($node->kind === node_kind::integer_literal) {
+		if ($node->kind() === node_kind::integer_literal) {
 			if ($mapping->literal !== cpp_literal_kind::signed_integer) {
 				throw new \RuntimeException('C++ literal emission is not implemented for this type');
 			}
@@ -68,7 +69,8 @@ final class CPP_Generator
 		}
 		$declaration = weakref_get($expression->declaration);
 		if ($declaration !== null) {
-			return self::local_name(object_cast($declaration, collected_name::class));
+			$target /** collected_name */ = $declaration;
+			return self::local_name($target);
 		}
 		throw new \RuntimeException('C++ expression lacks prepared lowering facts');
 	}

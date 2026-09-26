@@ -142,7 +142,7 @@ Scope storage is private; global scope has a language/runtime parent. Built-in `
 is canonical signed 64-bit with a uint32 width field and enum categories. Source
 and built-in definitions have truthful provenance. Preparation retains resolved
 expression types and binding identities. The 2026-09-26 follow-up attaches those
-facts directly to specialized AST nodes, preserving source syntax and adding
+facts directly to AST specialization records, preserving source syntax and adding
 per-node cleanup on reset, reuse and failure. Native compiler builds are now opt-in
 under docs/AGENTS.md; the earlier native results below do not cover this follow-up.
 
@@ -164,8 +164,8 @@ physical publication and build caching are outside this first slice.
 
 Model owns static module, token-list, parsed-file, collected-file, language/global
 scopes, prepared-file and C++/LLVM-output roots. Storage is a numeric shared-object list; Keyed_Storage is the
-string-keyed counterpart. No Storage_View layer remains. AST nodes are concrete
-subclasses of abstract ast_node, with attached node_structure data and private
+string-keyed counterpart. No Storage_View layer remains. AST nodes use one final ast_node class, with a fixed kind tag, attached
+node_structure specializations and private
 traversal links. Native weak scope/backlinks have explicit conversion support;
 ordinary documentary weak annotations are not automatic lifetime enforcement.
 

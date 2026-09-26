@@ -71,7 +71,7 @@ final class LLVM_Preparation_Run
 		{
 			$entries /** Storage<collected_name> */ = $file->source->entries;
 			foreach (Syntax_Nodes::block_data($file->source->root)->children as $statement) {
-				if (!(($statement->kind === node_kind::function_declaration) || ($statement->kind === node_kind::struct_declaration))) {
+				if (!(($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::struct_declaration))) {
 					$this->register($file, null, []);
 					break;
 				}
@@ -170,14 +170,14 @@ final class LLVM_Preparation_Run
 	/** A required declaration type is checked before the native nullable boundary. */
 	private function declaration_type(collected_name $declaration): ast_node
 	{
-		if ($declaration->node->kind === node_kind::parameter_declaration) {
+		if ($declaration->node->kind() === node_kind::parameter_declaration) {
 			return Syntax_Nodes::parameter_data($declaration->node)->type_syntax;
 		}
 		$binding = Syntax_Nodes::binding_data($declaration->node);
 		if ($binding->type_syntax === null) {
 			throw new \RuntimeException('LLVM preparation requires an explicitly typed variable');
 		}
-		return object_cast($binding->type_syntax, ast_node::class);
+		return $binding->type_syntax;
 	}
 
 	/** Prepare storage and calls in one concrete context; local source indexes remain unchanged. */
@@ -189,16 +189,16 @@ final class LLVM_Preparation_Run
 		$struct_types /** Keyed_Storage<llvm_struct_type> */ = $file->struct_types;
 		$parameters /** Storage<llvm_parameter> */ = $function->parameters;
 		$external_functions /** Keyed_Storage<llvm_prepared_function> */ = $file->external_functions;
-		$function_scope /** scope */ = object_cast(weakref_get(Syntax_Nodes::block_data($function->body)->scope), scope::class);
+		$function_scope /** scope */ = Syntax_Nodes::block_data($function->body)->lexical_scope();
 		foreach ($file->source->defined_elements as $index)
 		{
 			$declaration = $entries[$index];
 			if (($declaration->kind !== collected_name_kind::variable_declaration) || (object_cast(weakref_get($declaration->scope), scope::class) !== $function_scope)) {
 				continue;
 			}
-			$is_parameter = $declaration->node->kind === node_kind::parameter_declaration;
+			$is_parameter = $declaration->node->kind() === node_kind::parameter_declaration;
 			$type_syntax = $this->declaration_type($declaration);
-			$is_array = $type_syntax->kind === node_kind::array_type;
+			$is_array = $type_syntax->kind() === node_kind::array_type;
 			$name = $this->type_name($function, $type_syntax);
 			$local = new llvm_local();
 			$local->declaration = $declaration;

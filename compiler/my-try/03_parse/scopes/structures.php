@@ -118,7 +118,8 @@ final class scope
 		$result /** vector<collected_name> */ = [];
 		foreach ($this->types_named($name) as $definition) {
 			if ($definition->declaration !== null) {
-				$result[] = object_cast($definition->declaration, collected_name::class);
+				$entry /** collected_name */ = $definition->declaration;
+				$result[] = $entry;
 			}
 		}
 		return $result;
@@ -170,8 +171,9 @@ final class scope
 	/** Rebuild local indexes from a caller-selected membership. */
 	public function replace_declarations(array $entries /** vector<collected_name> */): void
 	{
-		$this->functions = [];
-		$this->variables = [];
+		$empty /** hash<vector<collected_name>> */ = [];
+		$this->functions = $empty;
+		$this->variables = $empty;
 		foreach ($entries as $entry) {
 			$this->register($entry);
 		}

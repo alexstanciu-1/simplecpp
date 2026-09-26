@@ -22,8 +22,7 @@ final class Symbol_Collector
 		if ($this->finished) {
 			throw new \LogicException('Collection is already finished');
 		}
-		$entry = new collected_name();
-		$entry->collection = $this->collection;
+		$entry = new collected_name($this->collection);
 		$entry->name = $name;
 		$entry->kind = $kind;
 		$entry->scope = $scope;

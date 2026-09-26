@@ -22,7 +22,7 @@ LLVM experiment does not provide type policy for this path.
   in source order. The first untyped assignment becomes a prepared declaration;
   later reads and assignments retain that occurrence identity. Explicit `int` locals
   resolve through source scopes and converge on the same canonical definition.
-- Prepared expressions/bindings are attached to their specialized AST nodes.
+- Prepared expressions/bindings are attached to their AST specialization records.
   Source syntax, scopes and the declaration inventory are unchanged; each node
   clears its derived facts during tree cleanup. No reverse syntax references or
   token-keyed fact maps remain. Type objects are shared.

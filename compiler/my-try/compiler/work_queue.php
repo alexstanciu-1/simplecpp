@@ -24,7 +24,7 @@ final class Source_Work_Queue
 			throw new \LogicException('A source record cannot have concurrent work orders');
 		}
 		if ($tokens !== null) {
-			$snapshot = object_cast($tokens, token_list::class);
+			$snapshot /** token_list */ = $tokens;
 			if ($snapshot->file !== $source) {
 				throw new \LogicException('Token snapshot belongs to another source');
 			}

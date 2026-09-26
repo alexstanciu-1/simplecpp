@@ -73,7 +73,7 @@ echo "    $group\n";
 	/** Display parsed nodes with their token spans and original spelling. */
 	private function dump_node(ast_node $node, int $depth, token_list $tokens): void
 	{
-		$label = $node->kind->name;
+		$label = $node->kind()->name;
 		$payload = $node->payload();
 		if ($payload instanceof binding_structure) {
 			$label .= ' (' . $payload->syntax_kind->name . ')';

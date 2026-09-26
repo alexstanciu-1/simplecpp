@@ -1,13 +1,47 @@
 <?php
 
 /*
- * Role: node-specific structures and concrete AST node subclasses.
+ * Role: specialized syntax records and their optional prepared facts.
  * Used by: Parser, Syntax_Nodes, Symbol_Collector and LLVM preparation/generation.
- * Flow: ast_node.structure owns extra data; named children retain aliases of linked nodes.
+ * Flow: ast_node.payload() owns extra data; named children retain aliases of linked nodes.
  */
 namespace scpp\compiler;
 
-final class call_structure implements node_structure
+/** Expression specializations store facts; preparation processors compute them. */
+abstract class expression_structure extends node_structure
+{
+	/** @ownership owner */
+	private ?prepared_expression $prepared_facts = null;
+
+	public function preparation(): ?prepared_expression
+	{
+		return $this->prepared_facts;
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return object_cast($this->prepared_facts, prepared_expression::class);
+	}
+
+	public function set_preparation(prepared_expression $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared_facts = null;
+	}
+}
+
+/** Leaf expressions need no additional syntax fields. */
+final class integer_literal_structure extends expression_structure {
+}
+
+final class variable_reference_structure extends expression_structure {
+}
+
+final class call_structure extends expression_structure
 {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -34,7 +68,7 @@ final class call_structure implements node_structure
 }
 
 /** The body block references a file-owned local scope and an ordered statement list. */
-final class function_structure implements node_structure
+final class function_structure extends node_structure
 {
 	/** Ordered formal names and declaration token indexes. */
 	public array $template_parameters /** hash<int> */ = [];
@@ -60,7 +94,7 @@ final class function_structure implements node_structure
 	}
 }
 
-final class parameter_structure implements node_structure {
+final class parameter_structure extends node_structure {
 	public passing_mode $mode = passing_mode::value;
 	/** Null for value parameters; present exactly when mode is reference.
 	 * @storage.index token_list.tokens
@@ -75,7 +109,7 @@ final class parameter_structure implements node_structure {
 }
 
 /** Shared payload for a file body or a block that introduces a scope. */
-final class block_structure implements node_structure
+final class block_structure extends node_structure
 {
 	/**
 	 * Ordered object list of child nodes.
@@ -88,16 +122,22 @@ final class block_structure implements node_structure
 	 * @storage.reference parsed_file.scopes
 	 * @reference.weak
 	 */
-	public scope $scope /** weak<scope> */;
+	private scope $scope_reference /** weak<scope> */;
 
-	public function __construct()
+	public function __construct(scope $lexical_scope)
 	{
+		$this->scope_reference = $lexical_scope;
 		$this->children = new Storage /** Storage<ast_node> */();
+	}
+
+	public function lexical_scope(): scope
+	{
+		return object_cast(weakref_get($this->scope_reference), scope::class);
 	}
 }
 
 /** Binary and assignment expressions share operands; their node kinds retain the distinction. */
-final class binary_structure implements node_structure {
+final class binary_structure extends expression_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -111,7 +151,7 @@ final class binary_structure implements node_structure {
 }
 
 /** An expression used as a statement owns its terminating semicolon here. */
-final class expression_statement_structure implements node_structure {
+final class expression_statement_structure extends node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -121,7 +161,7 @@ final class expression_statement_structure implements node_structure {
 }
 
 /** expression is null for a bare return; keyword and semicolon remain required. */
-final class return_structure implements node_structure {
+final class return_structure extends node_structure {
 	/** @storage.index token_list.tokens */
 	public int $keyword_token_index;
 	/** Syntax child owned through this link.
@@ -137,8 +177,11 @@ final class return_structure implements node_structure {
  * equals_token_index and value are either both present or both absent.
  * A typed declaration may omit its initializer; an untyped write requires a value.
  */
-final class binding_structure implements node_structure
+final class binding_structure extends node_structure
 {
+	/** Derived facts are absent before preparation and after cleanup. @ownership owner */
+	private ?prepared_binding $prepared_facts = null;
+
 	public binding_kind $syntax_kind = binding_kind::unresolved;
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -158,455 +201,6 @@ final class binding_structure implements node_structure
 	public ?ast_node $value = null;
 	/** @storage.index token_list.tokens */
 	public int $semicolon_token_index;
-}
-
-/** Fixed extent is syntax until preparation checks and normalizes it. */
-final class array_type_structure implements node_structure {
-	/** Syntax child owned through this link.
-	 * @ownership owner
-	 */
-	public ast_node $element_type;
-	/** Syntax child owned through this link.
-	 * @ownership owner
-	 */
-	public ast_node $count;
-}
-
-final class array_literal_structure implements node_structure {
-	/**
-	 * Ordered object list of child nodes.
-	 * @storage.owner
-	 */
-	public Storage $elements /** Storage<ast_node> */;
-
-	public function __construct()
-	{
-		$this->elements = new Storage /** Storage<ast_node> */();
-	}
-}
-
-final class index_structure implements node_structure {
-	/** Syntax child owned through this link.
-	 * @ownership owner
-	 */
-	public ast_node $base;
-	/** Syntax child owned through this link.
-	 * @ownership owner
-	 */
-	public ast_node $index;
-}
-
-final class struct_structure implements node_structure
-{
-	/** @storage.index token_list.tokens */
-	public int $name_token_index;
-	/**
-	 * Ordered field declarations. Ordered object list of child nodes.
-	 * @storage.owner
-	 */
-	public Storage $fields /** Storage<ast_node> */;
-
-	public function __construct()
-	{
-		$this->fields = new Storage /** Storage<ast_node> */();
-	}
-}
-
-final class field_structure implements node_structure {
-	/** @storage.index token_list.tokens */
-	public int $name_token_index;
-	/** Syntax child owned through this link.
-	 * @ownership owner
-	 */
-	public ast_node $type_syntax;
-}
-
-final class field_access_structure implements node_structure {
-	/** Syntax child owned through this link.
-	 * @ownership owner
-	 */
-	public ast_node $base;
-	/** @storage.index token_list.tokens */
-	public int $name_token_index;
-}
-
-/** Expression nodes own optional derived facts; processors decide when to attach them. */
-abstract class expression_node extends ast_node
-{
-	/** @ownership owner */
-	private ?prepared_expression $prepared_facts = null;
-
-	public function preparation(): ?prepared_expression
-	{
-		return $this->prepared_facts;
-	}
-
-	public function require_preparation(): prepared_expression
-	{
-		return object_cast($this->prepared_facts, prepared_expression::class);
-	}
-
-	public function set_preparation(prepared_expression $facts): void
-	{
-		$this->prepared_facts = $facts;
-	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared_facts = null;
-	}
-}
-
-/** Concrete struct_declaration syntax node. */
-final class struct_declaration_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::struct_declaration;
-	}
-
-	public function fields(): Storage /** Storage<ast_node> */
-	{
-		return object_cast($this->payload(), struct_structure::class)->fields;
-	}
-
-	public function name_index(): int
-	{
-		return object_cast($this->payload(), struct_structure::class)->name_token_index;
-	}
-}
-
-/** Concrete field_declaration syntax node. */
-final class field_declaration_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::field_declaration;
-	}
-
-	public function declared_type(): ast_node
-	{
-		return object_cast($this->payload(), field_structure::class)->type_syntax;
-	}
-
-	public function name_index(): int
-	{
-		return object_cast($this->payload(), field_structure::class)->name_token_index;
-	}
-}
-
-/** Concrete field_expression syntax node. */
-final class field_expression_node extends expression_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::field_expression;
-	}
-
-	public function base(): ast_node
-	{
-		return object_cast($this->payload(), field_access_structure::class)->base;
-	}
-
-	public function name_index(): int
-	{
-		return object_cast($this->payload(), field_access_structure::class)->name_token_index;
-	}
-}
-
-/** Concrete file syntax node. */
-final class file_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::file;
-	}
-
-	public function lexical_scope(): scope
-	{
-		return object_cast(weakref_get(object_cast($this->payload(), block_structure::class)->scope), scope::class);
-	}
-}
-
-/** Concrete function_declaration syntax node. */
-final class function_declaration_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::function_declaration;
-	}
-
-	public function body(): ast_node
-	{
-		return object_cast($this->payload(), function_structure::class)->body;
-	}
-
-	public function return_type(): ast_node
-	{
-		return object_cast($this->payload(), function_structure::class)->return_type;
-	}
-
-	public function parameters(): Storage /** Storage<ast_node> */
-	{
-		return object_cast($this->payload(), function_structure::class)->parameters;
-	}
-
-	public function name_index(): int
-	{
-		return object_cast($this->payload(), function_structure::class)->name_token_index;
-	}
-}
-
-/** Concrete parameter_declaration syntax node. */
-final class parameter_declaration_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::parameter_declaration;
-	}
-
-	public function declared_type(): ast_node
-	{
-		return object_cast($this->payload(), parameter_structure::class)->type_syntax;
-	}
-
-	public function name_index(): int
-	{
-		return object_cast($this->payload(), parameter_structure::class)->name_token_index;
-	}
-}
-
-/** Concrete block syntax node. */
-final class block_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::block;
-	}
-
-	public function lexical_scope(): scope
-	{
-		return object_cast(weakref_get(object_cast($this->payload(), block_structure::class)->scope), scope::class);
-	}
-}
-
-/** Concrete identifier syntax node. */
-final class identifier_node extends ast_node {
-	public function __construct()
-	{
-		$this->kind = node_kind::identifier;
-	}
-}
-
-/** Concrete punctuation syntax node. */
-final class punctuation_node extends ast_node {
-	public function __construct()
-	{
-		$this->kind = node_kind::punctuation;
-	}
-}
-
-/** Concrete comment syntax node. */
-final class comment_node extends ast_node {
-	public function __construct()
-	{
-		$this->kind = node_kind::comment;
-	}
-}
-
-/** Concrete array_type syntax node. */
-final class array_type_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::array_type;
-	}
-
-	public function element_type(): ast_node
-	{
-		return object_cast($this->payload(), array_type_structure::class)->element_type;
-	}
-
-	public function extent(): ast_node
-	{
-		return object_cast($this->payload(), array_type_structure::class)->count;
-	}
-}
-
-/** Concrete array_literal syntax node. */
-final class array_literal_node extends expression_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::array_literal;
-	}
-
-	public function elements(): Storage /** Storage<ast_node> */
-	{
-		return object_cast($this->payload(), array_literal_structure::class)->elements;
-	}
-}
-
-/** Concrete index_expression syntax node. */
-final class index_expression_node extends expression_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::index_expression;
-	}
-
-	public function base(): ast_node
-	{
-		return object_cast($this->payload(), index_structure::class)->base;
-	}
-
-	public function index(): ast_node
-	{
-		return object_cast($this->payload(), index_structure::class)->index;
-	}
-}
-
-/** Concrete integer_literal syntax node. */
-final class integer_literal_node extends expression_node {
-	public function __construct()
-	{
-		$this->kind = node_kind::integer_literal;
-	}
-}
-
-/** Concrete variable_reference syntax node. */
-final class variable_reference_node extends expression_node {
-	public function __construct()
-	{
-		$this->kind = node_kind::variable_reference;
-	}
-}
-
-/** Concrete binary_expression syntax node. */
-final class binary_expression_node extends expression_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::binary_expression;
-	}
-
-	public function left(): ast_node
-	{
-		return object_cast($this->payload(), binary_structure::class)->left;
-	}
-
-	public function right(): ast_node
-	{
-		return object_cast($this->payload(), binary_structure::class)->right;
-	}
-}
-
-/** Concrete assignment_expression syntax node. */
-final class assignment_expression_node extends expression_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::assignment_expression;
-	}
-
-	public function left(): ast_node
-	{
-		return object_cast($this->payload(), binary_structure::class)->left;
-	}
-
-	public function right(): ast_node
-	{
-		return object_cast($this->payload(), binary_structure::class)->right;
-	}
-}
-
-/** Concrete call_expression syntax node. */
-final class call_expression_node extends expression_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::call_expression;
-	}
-
-	public function arguments(): Storage /** Storage<ast_node> */
-	{
-		return object_cast($this->payload(), call_structure::class)->arguments;
-	}
-
-	public function type_arguments(): Storage /** Storage<ast_node> */
-	{
-		return object_cast($this->payload(), call_structure::class)->template_arguments;
-	}
-
-	public function name_index(): int
-	{
-		return object_cast($this->payload(), call_structure::class)->name_token_index;
-	}
-}
-
-/** Concrete expression_statement syntax node. */
-final class expression_statement_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::expression_statement;
-	}
-
-	public function expression(): ast_node
-	{
-		return object_cast($this->payload(), expression_statement_structure::class)->expression;
-	}
-}
-
-/** Concrete return_statement syntax node. */
-final class return_statement_node extends ast_node
-{
-	public function __construct()
-	{
-		$this->kind = node_kind::return_statement;
-	}
-
-	public function expression(): ?ast_node
-	{
-		return object_cast($this->payload(), return_structure::class)->expression;
-	}
-}
-
-/** Concrete variable_binding_statement syntax node. */
-final class variable_binding_statement_node extends ast_node
-{
-	/** Derived facts owned by this node, absent before preparation or after cleanup. @ownership owner */
-	private ?prepared_binding $prepared_facts = null;
-
-	public function __construct()
-	{
-		$this->kind = node_kind::variable_binding_statement;
-	}
-
-	public function initializer(): ?ast_node
-	{
-		return object_cast($this->payload(), binding_structure::class)->value;
-	}
-
-	public function target(): ?ast_node
-	{
-		return object_cast($this->payload(), binding_structure::class)->target;
-	}
-
-	public function declared_type(): ?ast_node
-	{
-		return object_cast($this->payload(), binding_structure::class)->type_syntax;
-	}
-
-	public function name_index(): int
-	{
-		return object_cast($this->payload(), binding_structure::class)->name_token_index;
-	}
-
-	public function parsed_kind(): binding_kind
-	{
-		return object_cast($this->payload(), binding_structure::class)->syntax_kind;
-	}
 
 	public function preparation(): ?prepared_binding
 	{
@@ -627,4 +221,74 @@ final class variable_binding_statement_node extends ast_node
 	{
 		$this->prepared_facts = null;
 	}
+}
+
+/** Fixed extent is syntax until preparation checks and normalizes it. */
+final class array_type_structure extends node_structure {
+	/** Syntax child owned through this link.
+	 * @ownership owner
+	 */
+	public ast_node $element_type;
+	/** Syntax child owned through this link.
+	 * @ownership owner
+	 */
+	public ast_node $count;
+}
+
+final class array_literal_structure extends expression_structure {
+	/**
+	 * Ordered object list of child nodes.
+	 * @storage.owner
+	 */
+	public Storage $elements /** Storage<ast_node> */;
+
+	public function __construct()
+	{
+		$this->elements = new Storage /** Storage<ast_node> */();
+	}
+}
+
+final class index_structure extends expression_structure {
+	/** Syntax child owned through this link.
+	 * @ownership owner
+	 */
+	public ast_node $base;
+	/** Syntax child owned through this link.
+	 * @ownership owner
+	 */
+	public ast_node $index;
+}
+
+final class struct_structure extends node_structure
+{
+	/** @storage.index token_list.tokens */
+	public int $name_token_index;
+	/**
+	 * Ordered field declarations. Ordered object list of child nodes.
+	 * @storage.owner
+	 */
+	public Storage $fields /** Storage<ast_node> */;
+
+	public function __construct()
+	{
+		$this->fields = new Storage /** Storage<ast_node> */();
+	}
+}
+
+final class field_structure extends node_structure {
+	/** @storage.index token_list.tokens */
+	public int $name_token_index;
+	/** Syntax child owned through this link.
+	 * @ownership owner
+	 */
+	public ast_node $type_syntax;
+}
+
+final class field_access_structure extends expression_structure {
+	/** Syntax child owned through this link.
+	 * @ownership owner
+	 */
+	public ast_node $base;
+	/** @storage.index token_list.tokens */
+	public int $name_token_index;
 }

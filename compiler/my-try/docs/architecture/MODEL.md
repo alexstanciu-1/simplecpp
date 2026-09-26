@@ -17,13 +17,13 @@ Keyed_Storage is used for named object collections during LLVM preparation.
 | language_scope | Owns language/runtime type definitions; currently the built-in Simple C++ `int`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
 | collected_files | collected_file records; each owns Storage<collected_name> and local position work lists. |
-| prepared_files | Completed preparation records pointing to source files; specialized AST nodes own the facts. |
+| prepared_files | Completed preparation records pointing to source files; AST specialization records own the facts. |
 | cpp_files | Final C++ artifact names and bytes; no preparation backlinks. |
 | llvm_files | llvm_module records; each owns output functions, blocks, operands and text. |
 
 ## AST graph
 
-parsed_file.root owns its concrete ast_node subclass. The abstract base owns an
+parsed_file.root owns a final ast_node. The common node owns an
 optional node_structure and private first-child/next-sibling links, with native
 weak parent/previous links and a uint32 child ordinal. Node token spans are uint32.
 Named structure child fields/lists remain retaining aliases for existing workers.
@@ -57,7 +57,7 @@ Completed files can publish before a later file fails: this is not atomic rollba
 Static roots are shared between Compiler instances, not isolated compilation sessions.
 
 Experimental LLVM preparation records remain transient. S2S facts are owned by
-specialized AST nodes; Model::$prepared_files retains completed-file records.
+AST specialization records; Model::$prepared_files retains completed-file records.
 Generated output owns copies of incoming
 operands and does not depend on preparation lifetime. Existing source/AST purity,
 failed-stage behavior and native sample execution remain regression requirements.
@@ -104,20 +104,19 @@ or change retained ownership. See [binding details](../../../../specs/portabilit
 
 ### Concrete payload access
 
-The optional node_structure payload remains privately node-owned. Concrete nodes
-expose named structural accessors such as initializer(), declared_type(), body(),
-parameters() and arguments(). Preparation and C++ emission use these accessors and
-first_child()/next() traversal rather than reaching through payload records.
-Syntax_Nodes retains the existing *_data bridge for experimental LLVM consumers;
-payload() also supports construction and structural inspection. These return the
-same objects, not copies. Payload/list mutation after publication is unsupported.
+The optional node_structure payload remains privately node-owned. `kind()` exposes
+the fixed tag; `Syntax_Nodes::*_data` provides typed access to the specialization
+for all consumers. Specializations retain named syntax fields and child lists.
+These accessors return the same objects, not copies. Preparation and C++ emission
+walk first_child()/next() and read the corresponding specialized record.
+Payload/list mutation after publication is unsupported.
 
 collected_name.collection names the owning occurrence collection. collected_file
 keeps its token snapshot private; token_snapshot() and source_file() expose the
 requested records directly. parsed_file also exposes source_file() and root_scope().
 These accessors preserve identity without introducing more stored backlinks.
 
-Direct scope links (`scope.enclosing`, `block_structure.scope`,
+Direct scope links (`scope.enclosing`, `block_structure.scope_reference`,
 `collected_name.scope`) now carry adjacent `weak<scope>` annotations for native
 conversion. PHP keeps strong references; native consumers explicitly acquire live
 handles. Keep the owning parsed file/model alive when scope access is required.
@@ -168,10 +167,10 @@ PHP objects or converted enum layouts. Runtime/library JSON import is not implem
 in this slice. No secondary global type-name registry or constructed-type model was added.
 
 `File_Preparation` owns a transient source-order scope and returns a fresh
-`prepared_file` completion record referencing its source. Specialized binding,
-expression nodes own optional preparation records behind typed accessors.
-`expression_node` supplies the shared expression-fact slot and its local cleanup;
-binding nodes keep their distinct prepared_binding slot.
+`prepared_file` completion record referencing its source. `binding_structure` and
+`expression_structure` own optional preparation records behind typed accessors.
+Expression specializations inherit the shared fact slot and local cleanup;
+bindings keep their distinct prepared_binding slot. No class extends ast_node.
 There are no per-file token-keyed fact maps or reverse `syntax` links. Binding
 initializers remain ordinary AST children; generation reads their attached facts.
 Declaration links in facts are explicitly weak observers of collected occurrences;
@@ -180,8 +179,8 @@ existing binding occurrence as identity. Parsed classification, source declarati
 inventory and published scopes remain unchanged.
 
 `Preparation_Cleanup::tree` walks owned child/sibling links and calls each node's
-`clear_preparation` method. Syntax-only nodes do nothing; specialized nodes clear
-their own slots. Compiler_Lifecycle resets clean the retained tree before dropping/replacing
+`clear_preparation` method, which delegates to the specialization. Syntax-only
+records do nothing; expression and binding records clear their own slots. Compiler_Lifecycle resets clean the retained tree before dropping/replacing
 roots. Preparation starts clean and clears partial facts on failure; the compiler
 also cleans facts if C++ emission fails. Old prepared-file handles reference the
 same mutable source tree, not immutable snapshots of its former facts. No selective
@@ -207,7 +206,7 @@ registration, replacement and parent/publication links without selecting update 
 `Source_Publication` calls that processor and keeps model roots synchronized after
 each completed publication so a later file failure preserves prior completed work.
 
-Binding syntax uses `syntax_kind` (exposed as parsed_kind()); prepared facts use
+Binding syntax uses `syntax_kind`; prepared facts use
 `resolved_kind`. Their meanings remain distinct: an untyped first write is unresolved
 syntax even when preparation identifies a declaration. No new validation rules,
 source-language forms, storage representation, or LLVM lowering rules were added.
