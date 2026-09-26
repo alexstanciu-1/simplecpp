@@ -8,13 +8,12 @@ namespace scpp\compiler;
 
 final class Symbol_Collector
 {
-	private collected_file $file;
+	private collected_file $collection;
 	private bool $finished = false;
 
 	public function __construct(token_list $source)
 	{
-		$this->file = new collected_file();
-		$this->file->source = $source;
+		$this->collection = new collected_file($source);
 	}
 
 	/** Append one occurrence during parsing; never look up, merge or reject a name. */
@@ -24,31 +23,31 @@ final class Symbol_Collector
 			throw new \LogicException('Collection is already finished');
 		}
 		$entry = new collected_name();
-		$entry->file = $this->file;
+		$entry->collection = $this->collection;
 		$entry->name = $name;
 		$entry->kind = $kind;
 		$entry->scope = $scope;
 		$entry->node = $node;
 		$entry->token_index = $token_index;
-		$entries /** Storage<collected_name> */ = $this->file->entries;
+		$entries /** Storage<collected_name> */ = $this->collection->entries;
 		$entry->local_index = $entries->append($entry);
 		if (($kind === collected_name_kind::field_declaration) || ($kind === collected_name_kind::struct_declaration) || ($kind === collected_name_kind::variable_declaration) || ($kind === collected_name_kind::function_declaration)) {
-			$this->file->defined_elements[] = $entry->local_index;
+			$this->collection->defined_elements[] = $entry->local_index;
 		}
 		elseif ($kind === collected_name_kind::field_reference) {
-			$this->file->field_references[] = $entry->local_index;
+			$this->collection->field_references[] = $entry->local_index;
 		}
 		elseif ($kind === collected_name_kind::variable_reference) {
-			$this->file->variable_references[] = $entry->local_index;
+			$this->collection->variable_references[] = $entry->local_index;
 		}
 		elseif ($kind === collected_name_kind::type_reference) {
-			$this->file->type_references[] = $entry->local_index;
+			$this->collection->type_references[] = $entry->local_index;
 		}
 		elseif ($kind === collected_name_kind::function_reference) {
-			$this->file->function_references[] = $entry->local_index;
+			$this->collection->function_references[] = $entry->local_index;
 		}
 		elseif ($kind === collected_name_kind::binding) {
-			$this->file->pending_bindings[] = $entry->local_index;
+			$this->collection->pending_bindings[] = $entry->local_index;
 		}
 
 		return $entry->local_index;
@@ -60,9 +59,9 @@ final class Symbol_Collector
 		if ($this->finished) {
 			throw new \LogicException('Collection is already finished');
 		}
-		$this->file->root = $root;
-		$entries /** Storage<collected_name> */ = $this->file->entries;
-		foreach ($this->file->defined_elements as $index)
+		$this->collection->root = $root;
+		$entries /** Storage<collected_name> */ = $this->collection->entries;
+		foreach ($this->collection->defined_elements as $index)
 		{
 			$entry = $entries[$index];
 			if ($entry->kind === collected_name_kind::field_declaration) {
@@ -77,6 +76,6 @@ final class Symbol_Collector
 			}
 		}
 		$this->finished = true;
-		return $this->file;
+		return $this->collection;
 	}
 }

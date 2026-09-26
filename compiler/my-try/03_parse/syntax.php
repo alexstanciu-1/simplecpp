@@ -81,18 +81,18 @@ final class Syntax_Nodes
 	public static function child_nodes(ast_node $node): Storage /** Storage<ast_node> */
 	{
 		$result /** Storage<ast_node> */ = new Storage();
-		if ($node->structure instanceof block_structure)
+		if ($node->payload() instanceof block_structure)
 		{
-			$data = object_cast($node->structure, block_structure::class);
+			$data = object_cast($node->payload(), block_structure::class);
 			$items /** Storage<ast_node> */ = $data->children;
 			foreach ($items as $child) {
 				$result->append($child);
 			}
 			return $result;
 		}
-		if ($node->structure instanceof function_structure)
+		if ($node->payload() instanceof function_structure)
 		{
-			$data = object_cast($node->structure, function_structure::class);
+			$data = object_cast($node->payload(), function_structure::class);
 			$items /** Storage<ast_node> */ = $data->parameters;
 			foreach ($items as $child) {
 				$result->append($child);
@@ -101,14 +101,14 @@ final class Syntax_Nodes
 			$result->append($data->body);
 			return $result;
 		}
-		if ($node->structure instanceof parameter_structure) {
-			$data = object_cast($node->structure, parameter_structure::class);
+		if ($node->payload() instanceof parameter_structure) {
+			$data = object_cast($node->payload(), parameter_structure::class);
 			$result->append($data->type_syntax);
 			return $result;
 		}
-		if ($node->structure instanceof call_structure)
+		if ($node->payload() instanceof call_structure)
 		{
-			$data = object_cast($node->structure, call_structure::class);
+			$data = object_cast($node->payload(), call_structure::class);
 			$items /** Storage<ast_node> */ = $data->template_arguments;
 			foreach ($items as $child) {
 				$result->append($child);
@@ -119,27 +119,27 @@ final class Syntax_Nodes
 			}
 			return $result;
 		}
-		if ($node->structure instanceof binary_structure) {
-			$data = object_cast($node->structure, binary_structure::class);
+		if ($node->payload() instanceof binary_structure) {
+			$data = object_cast($node->payload(), binary_structure::class);
 			$result->append($data->left);
 			$result->append($data->right);
 			return $result;
 		}
-		if ($node->structure instanceof expression_statement_structure) {
-			$data = object_cast($node->structure, expression_statement_structure::class);
+		if ($node->payload() instanceof expression_statement_structure) {
+			$data = object_cast($node->payload(), expression_statement_structure::class);
 			$result->append($data->expression);
 			return $result;
 		}
-		if ($node->structure instanceof return_structure) {
-			$data = object_cast($node->structure, return_structure::class);
+		if ($node->payload() instanceof return_structure) {
+			$data = object_cast($node->payload(), return_structure::class);
 			if ($data->expression !== null) {
 				$result->append(object_cast($data->expression, ast_node::class));
 			}
 			return $result;
 		}
-		if ($node->structure instanceof binding_structure)
+		if ($node->payload() instanceof binding_structure)
 		{
-			$data = object_cast($node->structure, binding_structure::class);
+			$data = object_cast($node->payload(), binding_structure::class);
 			if ($data->type_syntax !== null) {
 				$result->append(object_cast($data->type_syntax, ast_node::class));
 			}
@@ -151,43 +151,43 @@ final class Syntax_Nodes
 			}
 			return $result;
 		}
-		if ($node->structure instanceof array_type_structure) {
-			$data = object_cast($node->structure, array_type_structure::class);
+		if ($node->payload() instanceof array_type_structure) {
+			$data = object_cast($node->payload(), array_type_structure::class);
 			$result->append($data->element_type);
 			$result->append($data->count);
 			return $result;
 		}
-		if ($node->structure instanceof array_literal_structure)
+		if ($node->payload() instanceof array_literal_structure)
 		{
-			$data = object_cast($node->structure, array_literal_structure::class);
+			$data = object_cast($node->payload(), array_literal_structure::class);
 			$items /** Storage<ast_node> */ = $data->elements;
 			foreach ($items as $child) {
 				$result->append($child);
 			}
 			return $result;
 		}
-		if ($node->structure instanceof index_structure) {
-			$data = object_cast($node->structure, index_structure::class);
+		if ($node->payload() instanceof index_structure) {
+			$data = object_cast($node->payload(), index_structure::class);
 			$result->append($data->base);
 			$result->append($data->index);
 			return $result;
 		}
-		if ($node->structure instanceof struct_structure)
+		if ($node->payload() instanceof struct_structure)
 		{
-			$data = object_cast($node->structure, struct_structure::class);
+			$data = object_cast($node->payload(), struct_structure::class);
 			$items /** Storage<ast_node> */ = $data->fields;
 			foreach ($items as $child) {
 				$result->append($child);
 			}
 			return $result;
 		}
-		if ($node->structure instanceof field_structure) {
-			$data = object_cast($node->structure, field_structure::class);
+		if ($node->payload() instanceof field_structure) {
+			$data = object_cast($node->payload(), field_structure::class);
 			$result->append($data->type_syntax);
 			return $result;
 		}
-		if ($node->structure instanceof field_access_structure) {
-			$data = object_cast($node->structure, field_access_structure::class);
+		if ($node->payload() instanceof field_access_structure) {
+			$data = object_cast($node->payload(), field_access_structure::class);
 			$result->append($data->base);
 			return $result;
 		}
@@ -248,11 +248,11 @@ final class Syntax_Nodes
 			throw new \LogicException('Invalid binding: an untyped write requires a value');
 		}
 
-		if (($binding->classification === binding_kind::declaration) !== $has_type) {
+		if (($binding->syntax_kind === binding_kind::declaration) !== $has_type) {
 			throw new \LogicException('Invalid binding: declaration classification must agree with type syntax');
 		}
 		if ($has_target) {
-			if ($binding->classification !== binding_kind::assignment) {
+			if ($binding->syntax_kind !== binding_kind::assignment) {
 				throw new \LogicException('Invalid binding: an explicit target requires assignment classification');
 			}
 		}
@@ -285,78 +285,78 @@ final class Syntax_Nodes
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function block_data(ast_node $node): block_structure
 	{
-		return object_cast($node->structure, block_structure::class);
+		return object_cast($node->payload(), block_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function function_data(ast_node $node): function_structure
 	{
-		return object_cast($node->structure, function_structure::class);
+		return object_cast($node->payload(), function_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function parameter_data(ast_node $node): parameter_structure
 	{
-		return object_cast($node->structure, parameter_structure::class);
+		return object_cast($node->payload(), parameter_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function call_data(ast_node $node): call_structure
 	{
-		return object_cast($node->structure, call_structure::class);
+		return object_cast($node->payload(), call_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function binding_data(ast_node $node): binding_structure
 	{
-		return object_cast($node->structure, binding_structure::class);
+		return object_cast($node->payload(), binding_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function return_data(ast_node $node): return_structure
 	{
-		return object_cast($node->structure, return_structure::class);
+		return object_cast($node->payload(), return_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function statement_data(ast_node $node): expression_statement_structure
 	{
-		return object_cast($node->structure, expression_statement_structure::class);
+		return object_cast($node->payload(), expression_statement_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function struct_data(ast_node $node): struct_structure
 	{
-		return object_cast($node->structure, struct_structure::class);
+		return object_cast($node->payload(), struct_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function field_data(ast_node $node): field_structure
 	{
-		return object_cast($node->structure, field_structure::class);
+		return object_cast($node->payload(), field_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function field_access_data(ast_node $node): field_access_structure
 	{
-		return object_cast($node->structure, field_access_structure::class);
+		return object_cast($node->payload(), field_access_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function array_data(ast_node $node): array_literal_structure
 	{
-		return object_cast($node->structure, array_literal_structure::class);
+		return object_cast($node->payload(), array_literal_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function array_type_data(ast_node $node): array_type_structure
 	{
-		return object_cast($node->structure, array_type_structure::class);
+		return object_cast($node->payload(), array_type_structure::class);
 	}
 
 	/** Checked shared payload access; retains the node-owned record identity. */
 	public static function index_data(ast_node $node): index_structure
 	{
-		return object_cast($node->structure, index_structure::class);
+		return object_cast($node->payload(), index_structure::class);
 	}
 }

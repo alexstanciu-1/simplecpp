@@ -150,3 +150,14 @@ and execute generated C++ samples when relevant to S2S output. Those sample chec
 are distinct from compiling the compiler itself. Report native verification as not
 run for a change unless explicitly requested and completed. This overrides earlier
 routine native-proof expectations for this project, including skill defaults.
+
+## Structure boundaries
+
+Keep compiler decisions outside retained structures. Structures may initialize data,
+maintain local representation invariants, expose typed access/navigation and simple
+queries, and clear their own derived fields. Stage sequencing and tree cleanup belong
+to Compiler_Lifecycle/Preparation_Cleanup; scope publication and replacement policy
+belong to Scope_Publication. Prefer named node accessors and first_child()/next()
+over payload chains. children_snapshot() explicitly copies membership. Preserve source
+order and stable storage positions; do not sort AST/storage membership as a convenience.
+See [the model boundary](architecture/MODEL.md#structure-and-processing-boundary).

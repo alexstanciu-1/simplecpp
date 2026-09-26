@@ -31,13 +31,13 @@ try
 	file_put_contents($caller, 'return value();');
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
-	$compiler->exec();
+	$compiler->exec_llvm();
 	$baseline = smoke_output();
 	$old_syntax = Model::$syntax_files[0];
 	$kept_caller = Model::$syntax_files[1];
 
 	file_put_contents($definition, 'function value(): int { return 2; }');
-	$compiler->update([$definition]);
+	$compiler->update_llvm([$definition]);
 	$targets = Scope_Lookup::live(Model::$global_scope->functions_named('value'));
 	smoke_require(count($targets) === 1, 'Update lost unique function target');
 	smoke_require($targets[0]->changes === SYNC_BODY_CHANGED, 'Wrong body-change flags');
@@ -52,13 +52,13 @@ try
 	file_put_contents($definition, $original);
 	if ($restore_check)
 	{
-		$compiler->update([$definition]);
+		$compiler->update_llvm([$definition]);
 		$restored = smoke_output();
 		smoke_require($restored === $baseline, 'Restore differs from original full-build output');
 		smoke_require(Model::$syntax_files[1] === $kept_caller, 'Restore reparsed unchanged caller');
 		$fresh = new Compiler();
 		$fresh->init([$directory]);
-		$fresh->exec();
+		$fresh->exec_llvm();
 		smoke_require(smoke_output() === $restored, 'Restored incremental output differs from fresh build');
 	}
 }

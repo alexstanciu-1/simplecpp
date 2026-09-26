@@ -157,7 +157,7 @@ final class LLVM_Preparation_Run
 	{
 		$lookup_token_index /** int */ = (int) $syntax->token_index;
 		if (!isset($function->file->names->template_slots[$lookup_token_index])) {
-			$tokens /** Storage<token> */ = $function->file->source->source->tokens;
+			$tokens /** Storage<token> */ = $function->file->source->token_snapshot()->tokens;
 			return $tokens[(int) $syntax->token_index]->text();
 		}
 		$slot /** int */ = $function->file->names->template_slots[(int) $syntax->token_index];
@@ -185,7 +185,7 @@ final class LLVM_Preparation_Run
 	{
 		$file = $function->file;
 		$entries /** Storage<collected_name> */ = $file->source->entries;
-		$tokens /** Storage<token> */ = $file->source->source->tokens;
+		$tokens /** Storage<token> */ = $file->source->token_snapshot()->tokens;
 		$struct_types /** Keyed_Storage<llvm_struct_type> */ = $file->struct_types;
 		$parameters /** Storage<llvm_parameter> */ = $function->parameters;
 		$external_functions /** Keyed_Storage<llvm_prepared_function> */ = $file->external_functions;

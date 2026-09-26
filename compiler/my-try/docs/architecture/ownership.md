@@ -29,7 +29,7 @@ store or Storage_View remains. Collection files own occurrence entries and work 
 LLVM modules own functions; functions own operands and blocks; blocks own text.
 
 file.tokens and parsed_file.collection are convenience links to Model results.
-collected_file.root mirrors parsed_file.root. collected_name.file/scope and scope.enclosing
+collected_file.root mirrors parsed_file.root. collected_name.collection/scope and scope.enclosing
 are backward/context links; scope name maps index collection entries. AST operands
 and type syntax are direct child relationships. Collection/preparation node references
 point into parsed_file.root's syntax graph, not a nonexistent parsed_file.nodes store.
@@ -112,9 +112,9 @@ native compiler verification for this change is deferred until explicitly reques
 scan-only, parse-only and synchronization work. `compiler/sync/sources.php` plans
 source candidates and resets notification flags; `compiler/sync/declarations.php`
 compares declaration inventories. `compiler/publication.php` publishes completed
-work and restores retained root ordering. It owns the replacement policy: remove
-superseded live references, retain deletion evidence. Scope performs the private
-index mutation requested by that owner.
+work and restores retained root ordering. It delegates scope replacement policy to `compiler/scope_publication.php`: remove
+superseded live references, retain deletion evidence. Scope exposes membership and
+private-index operations; it does not select the publication/replacement policy.
 
 `03_parse/scopes/structures.php` encapsulates the shared scope representation;
 `03_parse/scopes/lookup.php` owns ordinary parent/publication lookup. The parser supplies
@@ -125,9 +125,9 @@ type definitions. `04_analyze/prepare/literals.php` prepares integer literals;
 `04_analyze/prepare/file.php` prepares supported file expressions and bindings;
 `05_backend/cpp/types.php` maps canonical types to C++ representations.
 
-Deliberate retained boundaries: `Model::reset_syntax` establishes a complete usable
+`compiler/lifecycle.php` owns reset sequencing. `Compiler_Lifecycle::reset_syntax` establishes a complete usable
 root graph, including installing built-ins through `Language_Types`. Every reset
-caller needs that invariant; no second bootstrap path is introduced. Tokenizer's
+caller uses that single processing owner; Model only retains the resulting roots. Tokenizer's
 public operation continues to acquire disk bytes through `File_Loader` as well as
 accepting in-memory input. The frontend worker preserves that per-file chain;
 standalone reparse consumes existing snapshots without reading disk. Host reporting

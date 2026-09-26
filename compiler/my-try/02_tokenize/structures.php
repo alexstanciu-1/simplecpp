@@ -49,4 +49,10 @@ final class token_list
 	{
 		$this->tokens = new Storage /** Storage<token> */();
 	}
+
+	public function text_at(int $index): string
+	{
+		$tokens /** Storage<token> */ = $this->tokens;
+		return $tokens[$index]->text();
+	}
 }

@@ -110,7 +110,7 @@ final class Template_File_Checker
 			}
 			return $bindings[$slot];
 		}
-		$tokens /** Storage<token> */ = $file->source->source->tokens;
+		$tokens /** Storage<token> */ = $file->source->token_snapshot()->tokens;
 		$name = $tokens[(int) $node->token_index]->text();
 		if (!isset($this->context->policy->types[$name])) {
 			throw new \RuntimeException('Template proof supports only int, void and bound type parameters');
@@ -191,7 +191,7 @@ final class Template_File_Checker
 			throw new \RuntimeException('Generic call argument count mismatch');
 		}
 		// Name bindings for a target file remain shared and independent of this checking context.
-		$target_file = $this->context->files[$target->file];
+		$target_file = $this->context->files[$target->collection];
 		foreach (Syntax_Nodes::call_data($node)->arguments as $index => $argument)
 		{
 			$parameter = Syntax_Nodes::parameter_data($parameters[$index]);

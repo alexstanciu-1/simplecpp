@@ -29,7 +29,7 @@ final class collected_name
 	 * @storage.reference model.collected_files
 	 * @reference.weak
 	 */
-	public collected_file $file;
+	public collected_file $collection;
 	/** @storage.index collected_file.entries */
 	public int $local_index;
 	public string $name;
@@ -48,6 +48,16 @@ final class collected_name
 	public ast_node $node;
 	/** @storage.index token_list.tokens */
 	public int $token_index;
+
+	public function source_file(): file
+	{
+		return $this->collection->source_file();
+	}
+
+	public function token_snapshot(): token_list
+	{
+		return $this->collection->token_snapshot();
+	}
 }
 
 /** One parse's occurrences plus retained deleted declarations; duplicate names never merge. */
@@ -56,7 +66,7 @@ final class collected_file
 	/**
 	 * @storage.reference model.tokens
 	 */
-	public token_list $source;
+	private token_list $tokens;
 	/**
 	 * Convenience mirror of parsed_file.root; not a second AST owner.
 	 * @reference.source parsed_file.root (syntax graph)
@@ -68,6 +78,7 @@ final class collected_file
 	 * @storage.owner
 	 */
 	public Storage $entries /** Storage<collected_name> */;
+
 	/**
 	 * Positions in this entries store, including retained deleted declarations.
 	 * Deleted rows retain old provenance; inspect changes before other fields.
@@ -100,8 +111,19 @@ final class collected_file
 	 */
 	public array $pending_bindings /** vector<int> */ = [];
 
-	public function __construct()
+	public function __construct(token_list $tokens)
 	{
+		$this->tokens = $tokens;
 		$this->entries = new Storage /** Storage<collected_name> */();
+	}
+
+	public function source_file(): file
+	{
+		return $this->tokens->file;
+	}
+
+	public function token_snapshot(): token_list
+	{
+		return $this->tokens;
 	}
 }

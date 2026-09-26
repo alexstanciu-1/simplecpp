@@ -25,7 +25,7 @@ try
 	$compiler->init([$directory]);
 	$failed = false;
 	try {
-		$compiler->exec();
+		$compiler->exec_llvm();
 	}
 	catch (\RuntimeException $expected) {
 		$failed = true;
@@ -37,7 +37,7 @@ try
 	$compiler->init([$directory]);
 	unlink($directory . '/a.phs');
 	try {
-		$compiler->exec();
+		$compiler->exec_llvm();
 		throw new \LogicException('Missing file after discovery was accepted');
 	}
 	catch (\RuntimeException $expected) {

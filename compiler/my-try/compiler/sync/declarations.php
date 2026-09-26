@@ -36,7 +36,7 @@ final class Declaration_Changes
 		elseif ($body) {
 			return '';
 		}
-		return self::spelling($entry->file->source, $start, $end);
+		return self::spelling($entry->token_snapshot(), $start, $end);
 	}
 
 	/** Names identify candidate groups; enclosing syntax distinguishes members and function locals. */
@@ -44,7 +44,7 @@ final class Declaration_Changes
 	{
 		$key = Node_Kind_Name::text($entry->node->kind) . ':' . $entry->name;
 		$parent = $entry->node->parent();
-		$tokens /** Storage<token> */ = $entry->file->source->tokens;
+		$tokens /** Storage<token> */ = $entry->token_snapshot()->tokens;
 		while ($parent !== null)
 		{
 			$node = object_cast($parent, ast_node::class);

@@ -2,9 +2,11 @@
 Doc Status: supporting
 
 ```text
-Compiler::init(paths) -> Model::reset + Module_Loader discovery (no reads)
-Compiler::exec() -> sync(all live paths) -> llvm()
-Compiler::update(paths) -> sync(notified paths) -> llvm()
+Compiler::init(paths) -> Compiler_Lifecycle::reset + Module_Loader discovery (no reads)
+Compiler::exec_cpp() -> sync(all live paths) -> cpp()
+Compiler::exec_llvm() -> sync(all live paths) -> llvm()
+Compiler::update_cpp(paths) -> sync(notified paths) -> cpp()
+Compiler::update_llvm(paths) -> sync(notified paths) -> llvm()
 Compiler::sync(paths)
   private file -> worker read/tokenize -> parse/collect
   locked publish_update -> compare declarations -> replace file + update globals

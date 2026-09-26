@@ -40,7 +40,7 @@ final class LLVM_Test
 				throw new \RuntimeException('Incorrect output module structure');
 			}
 			$file = Model::$collected_files[0];
-			if ($file->source->content !== $source) {
+			if ($file->token_snapshot()->content !== $source) {
 				throw new \RuntimeException('Source content changed');
 			}
 			foreach ($file->defined_elements as $index) {
@@ -175,9 +175,9 @@ final class LLVM_Test
 	/** Prove that the independent body block owns locals and declarations emit no call. */
 	private static function check_function_scope(collected_file $file, llvm_module $module): void
 	{
-		$global = $file->root->structure->scope;
-		$function = $global->functions_named('example')[0]->node->structure;
-		$local = $function->body->structure->scope;
+		$global = $file->root->payload()->scope;
+		$function = $global->functions_named('example')[0]->node->payload();
+		$local = $function->body->payload()->scope;
 		if (($function->body->kind !== node_kind::block) || ($local === $global) || ($local->parent_scope() !== $global) || !$local->is_function() || (count($global->variables_named('a')) !== 1) || (count($local->variables_named('a')) !== 1)) {
 			throw new \RuntimeException('Incorrect block or scope ownership');
 		}
@@ -198,7 +198,7 @@ final class LLVM_Test
 		$compiler->init([$directory]);
 		ob_start();
 		try {
-			$compiler->exec();
+			$compiler->exec_llvm();
 		}
 		catch (\Throwable $error) {
 			if (!Model::$llvm_files->is_empty()) {

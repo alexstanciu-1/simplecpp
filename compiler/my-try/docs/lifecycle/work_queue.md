@@ -80,7 +80,7 @@ The native compiler harness checks PHP/output parity, repeated runs and recovery
 
 Compiler.tokenize is an explicit read/tokenize-only batch for callers that want a
 stage boundary; Compiler.parse reparses retained snapshots without disk reads.
-Compiler.exec uses sync, the combined update chain, instead of these two batch APIs.
+Compiler.exec_llvm uses sync, the combined update chain, instead of these two batch APIs.
 Tokens and parsing results are published together after a successful full-chain job.
 A parse failure in exec therefore does not publish that job's private token result;
 explicit tokenize() followed by parse() retains the already published token batch.

@@ -134,71 +134,55 @@ final class scope
 		return q_count($this->variables) !== 0;
 	}
 
-	/** Publish references from a completed root without copying source/type identities. */
-	public static function publish(scope $local_scope, scope $global): void
+	public function set_publication(scope $global): void
 	{
-		if ($local_scope->published_scope() !== null) {
-			throw new \LogicException('Parsed file was already published');
-		}
-		foreach ($local_scope->functions as $name => $entries) {
-			foreach ($entries as $entry) {
-				$global->functions[$name][] = $entry;
-			}
-		}
-		foreach ($local_scope->variables as $name => $entries) {
-			foreach ($entries as $entry) {
-				$global->variables[$name][] = $entry;
-			}
-		}
-		$types /** Storage<type_definition> */ = $local_scope->types;
-		foreach ($types as $definition) {
-			$global->register_type($definition);
-		}
-		$local_scope->publication = $global;
+		$this->publication = $global;
 	}
 
-	/** Drop superseded live definitions from one file while retaining deletion evidence. */
-	public function replace_source(string $path): void
+	/** Snapshot of local declaration references; no liveness or publication policy. */
+	public function declarations(): array /** vector<collected_name> */
 	{
-		$this->variables = self::retain_other($this->variables, $path);
-		$this->functions = self::retain_other($this->functions, $path);
-		$types /** Storage<type_definition> */ = new Storage();
-		$previous /** Storage<type_definition> */ = $this->types;
-		foreach ($previous as $definition)
-		{
-			$keep = true;
-			if ($definition->declaration !== null) {
-				$entry = object_cast($definition->declaration, collected_name::class);
-				if ($entry->changes !== \scpp\compiler\SYNC_DELETED) {
-					$keep = $entry->file->source->file->path !== $path;
-				}
-			}
-			if ($keep) {
-				$types->append($definition);
+		$result /** vector<collected_name> */ = [];
+		foreach ($this->functions as $entries) {
+			foreach ($entries as $entry) {
+				$result[] = $entry;
 			}
 		}
-		$this->types = $types;
-	}
-
-	/** Replacement keeps other files and tombstones; it does not create version history. */
-	private static function retain_other(array $index /** hash<vector<collected_name>> */, string $path): array /** hash<vector<collected_name>> */
-	{
-		$result /** hash<vector<collected_name>> */ = [];
-		foreach ($index as $name => $entries)
-		{
-			foreach ($entries as $entry)
-			{
-				if ($entry->changes === \scpp\compiler\SYNC_DELETED) {
-					$result[$name][] = $entry;
-					continue;
-				}
-				if ($entry->file->source->file->path !== $path) {
-					$result[$name][] = $entry;
-				}
+		foreach ($this->variables as $entries) {
+			foreach ($entries as $entry) {
+				$result[] = $entry;
 			}
 		}
 		return $result;
 	}
-}
 
-/** Completed parsing output, sharing its source and collection with other model roots. */
+	/** Snapshot membership while preserving type-definition identity. */
+	public function type_definitions(): array /** vector<type_definition> */
+	{
+		$result /** vector<type_definition> */ = [];
+		$types /** Storage<type_definition> */ = $this->types;
+		foreach ($types as $definition) {
+			$result[] = $definition;
+		}
+		return $result;
+	}
+
+	/** Rebuild local indexes from a caller-selected membership. */
+	public function replace_declarations(array $entries /** vector<collected_name> */): void
+	{
+		$this->functions = [];
+		$this->variables = [];
+		foreach ($entries as $entry) {
+			$this->register($entry);
+		}
+	}
+
+	/** Replace membership without deciding which definitions belong in this scope. */
+	public function replace_types(array $definitions /** vector<type_definition> */): void
+	{
+		$this->types = new Storage /** Storage<type_definition> */();
+		foreach ($definitions as $definition) {
+			$this->register_type($definition);
+		}
+	}
+}

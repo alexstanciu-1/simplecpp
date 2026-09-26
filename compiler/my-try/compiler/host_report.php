@@ -38,10 +38,10 @@ final class Host_Report
 		echo "\nCollected names (global and function-local scopes)\n";
 		foreach (Model::$collected_files as $file)
 		{
-			if ($file->source->file->changes === SYNC_DELETED) {
+			if ($file->source_file()->changes === SYNC_DELETED) {
 				continue;
 			}
-			echo '  ' . htmlspecialchars($file->source->file->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
+			echo '  ' . htmlspecialchars($file->source_file()->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			foreach (['defined_elements', 'type_references', 'variable_references', 'function_references', 'field_references', 'pending_bindings'] as $group)
 			{
 echo "    $group\n";
@@ -74,9 +74,9 @@ echo "    $group\n";
 	private function dump_node(ast_node $node, int $depth, token_list $tokens): void
 	{
 		$label = $node->kind->name;
-		$payload = $node->structure;
+		$payload = $node->payload();
 		if ($payload instanceof binding_structure) {
-			$label .= ' (' . $payload->classification->name . ')';
+			$label .= ' (' . $payload->syntax_kind->name . ')';
 		}
 		$words /** vector<string> */ = [];
 		for ($index = $node->token_index; $index < $node->end_token_index; $index++) {

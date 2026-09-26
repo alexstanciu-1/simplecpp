@@ -11,25 +11,25 @@ function parse_private(string $name, string $content): parsed_file
 	return (new Parser((new Tokenizer($input))->tokenize()))->parse();
 }
 
-Model::reset();
+Compiler_Lifecycle::reset();
 $first = parse_private('first.phs', 'function exported(): int { $private int = 4; return $private; }');
 $second = parse_private('second.phs', 'return exported();');
 if (!Model::$syntax_files->is_empty() || Model::$global_scope->has_functions()) {
 	throw new \LogicException('Private parsing published global state');
 }
 // Deliberately publish the use before its definition.
-Compiler::publish_parsed($second);
-Compiler::publish_parsed($first);
+Source_Publication::publish_parsed($second);
+Source_Publication::publish_parsed($first);
 if (count(Model::$global_scope->functions_named('exported')) !== 1 || (count(Model::$global_scope->variables_named('private')) !== 0)) {
 	throw new \LogicException('Publication lost an export or exposed function locals');
 }
 $resolved = (new Name_Preparation())->prepare($second->collection);
 $entry = $second->collection->entries[$second->collection->function_references[0]];
-if ($resolved->function_references[$entry->token_index]->file !== $first->collection) {
+if ($resolved->function_references[$entry->token_index]->collection !== $first->collection) {
 	throw new \LogicException('Publication changed cross-file identity');
 }
 try {
-	Compiler::publish_parsed($first);
+	Source_Publication::publish_parsed($first);
 	throw new \RuntimeException('Duplicate publication accepted');
 }
 catch (\LogicException $expected) {
@@ -39,7 +39,7 @@ if (count(Model::$global_scope->functions_named('exported')) !== 1) {
 }
 // A local definition must not hide a conflicting published declaration.
 $duplicate = parse_private('duplicate.phs', 'function exported(): int { return 2; } return exported();');
-Compiler::publish_parsed($duplicate);
+Source_Publication::publish_parsed($duplicate);
 try {
 	(new Name_Preparation())->prepare($duplicate->collection);
 	throw new \RuntimeException('File ownership hid a global duplicate');

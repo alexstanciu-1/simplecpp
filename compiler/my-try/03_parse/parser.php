@@ -296,7 +296,7 @@ final class Parser_Run
 			$base = $this->node(node_kind::variable_reference, $start);
 			$this->record_name($base, $start, collected_name_kind::variable_reference, $this->current_scope);
 			$binding->target = $this->access_suffix($base);
-			$binding->classification = binding_kind::assignment;
+			$binding->syntax_kind = binding_kind::assignment;
 		}
 
 		// A named element type may have one fixed-array suffix.
@@ -306,7 +306,7 @@ final class Parser_Run
 			$type_node = $this->node(node_kind::identifier, $type_start);
 			$binding->type_syntax = $type_node;
 			$this->record_name($binding->type_syntax, $type_start, collected_name_kind::type_reference, $this->current_scope);
-			$binding->classification = binding_kind::declaration;
+			$binding->syntax_kind = binding_kind::declaration;
 			if ($this->text() === '[') {
 				$binding->type_syntax = $this->array_type($type_node);
 			}
@@ -321,7 +321,7 @@ final class Parser_Run
 
 		$binding->semicolon_token_index = $this->expect(';');
 		$node = $this->payload_node(node_kind::variable_binding_statement, $start, $binding);
-		$kind = $binding->classification === binding_kind::declaration ? collected_name_kind::variable_declaration : collected_name_kind::binding;
+		$kind = $binding->syntax_kind === binding_kind::declaration ? collected_name_kind::variable_declaration : collected_name_kind::binding;
 		if ($binding->target === null) {
 			$this->record_name($node, $start, $kind, $this->current_scope);
 		}

@@ -2,7 +2,7 @@
 
 /*
  * Role: coordinate the currently imported compiler stages.
- * Call map: init -> exec/update -> sync (private read/tokenize/parse, locked replacement) -> cpp/llvm.
+ * Call map: init -> exec_cpp/update_cpp or exec_llvm/update_llvm -> sync (private read/tokenize/parse, locked replacement) -> cpp/llvm.
  * Output: retained sources, syntax, collection and separately selected C++/LLVM artifacts.
  */
 namespace scpp\compiler;
@@ -22,7 +22,7 @@ final class Compiler
 	/** Discover one module per input folder, retaining the requested order. */
 	public function init(array $paths /** vector<string> */): void
 	{
-		Model::reset();
+		Compiler_Lifecycle::reset();
 
 		foreach ($paths as $path) {
 			$input_module = new module();
@@ -31,7 +31,7 @@ final class Compiler
 		}
 	}
 	/** Experimental LLVM entry remains available for existing regression callers. */
-	public function exec(): void
+	public function exec_llvm(): void
 	{
 		$this->sync_live();
 		$this->llvm();
@@ -59,7 +59,7 @@ final class Compiler
 	}
 
 	/** Apply file notifications, then rerun all existing resolution/preparation and generation. */
-	public function update(array $paths /** vector<string> */): void
+	public function update_llvm(array $paths /** vector<string> */): void
 	{
 		$this->sync($paths);
 		$this->llvm();
@@ -77,8 +77,8 @@ final class Compiler
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');
 		}
-		Model::reset_llvm();
-		Model::reset_cpp();
+		Compiler_Lifecycle::reset_llvm();
+		Compiler_Lifecycle::reset_cpp();
 		$queue = Source_Synchronization::plan($paths);
 		$items /** vector<source_work> */ = $queue->items();
 		$published = task_run_publish_unordered($items, $this->jobs,
@@ -96,7 +96,7 @@ final class Compiler
 		Source_Publication::order_roots();
 	}
 
-	/** Standalone parallel scanning; exec uses the combined pipeline without this barrier. */
+	/** Standalone parallel scanning; compilation uses the combined pipeline without this barrier. */
 	public function tokenize(): void
 	{
 		$this->frontend(frontend_operation::scan);
@@ -112,10 +112,10 @@ final class Compiler
 	private function frontend(frontend_operation $operation): void
 	{
 		if ($operation === frontend_operation::scan) {
-			Model::reset_tokens();
+			Compiler_Lifecycle::reset_tokens();
 		}
 		else {
-			Model::reset_syntax();
+			Compiler_Lifecycle::reset_syntax();
 		}
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');
@@ -149,19 +149,13 @@ final class Compiler
 		Source_Publication::order_stage($items, $operation);
 	}
 
-	/** Compatibility entry for callers publishing a completed parse under serialization. */
-	public static function publish_parsed(parsed_file $parsed): void
-	{
-		Source_Publication::publish_parsed($parsed);
-	}
-
 	/** Publish complete preparation and C++ together; unsupported input leaves no stale output. */
 	public function cpp(): void
 	{
-		Model::reset_cpp();
+		Compiler_Lifecycle::reset_cpp();
 		$sources /** Storage<collected_file> */ = new Storage();
 		foreach (Model::$collected_files as $source) {
-			if ($source->source->file->changes !== \scpp\compiler\SYNC_DELETED) {
+			if ($source->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
 				$sources->append($source);
 			}
 		}
@@ -175,7 +169,7 @@ final class Compiler
 			Model::$cpp_files[] = $output;
 		}
 		catch (\Throwable $error) {
-			Model::reset_cpp();
+			Compiler_Lifecycle::reset_cpp();
 			throw $error;
 		}
 	}
@@ -183,11 +177,11 @@ final class Compiler
 	/** Prepare all sources and emit one LLVM module per source file. */
 	public function llvm(): void
 	{
-		Model::reset_llvm();
+		Compiler_Lifecycle::reset_llvm();
 		$policy = new llvm_policy();
 		$sources /** Storage<collected_file> */ = new Storage();
 		foreach (Model::$collected_files as $source) {
-			if ($source->source->file->changes !== \scpp\compiler\SYNC_DELETED) {
+			if ($source->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
 				$sources->append($source);
 			}
 		}

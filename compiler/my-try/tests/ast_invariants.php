@@ -12,7 +12,7 @@ function check_binding_invariants(): void
 		for ($mask = 0; $mask < 16; $mask++)
 		{
 			$binding = new binding_structure();
-			$binding->classification = $kind;
+			$binding->syntax_kind = $kind;
 			$binding->type_syntax = ($mask & 1) !== 0 ? new identifier_node() : null;
 			$binding->target = ($mask & 2) !== 0 ? new identifier_node() : null;
 			$binding->value = ($mask & 4) !== 0 ? new identifier_node() : null;

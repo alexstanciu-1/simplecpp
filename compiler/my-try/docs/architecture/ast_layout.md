@@ -7,9 +7,11 @@ publication path allocates that subclass, validates the additional structure and
 local invariants, checks/sets its span, and links its complete child list.
 
 The base retains uint32 token_index and end_token_index (exclusive end), kind and
-optional node_structure. Extra syntax data uses named *_structure records. Leaf
-kinds have no structure. Syntax_Nodes retains typed *_data accessors so semantic
-workers do not depend on the concrete structure representation.
+a private optional node_structure. Extra syntax data uses named *_structure records.
+Leaf kinds have no payload. Concrete nodes provide named structural accessors;
+Syntax_Nodes retains typed *_data accessors as the experimental LLVM bridge.
+An intermediate expression_node owns optional expression facts; binding nodes own
+their distinct binding facts. Constructors and these accessors perform no preparation.
 
 ## Fixed navigation fields
 
@@ -26,7 +28,7 @@ All navigation state is private:
 A root's position is zero but has no sibling meaning. parent(), prev(), next() and
 first_child() return nullable node handles. child_position() exposes the ordinal
 as an ordinary int for current Storage/map APIs. has_children() needs no allocation.
-children() returns a fresh Storage membership snapshot in linked order; editing
+children_snapshot() returns a fresh Storage membership snapshot in linked order; editing
 that snapshot does not edit the tree. Hot walks can use first_child()/next()
 without allocating a snapshot. Each native parent/prev access acquires a shared
 handle and returns null if the weak target is absent/expired. PHP uses ordinary
@@ -45,8 +47,8 @@ retained as navigation state. Linking uses one pass to validate and another to
 publish. Parser children are complete before their parent is built.
 
 This is a build-once tree. No insertion, removal, moving, relinking or automatic
-synchronization after publication is supported. Public kind/structure/span fields
-and named child aliases must not be rewritten to contradict the published tree.
+synchronization after publication is supported. Public kind/span fields
+and payload contents/named child aliases must not be rewritten to contradict the published tree.
 initialize() belongs only to construction, before linking/publication.
 
 The child/sibling chain provides uniform ownership and traversal. For this first
@@ -91,3 +93,18 @@ construction goes exclusively through concrete subclasses.
 
 See the linked-AST native evidence under
 specs/planning/compiler_migration/results/linked-ast-native-01.
+
+## Access and preparation
+
+Use first_child()/next() for an allocation-free walk, and children_snapshot() when
+independent membership is needed. Preparation, C++ emission and cleanup traverse
+the published links. Named methods such as initializer(), expression(), body(),
+arguments() and declared_type() expose grammar roles without exposing payload layout.
+Returned named Storage lists are retaining aliases, not independent snapshots; callers
+must not edit them after publication or reorder source-defined children.
+
+preparation() returns nullable facts, require_preparation() requires them, and
+set_preparation() attaches a processor's result. clear_preparation() only clears
+that node's slot; Preparation_Cleanup owns walking the tree. Fact access does not
+select a backend, infer types or start processing. The earlier Prepared_Nodes
+kind-dispatch helper is no longer needed.

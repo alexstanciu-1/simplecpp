@@ -28,13 +28,13 @@ try
 	file_put_contents($b, 'return value();');
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
-	$compiler->exec();
+	$compiler->exec_llvm();
 	sync_check(sync_function('value')->changes === SYNC_ADDED, 'Initial build is not all-added');
 	$old_node = sync_function('value')->node;
 	$old_tokens = Model::$tokens[0];
 	$unchanged = Model::$syntax_files[1];
 	file_put_contents($a, 'function value(): int { return 2; } struct Box { int $item; }');
-	$compiler->update([$a]);
+	$compiler->update_llvm([$a]);
 	sync_check(sync_function('value')->changes === SYNC_BODY_CHANGED, 'Body edit changed signature');
 	sync_check(sync_function('value')->node !== $old_node && Model::$tokens[0] !== $old_tokens, 'Syntax was patched instead of replaced');
 	sync_check(Model::$syntax_files[1] === $unchanged, 'Unchanged file was reparsed');
@@ -76,7 +76,7 @@ try
 	}
 	catch (\RuntimeException $expected) {
 	}
-	sync_check(Model::$syntax_files[0] === $kept && sync_function('replacement')->file === $kept->collection, 'Failed candidate damaged publication');
+	sync_check(Model::$syntax_files[0] === $kept && sync_function('replacement')->collection === $kept->collection, 'Failed candidate damaged publication');
 	sync_check(Model::$modules[0]->files[0]->content === $kept->tokens->content, 'Failed candidate changed published source');
 	sync_check(Model::$llvm_files->is_empty(), 'Failed update retained generated output');
 
@@ -90,14 +90,14 @@ try
 		sync_check($entry->changes === 0, 'Reordered equivalent duplicate changed');
 	}
 	file_put_contents($a, 'function value(): int { return 4; }');
-	$compiler->update([$a]);
+	$compiler->update_llvm([$a]);
 	sync_check(sync_function('value')->changes === 0, 'Surviving duplicate lost exact match');
 	unlink($a);
 	$compiler->sync([$a]);
 	sync_check((Model::$modules[0]->files[0]->changes & SYNC_DELETED) !== 0, 'Deleted file disappeared instead of remaining marked');
 	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 0, 'Deleted file still exports functions');
 	file_put_contents($a, 'function value(): int { return 6; }');
-	$compiler->update([$a]);
+	$compiler->update_llvm([$a]);
 	sync_check(sync_function('value')->changes === SYNC_ADDED, 'Historical tombstone participated in matching');
 	sync_check(count(Model::$llvm_files) === 2, 'Deleted file was generated');
 	$compiler->sync([]);
@@ -108,14 +108,14 @@ try
 	$compiler->sync([$c]);
 	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 2, 'New file erased another definition');
 	unlink($c);
-	$compiler->update([$c]);
+	$compiler->update_llvm([$c]);
 	sync_check(sync_function('value')->changes === 0, 'Deletion damaged another file definition');
 	file_put_contents($a, 'function value(int $x): int { return 10; }');
 	$compiler->sync([$a]);
 	sync_check(sync_function('value')->changes === (SYNC_CHANGED + SYNC_BODY_CHANGED), 'Combined declaration/body flags wrong');
 	file_put_contents($a, 'function value(): int { return 6; }');
 	$compiler->init([$directory]);
-	$compiler->exec();
+	$compiler->exec_llvm();
 	sync_check(count(Model::$modules[0]->files) === 2 && count(Model::$global_scope->functions_named('value')) === 1, 'Full module rebuild retained tombstones');
 }
 finally {

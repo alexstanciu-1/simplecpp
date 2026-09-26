@@ -11,7 +11,7 @@ function s2s_parse(string $text): parsed_file
 	$input->path = 's2s.phs';
 	$input->content = $text;
 	$syntax = (new Parser((new Tokenizer($input))->tokenize()))->parse();
-	Compiler::publish_parsed($syntax);
+	Source_Publication::publish_parsed($syntax);
 	return $syntax;
 }
 
@@ -29,7 +29,7 @@ $cases = [
 $executions = [];
 foreach ($cases as $name => [$source, $exit])
 {
-	Model::reset();
+	Compiler_Lifecycle::reset();
 	$syntax = s2s_parse($source);
 	$before = serialize($syntax);
 	$compiler = new Compiler();
@@ -55,7 +55,7 @@ foreach ($cases as $name => [$source, $exit])
 }
 foreach (['$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a int;', 'function f(): int { return 1; }'] as $source)
 {
-	Model::reset();
+	Compiler_Lifecycle::reset();
 	s2s_parse($source);
 	$failed = false;
 	try {
@@ -70,7 +70,7 @@ foreach (['$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();
 }
 
 // A standalone preparation failure must clear an earlier successful statement too.
-Model::reset();
+Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; $b = $missing;');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $first_node = $children[0];
@@ -83,12 +83,12 @@ try {
 catch (\RuntimeException $expected) {
 	$failed = true;
 }
-if ((!$failed) || ($first_node->prepared !== null) || ($first_literal->prepared !== null) || (serialize($syntax) !== $before)) {
+if ((!$failed) || ($first_node->preparation() !== null) || ($first_literal->preparation() !== null) || (serialize($syntax) !== $before)) {
 	throw new \LogicException('Standalone failure left prepared facts or changed syntax');
 }
 
 // Emission failure after successful preparation must also release attached facts.
-Model::reset();
+Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $first_node = $children[0];
@@ -101,12 +101,12 @@ try {
 catch (\RuntimeException $expected) {
 	$failed = true;
 }
-if ((!$failed) || ($first_node->prepared !== null) || ($first_literal->prepared !== null) || (!Model::$prepared_files->is_empty()) || (!Model::$cpp_files->is_empty())) {
+if ((!$failed) || ($first_node->preparation() !== null) || ($first_literal->preparation() !== null) || (!Model::$prepared_files->is_empty()) || (!Model::$cpp_files->is_empty())) {
 	throw new \LogicException('Emission failure left prepared facts or output');
 }
 
 // The cleanup traversal reaches nested specialized nodes through syntax-only parents.
-Model::reset();
+Compiler_Lifecycle::reset();
 $syntax = s2s_parse('function nested(): int { return 7; }');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $body = Syntax_Nodes::function_data($children[0])->body;
@@ -116,26 +116,26 @@ $before = serialize($syntax);
 $facts = new prepared_expression();
 $facts->type = Language_Types::integer(Model::$language_scope);
 $facts->literal = '7';
-$nested_literal->prepared = $facts;
-Model::reset_cpp();
-if (($nested_literal->prepared !== null) || (serialize($syntax) !== $before)) {
+$nested_literal->set_preparation($facts);
+Compiler_Lifecycle::reset_cpp();
+if (($nested_literal->preparation() !== null) || (serialize($syntax) !== $before)) {
 	throw new \LogicException('Nested node cleanup changed syntax or missed attached facts');
 }
 
 // Reset must clear the old graph before dropping it, including externally retained nodes.
-Model::reset();
+Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
 (new Compiler())->cpp();
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $first_node = $children[0];
 $first_literal = Syntax_Nodes::binding_data($first_node)->value;
-Model::reset_syntax();
-if (($first_node->prepared !== null) || ($first_literal->prepared !== null)) {
+Compiler_Lifecycle::reset_syntax();
+if (($first_node->preparation() !== null) || ($first_literal->preparation() !== null)) {
 	throw new \LogicException('Syntax reset dropped roots before cleaning their nodes');
 }
 
 // Ordinary parent traversal permits source shadowing; reserved-name enforcement is deferred.
-Model::reset();
+Compiler_Lifecycle::reset();
 $syntax = s2s_parse('struct int { int $field; }');
 $root = Syntax_Nodes::block_data($syntax->root)->scope;
 $local = new scope();

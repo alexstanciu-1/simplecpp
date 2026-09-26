@@ -42,7 +42,7 @@ final class Name_Preparation
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("LLVM experiment needs one same-file declaration for " . $entry->name . " at token " . $entry->token_index));
 			}
-			if ($candidates[0]->file !== $file) {
+			if ($candidates[0]->collection !== $file) {
 				throw new \RuntimeException('LLVM experiment needs one same-file declaration for ' . $entry->name . ' at token ' . $entry->token_index);
 			}
 			if (($entry->kind === collected_name_kind::binding) && ($candidates[0]->token_index >= $entry->token_index)) {
@@ -74,7 +74,7 @@ final class Name_Preparation
 				$current_scope = object_cast($parent, scope::class);
 			}
 			if (q_count($candidates) !== 1) {
-				throw new \RuntimeException(("Expected one function target for " . $entry->name . " at " . $file->source->file->path . ": token " . $entry->token_index));
+				throw new \RuntimeException(("Expected one function target for " . $entry->name . " at " . $file->source_file()->path . ": token " . $entry->token_index));
 			}
 			$result->function_references[$entry->token_index] = $candidates[0];
 		}

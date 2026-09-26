@@ -11,7 +11,7 @@ trait LLVM_Expressions
 	/** Keep decimal literal spelling canonical without relying on host integer width. */
 	private function to_llvm_integer_literal(ast_node $node): llvm_operand
 	{
-		$tokens /** Storage<token> */ = $this->prepared->source->source->tokens;
+		$tokens /** Storage<token> */ = $this->prepared->source->token_snapshot()->tokens;
 		$text = $tokens[(int) $node->token_index]->text();
 		$text = LLVM_Text::decimal($text);
 		$text = $text === '' ? '0' : $text;

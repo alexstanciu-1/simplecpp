@@ -2,7 +2,7 @@
 
 /*
  * Role: browser/CLI host entry for C++ S2S output or the existing compiler debug report.
- * Call map: boot.php -> Compiler::init -> exec_cpp (S2S) or exec (debug report).
+ * Call map: boot.php -> Compiler::init -> exec_cpp (S2S) or exec_llvm (debug report).
  * This host entry is not part of the convertible compiler core.
  */
 namespace scpp\compiler;
@@ -91,7 +91,7 @@ try
 	$paths /** vector<string> */ = [__DIR__ . '/tests/samples/01_base'];
 	$compiler = new Compiler();
 	$compiler->init($paths);
-	$compiler->exec();
+	$compiler->exec_llvm();
 
 	echo "Simple C++ — PHP compiler\n\n";
 	foreach (Model::$modules as $module) {

@@ -16,7 +16,7 @@ final class LLVM_Struct_Preparation
 		foreach ($files as $file)
 		{
 			$entries /** Storage<collected_name> */ = $file->entries;
-			$tokens /** Storage<token> */ = $file->source->tokens;
+			$tokens /** Storage<token> */ = $file->token_snapshot()->tokens;
 			foreach ($file->defined_elements as $index)
 			{
 				$entry = $entries[$index];

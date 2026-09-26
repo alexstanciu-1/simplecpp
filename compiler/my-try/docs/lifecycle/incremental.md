@@ -1,9 +1,9 @@
 # File synchronization
 Doc Status: supporting
 
-Compiler.init(paths) starts an empty session and discovers module files. Compiler.exec()
+Compiler.init(paths) starts an empty session and discovers module files. Compiler.exec_llvm()
 submits every live file to Compiler.sync(paths), then invokes the existing full
-preparation/generation path. Compiler.update(paths) submits only notified files and
+preparation/generation path. Compiler.update_llvm(paths) submits only notified files and
 then runs that same full preparation. Compiler.sync(paths) publishes source changes
 without invoking the backend, so duplicate declarations can be retained for later
 validation. No watcher or background process loop is introduced: the caller keeps

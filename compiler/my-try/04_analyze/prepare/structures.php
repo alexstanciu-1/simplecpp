@@ -53,7 +53,7 @@ final class prepared_expression {
 final class prepared_binding {
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_name $declaration /** weak<collected_name> */;
-	public binding_kind $classification;
+	public binding_kind $resolved_kind;
 	public type_definition $type;
 }
 

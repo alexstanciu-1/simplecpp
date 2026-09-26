@@ -69,7 +69,7 @@ abstract class ast_node
 	public int $end_token_index /** uint32 */;
 	public node_kind $kind;
 	/** Extra syntax data owned by this node. @ownership owner */
-	public ?node_structure $structure = null;
+	private ?node_structure $payload_data = null;
 	/** @reference.source parsed_file.root @reference.weak */
 	private ?ast_node $parent_node /** weak<ast_node> */ = null;
 	/** @reference.source parsed_file.root @reference.weak */
@@ -89,7 +89,13 @@ abstract class ast_node
 		$this->token_index = $start;
 		$this->end_token_index = $end;
 		$this->position = 0;
-		$this->structure = $data;
+		$this->payload_data = $data;
+	}
+
+	/** Construction/debug access; processing uses the specialized node's named accessors. */
+	public function payload(): ?node_structure
+	{
+		return $this->payload_data;
 	}
 
 	/** Specialized nodes discard their own derived facts; syntax-only nodes have none. */
@@ -136,7 +142,7 @@ abstract class ast_node
 	}
 
 	/** Return a membership snapshot; traversal itself does not require a stored collection. */
-	public function children(): Storage /** Storage<ast_node> */
+	public function children_snapshot(): Storage /** Storage<ast_node> */
 	{
 		$result /** Storage<ast_node> */ = new Storage();
 		$current = $this->first_node;
@@ -220,5 +226,15 @@ final class parsed_file
 	public function __construct()
 	{
 		$this->scopes = new Storage /** Storage<scope> */();
+	}
+
+	public function source_file(): file
+	{
+		return $this->tokens->file;
+	}
+
+	public function root_scope(): scope
+	{
+		return object_cast($this->root, file_node::class)->lexical_scope();
 	}
 }

@@ -12,7 +12,7 @@ required fields are assigned before use/publication; optional absence uses ?T.
 
 | Record/state | Required initialization | Optional state / result |
 | --- | --- | --- |
-| Model roots | Compiler.init calls Model.reset before any pipeline stage. reset initializes modules before reset_tokens traverses them; downstream resets initialize their roots before rebuilding. | Empty collections are valid; no nullable roots needed. Stage entry before init is outside the lifecycle contract. |
+| Model roots | Compiler.init calls Compiler_Lifecycle.reset before any pipeline stage. reset initializes modules before reset_tokens traverses them; downstream resets initialize their roots before rebuilding. | Empty collections are valid; no nullable roots needed. Stage entry before init is outside the lifecycle contract. |
 | module | Constructor initializes files; Module_Loader assigns path before discovery. Compiler publishes a module after path discovery succeeds. | No optional fields. Reusing the loader directly clears files first and can leave a partial list on failure. |
 | file | Module_Loader assigns path and disk_source=true; content and metadata start as empty/zero pending placeholders. Tokenizer invokes File_Loader, which completes metadata/content reads before assigning their observed values. | tokens is the sole optional field, initially null. Successful reload clears it; failed load preserves the previous record and backlink. |
 | token_list | Constructor initializes tokens; Tokenizer assigns file and captured content before scanning, and returns only on success. | Empty input produces a completed empty list; no optional fields. |

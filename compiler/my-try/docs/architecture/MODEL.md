@@ -1,7 +1,9 @@
 # Retained compiler model
 Doc Status: supporting
 
-Model owns the shared compiler roots. Workers process records; retained records
+Model owns the shared compiler roots. `Compiler_Lifecycle` sequences initialization,
+resets, built-in installation and tree cleanup. Model does not call processors.
+Workers process records; retained records
 contain data, initialization and representation-level access/navigation methods. Storage<T> is the numeric shared
 object-list boundary; scalar lists and name indexes remain explicit typed arrays.
 Storage and Keyed_Storage share Storage_Abstract. Root collections remain numeric;
@@ -102,11 +104,18 @@ or change retained ownership. See [binding details](../../../../specs/portabilit
 
 ### Concrete payload access
 
-The optional node_structure payload remains directly node-owned. Syntax_Nodes now
-exposes typed *_data accessors using checked, identity-preserving object_cast.
-Compiler consumers use these accessors instead of implicitly reading concrete fields
-through an interface handle. Null or wrong payload types fail. PHP graph identity is
-unchanged; native interfaces are polymorphic for checked narrowing.
+The optional node_structure payload remains privately node-owned. Concrete nodes
+expose named structural accessors such as initializer(), declared_type(), body(),
+parameters() and arguments(). Preparation and C++ emission use these accessors and
+first_child()/next() traversal rather than reaching through payload records.
+Syntax_Nodes retains the existing *_data bridge for experimental LLVM consumers;
+payload() also supports construction and structural inspection. These return the
+same objects, not copies. Payload/list mutation after publication is unsupported.
+
+collected_name.collection names the owning occurrence collection. collected_file
+keeps its token snapshot private; token_snapshot() and source_file() expose the
+requested records directly. parsed_file also exposes source_file() and root_scope().
+These accessors preserve identity without introducing more stored backlinks.
 
 Direct scope links (`scope.enclosing`, `block_structure.scope`,
 `collected_name.scope`) now carry adjacent `weak<scope>` annotations for native
@@ -129,7 +138,7 @@ bounded native execution with locked completion-order publication. No revision t
 Module discovery now publishes paths only. A discovered file has disk_source=true;
 its initially empty content/zero metadata are pending placeholders. Tokenizer reads
 those files in the worker, then scans their bytes. Explicit in-memory records keep
-disk_source=false. Each Compiler.exec work order immediately parses its own token
+disk_source=false. Each Compiler.exec_llvm work order immediately parses its own token
 result and publishes the completed file under the existing lock. Model token/syntax
 roots return to input order after all jobs join. See docs/lifecycle/work_queue.md for explicit
 stage entrypoints and failure/publication boundaries.
@@ -147,7 +156,7 @@ change-record store or persistent identity layer is introduced.
 `scope` encapsulates its parent/publication observers, template slots, declaration
 indexes and type-definition store. Callers register declarations, request local
 candidate snapshots or use `Scope_Lookup::types` for nearest-live parent lookup.
-Scope owns its `Storage<type_definition>`; global publication shares source type
+Scope owns its `Storage<type_definition>`; `Scope_Publication` shares source type
 objects from the file scope. Source definitions retain their collected declaration;
 built-ins have no source declaration. Replacement removes superseded live references
 and retains existing deletion evidence. Publication is not an extra lexical parent.
@@ -160,7 +169,9 @@ in this slice. No secondary global type-name registry or constructed-type model 
 
 `File_Preparation` owns a transient source-order scope and returns a fresh
 `prepared_file` completion record referencing its source. Specialized binding,
-integer-literal and variable-reference nodes own nullable `prepared` records.
+expression nodes own optional preparation records behind typed accessors.
+`expression_node` supplies the shared expression-fact slot and its local cleanup;
+binding nodes keep their distinct prepared_binding slot.
 There are no per-file token-keyed fact maps or reverse `syntax` links. Binding
 initializers remain ordinary AST children; generation reads their attached facts.
 Declaration links in facts are explicitly weak observers of collected occurrences;
@@ -170,15 +181,37 @@ inventory and published scopes remain unchanged.
 
 `Preparation_Cleanup::tree` walks owned child/sibling links and calls each node's
 `clear_preparation` method. Syntax-only nodes do nothing; specialized nodes clear
-their own slots. Model resets clean the retained tree before dropping/replacing
+their own slots. Compiler_Lifecycle resets clean the retained tree before dropping/replacing
 roots. Preparation starts clean and clears partial facts on failure; the compiler
 also cleans facts if C++ emission fails. Old prepared-file handles reference the
 same mutable source tree, not immutable snapshots of its former facts. No selective
 invalidation machinery is introduced by this lifecycle.
 
-`Compiler::exec_cpp`, `update_cpp` and `cpp` drive the C++ path. Existing `exec`,
-`update` and `llvm` remain experimental regression entrypoints. The current C++
+`Compiler::exec_cpp`, `update_cpp` and `cpp` drive the C++ path. Explicit `exec_llvm`,
+`update_llvm` and `llvm` remain experimental regression entrypoints. The current C++
 path requires one live source file with straight-line integer bindings/references
 and optional entry returns. A failed sync, preparation or emission clears C++ facts
 and output; complete results are published together after successful generation.
 Generated artifacts own only names and text. See [the slice](../s2s_integer_slice.md).
+
+## Structure and processing boundary
+
+Structures own representation, construction, local consistency, navigation and
+small data queries. Processors own stage ordering, publication policy, resolution,
+preparation and emission. Local index maintenance and per-node fact cleanup remain
+structure operations; deciding when to invoke them belongs to a processor.
+
+`Scope_Publication` selects declarations and types for publication/replacement,
+including tombstone retention. Scope exposes declaration/type membership snapshots,
+registration, replacement and parent/publication links without selecting update policy.
+`Source_Publication` calls that processor and keeps model roots synchronized after
+each completed publication so a later file failure preserves prior completed work.
+
+Binding syntax uses `syntax_kind` (exposed as parsed_kind()); prepared facts use
+`resolved_kind`. Their meanings remain distinct: an untyped first write is unresolved
+syntax even when preparation identifies a declaration. No new validation rules,
+source-language forms, storage representation, or LLVM lowering rules were added.
+
+`exec_cpp()` / `update_cpp()` and `exec_llvm()` / `update_llvm()` identify the backend
+explicitly. `cpp()` and `llvm()` process already synchronized sources. Direct parse
+publication goes through Source_Publication, without a Compiler forwarding wrapper.

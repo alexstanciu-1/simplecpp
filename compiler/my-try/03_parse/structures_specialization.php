@@ -139,7 +139,7 @@ final class return_structure implements node_structure {
  */
 final class binding_structure implements node_structure
 {
-	public binding_kind $classification = binding_kind::unresolved;
+	public binding_kind $syntax_kind = binding_kind::unresolved;
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
 	/** Syntax child owned through this link.
@@ -230,59 +230,163 @@ final class field_access_structure implements node_structure {
 	public int $name_token_index;
 }
 
+/** Expression nodes own optional derived facts; processors decide when to attach them. */
+abstract class expression_node extends ast_node
+{
+	/** @ownership owner */
+	private ?prepared_expression $prepared_facts = null;
+
+	public function preparation(): ?prepared_expression
+	{
+		return $this->prepared_facts;
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return object_cast($this->prepared_facts, prepared_expression::class);
+	}
+
+	public function set_preparation(prepared_expression $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared_facts = null;
+	}
+}
+
 /** Concrete struct_declaration syntax node. */
-final class struct_declaration_node extends ast_node {
+final class struct_declaration_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::struct_declaration;
 	}
+
+	public function fields(): Storage /** Storage<ast_node> */
+	{
+		return object_cast($this->payload(), struct_structure::class)->fields;
+	}
+
+	public function name_index(): int
+	{
+		return object_cast($this->payload(), struct_structure::class)->name_token_index;
+	}
 }
 
 /** Concrete field_declaration syntax node. */
-final class field_declaration_node extends ast_node {
+final class field_declaration_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::field_declaration;
 	}
+
+	public function declared_type(): ast_node
+	{
+		return object_cast($this->payload(), field_structure::class)->type_syntax;
+	}
+
+	public function name_index(): int
+	{
+		return object_cast($this->payload(), field_structure::class)->name_token_index;
+	}
 }
 
 /** Concrete field_expression syntax node. */
-final class field_expression_node extends ast_node {
+final class field_expression_node extends expression_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::field_expression;
 	}
+
+	public function base(): ast_node
+	{
+		return object_cast($this->payload(), field_access_structure::class)->base;
+	}
+
+	public function name_index(): int
+	{
+		return object_cast($this->payload(), field_access_structure::class)->name_token_index;
+	}
 }
 
 /** Concrete file syntax node. */
-final class file_node extends ast_node {
+final class file_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::file;
 	}
+
+	public function lexical_scope(): scope
+	{
+		return object_cast(weakref_get(object_cast($this->payload(), block_structure::class)->scope), scope::class);
+	}
 }
 
 /** Concrete function_declaration syntax node. */
-final class function_declaration_node extends ast_node {
+final class function_declaration_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::function_declaration;
 	}
+
+	public function body(): ast_node
+	{
+		return object_cast($this->payload(), function_structure::class)->body;
+	}
+
+	public function return_type(): ast_node
+	{
+		return object_cast($this->payload(), function_structure::class)->return_type;
+	}
+
+	public function parameters(): Storage /** Storage<ast_node> */
+	{
+		return object_cast($this->payload(), function_structure::class)->parameters;
+	}
+
+	public function name_index(): int
+	{
+		return object_cast($this->payload(), function_structure::class)->name_token_index;
+	}
 }
 
 /** Concrete parameter_declaration syntax node. */
-final class parameter_declaration_node extends ast_node {
+final class parameter_declaration_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::parameter_declaration;
 	}
+
+	public function declared_type(): ast_node
+	{
+		return object_cast($this->payload(), parameter_structure::class)->type_syntax;
+	}
+
+	public function name_index(): int
+	{
+		return object_cast($this->payload(), parameter_structure::class)->name_token_index;
+	}
 }
 
 /** Concrete block syntax node. */
-final class block_node extends ast_node {
+final class block_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::block;
+	}
+
+	public function lexical_scope(): scope
+	{
+		return object_cast(weakref_get(object_cast($this->payload(), block_structure::class)->scope), scope::class);
 	}
 }
 
@@ -311,100 +415,160 @@ final class comment_node extends ast_node {
 }
 
 /** Concrete array_type syntax node. */
-final class array_type_node extends ast_node {
+final class array_type_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::array_type;
 	}
+
+	public function element_type(): ast_node
+	{
+		return object_cast($this->payload(), array_type_structure::class)->element_type;
+	}
+
+	public function extent(): ast_node
+	{
+		return object_cast($this->payload(), array_type_structure::class)->count;
+	}
 }
 
 /** Concrete array_literal syntax node. */
-final class array_literal_node extends ast_node {
+final class array_literal_node extends expression_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::array_literal;
 	}
+
+	public function elements(): Storage /** Storage<ast_node> */
+	{
+		return object_cast($this->payload(), array_literal_structure::class)->elements;
+	}
 }
 
 /** Concrete index_expression syntax node. */
-final class index_expression_node extends ast_node {
+final class index_expression_node extends expression_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::index_expression;
 	}
+
+	public function base(): ast_node
+	{
+		return object_cast($this->payload(), index_structure::class)->base;
+	}
+
+	public function index(): ast_node
+	{
+		return object_cast($this->payload(), index_structure::class)->index;
+	}
 }
 
 /** Concrete integer_literal syntax node. */
-final class integer_literal_node extends ast_node
-{
-	/** Derived facts owned by this node, absent before preparation or after cleanup. @ownership owner */
-	public ?prepared_expression $prepared = null;
-
+final class integer_literal_node extends expression_node {
 	public function __construct()
 	{
 		$this->kind = node_kind::integer_literal;
 	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared = null;
-	}
 }
 
 /** Concrete variable_reference syntax node. */
-final class variable_reference_node extends ast_node
-{
-	/** Derived facts owned by this node, absent before preparation or after cleanup. @ownership owner */
-	public ?prepared_expression $prepared = null;
-
+final class variable_reference_node extends expression_node {
 	public function __construct()
 	{
 		$this->kind = node_kind::variable_reference;
 	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared = null;
-	}
 }
 
 /** Concrete binary_expression syntax node. */
-final class binary_expression_node extends ast_node {
+final class binary_expression_node extends expression_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::binary_expression;
 	}
+
+	public function left(): ast_node
+	{
+		return object_cast($this->payload(), binary_structure::class)->left;
+	}
+
+	public function right(): ast_node
+	{
+		return object_cast($this->payload(), binary_structure::class)->right;
+	}
 }
 
 /** Concrete assignment_expression syntax node. */
-final class assignment_expression_node extends ast_node {
+final class assignment_expression_node extends expression_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::assignment_expression;
 	}
+
+	public function left(): ast_node
+	{
+		return object_cast($this->payload(), binary_structure::class)->left;
+	}
+
+	public function right(): ast_node
+	{
+		return object_cast($this->payload(), binary_structure::class)->right;
+	}
 }
 
 /** Concrete call_expression syntax node. */
-final class call_expression_node extends ast_node {
+final class call_expression_node extends expression_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::call_expression;
 	}
+
+	public function arguments(): Storage /** Storage<ast_node> */
+	{
+		return object_cast($this->payload(), call_structure::class)->arguments;
+	}
+
+	public function type_arguments(): Storage /** Storage<ast_node> */
+	{
+		return object_cast($this->payload(), call_structure::class)->template_arguments;
+	}
+
+	public function name_index(): int
+	{
+		return object_cast($this->payload(), call_structure::class)->name_token_index;
+	}
 }
 
 /** Concrete expression_statement syntax node. */
-final class expression_statement_node extends ast_node {
+final class expression_statement_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::expression_statement;
 	}
+
+	public function expression(): ast_node
+	{
+		return object_cast($this->payload(), expression_statement_structure::class)->expression;
+	}
 }
 
 /** Concrete return_statement syntax node. */
-final class return_statement_node extends ast_node {
+final class return_statement_node extends ast_node
+{
 	public function __construct()
 	{
 		$this->kind = node_kind::return_statement;
+	}
+
+	public function expression(): ?ast_node
+	{
+		return object_cast($this->payload(), return_structure::class)->expression;
 	}
 }
 
@@ -412,15 +576,55 @@ final class return_statement_node extends ast_node {
 final class variable_binding_statement_node extends ast_node
 {
 	/** Derived facts owned by this node, absent before preparation or after cleanup. @ownership owner */
-	public ?prepared_binding $prepared = null;
+	private ?prepared_binding $prepared_facts = null;
 
 	public function __construct()
 	{
 		$this->kind = node_kind::variable_binding_statement;
 	}
 
+	public function initializer(): ?ast_node
+	{
+		return object_cast($this->payload(), binding_structure::class)->value;
+	}
+
+	public function target(): ?ast_node
+	{
+		return object_cast($this->payload(), binding_structure::class)->target;
+	}
+
+	public function declared_type(): ?ast_node
+	{
+		return object_cast($this->payload(), binding_structure::class)->type_syntax;
+	}
+
+	public function name_index(): int
+	{
+		return object_cast($this->payload(), binding_structure::class)->name_token_index;
+	}
+
+	public function parsed_kind(): binding_kind
+	{
+		return object_cast($this->payload(), binding_structure::class)->syntax_kind;
+	}
+
+	public function preparation(): ?prepared_binding
+	{
+		return $this->prepared_facts;
+	}
+
+	public function require_preparation(): prepared_binding
+	{
+		return object_cast($this->prepared_facts, prepared_binding::class);
+	}
+
+	public function set_preparation(prepared_binding $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
 	public function clear_preparation(): void
 	{
-		$this->prepared = null;
+		$this->prepared_facts = null;
 	}
 }

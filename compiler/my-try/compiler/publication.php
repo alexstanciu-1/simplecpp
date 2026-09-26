@@ -18,28 +18,17 @@ final class Source_Publication
 		return null;
 	}
 
-	/** Return only the previous live syntax; retained deletions are not a version history. */
-	private static function find_syntax(string $path): ?parsed_file
-	{
-		foreach (Model::$syntax_files as $parsed) {
-			if (($parsed->tokens->file->path === $path) && ($parsed->tokens->file->changes !== \scpp\compiler\SYNC_DELETED)) {
-				return $parsed;
-			}
-		}
-		return null;
-	}
-
 	/** Replace only one file; old deleted declarations remain observable but are never resolved. */
 	public static function publish_update(source_work $work): void
 	{
 		$source = $work->source;
 		$syntax /** Storage<parsed_file> */ = Model::$syntax_files;
-		$previous = self::find_syntax($source->path);
+		$previous /** ?parsed_file */ = null;
 		$position = -1;
 		foreach ($syntax as $index => $parsed)
 		{
-			if ($parsed->tokens->file->path === $source->path) {
-				if ($parsed->tokens->file->changes !== \scpp\compiler\SYNC_DELETED) {
+			if ($parsed->source_file()->path === $source->path) {
+				if ($parsed->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
 					$previous = $parsed;
 					$position = $index;
 				}
@@ -50,7 +39,7 @@ final class Source_Publication
 			if ($previous !== null)
 			{
 				$old = object_cast($previous, parsed_file::class);
-				$old->tokens->file->changes = \scpp\compiler\SYNC_DELETED;
+				$old->source_file()->changes = \scpp\compiler\SYNC_DELETED;
 				$entries /** Storage<collected_name> */ = $old->collection->entries;
 				foreach ($old->collection->defined_elements as $index) {
 					$entries[$index]->changes = \scpp\compiler\SYNC_DELETED;
@@ -75,7 +64,7 @@ final class Source_Publication
 		}
 		// Remove replaced live references; keep actual deletions as tombstones in global indexes.
 		$global = Model::$global_scope;
-		$global->replace_source($source->path);
+		Scope_Publication::replace_source($global, $source->path);
 		if ($position >= 0) {
 			$syntax->replace($position, $candidate);
 		}
@@ -113,7 +102,7 @@ final class Source_Publication
 	{
 		$by_source /** hash<parsed_file, shared<file>> */ = new \SplObjectStorage /** hash<parsed_file, shared<file>> */();
 		foreach (Model::$syntax_files as $parsed) {
-			$by_source[$parsed->tokens->file] = $parsed;
+			$by_source[$parsed->source_file()] = $parsed;
 		}
 		$syntax /** Storage<parsed_file> */ = new Storage();
 		$tokens /** Storage<token_list> */ = new Storage();
@@ -147,8 +136,8 @@ final class Source_Publication
 	/** Export live file-root declarations; duplicate candidates remain separate entries. */
 	private static function publish_scope(parsed_file $parsed): void
 	{
-		$root_scope = object_cast(weakref_get(Syntax_Nodes::block_data($parsed->root)->scope), scope::class);
-		scope::publish($root_scope, Model::$global_scope);
+		$root_scope = $parsed->root_scope();
+		Scope_Publication::publish($root_scope, Model::$global_scope);
 	}
 
 	/** Publish only the completed standalone stage while the caller holds serialization. */

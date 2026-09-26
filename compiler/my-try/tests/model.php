@@ -18,7 +18,7 @@ final class Model_Test
 			}
 		}
 		$empty_output = Model::$llvm_files;
-		$compiler->exec();
+		$compiler->exec_llvm();
 		if ((count(Model::$modules) !== 1) || (count(Model::$tokens) !== 2) || (count(Model::$syntax_files) !== 2) || (count(Model::$collected_files) !== 2) || (count(Model::$llvm_files) !== 2)) {
 			throw new \RuntimeException('Unexpected model collection counts');
 		}
@@ -27,7 +27,7 @@ final class Model_Test
 			if (!is_int($position) || ($tokens->file !== Model::$modules[0]->files[$position])) {
 				throw new \RuntimeException('Source identity or numeric order changed');
 			}
-			if (($tokens->file->tokens !== $tokens) || (Model::$collected_files[$position]->source !== $tokens) || (Model::$syntax_files[$position]->tokens !== $tokens) || (Model::$syntax_files[$position]->collection !== Model::$collected_files[$position])) {
+			if (($tokens->file->tokens !== $tokens) || (Model::$collected_files[$position]->token_snapshot() !== $tokens) || (Model::$syntax_files[$position]->tokens !== $tokens) || (Model::$syntax_files[$position]->collection !== Model::$collected_files[$position])) {
 				throw new \RuntimeException('Parser/collection sharing changed');
 			}
 		}
@@ -62,7 +62,7 @@ final class Model_Test
 	private static function check_restarts(Compiler $compiler): void
 	{
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
-		$compiler->exec();
+		$compiler->exec_llvm();
 		$preparation = new LLVM_Preparation();
 		$prepared = $preparation->prepare_program(Model::$collected_files, new llvm_policy());
 		$generator = new LLVM_Generator();
@@ -149,7 +149,7 @@ final class Model_Test
 		}
 		$old_tokens->file->content = $old_content;
 		$old_tokens->file->disk_source = true;
-		$compiler->exec();
+		$compiler->exec_llvm();
 		// Corrupt the first token only to exercise parse failure after a successful run.
 		Model::$tokens[0]->tokens[0] = new token(0, 1, ')');
 		try {
@@ -161,7 +161,7 @@ final class Model_Test
 		if (!Model::$syntax_files->is_empty() || !Model::$collected_files->is_empty() || !Model::$llvm_files->is_empty()) {
 			throw new \LogicException('Parse failure retained stale output');
 		}
-		$compiler->exec();
+		$compiler->exec_llvm();
 		$compiler->parse();
 		if (!Model::$llvm_files->is_empty() || count(Model::$syntax_files) !== 2) {
 			throw new \LogicException('Successful parse retained stale LLVM');
@@ -172,7 +172,7 @@ final class Model_Test
 	private static function check_preparation_recovery(Compiler $compiler): void
 	{
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
-		$compiler->exec();
+		$compiler->exec_llvm();
 		$good = Model::$collected_files;
 		$worker = new LLVM_Preparation();
 		$prepared = $worker->prepare_program($good, new llvm_policy());
@@ -277,7 +277,7 @@ final class Model_Test
 		$scope = new scope();
 		$collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
 		// Host test access only: the compiler still builds occurrence lists append-only.
-		$property = new \ReflectionProperty(Symbol_Collector::class, 'file');
+		$property = new \ReflectionProperty(Symbol_Collector::class, 'collection');
 		$file = $property->getValue($collector);
 		$file->entries->remove(0);
 		$file->variable_references = [];

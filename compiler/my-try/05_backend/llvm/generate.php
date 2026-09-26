@@ -25,7 +25,7 @@ final class LLVM_Generator
 				}
 				$module->types[] = $type->name . ' = type { ' . LLVM_Text::join($fields, ', ') . ' }';
 			}
-			$module->file_name = LLVM_Text::output_name($prepared->source->source->file->path);
+			$module->file_name = LLVM_Text::output_name($prepared->source->source_file()->path);
 			foreach ($prepared->external_functions as $target)
 			{
 				$types /** vector<string> */ = [];
