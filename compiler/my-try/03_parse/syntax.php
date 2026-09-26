@@ -27,9 +27,14 @@ final class Syntax_Nodes
 		return $node;
 	}
 
-	public static function expression_data(ast_node $node): expression_structure
+	public static function integer_data(ast_node $node): integer_literal_structure
 	{
-		return object_cast($node->payload(), expression_structure::class);
+		return object_cast($node->payload(), integer_literal_structure::class);
+	}
+
+	public static function reference_data(ast_node $node): variable_reference_structure
+	{
+		return object_cast($node->payload(), variable_reference_structure::class);
 	}
 
 	/** Enumerate direct syntax children in grammar order before publishing navigation links. */

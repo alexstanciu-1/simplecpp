@@ -41,6 +41,7 @@ final class Compiler
 	public function exec_cpp(): void
 	{
 		$this->sync_live();
+		$this->prepare();
 		$this->cpp();
 	}
 
@@ -68,6 +69,7 @@ final class Compiler
 	public function update_cpp(array $paths /** vector<string> */): void
 	{
 		$this->sync($paths);
+		$this->prepare();
 		$this->cpp();
 	}
 
@@ -78,7 +80,7 @@ final class Compiler
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		Compiler_Lifecycle::reset_llvm();
-		Compiler_Lifecycle::reset_cpp();
+		Compiler_Lifecycle::reset_preparation();
 		$queue = Source_Synchronization::plan($paths);
 		$items /** vector<source_work> */ = $queue->items();
 		$published = task_run_publish_unordered($items, $this->jobs,
@@ -149,10 +151,10 @@ final class Compiler
 		Source_Publication::order_stage($items, $operation);
 	}
 
-	/** Publish complete preparation and C++ together; unsupported input leaves no stale output. */
-	public function cpp(): void
+	/** Prepare synchronized source independently of backend emission. */
+	public function prepare(): void
 	{
-		Compiler_Lifecycle::reset_cpp();
+		Compiler_Lifecycle::reset_preparation();
 		$sources /** Storage<collected_file> */ = new Storage();
 		foreach (Model::$collected_files as $source) {
 			if ($source->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
@@ -160,18 +162,28 @@ final class Compiler
 			}
 		}
 		if (q_count($sources) !== 1) {
-			throw new \RuntimeException('The first C++ slice requires exactly one source file');
+			throw new \RuntimeException('The current preparation slice requires exactly one source file');
 		}
 		try {
 			$prepared = (new File_Preparation($sources[0], Model::$language_scope))->prepare();
-			$output = (new CPP_Generator())->generate($prepared);
 			Model::$prepared_files[] = $prepared;
-			Model::$cpp_files[] = $output;
 		}
 		catch (\Throwable $error) {
-			Compiler_Lifecycle::reset_cpp();
+			Compiler_Lifecycle::reset_preparation();
 			throw $error;
 		}
+	}
+
+	/** Emit from completed shared preparation; failure discards only C++ artifacts. */
+	public function cpp(): void
+	{
+		Compiler_Lifecycle::reset_cpp();
+		$prepared /** Storage<prepared_file> */ = Model::$prepared_files;
+		if (q_count($prepared) !== 1) {
+			throw new \RuntimeException('C++ emission requires one prepared source file; run prepare first');
+		}
+		$output = (new CPP_Generator())->generate($prepared[0]);
+		Model::$cpp_files[] = $output;
 	}
 
 	/** Prepare all sources and emit one LLVM module per source file. */

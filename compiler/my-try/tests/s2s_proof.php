@@ -25,11 +25,15 @@ final class S2S_Proof
 		$children /** Storage<ast_node> */ = Syntax_Nodes::block_data($prepared->source->root)->children;
 		$first_data = Syntax_Nodes::binding_data($children[0]);
 		$assignment_data = Syntax_Nodes::binding_data($children[2]);
-		$literal_data = Syntax_Nodes::expression_data($first_data->value);
-		$reference_data = Syntax_Nodes::expression_data(Syntax_Nodes::binding_data($children[1])->value);
+		$literal_data = Syntax_Nodes::integer_data($first_data->value);
+		$reference_data = Syntax_Nodes::reference_data(Syntax_Nodes::binding_data($children[1])->value);
 		$first = $first_data->require_preparation();
 		$assignment = $assignment_data->require_preparation();
 		$literal = $literal_data->require_preparation();
+		$reference = $reference_data->require_preparation();
+		if (($literal->decimal !== '10') || (weakref_get($reference->declaration) !== weakref_get($first->declaration)) || ($reference->type !== $first->type)) {
+			throw new \LogicException('Specialized expression facts lost literal value or reference identity');
+		}
 		$integer = Language_Types::integer(Model::$language_scope);
 		$resolved /** vector<type_definition> */ = Scope_Lookup::types(Model::$global_scope, 'int');
 		if (($resolved[0] !== $integer) || ($integer->origin !== type_origin::language) || ((int) $integer->value_bits !== 64) || (!$integer->signed) || ($integer->declaration !== null)) {
@@ -55,13 +59,18 @@ final class S2S_Proof
 		if (($outputs[0]->text !== $expected) || ($outputs[0] === $old_output)) {
 			throw new \LogicException('Repeated generation changed bytes or reused output records');
 		}
-		if ($first_data->require_preparation() === $first) {
-			throw new \LogicException('Repeated preparation reused stale node facts');
+		if ($first_data->require_preparation() !== $first) {
+			throw new \LogicException('Emission replaced shared prepared facts');
 		}
 		Compiler_Lifecycle::reset_cpp();
+		if (($literal_data->require_preparation() !== $literal) || ($reference_data->require_preparation() !== $reference)) {
+			throw new \LogicException('C++ output reset discarded shared facts');
+		}
+		Compiler_Lifecycle::reset_preparation();
 		if (($first_data->preparation() !== null) || ($assignment_data->preparation() !== null) || ($literal_data->preparation() !== null) || ($reference_data->preparation() !== null)) {
 			throw new \LogicException('Specializations did not clear their prepared facts');
 		}
+		$compiler->prepare();
 		$compiler->cpp();
 		$current_inputs /** Storage<file> */ = $input_module->files;
 		$current_inputs[0]->content = '$a = 13; return $a;';
@@ -90,7 +99,7 @@ final class S2S_Proof
 		$failed_syntax /** Storage<parsed_file> */ = Model::$syntax_files;
 		$failed_children /** Storage<ast_node> */ = Syntax_Nodes::block_data($failed_syntax[0]->root)->children;
 		$partial = Syntax_Nodes::binding_data($failed_children[0]);
-		$partial_literal = Syntax_Nodes::expression_data($partial->value);
+		$partial_literal = Syntax_Nodes::integer_data($partial->value);
 		if (($partial->preparation() !== null) || ($partial_literal->preparation() !== null)) {
 			throw new \LogicException('Failed preparation left partial facts attached to syntax');
 		}

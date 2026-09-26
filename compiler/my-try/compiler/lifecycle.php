@@ -30,7 +30,7 @@ final class Compiler_Lifecycle
 	/** Restart parsing: old scopes, occurrences and generated output no longer apply. */
 	public static function reset_syntax(): void
 	{
-		self::reset_cpp();
+		self::reset_preparation();
 		Model::$syntax_files = new Storage /** Storage<parsed_file> */();
 		self::$syntax_initialized = true;
 		Model::$language_scope = new scope();
@@ -42,7 +42,7 @@ final class Compiler_Lifecycle
 	}
 
 	/** Clear node-owned facts before releasing preparation/output roots or replacing syntax. */
-	public static function reset_cpp(): void
+	public static function reset_preparation(): void
 	{
 		if (self::$syntax_initialized) {
 			foreach (Model::$syntax_files as $parsed) {
@@ -50,6 +50,12 @@ final class Compiler_Lifecycle
 			}
 		}
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		self::reset_cpp();
+	}
+
+	/** Discard C++ artifacts while retaining shared prepared facts. */
+	public static function reset_cpp(): void
+	{
 		Model::$cpp_files = new Storage /** Storage<cpp_module> */();
 	}
 

@@ -40,13 +40,20 @@ final class template_check_context {
 	public \SplObjectStorage $files /** hash<llvm_prepared_file, shared<collected_file>> */;
 }
 
-/** Facts owned by the expression specialization; no reverse syntax reference. */
-final class prepared_expression {
+/** Common backend-neutral result of preparing an expression. */
+abstract class prepared_expression {
 	public type_definition $type;
-	/** Decimal value for integer literals; empty for other expressions. */
-	public string $literal = '';
-	/** Declaration is owned by the source collection, not by this expression. @reference.weak */
-	public ?collected_name $declaration /** weak<collected_name> */ = null;
+}
+
+/** Exact normalized decimal value; C++ spelling belongs to the backend. */
+final class prepared_integer_literal extends prepared_expression {
+	public string $decimal;
+}
+
+/** A resolved reference always has a declaration; no literal fields belong here. */
+final class prepared_variable_reference extends prepared_expression {
+	/** @storage.reference collected_file.entries @reference.weak */
+	public collected_name $declaration /** weak<collected_name> */;
 }
 
 /** Facts owned by the binding specialization; declaration identity is a non-owning reference. */

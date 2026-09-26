@@ -64,10 +64,12 @@ clang++ -std=c++20 -I runtime/include /tmp/program.cpp -o /tmp/program
 ```
 
 API: `Compiler::init(paths)` followed by `exec_cpp()`, or `update_cpp(changed_paths)`
-for subsequent notifications. `cpp()` prepares already published syntax. Complete
-results appear in `Model::$prepared_files` and `Model::$cpp_files`. Preparation or
-emission failure leaves both empty; synchronization clears them before processing.
-The existing `exec()` / `update()` LLVM path remains for regression callers.
+for subsequent notifications. Standalone stages are `prepare()` on published syntax,
+then `cpp()` on completed preparation. Preparation publishes Model::$prepared_files;
+emission publishes Model::$cpp_files. Preparation failure leaves both empty. Emission
+failure clears only C++ output, permitting retry with the same shared facts.
+`reset_cpp()` preserves preparation; `reset_preparation()` clears facts and dependent
+C++ output. The explicit `exec_llvm()` / `update_llvm()` path remains for regression callers.
 
 The slice returns final bytes in memory/stdout. Artifact publication, file splitting,
 link planning and native build caching are not implemented by this entry.

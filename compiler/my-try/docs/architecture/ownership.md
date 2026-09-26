@@ -93,13 +93,13 @@ parent observer reaches the language/runtime scope. Parsed-file scopes remain ow
 by parsed_file.scopes. Type definitions live in scope-owned Storage; publication
 shares their identity rather than manufacturing a second source definition.
 
-Specialized binding, integer-literal and variable-reference AST nodes own their
+Binding, integer-literal and variable-reference specialization records own their
 nullable prepared facts. Facts retain canonical types, observe collected declarations
 through explicit weak fields, and have no reverse syntax link. The binding's
 initializer remains an AST child rather than a second prepared-record link. Model
 owns completed-file records and independent C++ artifacts; no token-keyed binding
 or expression maps remain. See MODEL.md for per-node cleanup before reset/reuse and
-on preparation/emission failure. The source-order scope remains transient; attaching
+on preparation failure. Emission failure/reset preserves shared prepared facts. The source-order scope remains transient; attaching
 facts does not modify source scope membership or parsed syntax.
 
 The new node slots, cleanup overrides and declaration weak fields have PHP coverage;

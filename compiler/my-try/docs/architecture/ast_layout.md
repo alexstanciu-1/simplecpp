@@ -15,8 +15,11 @@ The header retains uint32 token_index and end_token_index (exclusive end), kind,
 and a private optional node_structure. Named *_structure records hold specialized
 syntax. Identifier, punctuation and comment nodes have no payload. Integer literals
 and variable references have small expression records so their prepared facts have
-a specialized owner. `expression_structure` supplies the expression-fact slot;
-`binding_structure` owns its distinct binding-fact slot. `node_structure` supplies
+a specialized owner. Integer and reference structures own their respective typed
+preparation slots; `binding_structure` owns its distinct binding-fact slot.
+`prepared_expression` holds only the common type; prepared_integer_literal adds
+required decimal text and prepared_variable_reference adds a required declaration.
+Unsupported expression structures have no speculative fact slots. `node_structure` supplies
 no-op local cleanup for syntax-only records. None of these records performs preparation.
 
 ## Fixed navigation fields

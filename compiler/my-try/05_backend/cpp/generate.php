@@ -58,21 +58,22 @@ final class CPP_Generator
 	/** Integer spelling supplies an exact native carrier before constructing the runtime value. */
 	private function expression(ast_node $node): string
 	{
-		$expression = Syntax_Nodes::expression_data($node)->require_preparation();
-		$mapping = CPP_Types::representation($expression->type);
-		$this->headers[$mapping->header] = true;
-		if ($node->kind() === node_kind::integer_literal) {
+		if ($node->kind() === node_kind::integer_literal)
+		{
+			$literal = Syntax_Nodes::integer_data($node)->require_preparation();
+			$mapping = CPP_Types::representation($literal->type);
+			$this->headers[$mapping->header] = true;
 			if ($mapping->literal !== cpp_literal_kind::signed_integer) {
 				throw new \RuntimeException('C++ literal emission is not implemented for this type');
 			}
-			return 'static_cast<' . $mapping->spelling . '>(' . $expression->literal . 'LL)';
+			return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . 'LL)';
 		}
-		$declaration = weakref_get($expression->declaration);
-		if ($declaration !== null) {
-			$target /** collected_name */ = $declaration;
+		if ($node->kind() === node_kind::variable_reference) {
+			$reference = Syntax_Nodes::reference_data($node)->require_preparation();
+			$target = object_cast(weakref_get($reference->declaration), collected_name::class);
 			return self::local_name($target);
 		}
-		throw new \RuntimeException('C++ expression lacks prepared lowering facts');
+		throw new \RuntimeException('C++ expression emission is not implemented for this form');
 	}
 
 	private static function local_name(collected_name $declaration): string

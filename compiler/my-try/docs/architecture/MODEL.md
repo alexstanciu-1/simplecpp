@@ -167,10 +167,11 @@ PHP objects or converted enum layouts. Runtime/library JSON import is not implem
 in this slice. No secondary global type-name registry or constructed-type model was added.
 
 `File_Preparation` owns a transient source-order scope and returns a fresh
-`prepared_file` completion record referencing its source. `binding_structure` and
-`expression_structure` own optional preparation records behind typed accessors.
-Expression specializations inherit the shared fact slot and local cleanup;
-bindings keep their distinct prepared_binding slot. No class extends ast_node.
+`prepared_file` completion record referencing its source. Binding, integer-literal
+and variable-reference structures own their typed preparation slots and local cleanup.
+The common prepared_expression contains only type. prepared_integer_literal adds
+required decimal text; prepared_variable_reference adds its required weak declaration.
+No class extends ast_node.
 There are no per-file token-keyed fact maps or reverse `syntax` links. Binding
 initializers remain ordinary AST children; generation reads their attached facts.
 Declaration links in facts are explicitly weak observers of collected occurrences;
@@ -181,16 +182,21 @@ inventory and published scopes remain unchanged.
 `Preparation_Cleanup::tree` walks owned child/sibling links and calls each node's
 `clear_preparation` method, which delegates to the specialization. Syntax-only
 records do nothing; expression and binding records clear their own slots. Compiler_Lifecycle resets clean the retained tree before dropping/replacing
-roots. Preparation starts clean and clears partial facts on failure; the compiler
-also cleans facts if C++ emission fails. Old prepared-file handles reference the
+roots. Preparation starts clean and clears partial facts on failure. C++ emission
+failure clears output but preserves completed shared preparation. Old prepared-file handles reference the
 same mutable source tree, not immutable snapshots of its former facts. No selective
 invalidation machinery is introduced by this lifecycle.
 
-`Compiler::exec_cpp`, `update_cpp` and `cpp` drive the C++ path. Explicit `exec_llvm`,
+`Compiler::prepare()` prepares synchronized sources and publishes completed facts
+without emitting code. `cpp()` consumes that preparation, and rejects an unprepared
+input. Repeated emission preserves fact identity. `exec_cpp()` and `update_cpp()`
+remain end-to-end entrypoints: synchronize, prepare, then emit.
+`reset_preparation()` clears facts, completion records and dependent C++ output;
+`reset_cpp()` clears only C++ artifacts. Explicit `exec_llvm`,
 `update_llvm` and `llvm` remain experimental regression entrypoints. The current C++
 path requires one live source file with straight-line integer bindings/references
-and optional entry returns. A failed sync, preparation or emission clears C++ facts
-and output; complete results are published together after successful generation.
+and optional entry returns. Synchronization resets preparation before processing;
+preparation publishes only on success, and emission publishes only complete output.
 Generated artifacts own only names and text. See [the slice](../s2s_integer_slice.md).
 
 ## Structure and processing boundary
@@ -212,5 +218,6 @@ syntax even when preparation identifies a declaration. No new validation rules,
 source-language forms, storage representation, or LLVM lowering rules were added.
 
 `exec_cpp()` / `update_cpp()` and `exec_llvm()` / `update_llvm()` identify the backend
-explicitly. `cpp()` and `llvm()` process already synchronized sources. Direct parse
+explicitly. `prepare()` processes synchronized sources, `cpp()` emits prepared sources, and
+`llvm()` retains its experimental preparation/emission path. Direct parse
 publication goes through Source_Publication, without a Compiler forwarding wrapper.

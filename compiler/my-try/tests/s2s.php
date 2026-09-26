@@ -33,6 +33,7 @@ foreach ($cases as $name => [$source, $exit])
 	$syntax = s2s_parse($source);
 	$before = serialize($syntax);
 	$compiler = new Compiler();
+	$compiler->prepare();
 	$compiler->cpp();
 	Preparation_Cleanup::tree($syntax->root);
 	if (serialize($syntax) !== $before) {
@@ -59,6 +60,7 @@ foreach (['$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();
 	s2s_parse($source);
 	$failed = false;
 	try {
+		(new Compiler())->prepare();
 		(new Compiler())->cpp();
 	}
 	catch (\RuntimeException $expected) {
@@ -74,7 +76,7 @@ Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; $b = $missing;');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $first_data = Syntax_Nodes::binding_data($children[0]);
-$first_literal_data = Syntax_Nodes::expression_data($first_data->value);
+$first_literal_data = Syntax_Nodes::integer_data($first_data->value);
 $before = serialize($syntax);
 $failed = false;
 try {
@@ -87,22 +89,61 @@ if ((!$failed) || ($first_data->preparation() !== null) || ($first_literal_data-
 	throw new \LogicException('Standalone failure left prepared facts or changed syntax');
 }
 
-// Emission failure after successful preparation must also release attached facts.
+// Preparation and emission are independent; an output failure retains valid facts.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
-$children = Syntax_Nodes::block_data($syntax->root)->children;
-$first_data = Syntax_Nodes::binding_data($children[0]);
-$first_literal_data = Syntax_Nodes::expression_data($first_data->value);
-Language_Types::integer(Model::$language_scope)->value_bits = 32;
+$compiler = new Compiler();
 $failed = false;
 try {
-	(new Compiler())->cpp();
+	$compiler->cpp();
 }
 catch (\RuntimeException $expected) {
 	$failed = true;
 }
-if ((!$failed) || ($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null) || (!Model::$prepared_files->is_empty()) || (!Model::$cpp_files->is_empty())) {
-	throw new \LogicException('Emission failure left prepared facts or output');
+if (!$failed || !Model::$prepared_files->is_empty() || !Model::$cpp_files->is_empty()) {
+	throw new \LogicException('Emission implicitly prepared source');
+}
+$compiler->prepare();
+$children = Syntax_Nodes::block_data($syntax->root)->children;
+$first_data = Syntax_Nodes::binding_data($children[0]);
+$first_literal_data = Syntax_Nodes::integer_data($first_data->value);
+$binding_facts = $first_data->require_preparation();
+$literal_facts = $first_literal_data->require_preparation();
+$completion = Model::$prepared_files[0];
+if (!Model::$cpp_files->is_empty()) {
+	throw new \LogicException('Preparation emitted C++ output');
+}
+$compiler->cpp();
+$output = Model::$cpp_files[0];
+Compiler_Lifecycle::reset_cpp();
+if (($first_data->require_preparation() !== $binding_facts) || (Model::$prepared_files[0] !== $completion) || !Model::$cpp_files->is_empty()) {
+	throw new \LogicException('Output reset changed shared preparation');
+}
+$compiler->cpp();
+Language_Types::integer(Model::$language_scope)->value_bits = 32;
+$failed = false;
+try {
+	$compiler->cpp();
+}
+catch (\RuntimeException $expected) {
+	$failed = true;
+}
+if ((!$failed) || ($first_data->preparation() !== $binding_facts) || ($first_literal_data->preparation() !== $literal_facts) || (Model::$prepared_files[0] !== $completion) || (!Model::$cpp_files->is_empty())) {
+	throw new \LogicException('Emission failure damaged shared preparation or retained stale output');
+}
+Language_Types::integer(Model::$language_scope)->value_bits = 64;
+$compiler->cpp();
+if (Model::$cpp_files[0]->text !== $output->text) {
+	throw new \LogicException('Emission retry changed output');
+}
+$compiler->prepare();
+if (($first_data->require_preparation() === $binding_facts) || !Model::$cpp_files->is_empty()) {
+	throw new \LogicException('Repreparation reused facts or left stale output');
+}
+$compiler->cpp();
+Compiler_Lifecycle::reset_preparation();
+if (($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null) || !Model::$prepared_files->is_empty() || !Model::$cpp_files->is_empty()) {
+	throw new \LogicException('Preparation reset retained facts or dependent output');
 }
 
 // The cleanup traversal reaches nested expression specializations through syntax-only parents.
@@ -111,13 +152,13 @@ $syntax = s2s_parse('function nested(): int { return 7; }');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $body = Syntax_Nodes::function_data($children[0])->body;
 $statements = Syntax_Nodes::block_data($body)->children;
-$nested_literal_data = Syntax_Nodes::expression_data(Syntax_Nodes::return_data($statements[0])->expression);
+$nested_literal_data = Syntax_Nodes::integer_data(Syntax_Nodes::return_data($statements[0])->expression);
 $before = serialize($syntax);
-$facts = new prepared_expression();
+$facts = new prepared_integer_literal();
 $facts->type = Language_Types::integer(Model::$language_scope);
-$facts->literal = '7';
+$facts->decimal = '7';
 $nested_literal_data->set_preparation($facts);
-Compiler_Lifecycle::reset_cpp();
+Compiler_Lifecycle::reset_preparation();
 if (($nested_literal_data->preparation() !== null) || (serialize($syntax) !== $before)) {
 	throw new \LogicException('Nested node cleanup changed syntax or missed attached facts');
 }
@@ -125,10 +166,11 @@ if (($nested_literal_data->preparation() !== null) || (serialize($syntax) !== $b
 // Reset must clear the old graph before dropping it, including externally retained nodes.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
+(new Compiler())->prepare();
 (new Compiler())->cpp();
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $first_data = Syntax_Nodes::binding_data($children[0]);
-$first_literal_data = Syntax_Nodes::expression_data($first_data->value);
+$first_literal_data = Syntax_Nodes::integer_data($first_data->value);
 Compiler_Lifecycle::reset_syntax();
 if (($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null)) {
 	throw new \LogicException('Syntax reset dropped roots before cleaning their nodes');

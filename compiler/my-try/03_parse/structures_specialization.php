@@ -7,23 +7,23 @@
  */
 namespace scpp\compiler;
 
-/** Expression specializations store facts; preparation processors compute them. */
-abstract class expression_structure extends node_structure
+/** Specialized facts are attached by preparation and cleared locally. */
+final class integer_literal_structure extends node_structure
 {
 	/** @ownership owner */
-	private ?prepared_expression $prepared_facts = null;
+	private ?prepared_integer_literal $prepared_facts = null;
 
-	public function preparation(): ?prepared_expression
+	public function preparation(): ?prepared_integer_literal
 	{
 		return $this->prepared_facts;
 	}
 
-	public function require_preparation(): prepared_expression
+	public function require_preparation(): prepared_integer_literal
 	{
-		return object_cast($this->prepared_facts, prepared_expression::class);
+		return object_cast($this->prepared_facts, prepared_integer_literal::class);
 	}
 
-	public function set_preparation(prepared_expression $facts): void
+	public function set_preparation(prepared_integer_literal $facts): void
 	{
 		$this->prepared_facts = $facts;
 	}
@@ -34,14 +34,34 @@ abstract class expression_structure extends node_structure
 	}
 }
 
-/** Leaf expressions need no additional syntax fields. */
-final class integer_literal_structure extends expression_structure {
+/** Specialized facts are attached by preparation and cleared locally. */
+final class variable_reference_structure extends node_structure
+{
+	/** @ownership owner */
+	private ?prepared_variable_reference $prepared_facts = null;
+
+	public function preparation(): ?prepared_variable_reference
+	{
+		return $this->prepared_facts;
+	}
+
+	public function require_preparation(): prepared_variable_reference
+	{
+		return object_cast($this->prepared_facts, prepared_variable_reference::class);
+	}
+
+	public function set_preparation(prepared_variable_reference $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared_facts = null;
+	}
 }
 
-final class variable_reference_structure extends expression_structure {
-}
-
-final class call_structure extends expression_structure
+final class call_structure extends node_structure
 {
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
@@ -137,7 +157,7 @@ final class block_structure extends node_structure
 }
 
 /** Binary and assignment expressions share operands; their node kinds retain the distinction. */
-final class binary_structure extends expression_structure {
+final class binary_structure extends node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -235,7 +255,7 @@ final class array_type_structure extends node_structure {
 	public ast_node $count;
 }
 
-final class array_literal_structure extends expression_structure {
+final class array_literal_structure extends node_structure {
 	/**
 	 * Ordered object list of child nodes.
 	 * @storage.owner
@@ -248,7 +268,7 @@ final class array_literal_structure extends expression_structure {
 	}
 }
 
-final class index_structure extends expression_structure {
+final class index_structure extends node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -284,7 +304,7 @@ final class field_structure extends node_structure {
 	public ast_node $type_syntax;
 }
 
-final class field_access_structure extends expression_structure {
+final class field_access_structure extends node_structure {
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */

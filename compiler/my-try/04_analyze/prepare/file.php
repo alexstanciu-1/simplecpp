@@ -109,10 +109,12 @@ final class File_Preparation
 	/** Literal and reference expressions share resolved type identity before emission. */
 	private function expression(ast_node $node): prepared_expression
 	{
-		$value = new prepared_expression();
 		if ($node->kind() === node_kind::integer_literal) {
-			$value->literal = Integer_Literals::decimal($this->collection->token_snapshot()->text_at((int) $node->token_index));
+			$value = new prepared_integer_literal();
+			$value->decimal = Integer_Literals::decimal($this->collection->token_snapshot()->text_at((int) $node->token_index));
 			$value->type = $this->integer;
+			Syntax_Nodes::integer_data($node)->set_preparation($value);
+			return $value;
 		}
 		elseif ($node->kind() === node_kind::variable_reference)
 		{
@@ -121,13 +123,14 @@ final class File_Preparation
 			if (q_count($targets) !== 1) {
 				throw new \RuntimeException('S2S needs an established local declaration for ' . $entry->name);
 			}
-			$value->declaration = $targets[0];
-			$value->type = Syntax_Nodes::binding_data($targets[0]->node)->require_preparation()->type;
+			$reference = new prepared_variable_reference();
+			$reference->declaration = $targets[0];
+			$reference->type = Syntax_Nodes::binding_data($targets[0]->node)->require_preparation()->type;
+			Syntax_Nodes::reference_data($node)->set_preparation($reference);
+			return $reference;
 		}
 		else {
 			throw new \RuntimeException('S2S expression lowering is not implemented for this form');
 		}
-		Syntax_Nodes::expression_data($node)->set_preparation($value);
-		return $value;
 	}
 }
