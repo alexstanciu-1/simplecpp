@@ -1,7 +1,7 @@
 # Constructor and invocation-lifetime checkpoint
 Doc Status: planning
 
-See [worker lifetimes](../../../../../compiler/my-try/docs/worker_lifetimes.md)
+See [worker lifetimes](../../../../../compiler/my-try/docs/lifecycle/worker_lifetimes.md)
 for the implemented ownership and reuse contract. This checkpoint follows
 my-try-native-01, using the same exact PR #244 candidate and recorded overlay.
 The global verified target remains unchanged.

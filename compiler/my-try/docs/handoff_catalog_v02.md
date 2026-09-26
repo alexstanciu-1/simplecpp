@@ -30,11 +30,11 @@ Follow repository AGENTS.md: read specs/spec_map.md, docs/ai_onboarding/README.m
 docs/ai_onboarding/coding_style.md, specs/simple_cpp_php_strict_quick_learn.md,
 then the owning specs. Also read:
 
-- [Local AGENTS.md](../AGENTS.md), [code style](code_style.md).
-- [Catalog README](../catalog/README.md), then the selected card.
-- [Model](../MODEL.md), [ownership](ownership.md) when touching retained data.
-- [Incremental contract/debt](incremental.md), [work queue](work_queue.md).
-- [Native adaptations](native_adaptations.md) and saved evidence for portability.
+- [Local AGENTS.md](AGENTS.md), [code style](code_style.md).
+- [Catalog README](catalog/README.md), then the selected card.
+- [Model](architecture/MODEL.md), [ownership](architecture/ownership.md) when touching retained data.
+- [Incremental contract/debt](lifecycle/incremental.md), [work queue](lifecycle/work_queue.md).
+- [Native adaptations](portability/native_adaptations.md) and saved evidence for portability.
 - [v0.2 inventory](../../../specs/planning/v0_2_compiler_s2s_requirements.md) and
   [latency handoff](../../../specs/planning/s2s_next_generator_technical_handoff.md).
   The v0.2 inventory predates the generation/validation split below; its requirement
@@ -144,9 +144,9 @@ and built-in definitions have truthful provenance. Preparation retains resolved
 expression types and binding identities. The 2026-09-26 follow-up attaches those
 facts directly to specialized AST nodes, preserving source syntax and adding
 per-node cleanup on reset, reuse and failure. Native compiler builds are now opt-in
-under local AGENTS.md; the earlier native results below do not cover this follow-up.
+under docs/AGENTS.md; the earlier native results below do not cover this follow-up.
 
-`Compiler::exec_cpp` / `update_cpp` and host `s2s.php` select the new path. The old
+`Compiler::exec_cpp` / `update_cpp` and host `main.php --s2s SOURCE_DIRECTORY` select the new path. The old
 `exec` / `update` LLVM entrypoints remain regression infrastructure. Current C++
 coverage is one file of straight-line integer locals/reads/assignments and optional
 entry returns. Output uses typed literals with `auto`; no spelling optimization was
@@ -207,7 +207,7 @@ Model is static. Cross-file preparation starts after all workers join.
   Earlier successful files may already be published; batches are not transactions.
   No watcher/service loop was added: a caller keeps the session and sends notifications.
 
-Deferred debt is documented in incremental.md and REVIEW.md: physical deletion and
+Deferred debt is documented in [incremental notes](lifecycle/incremental.md) and [the review inventory](portability/REVIEW.md): physical deletion and
 old-reference reclamation, remaining lookup/comparison scans, dependency tracking,
 and multi-error validation. Root ordering now uses a temporary source identity
 index; flag reset visits declaration inventory rows rather than all occurrences.

@@ -15,7 +15,7 @@ import time
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
-STAGES = ['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_cpp', '05_llvm', '06_native', 'compile', 'scopes']
+STAGES = ['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_backend', '06_native', 'compiler']
 
 
 def php_literal(text):
@@ -125,7 +125,7 @@ def main():
     expected_exits['sample/01_base'] = 9
     cases = [(suite + '/' + path.name, path) for suite in ['llvm', 'calls']
              for path in sorted((fixtures / suite).iterdir()) if path.is_dir()]
-    cases.append(('sample/01_base', APP / 'samples/01_base'))
+    cases.append(('sample/01_base', APP / 'tests/samples/01_base'))
     php_code = 'require ' + php_literal(APP / 'boot.php') + '; require ' + php_literal(APP / 'tests/s2s_proof.php') + '; require ' + php_literal(source / 'main.php') + ';'
     # Compile generated C++ from both host implementations, independently of LLVM parity.
     request.write_text('s2s-proof')

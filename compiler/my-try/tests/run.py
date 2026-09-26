@@ -71,6 +71,22 @@ def verify(root, output):
         run(["clang++", "-std=c++20", "-I", str(root.parents[1] / "runtime/include"), str(source), "-o", str(executable)])
         run([str(executable)], fixture["exit_code"])
 
+    # The single host entry exposes S2S without the report banner or diagnostics on stdout.
+    cli_source = output / "cli-source"
+    cli_source.mkdir()
+    (cli_source / "main.phs").write_text("$a = 10; return $a;")
+    cli = run(["php", str(root / "main.php"), "--s2s", str(cli_source)])
+    if cli.stdout != (s2s / "value.cpp").read_text() or cli.stderr:
+        raise RuntimeError("Host S2S mode differs from direct generation")
+    (output / "s2s-cli.log").write_text(cli.stdout)
+    for arguments in (["--s2s"], ["--unknown"], ["--s2s", str(cli_source), "extra"]):
+        bad_usage = run(["php", str(root / "main.php"), *arguments], expected=1)
+        if bad_usage.stdout or not bad_usage.stderr.startswith("Usage:"):
+            raise RuntimeError("Host usage failure did not stay on stderr")
+    missing = run(["php", str(root / "main.php"), "--s2s", str(output / "missing-source")], expected=1)
+    if missing.stdout or not missing.stderr.startswith("S2S generation failed:"):
+        raise RuntimeError("Host S2S failure did not stay on stderr")
+
     sample = run(["php", str(root / "main.php")])
     (output / "sample.log").write_text(sample.stdout + sample.stderr)
     if "Native build: exit 0\n" not in sample.stdout or "Executable exit code: 9\n" not in sample.stdout:

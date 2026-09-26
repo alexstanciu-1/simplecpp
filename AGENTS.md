@@ -76,3 +76,9 @@ See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation
 
 - Temporary planning notes for active tasks should default to `specs/planning/` unless a more specific owning folder is clearly better.
 - Planning notes must carry `Doc Status: planning` and must not be treated as semantic authority.
+
+## my-try compiler instructions
+
+When working under `compiler/my-try/`, also read and follow
+[its local operating rules](compiler/my-try/docs/AGENTS.md). They apply to the entire
+`compiler/my-try/` subtree; the file lives in docs to keep documentation together.

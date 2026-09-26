@@ -7,7 +7,7 @@ LLVM experiment does not provide type policy for this path.
 
 ## Model and ownership
 
-- `04_analyze/types/structures.php` defines canonical type records and enum tags.
+- `compiler/types/structures.php` defines canonical type records and enum tags.
   `Language_Types` registers the current built-in `int` (signed 64-bit) in code.
   The width field uses the portable `uint32` annotation; enum layout is not claimed
   to be byte-sized. Runtime/library JSON loading is a later feature.
@@ -26,7 +26,7 @@ LLVM experiment does not provide type policy for this path.
   Source syntax, scopes and the declaration inventory are unchanged; each node
   clears its derived facts during tree cleanup. No reverse syntax references or
   token-keyed fact maps remain. Type objects are shared.
-- C++ type spelling, header and enum-tagged literal strategy belong to `05_cpp`.
+- C++ type spelling, header and enum-tagged literal strategy belong to `05_backend/cpp`.
   Final artifact records contain only names and text.
 
 Reserved-name restrictions remain deferred to validation/STAN. A nearest source
@@ -59,7 +59,7 @@ included. No source-level include is required.
 ## Entry points
 
 ```sh
-php compiler/my-try/s2s.php SOURCE_DIRECTORY > /tmp/program.cpp
+php compiler/my-try/main.php --s2s SOURCE_DIRECTORY > /tmp/program.cpp
 clang++ -std=c++20 -I runtime/include /tmp/program.cpp -o /tmp/program
 ```
 

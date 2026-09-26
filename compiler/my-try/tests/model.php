@@ -11,7 +11,7 @@ final class Model_Test
 	public static function run(): void
 	{
 		$compiler = new Compiler();
-		$compiler->init([dirname(__DIR__) . '/samples/01_base']);
+		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		foreach ([Model::$modules, Model::$tokens, Model::$syntax_files, Model::$collected_files, Model::$llvm_files] as $storage) {
 			if (!$storage instanceof Storage) {
 				throw new \RuntimeException('Model collection is not Storage');
@@ -61,7 +61,7 @@ final class Model_Test
 	/** Stage failure must not leave output or backlinks from the previous run. */
 	private static function check_restarts(Compiler $compiler): void
 	{
-		$compiler->init([dirname(__DIR__) . '/samples/01_base']);
+		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		$compiler->exec();
 		$preparation = new LLVM_Preparation();
 		$prepared = $preparation->prepare_program(Model::$collected_files, new llvm_policy());
@@ -171,7 +171,7 @@ final class Model_Test
 	/** Reuse preparation after failures at different stages without damaging old results. */
 	private static function check_preparation_recovery(Compiler $compiler): void
 	{
-		$compiler->init([dirname(__DIR__) . '/samples/01_base']);
+		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		$compiler->exec();
 		$good = Model::$collected_files;
 		$worker = new LLVM_Preparation();
