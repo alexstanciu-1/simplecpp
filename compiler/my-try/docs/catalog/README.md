@@ -76,17 +76,22 @@ Discuss and split those rows rather than expanding a small slice silently.
 ## Per-example workflow
 
 1. Choose an entry and read its source example, old C++ result, preconditions and notes.
-2. Discuss source semantics and the desired v0.2 C++ solution. Consult current owning
+2. Review the corresponding legacy S2S implementation, tests and known limitations
+   before implementing every entry. Look for edge cases and precision/representation
+   traps. Compare findings against the current owning specs; legacy behavior is
+   evidence, not authority. Record relevant findings and deliberate departures in
+   the entry's decision or its linked implementation notes.
+3. Discuss source semantics and the desired v0.2 C++ solution. Consult current owning
    specs when the imported material conflicts or describes a v1 workaround.
-3. Split combined cases using child IDs such as `FUNC-DECL-002.a`; retain the parent
+4. Split combined cases using child IDs such as `FUNC-DECL-002.a`; retain the parent
    ID and its source links. Name dependencies and the slice's non-goal.
-4. Record the agreed source example, expected result/diagnostic, semantic owner,
+5. Record the agreed source example, expected result/diagnostic, semantic owner,
    facts needed by the emitter, and target C++ before implementation. Include the
    compilation-cost review below when agreeing the target form.
-5. Implement the reusable concept in `my-try`; track frontend, C++ S2S and LLVM
+6. Implement the reusable concept in `my-try`; track frontend, C++ S2S and LLVM
    independently. LLVM delivery stays deferred unless the user explicitly requests it;
    record PHP/native compiler execution and generated-program evidence separately.
-6. Update the chapter's progress row with a durable test/result link and any blocker.
+7. Update the chapter's progress row with a durable test/result link and any blocker.
    A rejected construct is complete only when its agreed diagnostic is proved.
 
 Each card has a **v0.2 decision / target C++** area to expand during discussion.

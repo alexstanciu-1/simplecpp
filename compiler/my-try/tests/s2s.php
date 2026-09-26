@@ -18,6 +18,10 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'float_explicit' => ['$a float = 10.5; return $a;', 10],
+	'float_copy' => ['$a = 10.5; $b float = $a; $a = .5; return $b;', 10],
+	'float_reassign' => ['$a = 10.5; $a = 2.5; return $a;', 2],
+	'float_direct' => ['return 10.e-1;', 1],
 	'bool_true' => ['$a = true; return $a;', 1],
 	'bool_false' => ['$a = false; return $a;', 0],
 	'bool_explicit' => ['$a bool = true; return $a;', 1],
@@ -33,6 +37,13 @@ $cases = [
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
 	'keyword' => ['$int = 10; return $int;', 10],
 ];
+// Exact spellings cover decimal grammar, precision, normal limits and subnormals.
+$float_forms = ['10.5', '.5', '10.', '1e3', '1E+3', '1.25e-3', '.5e2', '10.e-1',
+	'1.2345678901234567', '0.0', '0008.5', '08e0', '1.7976931348623157e308',
+	'2.2250738585072014e-308', '4.9406564584124654e-324'];
+foreach ($float_forms as $index => $spelling) {
+	$cases['float_form_' . $index] = ['$a = ' . $spelling . ';', 0];
+}
 $executions = [];
 foreach ($cases as $name => [$source, $exit])
 {
@@ -57,6 +68,18 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 
+	if (str_starts_with($name, 'float_form_'))
+	{
+		$spelling = $float_forms[(int) substr($name, strlen('float_form_'))];
+		$text = Model::$cpp_files[0]->text;
+		if (!str_contains($text, 'static_cast<scpp::float_t>(' . $spelling . ')')) {
+			throw new \LogicException('Float literal spelling was rounded or changed');
+		}
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_0), scpp::float_t>);\n";
+		$probe .= "\tif (local_0.native_value() != " . $spelling . ") { return 91; }\n";
+		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", $text));
+	}
+
 	// Independent native probes observe the value and type of large emitted literals.
 	if (($name === 'wide') || ($name === 'maximum'))
 	{
@@ -69,7 +92,7 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 }
-foreach (['$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a int;', 'function f(): int { return 1; }'] as $source)
+foreach (['$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a int;', 'function f(): int { return 1; }'] as $source)
 {
 	Compiler_Lifecycle::reset();
 	s2s_parse($source);
@@ -84,6 +107,47 @@ foreach (['$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = 
 	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty()) {
 		throw new \LogicException('Unsupported generation published output');
 	}
+}
+
+// Malformed numeric tokens must not split into accidentally valid expressions.
+foreach (['.', '.e2', '1e', '1e+', '1e-', '1.2.3', '1e2e3', '1.0f', '1_0.5', '0x1.2', '-1.5', '+1.5'] as $spelling)
+{
+	Compiler_Lifecycle::reset();
+	$failed = false;
+	try {
+		s2s_parse('$a = ' . $spelling . ';');
+	}
+	catch (\RuntimeException $expected) {
+		$failed = true;
+	}
+	if (!$failed) {
+		throw new \LogicException('Unsupported numeric syntax accepted: ' . $spelling);
+	}
+}
+
+// Floating facts retain exact text and canonical identity; cleanup belongs to specialization.
+Compiler_Lifecycle::reset();
+$syntax = s2s_parse('$a = 1.2345678901234567; $b = $a;');
+$children = Syntax_Nodes::block_data($syntax->root)->children;
+$float_node = Syntax_Nodes::binding_data($children[0])->value;
+$float_data = Syntax_Nodes::float_data($float_node);
+$before = serialize($syntax);
+$compiler = new Compiler();
+$compiler->prepare();
+$float_facts = $float_data->require_preparation();
+$floating = Language_Types::floating(Model::$language_scope);
+$resolved = Scope_Lookup::types(Model::$global_scope, 'float');
+if (($resolved[0] !== $floating) || ($floating->value_bits !== 64) || !$floating->signed || ($float_facts->decimal !== '1.2345678901234567') || ($float_facts->type !== $floating) || (Syntax_Nodes::binding_data($children[1])->require_preparation()->type !== $floating)) {
+	throw new \LogicException('Floating literal lost precision or canonical type identity');
+}
+$compiler->cpp();
+Compiler_Lifecycle::reset_cpp();
+if ($float_data->require_preparation() !== $float_facts) {
+	throw new \LogicException('Output reset changed floating facts');
+}
+Compiler_Lifecycle::reset_preparation();
+if (($float_data->preparation() !== null) || (serialize($syntax) !== $before)) {
+	throw new \LogicException('Floating cleanup changed syntax or retained facts');
 }
 
 // Boolean literals keep canonical identity without entering reference/name collection.

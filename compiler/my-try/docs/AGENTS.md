@@ -159,4 +159,17 @@ queries, and clear their own derived fields. Stage sequencing and tree cleanup b
 to Compiler_Lifecycle/Preparation_Cleanup; scope publication and replacement policy
 belong to Scope_Publication. Prefer typed specialization access and first_child()/next() over untyped payload chains. children_snapshot() explicitly copies membership. Preserve source
 order and stable storage positions; do not sort AST/storage membership as a convenience.
+Specializations may also expose operation dispatch and traversal hooks that forward
+to the owning process, including backend-specific operations. The worker retains
+the compiler algorithm; each operation must define who owns child traversal.
+These hooks are intended to replace manual dispatch chains and enable compiler
+optimization, not to promise devirtualization or measured speedups.
 See [the model boundary](architecture/MODEL.md#structure-and-processing-boundary).
+
+## Catalog intake review
+
+Before implementing each catalog slice, review its corresponding legacy S2S code,
+tests and known limitations for traps and edge cases. Compare them with the owning
+specs and record relevant findings or intentional departures in the catalog decision
+or linked slice notes. Follow [the per-example workflow](catalog/README.md#per-example-workflow).
+Legacy behavior is evidence; it does not override the Simple C++ contract.

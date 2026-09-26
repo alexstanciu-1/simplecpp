@@ -46,7 +46,7 @@ token_check(count($tokens) === count($expected));
 foreach ($tokens as $index => $token) {
 	token_check([$token->offset, $token->length, $token->text()] === $expected[$index]);
 }
-foreach (['$', '$0', '12a', '1.', '==', '=>', '-', "\0", "\xc3\xa9"] as $invalid)
+foreach (['$', '$0', '12a', '1.e+', '1..', '==', '=>', '-', "\0", "\xc3\xa9"] as $invalid)
 {
 	$failed = false;
 	try {
@@ -56,6 +56,13 @@ foreach (['$', '$0', '12a', '1.', '==', '=>', '-', "\0", "\xc3\xa9"] as $invalid
 		$failed = str_contains($error->getMessage(), 'bytes.phs: byte 2');
 	}
 	token_check($failed);
+}
+// Decimal/exponent tokens preserve spans, including signs inside the exponent.
+foreach (['10.5', '.5', '10.', '1e3', '1E+3', '1.25e-3', '.5e2', '10.e-1'] as $spelling) {
+	$tokens = token_scan('  ' . $spelling . ';')->tokens;
+	token_check(count($tokens) === 2);
+	token_check([$tokens[0]->offset, $tokens[0]->length, $tokens[0]->text()] === [2, strlen($spelling), $spelling]);
+	token_check(Source_Text::floating($tokens[0]->text()));
 }
 token_check(token_scan('')->tokens->is_empty());
 for ($byte = 0; $byte < 256; $byte++) {

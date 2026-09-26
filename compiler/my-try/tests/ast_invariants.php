@@ -82,6 +82,23 @@ function check_node_construction(): void
 	}
 }
 
+// Fieldless syntax still supports unconditional local lifecycle delegation.
+foreach ([node_kind::identifier, node_kind::punctuation, node_kind::comment] as $kind)
+{
+	$node = Syntax_Nodes::make($kind, 0, 1);
+	$before = serialize($node);
+	$node->clear_preparation();
+	if (!($node->payload() instanceof empty_node_structure) || $node->has_children() || (serialize($node) !== $before)) {
+		throw new \LogicException('Empty specialization lost its leaf or cleanup contract');
+	}
+	try {
+		Syntax_Nodes::make(node_kind::return_statement, 0, 1, new empty_node_structure());
+		throw new \RuntimeException('Empty specialization accepted for required return data');
+	}
+	catch (\LogicException $expected) {
+	}
+}
+
 check_node_construction();
 check_binding_invariants();
 check_parameter_invariants();

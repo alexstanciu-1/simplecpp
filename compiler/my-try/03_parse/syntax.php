@@ -13,15 +13,22 @@ final class Syntax_Nodes
 	{
 		if ($data === null)
 		{
-			if ($kind === node_kind::integer_literal) {
+			if ($kind === node_kind::float_literal) {
+				$data = new float_literal_structure();
+			}
+			elseif ($kind === node_kind::integer_literal) {
 				$data = new integer_literal_structure();
 			}
 			elseif ($kind === node_kind::variable_reference) {
 				$data = new variable_reference_structure();
 			}
+			elseif (($kind === node_kind::identifier) || ($kind === node_kind::punctuation) || ($kind === node_kind::comment)) {
+				$data = new empty_node_structure();
+			}
 		}
 		self::validate_payload($kind, $data);
-		$node = new ast_node($kind, $start, $end, $data);
+		$specialization = object_cast($data, node_structure::class);
+		$node = new ast_node($kind, $start, $end, $specialization);
 		$children /** Storage<ast_node> */ = self::child_nodes($node);
 		ast_node::link_children($node, $children);
 		return $node;
@@ -30,6 +37,11 @@ final class Syntax_Nodes
 	public static function integer_data(ast_node $node): integer_literal_structure
 	{
 		return object_cast($node->payload(), integer_literal_structure::class);
+	}
+
+	public static function float_data(ast_node $node): float_literal_structure
+	{
+		return object_cast($node->payload(), float_literal_structure::class);
 	}
 
 	public static function boolean_data(ast_node $node): boolean_literal_structure
@@ -42,125 +54,11 @@ final class Syntax_Nodes
 		return object_cast($node->payload(), variable_reference_structure::class);
 	}
 
-	/** Enumerate direct syntax children in grammar order before publishing navigation links. */
+	/** Ask the specialization for direct children before navigation links exist. */
 	public static function child_nodes(ast_node $node): Storage /** Storage<ast_node> */
 	{
 		$result /** Storage<ast_node> */ = new Storage();
-		if ($node->payload() instanceof block_structure)
-		{
-			$data = object_cast($node->payload(), block_structure::class);
-			$items /** Storage<ast_node> */ = $data->children;
-			foreach ($items as $child) {
-				$result->append($child);
-			}
-			return $result;
-		}
-		if ($node->payload() instanceof function_structure)
-		{
-			$data = object_cast($node->payload(), function_structure::class);
-			$items /** Storage<ast_node> */ = $data->parameters;
-			foreach ($items as $child) {
-				$result->append($child);
-			}
-			$result->append($data->return_type);
-			$result->append($data->body);
-			return $result;
-		}
-		if ($node->payload() instanceof parameter_structure) {
-			$data = object_cast($node->payload(), parameter_structure::class);
-			$result->append($data->type_syntax);
-			return $result;
-		}
-		if ($node->payload() instanceof call_structure)
-		{
-			$data = object_cast($node->payload(), call_structure::class);
-			$items /** Storage<ast_node> */ = $data->template_arguments;
-			foreach ($items as $child) {
-				$result->append($child);
-			}
-			$items /** Storage<ast_node> */ = $data->arguments;
-			foreach ($items as $child) {
-				$result->append($child);
-			}
-			return $result;
-		}
-		if ($node->payload() instanceof binary_structure) {
-			$data = object_cast($node->payload(), binary_structure::class);
-			$result->append($data->left);
-			$result->append($data->right);
-			return $result;
-		}
-		if ($node->payload() instanceof expression_statement_structure) {
-			$data = object_cast($node->payload(), expression_statement_structure::class);
-			$result->append($data->expression);
-			return $result;
-		}
-		if ($node->payload() instanceof return_structure)
-		{
-			$data = object_cast($node->payload(), return_structure::class);
-			if ($data->expression !== null) {
-				$expression /** ast_node */ = $data->expression;
-				$result->append($expression);
-			}
-			return $result;
-		}
-		if ($node->payload() instanceof binding_structure)
-		{
-			$data = object_cast($node->payload(), binding_structure::class);
-			if ($data->type_syntax !== null) {
-				$type_syntax /** ast_node */ = $data->type_syntax;
-				$result->append($type_syntax);
-			}
-			if ($data->target !== null) {
-				$target /** ast_node */ = $data->target;
-				$result->append($target);
-			}
-			if ($data->value !== null) {
-				$value /** ast_node */ = $data->value;
-				$result->append($value);
-			}
-			return $result;
-		}
-		if ($node->payload() instanceof array_type_structure) {
-			$data = object_cast($node->payload(), array_type_structure::class);
-			$result->append($data->element_type);
-			$result->append($data->count);
-			return $result;
-		}
-		if ($node->payload() instanceof array_literal_structure)
-		{
-			$data = object_cast($node->payload(), array_literal_structure::class);
-			$items /** Storage<ast_node> */ = $data->elements;
-			foreach ($items as $child) {
-				$result->append($child);
-			}
-			return $result;
-		}
-		if ($node->payload() instanceof index_structure) {
-			$data = object_cast($node->payload(), index_structure::class);
-			$result->append($data->base);
-			$result->append($data->index);
-			return $result;
-		}
-		if ($node->payload() instanceof struct_structure)
-		{
-			$data = object_cast($node->payload(), struct_structure::class);
-			$items /** Storage<ast_node> */ = $data->fields;
-			foreach ($items as $child) {
-				$result->append($child);
-			}
-			return $result;
-		}
-		if ($node->payload() instanceof field_structure) {
-			$data = object_cast($node->payload(), field_structure::class);
-			$result->append($data->type_syntax);
-			return $result;
-		}
-		if ($node->payload() instanceof field_access_structure) {
-			$data = object_cast($node->payload(), field_access_structure::class);
-			$result->append($data->base);
-			return $result;
-		}
+		$node->payload()->append_children($result);
 		return $result;
 	}
 
@@ -183,8 +81,9 @@ final class Syntax_Nodes
 			node_kind::struct_declaration => $payload instanceof struct_structure,
 			node_kind::field_declaration => $payload instanceof field_structure,
 			node_kind::field_expression => $payload instanceof field_access_structure,
-			node_kind::identifier, node_kind::punctuation, node_kind::comment => $payload === null,
+			node_kind::identifier, node_kind::punctuation, node_kind::comment => $payload instanceof empty_node_structure,
 			node_kind::integer_literal => $payload instanceof integer_literal_structure,
+			node_kind::float_literal => $payload instanceof float_literal_structure,
 			node_kind::boolean_literal => $payload instanceof boolean_literal_structure,
 			node_kind::variable_reference => $payload instanceof variable_reference_structure,
 		};
@@ -247,7 +146,7 @@ final class Syntax_Nodes
 		{
 			node_kind::struct_declaration, node_kind::field_declaration, node_kind::array_type, node_kind::file, node_kind::function_declaration, node_kind::parameter_declaration, node_kind::identifier, node_kind::punctuation,
 			node_kind::comment => node_category::syntax,
-			node_kind::field_expression, node_kind::array_literal, node_kind::index_expression, node_kind::integer_literal, node_kind::boolean_literal, node_kind::variable_reference,
+			node_kind::field_expression, node_kind::array_literal, node_kind::index_expression, node_kind::integer_literal, node_kind::float_literal, node_kind::boolean_literal, node_kind::variable_reference,
 			node_kind::binary_expression, node_kind::assignment_expression, node_kind::call_expression => node_category::expression,
 			node_kind::block, node_kind::expression_statement,
 			node_kind::return_statement, node_kind::variable_binding_statement => node_category::statement,

@@ -1,0 +1,91 @@
+<?php
+namespace scpp\compiler;
+require_once dirname(__DIR__) . '/boot.php';
+
+/** Produce a real source tree while keeping these dispatch checks independent of publication. */
+function dispatch_parse(string $text): parsed_file
+{
+	$source = new file();
+	$source->path = 'dispatch.phs';
+	$source->content = $text;
+	$parsed = (new Parser((new Tokenizer($source))->tokenize()))->parse();
+	$parsed->root_scope()->set_parent(Model::$global_scope);
+	return $parsed;
+}
+
+Compiler_Lifecycle::reset();
+$parsed = dispatch_parse('function unsupported(): int { return 17; }');
+$function = $parsed->root->first_child();
+$body = Syntax_Nodes::function_data($function)->body;
+$return_node = $body->first_child();
+$literal = Syntax_Nodes::integer_data(Syntax_Nodes::return_data($return_node)->expression);
+$context = new preparation_context();
+$context->collection = $parsed->collection;
+$context->locals = new scope();
+$context->integer = Language_Types::integer(Model::$language_scope);
+$context->boolean = Language_Types::boolean(Model::$language_scope);
+$context->floating = Language_Types::floating(Model::$language_scope);
+$cpp_context = new cpp_generation_context();
+$syntax_before = serialize($parsed);
+
+// Unsupported parents must reject before visiting otherwise supported descendants.
+$specialization = $function->payload();
+$failures = 0;
+try {
+	$specialization->prepare_statement($function, $context);
+}
+catch (\RuntimeException $error) {
+	$failures++;
+}
+try {
+	$specialization->prepare_expression($function, $context);
+}
+catch (\RuntimeException $error) {
+	$failures++;
+}
+try {
+	$specialization->generate_cpp_statement($function, $cpp_context);
+}
+catch (\RuntimeException $error) {
+	$failures++;
+}
+try {
+	$specialization->generate_cpp_expression($function, $cpp_context);
+}
+catch (\RuntimeException $error) {
+	$failures++;
+}
+if (($failures !== 4) || ($literal->preparation() !== null) || ($cpp_context->headers !== []) || (serialize($parsed) !== $syntax_before)) {
+	throw new \LogicException('Unsupported specialization walked children or published effects');
+}
+if (!($specialization instanceof node_operations_i)) {
+	throw new \LogicException('Specializations did not inherit the operation interface');
+}
+
+// A reused generator must own fresh output state rather than retain a prior invocation's headers.
+$generator = new CPP_Generator();
+$integer_source = dispatch_parse('$a int = 10; return $a;');
+$integer_prepared = (new File_Preparation($integer_source->collection, Model::$language_scope))->prepare();
+$integer_output = $generator->generate($integer_prepared);
+$boolean_source = dispatch_parse('$a bool = false; return $a;');
+$boolean_prepared = (new File_Preparation($boolean_source->collection, Model::$language_scope))->prepare();
+$boolean_output = $generator->generate($boolean_prepared);
+if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($boolean_output->text, 'scpp/bool_t.hpp') || (substr_count($integer_output->text, 'auto local_0') !== 1)) {
+	throw new \LogicException('Generation leaked context or visited a binding twice');
+}
+
+// Public phase cleanup remains responsible for clearing partial success on a later unsupported node.
+$mixed = dispatch_parse('$a = 10; function unsupported(): int { return 17; }');
+$first_data = Syntax_Nodes::binding_data($mixed->root->first_child());
+$first_literal = Syntax_Nodes::integer_data($first_data->value);
+$failed = false;
+try {
+	(new File_Preparation($mixed->collection, Model::$language_scope))->prepare();
+}
+catch (\RuntimeException $error) {
+	$failed = true;
+}
+if (!$failed || ($first_data->preparation() !== null) || ($first_literal->preparation() !== null)) {
+	throw new \LogicException('Specialization dispatch bypassed failed-phase cleanup');
+}
+echo "Specialization dispatch: inherited contract, unsupported-parent isolation, phase cleanup and invocation state passed\n";

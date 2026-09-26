@@ -18,7 +18,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-INT-001](#lit-int-001) | agreed | `$a = 10;` | proved | proved | deferred | [S2S integer slice](../s2s_integer_slice.md); PHP preparation + Clang execution; compiler-native evidence recorded in handoff |
 | [LIT-BOOL-001](#lit-bool-001) | agreed | `$a = true;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-BOOL-002](#lit-bool-002) | agreed | `$a = false;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
-| [LIT-FLOAT-001](#lit-float-001) | pending-discussion | `$a = 10.5;` | unverified | unverified | deferred | — |
+| [LIT-FLOAT-001](#lit-float-001) | agreed | `$a = 10.5;` | proved | proved | deferred | [Scalar proof](../../tests/s2s.php), [float decision](#lit-float-001) |
 | [LIT-STR-001](#lit-str-001) | pending-discussion | `$a = 'x';` | unverified | unverified | deferred | — |
 | [LIT-STR-002](#lit-str-002) | pending-discussion | `$a = "x";` | unverified | unverified | deferred | — |
 | [TYPE-VAR-001](#type-var-001) | pending-discussion | `$x string = "test";` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
@@ -206,7 +206,37 @@ auto a = static_cast<bool_t>(false);
 
 ## LIT-FLOAT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Agreed decimal floating literals use canonical
+`float` (signed 64-bit, runtime `scpp::float_t` backed by `double`; current target
+IEEE binary64 with 53 significand bits). Emit `auto local_0 =
+static_cast<scpp::float_t>(10.5);` with the narrow `scpp/float_t.hpp` header.
+
+Accept decimal point and exponent forms: `10.5`, `.5`, `10.`, `1e3`, `1E+3`,
+`1.25e-3`, `.5e2`, `10.e-1`. The tokenizer owns numeric grammar and exact spans;
+parser assigns the float specialization; preparation retains decimal text and the
+canonical type. These spellings are already C++ compatible, including leading
+zeros in floating forms, so emission preserves them without host numeric conversion.
+This preserves the decimal input to target rounding, not exact decimal arithmetic.
+
+Reuse scalar bindings for inference, explicit `float`, copies and reassignment.
+Unary signs, separators, arithmetic, cross-type conversions and numeric range
+validation remain outside this slice. Exponent signs are part of the literal.
+Overflow/underflow diagnostics remain a target-toolchain concern in this pass.
+
+**Legacy review:** `Generator::renderExpr()` receives an already parsed PHP float
+and concatenates it into output. The precision probe `1.2345678901234567` emitted
+`1.2345678901235`; this loss is deliberately avoided. Existing float initialization
+and reassignment fixtures (`tests/php/types/float/level_01`) and runtime scalar
+proofs were reviewed; they cover ordinary values, not text preservation or exponent
+edge cases. The current proof adds all accepted forms, high precision, maximum
+finite double, minimum normal and subnormal, malformed exponent rejection, canonical
+identity and preparation cleanup.
+
+**Verification (2026-09-26):** `/tmp/scpp-float-s2s-02/summary.json` records
+72 PHP files linted, passing style/behavior suites, 37 generated C++ programs
+compiled/executed, and the existing 19 LLVM / 28 call regressions. All 51 portable
+compiler sources converted in `/tmp/scpp-float-conversion/`. Native compilation of
+`my-try` itself was not run, per the opt-in rule.
 
 ### Imported version 1
 

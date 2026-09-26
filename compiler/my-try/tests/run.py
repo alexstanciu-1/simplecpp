@@ -35,6 +35,8 @@ def verify(root, output):
     (output / "structure_access.log").write_text(access.stdout + access.stderr)
     invariants = run(["php", str(root / "tests/ast_invariants.php")])
     (output / "ast_invariants.log").write_text(invariants.stdout + invariants.stderr)
+    dispatch = run(["php", str(root / "tests/specialization_dispatch.php")])
+    (output / "specialization_dispatch.log").write_text(dispatch.stdout + dispatch.stderr)
     incremental = run(["php", str(root / "tests/incremental.php")])
     (output / "incremental.log").write_text(incremental.stdout + incremental.stderr)
     pipeline = run(["php", str(root / "tests/pipeline.php")])

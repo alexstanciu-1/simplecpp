@@ -8,6 +8,8 @@ require_once dirname(__DIR__) . '/boot.php';
 final class AST_Test
 {
 	private const PAYLOADS = [
+		'empty' => empty_node_structure::class,
+		'floats' => float_literal_structure::class,
 		'booleans' => boolean_literal_structure::class,
 		'integers' => integer_literal_structure::class,
 		'references' => variable_reference_structure::class,
@@ -76,9 +78,6 @@ final class AST_Test
 		self::check($node->token_index <= $node->end_token_index);
 		$payload = $node->payload();
 		Syntax_Nodes::validate_payload($node->kind(), $payload);
-		if ($payload === null) {
-			return;
-		}
 		self::initialized($payload);
 		self::check(!$payloads->contains($payload));
 		$payloads->attach($payload);
@@ -235,6 +234,7 @@ template<T> function identity(T $value): T { return $value; }
 function pick(int &$first, int $second): int { return $second; }
 $values int[2] = [2, 8];
 $flag bool = false;
+$fraction float = .5e2;
 $pair Pair;
 $pair->first = $values[0];
 identity<int>($pair->first);
@@ -245,9 +245,7 @@ PHS;
 		$first_nodes = self::verify($first);
 		$types = [];
 		foreach ($first_nodes as $node) {
-			if ($node->payload() !== null) {
-				$types[get_class($node->payload())] = true;
-			}
+			$types[get_class($node->payload())] = true;
 		}
 		foreach (self::PAYLOADS as $field => $type) {
 			self::check($field === 'binaries' ? !isset($types[$type]) : isset($types[$type]));

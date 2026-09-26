@@ -6,6 +6,7 @@ namespace scpp\compiler;
 enum type_kind {
 	case integer;
 	case boolean;
+	case floating;
 	case record;
 }
 

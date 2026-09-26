@@ -16,6 +16,14 @@ final class Language_Types
 		$integer->signed = true;
 		$language_scope->register_type($integer);
 
+		$floating = new type_definition();
+		$floating->name = 'float';
+		$floating->kind = type_kind::floating;
+		$floating->origin = type_origin::language;
+		$floating->value_bits = 64;
+		$floating->signed = true;
+		$language_scope->register_type($floating);
+
 		$boolean = new type_definition();
 		$boolean->name = 'bool';
 		$boolean->kind = type_kind::boolean;
@@ -39,6 +47,15 @@ final class Language_Types
 		$types /** vector<type_definition> */ = $language_scope->types_named('bool');
 		if (q_count($types) !== 1) {
 			throw new \LogicException('Missing canonical boolean definition');
+		}
+		return $types[0];
+	}
+	/** Floating-point defaults use the same language scope as integer defaults. */
+	public static function floating(scope $language_scope): type_definition
+	{
+		$types /** vector<type_definition> */ = $language_scope->types_named('float');
+		if (q_count($types) !== 1) {
+			throw new \LogicException('Missing canonical floating definition');
 		}
 		return $types[0];
 	}

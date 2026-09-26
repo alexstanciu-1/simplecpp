@@ -9,3 +9,7 @@ representation mapping belongs in `05_backend/cpp` or `05_backend/llvm`.
 
 Runtime/library JSON ingestion remains deferred. This move does not change type
 identity, scope lookup, or the existing initialization/reset contract.
+
+Current scalar definitions are `int` (signed 64-bit), `bool` (one semantic value
+bit), and `float` (signed 64-bit floating representation). The runtime float wrapper
+uses binary64 on the current target; C++ spellings stay in the backend mapping.

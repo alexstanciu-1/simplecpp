@@ -17,6 +17,11 @@ final class CPP_Types
 			$result->header = 'scpp/int_t.hpp';
 			$result->literal = cpp_literal_kind::signed_integer;
 		}
+		elseif (($definition->kind === type_kind::floating) && ((int) $definition->value_bits === 64) && $definition->signed) {
+			$result->spelling = 'scpp::float_t';
+			$result->header = 'scpp/float_t.hpp';
+			$result->literal = cpp_literal_kind::floating;
+		}
 		elseif ($definition->kind === type_kind::boolean) {
 			$result->spelling = 'scpp::bool_t';
 			$result->header = 'scpp/bool_t.hpp';

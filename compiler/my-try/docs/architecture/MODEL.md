@@ -24,7 +24,7 @@ Keyed_Storage is used for named object collections during LLVM preparation.
 ## AST graph
 
 parsed_file.root owns a final ast_node. The common node owns an
-optional node_structure and private first-child/next-sibling links, with native
+required node_structure and private first-child/next-sibling links, with native
 weak parent/previous links and a uint32 child ordinal. Node token spans are uint32.
 Named structure child fields/lists remain retaining aliases for existing workers.
 The parser validates and links completed children before publishing each node.
@@ -104,7 +104,7 @@ or change retained ownership. See [binding details](../../../../specs/portabilit
 
 ### Concrete payload access
 
-The optional node_structure payload remains privately node-owned. `kind()` exposes
+The required node_structure payload remains privately node-owned. `kind()` exposes
 the fixed tag; `Syntax_Nodes::*_data` provides typed access to the specialization
 for all consumers. Specializations retain named syntax fields and child lists.
 These accessors return the same objects, not copies. Preparation and C++ emission
@@ -204,7 +204,9 @@ Generated artifacts own only names and text. See [the slice](../s2s_integer_slic
 
 Structures own representation, construction, local consistency, navigation and
 small data queries. Processors own stage ordering, publication policy, resolution,
-preparation and emission. Local index maintenance and per-node fact cleanup remain
+preparation and emission algorithms. Specializations may route process operations
+and expose structural child order; each operation has one traversal owner.
+Local index maintenance and per-node fact cleanup remain
 structure operations; deciding when to invoke them belongs to a processor.
 
 `Scope_Publication` selects declarations and types for publication/replacement,
@@ -222,3 +224,24 @@ source-language forms, storage representation, or LLVM lowering rules were added
 explicitly. `prepare()` processes synchronized sources, `cpp()` emits prepared sources, and
 `llvm()` retains its experimental preparation/emission path. Direct parse
 publication goes through Source_Publication, without a Compiler forwarding wrapper.
+
+### Floating scalar facts
+
+`float_literal_structure` owns optional `prepared_float_literal` facts, cleared
+locally like integer and boolean facts. Its decimal string retains the exact source
+mantissa/exponent; preparation never converts it to a host number. The canonical
+language-scope `float` definition is signed, 64-bit and shared by bindings and
+references. C++ representation and rounding belong to the backend/toolchain.
+
+### Specialization operation hooks
+
+Agreed 2026-09-26: specialization records may provide dispatch/traversal hooks for
+compiler operations, including backend-specific ones. Algorithms remain in their
+processing owners. A phase worker starts an independent pass; interlinked operations
+may be delegated when needed. Each operation defines one traversal owner to avoid
+double visits or unintended execution order. The abstract base should implement
+shared operation interfaces once. The base now implements `node_operations_i`, with explicit statement/expression
+preparation and C++ generation hooks. Algorithms use per-invocation context records
+and typed processing routines; syntax never retains those contexts. Unsupported
+operations throw before walking children. Native optimization of virtual calls
+requires separate evidence. See [dispatch ownership](ast_layout.md#specialization-dispatch).

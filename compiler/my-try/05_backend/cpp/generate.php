@@ -5,23 +5,20 @@ namespace scpp\compiler;
 
 final class CPP_Generator
 {
-	private array $headers /** hash<bool> */ = [];
-
 	/** Emit only after preparation succeeds; generated names cannot collide with C++ keywords. */
 	public function generate(prepared_file $prepared): cpp_module
 	{
-		$empty /** hash<bool> */ = [];
-		$this->headers = $empty;
+		$context = new cpp_generation_context();
 		$body = "\nint main()\n{\n";
 		$child = $prepared->source->root->first_child();
 		while ($child !== null) {
 			$node /** ast_node */ = $child;
-			$body .= $this->statement($node);
+			$body .= $node->payload()->generate_cpp_statement($node, $context);
 			$child = $node->next();
 		}
 		$body .= "\treturn 0;\n}\n";
 		$text = '';
-		foreach ($this->headers as $header => $used) {
+		foreach ($context->headers as $header => $used) {
 			$text .= '#include "' . $header . '"' . "\n";
 		}
 		$text .= $body;
@@ -31,60 +28,64 @@ final class CPP_Generator
 		return $result;
 	}
 
-	/** Binding classification and declaration identity come from preparation, not C++ heuristics. */
-	private function statement(ast_node $node): string
+	/** Emit a prepared binding; only its initializer participates in expression generation. */
+	public static function generate_binding(binding_structure $syntax, cpp_generation_context $context): string
 	{
-		if ($node->kind() === node_kind::variable_binding_statement)
-		{
-			$binding_data = Syntax_Nodes::binding_data($node);
-			$binding = $binding_data->require_preparation();
-			$initializer = object_cast($binding_data->value, ast_node::class);
-			$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
-			$prefix = $binding->resolved_kind === binding_kind::declaration ? 'auto ' : '';
-			return "\t" . $prefix . self::local_name($declaration) . ' = ' . $this->expression($initializer) . ";\n";
-		}
-		if ($node->kind() === node_kind::return_statement)
-		{
-			$return_data = Syntax_Nodes::return_data($node);
-			if ($return_data->expression === null) {
-				return "\treturn 0;\n";
-			}
-			$syntax /** ast_node */ = $return_data->expression;
-			return "\treturn static_cast<int>((" . $this->expression($syntax) . ").native_value());\n";
-		}
-		throw new \RuntimeException('C++ statement emission is not implemented for this form');
+		$binding = $syntax->require_preparation();
+		$initializer = object_cast($syntax->value, ast_node::class);
+		$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
+		$prefix = $binding->resolved_kind === binding_kind::declaration ? 'auto ' : '';
+		return "\t" . $prefix . self::local_name($declaration) . ' = ' . $initializer->payload()->generate_cpp_expression($initializer, $context) . ";\n";
 	}
 
-	/** Emit each scalar from its specialized facts using the canonical C++ representation. */
-	private function expression(ast_node $node): string
+	/** Program-entry returns use the native scalar value; a bare return exits successfully. */
+	public static function generate_return(return_structure $syntax, cpp_generation_context $context): string
 	{
-		if ($node->kind() === node_kind::integer_literal)
-		{
-			$literal = Syntax_Nodes::integer_data($node)->require_preparation();
-			$mapping = CPP_Types::representation($literal->type);
-			$this->headers[$mapping->header] = true;
-			if ($mapping->literal !== cpp_literal_kind::signed_integer) {
-				throw new \RuntimeException('C++ literal emission is not implemented for this type');
-			}
-			return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . 'LL)';
+		if ($syntax->expression === null) {
+			return "\treturn 0;\n";
 		}
-		if ($node->kind() === node_kind::boolean_literal)
-		{
-			$boolean = Syntax_Nodes::boolean_data($node)->require_preparation();
-			$mapping = CPP_Types::representation($boolean->type);
-			$this->headers[$mapping->header] = true;
-			if ($mapping->literal !== cpp_literal_kind::boolean) {
-				throw new \RuntimeException('C++ literal emission is not implemented for this type');
-			}
-			$spelling = $boolean->value ? 'true' : 'false';
-			return 'static_cast<' . $mapping->spelling . '>(' . $spelling . ')';
+		$expression /** ast_node */ = $syntax->expression;
+		return "\treturn static_cast<int>((" . $expression->payload()->generate_cpp_expression($expression, $context) . ").native_value());\n";
+	}
+
+	/** Emit exact signed integer magnitude using its canonical representation. */
+	public static function generate_integer(prepared_integer_literal $literal, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($literal->type);
+		$context->headers[$mapping->header] = true;
+		if ($mapping->literal !== cpp_literal_kind::signed_integer) {
+			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
-		if ($node->kind() === node_kind::variable_reference) {
-			$reference = Syntax_Nodes::reference_data($node)->require_preparation();
-			$target = object_cast(weakref_get($reference->declaration), collected_name::class);
-			return self::local_name($target);
+		return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . 'LL)';
+	}
+
+	/** Preserve decimal spelling until the target toolchain performs floating conversion. */
+	public static function generate_float(prepared_float_literal $literal, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($literal->type);
+		$context->headers[$mapping->header] = true;
+		if ($mapping->literal !== cpp_literal_kind::floating) {
+			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
-		throw new \RuntimeException('C++ expression emission is not implemented for this form');
+		return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . ')';
+	}
+
+	/** Boolean source normalization is already complete before backend spelling. */
+	public static function generate_boolean(prepared_boolean_literal $literal, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($literal->type);
+		$context->headers[$mapping->header] = true;
+		if ($mapping->literal !== cpp_literal_kind::boolean) {
+			throw new \RuntimeException('C++ literal emission is not implemented for this type');
+		}
+		$spelling = $literal->value ? 'true' : 'false';
+		return 'static_cast<' . $mapping->spelling . '>(' . $spelling . ')';
+	}
+
+	public static function generate_reference(prepared_variable_reference $reference, cpp_generation_context $context): string
+	{
+		$target = object_cast(weakref_get($reference->declaration), collected_name::class);
+		return self::local_name($target);
 	}
 
 	private static function local_name(collected_name $declaration): string

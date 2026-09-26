@@ -1,11 +1,15 @@
 <?php
 
 /*
- * Role: specialized syntax records and their optional prepared facts.
- * Used by: Parser, Syntax_Nodes, Symbol_Collector and LLVM preparation/generation.
+ * Role: specialized syntax, prepared facts, child access and operation forwarding.
+ * Used by: Parser, Syntax_Nodes, File_Preparation, CPP_Generator and experimental LLVM consumers.
  * Flow: ast_node.payload() owns extra data; named children retain aliases of linked nodes.
  */
 namespace scpp\compiler;
+
+/** Nodes with no additional syntax fields still have a concrete specialization. */
+final class empty_node_structure extends node_structure {
+}
 
 /** Specialized facts are attached by preparation and cleared locally. */
 final class integer_literal_structure extends node_structure
@@ -31,6 +35,57 @@ final class integer_literal_structure extends node_structure
 	public function clear_preparation(): void
 	{
 		$this->prepared_facts = null;
+	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_integer($node, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_integer($this->require_preparation(), $context);
+	}
+}
+
+/** Specialized facts are attached by preparation and cleared locally. */
+final class float_literal_structure extends node_structure
+{
+	/** @ownership owner */
+	private ?prepared_float_literal $prepared_facts = null;
+
+	public function preparation(): ?prepared_float_literal
+	{
+		return $this->prepared_facts;
+	}
+
+	public function require_preparation(): prepared_float_literal
+	{
+		return object_cast($this->prepared_facts, prepared_float_literal::class);
+	}
+
+	public function set_preparation(prepared_float_literal $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared_facts = null;
+	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_float($node, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_float($this->require_preparation(), $context);
 	}
 }
 
@@ -61,6 +116,18 @@ final class boolean_literal_structure extends node_structure
 	{
 		$this->prepared_facts = null;
 	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_boolean($this->value, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_boolean($this->require_preparation(), $context);
+	}
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
@@ -88,6 +155,18 @@ final class variable_reference_structure extends node_structure
 	{
 		$this->prepared_facts = null;
 	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_reference($node, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_reference($this->require_preparation(), $context);
+	}
 }
 
 final class call_structure extends node_structure
@@ -113,6 +192,19 @@ final class call_structure extends node_structure
 	{
 		$this->arguments = new Storage /** Storage<ast_node> */();
 		$this->template_arguments = new Storage /** Storage<ast_node> */();
+	}
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$items /** Storage<ast_node> */ = $this->template_arguments;
+		foreach ($items as $child) {
+			$result->append($child);
+		}
+		$items /** Storage<ast_node> */ = $this->arguments;
+		foreach ($items as $child) {
+			$result->append($child);
+		}
 	}
 }
 
@@ -141,9 +233,21 @@ final class function_structure extends node_structure
 	{
 		$this->parameters = new Storage /** Storage<ast_node> */();
 	}
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$items /** Storage<ast_node> */ = $this->parameters;
+		foreach ($items as $child) {
+			$result->append($child);
+		}
+		$result->append($this->return_type);
+		$result->append($this->body);
+	}
 }
 
-final class parameter_structure extends node_structure {
+final class parameter_structure extends node_structure
+{
 	public passing_mode $mode = passing_mode::value;
 	/** Null for value parameters; present exactly when mode is reference.
 	 * @storage.index token_list.tokens
@@ -155,6 +259,12 @@ final class parameter_structure extends node_structure {
 	 * @ownership owner
 	 */
 	public ast_node $type_syntax;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$result->append($this->type_syntax);
+	}
 }
 
 /** Shared payload for a file body or a block that introduces a scope. */
@@ -183,10 +293,20 @@ final class block_structure extends node_structure
 	{
 		return object_cast(weakref_get($this->scope_reference), scope::class);
 	}
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$items /** Storage<ast_node> */ = $this->children;
+		foreach ($items as $child) {
+			$result->append($child);
+		}
+	}
 }
 
 /** Binary and assignment expressions share operands; their node kinds retain the distinction. */
-final class binary_structure extends node_structure {
+final class binary_structure extends node_structure
+{
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -197,20 +317,35 @@ final class binary_structure extends node_structure {
 	 * @ownership owner
 	 */
 	public ast_node $right;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$result->append($this->left);
+		$result->append($this->right);
+	}
 }
 
 /** An expression used as a statement owns its terminating semicolon here. */
-final class expression_statement_structure extends node_structure {
+final class expression_statement_structure extends node_structure
+{
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
 	public ast_node $expression;
 	/** @storage.index token_list.tokens */
 	public int $semicolon_token_index;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$result->append($this->expression);
+	}
 }
 
 /** expression is null for a bare return; keyword and semicolon remain required. */
-final class return_structure extends node_structure {
+final class return_structure extends node_structure
+{
 	/** @storage.index token_list.tokens */
 	public int $keyword_token_index;
 	/** Syntax child owned through this link.
@@ -219,6 +354,25 @@ final class return_structure extends node_structure {
 	public ?ast_node $expression = null;
 	/** @storage.index token_list.tokens */
 	public int $semicolon_token_index;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		if ($this->expression !== null) {
+			$expression /** ast_node */ = $this->expression;
+			$result->append($expression);
+		}
+	}
+
+	public function prepare_statement(ast_node $node, preparation_context $context): void
+	{
+		File_Preparation::prepare_return(Syntax_Nodes::return_data($node), $context);
+	}
+
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_return(Syntax_Nodes::return_data($node), $context);
+	}
 }
 
 /** Preserve ambiguous binding syntax while declaration/assignment classification is refined.
@@ -270,10 +424,38 @@ final class binding_structure extends node_structure
 	{
 		$this->prepared_facts = null;
 	}
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		if ($this->type_syntax !== null) {
+			$type_syntax /** ast_node */ = $this->type_syntax;
+			$result->append($type_syntax);
+		}
+		if ($this->target !== null) {
+			$target /** ast_node */ = $this->target;
+			$result->append($target);
+		}
+		if ($this->value !== null) {
+			$value /** ast_node */ = $this->value;
+			$result->append($value);
+		}
+	}
+
+	public function prepare_statement(ast_node $node, preparation_context $context): void
+	{
+		File_Preparation::prepare_binding(Syntax_Nodes::binding_data($node), $context);
+	}
+
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_binding(Syntax_Nodes::binding_data($node), $context);
+	}
 }
 
 /** Fixed extent is syntax until preparation checks and normalizes it. */
-final class array_type_structure extends node_structure {
+final class array_type_structure extends node_structure
+{
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -282,9 +464,17 @@ final class array_type_structure extends node_structure {
 	 * @ownership owner
 	 */
 	public ast_node $count;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$result->append($this->element_type);
+		$result->append($this->count);
+	}
 }
 
-final class array_literal_structure extends node_structure {
+final class array_literal_structure extends node_structure
+{
 	/**
 	 * Ordered object list of child nodes.
 	 * @storage.owner
@@ -295,9 +485,19 @@ final class array_literal_structure extends node_structure {
 	{
 		$this->elements = new Storage /** Storage<ast_node> */();
 	}
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$items /** Storage<ast_node> */ = $this->elements;
+		foreach ($items as $child) {
+			$result->append($child);
+		}
+	}
 }
 
-final class index_structure extends node_structure {
+final class index_structure extends node_structure
+{
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -306,6 +506,13 @@ final class index_structure extends node_structure {
 	 * @ownership owner
 	 */
 	public ast_node $index;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$result->append($this->base);
+		$result->append($this->index);
+	}
 }
 
 final class struct_structure extends node_structure
@@ -322,22 +529,45 @@ final class struct_structure extends node_structure
 	{
 		$this->fields = new Storage /** Storage<ast_node> */();
 	}
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$items /** Storage<ast_node> */ = $this->fields;
+		foreach ($items as $child) {
+			$result->append($child);
+		}
+	}
 }
 
-final class field_structure extends node_structure {
+final class field_structure extends node_structure
+{
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
 	public ast_node $type_syntax;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$result->append($this->type_syntax);
+	}
 }
 
-final class field_access_structure extends node_structure {
+final class field_access_structure extends node_structure
+{
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
 	public ast_node $base;
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
+
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$result->append($this->base);
+	}
 }

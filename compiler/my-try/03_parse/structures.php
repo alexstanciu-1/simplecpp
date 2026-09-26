@@ -29,6 +29,7 @@ enum node_kind
 	case index_expression;
 	case integer_literal;
 	case boolean_literal;
+	case float_literal;
 	case variable_reference;
 	case binary_expression;
 	case assignment_expression;
@@ -57,11 +58,45 @@ enum passing_mode {
 	case reference;
 }
 
-/** Specialized data owns local cleanup; tree traversal belongs to preparation. */
-abstract class node_structure {
+/** Specializations route operations; process owners retain algorithms and invocation state. */
+interface node_operations_i {
+	public function prepare_statement(ast_node $node, preparation_context $context): void;
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression;
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string;
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string;
+}
+
+/** Leaf layout and local cleanup default to empty; unsupported processing never walks children. */
+abstract class node_structure implements node_operations_i
+{
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		return;
+	}
+
 	public function clear_preparation(): void
 	{
 		return;
+	}
+
+	public function prepare_statement(ast_node $node, preparation_context $context): void
+	{
+		throw new \RuntimeException('S2S preparation does not support this statement yet');
+	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		throw new \RuntimeException('S2S expression lowering is not implemented for this form');
+	}
+
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
+	{
+		throw new \RuntimeException('C++ statement emission is not implemented for this form');
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		throw new \RuntimeException('C++ expression emission is not implemented for this form');
 	}
 }
 
@@ -74,7 +109,7 @@ final class ast_node
 	public int $end_token_index /** uint32 */;
 	private node_kind $syntax_kind;
 	/** Extra syntax data owned by this node. @ownership owner */
-	private ?node_structure $payload_data = null;
+	private node_structure $payload_data;
 	/** @reference.source parsed_file.root @reference.weak */
 	private ?ast_node $parent_node /** weak<ast_node> */ = null;
 	/** @reference.source parsed_file.root @reference.weak */
@@ -86,7 +121,7 @@ final class ast_node
 	private int $position /** uint32 */ = 0;
 
 	/** Initialize the compact header before the node is linked or published. */
-	public function __construct(node_kind $kind, int $start, int $end, ?node_structure $data)
+	public function __construct(node_kind $kind, int $start, int $end, node_structure $data)
 	{
 		if (($start < 0) || ($end < $start) || ($end > 4294967295)) {
 			throw new \LogicException('AST token span exceeds uint32 bounds');
@@ -104,7 +139,7 @@ final class ast_node
 	}
 
 	/** Access the specialization owned by this node. */
-	public function payload(): ?node_structure
+	public function payload(): node_structure
 	{
 		return $this->payload_data;
 	}
@@ -112,10 +147,7 @@ final class ast_node
 	/** Delegate local fact cleanup to the specialization without traversing children. */
 	public function clear_preparation(): void
 	{
-		if ($this->payload_data !== null) {
-			$data /** node_structure */ = $this->payload_data;
-			$data->clear_preparation();
-		}
+		$this->payload_data->clear_preparation();
 	}
 
 	public function next(): ?ast_node

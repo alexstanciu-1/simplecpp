@@ -39,6 +39,18 @@ final class Source_Text
 		return true;
 	}
 
+	/** Classify a tokenizer-verified numeric token by its decimal point or exponent. */
+	public static function floating(string $text): bool
+	{
+		for ($index = 0; $index < string_byte_len($text); $index++) {
+			$byte = string_byte_at($text, $index);
+			if (($byte === 46) || ($byte === 69) || ($byte === 101)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static function letter(int $byte): bool
 	{
 		return ($byte === 95) || (($byte >= 65) && ($byte < 91)) || (($byte >= 97) && ($byte < 123));

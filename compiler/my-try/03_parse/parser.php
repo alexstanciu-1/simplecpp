@@ -348,8 +348,11 @@ final class Parser_Run
 			if (($text !== '') && Source_Text::digits($text)) {
 				$kind = node_kind::integer_literal;
 			}
+			elseif (Source_Text::floating($text)) {
+				$kind = node_kind::float_literal;
+			}
 			else {
-				throw new \RuntimeException($this->error_message('Expected integer literal or variable reference'));
+				throw new \RuntimeException($this->error_message('Expected scalar literal or variable reference'));
 			}
 		}
 		$this->position++;

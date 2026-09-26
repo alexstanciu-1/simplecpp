@@ -50,6 +50,11 @@ final class prepared_integer_literal extends prepared_expression {
 	public string $decimal;
 }
 
+/** Exact decimal floating spelling; rounding belongs to the target representation. */
+final class prepared_float_literal extends prepared_expression {
+	public string $decimal;
+}
+
 /** Normalized boolean value shared by backends. */
 final class prepared_boolean_literal extends prepared_expression {
 	public bool $value;
@@ -72,4 +77,16 @@ final class prepared_binding {
 /** Completed file preparation; the source tree owns the actual facts. */
 final class prepared_file {
 	public collected_file $source;
+}
+
+/** Invocation-local preparation data; never published into AST records or source scopes. */
+final class preparation_context
+{
+	public collected_file $collection;
+	public scope $locals;
+	public type_definition $integer;
+	public type_definition $boolean;
+	public type_definition $floating;
+	/** Non-owning occurrence index within collection.entries. */
+	public array $occurrences /** hash<collected_name, int> */ = [];
 }

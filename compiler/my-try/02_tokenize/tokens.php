@@ -71,7 +71,7 @@ final class Tokenizer
 		return ($byte >= 48) && ($byte < 58);
 	}
 
-	/** Recognize names, variables, decimal integers and assignment punctuation. */
+	/** Recognize names, variables, decimal numbers and assignment punctuation. */
 	private function token_end(int $start): int
 	{
 		$offset = $start;
@@ -93,18 +93,8 @@ final class Tokenizer
 			}
 			return $offset;
 		}
-		if (self::digit($byte))
-		{
-			$offset++;
-			$next = string_byte_at($this->content, $offset);
-			while (self::digit($next)) {
-				$offset++;
-				$next = string_byte_at($this->content, $offset);
-			}
-			if (self::letter($next) || ($next === 46)) {
-				throw new \RuntimeException('Unsupported numeric literal at ' . $this->source->path . ': byte ' . $start);
-			}
-			return $offset;
+		if (self::digit($byte) || ($byte === 46)) {
+			return $this->numeric_end($start);
 		}
 		if (string_byte_slice($this->content, $offset, 2) === '->') {
 			return $offset + 2;
@@ -122,5 +112,48 @@ final class Tokenizer
 			}
 		}
 		throw new \RuntimeException('Unsupported token at ' . $this->source->path . ': byte ' . $start);
+	}
+
+	/** Scan decimal mantissa and exponent as one token, preserving every source byte. */
+	private function numeric_end(int $start): int
+	{
+		$offset = $start;
+		while (self::digit(string_byte_at($this->content, $offset))) {
+			$offset++;
+		}
+		$digits = $offset - $start;
+		if (string_byte_at($this->content, $offset) === 46)
+		{
+			$offset++;
+			$fraction = $offset;
+			while (self::digit(string_byte_at($this->content, $offset))) {
+				$offset++;
+			}
+			$digits = $digits + ($offset - $fraction);
+		}
+		if ($digits === 0) {
+			throw new \RuntimeException('Expected decimal digits at ' . $this->source->path . ': byte ' . $start);
+		}
+		$next = string_byte_at($this->content, $offset);
+		if (($next === 69) || ($next === 101))
+		{
+			$offset++;
+			$sign = string_byte_at($this->content, $offset);
+			if (($sign === 43) || ($sign === 45)) {
+				$offset++;
+			}
+			$exponent = $offset;
+			while (self::digit(string_byte_at($this->content, $offset))) {
+				$offset++;
+			}
+			if ($offset === $exponent) {
+				throw new \RuntimeException('Expected exponent digits at ' . $this->source->path . ': byte ' . $start);
+			}
+		}
+		$next = string_byte_at($this->content, $offset);
+		if (self::letter($next) || ($next === 46)) {
+			throw new \RuntimeException('Unsupported numeric literal at ' . $this->source->path . ': byte ' . $start);
+		}
+		return $offset;
 	}
 }

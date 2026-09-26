@@ -136,3 +136,11 @@ and experimental execution remain in the existing host adapter and Native_Runner
 Experimental name preparation, template checking and source-only type projection
 remain regression infrastructure. Their further isolation and parser name-rule
 validation belong to the deferred work, not this ownership refactor.
+
+## Operation contexts
+
+`preparation_context` and `cpp_generation_context` are invocation-local processing
+data. Specialization hooks borrow their handles for synchronous calls and never
+store them. Workers retain algorithms, phase entry and publication/cleanup policy;
+specializations own structural child access and typed operation routing. This does
+not add worker references or processing state to the retained AST.
