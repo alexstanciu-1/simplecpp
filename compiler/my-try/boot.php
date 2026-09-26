@@ -30,6 +30,8 @@ require_once __DIR__ . '/04_analyze/collect/collect.php';
 require_once __DIR__ . '/04_analyze/structures.php';
 require_once __DIR__ . '/04_analyze/prepare.php';
 require_once __DIR__ . '/04_analyze/literals.php';
+require_once __DIR__ . '/04_analyze/cleanup.php';
+require_once __DIR__ . '/04_analyze/nodes.php';
 require_once __DIR__ . '/04_analyze/file.php';
 require_once __DIR__ . '/05_cpp/structures.php';
 require_once __DIR__ . '/05_cpp/types.php';

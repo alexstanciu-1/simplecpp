@@ -34,6 +34,7 @@ foreach ($cases as $name => [$source, $exit])
 	$before = serialize($syntax);
 	$compiler = new Compiler();
 	$compiler->cpp();
+	Preparation_Cleanup::tree($syntax->root);
 	if (serialize($syntax) !== $before) {
 		throw new \LogicException('Preparation/emission changed source syntax or its scopes');
 	}
@@ -68,6 +69,71 @@ foreach (['$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();
 	}
 }
 
+// A standalone preparation failure must clear an earlier successful statement too.
+Model::reset();
+$syntax = s2s_parse('$a = 10; $b = $missing;');
+$children = Syntax_Nodes::block_data($syntax->root)->children;
+$first_node = $children[0];
+$first_literal = Syntax_Nodes::binding_data($first_node)->value;
+$before = serialize($syntax);
+$failed = false;
+try {
+	(new File_Preparation($syntax->collection, Model::$language_scope))->prepare();
+}
+catch (\RuntimeException $expected) {
+	$failed = true;
+}
+if ((!$failed) || ($first_node->prepared !== null) || ($first_literal->prepared !== null) || (serialize($syntax) !== $before)) {
+	throw new \LogicException('Standalone failure left prepared facts or changed syntax');
+}
+
+// Emission failure after successful preparation must also release attached facts.
+Model::reset();
+$syntax = s2s_parse('$a = 10; return $a;');
+$children = Syntax_Nodes::block_data($syntax->root)->children;
+$first_node = $children[0];
+$first_literal = Syntax_Nodes::binding_data($first_node)->value;
+Language_Types::integer(Model::$language_scope)->value_bits = 32;
+$failed = false;
+try {
+	(new Compiler())->cpp();
+}
+catch (\RuntimeException $expected) {
+	$failed = true;
+}
+if ((!$failed) || ($first_node->prepared !== null) || ($first_literal->prepared !== null) || (!Model::$prepared_files->is_empty()) || (!Model::$cpp_files->is_empty())) {
+	throw new \LogicException('Emission failure left prepared facts or output');
+}
+
+// The cleanup traversal reaches nested specialized nodes through syntax-only parents.
+Model::reset();
+$syntax = s2s_parse('function nested(): int { return 7; }');
+$children = Syntax_Nodes::block_data($syntax->root)->children;
+$body = Syntax_Nodes::function_data($children[0])->body;
+$statements = Syntax_Nodes::block_data($body)->children;
+$nested_literal = Syntax_Nodes::return_data($statements[0])->expression;
+$before = serialize($syntax);
+$facts = new prepared_expression();
+$facts->type = Language_Types::integer(Model::$language_scope);
+$facts->literal = '7';
+$nested_literal->prepared = $facts;
+Model::reset_cpp();
+if (($nested_literal->prepared !== null) || (serialize($syntax) !== $before)) {
+	throw new \LogicException('Nested node cleanup changed syntax or missed attached facts');
+}
+
+// Reset must clear the old graph before dropping it, including externally retained nodes.
+Model::reset();
+$syntax = s2s_parse('$a = 10; return $a;');
+(new Compiler())->cpp();
+$children = Syntax_Nodes::block_data($syntax->root)->children;
+$first_node = $children[0];
+$first_literal = Syntax_Nodes::binding_data($first_node)->value;
+Model::reset_syntax();
+if (($first_node->prepared !== null) || ($first_literal->prepared !== null)) {
+	throw new \LogicException('Syntax reset dropped roots before cleaning their nodes');
+}
+
 // Ordinary parent traversal permits source shadowing; reserved-name enforcement is deferred.
 Model::reset();
 $syntax = s2s_parse('struct int { int $field; }');
@@ -95,4 +161,4 @@ if (Scope_Lookup::types($local, 'int')[0] !== $replacement) {
 	throw new \LogicException('Nearest scope lost precedence');
 }
 file_put_contents($directory . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
-echo "S2S: canonical types, first assignment, reuse, purity, scope lookup and bounded output passed\n";
+echo "S2S: canonical types, first assignment, reuse, node cleanup, syntax purity, scope lookup and bounded output passed\n";

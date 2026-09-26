@@ -113,3 +113,14 @@ before read or publication. Nullable is explicit (`?T`) only where absence is a
 valid usable state; weak-reference intent does not imply nullable. Track the
 remaining audit in REVIEW.md#explicit-nullability-audit. Native empty initialization
 is not permission to read or publish an incomplete required field.
+
+## Native compiler verification is opt-in
+
+User decision, 2026-09-26: compile `compiler/my-try` itself to a native executable
+and run its native parity suite only when the user explicitly requests that check.
+Do not run `tools/native_validate.py` automatically after implementation or refactoring.
+Default verification remains PHP lint/style and focused PHP behavior tests; compile
+and execute generated C++ samples when relevant to S2S output. Those sample checks
+are distinct from compiling the compiler itself. Report native verification as not
+run for a change unless explicitly requested and completed. This overrides earlier
+routine native-proof expectations for this project, including skill defaults.

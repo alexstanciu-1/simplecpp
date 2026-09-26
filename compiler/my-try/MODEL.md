@@ -15,7 +15,7 @@ Keyed_Storage is used for named object collections during LLVM preparation.
 | language_scope | Owns language/runtime type definitions; currently the built-in Simple C++ `int`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
 | collected_files | collected_file records; each owns Storage<collected_name> and local position work lists. |
-| prepared_files | Complete per-file expression and binding facts for the C++ path. |
+| prepared_files | Completed preparation records pointing to source files; specialized AST nodes own the facts. |
 | cpp_files | Final C++ artifact names and bytes; no preparation backlinks. |
 | llvm_files | llvm_module records; each owns output functions, blocks, operands and text. |
 
@@ -54,7 +54,9 @@ Parsing clears syntax/collection/global scope/LLVM; LLVM generation clears old o
 Completed files can publish before a later file fails: this is not atomic rollback.
 Static roots are shared between Compiler instances, not isolated compilation sessions.
 
-Experimental LLVM preparation records remain transient; S2S preparation records are retained in Model::$prepared_files. Generated output owns copies of incoming
+Experimental LLVM preparation records remain transient. S2S facts are owned by
+specialized AST nodes; Model::$prepared_files retains completed-file records.
+Generated output owns copies of incoming
 operands and does not depend on preparation lifetime. Existing source/AST purity,
 failed-stage behavior and native sample execution remain regression requirements.
 
@@ -157,13 +159,22 @@ PHP objects or converted enum layouts. Runtime/library JSON import is not implem
 in this slice. No secondary global type-name registry or constructed-type model was added.
 
 `File_Preparation` owns a transient source-order scope and returns a fresh
-`prepared_file`. Its token-keyed maps own prepared expression/binding records;
-those records reference source syntax, collected occurrences and canonical type
-definitions. An inferred declaration uses its existing binding occurrence as its
-identity. It does not mutate the AST classification, source declaration inventory,
-or published scope. Later reads/writes reuse that prepared declaration. Incremental
-execution rebuilds these facts; inferred declarations do not acquire separate sync
-flags or dependency records in this slice.
+`prepared_file` completion record referencing its source. Specialized binding,
+integer-literal and variable-reference nodes own nullable `prepared` records.
+There are no per-file token-keyed fact maps or reverse `syntax` links. Binding
+initializers remain ordinary AST children; generation reads their attached facts.
+Declaration links in facts are explicitly weak observers of collected occurrences;
+canonical type links retain their definitions. An inferred declaration uses its
+existing binding occurrence as identity. Parsed classification, source declaration
+inventory and published scopes remain unchanged.
+
+`Preparation_Cleanup::tree` walks owned child/sibling links and calls each node's
+`clear_preparation` method. Syntax-only nodes do nothing; specialized nodes clear
+their own slots. Model resets clean the retained tree before dropping/replacing
+roots. Preparation starts clean and clears partial facts on failure; the compiler
+also cleans facts if C++ emission fails. Old prepared-file handles reference the
+same mutable source tree, not immutable snapshots of its former facts. No selective
+invalidation machinery is introduced by this lifecycle.
 
 `Compiler::exec_cpp`, `update_cpp` and `cpp` drive the C++ path. Existing `exec`,
 `update` and `llvm` remain experimental regression entrypoints. The current C++

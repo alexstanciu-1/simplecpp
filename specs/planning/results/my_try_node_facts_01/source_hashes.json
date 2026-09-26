@@ -1,0 +1,13 @@
+{
+  "compiler/my-try/03_parse/structures.php": "894a9f7667803d859dd58e7df59d258081bcd3c73f54795c5dbb865a7bb88fe0",
+  "compiler/my-try/03_parse/structures_specialization.php": "c511661c9c8498a7a27a040ff91d118fce9494f5224a555148aa6f2fec2345c7",
+  "compiler/my-try/04_analyze/cleanup.php": "7f77461385f7b9eaac699f0947fb311dd22338305ecace017d403f9fb3ae7ff1",
+  "compiler/my-try/04_analyze/nodes.php": "4f772c7b8d67810945189f30d4e20f81a4f3ef44ec1825c9bb4fbbc46182d50d",
+  "compiler/my-try/04_analyze/file.php": "8336751b1e38aecff6bcd570e91b7ebc3d862a752eb2abfb36d5c0035a464c16",
+  "compiler/my-try/04_analyze/structures.php": "7ea48c2972dc788515188514cad544553d7c378fae348f20ba0543fb85fd1557",
+  "compiler/my-try/05_cpp/generate.php": "79e01225b307e7e3691b29aca2406b519b171ef419716d8daa93c56009c3688b",
+  "compiler/my-try/compile/model.php": "7adea34b7d1c12036a25b5e3b931ee0c2e681d1c2cb0ab4932c1ea5305a4a29c",
+  "compiler/my-try/compile/compile.php": "536e767e6f2b4be7a1ec6621f7481b91b0b55b53693793cece202b5a06ae71a9",
+  "compiler/my-try/tests/s2s.php": "f499de261928186638db9aa3395eb9c10777b0102a2e38bdae96bb05011aa159",
+  "compiler/my-try/tests/s2s_proof.php": "e6aa09d7184de9a5255b7e68dac6e9bb067375aba8cdf36b649ecd4a64fa4769"
+}

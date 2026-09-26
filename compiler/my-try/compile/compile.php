@@ -168,10 +168,16 @@ final class Compiler
 		if (q_count($sources) !== 1) {
 			throw new \RuntimeException('The first C++ slice requires exactly one source file');
 		}
-		$prepared = (new File_Preparation($sources[0], Model::$language_scope))->prepare();
-		$output = (new CPP_Generator())->generate($prepared);
-		Model::$prepared_files[] = $prepared;
-		Model::$cpp_files[] = $output;
+		try {
+			$prepared = (new File_Preparation($sources[0], Model::$language_scope))->prepare();
+			$output = (new CPP_Generator())->generate($prepared);
+			Model::$prepared_files[] = $prepared;
+			Model::$cpp_files[] = $output;
+		}
+		catch (\Throwable $error) {
+			Model::reset_cpp();
+			throw $error;
+		}
 	}
 
 	/** Prepare all sources and emit one LLVM module per source file. */

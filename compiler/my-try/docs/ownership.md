@@ -93,12 +93,17 @@ parent observer reaches the language/runtime scope. Parsed-file scopes remain ow
 by parsed_file.scopes. Type definitions live in scope-owned Storage; publication
 shares their identity rather than manufacturing a second source definition.
 
-Canonical type links in prepared expression/binding records retain their definitions.
-Source links refer to the existing AST/occurrence graph; prepared records never point
-to a worker. Model owns complete prepared-file results and independent C++ artifacts.
-The preparation worker's source-order scope is transient and does not alter source
-scope membership. Parent lookup considers live source definitions before ascending,
-with reserved-name restrictions deferred to validation/STAN.
+Specialized binding, integer-literal and variable-reference AST nodes own their
+nullable prepared facts. Facts retain canonical types, observe collected declarations
+through explicit weak fields, and have no reverse syntax link. The binding's
+initializer remains an AST child rather than a second prepared-record link. Model
+owns completed-file records and independent C++ artifacts; no token-keyed binding
+or expression maps remain. See MODEL.md for per-node cleanup before reset/reuse and
+on preparation/emission failure. The source-order scope remains transient; attaching
+facts does not modify source scope membership or parsed syntax.
+
+The new node slots, cleanup overrides and declaration weak fields have PHP coverage;
+native compiler verification for this change is deferred until explicitly requested.
 
 ## Process and file responsibilities
 

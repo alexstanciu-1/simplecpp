@@ -22,20 +22,26 @@ final class S2S_Proof
 
 		$prepared_files /** Storage<prepared_file> */ = Model::$prepared_files;
 		$prepared = $prepared_files[0];
-		$bindings /** hash<prepared_binding, int> */ = $prepared->bindings;
-		$expressions /** hash<prepared_expression, int> */ = $prepared->expressions;
+		$children /** Storage<ast_node> */ = Syntax_Nodes::block_data($prepared->source->root)->children;
+		$first_node = object_cast($children[0], variable_binding_statement_node::class);
+		$assignment_node = object_cast($children[2], variable_binding_statement_node::class);
+		$literal_node = object_cast(Syntax_Nodes::binding_data($first_node)->value, integer_literal_node::class);
+		$reference_node = object_cast(Syntax_Nodes::binding_data($children[1])->value, variable_reference_node::class);
+		$first = Prepared_Nodes::binding($first_node);
+		$assignment = Prepared_Nodes::binding($assignment_node);
+		$literal = Prepared_Nodes::expression($literal_node);
 		$integer = Language_Types::integer(Model::$language_scope);
 		$resolved /** vector<type_definition> */ = Scope_Lookup::types(Model::$global_scope, 'int');
 		if (($resolved[0] !== $integer) || ($integer->origin !== type_origin::language) || ((int) $integer->value_bits !== 64) || (!$integer->signed) || ($integer->declaration !== null)) {
 			throw new \LogicException('Canonical integer identity or representation changed');
 		}
-		if ((Model::$global_scope->parent_scope() !== Model::$language_scope) || ($bindings[0]->type !== $integer) || ($expressions[2]->type !== $integer)) {
+		if ((Model::$global_scope->parent_scope() !== Model::$language_scope) || ($first->type !== $integer) || ($literal->type !== $integer)) {
 			throw new \LogicException('Literal or local did not retain the canonical integer type');
 		}
-		if (($bindings[0]->classification !== binding_kind::declaration) || ($bindings[9]->classification !== binding_kind::assignment) || ($bindings[9]->declaration !== $bindings[0]->declaration)) {
+		if (($first->classification !== binding_kind::declaration) || ($assignment->classification !== binding_kind::assignment) || (weakref_get($assignment->declaration) !== weakref_get($first->declaration))) {
 			throw new \LogicException('First assignment and reassignment lost declaration identity');
 		}
-		if (Syntax_Nodes::binding_data($bindings[0]->syntax)->classification !== binding_kind::unresolved) {
+		if (Syntax_Nodes::binding_data($first_node)->classification !== binding_kind::unresolved) {
 			throw new \LogicException('Preparation mutated the parsed binding');
 		}
 		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
@@ -49,6 +55,14 @@ final class S2S_Proof
 		if (($outputs[0]->text !== $expected) || ($outputs[0] === $old_output)) {
 			throw new \LogicException('Repeated generation changed bytes or reused output records');
 		}
+		if (Prepared_Nodes::binding($first_node) === $first) {
+			throw new \LogicException('Repeated preparation reused stale node facts');
+		}
+		Model::reset_cpp();
+		if (($first_node->prepared !== null) || ($assignment_node->prepared !== null) || ($literal_node->prepared !== null) || ($reference_node->prepared !== null)) {
+			throw new \LogicException('Specialized nodes did not clear their prepared facts');
+		}
+		$compiler->cpp();
 		$current_inputs /** Storage<file> */ = $input_module->files;
 		$current_inputs[0]->content = '$a = 13; return $a;';
 		$paths /** vector<string> */ = ['/s2s-proof/main.phs'];
@@ -57,7 +71,10 @@ final class S2S_Proof
 		if (($outputs[0]->text === $expected) || ($old_output->text !== $expected)) {
 			throw new \LogicException('Update damaged old output or failed to regenerate');
 		}
-		$current_inputs[0]->content = '$a = $missing;';
+		if (($first_node->prepared !== null) || ($literal_node->prepared !== null) || ($reference_node->prepared !== null)) {
+			throw new \LogicException('Incremental replacement left facts on the detached old tree');
+		}
+		$current_inputs[0]->content = '$a = 1; $b = $missing;';
 		$failed = false;
 		try {
 			$compiler->update_cpp($paths);
@@ -69,6 +86,13 @@ final class S2S_Proof
 		$prepared_files = Model::$prepared_files;
 		if ((!$failed) || (!$outputs->is_empty()) || (!$prepared_files->is_empty())) {
 			throw new \LogicException('Failed preparation retained stale C++ results');
+		}
+		$failed_syntax /** Storage<parsed_file> */ = Model::$syntax_files;
+		$failed_children /** Storage<ast_node> */ = Syntax_Nodes::block_data($failed_syntax[0]->root)->children;
+		$partial = object_cast($failed_children[0], variable_binding_statement_node::class);
+		$partial_literal = object_cast(Syntax_Nodes::binding_data($partial)->value, integer_literal_node::class);
+		if (($partial->prepared !== null) || ($partial_literal->prepared !== null)) {
+			throw new \LogicException('Failed preparation left partial facts attached to syntax');
 		}
 		return $expected;
 	}

@@ -22,9 +22,10 @@ LLVM experiment does not provide type policy for this path.
   in source order. The first untyped assignment becomes a prepared declaration;
   later reads and assignments retain that occurrence identity. Explicit `int` locals
   resolve through source scopes and converge on the same canonical definition.
-- Prepared expressions/bindings live in per-file results indexed by existing token
-  positions. Syntax, source scopes and the declaration inventory are unchanged.
-  Type objects are shared; no constructed-type representation has been introduced.
+- Prepared expressions/bindings are attached to their specialized AST nodes.
+  Source syntax, scopes and the declaration inventory are unchanged; each node
+  clears its derived facts during tree cleanup. No reverse syntax references or
+  token-keyed fact maps remain. Type objects are shared.
 - C++ type spelling, header and enum-tagged literal strategy belong to `05_cpp`.
   Final artifact records contain only names and text.
 
@@ -73,13 +74,13 @@ link planning and native build caching are not implemented by this entry.
 
 ## Proof
 
-- `tests/s2s.php`: source purity, canonical integer identity, explicit/inferred locals,
+- `tests/s2s.php`: source syntax purity after fact cleanup, node cleanup on failure/reset, canonical integer identity, explicit/inferred locals,
   copies/reassignment, values beyond int32, maximum signed int64, ordinary parent
   lookup/shadowing and tombstones, and unsupported-generation output clearing.
 - `tests/s2s_proof.php`: portable PHP/native proof of canonical facts, first assignment,
   exact emitted bytes, repeated generation, update behavior and failure recovery.
 - `tests/run.py`: runs PHP regressions plus compiles/executes seven generated C++ cases plus two independent int64 value/type probes.
-- `tools/native_validate.py`: normal STAN-enabled conversion/build; compares PHP/native
+- `tools/native_validate.py` (only on explicit user request): normal STAN-enabled conversion/build; compares PHP/native
   C++ bytes, compiles/runs the emitted program, and retains existing LLVM regressions.
 
 Saved [PHP/native evidence](../../../specs/planning/results/s2s_integer_01/README.md) records the toolchain fingerprints, outcomes and portability corrections.

@@ -335,18 +335,36 @@ final class index_expression_node extends ast_node {
 }
 
 /** Concrete integer_literal syntax node. */
-final class integer_literal_node extends ast_node {
+final class integer_literal_node extends ast_node
+{
+	/** Derived facts owned by this node, absent before preparation or after cleanup. @ownership owner */
+	public ?prepared_expression $prepared = null;
+
 	public function __construct()
 	{
 		$this->kind = node_kind::integer_literal;
 	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared = null;
+	}
 }
 
 /** Concrete variable_reference syntax node. */
-final class variable_reference_node extends ast_node {
+final class variable_reference_node extends ast_node
+{
+	/** Derived facts owned by this node, absent before preparation or after cleanup. @ownership owner */
+	public ?prepared_expression $prepared = null;
+
 	public function __construct()
 	{
 		$this->kind = node_kind::variable_reference;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared = null;
 	}
 }
 
@@ -391,9 +409,18 @@ final class return_statement_node extends ast_node {
 }
 
 /** Concrete variable_binding_statement syntax node. */
-final class variable_binding_statement_node extends ast_node {
+final class variable_binding_statement_node extends ast_node
+{
+	/** Derived facts owned by this node, absent before preparation or after cleanup. @ownership owner */
+	public ?prepared_binding $prepared = null;
+
 	public function __construct()
 	{
 		$this->kind = node_kind::variable_binding_statement;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared = null;
 	}
 }

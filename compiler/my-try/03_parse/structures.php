@@ -92,6 +92,11 @@ abstract class ast_node
 		$this->structure = $data;
 	}
 
+	/** Specialized nodes discard their own derived facts; syntax-only nodes have none. */
+	public function clear_preparation(): void
+	{
+	}
+
 	public function next(): ?ast_node
 	{
 		return $this->next_node;

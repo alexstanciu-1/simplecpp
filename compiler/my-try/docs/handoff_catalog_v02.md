@@ -141,7 +141,10 @@ Implemented the agreed compact type/scope model and `LIT-INT-001`. See
 Scope storage is private; global scope has a language/runtime parent. Built-in `int`
 is canonical signed 64-bit with a uint32 width field and enum categories. Source
 and built-in definitions have truthful provenance. Preparation retains resolved
-expression types and binding identities without changing the AST.
+expression types and binding identities. The 2026-09-26 follow-up attaches those
+facts directly to specialized AST nodes, preserving source syntax and adding
+per-node cleanup on reset, reuse and failure. Native compiler builds are now opt-in
+under local AGENTS.md; the earlier native results below do not cover this follow-up.
 
 `Compiler::exec_cpp` / `update_cpp` and host `s2s.php` select the new path. The old
 `exec` / `update` LLVM entrypoints remain regression infrastructure. Current C++

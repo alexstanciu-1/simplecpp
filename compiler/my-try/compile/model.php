@@ -11,6 +11,8 @@ namespace scpp\compiler;
 
 final class Model
 {
+	/** Initial reset has no prior syntax graph to clean. */
+	private static bool $syntax_initialized = false;
 	/**
 	 * Numeric storage of module records.
 	 * @storage.owner
@@ -71,18 +73,25 @@ final class Model
 	/** Restart parsing: old scopes, occurrences and generated output no longer apply. */
 	public static function reset_syntax(): void
 	{
+		self::reset_cpp();
 		self::$syntax_files = new Storage /** Storage<parsed_file> */();
+		self::$syntax_initialized = true;
 		self::$language_scope = new scope();
 		Language_Types::install(self::$language_scope);
 		self::$global_scope = new scope();
 		self::$global_scope->set_parent(self::$language_scope);
 		self::$collected_files = new Storage /** Storage<collected_file> */();
 		self::reset_llvm();
-		self::reset_cpp();
 	}
 
+	/** Clear node-owned facts before releasing preparation/output roots or replacing syntax. */
 	public static function reset_cpp(): void
 	{
+		if (self::$syntax_initialized) {
+			foreach (self::$syntax_files as $parsed) {
+				Preparation_Cleanup::tree($parsed->root);
+			}
+		}
 		self::$prepared_files = new Storage /** Storage<prepared_file> */();
 		self::$cpp_files = new Storage /** Storage<cpp_module> */();
 	}
