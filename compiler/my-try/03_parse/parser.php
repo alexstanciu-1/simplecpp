@@ -327,6 +327,13 @@ final class Parser_Run
 	/** Parse literals, calls and variable/index expressions; arithmetic is not supported yet. */
 	private function expression(): ast_node
 	{
+		if (($this->text() === 'true') || ($this->text() === 'false')) {
+			$start = $this->position;
+			$literal = new boolean_literal_structure();
+			$literal->value = $this->text() === 'true';
+			$this->position++;
+			return $this->payload_node(node_kind::boolean_literal, $start, $literal);
+		}
 		if ($this->text() === '[') {
 			return $this->array_literal();
 		}

@@ -35,6 +35,35 @@ final class integer_literal_structure extends node_structure
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
+final class boolean_literal_structure extends node_structure
+{
+	/** Canonical value normalized by the source frontend. */
+	public bool $value;
+	/** @ownership owner */
+	private ?prepared_boolean_literal $prepared_facts = null;
+
+	public function preparation(): ?prepared_boolean_literal
+	{
+		return $this->prepared_facts;
+	}
+
+	public function require_preparation(): prepared_boolean_literal
+	{
+		return object_cast($this->prepared_facts, prepared_boolean_literal::class);
+	}
+
+	public function set_preparation(prepared_boolean_literal $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared_facts = null;
+	}
+}
+
+/** Specialized facts are attached by preparation and cleared locally. */
 final class variable_reference_structure extends node_structure
 {
 	/** @ownership owner */

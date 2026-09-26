@@ -1,6 +1,6 @@
 <?php
 
-/* Prepare the straight-line integer slice by attaching facts without changing source syntax or scopes. */
+/* Prepare the straight-line scalar slice by attaching facts without changing source syntax or scopes. */
 namespace scpp\compiler;
 
 final class File_Preparation
@@ -9,6 +9,7 @@ final class File_Preparation
 	/** Invocation-local declaration index; never published into parsed source scopes. */
 	private scope $locals;
 	private type_definition $integer;
+	private type_definition $boolean;
 	private array $occurrences /** hash<collected_name, int> */ = [];
 
 	/** Every invocation owns fresh results and source-order declaration state. */
@@ -17,6 +18,7 @@ final class File_Preparation
 		$this->collection = $source;
 		$this->locals = new scope();
 		$this->integer = Language_Types::integer($language_scope);
+		$this->boolean = Language_Types::boolean($language_scope);
 		$entries /** Storage<collected_name> */ = $source->entries;
 		foreach ($entries as $entry) {
 			if ($entry->changes !== \scpp\compiler\SYNC_DELETED) {
@@ -100,8 +102,11 @@ final class File_Preparation
 			$binding->declaration = $previous[0];
 			$binding->type = Syntax_Nodes::binding_data($previous[0]->node)->require_preparation()->type;
 		}
-		if (($binding->type !== $this->integer) || ($value->type !== $this->integer)) {
-			throw new \RuntimeException('S2S binding lowering currently supports canonical int only');
+		if ($binding->type !== $value->type) {
+			throw new \RuntimeException('S2S binding requires matching scalar types; conversions are not implemented');
+		}
+		if (($binding->type !== $this->integer) && ($binding->type !== $this->boolean)) {
+			throw new \RuntimeException('S2S binding requires a supported canonical scalar type');
 		}
 		$syntax->set_preparation($binding);
 	}
@@ -115,6 +120,13 @@ final class File_Preparation
 			$value->type = $this->integer;
 			Syntax_Nodes::integer_data($node)->set_preparation($value);
 			return $value;
+		}
+		elseif ($node->kind() === node_kind::boolean_literal) {
+			$boolean_value = new prepared_boolean_literal();
+			$boolean_value->value = Syntax_Nodes::boolean_data($node)->value;
+			$boolean_value->type = $this->boolean;
+			Syntax_Nodes::boolean_data($node)->set_preparation($boolean_value);
+			return $boolean_value;
 		}
 		elseif ($node->kind() === node_kind::variable_reference)
 		{

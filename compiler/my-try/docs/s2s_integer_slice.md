@@ -38,9 +38,10 @@ record generation or permanent permission to redeclare reserved names.
 ## Current generation surface
 
 One live source file containing straight-line integer bindings, variable reads,
-reassignments and optional top-level returns. Decimal literals from zero through
+reassignments and optional top-level returns. The boolean extension below adds
+`bool` through the same path. Decimal literals from zero through
 9223372036854775807 preserve their exact text; the host never parses them through
-PHP int/float. Leading-zero numeric forms, negative/unary forms, other literals,
+PHP int/float. Leading-zero numeric forms, negative/unary forms, float/string literals,
 functions, compound types and multi-file program generation remain unsupported.
 These are generation coverage boundaries, not a new validation milestone.
 
@@ -86,3 +87,35 @@ link planning and native build caching are not implemented by this entry.
   C++ bytes, compiles/runs the emitted program, and retains existing LLVM regressions.
 
 Saved [PHP/native evidence](../../../specs/planning/results/s2s_integer_01/README.md) records the toolchain fingerprints, outcomes and portability corrections.
+
+
+## Boolean literal extension
+
+`LIT-BOOL-001` and `LIT-BOOL-002` share one implementation for lowercase `true` and
+`false`. Parsing recognizes them before identifier/call dispatch and retains a
+normalized bool value in boolean_literal_structure. They are not symbol references.
+Preparation attaches prepared_boolean_literal (shared expression type plus required
+bool value), using the canonical `bool` registered beside `int` in LANGUAGE+RUNTIME.
+The boolean value_bits field is 1 semantic value bit, not a native storage-size claim.
+
+C++ representation stays in the backend: `scpp::bool_t`, `scpp/bool_t.hpp`, and
+`static_cast<scpp::bool_t>(true)` or `(false)`. The existing binding emitter still uses
+`auto` on first assignment and the existing declaration name on reassignment.
+Top-level bool returns use the existing entry adapter and produce exit 0 or 1.
+
+Binding preparation now requires matching canonical scalar identities and supports
+int and bool through the same path. Explicit types, inference, copies and reassignment
+reuse scope lookup and declaration identity. Cross-type assignment/conversion,
+boolean operators, other keyword spellings and LLVM boolean lowering are deferred.
+
+`tests/s2s.php` covers both values, explicit bool, copying, reassignment, coexistence
+with int, direct return, exact bool-only header/output, canonical identity, absence
+from name collection, syntax purity and cleanup. Two independently compiled probes
+assert the generated local is scpp::bool_t. Cross-type writes reject without output.
+`tests/ast.php` covers initialized boolean payloads and tree ownership.
+
+Verification passed: PHP lint/style, existing regressions and all 18 generated C++
+execution cases (nine integer and nine boolean/combined cases including type probes).
+Evidence is in `/tmp/scpp-bool-s2s-01/summary.json`. Compiler source
+conversion is checked separately; the compiler itself has not been rebuilt natively
+for this extension. The earlier native checkpoints do not prove this new slice.

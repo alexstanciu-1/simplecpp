@@ -14,7 +14,7 @@ Keyed_Storage is used for named object collections during LLVM preparation.
 | modules | module records; each owns a Storage<file>. |
 | tokens | token_list records; each owns source snapshot text and Storage<token>. |
 | syntax_files | parsed_file records; each owns a root AST and Storage<scope>. |
-| language_scope | Owns language/runtime type definitions; currently the built-in Simple C++ `int`. |
+| language_scope | Owns language/runtime type definitions; currently the built-in Simple C++ `int` and `bool`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
 | collected_files | collected_file records; each owns Storage<collected_name> and local position work lists. |
 | prepared_files | Completed preparation records pointing to source files; AST specialization records own the facts. |
@@ -160,17 +160,18 @@ objects from the file scope. Source definitions retain their collected declarati
 built-ins have no source declaration. Replacement removes superseded live references
 and retains existing deletion evidence. Publication is not an extra lexical parent.
 
-The language/runtime scope currently registers `int` in code: signed, 64 value
-bits. The width field uses the supported portable `uint32` annotation. Categories,
+The language/runtime scope registers `int` (signed, 64 value bits) and `bool`
+(one semantic value bit) in code. The width field uses the supported portable `uint32` annotation. Categories,
 origins and emission strategies use enums; no native byte-size claim is made for
 PHP objects or converted enum layouts. Runtime/library JSON import is not implemented
 in this slice. No secondary global type-name registry or constructed-type model was added.
 
 `File_Preparation` owns a transient source-order scope and returns a fresh
-`prepared_file` completion record referencing its source. Binding, integer-literal
+`prepared_file` completion record referencing its source. Binding, integer-literal, boolean-literal
 and variable-reference structures own their typed preparation slots and local cleanup.
 The common prepared_expression contains only type. prepared_integer_literal adds
-required decimal text; prepared_variable_reference adds its required weak declaration.
+required decimal text; prepared_boolean_literal adds a required bool value;
+prepared_variable_reference adds its required weak declaration.
 No class extends ast_node.
 There are no per-file token-keyed fact maps or reverse `syntax` links. Binding
 initializers remain ordinary AST children; generation reads their attached facts.
@@ -194,7 +195,7 @@ remain end-to-end entrypoints: synchronize, prepare, then emit.
 `reset_preparation()` clears facts, completion records and dependent C++ output;
 `reset_cpp()` clears only C++ artifacts. Explicit `exec_llvm`,
 `update_llvm` and `llvm` remain experimental regression entrypoints. The current C++
-path requires one live source file with straight-line integer bindings/references
+path requires one live source file with straight-line int/bool bindings/references
 and optional entry returns. Synchronization resets preparation before processing;
 preparation publishes only on success, and emission publishes only complete output.
 Generated artifacts own only names and text. See [the slice](../s2s_integer_slice.md).

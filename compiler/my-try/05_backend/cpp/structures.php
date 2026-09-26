@@ -5,6 +5,7 @@ namespace scpp\compiler;
 
 enum cpp_literal_kind {
 	case signed_integer;
+	case boolean;
 }
 
 final class cpp_type {

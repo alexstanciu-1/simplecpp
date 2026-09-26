@@ -18,6 +18,13 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'bool_true' => ['$a = true; return $a;', 1],
+	'bool_false' => ['$a = false; return $a;', 0],
+	'bool_explicit' => ['$a bool = true; return $a;', 1],
+	'bool_copy' => ['$a = true; $b bool = $a; $a = false; return $b;', 1],
+	'bool_reassign' => ['$a = true; $a = false; return $a;', 0],
+	'bool_direct' => ['return false;', 0],
+	'bool_and_int' => ['$a = true; $b = 7; return $b;', 7],
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
@@ -42,6 +49,14 @@ foreach ($cases as $name => [$source, $exit])
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
+	if (($name === 'bool_true') || ($name === 'bool_false')) {
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_0), scpp::bool_t>);\n";
+		$probe_path = $directory . '/' . $name . '_type.cpp';
+		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", Model::$cpp_files[0]->text);
+		file_put_contents($probe_path, $probe_text);
+		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
+	}
+
 	// Independent native probes observe the value and type of large emitted literals.
 	if (($name === 'wide') || ($name === 'maximum'))
 	{
@@ -54,7 +69,7 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 }
-foreach (['$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a int;', 'function f(): int { return 1; }'] as $source)
+foreach (['$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a int;', 'function f(): int { return 1; }'] as $source)
 {
 	Compiler_Lifecycle::reset();
 	s2s_parse($source);
@@ -69,6 +84,41 @@ foreach (['$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();
 	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty()) {
 		throw new \LogicException('Unsupported generation published output');
 	}
+}
+
+// Boolean literals keep canonical identity without entering reference/name collection.
+Compiler_Lifecycle::reset();
+$syntax = s2s_parse('$a = false; $b = $a; return $b;');
+$children = Syntax_Nodes::block_data($syntax->root)->children;
+$binding_data = Syntax_Nodes::binding_data($children[0]);
+$literal_node = $binding_data->value;
+$literal_data = Syntax_Nodes::boolean_data($literal_node);
+$reference_data = Syntax_Nodes::reference_data(Syntax_Nodes::binding_data($children[1])->value);
+$before = serialize($syntax);
+$compiler = new Compiler();
+$compiler->prepare();
+$boolean_type = Language_Types::boolean(Model::$language_scope);
+$literal_facts = $literal_data->require_preparation();
+if (($literal_node->kind() !== node_kind::boolean_literal) || (Syntax_Nodes::category($literal_node) !== node_category::expression) || $literal_data->value || $literal_facts->value || ($literal_facts->type !== $boolean_type) || ($reference_data->require_preparation()->type !== $boolean_type)) {
+	throw new \LogicException('Boolean syntax, false value or inferred type changed');
+}
+foreach ($syntax->collection->entries as $entry) {
+	if ($entry->node === $literal_node) {
+		throw new \LogicException('Boolean literal was collected as a name');
+	}
+}
+$compiler->cpp();
+$expected = "#include \"scpp/bool_t.hpp\"\n\nint main()\n{\n\tauto local_0 = static_cast<scpp::bool_t>(false);\n\tauto local_4 = local_0;\n\treturn static_cast<int>((local_4).native_value());\n\treturn 0;\n}\n";
+if (Model::$cpp_files[0]->text !== $expected) {
+	throw new \LogicException('Unexpected boolean C++ representation or includes');
+}
+Compiler_Lifecycle::reset_cpp();
+if ($literal_data->require_preparation() !== $literal_facts) {
+	throw new \LogicException('Boolean facts lost across output reset');
+}
+Compiler_Lifecycle::reset_preparation();
+if (($literal_data->preparation() !== null) || ($reference_data->preparation() !== null) || (serialize($syntax) !== $before)) {
+	throw new \LogicException('Boolean cleanup missed facts or changed syntax');
 }
 
 // A standalone preparation failure must clear an earlier successful statement too.

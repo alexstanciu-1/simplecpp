@@ -6,9 +6,9 @@ semantics or blanket implementation authorization. Read current files before edi
 
 ## Next action
 
-The first `LIT-INT-001` slice is implemented; read
+The `LIT-INT-001`, `LIT-BOOL-001` and `LIT-BOOL-002` slices are implemented; read
 [the integer S2S slice](s2s_integer_slice.md) and the completion evidence below.
-Continue the catalog discussion one item at a time. Do not infer broader literal,
+The next pending card is `LIT-FLOAT-001`. Continue the catalog discussion one item at a time. Do not infer broader literal,
 function, composite-type or multi-file support from this bounded implementation.
 
 Follow the existing chapter order. Pick one item, discuss it, split combined

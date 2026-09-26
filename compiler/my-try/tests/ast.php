@@ -8,6 +8,7 @@ require_once dirname(__DIR__) . '/boot.php';
 final class AST_Test
 {
 	private const PAYLOADS = [
+		'booleans' => boolean_literal_structure::class,
 		'integers' => integer_literal_structure::class,
 		'references' => variable_reference_structure::class,
 		'blocks' => block_structure::class,
@@ -233,6 +234,7 @@ struct Pair { int $first; int $second; }
 template<T> function identity(T $value): T { return $value; }
 function pick(int &$first, int $second): int { return $second; }
 $values int[2] = [2, 8];
+$flag bool = false;
 $pair Pair;
 $pair->first = $values[0];
 identity<int>($pair->first);

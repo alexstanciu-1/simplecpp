@@ -32,6 +32,11 @@ final class Syntax_Nodes
 		return object_cast($node->payload(), integer_literal_structure::class);
 	}
 
+	public static function boolean_data(ast_node $node): boolean_literal_structure
+	{
+		return object_cast($node->payload(), boolean_literal_structure::class);
+	}
+
 	public static function reference_data(ast_node $node): variable_reference_structure
 	{
 		return object_cast($node->payload(), variable_reference_structure::class);
@@ -180,6 +185,7 @@ final class Syntax_Nodes
 			node_kind::field_expression => $payload instanceof field_access_structure,
 			node_kind::identifier, node_kind::punctuation, node_kind::comment => $payload === null,
 			node_kind::integer_literal => $payload instanceof integer_literal_structure,
+			node_kind::boolean_literal => $payload instanceof boolean_literal_structure,
 			node_kind::variable_reference => $payload instanceof variable_reference_structure,
 		};
 		if (!$valid) {
@@ -241,7 +247,7 @@ final class Syntax_Nodes
 		{
 			node_kind::struct_declaration, node_kind::field_declaration, node_kind::array_type, node_kind::file, node_kind::function_declaration, node_kind::parameter_declaration, node_kind::identifier, node_kind::punctuation,
 			node_kind::comment => node_category::syntax,
-			node_kind::field_expression, node_kind::array_literal, node_kind::index_expression, node_kind::integer_literal, node_kind::variable_reference,
+			node_kind::field_expression, node_kind::array_literal, node_kind::index_expression, node_kind::integer_literal, node_kind::boolean_literal, node_kind::variable_reference,
 			node_kind::binary_expression, node_kind::assignment_expression, node_kind::call_expression => node_category::expression,
 			node_kind::block, node_kind::expression_statement,
 			node_kind::return_statement, node_kind::variable_binding_statement => node_category::statement,

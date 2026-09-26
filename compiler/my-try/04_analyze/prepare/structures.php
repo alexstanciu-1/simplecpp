@@ -50,6 +50,11 @@ final class prepared_integer_literal extends prepared_expression {
 	public string $decimal;
 }
 
+/** Normalized boolean value shared by backends. */
+final class prepared_boolean_literal extends prepared_expression {
+	public bool $value;
+}
+
 /** A resolved reference always has a declaration; no literal fields belong here. */
 final class prepared_variable_reference extends prepared_expression {
 	/** @storage.reference collected_file.entries @reference.weak */

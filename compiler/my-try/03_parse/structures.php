@@ -28,6 +28,7 @@ enum node_kind
 	case array_literal;
 	case index_expression;
 	case integer_literal;
+	case boolean_literal;
 	case variable_reference;
 	case binary_expression;
 	case assignment_expression;

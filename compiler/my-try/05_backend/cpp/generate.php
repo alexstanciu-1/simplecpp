@@ -1,6 +1,6 @@
 <?php
 
-/* First C++ vertical slice: resolved straight-line integer locals in a program entry. */
+/* First C++ vertical slice: resolved straight-line scalar locals in a program entry. */
 namespace scpp\compiler;
 
 final class CPP_Generator
@@ -55,7 +55,7 @@ final class CPP_Generator
 		throw new \RuntimeException('C++ statement emission is not implemented for this form');
 	}
 
-	/** Integer spelling supplies an exact native carrier before constructing the runtime value. */
+	/** Emit each scalar from its specialized facts using the canonical C++ representation. */
 	private function expression(ast_node $node): string
 	{
 		if ($node->kind() === node_kind::integer_literal)
@@ -67,6 +67,17 @@ final class CPP_Generator
 				throw new \RuntimeException('C++ literal emission is not implemented for this type');
 			}
 			return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . 'LL)';
+		}
+		if ($node->kind() === node_kind::boolean_literal)
+		{
+			$boolean = Syntax_Nodes::boolean_data($node)->require_preparation();
+			$mapping = CPP_Types::representation($boolean->type);
+			$this->headers[$mapping->header] = true;
+			if ($mapping->literal !== cpp_literal_kind::boolean) {
+				throw new \RuntimeException('C++ literal emission is not implemented for this type');
+			}
+			$spelling = $boolean->value ? 'true' : 'false';
+			return 'static_cast<' . $mapping->spelling . '>(' . $spelling . ')';
 		}
 		if ($node->kind() === node_kind::variable_reference) {
 			$reference = Syntax_Nodes::reference_data($node)->require_preparation();

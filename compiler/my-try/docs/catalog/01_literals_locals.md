@@ -16,8 +16,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [LIT-INT-001](#lit-int-001) | agreed | `$a = 10;` | proved | proved | deferred | [S2S integer slice](../s2s_integer_slice.md); PHP preparation + Clang execution; compiler-native evidence recorded in handoff |
-| [LIT-BOOL-001](#lit-bool-001) | pending-discussion | `$a = true;` | unverified | unverified | deferred | — |
-| [LIT-BOOL-002](#lit-bool-002) | pending-discussion | `$a = false;` | unverified | unverified | deferred | — |
+| [LIT-BOOL-001](#lit-bool-001) | agreed | `$a = true;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
+| [LIT-BOOL-002](#lit-bool-002) | agreed | `$a = false;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-FLOAT-001](#lit-float-001) | pending-discussion | `$a = 10.5;` | unverified | unverified | deferred | — |
 | [LIT-STR-001](#lit-str-001) | pending-discussion | `$a = 'x';` | unverified | unverified | deferred | — |
 | [LIT-STR-002](#lit-str-002) | pending-discussion | `$a = "x";` | unverified | unverified | deferred | — |
@@ -106,7 +106,21 @@ auto a = static_cast<int_t>(10);
 
 ## LIT-BOOL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Boolean literals follow the integer pipeline.
+The frontend normalizes `true` into a boolean_literal specialization. Preparation
+attaches a prepared_boolean_literal with canonical language `bool` identity and
+its boolean value. The shared binding path infers the local type and establishes
+its declaration on first assignment. Inside the program entry:
+
+```cpp
+auto local_0 = static_cast<scpp::bool_t>(true);
+```
+
+Include only `scpp/bool_t.hpp` when this is the only literal type needed. True and
+false use one implementation; both catalog IDs remain for provenance. Explicit
+`$a bool = true;`, copies and same-type reassignment use the existing scope/binding
+flow. Cross-type conversions and boolean operators are outside this slice.
+See [the shared slice and proof](../s2s_integer_slice.md#boolean-literal-extension).
 
 ### Imported version 1
 
@@ -143,7 +157,21 @@ auto a = static_cast<bool_t>(true);
 
 ## LIT-BOOL-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Boolean literals follow the integer pipeline.
+The frontend normalizes `false` into a boolean_literal specialization. Preparation
+attaches a prepared_boolean_literal with canonical language `bool` identity and
+its boolean value. The shared binding path infers the local type and establishes
+its declaration on first assignment. Inside the program entry:
+
+```cpp
+auto local_0 = static_cast<scpp::bool_t>(false);
+```
+
+Include only `scpp/bool_t.hpp` when this is the only literal type needed. True and
+false use one implementation; both catalog IDs remain for provenance. Explicit
+`$a bool = false;`, copies and same-type reassignment use the existing scope/binding
+flow. Cross-type conversions and boolean operators are outside this slice.
+See [the shared slice and proof](../s2s_integer_slice.md#boolean-literal-extension).
 
 ### Imported version 1
 
