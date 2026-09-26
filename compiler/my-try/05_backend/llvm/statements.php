@@ -2,7 +2,7 @@
 
 /*
  * Role: statement emission methods on LLVM_Function_Generator.
- * Call map: LLVM_Generator::to_llvm_block -> statement handlers -> expression.
+ * Call map: LLVM_Function_Generator::to_llvm_block -> statement handlers -> expression.
  */
 namespace scpp\compiler;
 

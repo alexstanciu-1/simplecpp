@@ -2,7 +2,7 @@
 
 /*
  * Role: compile and execute emitted LLVM using the configured Clang.
- * Call map: Compiler::run_native / tests -> Native_Runner::run -> process; dump -> dump_streams.
+ * Call map: Host_Report / tests -> Native_Runner::run -> process; dump -> dump_streams.
  */
 namespace scpp\compiler;
 
@@ -100,13 +100,13 @@ final class Native_Runner
 	/** Display compiler diagnostics and execution output safely within the page's pre block. */
 	public function dump(native_result $result): void
 	{
-echo "\nNative build: exit {$result->build->exit_code}\n";
+		echo "\nNative build: exit {$result->build->exit_code}\n";
 		$this->dump_streams($result->build);
 		if ($result->execution === null) {
 			echo "Executable was not run because compilation failed.\n";
 			return;
 		}
-echo "Executable exit code: {$result->execution->exit_code}\n";
+		echo "Executable exit code: {$result->execution->exit_code}\n";
 		$this->dump_streams($result->execution);
 	}
 

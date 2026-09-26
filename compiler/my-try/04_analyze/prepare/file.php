@@ -16,12 +16,14 @@ final class File_Preparation
 		$context->integer = Language_Types::integer($language_scope);
 		$context->boolean = Language_Types::boolean($language_scope);
 		$context->floating = Language_Types::floating($language_scope);
+
 		$entries /** Storage<collected_name> */ = $source->entries;
 		foreach ($entries as $entry) {
 			if ($entry->changes !== \scpp\compiler\SYNC_DELETED) {
 				$context->occurrences[$entry->token_index] = $entry;
 			}
 		}
+
 		$this->context = $context;
 	}
 
@@ -31,6 +33,7 @@ final class File_Preparation
 		$context = $this->context;
 		Preparation_Cleanup::tree($context->collection->root);
 		$context->locals = new scope();
+
 		try
 		{
 			$child = $context->collection->root->first_child();
@@ -44,6 +47,7 @@ final class File_Preparation
 			Preparation_Cleanup::tree($context->collection->root);
 			throw $error;
 		}
+
 		$result = new prepared_file();
 		$result->source = $context->collection;
 		return $result;
@@ -55,12 +59,16 @@ final class File_Preparation
 		if (($syntax->target !== null) || ($syntax->value === null)) {
 			throw new \RuntimeException('S2S currently requires a local binding with an initializer');
 		}
+
+		// Establish initializer facts before deciding declaration versus reassignment.
 		$entry = $context->occurrences[(int) $syntax->name_token_index];
 		$initializer /** ast_node */ = $syntax->value;
 		$value = $initializer->payload()->prepare_expression($initializer, $context);
 		$binding = new prepared_binding();
 		$binding->type = $value->type;
 		$previous /** vector<collected_name> */ = $context->locals->variables_named($entry->name);
+
+		// Explicit source types resolve through lexical scopes; inference keeps the initializer type.
 		if ($syntax->type_syntax !== null)
 		{
 			$type_node /** ast_node */ = $syntax->type_syntax;
@@ -74,6 +82,7 @@ final class File_Preparation
 			}
 			$binding->type = $types[0];
 		}
+
 		if (($syntax->type_syntax !== null) || (q_count($previous) === 0)) {
 			$binding->resolved_kind = binding_kind::declaration;
 			$binding->declaration = $entry;
@@ -88,6 +97,8 @@ final class File_Preparation
 			$binding->declaration = $previous[0];
 			$binding->type = Syntax_Nodes::binding_data($previous[0]->node)->require_preparation()->type;
 		}
+
+		// Publish only a complete binding in the currently supported scalar slice.
 		if ($binding->type !== $value->type) {
 			throw new \RuntimeException('S2S binding requires matching scalar types; conversions are not implemented');
 		}
@@ -114,6 +125,7 @@ final class File_Preparation
 		return $value;
 	}
 
+	/** Retain source spelling so the target, rather than host PHP, performs rounding. */
 	public static function prepare_float(ast_node $node, preparation_context $context): prepared_float_literal
 	{
 		$value = new prepared_float_literal();
@@ -138,6 +150,7 @@ final class File_Preparation
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs an established local declaration for ' . $entry->name);
 		}
+
 		$reference = new prepared_variable_reference();
 		$reference->declaration = $targets[0];
 		$reference->type = Syntax_Nodes::binding_data($targets[0]->node)->require_preparation()->type;

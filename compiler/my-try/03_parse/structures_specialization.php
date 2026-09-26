@@ -17,6 +17,18 @@ final class integer_literal_structure extends node_structure
 	/** @ownership owner */
 	private ?prepared_integer_literal $prepared_facts = null;
 
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_integer($node, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_integer($this->require_preparation(), $context);
+	}
+
 	public function preparation(): ?prepared_integer_literal
 	{
 		return $this->prepared_facts;
@@ -36,18 +48,6 @@ final class integer_literal_structure extends node_structure
 	{
 		$this->prepared_facts = null;
 	}
-
-	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
-	{
-		$facts = File_Preparation::prepare_integer($node, $context);
-		$this->set_preparation($facts);
-		return $facts;
-	}
-
-	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
-	{
-		return CPP_Generator::generate_integer($this->require_preparation(), $context);
-	}
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
@@ -55,6 +55,18 @@ final class float_literal_structure extends node_structure
 {
 	/** @ownership owner */
 	private ?prepared_float_literal $prepared_facts = null;
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_float($node, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_float($this->require_preparation(), $context);
+	}
 
 	public function preparation(): ?prepared_float_literal
 	{
@@ -75,18 +87,6 @@ final class float_literal_structure extends node_structure
 	{
 		$this->prepared_facts = null;
 	}
-
-	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
-	{
-		$facts = File_Preparation::prepare_float($node, $context);
-		$this->set_preparation($facts);
-		return $facts;
-	}
-
-	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
-	{
-		return CPP_Generator::generate_float($this->require_preparation(), $context);
-	}
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
@@ -100,6 +100,18 @@ final class boolean_literal_structure extends node_structure
 	public function __construct(bool $value)
 	{
 		$this->value = $value;
+	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_boolean($this->value, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_boolean($this->require_preparation(), $context);
 	}
 
 	public function preparation(): ?prepared_boolean_literal
@@ -121,18 +133,6 @@ final class boolean_literal_structure extends node_structure
 	{
 		$this->prepared_facts = null;
 	}
-
-	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
-	{
-		$facts = File_Preparation::prepare_boolean($this->value, $context);
-		$this->set_preparation($facts);
-		return $facts;
-	}
-
-	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
-	{
-		return CPP_Generator::generate_boolean($this->require_preparation(), $context);
-	}
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
@@ -140,6 +140,18 @@ final class variable_reference_structure extends node_structure
 {
 	/** @ownership owner */
 	private ?prepared_variable_reference $prepared_facts = null;
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = File_Preparation::prepare_reference($node, $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_reference($this->require_preparation(), $context);
+	}
 
 	public function preparation(): ?prepared_variable_reference
 	{
@@ -159,18 +171,6 @@ final class variable_reference_structure extends node_structure
 	public function clear_preparation(): void
 	{
 		$this->prepared_facts = null;
-	}
-
-	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
-	{
-		$facts = File_Preparation::prepare_reference($node, $context);
-		$this->set_preparation($facts);
-		return $facts;
-	}
-
-	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
-	{
-		return CPP_Generator::generate_reference($this->require_preparation(), $context);
 	}
 }
 
@@ -199,13 +199,14 @@ final class call_structure extends node_structure
 		$this->template_arguments = new Storage /** Storage<ast_node> */();
 	}
 
-	/** Append direct syntax children in grammar order before links are published. */
+	/** Type arguments precede value arguments in structural traversal, not runtime evaluation. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
 		$items /** Storage<ast_node> */ = $this->template_arguments;
 		foreach ($items as $child) {
 			$result->append($child);
 		}
+
 		$items /** Storage<ast_node> */ = $this->arguments;
 		foreach ($items as $child) {
 			$result->append($child);
@@ -241,7 +242,7 @@ final class function_structure extends node_structure
 		$this->body = $body;
 	}
 
-	/** Append direct syntax children in grammar order before links are published. */
+	/** Expose signature children before the body; the return type follows the parameters. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
 		$items /** Storage<ast_node> */ = $this->parameters;
@@ -428,27 +429,7 @@ final class binding_structure extends node_structure
 	/** @storage.index token_list.tokens */
 	public int $semicolon_token_index;
 
-	public function preparation(): ?prepared_binding
-	{
-		return $this->prepared_facts;
-	}
-
-	public function require_preparation(): prepared_binding
-	{
-		return object_cast($this->prepared_facts, prepared_binding::class);
-	}
-
-	public function set_preparation(prepared_binding $facts): void
-	{
-		$this->prepared_facts = $facts;
-	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared_facts = null;
-	}
-
-	/** Append direct syntax children in grammar order before links are published. */
+	/** Preserve grammar roles while omitting absent type, target and initializer children. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
 		if ($this->type_syntax !== null) {
@@ -473,6 +454,26 @@ final class binding_structure extends node_structure
 	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
 	{
 		return CPP_Generator::generate_binding(Syntax_Nodes::binding_data($node), $context);
+	}
+
+	public function preparation(): ?prepared_binding
+	{
+		return $this->prepared_facts;
+	}
+
+	public function require_preparation(): prepared_binding
+	{
+		return object_cast($this->prepared_facts, prepared_binding::class);
+	}
+
+	public function set_preparation(prepared_binding $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared_facts = null;
 	}
 }
 

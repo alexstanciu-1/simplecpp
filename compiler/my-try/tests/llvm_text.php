@@ -8,6 +8,7 @@ function text_check(bool $ok): void
 		throw new \LogicException('LLVM text parity failed');
 	}
 }
+
 $all = '';
 for ($index = 0; $index < 256; $index++) {
 	$byte = chr($index);

@@ -1,12 +1,15 @@
 <?php
 
 /*
- * Role: retained syntax roots, node kinds and lexical scopes.
+ * Role: common syntax nodes, specialization operation contracts and parsed-file roots.
  * Used by: Parser, Symbol_Collector and preparation.
  */
 namespace scpp\compiler;
 
-/** Specializations route operations; process owners retain algorithms and invocation state. */
+/** Specializations route operations; process owners retain algorithms and invocation state.
+ * Statement hooks process one node; expression hooks return one result.
+ * Each process owns its child evaluation order. Hooks never retain the context.
+ */
 interface node_operations_i {
 	public function prepare_statement(ast_node $node, preparation_context $context): void;
 	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression;

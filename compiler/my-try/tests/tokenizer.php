@@ -10,12 +10,14 @@ function token_scan(string $text): token_list
 	$scanner = new Tokenizer($file);
 	return $scanner->tokenize();
 }
+
 function token_check(bool $ok): void
 {
 	if (!$ok) {
 		throw new \LogicException('Tokenizer byte contract failed');
 	}
 }
+
 $single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=';
 for ($value = 0; $value < 256; $value++)
 {

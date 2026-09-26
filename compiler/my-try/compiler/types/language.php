@@ -41,6 +41,7 @@ final class Language_Types
 		}
 		return $types[0];
 	}
+
 	/** Boolean defaults use the same language scope as integer defaults. */
 	public static function boolean(scope $language_scope): type_definition
 	{
@@ -50,6 +51,7 @@ final class Language_Types
 		}
 		return $types[0];
 	}
+
 	/** Floating-point defaults use the same language scope as integer defaults. */
 	public static function floating(scope $language_scope): type_definition
 	{

@@ -8,12 +8,14 @@ function native_check(bool $ok): void
 		throw new \LogicException('Native runner assertion failed');
 	}
 }
+
 function native_initialized(object $record): void
 {
 	foreach ((new \ReflectionClass($record))->getProperties() as $property) {
 		native_check($property->isInitialized($record));
 	}
 }
+
 $runner = new Native_Runner();
 $modules = new Storage();
 $module = new llvm_module();

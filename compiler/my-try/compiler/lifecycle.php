@@ -33,10 +33,12 @@ final class Compiler_Lifecycle
 		self::reset_preparation();
 		Model::$syntax_files = new Storage /** Storage<parsed_file> */();
 		self::$syntax_initialized = true;
+
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Model::$global_scope = new scope();
 		Model::$global_scope->set_parent(Model::$language_scope);
+
 		Model::$collected_files = new Storage /** Storage<collected_file> */();
 		self::reset_llvm();
 	}

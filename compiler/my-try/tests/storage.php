@@ -10,6 +10,7 @@ function check(bool $value): void
 		throw new \RuntimeException('Storage assertion failed');
 	}
 }
+
 /** Require the operation to fail with the requested exception family. */
 function rejects(\Closure $operation, string $type): void
 {

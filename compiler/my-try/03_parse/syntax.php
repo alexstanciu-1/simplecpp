@@ -2,7 +2,7 @@
 
 /*
  * Role: derived syntax queries without processing state in data records.
- * Call map: Parser -> validate_payload; syntax consumers -> category.
+ * Call map: Parser -> make -> validate_payload / specialization child access; syntax consumers -> category.
  */
 namespace scpp\compiler;
 

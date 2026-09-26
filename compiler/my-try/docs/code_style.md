@@ -45,7 +45,9 @@ strings, embedded sample programs or other executable content.
 ## Verification
 
 Run `python3 compiler/my-try/tools/style_check.py` from the repository root. It
-checks block layout and the presence of documentation on longer named functions.
+checks block layout, separation between methods, and the presence of documentation
+on longer named functions. Code containing interpolated strings is indented while
+multiline string/comment contents and heredoc terminators remain intact.
 `--write` applies whitespace-only block layout after verifying that PHP tokens,
 including comments and string contents, are preserved. It does not generate comments.
 

@@ -2,7 +2,7 @@
 
 /*
  * Role: parse retained tokens and collect occurrences.
- * Call map: Compiler::parse -> Parser::parse -> Parser_Run::parse -> statement/expression -> Symbol_Collector.
+ * Call map: Source_Frontend::run -> Parser::parse -> Parser_Run::parse -> statement/expression -> Symbol_Collector.
  */
 namespace scpp\compiler;
 
@@ -169,6 +169,7 @@ final class Parser_Run
 			while (true);
 			$this->expect('>');
 		}
+
 		$this->expect('function');
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return') || ($this->text() === 'void'))) {
 			throw new \RuntimeException($this->error_message('Expected function name'));
@@ -179,6 +180,7 @@ final class Parser_Run
 		if (isset($formals[$function_name])) {
 			throw new \RuntimeException($this->error_message('Template parameter conflicts with function name'));
 		}
+
 		$local_scope = new scope();
 		$scopes /** Storage<scope> */ = $this->scopes;
 		$scopes->append($local_scope);
@@ -190,6 +192,7 @@ final class Parser_Run
 			$slots[$name] = $slot++;
 		}
 		$local_scope->set_templates($slots);
+
 		$this->expect('(');
 		if ($this->text() !== ')')
 		{
@@ -207,10 +210,13 @@ final class Parser_Run
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected return type name'));
 		}
+
 		$type_start = $this->position++;
 		$return_type = $this->node(node_kind::identifier, $type_start);
 		$this->record_name($return_type, $type_start, collected_name_kind::type_reference, $local_scope);
+
 		$body = $this->block($local_scope);
+
 		$function = new function_structure($return_type, $body);
 		$function->parameters = $parameters;
 		$function->name_token_index = $name_token_index;
@@ -465,7 +471,7 @@ final class Parser_Run
 		return $node;
 	}
 
-	/** Stabilize the concrete payload as an interface before nullable wrapping. */
+	/** Keep the concrete specialization behind the common factory parameter type. */
 	private function payload_node(node_kind $kind, int $start, node_structure $structure): ast_node
 	{
 		return $this->node($kind, $start, $structure);

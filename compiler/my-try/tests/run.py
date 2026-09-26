@@ -20,6 +20,7 @@ def run(command, expected=0):
 
 def verify(root, output):
     clang = json.loads((root / "06_native/toolchain.json").read_text())["clang"]
+    run(["python3", str(root / "tests/style_check_test.py")])
     run(["python3", str(root / "tools/style_check.py")])
     php_files = sorted(p for p in root.rglob("*.php") if "build" not in p.relative_to(root).parts)
     for source in php_files:

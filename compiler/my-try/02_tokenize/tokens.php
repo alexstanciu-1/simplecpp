@@ -2,7 +2,7 @@
 
 /*
  * Role: scan source bytes into token spans.
- * Call map: Compiler::frontend -> Tokenizer::tokenize -> File_Loader / token_end.
+ * Call map: Source_Frontend::run -> Tokenizer::tokenize -> File_Loader / token_end.
  */
 namespace scpp\compiler;
 
@@ -121,6 +121,7 @@ final class Tokenizer
 		while (self::digit(string_byte_at($this->content, $offset))) {
 			$offset++;
 		}
+
 		$digits = $offset - $start;
 		if (string_byte_at($this->content, $offset) === 46)
 		{
@@ -134,6 +135,8 @@ final class Tokenizer
 		if ($digits === 0) {
 			throw new \RuntimeException('Expected decimal digits at ' . $this->source->path . ': byte ' . $start);
 		}
+
+		// Exponent signs belong to this token; leading unary signs do not.
 		$next = string_byte_at($this->content, $offset);
 		if (($next === 69) || ($next === 101))
 		{
@@ -150,6 +153,7 @@ final class Tokenizer
 				throw new \RuntimeException('Expected exponent digits at ' . $this->source->path . ': byte ' . $start);
 			}
 		}
+
 		$next = string_byte_at($this->content, $offset);
 		if (self::letter($next) || ($next === 46)) {
 			throw new \RuntimeException('Unsupported numeric literal at ' . $this->source->path . ': byte ' . $start);

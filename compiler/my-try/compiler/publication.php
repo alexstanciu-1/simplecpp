@@ -31,6 +31,7 @@ final class Source_Publication
 				}
 			}
 		}
+
 		if ($source->changes === \scpp\compiler\SYNC_DELETED)
 		{
 			if ($position >= 0)
@@ -44,6 +45,7 @@ final class Source_Publication
 			}
 			return;
 		}
+
 		$candidate = object_cast($work->result, parsed_file::class);
 		$entries /** Storage<collected_name> */ = $candidate->collection->entries;
 		foreach ($candidate->collection->defined_elements as $index) {
@@ -59,6 +61,7 @@ final class Source_Publication
 				$source->changes = \scpp\compiler\SYNC_CHANGED;
 			}
 		}
+
 		// Remove replaced live references; keep actual deletions as tombstones in global indexes.
 		$global = Model::$global_scope;
 		Scope_Publication::replace_source($global, $source->path);
@@ -101,6 +104,7 @@ final class Source_Publication
 		foreach (Model::$syntax_files as $parsed) {
 			$by_source[$parsed->source_file()] = $parsed;
 		}
+
 		$syntax /** Storage<parsed_file> */ = new Storage();
 		$tokens /** Storage<token_list> */ = new Storage();
 		$collections /** Storage<collected_file> */ = new Storage();
@@ -117,6 +121,7 @@ final class Source_Publication
 				$collections->append($parsed->collection);
 			}
 		}
+
 		Model::$syntax_files = $syntax;
 		Model::$tokens = $tokens;
 		Model::$collected_files = $collections;

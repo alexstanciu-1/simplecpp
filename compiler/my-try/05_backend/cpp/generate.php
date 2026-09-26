@@ -17,11 +17,14 @@ final class CPP_Generator
 			$child = $node->next();
 		}
 		$body .= "\treturn 0;\n}\n";
+
+		// Emit only headers actually requested by the generated expressions.
 		$text = '';
 		foreach ($context->headers as $header => $used) {
 			$text .= '#include "' . $header . '"' . "\n";
 		}
 		$text .= $body;
+
 		$result = new cpp_module();
 		$result->file_name = 'main.cpp';
 		$result->text = $text;
@@ -44,6 +47,7 @@ final class CPP_Generator
 		if ($syntax->expression === null) {
 			return "\treturn 0;\n";
 		}
+
 		$expression /** ast_node */ = $syntax->expression;
 		return "\treturn static_cast<int>((" . $expression->payload()->generate_cpp_expression($expression, $context) . ").native_value());\n";
 	}

@@ -2,7 +2,7 @@
 
 /*
  * Role: value and address emission methods on LLVM_Function_Generator.
- * Call map: LLVM_Generator::expression -> expression handlers -> expression_storage -> emit.
+ * Call map: LLVM_Function_Generator::expression -> expression handlers -> expression_storage -> emit.
  */
 namespace scpp\compiler;
 

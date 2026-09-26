@@ -69,6 +69,7 @@ def layout(source):
     pairs = blocks(ts)
     opening = {a: (b, named) for a, b, named, _ in pairs}
     closing = {b for _, b, _, _ in pairs}
+    method_ends = {b for _, b, named, _ in pairs if named}
     # Choose each gap independently. Preserve existing logical blank lines.
     gaps = [source[:ts[0]['start']]] if ts else ['']
     for i, token in enumerate(ts):
@@ -79,7 +80,7 @@ def layout(source):
         elif i in closing:
             next_text = ts[i + 1]['text'] if i + 1 < len(ts) else ''
             if next_text not in (';', ',', ')', ']', '->', '?->'):
-                gap = '\n\n' if gap.count('\n') > 1 else '\n'
+                gap = '\n\n' if gap.count('\n') > 1 or (i in method_ends and next_text != '}') else '\n'
         gaps.append(gap)
     expanded = gaps[0] + ''.join(t['text'] + gaps[i + 1] for i, t in enumerate(ts))
     ts = significant(expanded)
@@ -106,8 +107,14 @@ def layout(source):
     closes = {b for _, b, _, _ in blocks(ts)}
     for i, t in enumerate(ts):
         line = expanded.count('\n', 0, t['start'])
+        # Only interior lines belong to a multiline token. Code before an opening
+        # quote (for example echo) still needs indentation, even with interpolation.
+        if t['protected'] or t['kind'] in ('T_CONSTANT_ENCAPSED_STRING', 'T_COMMENT', 'T_DOC_COMMENT'):
+            end_line = expanded.count('\n', 0, max(t['start'], t['end'] - 1))
+            protected_lines.update(range(line + 1, end_line + 1))
         if t['protected']:
-            protected_lines.add(line)
+            if line not in events:
+                protected_lines.add(line)
             continue
         if i in closes:
             depth -= 1
@@ -123,7 +130,7 @@ def layout(source):
     for line, depth in events.items():
         if line in protected_lines:
             continue
-        # Preserve continuation indentation beyond the structural minimum.
+        # Indent code without touching whitespace stored inside strings or comments.
         text = lines[line].lstrip(' \t')
         lines[line] = '\t' * max(depth, 0) + text
     return ''.join(lines)

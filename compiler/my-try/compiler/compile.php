@@ -2,7 +2,7 @@
 
 /*
  * Role: coordinate the currently imported compiler stages.
- * Call map: init -> exec_cpp/update_cpp or exec_llvm/update_llvm -> sync (private read/tokenize/parse, locked replacement) -> cpp/llvm.
+ * Call map: init -> exec_cpp/update_cpp or exec_llvm/update_llvm -> sync (private read/tokenize/parse, locked replacement) -> prepare + cpp / llvm.
  * Output: retained sources, syntax, collection and separately selected C++/LLVM artifacts.
  */
 namespace scpp\compiler;
@@ -14,6 +14,7 @@ final class Compiler
 {
 	/** Constructor installs the configured default before use. */
 	public int $jobs = 0;
+
 	public function __construct()
 	{
 		$this->jobs = \scpp\compiler\DEFAULT_COMPILER_JOBS;
@@ -30,6 +31,7 @@ final class Compiler
 			Model::$modules[] = $input_module;
 		}
 	}
+
 	/** Experimental LLVM entry remains available for existing regression callers. */
 	public function exec_llvm(): void
 	{
@@ -43,20 +45,6 @@ final class Compiler
 		$this->sync_live();
 		$this->prepare();
 		$this->cpp();
-	}
-
-	/** Initial generation paths share the same source synchronization. */
-	private function sync_live(): void
-	{
-		$paths /** vector<string> */ = [];
-		foreach (Model::$modules as $input_module) {
-			foreach ($input_module->files as $source) {
-				if ($source->changes !== \scpp\compiler\SYNC_DELETED) {
-					$paths[] = $source->path;
-				}
-			}
-		}
-		$this->sync($paths);
 	}
 
 	/** Apply file notifications, then rerun all existing resolution/preparation and generation. */
@@ -110,47 +98,6 @@ final class Compiler
 		$this->frontend(frontend_operation::parse);
 	}
 
-	/** One bounded worker reads, tokenizes and immediately parses its file before publication. */
-	private function frontend(frontend_operation $operation): void
-	{
-		if ($operation === frontend_operation::scan) {
-			Compiler_Lifecycle::reset_tokens();
-		}
-		else {
-			Compiler_Lifecycle::reset_syntax();
-		}
-		if ($this->jobs < 1) {
-			throw new \LogicException('Compiler job limit must be positive');
-		}
-		$queue = new Source_Work_Queue();
-		if ($operation === frontend_operation::scan) {
-			foreach (Model::$modules as $input_module) {
-				foreach ($input_module->files as $source) {
-					$queue->enqueue($source);
-				}
-			}
-		}
-		else {
-			foreach (Model::$tokens as $tokens) {
-				$queue->enqueue($tokens->file, $tokens);
-			}
-		}
-		$items /** vector<source_work> */ = $queue->items();
-		$published = task_run_publish_unordered($items, $this->jobs,
-		function (source_work $work) use ($queue, $operation): source_work {
-			return Source_Frontend::run($work, $queue, $operation);
-		},
-		function (source_work $work) use ($queue, $operation): bool {
-			Source_Publication::publish_stage($work, $operation);
-			$queue->complete($work);
-			return true;
-		});
-		if (($published !== q_count($items)) || (!$queue->finished())) {
-			throw new \LogicException('Frontend barrier reached before work completed');
-		}
-		Source_Publication::order_stage($items, $operation);
-	}
-
 	/** Prepare synchronized source independently of backend emission. */
 	public function prepare(): void
 	{
@@ -199,5 +146,60 @@ final class Compiler
 		}
 		$prepared_files = (new LLVM_Preparation())->prepare_program($sources, $policy);
 		Model::$llvm_files = (new LLVM_Generator())->generate($prepared_files, $policy);
+	}
+
+	/** Initial generation paths share the same source synchronization. */
+	private function sync_live(): void
+	{
+		$paths /** vector<string> */ = [];
+		foreach (Model::$modules as $input_module) {
+			foreach ($input_module->files as $source) {
+				if ($source->changes !== \scpp\compiler\SYNC_DELETED) {
+					$paths[] = $source->path;
+				}
+			}
+		}
+		$this->sync($paths);
+	}
+
+	/** One bounded worker reads, tokenizes and immediately parses its file before publication. */
+	private function frontend(frontend_operation $operation): void
+	{
+		if ($operation === frontend_operation::scan) {
+			Compiler_Lifecycle::reset_tokens();
+		}
+		else {
+			Compiler_Lifecycle::reset_syntax();
+		}
+		if ($this->jobs < 1) {
+			throw new \LogicException('Compiler job limit must be positive');
+		}
+		$queue = new Source_Work_Queue();
+		if ($operation === frontend_operation::scan) {
+			foreach (Model::$modules as $input_module) {
+				foreach ($input_module->files as $source) {
+					$queue->enqueue($source);
+				}
+			}
+		}
+		else {
+			foreach (Model::$tokens as $tokens) {
+				$queue->enqueue($tokens->file, $tokens);
+			}
+		}
+		$items /** vector<source_work> */ = $queue->items();
+		$published = task_run_publish_unordered($items, $this->jobs,
+		function (source_work $work) use ($queue, $operation): source_work {
+			return Source_Frontend::run($work, $queue, $operation);
+		},
+		function (source_work $work) use ($queue, $operation): bool {
+			Source_Publication::publish_stage($work, $operation);
+			$queue->complete($work);
+			return true;
+		});
+		if (($published !== q_count($items)) || (!$queue->finished())) {
+			throw new \LogicException('Frontend barrier reached before work completed');
+		}
+		Source_Publication::order_stage($items, $operation);
 	}
 }
