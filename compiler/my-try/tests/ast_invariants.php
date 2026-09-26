@@ -45,7 +45,7 @@ function check_parameter_invariants(): void
 	{
 		foreach ([null, 0] as $index)
 		{
-			$parameter = new parameter_structure();
+			$parameter = new parameter_structure(Syntax_Nodes::make(node_kind::identifier, 0, 1));
 			$parameter->mode = $mode;
 			$parameter->reference_token_index = $index;
 			$valid = true;

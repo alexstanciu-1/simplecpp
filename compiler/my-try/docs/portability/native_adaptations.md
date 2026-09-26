@@ -171,3 +171,39 @@ fifth passed. Native-build commands took 1.448s, 33.776s, 22.610s and 25.005s; t
 final incremental rebuild took 1.065s. These resumed-build timings are diagnostic
 history, not a clean-build performance comparison. PHP regression evidence is in
 `/tmp/scpp-final-ast-native-php-01/summary.json`.
+
+## Specialization dispatch native verification
+
+User-requested verification, 2026-09-26, after `d678d9d1`.
+
+The first native attempt stopped at STAN with 13 required-field initialization
+errors in specialization methods. Required child handles and the boolean value
+now enter the affected records through constructors. The parser gathers function
+children before constructing its specialization; it retains the same source and
+collection order. No nullable substitutes or fake defaults were introduced.
+
+The second attempt passed STAN but C++ header ordering exposed a dependency cycle:
+AST operation signatures reference preparation records, whose fields need AST enums.
+`03_parse/kinds.php` now owns the independent syntax enums and Node_Kind_Name helper.
+The host bootstrap loads it before AST structures. No generated C++ or toolchain
+source was patched.
+
+The third attempt passed conversion, normal STAN-enabled native build and execution.
+Evidence: `/tmp/scpp-specialization-native-01/summary.json`, source hashes and
+per-attempt logs. Target: `/tmp/scpp-native-244`, candidate
+`unversioned-d8ddde93-overlay`; target fingerprints are retained in candidate.json.
+The verified target pin remains unchanged.
+
+- 142 PHP/native comparisons: 48 valid programs executed, 94 rejection/recovery cases.
+- Original integer S2S proof: PHP/native output parity and compiled program exit 10.
+- 15 additional native-compiler S2S cases: boolean copy/reassignment, float
+  copy/reassignment, decimal/exponent forms, high precision and normal/subnormal
+  boundaries. Their emitted C++ matched PHP, compiled, and ran successfully;
+  floating probes verified wrapper type and value without host float conversion.
+- Zero compile-blocking errors. STAN still reports 331 advisory errors and 91 warnings.
+- Native build commands: 1.584s (STAN failure), 29.841s (header-order failure),
+  36.386s (successful build). Successful incremental rebuild: 0.920s.
+
+The harness now accepts `s2s:<source-directory>` requests and retains scalar C++
+execution evidence alongside the existing native comparisons. This extends test
+coverage without enabling new source-language features or LLVM development.

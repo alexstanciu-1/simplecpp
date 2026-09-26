@@ -110,9 +110,8 @@ final class Parser_Run
 			if (!$this->identifier()) {
 				throw new \RuntimeException($this->error_message('Expected field type'));
 			}
-			$field = new field_structure();
 			$type_start = $this->position++;
-			$field->type_syntax = $this->node(node_kind::identifier, $type_start);
+			$field = new field_structure($this->node(node_kind::identifier, $type_start));
 			$this->record_name($field->type_syntax, $type_start, collected_name_kind::type_reference, $this->current_scope);
 			if (!string_byte_starts_with($this->text(), '$')) {
 				throw new \RuntimeException($this->error_message('Expected field variable name'));
@@ -133,8 +132,7 @@ final class Parser_Run
 	private function expression_statement(): ast_node
 	{
 		$start = $this->position;
-		$statement = new expression_statement_structure();
-		$statement->expression = $this->expression();
+		$statement = new expression_statement_structure($this->expression());
 		$statement->semicolon_token_index = $this->expect(';');
 		return $this->payload_node(node_kind::expression_statement, $start, $statement);
 	}
@@ -175,11 +173,9 @@ final class Parser_Run
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return') || ($this->text() === 'void'))) {
 			throw new \RuntimeException($this->error_message('Expected function name'));
 		}
-		$function = new function_structure();
-		$parameters /** Storage<ast_node> */ = $function->parameters;
-		$function->name_token_index = $this->position++;
-		$function->template_parameters = $formals;
-		$function_name = $token_rows[$function->name_token_index]->text();
+		$parameters /** Storage<ast_node> */ = new Storage();
+		$name_token_index = $this->position++;
+		$function_name = $token_rows[$name_token_index]->text();
 		if (isset($formals[$function_name])) {
 			throw new \RuntimeException($this->error_message('Template parameter conflicts with function name'));
 		}
@@ -212,9 +208,13 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected return type name'));
 		}
 		$type_start = $this->position++;
-		$function->return_type = $this->node(node_kind::identifier, $type_start);
-		$this->record_name($function->return_type, $type_start, collected_name_kind::type_reference, $local_scope);
-		$function->body = $this->block($local_scope);
+		$return_type = $this->node(node_kind::identifier, $type_start);
+		$this->record_name($return_type, $type_start, collected_name_kind::type_reference, $local_scope);
+		$body = $this->block($local_scope);
+		$function = new function_structure($return_type, $body);
+		$function->parameters = $parameters;
+		$function->name_token_index = $name_token_index;
+		$function->template_parameters = $formals;
 		$node = $this->payload_node(node_kind::function_declaration, $start, $function);
 		$this->record_name($node, $function->name_token_index, collected_name_kind::function_declaration, $this->current_scope);
 		return $node;
@@ -228,8 +228,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected parameter type'));
 		}
 		$this->position++;
-		$parameter = new parameter_structure();
-		$parameter->type_syntax = $this->node(node_kind::identifier, $start);
+		$parameter = new parameter_structure($this->node(node_kind::identifier, $start));
 		$this->record_name($parameter->type_syntax, $start, collected_name_kind::type_reference, $scope);
 		if ($this->text() === '&') {
 			$parameter->mode = passing_mode::reference;
@@ -329,8 +328,7 @@ final class Parser_Run
 	{
 		if (($this->text() === 'true') || ($this->text() === 'false')) {
 			$start = $this->position;
-			$literal = new boolean_literal_structure();
-			$literal->value = $this->text() === 'true';
+			$literal = new boolean_literal_structure($this->text() === 'true');
 			$this->position++;
 			return $this->payload_node(node_kind::boolean_literal, $start, $literal);
 		}
@@ -367,9 +365,7 @@ final class Parser_Run
 	private function array_type(ast_node $element): ast_node
 	{
 		$this->expect('[');
-		$type = new array_type_structure();
-		$type->element_type = $element;
-		$type->count = $this->expression();
+		$type = new array_type_structure($element, $this->expression());
 		if ($type->count->kind() !== node_kind::integer_literal) {
 			throw new \RuntimeException($this->error_message('Fixed array size must be a nonnegative integer literal'));
 		}
@@ -409,17 +405,14 @@ final class Parser_Run
 				if (!$this->identifier()) {
 					throw new \RuntimeException($this->error_message('Expected field name'));
 				}
-				$field = new field_access_structure();
-				$field->base = $base;
+				$field = new field_access_structure($base);
 				$field->name_token_index = $this->position++;
 				$base = $this->payload_node(node_kind::field_expression, (int) $base->token_index, $field);
 				$this->record_name($base, $field->name_token_index, collected_name_kind::field_reference, $this->current_scope);
 				continue;
 			}
 			$this->position++;
-			$access = new index_structure();
-			$access->base = $base;
-			$access->index = $this->expression();
+			$access = new index_structure($base, $this->expression());
 			$this->expect(']');
 			$base = $this->payload_node(node_kind::index_expression, (int) $base->token_index, $access);
 		}

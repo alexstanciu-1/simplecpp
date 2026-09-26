@@ -21,6 +21,7 @@ require_once __DIR__ . '/compiler/types/language.php';
 require_once __DIR__ . '/03_parse/scopes/structures.php';
 require_once __DIR__ . '/03_parse/scopes/lookup.php';
 require_once __DIR__ . '/compiler/types/source.php';
+require_once __DIR__ . '/03_parse/kinds.php';
 require_once __DIR__ . '/03_parse/structures.php';
 require_once __DIR__ . '/03_parse/structures_specialization.php';
 require_once __DIR__ . '/03_parse/syntax.php';

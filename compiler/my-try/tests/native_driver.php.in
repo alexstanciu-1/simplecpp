@@ -93,6 +93,15 @@ $path = fs_read_text(__REQUEST_FILE__);
 if ($path === 's2s-proof') {
 	echo $cpp_proof;
 }
+elseif (string_byte_starts_with($path, 's2s:'))
+{
+	$paths /** vector<string> */ = [string_byte_slice($path, 4, string_byte_len($path) - 4)];
+	$compiler = new Compiler();
+	$compiler->init($paths);
+	$compiler->exec_cpp();
+	$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+	echo $outputs[0]->text;
+}
 else
 {
 	$paths /** vector<string> */ = [$path];

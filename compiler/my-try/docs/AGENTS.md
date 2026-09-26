@@ -3,7 +3,8 @@
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**
 
 Current native checkpoint: the normal STAN-enabled build passes 142 PHP/native
-comparisons (48 valid programs executed, 94 rejection/recovery cases). See
+comparisons (48 valid programs executed, 94 rejection/recovery cases), the integer
+S2S proof, and 15 additional native-compiler scalar S2S cases. See
 `compiler/my-try/docs/portability/native_adaptations.md` for changes and limitations. Earlier
 pending-build notes below describe historical checkpoints; advisory STAN diagnostics
 remain and the verified target pin has not changed.

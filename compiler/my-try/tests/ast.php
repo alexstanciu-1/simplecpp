@@ -288,7 +288,7 @@ if (count($first->scopes) !== 2 || count($second->scopes) !== 2 || $first->scope
 	throw new \LogicException('Standalone parser scope ownership failed');
 }
 try {
-	Syntax_Nodes::validate_payload(node_kind::integer_literal, new binary_structure());
+	Syntax_Nodes::validate_payload(node_kind::integer_literal, new binary_structure(Syntax_Nodes::make(node_kind::identifier, 0, 1), Syntax_Nodes::make(node_kind::identifier, 1, 2)));
 	throw new \RuntimeException('Invalid payload accepted');
 }
 catch (\LogicException $expected) {

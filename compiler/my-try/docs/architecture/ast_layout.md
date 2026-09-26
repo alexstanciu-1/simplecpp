@@ -188,3 +188,7 @@ executions and the existing 19 LLVM / 28 call regression executions. All 37 C++
 files match `/tmp/scpp-float-s2s-02/s2s/` byte-for-byte. All 51 portable compiler
 sources converted in `/tmp/scpp-specialization-dispatch-conversion/`. The native
 compiler itself was not built or run for this refactor.
+
+The subsequent user-requested native verification passed after making required
+child initialization explicit in specialization constructors and separating syntax
+enums into `03_parse/kinds.php`. See [native evidence and adaptations](../portability/native_adaptations.md#specialization-dispatch-native-verification).

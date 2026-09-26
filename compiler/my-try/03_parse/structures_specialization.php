@@ -97,6 +97,11 @@ final class boolean_literal_structure extends node_structure
 	/** @ownership owner */
 	private ?prepared_boolean_literal $prepared_facts = null;
 
+	public function __construct(bool $value)
+	{
+		$this->value = $value;
+	}
+
 	public function preparation(): ?prepared_boolean_literal
 	{
 		return $this->prepared_facts;
@@ -229,9 +234,11 @@ final class function_structure extends node_structure
 	 */
 	public Storage $parameters /** Storage<ast_node> */;
 
-	public function __construct()
+	public function __construct(ast_node $return_type, ast_node $body)
 	{
 		$this->parameters = new Storage /** Storage<ast_node> */();
+		$this->return_type = $return_type;
+		$this->body = $body;
 	}
 
 	/** Append direct syntax children in grammar order before links are published. */
@@ -259,6 +266,11 @@ final class parameter_structure extends node_structure
 	 * @ownership owner
 	 */
 	public ast_node $type_syntax;
+
+	public function __construct(ast_node $type_syntax)
+	{
+		$this->type_syntax = $type_syntax;
+	}
 
 	/** Append direct syntax children in grammar order before links are published. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
@@ -318,6 +330,12 @@ final class binary_structure extends node_structure
 	 */
 	public ast_node $right;
 
+	public function __construct(ast_node $left, ast_node $right)
+	{
+		$this->left = $left;
+		$this->right = $right;
+	}
+
 	/** Append direct syntax children in grammar order before links are published. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
@@ -335,6 +353,11 @@ final class expression_statement_structure extends node_structure
 	public ast_node $expression;
 	/** @storage.index token_list.tokens */
 	public int $semicolon_token_index;
+
+	public function __construct(ast_node $expression)
+	{
+		$this->expression = $expression;
+	}
 
 	/** Append direct syntax children in grammar order before links are published. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
@@ -465,6 +488,12 @@ final class array_type_structure extends node_structure
 	 */
 	public ast_node $count;
 
+	public function __construct(ast_node $element_type, ast_node $count)
+	{
+		$this->element_type = $element_type;
+		$this->count = $count;
+	}
+
 	/** Append direct syntax children in grammar order before links are published. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
@@ -506,6 +535,12 @@ final class index_structure extends node_structure
 	 * @ownership owner
 	 */
 	public ast_node $index;
+
+	public function __construct(ast_node $base, ast_node $index)
+	{
+		$this->base = $base;
+		$this->index = $index;
+	}
 
 	/** Append direct syntax children in grammar order before links are published. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
@@ -549,6 +584,11 @@ final class field_structure extends node_structure
 	 */
 	public ast_node $type_syntax;
 
+	public function __construct(ast_node $type_syntax)
+	{
+		$this->type_syntax = $type_syntax;
+	}
+
 	/** Append direct syntax children in grammar order before links are published. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
@@ -564,6 +604,11 @@ final class field_access_structure extends node_structure
 	public ast_node $base;
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
+
+	public function __construct(ast_node $base)
+	{
+		$this->base = $base;
+	}
 
 	/** Append direct syntax children in grammar order before links are published. */
 	public function append_children(Storage $result /** Storage<ast_node> */): void
