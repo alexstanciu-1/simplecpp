@@ -41,6 +41,39 @@ $cases = [
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
 	'keyword' => ['$int = 10; return $int;', 10],
 ];
+// Ordinary functions and value structs exercise the existing frontend without adding syntax.
+$cases += [
+	'function_no_arguments' => ['function value(): int { return 13; } return value();', 13],
+	'function_void' => ['function done(): void { return; } done(); return 0;', 0],
+	'function_mixed_parameters' => ['function accept(int $x, float $y, bool $z): void {} accept(1, 2.5, true); return 0;', 0],
+	'function_local_shadow' => ['$x = 7; function own(): void { $x = 12; } own(); return $x;', 7],
+	'struct_argument_order' => ['struct Item { int32 $value; } function change(Item &$x): int { $x->value = 99; return 0; } function first(Item $x, int $unused): int32 { return $x->value; } $x Item; $x->value = 67; return first($x, change($x));', 67],
+	'integer_alias_reference' => ['function change(uint8 &$x): void { $x = 71; } $x byte = 0; change($x); return $x;', 71],
+	'function_forward' => ['return identity(19); function identity(int $x): int { return $x; }', 19],
+	'function_nested' => ['function identity(int $x): int { return $x; } return identity(identity(23));', 23],
+	'function_locals' => ['$x = 7; function own(int $x): int { $x = 12; return $x; } own($x); return $x;', 7],
+	'function_reference' => ['function set(int &$x): void { $x = 29; return; } $x = 1; set($x); return $x;', 29],
+	'function_forward_reference' => ['function forward(int &$x): void { set($x); } function set(int &$x): void { $x = 31; } $x = 1; forward($x); return $x;', 31],
+	'function_argument_order' => ['function change(int &$x): int { $x = 33; return $x; } function first(int $a, int $b): int { return $a; } $x = 11; return first($x, change($x));', 11],
+	'function_reference_order' => ['function change(int &$x): int { $x = 33; return $x; } function first(int &$a, int $b): int { return $a; } $x = 11; return first($x, change($x));', 33],
+	'function_bool' => ['function identity(bool $x): bool { return $x; } return identity(true);', 1],
+	'function_float' => ['function identity(float $x): float { return $x; } return identity(10.5);', 10],
+	'function_recursive_signature' => ['function first(int $x): int { return second($x); } function second(int $x): int { return first($x); } return 0;', 0],
+	'struct_fields' => ['struct Point { int32 $x; public bool $ok; } $p Point; $p->x = 17; $p->ok = true; return $p->x;', 17],
+	'struct_default' => ['struct Point { uint16 $x; } $p Point; return $p->x;', 0],
+	'struct_copy' => ['struct Point { int32 $x; } $p Point; $p->x = 19; $q = $p; $p->x = 21; return $q->x;', 19],
+	'struct_assignment' => ['struct Point { int32 $x; } $p Point; $q Point; $p->x = 25; $q = $p; $p->x = 27; return $q->x;', 25],
+	'struct_nested_forward' => ['struct Outer { Inner $inner; } struct Inner { uint8 $value; } $a Outer; $a->inner->value = 37; return $a->inner->value;', 37],
+	'struct_value_parameter' => ['struct Point { int32 $x; } function change(Point $p): void { $p->x = 99; } $p Point; $p->x = 41; change($p); return $p->x;', 41],
+	'struct_reference_parameter' => ['struct Point { int32 $x; } function change(Point &$p): void { $p->x = 43; } $p Point; change($p); return $p->x;', 43],
+	'struct_return' => ['function make(): Point { $p Point; $p->x = 47; return $p; } struct Point { int32 $x; } $p = make(); return $p->x;', 47],
+	'struct_field_reference' => ['struct Point { int32 $x; } function change(int32 &$x): void { $x = 53; } $p Point; change($p->x); return $p->x;', 53],
+	'struct_empty' => ['struct Empty {} function copy(Empty $e): Empty { return $e; } $e Empty; $f = copy($e); return 0;', 0],
+	'integer_boundary' => ['function identity(uint16 $x): uint8 { return $x; } $x int32 = 59; return identity($x);', 59],
+];
+foreach (['int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'] as $type) {
+	$cases['field_' . $type] = ['struct Item { ' . $type . ' $value; } $x Item; $x->value = 61; return $x->value;', 61];
+}
 // Exact spellings cover decimal grammar, precision, normal limits and subnormals.
 $float_forms = ['10.5', '.5', '10.', '1e3', '1E+3', '1.25e-3', '.5e2', '10.e-1',
 	'1.2345678901234567', '0.0', '0008.5', '08e0', '1.7976931348623157e308',
@@ -64,6 +97,14 @@ foreach ($cases as $name => [$source, $exit])
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
+	// Verify actual member representation, not merely that small integer values survive.
+	if (str_starts_with($name, 'field_')) {
+		$alias = substr($name, strlen('field_'));
+		$native = $alias === 'byte' ? 'uint8' : $alias;
+		$probe = 'static_assert(std::is_same_v<decltype(record_1{}.field_4), scpp::int_t<std::' . $native . '_t>>);';
+		file_put_contents($path, Model::$cpp_files[0]->text . "\n" . $probe . "\n");
+	}
+
 	if (($name === 'bool_true') || ($name === 'bool_false')) {
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_0), scpp::bool_t>);\n";
 		$probe_path = $directory . '/' . $name . '_type.cpp';
@@ -96,10 +137,23 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 }
-foreach (['$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a int;', 'function f(): int { return 1; }'] as $source)
+$rejections = ['function f(int &$x): void {} f(1);',
+	'function f(int $x): int { return $x; } f();',
+	'function f(): int { return; }',
+	'function f(): void { return 1; }',
+	'function f(): void {} $x = f();',
+	'$x = 1; function f(): int { return $x; }',
+	'struct S { int $x; }', 'struct S { float $x; }',
+	'struct S { uint8 $x; } $s S; $s->missing = 1;',
+	'struct A {} struct B {} $a A; $b B = $a;',
+	'struct S { uint8 $x; } $s S = [1];',
+	'function f(int &$x): void {} $x uint8 = 1; f($x);',
+	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a void;', 'template<T> function f(): int { return 1; }'];
+foreach ($rejections as $source)
 {
 	Compiler_Lifecycle::reset();
-	s2s_parse($source);
+	$syntax = s2s_parse($source);
+	$before = serialize($syntax);
 	$failed = false;
 	try {
 		(new Compiler())->prepare();
@@ -108,8 +162,28 @@ foreach (['$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = t
 	catch (\RuntimeException $expected) {
 		$failed = true;
 	}
-	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty()) {
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (serialize($syntax) !== $before)) {
 		throw new \LogicException('Unsupported generation published output');
+	}
+}
+
+// Layout recursion is a bounded emission failure; completed shared facts remain reusable.
+foreach (['struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }'] as $source)
+{
+	Compiler_Lifecycle::reset();
+	$syntax = s2s_parse($source);
+	$compiler = new Compiler();
+	$compiler->prepare();
+	$before = serialize($syntax);
+	$failed = false;
+	try {
+		$compiler->cpp();
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), 'recursive by-value');
+	}
+	if ((!$failed) || (!Model::$cpp_files->is_empty()) || (Model::$prepared_files->is_empty()) || (serialize($syntax) !== $before)) {
+		throw new \LogicException('Recursive layout failure changed shared facts or published C++');
 	}
 }
 
@@ -320,5 +394,6 @@ $local->register_type($replacement);
 if (Scope_Lookup::types($local, 'int')[0] !== $replacement) {
 	throw new \LogicException('Nearest scope lost precedence');
 }
+file_put_contents($directory . '/programs.json', json_encode(['valid' => $cases, 'rejected' => $rejections], JSON_PRETTY_PRINT));
 file_put_contents($directory . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
 echo "S2S: canonical types, first assignment, reuse, node cleanup, syntax purity, scope lookup and bounded output passed\n";

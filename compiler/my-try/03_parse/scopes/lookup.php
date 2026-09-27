@@ -50,6 +50,28 @@ final class Scope_Lookup
 		return $result;
 	}
 
+	/** Callable lookup follows the same nearest-pool rule as type lookup. */
+	public static function functions(scope $start, string $name): array /** vector<collected_name> */
+	{
+		$current_scope = $start;
+		$result /** vector<collected_name> */ = [];
+		while (true)
+		{
+			$current_scope = self::visible($current_scope);
+			$result = self::live($current_scope->functions_named($name));
+			if (q_count($result) !== 0) {
+				break;
+			}
+			$parent = $current_scope->parent_scope();
+			if ($parent === null) {
+				break;
+			}
+			$parent_scope /** scope */ = $parent;
+			$current_scope = $parent_scope;
+		}
+		return $result;
+	}
+
 	public static function visible(scope $local_scope): scope
 	{
 		$published = $local_scope->published_scope();

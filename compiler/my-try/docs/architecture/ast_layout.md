@@ -151,8 +151,10 @@ its storage can be optimized independently of callers.
 
 ## Specialization dispatch
 
-`node_structure` implements `node_operations_i` once and declares all four processing
-hooks abstract. `expression_node_structure` rejects statement operations and requires
+`node_structure` implements `node_operations_i` once and declares the four
+statement/expression processing hooks abstract. Its optional `prepare_declaration`
+hook defaults to no action; function and struct specializations forward signature
+preparation to the shared worker. Only the top-level declaration pass invokes it. `expression_node_structure` rejects statement operations and requires
 expression hooks; `statement_node_structure` does the converse.
 `unsupported_node_structure` explicitly rejects all four operations for forms outside
 the current slice. Concrete records implement their applicable hooks. Rejection
@@ -161,15 +163,17 @@ expression generation returns C++ text, and statement generation returns stateme
 text. This preserves the existing emitter contract without a generic mixed result.
 
 File_Preparation and CPP_Generator own phase entry and root statement iteration.
-Binding and return routines own evaluation of their required expression children.
-There is no second generic semantic traversal. Structural child discovery, cleanup
+Binding, call, member and return routines own their required expression children.
+A declaration-signature prepass precedes body preparation; it does not walk or
+prepare executable expressions. Structural child discovery, cleanup
 and reporting are separate operations; reporting now uses the linked tree, including
 call template arguments previously missed by its duplicate specialization chain.
 
 Specializations route to typed processing routines in their owning folders and may
 attach returned facts to their local slots. They never retain workers or invocation
 contexts. `preparation_context` holds source-order locals, occurrence references and
-canonical type handles. `cpp_generation_context` holds per-generation header state.
+canonical type handles. `cpp_generation_context` holds headers, ordered record emission state, declaration
+output sections, return context and temporary-name allocation.
 No retained AST or fact record references either context.
 
 The explicit contexts avoid passing native raw `$this` as a shared worker handle.

@@ -8,6 +8,7 @@ enum type_kind {
 	case boolean;
 	case floating;
 	case record;
+	case void_type;
 }
 
 enum type_origin {

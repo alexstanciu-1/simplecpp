@@ -21,14 +21,14 @@ $return_node = $body->first_child();
 $literal = Syntax_Nodes::integer_data(Syntax_Nodes::return_data($return_node)->expression);
 $context = new preparation_context();
 $context->collection = $parsed->collection;
-$context->locals = new scope();
+$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
 $context->integer = Language_Types::integer(Model::$language_scope);
 $context->boolean = Language_Types::boolean(Model::$language_scope);
 $context->floating = Language_Types::floating(Model::$language_scope);
 $cpp_context = new cpp_generation_context();
 $syntax_before = serialize($parsed);
 
-// Unsupported parents must reject before visiting otherwise supported descendants.
+// Unprepared function operations must reject before visiting their supported descendants.
 $specialization = $function->payload();
 $failures = 0;
 try {
@@ -117,7 +117,7 @@ if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($bool
 }
 
 // Public phase cleanup remains responsible for clearing partial success on a later unsupported node.
-$mixed = dispatch_parse('$a = 10; function unsupported(): int { return 17; }');
+$mixed = dispatch_parse('$a = 10; function unsupported(): int { return missing(); }');
 $first_data = Syntax_Nodes::binding_data($mixed->root->first_child());
 $first_literal = Syntax_Nodes::integer_data($first_data->value);
 $failed = false;

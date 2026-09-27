@@ -166,6 +166,45 @@ def main():
         run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
                                  folder / 'main.cpp', '-o', folder / 'program'])
         run(name + '-s2s-execute', [folder / 'program'], expected=expected_exit)
+    # Reuse the host suite's authored function/struct cases instead of duplicating fixtures.
+    s2s_fixtures = results / 's2s-fixtures'
+    s2s_fixtures.mkdir(exist_ok=args.resume)
+    run('php-s2s-suite', ['php', APP / 'tests/s2s.php', s2s_fixtures])
+    programs = json.loads((s2s_fixtures / 'programs.json').read_text())
+    declaration_cases = [(name, text, code) for name, (text, code) in programs['valid'].items()
+                         if name.startswith(('function_', 'struct_', 'integer_', 'field_'))]
+    for name, text, code in declaration_cases:
+        folder = results / 'declaration-programs' / name
+        folder.mkdir(parents=True, exist_ok=args.resume)
+        (folder / 'main.phs').write_text(text)
+        request.write_text('s2s:' + str(folder))
+        host_output = run(name + '-s2s-host', ['php', '-r', php_code])
+        native_output = run(name + '-s2s-native', [executable])
+        if native_output != host_output or native_output.startswith(b'ERROR\n'):
+            raise RuntimeError(name + ': native declaration output differs from PHP or was rejected')
+        generated = native_output.decode()
+        if name.startswith('field_'):
+            alias = name[len('field_'):]
+            native_type = 'uint8' if alias == 'byte' else alias
+            generated += ('\nstatic_assert(std::is_same_v<decltype(record_1{}.field_4), '
+                          'scpp::int_t<std::' + native_type + '_t>>);\n')
+        (folder / 'main.cpp').write_text(generated)
+        run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
+                                 folder / 'main.cpp', '-o', folder / 'program'])
+        run(name + '-s2s-execute', [folder / 'program'], expected=code)
+    rejection_cases = programs['rejected'] + [
+        'struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }']
+    for index, text in enumerate(rejection_cases):
+        name = 's2s-rejected-' + str(index)
+        folder = results / 'declaration-programs' / name
+        folder.mkdir(parents=True, exist_ok=args.resume)
+        (folder / 'main.phs').write_text(text)
+        request.write_text('s2s:' + str(folder))
+        host_output = run(name + '-host', ['php', '-r', php_code])
+        native_output = run(name + '-native', [executable])
+        if native_output != host_output or not native_output.startswith(b'ERROR\n'):
+            raise RuntimeError(name + ': native rejection/recovery differs from PHP')
+    print(f'{len(declaration_cases)} function/struct executions and {len(rejection_cases)} S2S rejections passed', flush=True)
     outcomes = []
     for name, path in cases:
         request.write_text(str(path))
@@ -196,7 +235,8 @@ def main():
     stan = json.loads((project / '.prism/cache/stan_status.json').read_text())
     analysis = {key: stan[key] for key in ['compile_error_count', 'stan_error_count', 'stan_warning_count', 'stan_notice_count']}
     summary = dict(analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
-                   s2s_scalar_executions=len(scalar_cases), cases=len(outcomes), valid=sum(x['valid'] for x in outcomes),
+                   s2s_scalar_executions=len(scalar_cases), s2s_declaration_executions=len(declaration_cases),
+                   s2s_rejections=len(rejection_cases), cases=len(outcomes), valid=sum(x['valid'] for x in outcomes),
                    rejected=sum(not x['valid'] for x in outcomes),
                    repeated_compile_and_recovery=True, outcomes=outcomes)
     (results / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')

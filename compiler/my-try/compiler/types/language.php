@@ -8,6 +8,18 @@ final class Language_Types
 	/** Install canonical language types supported by scalar generation. */
 	public static function install(scope $language_scope): void
 	{
+		// Fixed-width aliases select explicit integer wrapper representations.
+		foreach ([8, 16, 32, 64] as $bits) {
+			self::install_integer($language_scope, 'int' . $bits, $bits, true);
+			self::install_integer($language_scope, 'uint' . $bits, $bits, false);
+		}
+		self::install_integer($language_scope, 'byte', 8, false);
+		$void_type = new type_definition();
+		$void_type->name = 'void';
+		$void_type->kind = type_kind::void_type;
+		$void_type->origin = type_origin::language;
+		$language_scope->register_type($void_type);
+
 		$integer = new type_definition();
 		$integer->name = 'int';
 		$integer->kind = type_kind::integer;
@@ -30,6 +42,18 @@ final class Language_Types
 		$boolean->origin = type_origin::language;
 		$boolean->value_bits = 1;
 		$language_scope->register_type($boolean);
+	}
+
+	/** Install each source alias once; literal defaults remain the ordinary int definition. */
+	private static function install_integer(scope $language_scope, string $name, int $bits, bool $signed): void
+	{
+		$definition = new type_definition();
+		$definition->name = $name;
+		$definition->kind = type_kind::integer;
+		$definition->origin = type_origin::language;
+		$definition->value_bits = $bits;
+		$definition->signed = $signed;
+		$language_scope->register_type($definition);
 	}
 
 	/** Literal defaults use the language definition, independently of source shadowing. */

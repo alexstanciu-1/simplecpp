@@ -35,9 +35,11 @@ require_once __DIR__ . '/04_analyze/collect/collect.php';
 require_once __DIR__ . '/04_analyze/prepare/structures.php';
 require_once __DIR__ . '/04_analyze/prepare/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/cleanup.php';
+require_once __DIR__ . '/04_analyze/prepare/declarations.php';
 require_once __DIR__ . '/04_analyze/prepare/file.php';
 require_once __DIR__ . '/05_backend/cpp/structures.php';
 require_once __DIR__ . '/05_backend/cpp/types.php';
+require_once __DIR__ . '/05_backend/cpp/declarations.php';
 require_once __DIR__ . '/05_backend/cpp/generate.php';
 // Parked LLVM preparation and generation remain loaded for regression entrypoints.
 require_once __DIR__ . '/05_backend/llvm/structures.php';

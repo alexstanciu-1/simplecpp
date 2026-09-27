@@ -241,3 +241,45 @@ build and rerun after path-alias normalization. Earlier numbered logs retain the
 seven unsuccessful attempts and their corrective diagnostics. Native command timings
 are in each `commands.json`; `source_hashes.json` and `candidate.json` identify the
 final compiler inputs and selected toolchain files.
+
+## Ordinary functions and value structs — 2026-09-27
+
+User-requested native verification passed conversion, the normal STAN-enabled
+compiler build, native compiler execution, and an unchanged-source incremental
+rebuild. The same explicit `/tmp/scpp-native-244` candidate overlay was used;
+the verified toolchain pin remains unchanged. Current source hashes match the
+compiled source manifest in `/tmp/scpp-functions-native-01/source_hashes.json`.
+
+Native compiler coverage:
+
+- 142 existing PHP/native comparisons: 48 valid emitted programs executed and
+  94 rejection/recovery cases.
+- The original integer S2S proof and 15 scalar C++ execution cases.
+- 36 function/struct C++ execution cases reused from `tests/s2s.php`, including
+  reference aliasing, value copies, forward/nested calls, argument evaluation order,
+  nested structs and exact fixed-width field representation assertions.
+- 27 S2S rejection/recovery cases, including deferred templates, incompatible
+  boundaries, unsupported field types, unknown members and recursive value layouts.
+- Successful S2S requests reprepare retained syntax and compare fresh emitted
+  artifacts. Failed requests prove output cleanup and compile a recovery source.
+
+Native stabilization required three source fixes: function lookup now uses the
+same loop-exit/result pattern as type lookup; the backend output-name local is
+declared in its enclosing block; and member-write preparation accesses typed field
+facts through the AST specialization instead of narrowing a non-polymorphic facts
+base. No generated output or external toolchain was patched for this slice.
+
+STAN reports zero blocking compile errors, 419 advisory errors and 126 warnings.
+This proves successful native behavior, not clean static analysis.
+
+Evidence: `/tmp/scpp-functions-native-01/summary.json`, `candidate.json`, source
+hashes, and numbered command/build/test logs. Four attempts were retained: STAN
+control-flow failure (1.671s), lowering block-visibility failure (3.598s), native
+non-polymorphic-cast failure (38.794s), then successful build (15.145s). The final
+incremental build took 1.010s. These resumed-build timings are diagnostic history,
+not a clean-build performance comparison.
+
+Final PHP regression evidence: `/tmp/scpp-functions-native-php-final/summary.json`
+(82 linted PHP files, mandatory style check, 19 LLVM executions, 28 call executions
+and 73 generated C++ executions). Conversion and execution used the authored PHP
+source; no generated C++ fixes were retained.

@@ -1,6 +1,6 @@
 <?php
 
-/* Prepare the straight-line scalar slice by attaching facts without changing source syntax or scopes. */
+/* Prepare signatures and executable bodies without changing source syntax or scopes. */
 namespace scpp\compiler;
 
 final class File_Preparation
@@ -12,7 +12,7 @@ final class File_Preparation
 	{
 		$context = new preparation_context();
 		$context->collection = $source;
-		$context->locals = new scope();
+		$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
 		$context->integer = Language_Types::integer($language_scope);
 		$context->boolean = Language_Types::boolean($language_scope);
 		$context->floating = Language_Types::floating($language_scope);
@@ -20,21 +20,22 @@ final class File_Preparation
 		$this->context = $context;
 	}
 
-	/** This slice handles one top-level body; other constructs remain explicit blockers. */
+	/** Prepare declarations before bodies and discard every attached fact on failure. */
 	public function prepare(): prepared_file
 	{
 		$context = $this->context;
 		Preparation_Cleanup::tree($context->collection->root);
-		$context->locals = new scope();
+		$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
 
 		try
 		{
 			$child = $context->collection->root->first_child();
 			while ($child !== null) {
 				$node /** ast_node */ = $child;
+				$node->payload()->prepare_declaration($node, $context);
 				$child = $node->next();
-				$node->payload()->prepare_statement($node, $context);
 			}
+			self::prepare_statements($context->collection->root, $context);
 		}
 		catch (\Throwable $error) {
 			Preparation_Cleanup::tree($context->collection->root);
@@ -46,68 +47,103 @@ final class File_Preparation
 		return $result;
 	}
 
-	/** Explicit types resolve through source scopes; inference uses the initializer's type. */
+	/** Workers control body traversal; specializations dispatch individual operations. */
+	public static function prepare_statements(ast_node $body, preparation_context $context): void
+	{
+		$child = $body->first_child();
+		while ($child !== null) {
+			$node /** ast_node */ = $child;
+			$node->payload()->prepare_statement($node, $context);
+			$child = $node->next();
+		}
+	}
+
+	/** Establish source-order local storage or resolve a member write before publishing facts. */
 	public static function prepare_binding(binding_structure $syntax, preparation_context $context): void
 	{
-		if (($syntax->target !== null) || ($syntax->value === null)) {
-			throw new \RuntimeException('S2S currently requires a local binding with an initializer');
-		}
-
-		// Establish initializer facts before deciding declaration versus reassignment.
-		$entry = $syntax->occurrence();
-		$initializer /** ast_node */ = $syntax->value;
-		$value = $initializer->payload()->prepare_expression($initializer, $context);
 		$binding = new prepared_binding();
-		$binding->type = $value->type;
-		$previous /** vector<collected_name> */ = $context->locals->variables_named($entry->name);
-
-		// Explicit source types resolve through lexical scopes; inference keeps the initializer type.
-		if ($syntax->type_syntax !== null)
+		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
+		if ($syntax->target !== null)
 		{
-			$type_node /** ast_node */ = $syntax->type_syntax;
-			if ($type_node->kind() !== node_kind::identifier) {
-				throw new \RuntimeException('S2S constructed types are not supported yet');
+			$target /** ast_node */ = $syntax->target;
+			$place = $target->payload()->prepare_expression($target, $context);
+			if (!$place->addressable) {
+				throw new \RuntimeException('S2S assignment requires stable storage');
 			}
-			$type_occurrence = $type_node->payload()->occurrence();
-			$lexical_scope = object_cast(weakref_get($type_occurrence->scope), scope::class);
-			$types = Scope_Lookup::types($lexical_scope, $type_occurrence->name);
-			if (q_count($types) !== 1) {
-				throw new \RuntimeException('S2S needs one resolved local type');
-			}
-			$binding->type = $types[0];
-		}
-
-		if (($syntax->type_syntax !== null) || (q_count($previous) === 0)) {
-			$binding->resolved_kind = binding_kind::declaration;
-			$binding->declaration = $entry;
-			$context->locals->register($entry);
+			$binding->type = $place->type;
+			$binding->resolved_kind = binding_kind::assignment;
+			// Member writes are emitted through their prepared target, not a local declaration.
+			$member = Syntax_Nodes::field_access_data($target)->require_preparation();
+			$binding->declaration = $member->field->declaration;
 		}
 		else
 		{
-			if (q_count($previous) !== 1) {
-				throw new \RuntimeException('S2S needs one local assignment target');
+			$entry = $syntax->occurrence();
+			$previous /** vector<prepared_storage> */ = $locals->named($entry->name);
+			if (($syntax->type_syntax !== null) || (q_count($previous) === 0))
+			{
+				$binding->resolved_kind = binding_kind::declaration;
+				$binding->declaration = $entry;
+				if ($syntax->type_syntax !== null) {
+					$type_node /** ast_node */ = $syntax->type_syntax;
+					$binding->type = Declaration_Preparation::type($type_node);
+				}
 			}
-			$binding->resolved_kind = binding_kind::assignment;
-			$binding->declaration = $previous[0];
-			$binding->type = Syntax_Nodes::binding_data($previous[0]->node)->require_preparation()->type;
+			else
+			{
+				if (q_count($previous) !== 1) {
+					throw new \RuntimeException('S2S needs one local assignment target');
+				}
+				$binding->resolved_kind = binding_kind::assignment;
+				$binding->declaration = $previous[0]->declaration;
+				$binding->type = $previous[0]->type;
+			}
 		}
 
-		// Publish only a complete binding in the currently supported scalar slice.
-		if ($binding->type !== $value->type) {
-			throw new \RuntimeException('S2S binding requires matching scalar types; conversions are not implemented');
+		if ($syntax->value !== null)
+		{
+			$initializer /** ast_node */ = $syntax->value;
+			$value = $initializer->payload()->prepare_expression($initializer, $context);
+			if (($binding->resolved_kind === binding_kind::declaration) && ($syntax->type_syntax === null)) {
+				$binding->type = $value->type;
+			}
+			Declaration_Preparation::require_assignable($binding->type, $value->type);
 		}
-		if (($binding->type !== $context->integer) && ($binding->type !== $context->boolean) && ($binding->type !== $context->floating)) {
-			throw new \RuntimeException('S2S binding requires a supported canonical scalar type');
-		}
+		Declaration_Preparation::require_value_type($binding->type);
 		$syntax->set_preparation($binding);
+		if ($binding->resolved_kind === binding_kind::declaration) {
+			$entry = $syntax->occurrence();
+			$locals->add($entry->name, $binding);
+		}
 	}
 
-	/** Return owns evaluation of its optional expression; no generic child walk runs here. */
+	public static function prepare_expression_statement(expression_statement_structure $syntax, preparation_context $context): void
+	{
+		$expression = $syntax->expression;
+		$expression->payload()->prepare_expression($expression, $context);
+	}
+
+	/** Function returns use the signature; program-entry returns remain scalar exit values. */
 	public static function prepare_return(return_structure $syntax, preparation_context $context): void
 	{
-		if ($syntax->expression !== null) {
-			$expression /** ast_node */ = $syntax->expression;
-			$expression->payload()->prepare_expression($expression, $context);
+		if ($syntax->expression === null)
+		{
+			if ($context->return_type !== null) {
+				$type /** type_definition */ = $context->return_type;
+				if ($type->kind !== type_kind::void_type) {
+					throw new \RuntimeException('S2S non-void return requires a value');
+				}
+			}
+			return;
+		}
+		$expression /** ast_node */ = $syntax->expression;
+		$value = $expression->payload()->prepare_expression($expression, $context);
+		if ($context->return_type !== null) {
+			$type /** type_definition */ = $context->return_type;
+			Declaration_Preparation::require_assignable($type, $value->type);
+		}
+		elseif (($value->type->kind === type_kind::record) || ($value->type->kind === type_kind::void_type)) {
+			throw new \RuntimeException('S2S entry return requires a scalar value');
 		}
 	}
 
@@ -140,14 +176,16 @@ final class File_Preparation
 	public static function prepare_reference(ast_node $node, preparation_context $context): prepared_variable_reference
 	{
 		$entry = $node->payload()->occurrence();
-		$targets /** vector<collected_name> */ = $context->locals->variables_named($entry->name);
+		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
+		$targets /** vector<prepared_storage> */ = $locals->named($entry->name);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs an established local declaration for ' . $entry->name);
 		}
 
 		$reference = new prepared_variable_reference();
-		$reference->declaration = $targets[0];
-		$reference->type = Syntax_Nodes::binding_data($targets[0]->node)->require_preparation()->type;
+		$reference->declaration = $targets[0]->declaration;
+		$reference->type = $targets[0]->type;
+		$reference->addressable = true;
 		return $reference;
 	}
 }

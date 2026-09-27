@@ -97,9 +97,35 @@ elseif (string_byte_starts_with($path, 's2s:'))
 	$paths /** vector<string> */ = [string_byte_slice($path, 4, string_byte_len($path) - 4)];
 	$compiler = new Compiler();
 	$compiler->init($paths);
-	$compiler->exec_cpp();
-	$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-	echo $outputs[0]->text;
+	try
+	{
+		$compiler->exec_cpp();
+		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+		$first = $outputs[0];
+		$compiler->prepare();
+		$compiler->cpp();
+		$outputs = Model::$cpp_files;
+		if (($outputs[0] === $first) || ($outputs[0]->text !== $first->text)) {
+			throw new \LogicException('Repeated S2S preparation changed output or reused artifacts');
+		}
+		echo $first->text;
+	}
+	catch (\Throwable $error)
+	{
+		$message = $error->getMessage();
+		$failed_outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+		if (!$failed_outputs->is_empty()) {
+			throw new \LogicException('Failed S2S compilation published output');
+		}
+		$recovery_paths /** vector<string> */ = [__RECOVERY_DIR__];
+		$compiler->init($recovery_paths);
+		$compiler->exec_cpp();
+		$recovered /** Storage<cpp_module> */ = Model::$cpp_files;
+		if (q_count($recovered) !== 1) {
+			throw new \LogicException('S2S recovery did not produce one module');
+		}
+		echo "ERROR\n", $message;
+	}
 }
 else
 {

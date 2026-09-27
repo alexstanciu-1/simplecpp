@@ -8,9 +8,11 @@ namespace scpp\compiler;
 
 /** Specializations route operations; process owners retain algorithms and invocation state.
  * Statement hooks process one node; expression hooks return one result.
- * Each process owns its child evaluation order. Hooks never retain the context.
+ * The declaration hook prepares signatures only; other hooks own child evaluation order.
+ * Hooks never retain the context.
  */
 interface node_operations_i {
+	public function prepare_declaration(ast_node $node, preparation_context $context): void;
 	public function prepare_statement(ast_node $node, preparation_context $context): void;
 	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression;
 	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string;
@@ -31,6 +33,12 @@ abstract class node_structure implements node_operations_i
 	}
 
 	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		return;
+	}
+
+	/** Declaration prepass; ordinary statements have no signature to publish. */
+	public function prepare_declaration(ast_node $node, preparation_context $context): void
 	{
 		return;
 	}

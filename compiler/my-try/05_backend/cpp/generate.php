@@ -1,6 +1,6 @@
 <?php
 
-/* First C++ vertical slice: resolved straight-line scalar locals in a program entry. */
+/* Emit prepared declarations and straight-line bodies using specialization dispatch. */
 namespace scpp\compiler;
 
 final class CPP_Generator
@@ -10,12 +10,7 @@ final class CPP_Generator
 	{
 		$context = new cpp_generation_context();
 		$body = "\nint main()\n{\n";
-		$child = $prepared->source->root->first_child();
-		while ($child !== null) {
-			$node /** ast_node */ = $child;
-			$body .= $node->payload()->generate_cpp_statement($node, $context);
-			$child = $node->next();
-		}
+		$body .= self::generate_statements($prepared->source->root, $context);
 		$body .= "\treturn 0;\n}\n";
 
 		// Emit only headers actually requested by the generated expressions.
@@ -23,7 +18,7 @@ final class CPP_Generator
 		foreach ($context->headers as $header => $used) {
 			$text .= '#include "' . $header . '"' . "\n";
 		}
-		$text .= $body;
+		$text .= $context->records . $context->prototypes . $context->functions . $body;
 
 		$result = new cpp_module();
 		$result->file_name = 'main.cpp';
@@ -31,25 +26,63 @@ final class CPP_Generator
 		return $result;
 	}
 
-	/** Emit a prepared binding; only its initializer participates in expression generation. */
+	/** The worker visits executable children once; declaration hooks collect separate output sections. */
+	public static function generate_statements(ast_node $body, cpp_generation_context $context): string
+	{
+		$text = '';
+		$child = $body->first_child();
+		while ($child !== null) {
+			$node /** ast_node */ = $child;
+			$text .= $node->payload()->generate_cpp_statement($node, $context);
+			$child = $node->next();
+		}
+		return $text;
+	}
+
+	/** Prepared declarations and member targets share the same typed assignment boundary. */
 	public static function generate_binding(binding_structure $syntax, cpp_generation_context $context): string
 	{
 		$binding = $syntax->require_preparation();
-		$initializer = object_cast($syntax->value, ast_node::class);
-		$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
 		$prefix = $binding->resolved_kind === binding_kind::declaration ? 'auto ' : '';
-		return "\t" . $prefix . self::local_name($declaration) . ' = ' . $initializer->payload()->generate_cpp_expression($initializer, $context) . ";\n";
+		$name = '';
+		if ($syntax->target !== null) {
+			$target /** ast_node */ = $syntax->target;
+			$name = $target->payload()->generate_cpp_expression($target, $context);
+		}
+		else {
+			$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
+			$name = self::local_name($declaration);
+		}
+		if ($syntax->value === null) {
+			return "\t" . CPP_Declarations::type($binding->type, $context) . ' ' . $name . ";\n";
+		}
+		$initializer /** ast_node */ = $syntax->value;
+		$value = $initializer->payload()->generate_cpp_expression($initializer, $context);
+		if (($syntax->type_syntax !== null) || ($binding->resolved_kind === binding_kind::assignment)) {
+			$value = CPP_Declarations::value($value, $binding->type, $context);
+		}
+		return "\t" . $prefix . $name . ' = ' . $value . ";\n";
 	}
 
-	/** Program-entry returns use the native scalar value; a bare return exits successfully. */
+	/** Function returns retain their declared value type; entry returns become native exit codes. */
 	public static function generate_return(return_structure $syntax, cpp_generation_context $context): string
 	{
 		if ($syntax->expression === null) {
-			return "\treturn 0;\n";
+			return $context->return_type === null ? "\treturn 0;\n" : "\treturn;\n";
 		}
-
 		$expression /** ast_node */ = $syntax->expression;
-		return "\treturn static_cast<int>((" . $expression->payload()->generate_cpp_expression($expression, $context) . ").native_value());\n";
+		$value = $expression->payload()->generate_cpp_expression($expression, $context);
+		if ($context->return_type !== null) {
+			$type /** type_definition */ = $context->return_type;
+			return "\treturn " . CPP_Declarations::value($value, $type, $context) . ";\n";
+		}
+		return "\treturn static_cast<int>((" . $value . ").native_value());\n";
+	}
+
+	public static function generate_expression_statement(expression_statement_structure $syntax, cpp_generation_context $context): string
+	{
+		$expression = $syntax->expression;
+		return "\t" . $expression->payload()->generate_cpp_expression($expression, $context) . ";\n";
 	}
 
 	/** Emit exact signed integer magnitude using its canonical representation. */
@@ -92,7 +125,7 @@ final class CPP_Generator
 		return self::local_name($target);
 	}
 
-	private static function local_name(collected_name $declaration): string
+	public static function local_name(collected_name $declaration): string
 	{
 		return 'local_' . $declaration->token_index;
 	}

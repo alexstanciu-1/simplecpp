@@ -138,8 +138,13 @@ final class variable_reference_structure extends expression_node_structure
 	}
 }
 
-final class call_structure extends unsupported_node_structure
+final class call_structure extends expression_node_structure
 {
+	use Preparation_Facts;
+
+	/** @ownership owner */
+	private ?prepared_call $prepared_facts = null;
+
 	use Collected_Occurrence;
 
 	/** Observer of the canonical entry owned by collected_file.entries. */
@@ -183,11 +188,33 @@ final class call_structure extends unsupported_node_structure
 			$result->append($child);
 		}
 	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = Declaration_Preparation::prepare_call(Syntax_Nodes::call_data($node), $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Declarations::generate_call(Syntax_Nodes::call_data($node), $context);
+	}
+
+	public function require_preparation(): prepared_call
+	{
+		return object_cast($this->prepared_facts, prepared_call::class);
+	}
 }
 
 /** The body block references a file-owned local scope and an ordered statement list. */
-final class function_structure extends unsupported_node_structure
+final class function_structure extends statement_node_structure
 {
+	use Preparation_Facts;
+
+	/** @ownership owner */
+	private ?prepared_function $prepared_facts = null;
+
 	use Collected_Occurrence;
 
 	/** Observer of the canonical entry owned by collected_file.entries. */
@@ -230,10 +257,35 @@ final class function_structure extends unsupported_node_structure
 		$result->append($this->return_type);
 		$result->append($this->body);
 	}
+
+	public function prepare_declaration(ast_node $node, preparation_context $context): void
+	{
+		Declaration_Preparation::prepare_function(Syntax_Nodes::function_data($node), $context);
+	}
+
+	public function prepare_statement(ast_node $node, preparation_context $context): void
+	{
+		Declaration_Preparation::prepare_body(Syntax_Nodes::function_data($node), $context);
+	}
+
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Declarations::generate_function(Syntax_Nodes::function_data($node), $context);
+	}
+
+	public function require_preparation(): prepared_function
+	{
+		return object_cast($this->prepared_facts, prepared_function::class);
+	}
 }
 
 final class parameter_structure extends unsupported_node_structure
 {
+	use Preparation_Facts;
+
+	/** @ownership owner */
+	private ?prepared_parameter $prepared_facts = null;
+
 	use Collected_Occurrence;
 
 	/** Observer of the canonical entry owned by collected_file.entries. */
@@ -262,6 +314,11 @@ final class parameter_structure extends unsupported_node_structure
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
 		$result->append($this->type_syntax);
+	}
+
+	public function require_preparation(): prepared_parameter
+	{
+		return object_cast($this->prepared_facts, prepared_parameter::class);
 	}
 }
 
@@ -330,7 +387,7 @@ final class binary_structure extends unsupported_node_structure
 }
 
 /** An expression used as a statement owns its terminating semicolon here. */
-final class expression_statement_structure extends unsupported_node_structure
+final class expression_statement_structure extends statement_node_structure
 {
 	/** Syntax child owned through this link.
 	 * @ownership owner
@@ -348,6 +405,16 @@ final class expression_statement_structure extends unsupported_node_structure
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
 		$result->append($this->expression);
+	}
+
+	public function prepare_statement(ast_node $node, preparation_context $context): void
+	{
+		File_Preparation::prepare_expression_statement(Syntax_Nodes::statement_data($node), $context);
+	}
+
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Generator::generate_expression_statement(Syntax_Nodes::statement_data($node), $context);
 	}
 }
 
@@ -535,8 +602,13 @@ final class index_structure extends unsupported_node_structure
 	}
 }
 
-final class struct_structure extends unsupported_node_structure
+final class struct_structure extends statement_node_structure
 {
+	use Preparation_Facts;
+
+	/** @ownership owner */
+	private ?prepared_record $prepared_facts = null;
+
 	use Collected_Occurrence;
 
 	/** Observer of the canonical entry owned by collected_file.entries. */
@@ -564,10 +636,35 @@ final class struct_structure extends unsupported_node_structure
 	{
 		return $this->fields;
 	}
+
+	public function prepare_declaration(ast_node $node, preparation_context $context): void
+	{
+		Declaration_Preparation::prepare_struct(Syntax_Nodes::struct_data($node), $context);
+	}
+
+	public function prepare_statement(ast_node $node, preparation_context $context): void
+	{
+		return;
+	}
+
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Declarations::generate_struct(Syntax_Nodes::struct_data($node), $context);
+	}
+
+	public function require_preparation(): prepared_record
+	{
+		return object_cast($this->prepared_facts, prepared_record::class);
+	}
 }
 
 final class field_structure extends unsupported_node_structure
 {
+	use Preparation_Facts;
+
+	/** @ownership owner */
+	private ?prepared_field $prepared_facts = null;
+
 	use Collected_Occurrence;
 
 	/** Observer of the canonical entry owned by collected_file.entries. */
@@ -592,10 +689,20 @@ final class field_structure extends unsupported_node_structure
 	{
 		$result->append($this->type_syntax);
 	}
+
+	public function require_preparation(): prepared_field
+	{
+		return object_cast($this->prepared_facts, prepared_field::class);
+	}
 }
 
-final class field_access_structure extends unsupported_node_structure
+final class field_access_structure extends expression_node_structure
 {
+	use Preparation_Facts;
+
+	/** @ownership owner */
+	private ?prepared_field_access $prepared_facts = null;
+
 	use Collected_Occurrence;
 
 	/** Observer of the canonical entry owned by collected_file.entries. */
@@ -619,5 +726,22 @@ final class field_access_structure extends unsupported_node_structure
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
 		$result->append($this->base);
+	}
+
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		$facts = Declaration_Preparation::prepare_field_access(Syntax_Nodes::field_access_data($node), $context);
+		$this->set_preparation($facts);
+		return $facts;
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		return CPP_Declarations::generate_field_access(Syntax_Nodes::field_access_data($node), $context);
+	}
+
+	public function require_preparation(): prepared_field_access
+	{
+		return object_cast($this->prepared_facts, prepared_field_access::class);
 	}
 }

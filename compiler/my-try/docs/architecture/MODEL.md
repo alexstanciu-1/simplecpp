@@ -14,7 +14,7 @@ Keyed_Storage provides unique-key indexes, including the source-path index.
 | --- | --- |
 | modules | Module records; each owns `Storage<source_record>` in source order. |
 | sources_by_path | Unique normalized-path index referencing module-owned source records. |
-| language_scope | Owns language/runtime type definitions; currently the built-in Simple C++ `int`, `bool` and `float`. |
+| language_scope | Owns language/runtime type definitions; the built-in Simple C++ `int`, `bool`, `float`, fixed-width integer aliases and `void`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
 | prepared_files | Completed preparation records pointing to source files; AST specialization records own the facts. |
 | cpp_files | Final C++ artifact names and bytes; no preparation backlinks. |
