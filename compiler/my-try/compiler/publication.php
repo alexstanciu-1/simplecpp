@@ -88,7 +88,7 @@ final class Source_Publication
 			}
 		}
 		foreach (Model::$modules as $input_module) {
-			if ($input_module->path === fs_dirname($source->path)) {
+			if (Module_Loader::contains_path($input_module, $source->path)) {
 				$files /** Storage<file> */ = $input_module->files;
 				$files->append($source);
 				break;

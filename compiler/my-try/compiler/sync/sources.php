@@ -31,7 +31,7 @@ final class Source_Synchronization
 			$owner_found = false;
 			$previous = Source_Publication::find_source($path);
 			foreach (Model::$modules as $input_module) {
-				if ($input_module->path === fs_dirname($path)) {
+				if (Module_Loader::contains_path($input_module, $path)) {
 					$owner_found = true;
 				}
 			}

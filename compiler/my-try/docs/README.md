@@ -44,7 +44,7 @@ Imported byte-for-byte on 2026-09-24 from:
 `/home/alexv/__AI/scpp_compiler_3/prototype/my-try/01_prepare_inputs/`.
 
 - `01_prepare_inputs/file.php`: file metadata and source-byte loading.
-- `01_prepare_inputs/module.php`: immediate `.phs` file discovery and loading.
+- `01_prepare_inputs/module.php`: recursive `.phs` file discovery in sorted depth-first order. Directory symlinks are skipped.
 
 SHA-256 checksums identify the imported content for provenance only:
 
@@ -122,8 +122,9 @@ optimization remain joint-review decisions.
   convenience backlink. Preserve that boundary during conversion.
 - Is `size` filesystem metadata or the length of the retained content? The
   separate stat/read calls do not guarantee the file stayed unchanged.
-- Preserve immediate-file discovery and filename order; choose explicit typed
-  collection intent during adaptation.
+- Recursive discovery retains one module per input root and sorted depth-first
+  file order. Nested source notifications use directory ancestry for module membership;
+  new files retain the existing append-on-publication behavior.
 - Replace the global debug dependency with an agreed host reporting boundary.
 - Decide partial-failure behavior: module loading currently clears and appends
   its public file list progressively, so a failure can leave partial results.

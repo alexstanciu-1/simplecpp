@@ -40,6 +40,8 @@ def verify(root, output):
     (output / "specialization_dispatch.log").write_text(dispatch.stdout + dispatch.stderr)
     incremental = run(["php", str(root / "tests/incremental.php")])
     (output / "incremental.log").write_text(incremental.stdout + incremental.stderr)
+    discovery = run(["php", str(root / "tests/module_discovery.php")])
+    (output / "module_discovery.log").write_text(discovery.stdout + discovery.stderr)
     pipeline = run(["php", str(root / "tests/pipeline.php")])
     (output / "pipeline.log").write_text(pipeline.stdout + pipeline.stderr)
     publication = run(["php", str(root / "tests/publication.php")])
