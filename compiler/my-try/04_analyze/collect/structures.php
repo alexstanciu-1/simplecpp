@@ -2,7 +2,7 @@
 
 /*
  * Role: file-local occurrence identities and work lists.
- * Used by: Symbol_Collector, Name_Preparation and LLVM_Preparation.
+ * Used by: Symbol_Collector, File_Preparation and parked LLVM preparation.
  */
 namespace scpp\compiler;
 
@@ -26,7 +26,7 @@ final class collected_name
 	public int $changes = 0;
 	/**
 	 * Backlink to the owning occurrence collection.
-	 * @storage.reference model.collected_files
+	 * @reference.source parsed_file.collection
 	 * @reference.weak
 	 */
 	public collected_file $collection;

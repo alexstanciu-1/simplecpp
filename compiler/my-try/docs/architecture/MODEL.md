@@ -5,21 +5,55 @@ Model owns the shared compiler roots. `Compiler_Lifecycle` sequences initializat
 resets, built-in installation and tree cleanup. Model does not call processors.
 Workers process records; retained records
 contain data, initialization and representation-level access/navigation methods. Storage<T> is the numeric shared
-object-list boundary; scalar lists and name indexes remain explicit typed arrays.
+object-list boundary; scalar lists remain explicit typed arrays.
+`Key_Storage_List<T>` owns duplicate-key membership, ordered traversal and lookup.
 Storage and Keyed_Storage share Storage_Abstract. Root collections remain numeric;
-Keyed_Storage is used for named object collections during LLVM preparation.
+Keyed_Storage provides unique-key indexes, including the source-path index.
 
 | Root | Owned data |
 | --- | --- |
-| modules | module records; each owns a Storage<file>. |
-| tokens | token_list records; each owns source snapshot text and Storage<token>. |
-| syntax_files | parsed_file records; each owns a root AST and Storage<scope>. |
-| language_scope | Owns language/runtime type definitions; currently the built-in Simple C++ `int` and `bool`. |
+| modules | Module records; each owns `Storage<source_record>` in source order. |
+| sources_by_path | Unique normalized-path index referencing module-owned source records. |
+| language_scope | Owns language/runtime type definitions; currently the built-in Simple C++ `int`, `bool` and `float`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
-| collected_files | collected_file records; each owns Storage<collected_name> and local position work lists. |
 | prepared_files | Completed preparation records pointing to source files; AST specialization records own the facts. |
 | cpp_files | Final C++ artifact names and bytes; no preparation backlinks. |
 | llvm_files | llvm_module records; each owns output functions, blocks, operands and text. |
+
+## Source identity and stage ownership
+
+A `source_record` owns the current file snapshot, optional token result and optional
+parsed result. The parsed result owns its collection and shares the exact token
+result. A weak module backlink records stable membership. Edits, deletion and
+reappearance retain that identity; a failed candidate leaves prior results intact.
+Deletion marks retained syntax and declarations as tombstones. Overlapping module
+roots (including duplicate/canonical aliases) are rejected at discovery.
+
+`Model::tokens()`, `syntax_files()` and `collected_files()` produce temporary ordered
+snapshots from source records. They are not retained roots or synchronized indexes.
+Publication holds a direct source record and previous parse, so it needs neither
+path scans nor a join/reordering pass. Scope replacement removes superseded live
+entries by `collected_file` identity while retaining tombstones and built-ins.
+
+Name-bearing AST specializations alone use `Collected_Occurrence`. Collection
+attaches the canonical entry once; preparation reads it directly. Preparation reset
+clears derived facts without clearing the occurrence. Empty/punctuation and unnamed
+specializations hold no occurrence field. Declaration comparison creates temporary
+records with cached structural keys and spellings; `Key_Storage_List` groups them.
+These keys do not become persistent declaration identity.
+
+## Semantic preparation direction
+
+`File_Preparation` and specialization-attached facts are the active backend-neutral
+semantic model, currently consumed by C++ generation. Future semantic work extends
+that model toward one shared preparation path.
+
+The separate LLVM preparation stack is parked in `05_backend/llvm/` solely for
+regressions. Its `LLVM_Legacy_Name_Preparation`, template checkers and token-indexed
+`llvm_legacy_prepared_names` are not shared preparation owners. No new language
+semantics should be added independently there. Resuming LLVM requires a review and
+adaptation to consume shared facts, keeping only LLVM-specific lowering in the
+backend. The two implementations remain behaviorally separate in this isolation task.
 
 ## AST graph
 
@@ -81,7 +115,7 @@ layout/binding is claimed by this change.
   targets by emitted name, and the worker's exact definition/argument registry.
   Repeated external use replaces the same handle without changing first-use order.
   Field insertion uses add() after source duplicate diagnostics.
-- Typed arrays: scalar lists, scope overload pools, sparse token/declaration
+- Typed arrays: scalar lists, sparse token/declaration
   indexes, and locals keyed by source declaration position. Those integer keys
   are not Storage append positions; do not cast them to strings to fit Keyed_Storage.
 - SplObjectStorage: transient identity indexes from declarations/files to their
@@ -130,7 +164,7 @@ root declarations as references in global_scope. A file root's native weak
 local ownership or hiding cross-file duplicate candidates. Function locals remain
 private. The transient compiler parse queue is not retained in Model.
 See [work queue](../lifecycle/work_queue.md) for the sequential PHP executor and
-bounded native execution with locked completion-order publication. No revision tracking or reuse exists.
+bounded native execution with locked completion-order publication. Unchanged sources retain their existing parsed results; syntax is replaced per updated file.
 
 ## Per-file frontend pipeline
 
@@ -138,15 +172,15 @@ Module discovery now publishes paths only. A discovered file has disk_source=tru
 its initially empty content/zero metadata are pending placeholders. Tokenizer reads
 those files in the worker, then scans their bytes. Explicit in-memory records keep
 disk_source=false. Each Compiler.exec_llvm work order immediately parses its own token
-result and publishes the completed file under the existing lock. Model token/syntax
-roots return to input order after all jobs join. See docs/lifecycle/work_queue.md for explicit
+result and publishes the completed file under the existing lock. Stable source
+membership supplies input order independently of worker completion. See docs/lifecycle/work_queue.md for explicit
 stage entrypoints and failure/publication boundaries.
 
 ## File synchronization
 
 See [incremental sync](../lifecycle/incremental.md). file and collected_name carry only a
 changes field; tokens and AST have no flags and are replaced completely. Existing
-root stores retain deleted files; global candidate vectors retain deleted symbols.
+source records retain deleted files; global candidate collections retain deleted symbols.
 Consumers must filter tombstones before accessing their old syntax/scopes. No new
 change-record store or persistent identity layer is introduced.
 

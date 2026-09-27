@@ -32,7 +32,7 @@ final class Compiler
 		}
 	}
 
-	/** Experimental LLVM entry remains available for existing regression callers. */
+	/** Parked legacy LLVM entry remains available only for existing regression callers. */
 	public function exec_llvm(): void
 	{
 		$this->sync_live();
@@ -83,7 +83,6 @@ final class Compiler
 		if (($published !== q_count($items)) || (!$queue->finished())) {
 			throw new \LogicException('Update barrier reached before publication completed');
 		}
-		Source_Publication::order_roots();
 	}
 
 	/** Standalone parallel scanning; compilation uses the combined pipeline without this barrier. */
@@ -103,7 +102,7 @@ final class Compiler
 	{
 		Compiler_Lifecycle::reset_preparation();
 		$sources /** Storage<collected_file> */ = new Storage();
-		foreach (Model::$collected_files as $source) {
+		foreach (Model::collected_files() as $source) {
 			if ($source->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
 				$sources->append($source);
 			}
@@ -133,13 +132,13 @@ final class Compiler
 		Model::$cpp_files[] = $output;
 	}
 
-	/** Prepare all sources and emit one LLVM module per source file. */
+	/** Run parked LLVM preparation and emit modules for existing regression callers. */
 	public function llvm(): void
 	{
 		Compiler_Lifecycle::reset_llvm();
 		$policy = new llvm_policy();
 		$sources /** Storage<collected_file> */ = new Storage();
-		foreach (Model::$collected_files as $source) {
+		foreach (Model::collected_files() as $source) {
 			if ($source->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
 				$sources->append($source);
 			}
@@ -152,8 +151,10 @@ final class Compiler
 	private function sync_live(): void
 	{
 		$paths /** vector<string> */ = [];
-		foreach (Model::$modules as $input_module) {
-			foreach ($input_module->files as $source) {
+		foreach (Model::$modules as $input_module)
+		{
+			foreach ($input_module->sources as $record) {
+				$source = $record->file;
 				if ($source->changes !== \scpp\compiler\SYNC_DELETED) {
 					$paths[] = $source->path;
 				}
@@ -175,16 +176,22 @@ final class Compiler
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		$queue = new Source_Work_Queue();
-		if ($operation === frontend_operation::scan) {
+		if ($operation === frontend_operation::scan)
+		{
 			foreach (Model::$modules as $input_module) {
-				foreach ($input_module->files as $source) {
-					$queue->enqueue($source);
+				foreach ($input_module->sources as $record) {
+					$source = $record->file;
+					$queue->enqueue($record, $source);
 				}
 			}
 		}
-		else {
-			foreach (Model::$tokens as $tokens) {
-				$queue->enqueue($tokens->file, $tokens);
+		else
+		{
+			foreach (Model::sources() as $record) {
+				if ($record->tokens !== null) {
+					$tokens /** token_list */ = $record->tokens;
+					$queue->enqueue($record, $tokens->file, $tokens);
+				}
 			}
 		}
 		$items /** vector<source_work> */ = $queue->items();
@@ -200,6 +207,5 @@ final class Compiler
 		if (($published !== q_count($items)) || (!$queue->finished())) {
 			throw new \LogicException('Frontend barrier reached before work completed');
 		}
-		Source_Publication::order_stage($items, $operation);
 	}
 }

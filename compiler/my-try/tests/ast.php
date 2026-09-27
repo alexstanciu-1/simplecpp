@@ -8,7 +8,7 @@ require_once dirname(__DIR__) . '/boot.php';
 final class AST_Test
 {
 	private const PAYLOADS = [
-		'empty' => empty_node_structure::class,
+		'identifiers' => identifier_structure::class,
 		'floats' => float_literal_structure::class,
 		'booleans' => boolean_literal_structure::class,
 		'integers' => integer_literal_structure::class,
@@ -127,6 +127,7 @@ final class AST_Test
 		}
 		foreach ($syntax->collection->entries as $position => $entry) {
 			self::initialized($entry);
+			self::check($entry->node->payload()->occurrence() === $entry);
 			self::check($entry->local_index === $position && $nodes->contains($entry->node));
 		}
 		return $nodes;
@@ -195,11 +196,23 @@ final class AST_Test
 		$tokens = self::tokens('$x int;');
 		$parser = new Parser($tokens);
 		$syntax = $parser->parse();
-		$node = $syntax->root->payload()->children[0];
+		$binding = new binding_structure();
+		$binding->name_token_index = 0;
+		$binding->syntax_kind = binding_kind::declaration;
+		$binding->type_syntax = Syntax_Nodes::make(node_kind::identifier, 1, 2);
+		$node = Syntax_Nodes::make(node_kind::variable_binding_statement, 0, 3, $binding);
 		$scope = new scope();
 		$collector = new Symbol_Collector($tokens);
 		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
 		self::check(!$scope->has_variables());
+		self::check($node->payload()->occurrence()->node === $node);
+		try {
+			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'duplicate');
+			throw new \RuntimeException('Expected duplicate occurrence rejection');
+		}
+		catch (\LogicException $expected) {
+			self::check($node->payload()->occurrence()->name === 'canonical_name');
+		}
 		// Canonical names come from the frontend, independently of the source token '$x'.
 		$result = $collector->finish($syntax->root);
 		self::initialized($result);

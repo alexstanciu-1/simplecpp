@@ -7,7 +7,7 @@ final class Host_Report
 	/** PHP browser/CLI presentation and optional sample execution stay outside the compiler. */
 	public function show(): void
 	{
-		foreach (Model::$tokens as $tokens)
+		foreach (Model::tokens() as $tokens)
 		{
 			if ($tokens->file->changes === SYNC_DELETED) {
 				continue;
@@ -18,7 +18,7 @@ final class Host_Report
 				echo $token->offset . "\t" . $token->length . "\t" . htmlspecialchars($token->text(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			}
 		}
-		foreach (Model::$syntax_files as $syntax) {
+		foreach (Model::syntax_files() as $syntax) {
 			if ($syntax->tokens->file->changes === SYNC_DELETED) {
 				continue;
 			}
@@ -36,7 +36,7 @@ final class Host_Report
 	private function dump_collection(): void
 	{
 		echo "\nCollected names (global and function-local scopes)\n";
-		foreach (Model::$collected_files as $file)
+		foreach (Model::collected_files() as $file)
 		{
 			if ($file->source_file()->changes === SYNC_DELETED) {
 				continue;

@@ -12,27 +12,27 @@ final class Model_Test
 	{
 		$compiler = new Compiler();
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
-		foreach ([Model::$modules, Model::$tokens, Model::$syntax_files, Model::$collected_files, Model::$llvm_files] as $storage) {
+		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
 			if (!$storage instanceof Storage) {
 				throw new \RuntimeException('Model collection is not Storage');
 			}
 		}
 		$empty_output = Model::$llvm_files;
 		$compiler->exec_llvm();
-		if ((count(Model::$modules) !== 1) || (count(Model::$tokens) !== 2) || (count(Model::$syntax_files) !== 2) || (count(Model::$collected_files) !== 2) || (count(Model::$llvm_files) !== 2)) {
+		if ((count(Model::$modules) !== 1) || (count(Model::tokens()) !== 2) || (count(Model::syntax_files()) !== 2) || (count(Model::collected_files()) !== 2) || (count(Model::$llvm_files) !== 2)) {
 			throw new \RuntimeException('Unexpected model collection counts');
 		}
-		foreach (Model::$tokens as $position => $tokens)
+		foreach (Model::tokens() as $position => $tokens)
 		{
-			if (!is_int($position) || ($tokens->file !== Model::$modules[0]->files[$position])) {
+			if (!is_int($position) || ($tokens->file !== Model::$modules[0]->sources[$position]->file)) {
 				throw new \RuntimeException('Source identity or numeric order changed');
 			}
-			if (($tokens->file->tokens !== $tokens) || (Model::$collected_files[$position]->token_snapshot() !== $tokens) || (Model::$syntax_files[$position]->tokens !== $tokens) || (Model::$syntax_files[$position]->collection !== Model::$collected_files[$position])) {
+			if (($tokens->file->tokens !== $tokens) || (Model::collected_files()[$position]->token_snapshot() !== $tokens) || (Model::syntax_files()[$position]->tokens !== $tokens) || (Model::syntax_files()[$position]->collection !== Model::collected_files()[$position])) {
 				throw new \RuntimeException('Parser/collection sharing changed');
 			}
 		}
 		$seen = new \SplObjectStorage();
-		foreach ([Model::$modules, Model::$tokens, Model::$syntax_files, Model::$global_scope, Model::$collected_files, Model::$llvm_files] as $root) {
+		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::$global_scope, Model::collected_files(), Model::$llvm_files] as $root) {
 			self::check_graph($root, $seen);
 		}
 		if ((Model::$llvm_files === $empty_output) || !$empty_output->is_empty()) {
@@ -41,7 +41,7 @@ final class Model_Test
 
 		$old_output = Model::$llvm_files;
 		$compiler->init([]);
-		foreach ([Model::$modules, Model::$tokens, Model::$syntax_files, Model::$collected_files, Model::$llvm_files] as $storage) {
+		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
 			if (!$storage->is_empty()) {
 				throw new \RuntimeException('Reset retained previous rows');
 			}
@@ -64,7 +64,7 @@ final class Model_Test
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		$compiler->exec_llvm();
 		$preparation = new LLVM_Preparation();
-		$prepared = $preparation->prepare_program(Model::$collected_files, new llvm_policy());
+		$prepared = $preparation->prepare_program(Model::collected_files(), new llvm_policy());
 		$generator = new LLVM_Generator();
 		$output = $generator->generate($prepared, new llvm_policy());
 		$incoming = new \SplObjectStorage();
@@ -86,7 +86,7 @@ final class Model_Test
 			}
 		}
 		// Reusing a worker must not reuse mutable collections or damage the old graph.
-		$again = $preparation->prepare_program(Model::$collected_files, new llvm_policy());
+		$again = $preparation->prepare_program(Model::collected_files(), new llvm_policy());
 		if (($again === $prepared) || ($again[0] === $prepared[0]) || ($again[0]->functions === $prepared[0]->functions)) {
 			throw new \LogicException('Preparation reused a previous result');
 		}
@@ -124,7 +124,7 @@ final class Model_Test
 		}
 		$old_output = Model::$llvm_files;
 		$old_scope = Model::$global_scope;
-		$old_tokens = Model::$tokens[0];
+		$old_tokens = Model::tokens()[0];
 		$old_content = $old_tokens->content;
 		$old_tokens->file->disk_source = false; // Deliberately supply a broken in-memory snapshot.
 		$old_tokens->file->content = '$';
@@ -134,12 +134,13 @@ final class Model_Test
 		}
 		catch (\RuntimeException $expected) {
 		}
-		foreach ([Model::$tokens, Model::$syntax_files, Model::$collected_files, Model::$llvm_files] as $store) {
+		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $store) {
 			if (!$store->is_empty()) {
 				throw new \LogicException('Stale downstream result');
 			}
 		}
-		foreach (Model::$modules[0]->files as $file) {
+		foreach (Model::$modules[0]->sources as $record) {
+			$file = $record->file;
 			if (($file->tokens !== null)) {
 				throw new \LogicException('Stale token backlink');
 			}
@@ -151,19 +152,19 @@ final class Model_Test
 		$old_tokens->file->disk_source = true;
 		$compiler->exec_llvm();
 		// Corrupt the first token only to exercise parse failure after a successful run.
-		Model::$tokens[0]->tokens[0] = new token(0, 1, ')');
+		Model::tokens()[0]->tokens[0] = new token(0, 1, ')');
 		try {
 			$compiler->parse();
 			throw new \LogicException('Expected parse failure');
 		}
 		catch (\RuntimeException $expected) {
 		}
-		if (!Model::$syntax_files->is_empty() || !Model::$collected_files->is_empty() || !Model::$llvm_files->is_empty()) {
+		if (!Model::syntax_files()->is_empty() || !Model::collected_files()->is_empty() || !Model::$llvm_files->is_empty()) {
 			throw new \LogicException('Parse failure retained stale output');
 		}
 		$compiler->exec_llvm();
 		$compiler->parse();
-		if (!Model::$llvm_files->is_empty() || count(Model::$syntax_files) !== 2) {
+		if (!Model::$llvm_files->is_empty() || count(Model::syntax_files()) !== 2) {
 			throw new \LogicException('Successful parse retained stale LLVM');
 		}
 	}
@@ -173,7 +174,7 @@ final class Model_Test
 	{
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		$compiler->exec_llvm();
-		$good = Model::$collected_files;
+		$good = Model::collected_files();
 		$worker = new LLVM_Preparation();
 		$prepared = $worker->prepare_program($good, new llvm_policy());
 		$before = serialize($prepared);
@@ -187,13 +188,13 @@ final class Model_Test
 			$file->mtime = 0;
 			$file->size = strlen($content);
 			$file->content = $content;
-			$module->files[] = $file;
+			Source_Registry::add($module, $file);
 			Model::$modules[] = $module;
 			$compiler->tokenize();
 			$compiler->parse();
 			$failed = false;
 			try {
-				$worker->prepare_program(Model::$collected_files, new llvm_policy());
+				$worker->prepare_program(Model::collected_files(), new llvm_policy());
 			}
 			catch (\RuntimeException $expected) {
 				$failed = true;
@@ -281,6 +282,7 @@ final class Model_Test
 		$file = $property->getValue($collector);
 		$file->entries->remove(0);
 		$file->variable_references = [];
+		$node = Syntax_Nodes::make(node_kind::identifier, 0, 1);
 		$position = $collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
 		$result = $collector->finish($node);
 		if (($position !== 1) || ($result->entries[1]->local_index !== 1) || ($result->variable_references !== [1]) || isset($result->entries[0])) {
@@ -301,6 +303,12 @@ final class Model_Test
 			return;
 		}
 		$seen->attach($value);
+		if ($value instanceof Key_Storage_List) {
+			foreach ($value->items() as $item) {
+				self::check_graph($item, $seen);
+			}
+			return;
+		}
 		if ($value instanceof Storage_Abstract) {
 			foreach ($value as $item) {
 				self::check_graph($item, $seen);
@@ -338,7 +346,8 @@ final class Model_Test
 		$file->path = 'invalid.phs';
 		$file->content = $content;
 		$module = new module();
-		$module->files[] = $file;
+		$module->path = Source_Registry::normalize('.');
+		Source_Registry::add($module, $file);
 		Model::$modules[] = $module;
 		$failed = false;
 		try {
@@ -348,13 +357,13 @@ final class Model_Test
 		catch (\RuntimeException $error) {
 			$failed = true;
 		}
-		if (!$failed || !Model::$syntax_files->is_empty() || !Model::$collected_files->is_empty() || Model::$global_scope->has_functions()) {
+		if (!$failed || !Model::syntax_files()->is_empty() || !Model::collected_files()->is_empty() || Model::$global_scope->has_functions()) {
 			throw new \RuntimeException('Failed file published parse output');
 		}
-		if ($lexical && (!Model::$tokens->is_empty() || ($file->tokens !== null))) {
+		if ($lexical && (!Model::tokens()->is_empty() || ($file->tokens !== null))) {
 			throw new \RuntimeException('Failed scan published token output');
 		}
-		if (!$lexical && ((count(Model::$tokens) !== 1) || ($file->tokens !== Model::$tokens[0]))) {
+		if (!$lexical && ((count(Model::tokens()) !== 1) || ($file->tokens !== Model::tokens()[0]))) {
 			throw new \RuntimeException('Parse failure lost completed token output');
 		}
 	}

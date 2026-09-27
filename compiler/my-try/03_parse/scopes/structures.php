@@ -11,15 +11,17 @@ final class scope
 	private bool $function_boundary = false;
 	private array $template_parameters /** hash<int> */ = [];
 	/** @storage.reference collected_file.entries @reference.weak */
-	private array $variables /** hash<vector<collected_name>> */ = [];
+	private Key_Storage_List $variables /** Key_Storage_List<collected_name> */;
 	/** @storage.reference collected_file.entries @reference.weak */
-	private array $functions /** hash<vector<collected_name>> */ = [];
+	private Key_Storage_List $functions /** Key_Storage_List<collected_name> */;
 	/** Definitions owned here; published scopes retain the same definition objects. */
-	private Storage $types /** Storage<type_definition> */;
+	private Key_Storage_List $types /** Key_Storage_List<type_definition> */;
 
 	public function __construct()
 	{
-		$this->types = new Storage /** Storage<type_definition> */();
+		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
+		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_name> */();
+		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition> */();
 	}
 
 	public function set_parent(scope $parent): void
@@ -66,50 +68,40 @@ final class scope
 	public function register(collected_name $entry): void
 	{
 		if ($entry->kind === collected_name_kind::function_declaration) {
-			$this->functions[$entry->name][] = $entry;
+			$functions /** Key_Storage_List<collected_name> */ = $this->functions;
+			$functions->add($entry->name, $entry);
 		}
 		else {
-			$this->variables[$entry->name][] = $entry;
+			$variables /** Key_Storage_List<collected_name> */ = $this->variables;
+			$variables->add($entry->name, $entry);
 		}
 	}
 
 	public function register_type(type_definition $definition): void
 	{
-		$types /** Storage<type_definition> */ = $this->types;
-		$types->append($definition);
+		$types /** Key_Storage_List<type_definition> */ = $this->types;
+		$types->add($definition->name, $definition);
 	}
 
 	/** Local inventories include tombstones; callers choose live resolution explicitly. */
 	public function variables_named(string $name): array /** vector<collected_name> */
 	{
-		$result /** vector<collected_name> */ = [];
-		if (isset($this->variables[$name])) {
-			$result = $this->variables[$name];
-		}
-		return $result;
+		$items /** Key_Storage_List<collected_name> */ = $this->variables;
+		return $items->named($name);
 	}
 
 	/** Return a typed snapshot; an absent name has no candidates. */
 	public function functions_named(string $name): array /** vector<collected_name> */
 	{
-		$result /** vector<collected_name> */ = [];
-		if (isset($this->functions[$name])) {
-			$result = $this->functions[$name];
-		}
-		return $result;
+		$items /** Key_Storage_List<collected_name> */ = $this->functions;
+		return $items->named($name);
 	}
 
 	/** The small definition store owns records; lookup does not introduce another registry. */
 	public function types_named(string $name): array /** vector<type_definition> */
 	{
-		$result /** vector<type_definition> */ = [];
-		$types /** Storage<type_definition> */ = $this->types;
-		foreach ($types as $definition) {
-			if ($definition->name === $name) {
-				$result[] = $definition;
-			}
-		}
-		return $result;
+		$items /** Key_Storage_List<type_definition> */ = $this->types;
+		return $items->named($name);
 	}
 
 	/** Source-only projection keeps the experimental consumer independent of built-in metadata. */
@@ -127,12 +119,12 @@ final class scope
 
 	public function has_functions(): bool
 	{
-		return q_count($this->functions) !== 0;
+		return !$this->functions->is_empty();
 	}
 
 	public function has_variables(): bool
 	{
-		return q_count($this->variables) !== 0;
+		return !$this->variables->is_empty();
 	}
 
 	public function set_publication(scope $global): void
@@ -144,15 +136,13 @@ final class scope
 	public function declarations(): array /** vector<collected_name> */
 	{
 		$result /** vector<collected_name> */ = [];
-		foreach ($this->functions as $entries) {
-			foreach ($entries as $entry) {
-				$result[] = $entry;
-			}
+		$functions /** Key_Storage_List<collected_name> */ = $this->functions;
+		$variables /** Key_Storage_List<collected_name> */ = $this->variables;
+		foreach ($functions->items() as $entry) {
+			$result[] = $entry;
 		}
-		foreach ($this->variables as $entries) {
-			foreach ($entries as $entry) {
-				$result[] = $entry;
-			}
+		foreach ($variables->items() as $entry) {
+			$result[] = $entry;
 		}
 		return $result;
 	}
@@ -161,8 +151,8 @@ final class scope
 	public function type_definitions(): array /** vector<type_definition> */
 	{
 		$result /** vector<type_definition> */ = [];
-		$types /** Storage<type_definition> */ = $this->types;
-		foreach ($types as $definition) {
+		$types /** Key_Storage_List<type_definition> */ = $this->types;
+		foreach ($types->items() as $definition) {
 			$result[] = $definition;
 		}
 		return $result;
@@ -171,9 +161,8 @@ final class scope
 	/** Rebuild local indexes from a caller-selected membership. */
 	public function replace_declarations(array $entries /** vector<collected_name> */): void
 	{
-		$empty /** hash<vector<collected_name>> */ = [];
-		$this->functions = $empty;
-		$this->variables = $empty;
+		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_name> */();
+		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
 		foreach ($entries as $entry) {
 			$this->register($entry);
 		}
@@ -182,7 +171,7 @@ final class scope
 	/** Replace membership without deciding which definitions belong in this scope. */
 	public function replace_types(array $definitions /** vector<type_definition> */): void
 	{
-		$this->types = new Storage /** Storage<type_definition> */();
+		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition> */();
 		foreach ($definitions as $definition) {
 			$this->register_type($definition);
 		}

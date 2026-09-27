@@ -51,3 +51,24 @@ string-key distinctions, holes, expected PHS boundaries and invalid annotations.
 Existing collection tests own the fuller behavioral contract. Native validation
 against the selected source-binding revision remains required, including explicit
 local annotations where native cross-file metadata is insufficient.
+
+## Duplicate-key object lists
+
+`Key_Storage_List<T>` is a separate compiler collection. `add(string, T)` records
+every insertion, including repeated object identities. `named(string)` returns a
+`vector<T>` snapshot in per-key insertion order; `items()` returns a snapshot in
+full insertion order. Neither exposes mutable collection membership. Objects remain
+shared, and assignment aliases the collection. `is_empty()` observes membership.
+Numeric-looking strings remain distinct keys. There are no positional writes,
+unique-key replacements, removals or implicit identity deduplication in this API.
+
+The converter accepts the same explicit one-record type annotations and local
+constructor reuse as Storage. The native implementation belongs to the compiler
+runtime module; its S2S and STAN bindings describe this exact method surface.
+Scopes use it for variable/function candidates and type definitions; transient
+declaration comparison uses it for candidate groups. Unique registries remain
+Keyed_Storage, and the parked LLVM index maps are unchanged.
+
+Focused native proof (explicit opt-in):
+`python3 tests/portability/key_storage_list_native.py --target-checkout CHECKOUT --results FRESH`.
+The shared my-try S2S proof also exercises these invariants in the native compiler.

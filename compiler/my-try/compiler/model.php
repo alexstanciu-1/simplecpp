@@ -17,16 +17,6 @@ final class Model
 	 */
 	public static Storage $modules /** Storage<module> */;
 	/**
-	 * Numeric storage of token_list records.
-	 * @storage.owner
-	 */
-	public static Storage $tokens /** Storage<token_list> */;
-	/**
-	 * Numeric storage of parsed_file records.
-	 * @storage.owner
-	 */
-	public static Storage $syntax_files /** Storage<parsed_file> */;
-	/**
 	 * Established by reset; sync updates candidate lists while retaining deleted entries.
 	 * @ownership owner
 	 * Directly owned record; not an element of a Storage.
@@ -34,11 +24,6 @@ final class Model
 	public static scope $global_scope;
 	/** Built-in and runtime definitions; parent of global scope. @ownership owner */
 	public static scope $language_scope;
-	/**
-	 * Numeric storage of collected_file records.
-	 * @storage.owner
-	 */
-	public static Storage $collected_files /** Storage<collected_file> */;
 	/**
 	 * Numeric storage of llvm_module records, including their LLVM text.
 	 * @storage.owner
@@ -48,4 +33,52 @@ final class Model
 	public static Storage $prepared_files /** Storage<prepared_file> */;
 	/** Final C++ artifacts. @storage.owner */
 	public static Storage $cpp_files /** Storage<cpp_module> */;
+	/** Unique path index; module.sources owns the stable records. @reference.weak */
+	public static Keyed_Storage $sources_by_path /** Keyed_Storage<source_record> */;
+
+	/** Ordered snapshot of stable source membership, never a second retained store. */
+	public static function sources(): Storage /** Storage<source_record> */
+	{
+		$result /** Storage<source_record> */ = new Storage();
+		foreach (self::$modules as $module) {
+			foreach ($module->sources as $source) {
+				$result->append($source);
+			}
+		}
+		return $result;
+	}
+
+	/** Project completed scans in module/source order. */
+	public static function tokens(): Storage /** Storage<token_list> */
+	{
+		$result /** Storage<token_list> */ = new Storage();
+		foreach (self::sources() as $source) {
+			if ($source->tokens !== null) {
+				$result->append($source->tokens);
+			}
+		}
+		return $result;
+	}
+
+	/** Project completed parses in module/source order. */
+	public static function syntax_files(): Storage /** Storage<parsed_file> */
+	{
+		$result /** Storage<parsed_file> */ = new Storage();
+		foreach (self::sources() as $source) {
+			if ($source->parsed !== null) {
+				$result->append($source->parsed);
+			}
+		}
+		return $result;
+	}
+
+	/** Collection ownership follows its parse result. */
+	public static function collected_files(): Storage /** Storage<collected_file> */
+	{
+		$result /** Storage<collected_file> */ = new Storage();
+		foreach (self::syntax_files() as $parsed) {
+			$result->append($parsed->collection);
+		}
+		return $result;
+	}
 }

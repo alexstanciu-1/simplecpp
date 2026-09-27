@@ -94,9 +94,11 @@ try
 	$compiler->exec_llvm();
 
 	echo "Simple C++ — PHP compiler\n\n";
-	foreach (Model::$modules as $module) {
+	foreach (Model::$modules as $module)
+	{
 		echo "Module: {$module->path}\n";
-		foreach ($module->files as $file) {
+		foreach ($module->sources as $record) {
+			$file = $record->file;
 			echo "\nSource: {$file->path}\n";
 			echo htmlspecialchars($file->content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), "\n";
 		}

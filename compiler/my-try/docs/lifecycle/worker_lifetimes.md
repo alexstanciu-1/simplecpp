@@ -12,11 +12,14 @@ worker for each invocation whose transient state must not leak into the next run
 No placeholder AST, optional-required field, or initialization-analysis bypass is
 used. These changes do not add compiler language features or change Model ownership.
 
+`File_Preparation` owns active shared preparation. The LLVM rows below describe
+parked regression workers, not an alternative semantic development path.
+
 | Entry point | State lifetime |
 | --- | --- |
 | `new Tokenizer(file)` | Required source exists immediately. `tokenize()` captures current content and creates a fresh token list. `init(file)` can select the next source. |
 | `new Parser(tokens, target_scope)` | Required tokens exist immediately; target scope remains explicitly optional. `init()` selects the next input. Each `parse()` creates a `Parser_Run` with its real syntax result, scope and collector initialized. |
-| `Template_Checker::check(files, policy)` | Creates a complete `template_check_context` once, sharing its file index and policy across fresh `Template_File_Checker` workers. Symbolic locals/bindings reset per template. |
+| `LLVM_Legacy_Template_Checker::check(files, policy)` | Creates a complete `llvm_legacy_template_check_context` once, sharing its file index and policy across fresh `LLVM_Legacy_Template_File_Checker` workers. Symbolic locals/bindings reset per template. |
 | `LLVM_Preparation::prepare_program(sources, policy)` | Creates `LLVM_Preparation_Run` with a fresh registry, work queue, indexes and prepared struct types. A failed invocation cannot retain state in the reusable facade. |
 | `LLVM_Generator::generate(files, policy)` | Builds module output locally and creates one `LLVM_Function_Generator` per function. Each owns its actual initial block, temporary counter and initialized-local set. |
 

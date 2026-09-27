@@ -29,6 +29,7 @@ final class Symbol_Collector
 		$entry->node = $node;
 		$entry->token_index = $token_index;
 		$entries /** Storage<collected_name> */ = $this->collection->entries;
+		$node->payload()->attach_occurrence($entry);
 		$entry->local_index = $entries->append($entry);
 		if (($kind === collected_name_kind::field_declaration) || ($kind === collected_name_kind::struct_declaration) || ($kind === collected_name_kind::variable_declaration) || ($kind === collected_name_kind::function_declaration)) {
 			$this->collection->defined_elements[] = $entry->local_index;

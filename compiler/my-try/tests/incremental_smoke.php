@@ -33,18 +33,18 @@ try
 	$compiler->init([$directory]);
 	$compiler->exec_llvm();
 	$baseline = smoke_output();
-	$old_syntax = Model::$syntax_files[0];
-	$kept_caller = Model::$syntax_files[1];
+	$old_syntax = Model::syntax_files()[0];
+	$kept_caller = Model::syntax_files()[1];
 
 	file_put_contents($definition, 'function value(): int { return 2; }');
 	$compiler->update_llvm([$definition]);
 	$targets = Scope_Lookup::live(Model::$global_scope->functions_named('value'));
 	smoke_require(count($targets) === 1, 'Update lost unique function target');
 	smoke_require($targets[0]->changes === SYNC_BODY_CHANGED, 'Wrong body-change flags');
-	smoke_require(Model::$syntax_files[0] !== $old_syntax, 'Changed syntax was reused');
-	smoke_require(Model::$syntax_files[1] === $kept_caller, 'Unchanged caller was reparsed');
+	smoke_require(Model::syntax_files()[0] !== $old_syntax, 'Changed syntax was reused');
+	smoke_require(Model::syntax_files()[1] === $kept_caller, 'Unchanged caller was reparsed');
 	smoke_require(smoke_output() !== $baseline, 'Edit did not change generated output');
-	$names = (new Name_Preparation())->prepare($kept_caller->collection);
+	$names = (new LLVM_Legacy_Name_Preparation())->prepare($kept_caller->collection);
 	$reference = $kept_caller->collection->entries[$kept_caller->collection->function_references[0]];
 	smoke_require($names->function_references[$reference->token_index] === $targets[0], 'Caller resolved the old declaration');
 
@@ -55,7 +55,7 @@ try
 		$compiler->update_llvm([$definition]);
 		$restored = smoke_output();
 		smoke_require($restored === $baseline, 'Restore differs from original full-build output');
-		smoke_require(Model::$syntax_files[1] === $kept_caller, 'Restore reparsed unchanged caller');
+		smoke_require(Model::syntax_files()[1] === $kept_caller, 'Restore reparsed unchanged caller');
 		$fresh = new Compiler();
 		$fresh->init([$directory]);
 		$fresh->exec_llvm();

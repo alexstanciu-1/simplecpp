@@ -327,8 +327,9 @@ PHP keeps ordinary references; use explicit `weakref_get` acquisition in portabl
 source and maintain a real strong owner for the target's required lifetime.
 
 Ordinary reference classes now preserve `abstract class` and one literal `extends`
-clause. This adds no inheritance resolution, abstract-method conversion, override
-validation or parent-constructor inference. The linked AST proves inherited fields
+clause. Explicit public/protected abstract method declarations are also supported;
+see [trait signatures](traits_and_incremental_index.md#shared-accessors-for-concrete-object-fields).
+This adds no inheritance resolution, override validation or parent-constructor inference. The linked AST proves inherited fields
 and concrete methods on the candidate native target. That emitter does not enforce
 C++ abstractness for a base without a pure virtual member; construct concrete
 subclasses only. Reference-class uint32 properties can also use a decimal literal

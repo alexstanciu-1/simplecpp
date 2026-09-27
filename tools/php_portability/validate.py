@@ -72,6 +72,7 @@ def main():
     try:
         save()
         shutil.copy2(__file__, results / 'runner.py')
+        run('trait-field-types', [sys.executable, TESTS / 'trait_field_types.py'])
         target = json.loads((ROOT / 'compiler/tools/portability_target.json').read_text())
         report['configured_target'] = target
         if args.native:

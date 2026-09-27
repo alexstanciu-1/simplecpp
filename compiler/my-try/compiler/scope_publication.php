@@ -21,11 +21,11 @@ final class Scope_Publication
 	}
 
 	/** Superseded live rows leave the index; deleted rows and built-ins stay observable. */
-	public static function replace_source(scope $global, string $path): void
+	public static function replace_collection(scope $global, collected_file $previous): void
 	{
 		$entries /** vector<collected_name> */ = [];
 		foreach ($global->declarations() as $entry) {
-			if (self::retain($entry, $path)) {
+			if (self::retain($entry, $previous)) {
 				$entries[] = $entry;
 			}
 		}
@@ -35,7 +35,7 @@ final class Scope_Publication
 			$keep = true;
 			if ($definition->declaration !== null) {
 				$declaration /** collected_name */ = $definition->declaration;
-				$keep = self::retain($declaration, $path);
+				$keep = self::retain($declaration, $previous);
 			}
 			if ($keep) {
 				$definitions[] = $definition;
@@ -45,11 +45,11 @@ final class Scope_Publication
 		$global->replace_types($definitions);
 	}
 
-	private static function retain(collected_name $entry, string $path): bool
+	private static function retain(collected_name $entry, collected_file $previous): bool
 	{
 		if ($entry->changes === \scpp\compiler\SYNC_DELETED) {
 			return true;
 		}
-		return $entry->source_file()->path !== $path;
+		return $entry->collection !== $previous;
 	}
 }

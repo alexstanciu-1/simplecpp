@@ -8,12 +8,11 @@ final class Source_Synchronization
 	/** Reset notification flags and build private candidates in notification order. */
 	public static function plan(array $paths /** vector<string> */): Source_Work_Queue
 	{
-		foreach (Model::$modules as $input_module) {
-			foreach ($input_module->files as $source) {
-				$source->changes = $source->changes === \scpp\compiler\SYNC_DELETED ? \scpp\compiler\SYNC_DELETED : 0;
-			}
+		foreach (Model::sources() as $record) {
+			$source = $record->file;
+			$source->changes = $source->changes === \scpp\compiler\SYNC_DELETED ? \scpp\compiler\SYNC_DELETED : 0;
 		}
-		foreach (Model::$collected_files as $collection) {
+		foreach (Model::collected_files() as $collection) {
 			$entries /** Storage<collected_name> */ = $collection->entries;
 			foreach ($collection->defined_elements as $position) {
 				$entry = $entries[$position];
@@ -22,22 +21,15 @@ final class Source_Synchronization
 		}
 		$queue = new Source_Work_Queue();
 		$seen /** hash<bool> */ = [];
-		foreach ($paths as $path)
+		foreach ($paths as $notified)
 		{
+			$path = Source_Registry::normalize($notified);
 			if (isset($seen[$path])) {
 				continue;
 			}
 			$seen[$path] = true;
-			$owner_found = false;
-			$previous = Source_Publication::find_source($path);
-			foreach (Model::$modules as $input_module) {
-				if (Module_Loader::contains_path($input_module, $path)) {
-					$owner_found = true;
-				}
-			}
-			if (!$owner_found) {
-				throw new \LogicException('Module membership changed: call init with the complete module list, then exec');
-			}
+			$record = Source_Registry::resolve($path);
+			$previous = $record->file;
 			$candidate = new file();
 			$candidate->path = $path;
 			$candidate->disk_source = true;
@@ -58,7 +50,7 @@ final class Source_Synchronization
 					}
 				}
 			}
-			$queue->enqueue($candidate);
+			$queue->enqueue($record, $candidate);
 		}
 		return $queue;
 	}

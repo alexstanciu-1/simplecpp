@@ -39,11 +39,14 @@ Important authoring boundaries:
 - PHP arrays cannot carry object keys. Keep object-keyed maps in the explicit
   SplObjectStorage carrier; ordinary arrays remain scalar-keyed.
 
-Current maps: Template_Checker.files maps collected_file to llvm_prepared_file;
-LLVM_Preparation.owners maps collected_name to llvm_prepared_file, file_indexes maps
-llvm_prepared_file to int, and structs maps collected_name to llvm_struct_type.
-LLVM_Struct_Preparation constructs the last map before handing it to preparation.
-These are transient indexes, with no retained-model layout change.
+The parked LLVM regression stack uses these maps: llvm_legacy_template_check_context.files
+maps collected_file to llvm_prepared_file; LLVM_Preparation_Run.owners maps
+collected_name to llvm_prepared_file, file_indexes maps llvm_prepared_file to int,
+and structs maps collected_name to llvm_struct_type. LLVM_Struct_Preparation
+constructs the last map before handing it to that legacy preparation stack.
+These are transient indexes, not the active shared semantic-fact model; new semantics
+belong to File_Preparation and specialization-attached facts. Their relocation and
+renaming do not change retained storage.
 
 `php tests/portability/object_hashes.php` proves PHP identity/replacement/removal,
 real converter boundaries, rejections, and the native TypeMapper result

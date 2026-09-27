@@ -1,43 +1,34 @@
 <?php
 
-/* Role: publish completed source work and maintain the retained root graph. */
+/* Publish completed per-source stages through their stable membership records. */
 namespace scpp\compiler;
 
 final class Source_Publication
 {
-	/** Locate a live source by its module-qualified path; tombstones never participate. */
+	/** Compatibility query for external callers; work publication already holds the record. */
 	public static function find_source(string $path): ?file
 	{
-		foreach (Model::$modules as $input_module) {
-			foreach ($input_module->files as $source) {
-				if (($source->path === $path) && ($source->changes !== \scpp\compiler\SYNC_DELETED)) {
-					return $source;
-				}
-			}
+		$record = Source_Registry::find(Source_Registry::normalize($path));
+		if ($record === null) {
+			return null;
 		}
-		return null;
+		if ($record->file->changes === \scpp\compiler\SYNC_DELETED) {
+			return null;
+		}
+		return $record->file;
 	}
 
-	/** Replace only one file; old deleted declarations remain observable but are never resolved. */
+	/** Replace one complete source result; preserve prior published state on frontend failure. */
 	public static function publish_update(source_work $work): void
 	{
 		$source = $work->source;
-		$syntax /** Storage<parsed_file> */ = Model::$syntax_files;
-		$position = -1;
-		foreach ($syntax as $index => $parsed) {
-			if ($parsed->source_file()->path === $source->path) {
-				if ($parsed->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
-					$position = $index;
-				}
-			}
-		}
-
+		$record = $work->record;
+		$previous = $work->previous;
 		if ($source->changes === \scpp\compiler\SYNC_DELETED)
 		{
-			if ($position >= 0)
-			{
-				$old /** parsed_file */ = $syntax[$position];
-				$old->source_file()->changes = \scpp\compiler\SYNC_DELETED;
+			$record->file->changes = \scpp\compiler\SYNC_DELETED;
+			if ($previous !== null) {
+				$old /** parsed_file */ = $previous;
 				$entries /** Storage<collected_name> */ = $old->collection->entries;
 				foreach ($old->collection->defined_elements as $index) {
 					$entries[$index]->changes = \scpp\compiler\SYNC_DELETED;
@@ -52,133 +43,38 @@ final class Source_Publication
 			$entries[$index]->changes = \scpp\compiler\SYNC_ADDED;
 		}
 		$source->changes = \scpp\compiler\SYNC_ADDED;
-		if ($position >= 0)
+		if ($previous !== null)
 		{
-			$old /** parsed_file */ = $syntax[$position];
+			$old /** parsed_file */ = $previous;
 			Declaration_Changes::compare($old, $candidate);
-			$source->changes = 0;
-			if ($old->tokens->content !== $candidate->tokens->content) {
-				$source->changes = \scpp\compiler\SYNC_CHANGED;
+			if ($record->file->changes !== \scpp\compiler\SYNC_DELETED) {
+				$source->changes = $old->tokens->content === $candidate->tokens->content ? 0 : \scpp\compiler\SYNC_CHANGED;
 			}
+			Scope_Publication::replace_collection(Model::$global_scope, $old->collection);
 		}
-
-		// Remove replaced live references; keep actual deletions as tombstones in global indexes.
-		$global = Model::$global_scope;
-		Scope_Publication::replace_source($global, $source->path);
-		if ($position >= 0) {
-			$syntax->replace($position, $candidate);
-		}
-		else {
-			$syntax->append($candidate);
-		}
-		self::publish_scope($candidate);
-		$source->tokens = $candidate->tokens;
-		foreach (Model::$modules as $input_module)
-		{
-			$files /** Storage<file> */ = $input_module->files;
-			foreach ($files as $index => $old_source)
-			{
-				if ($old_source->path === $source->path) {
-					if ($old_source->changes !== \scpp\compiler\SYNC_DELETED) {
-						$files->replace($index, $source);
-						self::order_roots();
-						return;
-					}
-				}
-			}
-		}
-		foreach (Model::$modules as $input_module) {
-			if (Module_Loader::contains_path($input_module, $source->path)) {
-				$files /** Storage<file> */ = $input_module->files;
-				$files->append($source);
-				break;
-			}
-		}
-		self::order_roots();
+		self::publish_parsed($record, $candidate);
 	}
 
-	/** Restore module/file order using a temporary identity index, including retained deleted files. */
-	public static function order_roots(): void
+	/** Caller serializes publication; scope export and completed stages share one destination. */
+	public static function publish_parsed(source_record $record, parsed_file $parsed): void
 	{
-		$by_source /** hash<parsed_file, shared<file>> */ = new \SplObjectStorage /** hash<parsed_file, shared<file>> */();
-		foreach (Model::$syntax_files as $parsed) {
-			$by_source[$parsed->source_file()] = $parsed;
-		}
-
-		$syntax /** Storage<parsed_file> */ = new Storage();
-		$tokens /** Storage<token_list> */ = new Storage();
-		$collections /** Storage<collected_file> */ = new Storage();
-		foreach (Model::$modules as $input_module)
-		{
-			foreach ($input_module->files as $source)
-			{
-				if (!isset($by_source[$source])) {
-					continue;
-				}
-				$parsed /** parsed_file */ = $by_source[$source];
-				$syntax->append($parsed);
-				$tokens->append($parsed->tokens);
-				$collections->append($parsed->collection);
-			}
-		}
-
-		Model::$syntax_files = $syntax;
-		Model::$tokens = $tokens;
-		Model::$collected_files = $collections;
+		Scope_Publication::publish($parsed->root_scope(), Model::$global_scope);
+		$record->file = $parsed->source_file();
+		$record->tokens = $parsed->tokens;
+		$record->parsed = $parsed;
+		$record->file->tokens = $parsed->tokens;
 	}
 
-	/** Publication boundary: caller serializes this operation; parser workers never edit global indexes. */
-	public static function publish_parsed(parsed_file $parsed): void
-	{
-		self::publish_scope($parsed);
-		Model::$syntax_files[] = $parsed;
-		Model::$collected_files[] = $parsed->collection;
-	}
-
-	/** Export live file-root declarations; duplicate candidates remain separate entries. */
-	private static function publish_scope(parsed_file $parsed): void
-	{
-		$root_scope = $parsed->root_scope();
-		Scope_Publication::publish($root_scope, Model::$global_scope);
-	}
-
-	/** Publish only the completed standalone stage while the caller holds serialization. */
+	/** Standalone scanning leaves parsing absent; standalone parsing reuses the exact scan. */
 	public static function publish_stage(source_work $work, frontend_operation $operation): void
 	{
 		if ($operation === frontend_operation::scan) {
 			$tokens = object_cast($work->tokens, token_list::class);
+			$work->record->tokens = $tokens;
 			$work->source->tokens = $tokens;
-			Model::$tokens[] = $tokens;
 		}
 		if ($operation === frontend_operation::parse) {
-			self::publish_parsed(object_cast($work->result, parsed_file::class));
-		}
-	}
-
-	/** Restore input order after all standalone stage workers have joined. */
-	public static function order_stage(array $items /** vector<source_work> */, frontend_operation $operation): void
-	{
-		// Work is unordered; restore retained file order only after every worker has joined.
-		$token_files /** Storage<token_list> */ = new Storage();
-		$syntax_files /** Storage<parsed_file> */ = new Storage();
-		$collected_files /** Storage<collected_file> */ = new Storage();
-		foreach ($items as $work)
-		{
-			if ($operation === frontend_operation::scan) {
-				$token_files->append(object_cast($work->tokens, token_list::class));
-			}
-			if ($operation === frontend_operation::parse) {
-				$parsed = object_cast($work->result, parsed_file::class);
-				$syntax_files->append($parsed);
-				$collected_files->append($parsed->collection);
-			}
-		}
-		if ($operation === frontend_operation::scan) {
-			Model::$tokens = $token_files;
-		}
-		if ($operation === frontend_operation::parse) {
-			Model::$syntax_files = $syntax_files;
-			Model::$collected_files = $collected_files;
+			self::publish_parsed($work->record, object_cast($work->result, parsed_file::class));
 		}
 	}
 }

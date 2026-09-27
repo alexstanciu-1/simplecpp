@@ -17,9 +17,19 @@ interface node_operations_i {
 	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string;
 }
 
-/** Leaf layout and local cleanup default to empty; unsupported processing never walks children. */
+/** Common structure contract; leaves have no children or local preparation to clear. */
 abstract class node_structure implements node_operations_i
 {
+	public function attach_occurrence(collected_name $entry): void
+	{
+		throw new \LogicException('This syntax specialization does not collect a name');
+	}
+
+	public function occurrence(): collected_name
+	{
+		throw new \LogicException('This syntax specialization has no name occurrence');
+	}
+
 	public function append_children(Storage $result /** Storage<ast_node> */): void
 	{
 		return;
@@ -30,6 +40,43 @@ abstract class node_structure implements node_operations_i
 		return;
 	}
 
+	public abstract function prepare_statement(ast_node $node, preparation_context $context): void;
+	public abstract function prepare_expression(ast_node $node, preparation_context $context): prepared_expression;
+	public abstract function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string;
+	public abstract function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string;
+}
+
+/** Expression specializations must implement expression hooks; statement dispatch is invalid. */
+abstract class expression_node_structure extends node_structure
+{
+	public function prepare_statement(ast_node $node, preparation_context $context): void
+	{
+		throw new \RuntimeException('S2S preparation does not support this statement yet');
+	}
+
+	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
+	{
+		throw new \RuntimeException('C++ statement emission is not implemented for this form');
+	}
+}
+
+/** Statement specializations must implement statement hooks; expression dispatch is invalid. */
+abstract class statement_node_structure extends node_structure
+{
+	public function prepare_expression(ast_node $node, preparation_context $context): prepared_expression
+	{
+		throw new \RuntimeException('S2S expression lowering is not implemented for this form');
+	}
+
+	public function generate_cpp_expression(ast_node $node, cpp_generation_context $context): string
+	{
+		throw new \RuntimeException('C++ expression emission is not implemented for this form');
+	}
+}
+
+/** Explicit rejection base for forms outside the current preparation and C++ generation slice. */
+abstract class unsupported_node_structure extends node_structure
+{
 	public function prepare_statement(ast_node $node, preparation_context $context): void
 	{
 		throw new \RuntimeException('S2S preparation does not support this statement yet');

@@ -21,7 +21,7 @@ final class file
 	public bool $disk_source = false;
 	/**
 	 * Convenience backlink to the completed tokenization result; not its owner.
-	 * @storage.reference model.tokens
+	 * @reference.source source_record.tokens
 	 * @reference.weak
 	 */
 	public ?token_list $tokens = null;
@@ -31,13 +31,32 @@ final class module
 {
 	public string $path;
 	/**
-	 * Numeric storage of file records.
+	 * Numeric storage of stable source records.
 	 * @storage.owner
 	 */
-	public Storage $files /** Storage<file> */;
+	public Storage $sources /** Storage<source_record> */;
 
 	public function __construct()
 	{
-		$this->files = new Storage /** Storage<file> */();
+		$this->sources = new Storage /** Storage<source_record> */();
+	}
+}
+
+/** Stable module membership; stage publication replaces snapshots without replacing this identity. */
+final class source_record
+{
+	public string $path;
+	/** @reference.weak Model.modules */
+	public module $module /** weak<module> */;
+	/** Current published input and its optional completed stages. @ownership owner */
+	public file $file;
+	public ?token_list $tokens = null;
+	public ?parsed_file $parsed = null;
+
+	public function __construct(module $owner, file $snapshot)
+	{
+		$this->module = $owner;
+		$this->path = $snapshot->path;
+		$this->file = $snapshot;
 	}
 }

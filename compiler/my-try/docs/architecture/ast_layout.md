@@ -151,10 +151,12 @@ its storage can be optimized independently of callers.
 
 ## Specialization dispatch
 
-`node_structure` implements `node_operations_i` once. Concrete records override
-`prepare_statement`, `prepare_expression`, `generate_cpp_statement` and
-`generate_cpp_expression` only for currently supported operations. Base methods
-throw; they never silently recurse. Expression preparation returns prepared facts,
+`node_structure` implements `node_operations_i` once and declares all four processing
+hooks abstract. `expression_node_structure` rejects statement operations and requires
+expression hooks; `statement_node_structure` does the converse.
+`unsupported_node_structure` explicitly rejects all four operations for forms outside
+the current slice. Concrete records implement their applicable hooks. Rejection
+methods never silently recurse. Expression preparation returns prepared facts,
 expression generation returns C++ text, and statement generation returns statement
 text. This preserves the existing emitter contract without a generic mixed result.
 
@@ -192,3 +194,27 @@ compiler itself was not built or run for this refactor.
 The subsequent user-requested native verification passed after making required
 child initialization explicit in specialization constructors and separating syntax
 enums into `03_parse/kinds.php`. See [native evidence and adaptations](../portability/native_adaptations.md#specialization-dispatch-native-verification).
+
+## Shared preparation accessors and review debt
+
+`03_parse/preparation_facts.php` groups `preparation()`, `set_preparation()` and
+`clear_preparation()` in a method-only trait. Each final specialization retains its
+concrete nullable field and `require_preparation()` with its concrete `object_cast`.
+The converter's explicit `@field-type prepared_facts` signature annotation preserves
+the field's named type after trait expansion. PHP checks assignments through the
+concrete property; neither the trait nor the facts retain processing workers.
+
+Debt: review this grouping if new capabilities reveal a better shared-access pattern.
+Do not introduce a generic node/fact framework solely to remove repeated code.
+If multiple traits eventually need cleanup, give those capabilities distinct cleanup
+helpers and compose them in the specialization's `clear_preparation()` hook; avoid
+colliding trait methods. Native verification of this consolidation remains opt-in.
+
+## Single-list structural traversal
+
+Blocks, array literals and structs share `Child_List::append_children()` through
+`03_parse/child_list.php`. Each exposes its existing `children`, `elements` or
+`fields` storage through `child_list()` in grammar order. This accessor returns the
+existing storage, not a snapshot or a second owning list. Composite specializations
+retain explicit child assembly; the common node structure retains its empty leaf
+default. Structural linking and traversal ownership are unchanged.

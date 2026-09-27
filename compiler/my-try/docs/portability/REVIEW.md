@@ -21,8 +21,8 @@ that each PHP form is already supported by the portability converter.
 | `02_tokenize/` | Token object allocation, duplicated token text/source handles, byte helpers and span bounds. |
 | `03_parse/` | Direct AST graph and nested Storage child lists are in place; review shared-handle binding, scope lifetimes and enum representation; separate optional debug formatting from parsing. |
 | `04_analyze/collect/` | Occurrence identity versus declarations; keyed name pools and ordered occurrence lists; preserve append-only collection and duplicate handling. |
-| `04_analyze/prepare/names.php` | Explicit lookup contracts and nullable scope traversal; maintain retained declaration identity. |
-| `04_analyze/prepare/templates.php` | Symbolic contract limits; `SplObjectStorage` keys are collected-file objects and values are prepared files. |
+| `05_backend/llvm/legacy_names.php` | Parked LLVM-only lookup contracts and nullable scope traversal; preserve regression behavior. |
+| `05_backend/llvm/legacy_templates.php` | Parked LLVM-only symbolic checks; `SplObjectStorage` keys are collected-file objects and values are LLVM prepared files. |
 | `05_backend/llvm/prepare.php` | Registry keys and pending instances; object-keyed struct/owner/file-index maps; nullsafe PHP access and retained source purity. |
 | `05_backend/llvm/generate.php` and traits | Shared place/value paths; typed-container resets; callbacks, `match`, and specialization narrowing need actual conversion review. |
 | `05_backend/llvm/names.php` | Byte escaping and regex-result boundary; preserve reversible names and exact identities. |

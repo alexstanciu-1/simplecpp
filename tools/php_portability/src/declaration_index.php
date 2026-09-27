@@ -46,12 +46,12 @@ final class Declaration_Index {
 			if (!isset($tokens[$open])) { self::fail($path, $tokens[$i], 'missing declaration body'); }
 			$end = self::close($tokens, $open, $path);
 			$kind = match ($id) { T_TRAIT => 'trait', T_INTERFACE => 'interface', T_ENUM => 'enum', default => 'class' };
-			[$methods, $uses] = self::members($tokens, $open, $end, $kind, $namespace, $path);
+			[$methods, $uses, $fields] = self::members($tokens, $open, $end, $kind, $namespace, $path);
 			$key = strtolower($name);
 			if (isset($declarations[$key])) { self::fail($path, $tokens[$i], 'duplicate declaration ' . $name); }
 			$declarations[$key] = ['name' => $name, 'kind' => $kind, 'namespace' => $namespace,
 				'file' => $path, 'line' => $tokens[$i][2], 'start' => $i, 'open' => $open, 'end' => $end,
-				'methods' => $methods, 'uses' => $uses];
+				'methods' => $methods, 'uses' => $uses, 'fields' => $fields];
 			$i = $end;
 		}
 		return $declarations;
@@ -60,6 +60,7 @@ final class Declaration_Index {
 	private static function members(array $tokens, int $open, int $end, string $kind, string $namespace, string $path): array {
 		$methods = [];
 		$uses = [];
+		$fields = [];
 		for ($i = self::skip($tokens, $open + 1); $i < $end; $i = self::skip($tokens, $i)) {
 			$start = $i;
 			if ($tokens[$i][0] === T_USE) {
@@ -95,13 +96,23 @@ final class Declaration_Index {
 				$methods[$name] = $tokens[$nameAt][2];
 			} elseif ($kind === 'trait') {
 				self::fail($path, $tokens[$start], 'traits support explicit methods only');
+			} elseif ($kind === 'class') {
+				// Only a directly declared named instance field can bind a trait signature.
+				$typeAt = $tokens[$i][1] === '?' ? self::skip($tokens, $i + 1) : $i;
+				$fieldAt = self::skip($tokens, $typeAt + 1);
+				$modifiers = array_column(array_slice($tokens, $start, $i - $start), 0);
+				if (($tokens[$fieldAt][0] ?? null) === T_VARIABLE
+					&& in_array($tokens[$typeAt][0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)
+					&& !in_array(T_STATIC, $modifiers, true)) {
+					$fields[substr($tokens[$fieldAt][1], 1)] = $tokens[$typeAt];
+				}
 			}
 			// Skip one field/constant/case or a method signature and body. No callee lookup.
 			while ($i < $end && !in_array($tokens[$i][1], [';', '{'], true)) { ++$i; }
 			if ($tokens[$i][1] === '{') { $i = self::close($tokens, $i, $path); }
 			++$i;
 		}
-		return [$methods, $uses];
+		return [$methods, $uses, $fields];
 	}
 
 	public function __construct(private array $files) {
@@ -143,6 +154,36 @@ final class Declaration_Index {
 		return $dependencies;
 	}
 
+	/** Explicit trait signature annotations copy one consuming class field's named type. */
+	private static function bindFieldTypes(array $tokens, array $consumer, string $path): array {
+		$depth = 0;
+		$signature = false;
+		foreach ($tokens as $at => $token) {
+			if ($depth === 0 && $token[0] === T_FUNCTION) { $signature = true; }
+			if ($token[1] === '{') { ++$depth; $signature = false; }
+			if ($token[1] === '}') { --$depth; }
+			if ($depth === 0 && $token[1] === ';') { $signature = false; }
+			if ($token[0] !== T_DOC_COMMENT || !str_contains($token[1], '@field-type')) { continue; }
+			if (!preg_match('~^/\*\*\s*@field-type ([a-zA-Z_][a-zA-Z_0-9]*)\s*\*/$~D', $token[1], $match)) {
+				self::fail($path, $token, 'expected /** @field-type field_name */');
+			}
+			$previous = $at - 1;
+			while ($previous >= 0 && $tokens[$previous][0] === T_WHITESPACE) { --$previous; }
+			if (!$signature || $previous < 0 || $tokens[$previous][1] !== 'object') {
+				self::fail($path, $token, '@field-type must immediately follow an object signature type');
+			}
+			$type = $consumer['fields'][$match[1]] ?? null;
+			if ($type === null || in_array(strtolower($type[1]), ['int', 'float', 'string', 'bool', 'mixed', 'object', 'iterable', 'self', 'parent', 'static'], true)) {
+				self::fail($path, $token, '@field-type requires a directly declared named instance field ' . $match[1] . ' in ' . $consumer['name']);
+			}
+			$tokens[$previous][0] = $type[0];
+			$tokens[$previous][1] = $type[1];
+			$tokens[$at][0] = T_WHITESPACE;
+			$tokens[$at][1] = ' ';
+		}
+		return $tokens;
+	}
+
 	public function expand(string $path, callable $load): array {
 		$tokens = $load($path);
 		$replacements = [];
@@ -151,7 +192,8 @@ final class Declaration_Index {
 				$body = [];
 				foreach ($use['names'] as $name) {
 					$trait = $this->declarations[$name];
-					array_push($body, ...array_slice($load($trait['file']), $trait['open'] + 1, $trait['end'] - $trait['open'] - 1));
+					$members = array_slice($load($trait['file']), $trait['open'] + 1, $trait['end'] - $trait['open'] - 1);
+					array_push($body, ...self::bindFieldTypes($members, $declaration, $trait['file']));
 				}
 				$replacements[$use['start']] = [$use['end'] - $use['start'] + 1, $body];
 			}

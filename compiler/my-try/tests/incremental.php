@@ -31,14 +31,14 @@ try
 	$compiler->exec_llvm();
 	sync_check(sync_function('value')->changes === SYNC_ADDED, 'Initial build is not all-added');
 	$old_node = sync_function('value')->node;
-	$old_tokens = Model::$tokens[0];
-	$unchanged = Model::$syntax_files[1];
+	$old_tokens = Model::tokens()[0];
+	$unchanged = Model::syntax_files()[1];
 	file_put_contents($a, 'function value(): int { return 2; } struct Box { int $item; }');
 	$compiler->update_llvm([$a]);
 	sync_check(sync_function('value')->changes === SYNC_BODY_CHANGED, 'Body edit changed signature');
-	sync_check(sync_function('value')->node !== $old_node && Model::$tokens[0] !== $old_tokens, 'Syntax was patched instead of replaced');
-	sync_check(Model::$syntax_files[1] === $unchanged, 'Unchanged file was reparsed');
-	$resolved = (new Name_Preparation())->prepare($unchanged->collection);
+	sync_check(sync_function('value')->node !== $old_node && Model::tokens()[0] !== $old_tokens, 'Syntax was patched instead of replaced');
+	sync_check(Model::syntax_files()[1] === $unchanged, 'Unchanged file was reparsed');
+	$resolved = (new LLVM_Legacy_Name_Preparation())->prepare($unchanged->collection);
 	$reference = $unchanged->collection->entries[$unchanged->collection->function_references[0]];
 	sync_check($resolved->function_references[$reference->token_index] === sync_function('value'), 'Unchanged caller retained old binding');
 
@@ -49,7 +49,7 @@ try
 	$compiler->sync([$a]);
 	sync_check(sync_function('value')->changes === SYNC_CHANGED, 'Signature-only edit flags wrong');
 	$fields = [];
-	foreach (Model::$collected_files[0]->entries as $entry) {
+	foreach (Model::collected_files()[0]->entries as $entry) {
 		if ($entry->kind === collected_name_kind::field_declaration) {
 			$fields[$entry->name] = $entry->changes;
 		}
@@ -61,14 +61,14 @@ try
 	sync_check(Model::$global_scope->functions_named('value')[0]->changes === SYNC_DELETED, 'Missing global tombstone');
 	sync_check(sync_function('replacement')->changes === SYNC_ADDED, 'Added function flag missing');
 	try {
-		(new Name_Preparation())->prepare($unchanged->collection);
+		(new LLVM_Legacy_Name_Preparation())->prepare($unchanged->collection);
 		throw new \LogicException('Removed target still resolved');
 	}
 	catch (\RuntimeException $expected) {
 	}
 
 	// A failed candidate cannot mutate the published bytes, syntax, or global contributions.
-	$kept = Model::$syntax_files[0];
+	$kept = Model::syntax_files()[0];
 	file_put_contents($a, 'function broken(');
 	try {
 		$compiler->sync([$a]);
@@ -76,8 +76,8 @@ try
 	}
 	catch (\RuntimeException $expected) {
 	}
-	sync_check(Model::$syntax_files[0] === $kept && sync_function('replacement')->collection === $kept->collection, 'Failed candidate damaged publication');
-	sync_check(Model::$modules[0]->files[0]->content === $kept->tokens->content, 'Failed candidate changed published source');
+	sync_check(Model::syntax_files()[0] === $kept && sync_function('replacement')->collection === $kept->collection, 'Failed candidate damaged publication');
+	sync_check(Model::$modules[0]->sources[0]->file->content === $kept->tokens->content, 'Failed candidate changed published source');
 	sync_check(Model::$llvm_files->is_empty(), 'Failed update retained generated output');
 
 	// Duplicate definitions survive sync; deleting one makes lookup unambiguous again.
@@ -94,7 +94,7 @@ try
 	sync_check(sync_function('value')->changes === 0, 'Surviving duplicate lost exact match');
 	unlink($a);
 	$compiler->sync([$a]);
-	sync_check((Model::$modules[0]->files[0]->changes & SYNC_DELETED) !== 0, 'Deleted file disappeared instead of remaining marked');
+	sync_check((Model::$modules[0]->sources[0]->file->changes & SYNC_DELETED) !== 0, 'Deleted file disappeared instead of remaining marked');
 	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 0, 'Deleted file still exports functions');
 	file_put_contents($a, 'function value(): int { return 6; }');
 	$compiler->update_llvm([$a]);
@@ -116,7 +116,7 @@ try
 	file_put_contents($a, 'function value(): int { return 6; }');
 	$compiler->init([$directory]);
 	$compiler->exec_llvm();
-	sync_check(count(Model::$modules[0]->files) === 2 && count(Model::$global_scope->functions_named('value')) === 1, 'Full module rebuild retained tombstones');
+	sync_check(count(Model::$modules[0]->sources) === 2 && count(Model::$global_scope->functions_named('value')) === 1, 'Full module rebuild retained tombstones');
 }
 finally {
 	foreach (glob($directory . '/*') as $path) {

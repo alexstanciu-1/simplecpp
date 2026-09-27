@@ -44,98 +44,101 @@ final class Declaration_Changes
 	{
 		$key = Node_Kind_Name::text($entry->node->kind()) . ':' . $entry->name;
 		$parent = $entry->node->parent();
-		$tokens /** Storage<token> */ = $entry->token_snapshot()->tokens;
 		while ($parent !== null)
 		{
 			$node /** ast_node */ = $parent;
 			if ($node->kind() === node_kind::function_declaration) {
-				$index = Syntax_Nodes::function_data($node)->name_token_index;
-				$key = 'function:' . $tokens[$index]->text() . '/' . $key;
+				$key = 'function:' . $node->payload()->occurrence()->name . '/' . $key;
 			}
 			elseif ($node->kind() === node_kind::struct_declaration) {
-				$index = Syntax_Nodes::struct_data($node)->name_token_index;
-				$key = 'struct:' . $tokens[$index]->text() . '/' . $key;
+				$key = 'struct:' . $node->payload()->occurrence()->name . '/' . $key;
 			}
 			$parent = $node->parent();
 		}
 		return $key;
 	}
 
+	/** Compute each candidate's structural key and spellings once for this comparison. */
+	private static function candidates(collected_file $collection): Key_Storage_List /** Key_Storage_List<declaration_comparison> */
+	{
+		$result /** Key_Storage_List<declaration_comparison> */ = new Key_Storage_List();
+		$entries /** Storage<collected_name> */ = $collection->entries;
+		foreach ($collection->defined_elements as $index)
+		{
+			$entry = $entries[$index];
+			$record = new declaration_comparison();
+			$record->entry = $entry;
+			$record->key = self::declaration_key($entry);
+			$record->declaration = self::declaration_text($entry, false);
+			$record->body = self::declaration_text($entry, true);
+			$result->add($record->key, $record);
+		}
+		return $result;
+	}
+
 	/** Match equal duplicates first, then unambiguous remaining keys; retain unmatched old rows deleted. */
 	public static function compare(parsed_file $previous, parsed_file $candidate): void
 	{
-		$old_entries /** Storage<collected_name> */ = $previous->collection->entries;
-		$new_entries /** Storage<collected_name> */ = $candidate->collection->entries;
-		$matched /** hash<bool, int> */ = [];
-		$paired /** hash<bool, int> */ = [];
+		$old_records /** Key_Storage_List<declaration_comparison> */ = self::candidates($previous->collection);
+		$new_records /** Key_Storage_List<declaration_comparison> */ = self::candidates($candidate->collection);
 		for ($pass = 0; $pass < 2; $pass++)
 		{
-			foreach ($candidate->collection->defined_elements as $new_index)
+			foreach ($new_records->items() as $record)
 			{
-				if (isset($paired[$new_index])) {
+				if ($record->paired) {
 					continue;
 				}
-				$entry = $new_entries[$new_index];
-				$key = self::declaration_key($entry);
-				$found = -1;
-				$count = 0;
-				foreach ($previous->collection->defined_elements as $old_index)
+				$matches /** vector<declaration_comparison> */ = [];
+				foreach ($old_records->named($record->key) as $old)
 				{
-					$old = $old_entries[$old_index];
-					if (isset($matched[$old_index]) || ($old->changes === \scpp\compiler\SYNC_DELETED)) {
-						continue;
-					}
-					if (self::declaration_key($old) !== $key) {
+					if (($old->paired) || ($old->entry->changes === \scpp\compiler\SYNC_DELETED)) {
 						continue;
 					}
 					if ($pass === 0) {
-						if ((self::declaration_text($old, false) !== self::declaration_text($entry, false)) || (self::declaration_text($old, true) !== self::declaration_text($entry, true))) {
+						if (($old->declaration !== $record->declaration) || ($old->body !== $record->body)) {
 							continue;
 						}
 					}
-					$found = $old_index;
-					$count++;
+					$matches[] = $old;
 					if ($pass === 0) {
 						break;
 					}
 				}
-				if ($count !== 1) {
+				if (q_count($matches) !== 1) {
 					continue;
 				}
 				if ($pass === 1)
 				{
 					$remaining = 0;
-					foreach ($candidate->collection->defined_elements as $other_index) {
-						if (!isset($paired[$other_index])) {
-							if (self::declaration_key($new_entries[$other_index]) === $key) {
-								$remaining++;
-							}
+					foreach ($new_records->named($record->key) as $other) {
+						if (!$other->paired) {
+							$remaining++;
 						}
 					}
 					if ($remaining !== 1) {
 						continue;
 					}
 				}
-				$old = $old_entries[$found];
-				$entry->changes = 0;
-				if (self::declaration_text($old, false) !== self::declaration_text($entry, false)) {
-					$entry->changes = $entry->changes + \scpp\compiler\SYNC_CHANGED;
+				$old = $matches[0];
+				$record->entry->changes = 0;
+				if ($old->declaration !== $record->declaration) {
+					$record->entry->changes = $record->entry->changes + \scpp\compiler\SYNC_CHANGED;
 				}
-				if (self::declaration_text($old, true) !== self::declaration_text($entry, true)) {
-					$entry->changes = $entry->changes + \scpp\compiler\SYNC_BODY_CHANGED;
+				if ($old->body !== $record->body) {
+					$record->entry->changes = $record->entry->changes + \scpp\compiler\SYNC_BODY_CHANGED;
 				}
-				$paired[$new_index] = true;
-				$matched[$found] = true;
+				$record->paired = true;
+				$old->paired = true;
 			}
 		}
-		foreach ($previous->collection->defined_elements as $old_index)
+		$new_entries /** Storage<collected_name> */ = $candidate->collection->entries;
+		foreach ($old_records->items() as $old)
 		{
-			if (isset($matched[$old_index])) {
+			if ($old->paired) {
 				continue;
 			}
-			$old = $old_entries[$old_index];
-			$old->changes = \scpp\compiler\SYNC_DELETED;
-			$position = $new_entries->append($old);
+			$old->entry->changes = \scpp\compiler\SYNC_DELETED;
+			$position = $new_entries->append($old->entry);
 			$candidate->collection->defined_elements[] = $position;
 		}
 	}

@@ -1,17 +1,40 @@
-# First LLVM pass
+# Parked legacy LLVM experiment
 Doc Status: supporting
+
+This backend and its separate preparation stack are retained only for existing LLVM
+regressions. They are not the current semantic architecture. The active direction is
+[`File_Preparation` and specialization-attached facts](../../04_analyze/prepare/README.md),
+ultimately one backend-neutral preparation path.
+
+- `legacy_names.php`: `LLVM_Legacy_Name_Preparation`, the old token-indexed resolver.
+- `legacy_templates.php`: `LLVM_Legacy_Template_Checker` and its per-file worker.
+- `structures.php`: LLVM records, including `llvm_legacy_prepared_names` and
+  `llvm_legacy_template_check_context` used only by this parked preparation stack.
+- `prepare.php` and `structs.php`: retained concrete-instance, type and storage preparation.
+
+Do not independently add new language semantics here. If LLVM development resumes,
+first review and adapt it to consume shared preparation facts, leaving only
+LLVM-specific lowering in this backend. That convergence is future work; this task
+only isolates and labels the legacy path, preserving behavior and regression tests.
+The remaining sections describe the retained experiment and its existing limits,
+not an independent roadmap for new semantic features.
+
+## Retained regression call flow
 
 ```text
 Compiler::llvm()
     LLVM_Preparation::prepare_program()
-        LLVM_Struct_Preparation::prepare() [all struct definitions]
-        Name_Preparation::prepare()        [retained file bindings]
-        Template_Checker::check()          [symbolic permissions, including unused templates]
-        register()                        [ordinary roots and explicit instances]
-        prepare_instance()                [each queued instance]
-            locals and parameter storage
-            LLVM_Struct_Preparation::fields()
-            register()                    [new concrete call targets]
+        LLVM_Preparation_Run::__construct()
+            LLVM_Struct_Preparation::prepare()    [all struct definitions]
+        LLVM_Preparation_Run::prepare_program()
+            LLVM_Legacy_Name_Preparation::prepare() [token-indexed file bindings]
+            LLVM_Legacy_Template_Checker::check()
+                LLVM_Legacy_Template_File_Checker::check() [including unused templates]
+            register()                           [ordinary roots and explicit instances]
+            prepare_instance()                   [each queued instance]
+                locals and parameter storage
+                LLVM_Struct_Preparation::fields()
+                register()                       [new concrete call targets]
     LLVM_Generator::generate()
         LLVM_Function_Generator::generate() -> to_llvm_block()
             expression()/expression_storage() -> loads, calls, checked addresses
@@ -144,7 +167,7 @@ emits its demanded instances, and callers import only used cross-file signatures
 Link names append the reversibly escaped `<int,...>` spelling; registry identity
 is independent of that spelling.
 
-`04_analyze/prepare/templates.php` performs bounded symbolic signature/body checks before
+`legacy_templates.php` performs bounded symbolic signature/body checks before
 substitution, including unused templates. It supports value parameters, explicit
 copy initialization/assignment, returns and compatible call forwarding. Bare type
 parameters do not gain member access, indexing, default construction or mutable

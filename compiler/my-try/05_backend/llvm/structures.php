@@ -1,10 +1,44 @@
 <?php
 
 /*
- * Role: prepared storage, concrete instances and LLVM output records.
+ * Role: parked LLVM preparation data, concrete instances and LLVM output records.
  * Used by: LLVM_Preparation, LLVM_Generator and LLVM_Writer.
  */
 namespace scpp\compiler;
+
+/** Parked LLVM-only name maps: source-local token indexes reference retained declarations. */
+final class llvm_legacy_prepared_names {
+	/** @storage.reference collected_file.entries
+	 * @reference.weak
+	 */
+	public array $declarations /** hash<collected_name, int> */ = [];
+	/** Resolved source type declarations by use token. */
+	/** @storage.reference collected_file.entries
+	 * @reference.weak
+	 */
+	public array $types /** hash<collected_name, int> */ = [];
+	/** Type-use token index to its owning template parameter slot. */
+	public array $template_slots /** hash<int, int> */ = [];
+	/** @storage.reference collected_file.entries
+	 * @reference.weak
+	 */
+	public array $references /** hash<collected_name, int> */ = [];
+	/** Call-name token index to declaration. */
+	/** @storage.reference collected_file.entries
+	 * @reference.weak
+	 */
+	public array $function_references /** hash<collected_name, int> */ = [];
+}
+
+/** Parked LLVM-only template-check invocation; complete before its file workers run. */
+final class llvm_legacy_template_check_context {
+	/** Shared policy supplied to LLVM_Legacy_Template_Checker::check. */
+	public llvm_policy $policy;
+	/** Index references the prepared files supplied to LLVM_Legacy_Template_Checker::check.
+	 * @reference.weak
+	 */
+	public \SplObjectStorage $files /** hash<llvm_prepared_file, shared<collected_file>> */;
+}
 
 /** Explicit defaults for this experiment, not the full Simple C++ type/ABI contract. */
 final class llvm_policy
@@ -112,7 +146,7 @@ final class llvm_prepared_file
 	/** @storage.reference model.collected_files */
 	public collected_file $source;
 	/** @ownership owner */
-	public prepared_names $names;
+	public llvm_legacy_prepared_names $names;
 	/** Types required by this module, shared across the preparation result.
 	 * Definitions and imported uses refer to the same type records.
 	 * @reference.source LLVM_Preparation.structs

@@ -30,8 +30,9 @@ $compiler->jobs = 4;
 The task executor bounds concurrent work, serializes publication and joins workers.
 PHP implements the same work/publish calls sequentially; native uses actual worker
 threads. The compiler's success barrier checks the returned publication count and
-all work states AFTER joining. Cross-file LLVM/name preparation starts only after
-that barrier. Work/publisher errors join workers and escape, so generation does not
+all work states AFTER joining. Shared `File_Preparation` starts only after that
+barrier. The parked LLVM regression entry also waits before running its separate
+legacy name/template preparation. Work/publisher errors join workers and escape, so generation does not
 run. Already published files can remain visible until the next reset; no rollback
 is promised. Which error wins when several jobs fail is not specified.
 
@@ -42,7 +43,7 @@ file root and nested scopes. Symbol_Collector writes only those private scopes.
 The legacy direct Parser API accepting an external scope remains available; it is
 not used by compiler workers.
 
-Compiler.publish_scope (shared by initial publication and sync replacement) installs
+Source_Publication::publish_parsed (shared by initial publication and sync replacement) installs
 references to root-scope declarations in
 Model.global_scope, retains the completed parse/collection, and records the root
 scope's native weak publication link. Function locals are not exported. Declaration
@@ -60,8 +61,10 @@ duplicate candidates remain visible even if the file defines its own matching na
 Unpublished standalone parses still use local maps. AST/occurrence scope identity
 is preserved, including the LLVM experiment's same-file variable rules.
 
-After joining, retained syntax/collection roots are reordered by original input
-position, preserving generated filenames/output order independently of completion.
+Each work item carries its stable source record, prior parse and private candidate.
+Publication replaces that record's completed stages together. Module/source membership
+already determines traversal order, independently of worker completion; no retained
+root reordering or path-based join is required.
 Global declaration pools keep every candidate; scheduling cannot select a winner.
 
 ## Runtime boundary and validation

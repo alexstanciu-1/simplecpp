@@ -24,6 +24,7 @@ final class Converter {
 	private int $position = 0;
 	private string $path = '';
 	private bool $inClass = false;
+	private bool $validatingTrait = false;
 	private int $exceptionCounter = 0;
 	private array $seenLocals = [];
 	private array $borrowedLocals = [];
@@ -56,6 +57,7 @@ final class Converter {
 		$this->path = $path;
 		$this->exceptionCounter = 0;
 		$this->inClass = false;
+		$this->validatingTrait = false;
 		$this->seenLocals = [];
 		$this->borrowedLocals = [];
 		$this->parameterLocals = [];
@@ -241,6 +243,15 @@ final class Converter {
 		$type = $this->significant();
 		$nullable = ($return || $nullableParameter) && $type[1] === '?';
 		if ($nullable) { $type = $this->significant(); }
+		// Unexpanded traits are syntax-checked symbolically and never emitted. Each
+		// consuming class supplies the concrete field type before its conversion.
+		if ($this->validatingTrait && $type[1] === 'object') {
+			$annotation = $this->significant();
+			if ($annotation[0] !== T_DOC_COMMENT || !preg_match('~^/\*\*\s*@field-type ([a-zA-Z_][a-zA-Z_0-9]*)\s*\*/$~D', $annotation[1], $match)) {
+				$this->fail($annotation[2], 'trait object signature requires /** @field-type field_name */');
+			}
+			return $nullable ? 'nullable<' . $match[1] . '>' : $match[1];
+		}
 		if ($nullable && $type[0] === T_ARRAY) { $this->fail($type[2], 'nullable containers are unsupported at this signature site'); }
 		if ($return && $type[0] === T_ARRAY) { return $this->containerAnnotation($this->significant()); }
 		$excluded = ['mixed', 'object', 'iterable', 'never', 'self', 'parent', 'static',
@@ -253,7 +264,7 @@ final class Converter {
 		if ($nullable && strtolower($type[1]) === 'void') { $this->fail($type[2], 'nullable void is unsupported'); }
 		$mapped = Exception_Policy::name($type[1]);
 		if ($return && $mapped === '\\SplObjectStorage') { $mapped = $this->objectHashAnnotation($this->significant()); }
-		if ($return && in_array($mapped, ['Storage', 'Keyed_Storage'], true)) {
+		if ($return && in_array($mapped, ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
 			$mapped = $this->storageAnnotation($this->significant(), $mapped);
 		}
 		return $nullable ? 'nullable<' . $mapped . '>' : $mapped;
@@ -275,9 +286,9 @@ final class Converter {
 				$parameter = $this->significant();
 				if ($parameter[0] !== T_VARIABLE) { $this->fail($parameter[2], 'expected named parameter'); }
 				$parameterNames[] = $parameter[1];
-				$nullableStorage = in_array($type, ['nullable<Storage>', 'nullable<Keyed_Storage>'], true);
+				$nullableStorage = in_array($type, ['nullable<Storage>', 'nullable<Keyed_Storage>', 'nullable<Key_Storage_List>'], true);
 				$family = $nullableStorage ? substr($type, 9, -1) : $type;
-				$storage = in_array($family, ['Storage', 'Keyed_Storage'], true);
+				$storage = in_array($family, ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true);
 				if ($storage) {
 					if (!$containerReturn) { $this->fail($line, 'Storage interface signatures require a separately proved contract'); }
 					$type = $this->storageAnnotation($this->significant(), $family);
@@ -309,7 +320,7 @@ final class Converter {
 		}
 		$this->expect(':');
 		$return = $this->signatureType(true);
-		if (!$containerReturn && (str_starts_with($return, 'vector<') || str_starts_with($return, 'hash<') || str_starts_with($return, 'Storage<') || str_starts_with($return, 'Keyed_Storage<') || str_starts_with($return, 'nullable<'))) {
+		if (!$containerReturn && (str_starts_with($return, 'vector<') || str_starts_with($return, 'hash<') || str_starts_with($return, 'Storage<') || str_starts_with($return, 'Keyed_Storage<') || str_starts_with($return, 'Key_Storage_List<') || str_starts_with($return, 'nullable<'))) {
 			$this->fail($line, 'container interface returns require a separately proved native contract');
 		}
 		return $visibility . ($static ? ' static' : '') . ' function ' . $name[1] . '(' . implode(', ', $parameters) . '): ' . $return;
@@ -357,7 +368,7 @@ final class Converter {
 	/** Local type spelling only; declarations, assignability and identity belong to the target. */
 	private function localAnnotation(array $token): string {
 		$annotation = $token[1];
-		if (preg_match('~^/\*\*\s*(?:vector|hash|Storage|Keyed_Storage)\s*<~', $annotation)) {
+		if (preg_match('~^/\*\*\s*(?:vector|hash|Storage|Keyed_Storage|Key_Storage_List)\s*<~', $annotation)) {
 			return $this->containerAnnotation($token, true);
 		}
 		if (preg_match('~^/\*\*\s*((?:(?:nullable|result_or_false|result_or_bool)<)?(?:int|uint32|bool|string)>?)\s*\*/$~D', $annotation, $match)) {
@@ -371,7 +382,7 @@ final class Converter {
 			return $type;
 		}
 		if (preg_match('~^/\*\*\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*\*/$~D', $annotation, $match)
-			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
+			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
 			return Exception_Policy::name($match[1]);
 		}
 		$this->fail($token[2], 'unsupported local type annotation');
@@ -402,7 +413,7 @@ final class Converter {
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected promoted parameter name'); }
 			$parameterNames[] = $field[1];
-			if (in_array($mappedType, ['Storage', 'Keyed_Storage'], true)) {
+			if (in_array($mappedType, ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
 				$mappedType = $this->storageAnnotation($this->significant(), $mappedType);
 			}
 			if ($type[0] === T_ARRAY) {
@@ -430,7 +441,7 @@ final class Converter {
 				}
 				$separator = $this->significant();
 			}
-			$annotated = $nullable || $type[0] === T_ARRAY || in_array($type[1], ['Storage', 'Keyed_Storage'], true);
+			$annotated = $nullable || $type[0] === T_ARRAY || in_array($type[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true);
 			$property = $annotated
 				? ($readonly ? '/** PHP readonly; native usage contract. */ ' : '') . $visibility[1] . ' ' . $field[1] . ' ' . $typeName . ';'
 				: $visibility[1] . ' ' . ($readonly ? 'readonly ' : '') . $typeName . ' ' . $field[1] . ';';
@@ -577,6 +588,13 @@ final class Converter {
 			if (!in_array($id, [T_PUBLIC, T_PRIVATE, T_PROTECTED], true)) { $this->fail($at, 'expected explicit member visibility'); }
 			$visibility = $text;
 			$type = $this->significant();
+			if ($type[0] === T_ABSTRACT) {
+				if (!$abstract || $visibility === 'private') { $this->fail($at, 'abstract methods require a public/protected member of an abstract class'); }
+				$signature = $this->methodSignature($at, $visibility . ' abstract', false);
+				$this->expect(';');
+				$fields[] = new Node('abstract_method', $signature . ';', $at);
+				continue;
+			}
 			if ($type[0] === T_FUNCTION) {
 				if (($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === '__construct') {
 					if ($visibility !== 'public') { $this->fail($at, 'expected public constructor'); }
@@ -660,7 +678,7 @@ final class Converter {
 				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $collection . ';', $at);
 				continue;
 			}
-			if (in_array($type[1], ['Storage', 'Keyed_Storage'], true)) {
+			if (in_array($type[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
 				$collection = $this->storageAnnotation($this->significant(), $type[1]);
 				$initializer = '';
 				if ($nullable) { $this->expect('='); $this->expect('null'); $initializer = ' = null'; }
@@ -968,7 +986,9 @@ final class Converter {
 			if ($id === T_TRAIT) {
 				if ($closing !== null) { $this->fail($line, 'trait declarations must be at file scope'); }
 				// Validate the supported member grammar even for an unused trait.
+				$this->validatingTrait = true;
 				$this->referenceClass($line);
+				$this->validatingTrait = false;
 				continue;
 			}
 			if ($id === T_CONST) {
@@ -1030,7 +1050,7 @@ final class Converter {
 					continue;
 				}
 				$storageName = null;
-				if (in_array($name[1], ['Storage', 'Keyed_Storage'], true)) {
+				if (in_array($name[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
 					$annotationAt = $this->nextSignificant($this->position);
 					if (($this->tokens[$annotationAt][0] ?? null) === T_DOC_COMMENT) {
 						$storageName = $this->storageAnnotation($this->significant(), $name[1]);

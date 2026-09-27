@@ -11,19 +11,21 @@ final class Compiler_Lifecycle
 	/** Start a fresh compilation without retaining output or indexes from an earlier run. */
 	public static function reset(): void
 	{
+		if (self::$syntax_initialized) {
+			self::reset_preparation();
+		}
 		Model::$modules = new Storage /** Storage<module> */();
+		Model::$sources_by_path = new Keyed_Storage /** Keyed_Storage<source_record> */();
 		self::reset_tokens();
 	}
 
 	/** Restart scanning: invalidate every dependent root and all source backlinks first. */
 	public static function reset_tokens(): void
 	{
-		Model::$tokens = new Storage /** Storage<token_list> */();
 		self::reset_syntax();
-		foreach (Model::$modules as $module) {
-			foreach ($module->files as $file) {
-				$file->tokens = null;
-			}
+		foreach (Model::sources() as $source) {
+			$source->tokens = null;
+			$source->file->tokens = null;
 		}
 	}
 
@@ -31,7 +33,9 @@ final class Compiler_Lifecycle
 	public static function reset_syntax(): void
 	{
 		self::reset_preparation();
-		Model::$syntax_files = new Storage /** Storage<parsed_file> */();
+		foreach (Model::sources() as $source) {
+			$source->parsed = null;
+		}
 		self::$syntax_initialized = true;
 
 		Model::$language_scope = new scope();
@@ -39,7 +43,6 @@ final class Compiler_Lifecycle
 		Model::$global_scope = new scope();
 		Model::$global_scope->set_parent(Model::$language_scope);
 
-		Model::$collected_files = new Storage /** Storage<collected_file> */();
 		self::reset_llvm();
 	}
 
@@ -47,7 +50,7 @@ final class Compiler_Lifecycle
 	public static function reset_preparation(): void
 	{
 		if (self::$syntax_initialized) {
-			foreach (Model::$syntax_files as $parsed) {
+			foreach (Model::syntax_files() as $parsed) {
 				Preparation_Cleanup::tree($parsed->root);
 			}
 		}

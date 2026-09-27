@@ -1917,7 +1917,7 @@ final class Generator
 			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out, $namespacePhp);
 			return;
 		}
-		if (preg_match('/^(?:vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(?:Key_Storage_List|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			foreach ($this->typeMapper->splitTopLevelGenericArgs($matches[1]) as $arg) {
 				$this->collectForwardClassNamesFromType(trim($arg), $out, $namespacePhp);
 			}
@@ -7292,7 +7292,7 @@ final class Generator
 			return '?' . ($this->qualifyDeclaredPhpType($inner, $namespacePhp) ?? $inner);
 		}
 
-		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|Key_Storage_List|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			$wrapper = $matches[1];
 			$args = $this->typeMapper->splitTopLevelGenericArgs($matches[2]);
 			$qualifiedArgs = [];
@@ -7535,6 +7535,11 @@ final class Generator
 			return $class . '::' . $const;
 		}
 		if ($kind === AstKind::NEW) {
+			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
+			if ($this->typeMapper->isKeyStorageListType($authoredType)) {
+				$type = $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $namespacePhp));
+				return $type . '(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
+			}
 			if ($this->isStdClassNewExpr($expr)) {
 				return 'mixed_t{dynamic_()}';
 			}
@@ -7667,6 +7672,10 @@ final class Generator
 			$method = (string) ($expr->children['method'] ?? 'call');
 			$args = $expr->children['args']->children ?? [];
 			$baseType = $this->inferExprType($baseExpr);
+			if (str_starts_with($baseType, '::scpp::compiler::Key_Storage_List<')) {
+				$call = $base . '.' . $this->cppIdentifier($method) . '(' . $this->renderArgs($args, $namespacePhp) . ')';
+				return $method === 'is_empty' ? 'bool_t(' . $call . ')' : $call;
+			}
 			if (str_starts_with($baseType, 'result<') && $method === 'error' && count($args) === 0) {
 				return $base . '.error()';
 			}
@@ -8976,6 +8985,11 @@ final class Generator
 			$baseExpr = $expr->children['expr'] ?? null;
 			$methodName = (string) ($expr->children['method'] ?? '');
 			$baseType = $this->inferExprType($baseExpr);
+			if (preg_match('/^::scpp::compiler::Key_Storage_List<(.+)>$/', $baseType, $parts) === 1) {
+				if (in_array($methodName, ['items', 'named'], true)) return 'vector_t<shared_p<' . $parts[1] . '>>';
+				if ($methodName === 'is_empty') return 'bool_t';
+				if ($methodName === 'add') return 'void';
+			}
 			$methodDecl = is_object($baseExpr) && ($baseExpr->kind ?? null) === AstKind::VAR && ($baseExpr->children['name'] ?? null) === 'this'
 				? $this->lookupMethodDeclByCurrentClass($methodName, $namespacePhp)
 				: $this->lookupMethodDeclByMappedBaseType($baseType, $methodName);
@@ -9019,6 +9033,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
+			if (str_starts_with($declared, '::scpp::compiler::Key_Storage_List<')) return $declared;
 			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || $declared === 'dynamic_t<>' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'fixed_array_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
 			}
@@ -9052,6 +9067,8 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::NEW) {
+			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
+			if ($this->typeMapper->isKeyStorageListType($authoredType)) return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $this->currentNamespacePhp));
 			if ($this->isStdClassNewExpr($expr)) {
 				return 'dynamic_t<>';
 			}

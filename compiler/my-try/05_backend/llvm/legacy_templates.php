@@ -1,13 +1,14 @@
 <?php
 
 /*
- * Role: check bounded symbolic template contracts.
- * Call map: LLVM_Preparation::prepare_program -> Template_Checker::check -> statement -> expression.
+ * Role: check bounded template contracts for the parked LLVM experiment only.
+ * Status: parked; extend File_Preparation/attached facts for new semantics, not this path.
+ * Call map: LLVM_Preparation_Run::prepare_program -> LLVM_Legacy_Template_Checker::check -> LLVM_Legacy_Template_File_Checker::check.
  */
 namespace scpp\compiler;
 
 /** Bounded symbolic checks run even for unused definitions; substitution grants no permissions. */
-final class Template_Checker
+final class LLVM_Legacy_Template_Checker
 {
 	/** Index prepared files once and check every template against the shared symbolic policy. */
 	public function check(Storage $files /** Storage<llvm_prepared_file> */, llvm_policy $policy): void
@@ -17,25 +18,25 @@ final class Template_Checker
 			$file_index[$file->source] = $file;
 		}
 
-		$context = new template_check_context();
+		$context = new llvm_legacy_template_check_context();
 		$context->files = $file_index;
 		$context->policy = $policy;
 
 		foreach ($files as $file) {
-			(new Template_File_Checker($file, $context))->check();
+			(new LLVM_Legacy_Template_File_Checker($file, $context))->check();
 		}
 	}
 }
 
 /** A complete file context; symbolic locals reset for each template definition. */
-final class Template_File_Checker
+final class LLVM_Legacy_Template_File_Checker
 {
 	private llvm_prepared_file $file;
 	private array $bindings /** vector<string> */ = [];
 	private array $locals /** hash<string, int> */ = [];
-	private template_check_context $context;
+	private llvm_legacy_template_check_context $context;
 
-	public function __construct(llvm_prepared_file $file, template_check_context $context)
+	public function __construct(llvm_prepared_file $file, llvm_legacy_template_check_context $context)
 	{
 		$this->file = $file;
 		$this->context = $context;

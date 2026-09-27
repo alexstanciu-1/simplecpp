@@ -207,3 +207,37 @@ The verified target pin remains unchanged.
 The harness now accepts `s2s:<source-directory>` requests and retains scalar C++
 execution evidence alongside the existing native comparisons. This extends test
 coverage without enabling new source-language features or LLVM development.
+
+## Data-model relationship consolidation — 2026-09-27
+
+The stable source/attached occurrence/Key_Storage_List model passed a normal
+STAN-enabled native compiler build and 142 PHP/native comparisons (48 valid,
+94 rejection/recovery cases), the integer S2S proof and 15 scalar S2S executions.
+The shared proof also checks duplicate-key insertion order, repeated record identity,
+snapshot independence, collection aliasing and stable source identity across updates.
+Evidence: `/tmp/scpp-model-native-01/summary.json` and its numbered attempt logs.
+The PR #244 candidate remains an explicit overlay; the verified target pin is unchanged.
+
+New native collection support is maintained in the compiler runtime module and
+legacy S2S constructor/type/method bindings. A separate minimal application built
+with this repository's toolchain and ran with output `0`, independently of that
+candidate overlay (`/tmp/scpp-key-list-native-02`). The reproducible entry is
+`tests/portability/key_storage_list_native.py`.
+
+Native stabilization made occurrence attachment an explicit permanent boolean state,
+independent of weak-observer presence/expiration. The parked LLVM preparation worker
+now skips tombstones and non-variable declarations before acquiring a scope; it
+must not rely on PHP short-circuit behavior or old parsed scopes remaining alive.
+No parked LLVM index-map redesign was performed.
+
+At this checkpoint STAN has zero blocking compile errors, with 362 advisory errors
+and 108 warnings. Native behavior passes; this is not a clean static-analysis report.
+
+First complete PHP behavior checkpoint: `/tmp/scpp-model-php-03/summary.json`;
+final full PHP verification: `/tmp/scpp-model-php-final/summary.json` (80 linted PHP
+files, mandatory style, 19 LLVM, 28 call and 37 C++ executions). Native first complete
+behavior pass was attempt 8 (`logs-8`); attempt 9 (`logs-9`) was the final verification
+build and rerun after path-alias normalization. Earlier numbered logs retain the
+seven unsuccessful attempts and their corrective diagnostics. Native command timings
+are in each `commands.json`; `source_hashes.json` and `candidate.json` identify the
+final compiler inputs and selected toolchain files.

@@ -1,17 +1,18 @@
 <?php
 
 /*
- * Role: resolve occurrence indexes to exact declarations.
- * Call map: LLVM_Preparation::prepare_program -> Name_Preparation::prepare.
+ * Role: resolve token-indexed names for the parked LLVM experiment only.
+ * Status: parked; extend File_Preparation/attached facts for new semantics, not this path.
+ * Call map: LLVM_Preparation_Run::prepare_program -> LLVM_Legacy_Name_Preparation::prepare.
  */
 namespace scpp\compiler;
 
-final class Name_Preparation
+final class LLVM_Legacy_Name_Preparation
 {
 	/** Prepare only unambiguous explicit variables for the initial LLVM experiment. */
-	public function prepare(collected_file $file): prepared_names
+	public function prepare(collected_file $file): llvm_legacy_prepared_names
 	{
-		$result = new prepared_names();
+		$result = new llvm_legacy_prepared_names();
 		$entries /** Storage<collected_name> */ = $file->entries;
 		foreach ($file->defined_elements as $index)
 		{

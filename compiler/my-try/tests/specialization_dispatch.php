@@ -62,6 +62,48 @@ if (!($specialization instanceof node_operations_i)) {
 	throw new \LogicException('Specializations did not inherit the operation interface');
 }
 
+// Shared accessors retain identity, typed assignment and per-instance cleanup for every fact slot.
+$fact_pairs = [
+	[new integer_literal_structure(), new prepared_integer_literal()],
+	[new float_literal_structure(), new prepared_float_literal()],
+	[new boolean_literal_structure(true), new prepared_boolean_literal()],
+	[new variable_reference_structure(), new prepared_variable_reference()],
+	[new binding_structure(), new prepared_binding()],
+];
+foreach ($fact_pairs as $pair)
+{
+	$owner = $pair[0];
+	$facts = $pair[1];
+	if ($owner->preparation() !== null) {
+		throw new \LogicException('New specialization has prepared facts');
+	}
+	$owner->set_preparation($facts);
+	if (($owner->preparation() !== $facts) || ($owner->require_preparation() !== $facts)) {
+		throw new \LogicException('Shared preparation access copied or changed facts');
+	}
+	$rejected = false;
+	try {
+		$owner->set_preparation(new \stdClass());
+	}
+	catch (\TypeError $expected) {
+		$rejected = true;
+	}
+	if (!$rejected || ($owner->preparation() !== $facts)) {
+		throw new \LogicException('Shared setter accepted incompatible facts or lost prior state');
+	}
+	$owner->clear_preparation();
+	$rejected = false;
+	try {
+		$owner->require_preparation();
+	}
+	catch (\RuntimeException $expected) {
+		$rejected = true;
+	}
+	if (!$rejected || ($owner->preparation() !== null)) {
+		throw new \LogicException('Concrete required accessor accepted cleared facts');
+	}
+}
+
 // A reused generator must own fresh output state rather than retain a prior invocation's headers.
 $generator = new CPP_Generator();
 $integer_source = dispatch_parse('$a int = 10; return $a;');

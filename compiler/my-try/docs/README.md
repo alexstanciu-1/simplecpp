@@ -54,8 +54,11 @@ SHA-256 checksums identify the imported content for provenance only:
 The checksums above describe the original imports, before local adaptation.
 Data now lives in `01_prepare_inputs/structures.php`; `File_Loader::init()` and
 `Module_Loader::init()` populate caller-owned records. All use `scpp\compiler`.
-The full PHP pipeline is imported: loading, tokenization, parsing/collection,
-name/template preparation, LLVM generation and Clang execution. Data records live
+The original imported PHP pipeline included loading, tokenization, parsing/collection,
+name/template preparation, LLVM generation and Clang execution. Name/template
+preparation is now parked under `05_backend/llvm/` for existing regressions. Active
+semantic work belongs to `File_Preparation` and specialization-attached facts; see
+[the shared analysis direction](../04_analyze/README.md). Data records live
 in each process's `structures.php`; AST payloads are grouped separately in
 `03_parse/structures_specialization.php`. Processing owners use capitalized names.
 These components are not yet registered or proved convertible-PHP components.
@@ -182,7 +185,7 @@ issue text is a historical snapshot, not a synchronized copy of the local brief.
 - `02_tokenize/`: tokenization.
 - `03_parse/`: syntax and `scopes/` representation/lookup.
 - `04_analyze/collect/`: occurrence collection.
-- `04_analyze/prepare/`: preparation workers and records.
+- `04_analyze/prepare/`: active backend-neutral preparation workers and facts.
 - `compiler/types/`: shared type data, language initialization and source definitions.
 - `05_backend/cpp/`, `05_backend/llvm/`: backend preparation/emission.
 - `06_native/`: generated-program toolchain execution.

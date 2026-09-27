@@ -78,3 +78,19 @@ annotations. Constructions require `new Storage /** Storage<row> */(capacity)`
 (or Keyed_Storage) so the converter never infers T. See
 [the binding contract](../../../../specs/portability/storage_collections.md).
 This is PHP/conversion coverage; the whole compiler has not passed native validation.
+
+## Duplicate-key lists
+
+`Key_Storage_List<T>` groups object records by string key while preserving every
+insertion. `add(key, record)` never deduplicates identity. `named(key)` returns a
+per-key ordered vector snapshot; `items()` returns the full insertion-order vector
+snapshot. Returned vectors copy membership and retain the same objects.
+`is_empty()` reports whether anything was inserted. Collection aliases share
+membership. Keys are exact byte strings, including numeric-looking names.
+
+This separate helper owns its ordered records and private per-key position index;
+consumers do not maintain parallel lists or hash buckets. Scope variable/function
+pools, scope type definitions, and temporary declaration comparison groups use it.
+Names must stay stable while indexed; scope replacement rebuilds the collection.
+There is no unique-key replacement, position API or removal API in this slice.
+PHP helper code and the compiler runtime wrapper implement the same contract.

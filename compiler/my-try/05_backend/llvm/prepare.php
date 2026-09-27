@@ -1,7 +1,8 @@
 <?php
 
 /*
- * Role: prepare demanded function instances without changing source.
+ * Role: retain demanded-instance preparation for legacy LLVM regressions.
+ * Status: parked; extend File_Preparation/attached facts for new semantics, not this path.
  * Call map: Compiler::llvm -> LLVM_Preparation::prepare_program -> register -> prepare_instance.
  */
 namespace scpp\compiler;
@@ -48,7 +49,7 @@ final class LLVM_Preparation_Run
 		{
 			$file = new llvm_prepared_file();
 			$file->source = $source;
-			$file->names = (new Name_Preparation())->prepare($source);
+			$file->names = (new LLVM_Legacy_Name_Preparation())->prepare($source);
 			$entries /** Storage<collected_name> */ = $source->entries;
 			$struct_types /** Keyed_Storage<llvm_struct_type> */ = $file->struct_types;
 			$this->file_indexes[$file] = $index;
@@ -66,7 +67,7 @@ final class LLVM_Preparation_Run
 				}
 			}
 		}
-		(new Template_Checker())->check($files, $this->policy);
+		(new LLVM_Legacy_Template_Checker())->check($files, $this->policy);
 		foreach ($files as $file)
 		{
 			$entries /** Storage<collected_name> */ = $file->source->entries;
@@ -193,7 +194,11 @@ final class LLVM_Preparation_Run
 		foreach ($file->source->defined_elements as $index)
 		{
 			$declaration = $entries[$index];
-			if (($declaration->kind !== collected_name_kind::variable_declaration) || (object_cast(weakref_get($declaration->scope), scope::class) !== $function_scope)) {
+			// Tombstones retain syntax evidence, not the old parsed scope owner.
+			if (($declaration->changes === \scpp\compiler\SYNC_DELETED) || ($declaration->kind !== collected_name_kind::variable_declaration)) {
+				continue;
+			}
+			if (object_cast(weakref_get($declaration->scope), scope::class) !== $function_scope) {
 				continue;
 			}
 			$is_parameter = $declaration->node->kind() === node_kind::parameter_declaration;

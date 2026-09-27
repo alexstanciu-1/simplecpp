@@ -11,7 +11,11 @@ function s2s_parse(string $text): parsed_file
 	$input->path = 's2s.phs';
 	$input->content = $text;
 	$syntax = (new Parser((new Tokenizer($input))->tokenize()))->parse();
-	Source_Publication::publish_parsed($syntax);
+	$module = new module();
+	$module->path = Source_Registry::normalize('.');
+	Model::$modules[] = $module;
+	$record = Source_Registry::add($module, $input);
+	Source_Publication::publish_parsed($record, $syntax);
 	return $syntax;
 }
 

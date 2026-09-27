@@ -39,7 +39,7 @@ final class LLVM_Test
 			if ((count(Model::$llvm_files) !== 1) || !$module->functions[0]->is_entry || ($module->globals !== []) || ($module->external_functions !== []) || ($module->types !== []) || ($module->metadata !== [])) {
 				throw new \RuntimeException('Incorrect output module structure');
 			}
-			$file = Model::$collected_files[0];
+			$file = Model::collected_files()[0];
 			if ($file->token_snapshot()->content !== $source) {
 				throw new \RuntimeException('Source content changed');
 			}

@@ -6,21 +6,21 @@ final class Source_Work_Queue
 {
 	private array $pending /** vector<source_work> */ = [];
 	private bool $sealed = false;
-	private \SplObjectStorage $sources /** hash<bool, shared<file>> */;
+	private \SplObjectStorage $sources /** hash<bool, shared<source_record>> */;
 
 	public function __construct()
 	{
-		$sources /** hash<bool, shared<file>> */ = new \SplObjectStorage /** hash<bool, shared<file>> */();
+		$sources /** hash<bool, shared<source_record>> */ = new \SplObjectStorage /** hash<bool, shared<source_record>> */();
 		$this->sources = $sources;
 	}
 
 	/** Add an input snapshot before dispatch seals queue membership. */
-	public function enqueue(file $source, ?token_list $tokens = null): void
+	public function enqueue(source_record $record, file $source, ?token_list $tokens = null): void
 	{
 		if ($this->sealed) {
 			throw new \LogicException('Work membership is sealed');
 		}
-		if (isset($this->sources[$source])) {
+		if (isset($this->sources[$record])) {
 			throw new \LogicException('A source record cannot have concurrent work orders');
 		}
 		if ($tokens !== null) {
@@ -29,9 +29,11 @@ final class Source_Work_Queue
 				throw new \LogicException('Token snapshot belongs to another source');
 			}
 		}
-		$this->sources[$source] = true;
+		$this->sources[$record] = true;
 		$work = new source_work();
 		$work->source = $source;
+		$work->record = $record;
+		$work->previous = $record->parsed;
 		$work->tokens = $tokens;
 		$work->position = q_count($this->pending);
 		$this->pending[] = $work;

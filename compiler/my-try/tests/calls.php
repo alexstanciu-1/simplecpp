@@ -137,9 +137,9 @@ final class Calls_Test
 			$c->init([$folder]);
 			$c->tokenize();
 			$c->parse();
-			$before = serialize(Model::$collected_files);
+			$before = serialize(Model::collected_files());
 			$c->llvm();
-			if (serialize(Model::$collected_files) !== $before) {
+			if (serialize(Model::collected_files()) !== $before) {
 				throw new \RuntimeException('Preparation changed retained source or collection');
 			}
 			$caller = Model::$llvm_files[0];

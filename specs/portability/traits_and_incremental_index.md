@@ -62,6 +62,47 @@ Declaration lookup and direct expansion are the explicit exception to purely
 file-local conversion; there is no receiver-type inference, inherited-member
 lookup, overload resolution or general semantic compiler.
 
+## Shared accessors for concrete object fields
+
+Method-only traits may write `object /** @field-type facts */` in a parameter or
+return signature (`?object` for a nullable signature). During direct expansion,
+the converter copies the named type of the consuming class's explicitly declared
+instance field `facts`. The signature's own `?` controls nullability; the field
+annotation does not copy storage modifiers or an initializer. This is an explicit
+local structural binding, not inference from method bodies or inherited fields.
+
+```php
+trait Facts_Access {
+    public function facts(): ?object /** @field-type facts_data */ {
+        return $this->facts_data;
+    }
+    public function set_facts(object /** @field-type facts_data */ $facts): void {
+        $this->facts_data = $facts;
+    }
+}
+class Literal {
+    use Facts_Access;
+    private ?Literal_Facts $facts_data = null;
+}
+```
+
+PHP executes the methods using its `object` signature and the property's concrete
+assignment check. PHP reflection therefore reports `object`, whereas generated PHS
+has the concrete getter/setter types. Required accessors that use a concrete
+`object_cast` remain in the final class. Missing, inherited, static or scalar fields
+are rejected with trait source and consuming-class context. Trait syntax is checked
+symbolically even without a consumer; every expanded signature must bind before
+output publication. Existing trait collision rules remain unchanged.
+
+Abstract reference classes also support explicit `public abstract function` and
+`protected abstract function` declarations with supported method signatures and no
+body. This preserves the contract in PHS; PHP and the target compiler remain
+responsible for checking implementations.
+
+`python3 tests/portability/trait_field_types.py` covers PHP assignment/identity,
+concrete signatures, multiple traits, abstract declarations, cache invalidation and
+invalid bindings. Native execution of this extension has not yet been verified.
+
 ## Incremental discovery and cache
 
 ```bash

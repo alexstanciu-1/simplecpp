@@ -13,7 +13,8 @@ required fields are assigned before use/publication; optional absence uses ?T.
 | Record/state | Required initialization | Optional state / result |
 | --- | --- | --- |
 | Model roots | Compiler.init calls Compiler_Lifecycle.reset before any pipeline stage. reset initializes modules before reset_tokens traverses them; downstream resets initialize their roots before rebuilding. | Empty collections are valid; no nullable roots needed. Stage entry before init is outside the lifecycle contract. |
-| module | Constructor initializes files; Module_Loader assigns path before discovery. Compiler publishes a module after path discovery succeeds. | No optional fields. Reusing the loader directly clears files first and can leave a partial list on failure. |
+| module | Constructor initializes sources; Module_Loader canonicalizes path and rejects overlapping roots before discovery. Compiler publishes a module after path discovery succeeds. | No optional fields. Use Compiler.init to start a new module inventory. |
+| source_record | Constructor installs normalized path, owning-module observer and file snapshot. Module.sources owns membership; sources_by_path indexes the same identity. | tokens and parsed are absent until completed. Successful synchronized publication installs matching results together. |
 | file | Module_Loader assigns path and disk_source=true; content and metadata start as empty/zero pending placeholders. Tokenizer invokes File_Loader, which completes metadata/content reads before assigning their observed values. | tokens is the sole optional field, initially null. Successful reload clears it; failed load preserves the previous record and backlink. |
 | token_list | Constructor initializes tokens; Tokenizer assigns file and captured content before scanning, and returns only on success. | Empty input produces a completed empty list; no optional fields. |
 | token | Tokenizer assigns offset, length and text before append. | No optional fields. text remains required until a separately proved native representation replaces it. |
@@ -25,7 +26,7 @@ may remain published; this is not transactional compilation. Retained token list
 keep their own text snapshot when their file is reloaded or edited.
 
 Direct File_Loader use only updates that file and its backlink. It does not reset
-Model's downstream collections; use the coordinator's stage lifecycle before
+source records' downstream stage state; use the coordinator's stage lifecycle before
 consuming rebuilt results. File size/mtime come from stat, while content is read
 separately: concurrent filesystem changes can make them disagree. Resolving that
 host-read contract is later source-portability work, not a nullability fix.
@@ -47,7 +48,7 @@ objects, including empty bodies, parameter/argument lists and array literals.
 
 | Optional field | Meaning |
 | --- | --- |
-| ast_node.payload_data | Null for identifiers, punctuation and comments; expressions including literals have specialization records. |
+| name-bearing specialization.collected_occurrence | Absent until collection attaches it once; unsupported/unnamed specializations have no field. Native weak expiration does not permit attachment again. |
 | scope.parent | Null for a root; function-local scopes receive their parent before parsing their parameters/body. |
 | parameter.reference_token_index | Null for value passing; present for reference passing and points to the ampersand. |
 | return.expression | Null for a bare return; keyword and semicolon are always initialized. |
@@ -91,7 +92,11 @@ from count. The collected_file root is assigned by finish before scope indexes
 receive declarations. Repeated finish and record-after-finish reject before mutation.
 No transactional guarantee is made for allocation failure during index publication.
 
-Name_Preparation creates fresh empty maps and returns only after resolving the
+Active shared preparation uses `File_Preparation` and specialization-attached facts;
+its cleanup clears partial facts after failure. The following initialization details
+describe the separate parked LLVM regression stack under `05_backend/llvm/`.
+
+LLVM_Legacy_Name_Preparation creates fresh empty maps and returns only after resolving the
 supported uses. Missing map entries are absence, not nullable stored records. Its
 scope-walk locals can reach null through scope.parent; explicit local conversion
 annotations need review when adapting this worker.

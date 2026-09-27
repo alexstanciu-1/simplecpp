@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../tools/php_portability/src/converter.php';
 require_once __DIR__ . '/../../compiler/my-try/helpers/storage_abstract.php';
 require_once __DIR__ . '/../../compiler/my-try/helpers/storage.php';
 require_once __DIR__ . '/../../compiler/my-try/helpers/keyed_storage.php';
+require_once __DIR__ . '/../../compiler/my-try/helpers/key_storage_list.php';
 
 function ensure(bool $condition, string $message): void {
     if (!$condition) { throw new RuntimeException($message); }
@@ -95,3 +96,34 @@ foreach ($bad as $body) {
     throw new RuntimeException('Accepted invalid collection boundary: ' . $body);
 }
 echo "Storage bindings: declarations, constructors, aliases, keys, holes and rejections passed\n";
+
+// The duplicate-key wrapper has the same explicit annotation boundary, a distinct API.
+$grouped = <<<'SOURCE'
+<?php
+namespace scpp\compiler;
+final class Grouped_Row { public int $value = 0; }
+final class Grouped_Root {
+    public Key_Storage_List $groups /** Key_Storage_List<Grouped_Row> */;
+    public function __construct() { $this->groups = new Key_Storage_List /** Key_Storage_List<Grouped_Row> */(); }
+    public function alias(Key_Storage_List $groups /** Key_Storage_List<Grouped_Row> */): Key_Storage_List /** Key_Storage_List<Grouped_Row> */ { return $groups; }
+}
+$groups /** Key_Storage_List<Grouped_Row> */ = new Key_Storage_List();
+$row = new Grouped_Row();
+$groups->add('same', $row);
+$groups->add('same', $row);
+SOURCE;
+$lowered = $converter->convert($grouped, 'grouped.php');
+foreach (['public $groups Key_Storage_List<Grouped_Row>;', 'new Key_Storage_List<Grouped_Row>()', 'function alias($groups Key_Storage_List<Grouped_Row>): Key_Storage_List<Grouped_Row>'] as $fragment) {
+    ensure(str_contains($lowered, $fragment), 'Missing grouped collection lowering: ' . $fragment);
+}
+eval(substr($grouped, 5));
+ensure($groups->named('same') === [$row, $row], 'Repeated identity was deduplicated');
+$copied = $groups->items();
+array_pop($copied);
+ensure(count($groups->items()) === 2, 'Snapshot leaked membership mutation');
+foreach (['Key_Storage_List<int>', 'Key_Storage_List<Storage<Row>>', 'Key_Storage_List<Row, string>'] as $invalid) {
+    try { $converter->convert('<?php $rows /** ' . $invalid . ' */ = new Key_Storage_List();', 'bad.php'); }
+    catch (RuntimeException $expected) { continue; }
+    throw new RuntimeException('Accepted invalid grouped collection: ' . $invalid);
+}
+echo "Key_Storage_List bindings: typed boundaries, duplicate identity and snapshots passed\n";

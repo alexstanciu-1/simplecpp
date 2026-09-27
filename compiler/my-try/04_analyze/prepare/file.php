@@ -17,13 +17,6 @@ final class File_Preparation
 		$context->boolean = Language_Types::boolean($language_scope);
 		$context->floating = Language_Types::floating($language_scope);
 
-		$entries /** Storage<collected_name> */ = $source->entries;
-		foreach ($entries as $entry) {
-			if ($entry->changes !== \scpp\compiler\SYNC_DELETED) {
-				$context->occurrences[$entry->token_index] = $entry;
-			}
-		}
-
 		$this->context = $context;
 	}
 
@@ -61,7 +54,7 @@ final class File_Preparation
 		}
 
 		// Establish initializer facts before deciding declaration versus reassignment.
-		$entry = $context->occurrences[(int) $syntax->name_token_index];
+		$entry = $syntax->occurrence();
 		$initializer /** ast_node */ = $syntax->value;
 		$value = $initializer->payload()->prepare_expression($initializer, $context);
 		$binding = new prepared_binding();
@@ -75,8 +68,9 @@ final class File_Preparation
 			if ($type_node->kind() !== node_kind::identifier) {
 				throw new \RuntimeException('S2S constructed types are not supported yet');
 			}
-			$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-			$types = Scope_Lookup::types($lexical_scope, $context->collection->token_snapshot()->text_at((int) $type_node->token_index));
+			$type_occurrence = $type_node->payload()->occurrence();
+			$lexical_scope = object_cast(weakref_get($type_occurrence->scope), scope::class);
+			$types = Scope_Lookup::types($lexical_scope, $type_occurrence->name);
 			if (q_count($types) !== 1) {
 				throw new \RuntimeException('S2S needs one resolved local type');
 			}
@@ -145,7 +139,7 @@ final class File_Preparation
 	/** Resolve source-order locals without modifying the retained declaration inventory. */
 	public static function prepare_reference(ast_node $node, preparation_context $context): prepared_variable_reference
 	{
-		$entry = $context->occurrences[(int) $node->token_index];
+		$entry = $node->payload()->occurrence();
 		$targets /** vector<collected_name> */ = $context->locals->variables_named($entry->name);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs an established local declaration for ' . $entry->name);

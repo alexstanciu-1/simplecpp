@@ -9,9 +9,13 @@ enum work_state {
 }
 
 /** Transient compiler work; never retained by Model. */
-final class source_work {
-	/** @storage.reference module.files */
+final class source_work
+{
+	/** Private candidate snapshot. @ownership owner */
 	public file $source;
+	/** Stable publication destination and the prior published parse. */
+	public source_record $record;
+	public ?parsed_file $previous = null;
 	/** Existing snapshot for parse-only work, or the private scan result. */
 	public ?token_list $tokens = null;
 	/** Candidate owned until publication; then shared with Model. @ownership owner */

@@ -83,7 +83,7 @@ function check_node_construction(): void
 }
 
 // Fieldless syntax still supports unconditional local lifecycle delegation.
-foreach ([node_kind::identifier, node_kind::punctuation, node_kind::comment] as $kind)
+foreach ([node_kind::punctuation, node_kind::comment] as $kind)
 {
 	$node = Syntax_Nodes::make($kind, 0, 1);
 	$before = serialize($node);

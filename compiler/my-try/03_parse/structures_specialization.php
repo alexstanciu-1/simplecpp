@@ -8,12 +8,23 @@
 namespace scpp\compiler;
 
 /** Nodes with no additional syntax fields still have a concrete specialization. */
-final class empty_node_structure extends node_structure {
+final class identifier_structure extends unsupported_node_structure {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+}
+
+final class empty_node_structure extends unsupported_node_structure {
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
-final class integer_literal_structure extends node_structure
+final class integer_literal_structure extends expression_node_structure
 {
+	use Preparation_Facts;
+
 	/** @ownership owner */
 	private ?prepared_integer_literal $prepared_facts = null;
 
@@ -29,30 +40,17 @@ final class integer_literal_structure extends node_structure
 		return CPP_Generator::generate_integer($this->require_preparation(), $context);
 	}
 
-	public function preparation(): ?prepared_integer_literal
-	{
-		return $this->prepared_facts;
-	}
-
 	public function require_preparation(): prepared_integer_literal
 	{
 		return object_cast($this->prepared_facts, prepared_integer_literal::class);
 	}
-
-	public function set_preparation(prepared_integer_literal $facts): void
-	{
-		$this->prepared_facts = $facts;
-	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared_facts = null;
-	}
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
-final class float_literal_structure extends node_structure
+final class float_literal_structure extends expression_node_structure
 {
+	use Preparation_Facts;
+
 	/** @ownership owner */
 	private ?prepared_float_literal $prepared_facts = null;
 
@@ -68,30 +66,17 @@ final class float_literal_structure extends node_structure
 		return CPP_Generator::generate_float($this->require_preparation(), $context);
 	}
 
-	public function preparation(): ?prepared_float_literal
-	{
-		return $this->prepared_facts;
-	}
-
 	public function require_preparation(): prepared_float_literal
 	{
 		return object_cast($this->prepared_facts, prepared_float_literal::class);
 	}
-
-	public function set_preparation(prepared_float_literal $facts): void
-	{
-		$this->prepared_facts = $facts;
-	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared_facts = null;
-	}
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
-final class boolean_literal_structure extends node_structure
+final class boolean_literal_structure extends expression_node_structure
 {
+	use Preparation_Facts;
+
 	/** Canonical value normalized by the source frontend. */
 	public bool $value;
 	/** @ownership owner */
@@ -114,30 +99,24 @@ final class boolean_literal_structure extends node_structure
 		return CPP_Generator::generate_boolean($this->require_preparation(), $context);
 	}
 
-	public function preparation(): ?prepared_boolean_literal
-	{
-		return $this->prepared_facts;
-	}
-
 	public function require_preparation(): prepared_boolean_literal
 	{
 		return object_cast($this->prepared_facts, prepared_boolean_literal::class);
 	}
-
-	public function set_preparation(prepared_boolean_literal $facts): void
-	{
-		$this->prepared_facts = $facts;
-	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared_facts = null;
-	}
 }
 
 /** Specialized facts are attached by preparation and cleared locally. */
-final class variable_reference_structure extends node_structure
+final class variable_reference_structure extends expression_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
+	use Preparation_Facts;
+
 	/** @ownership owner */
 	private ?prepared_variable_reference $prepared_facts = null;
 
@@ -153,29 +132,21 @@ final class variable_reference_structure extends node_structure
 		return CPP_Generator::generate_reference($this->require_preparation(), $context);
 	}
 
-	public function preparation(): ?prepared_variable_reference
-	{
-		return $this->prepared_facts;
-	}
-
 	public function require_preparation(): prepared_variable_reference
 	{
 		return object_cast($this->prepared_facts, prepared_variable_reference::class);
 	}
-
-	public function set_preparation(prepared_variable_reference $facts): void
-	{
-		$this->prepared_facts = $facts;
-	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared_facts = null;
-	}
 }
 
-final class call_structure extends node_structure
+final class call_structure extends unsupported_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
 	/** @storage.index token_list.tokens */
@@ -215,8 +186,15 @@ final class call_structure extends node_structure
 }
 
 /** The body block references a file-owned local scope and an ordered statement list. */
-final class function_structure extends node_structure
+final class function_structure extends unsupported_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
 	/** Ordered formal names and declaration token indexes. */
 	public array $template_parameters /** hash<int> */ = [];
 	/** @storage.index token_list.tokens */
@@ -254,8 +232,15 @@ final class function_structure extends node_structure
 	}
 }
 
-final class parameter_structure extends node_structure
+final class parameter_structure extends unsupported_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
 	public passing_mode $mode = passing_mode::value;
 	/** Null for value parameters; present exactly when mode is reference.
 	 * @storage.index token_list.tokens
@@ -281,8 +266,10 @@ final class parameter_structure extends node_structure
 }
 
 /** Shared payload for a file body or a block that introduces a scope. */
-final class block_structure extends node_structure
+final class block_structure extends unsupported_node_structure
 {
+	use Child_List;
+
 	/**
 	 * Ordered object list of child nodes.
 	 * @storage.owner
@@ -307,18 +294,15 @@ final class block_structure extends node_structure
 		return object_cast(weakref_get($this->scope_reference), scope::class);
 	}
 
-	/** Append direct syntax children in grammar order before links are published. */
-	public function append_children(Storage $result /** Storage<ast_node> */): void
+	/** Access the existing child list in grammar order, without copying membership. */
+	public function child_list(): Storage /** Storage<ast_node> */
 	{
-		$items /** Storage<ast_node> */ = $this->children;
-		foreach ($items as $child) {
-			$result->append($child);
-		}
+		return $this->children;
 	}
 }
 
 /** Binary and assignment expressions share operands; their node kinds retain the distinction. */
-final class binary_structure extends node_structure
+final class binary_structure extends unsupported_node_structure
 {
 	/** Syntax child owned through this link.
 	 * @ownership owner
@@ -346,7 +330,7 @@ final class binary_structure extends node_structure
 }
 
 /** An expression used as a statement owns its terminating semicolon here. */
-final class expression_statement_structure extends node_structure
+final class expression_statement_structure extends unsupported_node_structure
 {
 	/** Syntax child owned through this link.
 	 * @ownership owner
@@ -368,7 +352,7 @@ final class expression_statement_structure extends node_structure
 }
 
 /** expression is null for a bare return; keyword and semicolon remain required. */
-final class return_structure extends node_structure
+final class return_structure extends statement_node_structure
 {
 	/** @storage.index token_list.tokens */
 	public int $keyword_token_index;
@@ -404,8 +388,17 @@ final class return_structure extends node_structure
  * equals_token_index and value are either both present or both absent.
  * A typed declaration may omit its initializer; an untyped write requires a value.
  */
-final class binding_structure extends node_structure
+final class binding_structure extends statement_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
+	use Preparation_Facts;
+
 	/** Derived facts are absent before preparation and after cleanup. @ownership owner */
 	private ?prepared_binding $prepared_facts = null;
 
@@ -456,30 +449,22 @@ final class binding_structure extends node_structure
 		return CPP_Generator::generate_binding(Syntax_Nodes::binding_data($node), $context);
 	}
 
-	public function preparation(): ?prepared_binding
-	{
-		return $this->prepared_facts;
-	}
-
 	public function require_preparation(): prepared_binding
 	{
 		return object_cast($this->prepared_facts, prepared_binding::class);
 	}
-
-	public function set_preparation(prepared_binding $facts): void
-	{
-		$this->prepared_facts = $facts;
-	}
-
-	public function clear_preparation(): void
-	{
-		$this->prepared_facts = null;
-	}
 }
 
 /** Fixed extent is syntax until preparation checks and normalizes it. */
-final class array_type_structure extends node_structure
+final class array_type_structure extends unsupported_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */
@@ -503,8 +488,10 @@ final class array_type_structure extends node_structure
 	}
 }
 
-final class array_literal_structure extends node_structure
+final class array_literal_structure extends unsupported_node_structure
 {
+	use Child_List;
+
 	/**
 	 * Ordered object list of child nodes.
 	 * @storage.owner
@@ -516,17 +503,14 @@ final class array_literal_structure extends node_structure
 		$this->elements = new Storage /** Storage<ast_node> */();
 	}
 
-	/** Append direct syntax children in grammar order before links are published. */
-	public function append_children(Storage $result /** Storage<ast_node> */): void
+	/** Access the existing child list in grammar order, without copying membership. */
+	public function child_list(): Storage /** Storage<ast_node> */
 	{
-		$items /** Storage<ast_node> */ = $this->elements;
-		foreach ($items as $child) {
-			$result->append($child);
-		}
+		return $this->elements;
 	}
 }
 
-final class index_structure extends node_structure
+final class index_structure extends unsupported_node_structure
 {
 	/** Syntax child owned through this link.
 	 * @ownership owner
@@ -551,8 +535,17 @@ final class index_structure extends node_structure
 	}
 }
 
-final class struct_structure extends node_structure
+final class struct_structure extends unsupported_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
+	use Child_List;
+
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
 	/**
@@ -566,18 +559,22 @@ final class struct_structure extends node_structure
 		$this->fields = new Storage /** Storage<ast_node> */();
 	}
 
-	/** Append direct syntax children in grammar order before links are published. */
-	public function append_children(Storage $result /** Storage<ast_node> */): void
+	/** Access the existing child list in grammar order, without copying membership. */
+	public function child_list(): Storage /** Storage<ast_node> */
 	{
-		$items /** Storage<ast_node> */ = $this->fields;
-		foreach ($items as $child) {
-			$result->append($child);
-		}
+		return $this->fields;
 	}
 }
 
-final class field_structure extends node_structure
+final class field_structure extends unsupported_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
 	/** @storage.index token_list.tokens */
 	public int $name_token_index;
 	/** Syntax child owned through this link.
@@ -597,8 +594,15 @@ final class field_structure extends node_structure
 	}
 }
 
-final class field_access_structure extends node_structure
+final class field_access_structure extends unsupported_node_structure
 {
+	use Collected_Occurrence;
+
+	/** Observer of the canonical entry owned by collected_file.entries. */
+	private ?collected_name $collected_occurrence /** weak<collected_name> */ = null;
+	/** Attachment is permanent even if the native weak observer later expires. */
+	private bool $occurrence_attached = false;
+
 	/** Syntax child owned through this link.
 	 * @ownership owner
 	 */

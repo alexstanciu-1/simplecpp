@@ -22,7 +22,10 @@ final class Syntax_Nodes
 			elseif ($kind === node_kind::variable_reference) {
 				$data = new variable_reference_structure();
 			}
-			elseif (($kind === node_kind::identifier) || ($kind === node_kind::punctuation) || ($kind === node_kind::comment)) {
+			elseif ($kind === node_kind::identifier) {
+				$data = new identifier_structure();
+			}
+			elseif (($kind === node_kind::punctuation) || ($kind === node_kind::comment)) {
 				$data = new empty_node_structure();
 			}
 		}
@@ -81,7 +84,8 @@ final class Syntax_Nodes
 			node_kind::struct_declaration => $payload instanceof struct_structure,
 			node_kind::field_declaration => $payload instanceof field_structure,
 			node_kind::field_expression => $payload instanceof field_access_structure,
-			node_kind::identifier, node_kind::punctuation, node_kind::comment => $payload instanceof empty_node_structure,
+			node_kind::identifier => $payload instanceof identifier_structure,
+			node_kind::punctuation, node_kind::comment => $payload instanceof empty_node_structure,
 			node_kind::integer_literal => $payload instanceof integer_literal_structure,
 			node_kind::float_literal => $payload instanceof float_literal_structure,
 			node_kind::boolean_literal => $payload instanceof boolean_literal_structure,

@@ -20,22 +20,25 @@ serialization follows from these tags.
 
 ## Current graph
 
-Model owns modules, tokenization/parse/collection/output results and global scope.
-Modules own files. Token lists own token objects and captured source text. Parsed
+Model owns modules, output results and global/language scopes. Modules own stable
+source records, which own current file/token/parse state. The path registry is an
+index of these same records; each source has a weak module backlink. Token lists own token objects and captured source text. Parsed
 files own their root AST and local scopes. AST nodes own additional structures and first-child/next-sibling chains. Native
 parent/previous backlinks are weak. Named structure child fields and lists remain
 retaining aliases during this migration; see ast_layout.md. No shared backing node
 store or Storage_View remains. Collection files own occurrence entries and work lists.
 LLVM modules own functions; functions own operands and blocks; blocks own text.
 
-file.tokens and parsed_file.collection are convenience links to Model results.
+file.tokens is a convenience backlink to its source record's completed scan.
+parsed_file.collection owns the occurrence collection.
 collected_file.root mirrors parsed_file.root. collected_name.collection/scope and scope.enclosing
-are backward/context links; scope name maps index collection entries. AST operands
+are backward/context links; scope Key_Storage_List collections index occurrence entries. Named specializations
+carry a weak collected occurrence backlink; unnamed specializations do not. AST operands
 and type syntax are direct child relationships. Collection/preparation node references
 point into parsed_file.root's syntax graph, not a nonexistent parsed_file.nodes store.
 Local scope ownership stays uniform in parsed_file.scopes; blocks reference scopes.
 
-Preparation returns Storage<llvm_prepared_file>; each file owns its function list,
+Parked LLVM preparation returns Storage<llvm_prepared_file>; each file owns its function list,
 and functions own ordered parameter lists and sparse declaration-keyed locals.
 The transient struct registry and per-file Keyed_Storage type maps share type
 records; each type owns Keyed_Storage<llvm_field>. The instance registry and pending
@@ -133,9 +136,12 @@ accepting in-memory input. The frontend worker preserves that per-file chain;
 standalone reparse consumes existing snapshots without reading disk. Host reporting
 and experimental execution remain in the existing host adapter and Native_Runner.
 
-Experimental name preparation, template checking and source-only type projection
-remain regression infrastructure. Their further isolation and parser name-rule
-validation belong to the deferred work, not this ownership refactor.
+Legacy name preparation and template checking now live under `05_backend/llvm/`
+with LLVM-specific names and data. They remain regression infrastructure; source-only
+type projection is retained for their existing callers. New semantic work extends
+`File_Preparation` and attached facts. LLVM must be reviewed and adapted to consume
+that shared model before development resumes. Semantic consolidation and parser
+name-rule validation remain deferred.
 
 ## Operation contexts
 

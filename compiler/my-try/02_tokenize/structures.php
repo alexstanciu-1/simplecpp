@@ -32,7 +32,7 @@ final class token_list
 {
 	/**
 	 * Source dependency, selected from the owning module.
-	 * @storage.reference module.files
+	 * @reference.source source_record.file
 	 */
 	public file $file;
 

@@ -11,25 +11,27 @@ its Compiler instance alive and supplies notifications.
 
 Changes to module membership/configuration require init(complete module paths) and
 exec(), a full compilation. Unknown-module file notifications are rejected rather
-than silently extending module membership. Paths use the same module/path spelling
-as discovery; normalization and overlapping module aliases are not introduced here.
+than silently extending module membership. Module roots use canonical filesystem paths and reject overlap. Notifications
+normalize lexical path components (including missing deletion paths) before the
+unique source-path lookup.
 
-## Existing records only
+## Stable sources and temporary comparisons
 
-The only added record property is int changes on file and collected_name. Constants
+The current snapshots expose int changes on file and collected_name. Constants
 are SYNC_ADDED=1, SYNC_CHANGED=2, SYNC_BODY_CHANGED=4 and SYNC_DELETED=8. Zero means
 unchanged. Declaration and body changes can combine (6); added/deleted are exclusive
 states. Each update clears transient flags on files and declaration inventory rows;
 ordinary use/reference rows need no reset. Retained tombstones keep DELETED.
-There are no declaration-change records, persistent declaration IDs or historical
-version mapping. Only live previous declarations participate in matching.
+Temporary declaration_comparison records cache keys and spellings once per update,
+grouped through Key_Storage_List. There are no persistent declaration IDs or
+historical version maps. Only live previous declarations participate in matching.
 
-Private source records are allocated for workers. Reading, tokenization and parsing
+Module-owned source_record identity survives updates and deletion. Private file
+snapshots are allocated for workers. Reading, tokenization and parsing
 never mutate published source bytes. A completed candidate is compared and installed
 under the existing publication lock. Tokens, ASTs and local scopes are replaced as
 a unit. Unchanged files retain their syntax; matched declarations use new occurrence
-records pointing into the new syntax. Global indexes replace their obsolete live
-references. Declaration object identity is not promised across updates.
+records pointing into the new syntax. Global indexes replace obsolete live references by previous collection identity. Declaration object identity is not promised across updates.
 
 The existing collected_file inventory includes struct fields as declaration rows,
 but those fields are not exported as global variables. Logical matching uses node

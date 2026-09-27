@@ -4684,6 +4684,22 @@ final class StanExpressionTypeResolver
 		$raw = trim($type, "\\ \t\n\r\0\x0B");
 		$nullableInner = $this->unwrapNullableType($raw);
 		$resolved = $nullableInner ?? $raw;
+		if (preg_match('/^Key_Storage_List\s*<(.+)>$/', $resolved, $parts) === 1) {
+			$record = trim($parts[1]);
+			$methods = [
+				'add' => ['void', [['name' => 'key', 'type' => 'string'], ['name' => 'record', 'type' => $record]]],
+				'named' => ['vector<' . $record . '>', [['name' => 'key', 'type' => 'string']]],
+				'items' => ['vector<' . $record . '>', []],
+				'is_empty' => ['bool', []],
+			];
+			$signatures = []; $returns = [];
+			foreach ($methods as $name => [$return, $params]) {
+				$signatures[$name] = ['name' => $name, 'params' => $params, 'return_type' => $return, 'is_static' => false, 'visibility' => 'public'];
+				$returns[$name] = $return;
+			}
+			return ['fqcn' => $resolved, 'name' => $resolved, 'method_signatures' => $signatures,
+				'method_return_types' => $returns, 'property_types' => [], 'ancestor_types' => []];
+		}
 		$normalized = strtolower($resolved);
 		if ($normalized === '') {
 			return null;

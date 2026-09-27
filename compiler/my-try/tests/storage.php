@@ -3,6 +3,7 @@ namespace scpp\compiler;
 require_once dirname(__DIR__) . '/helpers/storage_abstract.php';
 require_once dirname(__DIR__) . '/helpers/storage.php';
 require_once dirname(__DIR__) . '/helpers/keyed_storage.php';
+require_once dirname(__DIR__) . '/helpers/key_storage_list.php';
 
 function check(bool $value): void
 {
@@ -109,3 +110,19 @@ check($keys === ['0', '', "\0key", 'first']);
 check(count($named) === 4 && $held === $row);
 check($items instanceof Storage_Abstract && $named instanceof Storage_Abstract);
 echo "Keyed_Storage: string identity, order, shared records, replacement and validation passed\n";
+
+// Duplicate keys and identities retain insertion order; snapshots cannot mutate membership.
+$groups = new Key_Storage_List();
+$first = (object) ['value' => 1];
+$second = (object) ['value' => 2];
+check($groups->is_empty());
+$groups->add('1', $first);
+$groups->add('01', $second);
+$groups->add('1', $first);
+check($groups->items() === [$first, $second, $first]);
+check($groups->named('1') === [$first, $first]);
+check($groups->named('01') === [$second]);
+check($groups->named('absent') === []);
+$snapshot = $groups->named('1');
+array_pop($snapshot);
+check(count($groups->named('1')) === 2 && !$groups->is_empty());
