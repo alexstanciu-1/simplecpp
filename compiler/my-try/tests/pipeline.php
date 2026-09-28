@@ -9,7 +9,7 @@ try
 	$compiler = new Compiler();
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
-	$source = Model::modules()[0]->sources[0]->file;
+	$source = Model::$modules[$directory]->sources[0]->file;
 	if (!$source->disk_source || $source->content !== '' || !Model::tokens()->is_empty()) {
 		throw new \LogicException('Discovery read source bytes');
 	}

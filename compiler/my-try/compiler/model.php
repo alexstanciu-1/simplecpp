@@ -12,10 +12,12 @@ namespace scpp\compiler;
 final class Model
 {
 	/**
-	 * Keyed module identities and current active order.
+	 * Modules in input order followed by deleted records; one store owns both key lookup and iteration.
 	 * @storage.owner
 	 */
-	public static module_collection $modules;
+	public static Keyed_Storage $modules /** Keyed_Storage<module> */;
+	/** Shared reconciliation revision; records store their last-seen revision inline. */
+	public static int $revision /** uint32 */ = 0;
 	/** Discovery failure blocks frontend use until initialization succeeds. */
 	public static bool $modules_ready = true;
 	/** Module changes require every discovered file to cross the frontend barrier. */
@@ -40,16 +42,15 @@ final class Model
 	/** Unique path index; module.sources owns the stable records. @reference.weak */
 	public static Keyed_Storage $sources_by_path /** Keyed_Storage<source_record> */;
 
-	public static function modules(): Storage /** Storage<module> */
-	{
-		return self::$modules->items();
-	}
-
 	/** Ordered snapshot of stable source membership, never a second retained store. */
 	public static function sources(): Storage /** Storage<source_record> */
 	{
 		$result /** Storage<source_record> */ = new Storage();
-		foreach (self::modules() as $module) {
+		foreach (self::$modules as $module)
+		{
+			if ($module->changes === change_state::deleted) {
+				continue;
+			}
 			foreach ($module->sources as $source) {
 				$result->append($source);
 			}

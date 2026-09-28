@@ -2,13 +2,40 @@
 
 /*
  * Role: discover a module's recursive PHS files.
- * Call map: Module_Synchronization -> Module_Loader::discover.
+ * Call map: Compiler::init_modules -> Module_Loader::configuration/discover.
  * Flow: sorted depth-first directory traversal -> ordered module file records.
  */
 namespace scpp\compiler;
 
 final class Module_Loader
 {
+	/** Resolve complete input privately; invalid configurations preserve the published session. */
+	public static function configuration(Storage $inputs /** Storage<module_input> */): Keyed_Storage /** Keyed_Storage<module> */
+	{
+		$result /** Keyed_Storage<module> */ = new Keyed_Storage();
+		$position = 0;
+		foreach ($inputs as $input)
+		{
+			if (isset($result[$input->name])) {
+				throw new \LogicException('Duplicate module key: ' . $input->name);
+			}
+			$resolved = fs_require_realpath($input->declared_path);
+			if (!fs_is_dir($resolved)) {
+				throw new \LogicException('Module root must be a directory: ' . $input->declared_path);
+			}
+			$candidate = new module($input->declared_path, $resolved, $input->name);
+			$candidate->position = $position;
+			$position++;
+			foreach ($result as $existing) {
+				if (($existing->resolved_path === $resolved) || Module_Loader::contains_path($existing, $resolved) || Module_Loader::contains_path($candidate, $existing->resolved_path)) {
+					throw new \LogicException('Overlapping module roots are not supported');
+				}
+			}
+			$result->add($candidate->name, $candidate);
+		}
+		return $result;
+	}
+
 	/** Discover an already validated canonical root. */
 	public static function discover(module $module): void
 	{

@@ -30,10 +30,106 @@ final class Compiler
 		$this->init_modules($inputs);
 	}
 
-	/** Return whether module configuration required fresh discovery and compilation. */
+	/** Reconcile in place; only configuration changes replace the ordered module store. */
 	public function init_modules(Storage $inputs /** Storage<module_input> */): bool
 	{
-		return Module_Synchronization::run($inputs);
+		$incoming /** Keyed_Storage<module> */ = Module_Loader::configuration($inputs);
+		if (!Compiler_Lifecycle::initialized()) {
+			Compiler_Lifecycle::reset();
+		}
+		$modules /** Keyed_Storage<module> */ = Model::$modules;
+
+		// Rebase last-seen markers before the shared uint32 run counter wraps.
+		if ((int)Model::$revision === 4294967295) {
+			foreach ($modules as $record) {
+				$record->revision = 0;
+			}
+			Model::$revision = 0;
+		}
+		Model::$revision++;
+		$revision = (int)Model::$revision;
+		$changed = !Model::$modules_ready;
+
+		// Match by key, retaining existing identities while comparing the input position.
+		foreach ($incoming as $candidate)
+		{
+			if (isset($modules[$candidate->name]))
+			{
+				$record = $modules[$candidate->name];
+				if ($record->changes === change_state::deleted) {
+					$record->changes = change_state::added;
+				}
+				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position)) {
+					$record->changes = change_state::changed;
+				}
+				else {
+					$record->changes = change_state::unchanged;
+				}
+				$record->declared_path = $candidate->declared_path;
+				$record->resolved_path = $candidate->resolved_path;
+				$record->position = $candidate->position;
+				$record->revision = $revision;
+				if ($record->changes !== change_state::unchanged) {
+					$changed = true;
+				}
+			}
+			else {
+				$candidate->changes = change_state::added;
+				$candidate->revision = $revision;
+				$changed = true;
+			}
+		}
+		foreach ($modules as $record)
+		{
+			if ((int)$record->revision !== $revision) {
+				if ($record->changes !== change_state::deleted) {
+					$record->changes = change_state::deleted;
+					$changed = true;
+				}
+			}
+		}
+		if (!$changed) {
+			return false;
+		}
+
+		// Publish input order, followed by tombstones; no second order store is retained.
+		$ordered /** Keyed_Storage<module> */ = new Keyed_Storage();
+		foreach ($incoming as $candidate) {
+			$record = $candidate;
+			if (isset($modules[$candidate->name])) {
+				$record = $modules[$candidate->name];
+			}
+			$ordered->add($record->name, $record);
+		}
+		foreach ($modules as $record) {
+			if ($record->changes === change_state::deleted) {
+				$ordered->add($record->name, $record);
+			}
+		}
+		Model::$modules = $ordered;
+		$this->rebuild_modules();
+		return true;
+	}
+
+	/** Failed discovery leaves no partial source graph and identical input can retry it. */
+	private function rebuild_modules(): void
+	{
+		Model::$modules_ready = false;
+		Model::$full_sync_pending = true;
+		Compiler_Lifecycle::reset_compilation();
+		try
+		{
+			foreach (Model::$modules as $module) {
+				if ($module->changes !== change_state::deleted) {
+					Module_Loader::discover($module);
+				}
+			}
+			Model::$modules_ready = true;
+		}
+		catch (\Throwable $error) {
+			Compiler_Lifecycle::reset_compilation();
+			throw $error;
+		}
 	}
 
 	/** Parked legacy LLVM entry remains available only for existing regression callers. */
@@ -170,13 +266,10 @@ final class Compiler
 	private function live_paths(): array /** vector<string> */
 	{
 		$paths /** vector<string> */ = [];
-		foreach (Model::modules() as $input_module)
-		{
-			foreach ($input_module->sources as $record) {
-				$source = $record->file;
-				if ($source->changes !== \scpp\compiler\SYNC_DELETED) {
-					$paths[] = $source->path;
-				}
+		foreach (Model::sources() as $record) {
+			$source = $record->file;
+			if ($source->changes !== \scpp\compiler\SYNC_DELETED) {
+				$paths[] = $source->path;
 			}
 		}
 		return $paths;
@@ -203,13 +296,10 @@ final class Compiler
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		$queue = new Source_Work_Queue();
-		if ($operation === frontend_operation::scan)
-		{
-			foreach (Model::modules() as $input_module) {
-				foreach ($input_module->sources as $record) {
-					$source = $record->file;
-					$queue->enqueue($record, $source);
-				}
+		if ($operation === frontend_operation::scan) {
+			foreach (Model::sources() as $record) {
+				$source = $record->file;
+				$queue->enqueue($record, $source);
 			}
 		}
 		else

@@ -57,7 +57,7 @@ SHA-256 checksums identify the imported content for provenance only:
 The checksums above describe the original imports, before local adaptation.
 Data now lives in `01_prepare_inputs/structures.php`; `File_Loader::init()` and
 `Module_Loader::discover()` populate caller-owned records after module configuration
-validation by `Module_Synchronization`. All use `scpp\compiler`.
+validation by `Module_Loader::configuration()` and direct reconciliation in `Compiler::init_modules()`. All use `scpp\compiler`.
 The original imported PHP pipeline included loading, tokenization, parsing/collection,
 name/template preparation, LLVM generation and Clang execution. Name/template
 preparation is now parked under `05_backend/llvm/` for existing regressions. Active

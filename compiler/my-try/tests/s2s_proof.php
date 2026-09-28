@@ -15,7 +15,8 @@ final class S2S_Proof
 		$source->path = '/s2s-proof/main.phs';
 		$source->content = '$a = 10; $b int = $a; $a = 12; return $b;';
 		$stable = Source_Registry::add($input_module, $source);
-		Model::$modules->add($input_module);
+		$modules /** Keyed_Storage<module> */ = Model::$modules;
+		$modules->add($input_module->name, $input_module);
 		$compiler = new Compiler();
 		$compiler->exec_cpp();
 

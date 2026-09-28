@@ -16,7 +16,8 @@ final class Compiler_Lifecycle
 	/** Explicit fresh session also discards retained module identities and tombstones. */
 	public static function reset(): void
 	{
-		Model::$modules = new module_collection();
+		Model::$modules = new Keyed_Storage /** Keyed_Storage<module> */();
+		Model::$revision = 0;
 		self::reset_compilation();
 		Model::$modules_ready = true;
 		Model::$full_sync_pending = false;
@@ -25,7 +26,7 @@ final class Compiler_Lifecycle
 	/** Retire the whole graph by its roots; discarded syntax needs no fact-cleanup walk. */
 	public static function reset_compilation(): void
 	{
-		foreach (Model::$modules->inventory() as $module) {
+		foreach (Model::$modules as $module) {
 			$module->sources = new Storage /** Storage<source_record> */();
 		}
 		Model::$sources_by_path = new Keyed_Storage /** Keyed_Storage<source_record> */();

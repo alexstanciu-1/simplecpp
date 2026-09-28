@@ -12,7 +12,8 @@ function s2s_parse(string $text): parsed_file
 	$input->content = $text;
 	$syntax = (new Parser((new Tokenizer($input))->tokenize()))->parse();
 	$module = new module('.', Source_Registry::normalize('.'), '.');
-	Model::$modules->add($module);
+	$modules /** Keyed_Storage<module> */ = Model::$modules;
+	$modules->add($module->name, $module);
 	$record = Source_Registry::add($module, $input);
 	Source_Publication::publish_parsed($record, $syntax);
 	return $syntax;

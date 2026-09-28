@@ -33,8 +33,9 @@ final class module
 	public string $declared_path;
 	public string $resolved_path;
 	public int $position = 0;
-	public int $changes = 0;
-	public sync_presence $presence;
+	public change_state $changes = change_state::unchanged;
+	/** Last reconciliation run in which this module was present. */
+	public int $revision /** uint32 */ = 0;
 	/**
 	 * Numeric storage of stable source records.
 	 * @storage.owner
@@ -47,7 +48,6 @@ final class module
 		$this->name = $name;
 		$this->declared_path = $declared_path;
 		$this->resolved_path = $resolved_path;
-		$this->presence = new sync_presence();
 		$this->sources = new Storage /** Storage<source_record> */();
 	}
 }
@@ -81,60 +81,5 @@ final class module_input
 	{
 		$this->declared_path = $path;
 		$this->name = $name ?? $path;
-	}
-}
-
-/** Own module identities by key, retaining deleted records separately from active order. */
-final class module_collection
-{
-	/** @storage.owner Includes tombstones until a fresh session. */
-	private Keyed_Storage $records /** Keyed_Storage<module> */;
-	/** Ordered retaining aliases into records; excludes deleted modules. */
-	private Storage $ordered /** Storage<module> */;
-	private int $revision = 0;
-
-	public function __construct()
-	{
-		$this->records = new Keyed_Storage /** Keyed_Storage<module> */();
-		$this->ordered = new Storage /** Storage<module> */();
-	}
-
-	public function next_revision(): int
-	{
-		$this->revision++;
-		return $this->revision;
-	}
-
-	public function find(string $name): ?module
-	{
-		$records /** Keyed_Storage<module> */ = $this->records;
-		if (isset($records[$name])) {
-			return $records[$name];
-		}
-		return null;
-	}
-
-	/** Insert a unique identity and expose it in active order. */
-	public function add(module $record): void
-	{
-		$records /** Keyed_Storage<module> */ = $this->records;
-		$ordered /** Storage<module> */ = $this->ordered;
-		$records->add($record->name, $record);
-		$ordered->append($record);
-	}
-
-	public function items(): Storage /** Storage<module> */
-	{
-		return $this->ordered;
-	}
-
-	public function inventory(): Keyed_Storage /** Keyed_Storage<module> */
-	{
-		return $this->records;
-	}
-
-	public function set_order(Storage $ordered /** Storage<module> */): void
-	{
-		$this->ordered = $ordered;
 	}
 }

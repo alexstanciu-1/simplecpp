@@ -27,20 +27,29 @@ unique source-path lookup.
 `init_modules(Storage<module_input>)` accepts explicit names and returns whether a
 rebuild/discovery was required. `init(vector<string>)` is the unnamed adapter.
 `module_input(path, name)` uses the exact declared path as its name when the name is
-omitted. A module retains `name`, `declared_path`, `resolved_path`, `position`, change
-flags and independent run presence. A changed position triggers a full rebuild.
+omitted. A module retains `name`, `declared_path`, `resolved_path`, `position`, a shared `change_state` (`unchanged`, `added`, `changed`, `deleted`),
+and an inline `uint32` revision for run presence. A changed position triggers a full rebuild.
 
-`Model::$modules` owns a `module_collection`: a unique key index of retained identities
-(including deletions), plus ordered aliases for active modules. `Model::modules()`
-exposes active order. Collection maintenance goes through its methods. Removed modules
-are marked deleted; reappearance under the same key reuses the identity as added.
-Renaming is delete/add. Changing a named module's path preserves its identity.
+`Model::$modules` is one `Keyed_Storage<module>`, keyed by name. Live modules occur
+in input order and deleted records follow them. Consumers skip `change_state::deleted`.
+Removed modules retain identity; reappearance under the same key reuses that identity
+as added. Renaming is delete/add. Changing a named module's path preserves identity.
 
-`Module_Synchronization` validates all incoming roots and keys before mutation. It
-then matches incoming entries against the indexed records and sweeps retained entries
-for missing keys. `Key_Synchronization` shares revision-based presence/duplicate checks;
-module comparison and publication remain with the module worker. Matching is expected
-linear in input plus retained records; the small-module overlap check is pairwise.
+`Module_Loader::configuration()` validates all incoming roots and keys before mutation.
+`Compiler::init_modules()` directly loops that input, matches retained records by key,
+compares paths and position, and stamps their last-seen revision. A second loop marks
+missing records deleted. There is no module collection wrapper or synchronization
+worker/helper class. `Model::$revision` is the general uint32 reconciliation counter;
+modules retain their last-seen uint32 revision inline. Before rollover, initialization
+clears retained module markers and restarts at one. Future participating record kinds
+must join that reset when their incremental slices are implemented.
+
+When configuration changes, initialization builds a replacement keyed collection in
+input order using the retained objects, then appends tombstones. Only that collection
+is retained; unchanged input keeps the existing collection object. PHP and the native
+compiler collection both preserve insertion order, so no sorting API or separate
+active-order store is necessary. Matching is expected linear in input plus retained
+records; the small-module overlap validation remains pairwise.
 
 A change calls `Compiler_Lifecycle::reset_compilation()`: replace source, scope,
 preparation and output roots and empty module source stores. It does not walk discarded

@@ -75,8 +75,11 @@ final class Source_Registry
 		if ($known !== null) {
 			return $known;
 		}
-		foreach (Model::modules() as $owner)
+		foreach (Model::$modules as $owner)
 		{
+			if ($owner->changes === change_state::deleted) {
+				continue;
+			}
 			if (Module_Loader::contains_path($owner, $path)) {
 				$snapshot = new file();
 				$snapshot->path = $path;

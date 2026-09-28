@@ -133,9 +133,9 @@ paths are identical. An explicit name/tag is the key; otherwise the exact declar
 path is the key, preserving relative spelling. Match old/new modules by that key.
 Reject duplicate incoming keys and overlapping resolved module roots.
 
-Keep the retained collection indexed by key behind access methods. Incoming entries
-need not be indexed. Use a common synchronization helper for presence tracking,
-leaving module comparison and update decisions with the module process:
+Keep one retained Keyed_Storage indexed by name. Incoming entries need not arrive
+indexed. Initialization directly performs reconciliation; no module-specific collection
+wrapper or synchronization class is required:
 
 1. Walk incoming entries in order. Find the old entry by key, compare its configuration
    and position, mark it present, and update or insert it in the retained collection.
@@ -153,7 +153,10 @@ retain syntax still need their existing cleanup. Releasing a graph does not prom
 constant-time destruction. Failed discovery must not expose old output as current.
 An unchanged module configuration should retain the current compilation data.
 
-Wrap reset and synchronization behind methods so storage and matching can evolve.
+Keep full reset behind its lifecycle method. Rebuild the small module collection in
+incoming order only on change, reusing matched records and appending tombstones.
+Unchanged input preserves the existing collection. A shared Model revision counter
+and inline record revisions provide presence tracking without helper objects.
 Do not add file/AST synchronization machinery in this slice. When file scanning is
 addressed, prefer updating existing records directly from scan results over creating
 replacement records solely for comparison. Physical tombstone cleanup remains debt.
@@ -325,3 +328,10 @@ output bytes alone does not prove that incremental work was avoided.
   named/path keys, separate declared/resolved paths, presence tracking, full-root
   retirement, and pending full frontend synchronization. File/AST reuse optimizations
   remain deferred. Current behavior and proof are in the lifecycle document.
+
+- 2026-09-28: Simplified module reconciliation to direct initialization loops and one
+  ordered Keyed_Storage. Removed module_collection, Key_Synchronization and
+  Module_Synchronization. Ordering uses replacement membership only on change;
+  matched records keep identity, tombstones follow live input order. The shared
+  change_state enum and inline uint32 revisions replace integer module flags and
+  per-module presence objects. Files, tokens, AST and symbols remain separate slices.

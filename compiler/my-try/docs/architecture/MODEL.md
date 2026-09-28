@@ -7,12 +7,14 @@ Workers process records; retained records
 contain data, initialization and representation-level access/navigation methods. Storage<T> is the numeric shared
 object-list boundary; scalar lists remain explicit typed arrays.
 `Key_Storage_List<T>` owns duplicate-key membership, ordered traversal and lookup.
-Storage and Keyed_Storage share Storage_Abstract. Root collections remain numeric;
-Keyed_Storage provides unique-key indexes, including the source-path index.
+Storage and Keyed_Storage share Storage_Abstract. Module membership is keyed and
+ordered; stage-result collections remain numeric. Keyed_Storage also provides
+unique-key indexes, including the source-path index.
 
 | Root | Owned data |
 | --- | --- |
-| modules | `module_collection` owns a unique name index including deleted records and ordered aliases for active modules. Each module owns `Storage<source_record>` in source order. |
+| modules | One `Keyed_Storage<module>` owns keyed records in current input order, followed by tombstones. Each module owns `Storage<source_record>` in source order. |
+| revision | General uint32 reconciliation counter; participating records retain inline last-seen revisions. |
 | sources_by_path | Unique normalized-path index referencing module-owned source records. |
 | language_scope | Owns language/runtime type definitions; the built-in Simple C++ `int`, `bool`, `float`, fixed-width integer aliases and `void`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |

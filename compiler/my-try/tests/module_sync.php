@@ -33,7 +33,7 @@ try
 	$compiler = new Compiler();
 	$inputs = module_inputs([new module_input('a')]);
 	module_check($compiler->init_modules($inputs), 'Initial configuration did not rebuild');
-	$a = Model::$modules->find('a');
+	$a = Model::$modules['a'];
 	module_check(($a->declared_path === 'a') && ($a->resolved_path === $directory . '/a'), 'Declared and canonical paths were not retained');
 	$compiler->exec_cpp();
 	$source = Model::sources()[0];
@@ -41,9 +41,11 @@ try
 	$scope = Model::$global_scope;
 	$output = Model::$cpp_files;
 	$text = serialize($output);
+	$retained_modules = Model::$modules;
 	module_check(!$compiler->init_modules($inputs), 'Identical configuration triggered rebuild');
+	module_check(Model::$modules === $retained_modules, 'No-change replaced the module collection');
 	module_check((Model::sources()[0] === $source) && ($source->parsed === $syntax) && (Model::$global_scope === $scope) && (Model::$cpp_files === $output), 'No-change initialization replaced retained state');
-	module_check(($a->changes === 0) && !Model::$full_sync_pending, 'No-change retained transient flags');
+	module_check(($a->changes === change_state::unchanged) && !Model::$full_sync_pending, 'No-change retained transient flags');
 
 	// Invalid complete input must not mutate the retained session, even after a valid first entry.
 	foreach ([
@@ -62,32 +64,36 @@ try
 			$failed = true;
 		}
 		module_check($failed, 'Invalid module configuration accepted');
-		module_check((Model::$cpp_files === $output) && (Model::sources()[0] === $source) && (Model::$modules->find('a') === $a), 'Rejected configuration changed published data');
+		module_check((Model::$cpp_files === $output) && (Model::sources()[0] === $source) && (Model::$modules['a'] === $a), 'Rejected configuration changed published data');
 	}
 
 	// Explicit names retain identity through path edits; changing the key is delete/add.
 	$named = module_inputs([new module_input('a', 'app')]);
 	module_check($compiler->init_modules($named), 'Renaming module failed to rebuild');
-	$app = Model::$modules->find('app');
-	module_check(($a->changes === SYNC_DELETED) && ($app !== $a), 'Rename did not retire old key');
+	module_check(Model::$modules !== $retained_modules, 'Changed configuration did not replace module membership');
+	$app = Model::$modules['app'];
+	module_check(($a->changes === change_state::deleted) && ($app !== $a), 'Rename did not retire old key');
 	module_check(Model::$cpp_files->is_empty() && Model::syntax_files()->is_empty(), 'Full reset retained compilation results');
 	module_check(serialize($output) === $text, 'Reset mutated an externally retained output');
 	module_check($compiler->init_modules(module_inputs([new module_input('b', 'app')])), 'Named path change failed to rebuild');
-	module_check((Model::$modules->find('app') === $app) && ($app->resolved_path === $directory . '/b') && ($app->changes === SYNC_CHANGED), 'Named path change lost identity or change flag');
+	module_check((Model::$modules['app'] === $app) && ($app->resolved_path === $directory . '/b') && ($app->changes === change_state::changed), 'Named path change lost identity or change flag');
 
 	// Reordering alone resets every source; a partial notification still synchronizes all modules.
 	$pair = module_inputs([new module_input('a'), new module_input('b')]);
 	$compiler->init_modules($pair);
-	module_check((Model::$modules->find('a') === $a) && ($a->changes === SYNC_ADDED), 'Reappearance did not reuse deleted identity');
+	module_check((Model::$modules['a'] === $a) && ($a->changes === change_state::added), 'Reappearance did not reuse deleted identity');
 	$compiler->sync(['a/main.phs']);
 	module_check(count(Model::syntax_files()) === 2, 'Partial notification skipped required full sync');
 	$old_source = Model::sources()[0];
 	$old_scope = Model::$global_scope;
 	$reordered = module_inputs([new module_input('b'), new module_input('a')]);
 	module_check($compiler->init_modules($reordered), 'Order-only change did not rebuild');
-	module_check((Model::modules()[0]->name === 'b') && (Model::modules()[1] === $a) && ($a->changes === SYNC_CHANGED), 'Module order or retained identity changed incorrectly');
+	module_check(array_keys(iterator_to_array(Model::$modules)) === ['b', 'a', 'app'], 'Input order or trailing tombstones are wrong');
+	module_check((Model::$modules['a'] === $a) && ($a->changes === change_state::changed), 'Module identity or order-change state is wrong');
+	$reordered_modules = Model::$modules;
 	module_check((Model::$global_scope !== $old_scope) && (Source_Registry::find($directory . '/a/main.phs') !== $old_source), 'Order-only change retained source/scopes');
 	module_check(!$compiler->init_modules($reordered) && Model::$full_sync_pending, 'No-change initialization cancelled pending full sync');
+	module_check(Model::$modules === $reordered_modules, 'No-change with tombstones rebuilt the collection');
 	file_put_contents('a/later.phs', 'return 9;');
 	$compiler->sync(['a/later.phs']);
 	module_check((count(Model::syntax_files()) === 3) && !Model::$full_sync_pending, 'Full sync lost a new notification');
@@ -113,11 +119,11 @@ try
 	symlink($directory . '/a', 'alias');
 	$alias = module_inputs([new module_input('alias', 'linked')]);
 	$compiler->init_modules($alias);
-	$linked = Model::$modules->find('linked');
+	$linked = Model::$modules['linked'];
 	unlink('alias');
 	symlink($directory . '/b', 'alias');
 	module_check($compiler->init_modules($alias), 'Changed canonical root was missed');
-	module_check((Model::$modules->find('linked') === $linked) && ($linked->resolved_path === $directory . '/b'), 'Canonical root update lost identity');
+	module_check((Model::$modules['linked'] === $linked) && ($linked->resolved_path === $directory . '/b'), 'Canonical root update lost identity');
 
 	// A discovery failure retires partial data and permits retry of the same configuration.
 	chmod('c', 0000);
@@ -146,11 +152,24 @@ try
 	}
 	chmod('c', 0700);
 	$compiler->init([]);
-	module_check(Model::modules()->is_empty() && Model::sources()->is_empty() && Model::$cpp_files->is_empty(), 'Removing all modules retained live data');
+	module_check(Model::sources()->is_empty() && Model::$cpp_files->is_empty(), 'Removing all modules retained live data');
+	foreach (Model::$modules as $record) {
+		module_check($record->changes === change_state::deleted, 'Removed module not marked deleted');
+	}
 	$compiler->sync([]);
 	module_check(!$compiler->init_modules(new Storage()), 'Repeated empty configuration rebuilt');
+	// Exercise the shared uint32 counter through initialization rather than helper methods.
+	Model::$revision = 4294967294;
+	$a->revision = 1;
+	$compiler->init([]);
+	module_check(Model::$revision === 4294967295, 'Revision skipped uint32 maximum');
+	$compiler->init([]);
+	module_check(Model::$revision === 1, 'Revision did not restart after uint32 maximum');
+	module_check($a->revision === 0, 'Rollover retained a marker that could match the new run');
+	module_check($compiler->init_modules($inputs), 'Rollover prevented a deleted module from returning');
+	module_check($a->revision === 2, 'Module did not record the current revision directly');
 	Compiler_Lifecycle::reset();
-	module_check(Model::$modules->inventory()->is_empty(), 'Fresh session retained module tombstones');
+	module_check(Model::$modules->is_empty(), 'Fresh session retained module tombstones');
 }
 finally
 {
