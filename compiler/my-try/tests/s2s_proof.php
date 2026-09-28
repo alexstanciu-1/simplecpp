@@ -12,7 +12,7 @@ final class S2S_Proof
 		self::collection_membership();
 		$input_module = new module('/s2s-proof', '/s2s-proof', '/s2s-proof');
 		$source = new file();
-		$source->path = '/s2s-proof/main.phs';
+		$source->path = 'main.phs';
 		$source->content = '$a = 10; $b int = $a; $a = 12; return $b;';
 		$stable = Source_Registry::add($input_module, $source);
 		$modules /** Keyed_Storage<module> */ = Model::$modules;
@@ -72,8 +72,8 @@ final class S2S_Proof
 		}
 		$compiler->prepare();
 		$compiler->cpp();
-		$current_inputs /** Storage<source_record> */ = $input_module->sources;
-		$current_inputs[0]->file->content = '$a = 13; return $a;';
+		$current_inputs /** Keyed_Storage<source_record> */ = $input_module->sources;
+		$current_inputs['main.phs']->file->content = '$a = 13; return $a;';
 		$paths /** vector<string> */ = ['/s2s-proof/main.phs'];
 		$compiler->update_cpp($paths);
 		if (Source_Registry::find('/s2s-proof/main.phs') !== $stable) {
@@ -86,7 +86,7 @@ final class S2S_Proof
 		if (($first_data->preparation() !== null) || ($literal_data->preparation() !== null) || ($reference_data->preparation() !== null)) {
 			throw new \LogicException('Incremental replacement left facts on the detached old tree');
 		}
-		$current_inputs[0]->file->content = '$a = 1; $b = $missing;';
+		$current_inputs['main.phs']->file->content = '$a = 1; $b = $missing;';
 		$failed = false;
 		try {
 			$compiler->update_cpp($paths);

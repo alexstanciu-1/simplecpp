@@ -68,14 +68,17 @@ before adoption; prioritize total edit-to-build time, rebuilt objects and invali
 reasons. Preserve semantics, runtime checks, aliasing/lifetime and diagnostics, and
 assess runtime tradeoffs. Follow the [catalog guidance](catalog/README.md).
 
-## Mandatory writing checks
+## Writing rules and on-demand checks
 
 Read [code_style.md](code_style.md) before editing PHP/PHP++ here. The rules
 are required for new and touched code, including tests and helpers. Do not copy an
-existing one-line block or missing purpose comment as a precedent. Before finishing,
-run `python3 compiler/my-try/tools/style_check.py` and review meaningful grouping,
-comments, expression parentheses and method order. The standard PHP test runner
-also enforces the mechanical checks. Generated files and saved historical evidence
+existing one-line block or missing purpose comment as a precedent. Review meaningful
+grouping, comments, expression parentheses and method order during implementation.
+User decision, 2026-09-28: default to implementation, code review, relevant focused
+tests and a commit. Style-checker runs, broad regressions, conversion checks and
+native/generated-program compilation are on demand only. Do not run them repeatedly
+or automatically as a finishing gate. The explicitly requested full test runner
+still includes its existing mechanical checks. Generated files and saved historical evidence
 are excluded; do not reformat them.
 
 ## Default procedure for each imported slice
@@ -125,7 +128,7 @@ are excluded; do not reformat them.
 6. Follow compiler 3's formatting, purpose comments and method-order conventions
    (source links in README.md). Preserve behavior during this preparation;
    describe unresolved dependencies and conversion gaps explicitly.
-7. Run PHP lint and a focused behavior check appropriate to structural changes.
+7. Run focused behavior checks appropriate to the change; broader validation is on demand.
    Report what is proved; do not claim native conversion from PHP-only checks.
 8. After import preparation and PHP behavior verification, review files together
    before further conversion or optimization. Do not claim that imported PHP is
@@ -148,8 +151,8 @@ is not permission to read or publish an incomplete required field.
 User decision, 2026-09-26: compile `compiler/my-try` itself to a native executable
 and run its native parity suite only when the user explicitly requests that check.
 Do not run `tools/native_validate.py` automatically after implementation or refactoring.
-Default verification remains PHP lint/style and focused PHP behavior tests; compile
-and execute generated C++ samples when relevant to S2S output. Those sample checks
+Default verification is relevant focused behavior tests. Lint/style, conversion,
+full regressions and generated C++ compilation are on demand under the policy above. Those sample checks
 are distinct from compiling the compiler itself. Report native verification as not
 run for a change unless explicitly requested and completed. This overrides earlier
 routine native-proof expectations for this project, including skill defaults.

@@ -22,7 +22,6 @@ final class File_Loader
 		}
 		$content = fs_read_text($path);
 
-		$file->path = $path;
 		$file->mtime = $mtime;
 		$file->size = $size;
 		$file->content = $content;

@@ -77,7 +77,7 @@ try
 	catch (\RuntimeException $expected) {
 	}
 	sync_check(Model::syntax_files()[0] === $kept && sync_function('replacement')->collection === $kept->collection, 'Failed candidate damaged publication');
-	sync_check(Model::$modules[$directory]->sources[0]->file->content === $kept->tokens->content, 'Failed candidate changed published source');
+	sync_check(Model::$modules[$directory]->sources['a.phs']->file->content === $kept->tokens->content, 'Failed candidate changed published source');
 	sync_check(Model::$llvm_files->is_empty(), 'Failed update retained generated output');
 
 	// Duplicate definitions survive sync; deleting one makes lookup unambiguous again.
@@ -94,7 +94,7 @@ try
 	sync_check(sync_function('value')->changes === 0, 'Surviving duplicate lost exact match');
 	unlink($a);
 	$compiler->sync([$a]);
-	sync_check((Model::$modules[$directory]->sources[0]->file->changes & SYNC_DELETED) !== 0, 'Deleted file disappeared instead of remaining marked');
+	sync_check((Model::$modules[$directory]->sources['a.phs']->file->changes & SYNC_DELETED) !== 0, 'Deleted file disappeared instead of remaining marked');
 	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 0, 'Deleted file still exports functions');
 	file_put_contents($a, 'function value(): int { return 6; }');
 	$compiler->update_llvm([$a]);

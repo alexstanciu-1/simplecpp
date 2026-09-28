@@ -13,6 +13,23 @@ final class Compiler_Lifecycle
 		return self::$syntax_initialized;
 	}
 
+	/** Advance the shared run marker, clearing every participant before uint32 rollover. */
+	public static function next_revision(): int
+	{
+		if ((int)Model::$revision === 4294967295)
+		{
+			foreach (Model::$modules as $module) {
+				$module->revision = 0;
+				foreach ($module->sources as $source) {
+					$source->revision = 0;
+				}
+			}
+			Model::$revision = 0;
+		}
+		Model::$revision++;
+		return (int)Model::$revision;
+	}
+
 	/** Explicit fresh session also discards retained module identities and tombstones. */
 	public static function reset(): void
 	{
@@ -27,9 +44,8 @@ final class Compiler_Lifecycle
 	public static function reset_compilation(): void
 	{
 		foreach (Model::$modules as $module) {
-			$module->sources = new Storage /** Storage<source_record> */();
+			$module->sources = new Keyed_Storage /** Keyed_Storage<source_record> */();
 		}
-		Model::$sources_by_path = new Keyed_Storage /** Keyed_Storage<source_record> */();
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
@@ -56,6 +72,9 @@ final class Compiler_Lifecycle
 		self::reset_preparation();
 		foreach (Model::sources() as $source) {
 			$source->parsed = null;
+			if ($source->changes === change_state::unchanged) {
+				$source->changes = change_state::changed;
+			}
 		}
 		self::$syntax_initialized = true;
 

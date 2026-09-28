@@ -69,9 +69,9 @@ outside the current implementation slice.
 | Concern | Implemented today | Proposed direction / gap |
 | --- | --- | --- |
 | File identity | Module-owned `source_record` survives updates and deletion. | Keep that identity within unchanged module configuration; module reconciliation is implemented. |
-| Discovery | Module changes trigger full discovery/reset; identical configuration retains data. File updates receive notified paths. | Reconcile the known source set each run; discovery mechanism remains open. |
+| Discovery | Module changes trigger full discovery/reset; every sync scans module-local file indexes and accepts forced notifications. | Reconcile the known source set each run; discovery mechanism remains open. |
 | Previous/current results | `source_work.previous` holds the published parse; `source_work.result` holds a private candidate. | Retain a clear candidate/publication boundary when reconciling declarations. |
-| Changed input | Notified files are scanned/parsed, including unchanged notifications. | Establish no-change before unnecessary frontend work where possible. |
+| Changed input | Module scans compare mtime/size; only changed/pending files or explicit notifications enter the frontend. | Establish no-change before unnecessary frontend work where possible. |
 | Tokens and syntax | Successful synchronization replaces a file's tokens, AST and scopes together. | Replace active tokens while retaining whatever old data comparison/reuse needs. |
 | Declaration matching | Kind/name/enclosing context groups; exact matches first; ambiguous leftovers become additions/deletions. | Decide matching sufficient for stable declaration identity. |
 | Declaration identity | Matched occurrences and source `type_definition` records are newly constructed. | Identify the stable object that resolutions and scopes retain. |
@@ -160,6 +160,36 @@ and inline record revisions provide presence tracking without helper objects.
 Do not add file/AST synchronization machinery in this slice. When file scanning is
 addressed, prefer updating existing records directly from scan results over creating
 replacement records solely for comparison. Physical tombstone cleanup remains debt.
+
+## Agreed next slice: module-relative file reconciliation
+
+Status: implemented. Keep scanning and reconciliation
+inside the existing module/folder traversal, without new record types or generic
+synchronization helpers.
+
+- Store each file path relative to its module, including subfolders (for example
+  `lib/math.phs`). Source membership and file snapshots must not retain an absolute
+  file path as a second identity. Construct filesystem paths from the module's
+  resolved root and the relative path at IO boundaries.
+- One module-owned Keyed_Storage of source records owns and indexes all of that
+  module's files by relative path. Folders are traversal context, not retained
+  owners or indexes. The same relative path in different modules is valid.
+- Replace the current global absolute-path source index with module-local lookup.
+  External file notifications first identify the owning module, then select its
+  relative-path entry. Normalize keys consistently with scan output.
+- Scan each module recursively, updating existing records directly and allocating
+  records only for additions. Stamp last-seen revisions. File order requires no
+  reconciliation. Preserve the current source-extension and directory-symlink rules.
+- After a complete successful module scan, mark unseen files deleted. A failed scan
+  must not mark unvisited files deleted. Renames initially mean deletion/addition.
+- Compare modification time and size to detect changes. Explicit file notifications
+  force rereading. Observed filesystem metadata must not make old tokens/AST appear
+  current: failed or pending reads/parses remain eligible for retry until publication.
+
+Accepted debt: mtime plus size can miss equal-size edits whose modification time
+is unchanged (including coarse timestamp resolution or deliberately preserved
+metadata). This limitation is accepted for the initial file-scan slice. Consider
+content hashing or another stronger detector later; do not add it in this slice.
 
 ## Declaration identity, AST order and scope order
 
@@ -335,3 +365,9 @@ output bytes alone does not prove that incremental work was avoided.
   matched records keep identity, tombstones follow live input order. The shared
   change_state enum and inline uint32 revisions replace integer module flags and
   per-module presence objects. Files, tokens, AST and symbols remain separate slices.
+
+- 2026-09-28: Implemented module-relative file indexes and direct recursive scans.
+  Metadata differences and pending state select frontend work; explicit notifications
+  force reads. Failed scans do not delete unvisited entries, and failed frontend work
+  stays pending. Absolute paths are computed at IO boundaries. The mtime/size detection
+  limitation remains accepted debt; no new synchronization structures were introduced.

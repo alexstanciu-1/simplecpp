@@ -22,11 +22,14 @@ final class Tokenizer
 	}
 
 	/** Scan the source into token spans, skipping whitespace without changing offsets. */
-	public function tokenize(): token_list
+	public function tokenize(string $full_path = ''): token_list
 	{
 		// Disk reads belong to this file's worker; in-memory callers supply their own bytes.
 		if ($this->source->disk_source) {
-			File_Loader::init($this->source, $this->source->path);
+			if ($full_path === '') {
+				throw new \LogicException('Disk tokenization requires a full IO path');
+			}
+			File_Loader::init($this->source, $full_path);
 		}
 		// Retain the exact source snapshot used by every token span.
 		$this->content = $this->source->content;

@@ -6,13 +6,13 @@ strategy is being discussed in [Incremental compiler strategy](../planning/incre
 its identity and dependency rules are not implemented yet.
 
 Compiler.init(paths) reconciles the complete ordered module configuration and discovers
-files when that configuration changes. Identical configuration retains compilation data. Compiler.exec_llvm()
-submits every live file to Compiler.sync(paths), then invokes the existing full
-preparation/generation path. Compiler.update_llvm(paths) submits only notified files and
-then runs that same full preparation. Compiler.sync(paths) publishes source changes
-without invoking the backend, so duplicate declarations can be retained for later
-validation. No watcher or background process loop is introduced: the caller keeps
-its Compiler instance alive and supplies notifications.
+files when that configuration changes. Identical configuration retains compilation data.
+Compiler.sync(paths) scans configured filesystem modules, then reads/parses only new,
+changed, pending or explicitly notified files. Compiler.exec_cpp/exec_llvm use that
+same scan, followed by current full preparation/generation. update_cpp/update_llvm
+also accept explicit notifications that force rereading even with equal metadata.
+No watcher or background loop is introduced. In-memory test modules are not scanned;
+their explicit execution/notifications supply input through the existing pipeline.
 
 Changes to module membership/configuration require init(complete module paths).
 Any change, including order, retires the compilation graph and rediscovers every
@@ -20,7 +20,7 @@ active module. The next sync/update includes all discovered sources as well as a
 explicit notifications; it clears that full-sync obligation only on success. Unknown-module file notifications are rejected rather
 than silently extending module membership. Module roots use canonical filesystem paths and reject overlap. Notifications
 normalize lexical path components (including missing deletion paths) before the
-unique source-path lookup.
+owning-module lookup followed by its relative-path index.
 
 ## Module reconciliation and full reset
 
@@ -41,8 +41,7 @@ compares paths and position, and stamps their last-seen revision. A second loop 
 missing records deleted. There is no module collection wrapper or synchronization
 worker/helper class. `Model::$revision` is the general uint32 reconciliation counter;
 modules retain their last-seen uint32 revision inline. Before rollover, initialization
-clears retained module markers and restarts at one. Future participating record kinds
-must join that reset when their incremental slices are implemented.
+clears retained module and source markers and restarts at one.
 
 When configuration changes, initialization builds a replacement keyed collection in
 input order using the retained objects, then appends tombstones. Only that collection
@@ -61,12 +60,40 @@ an explicitly fresh session, dropping module identities and tombstones too.
 Invalid configuration preserves the prior session. Failure during discovery clears
 partial source data and blocks frontend work; identical initialization can retry.
 Failed frontend synchronization leaves the full-sync obligation pending. Identical
-successful initialization does not rescan for file additions: use file notifications
-or an explicit fresh reset until the file-discovery slice is implemented.
+successful initialization retains data; the next sync/exec/update performs file scanning.
 
 Proof: `tests/module_sync.php` covers identity, both paths, named path changes,
 canonical-root changes, ordering, deletion/reappearance, invalid configuration,
 full-sync retry and discovery failure/recovery (permission case on non-root hosts).
+
+## Direct file scanning
+
+Each module owns one `Keyed_Storage<source_record>` keyed by its normalized relative
+path, including subfolders. Both source_record.path and file.path stay relative.
+There is no global absolute-path file index and no retained folder collection.
+Same-named files in different modules are distinct. External notifications select
+the owning module, then its relative key. Filesystem reads receive a temporary full
+path constructed from the module root; Tokenizer passes that path to File_Loader
+without storing it on the file snapshot.
+
+Module_Loader traverses module/folder context and updates existing entries directly.
+Only additions allocate source records. It stamps last-seen revisions and compares
+mtime/size with the last published file metadata. source_record.changes records
+pending work using the shared change_state enum. Successful parse publication clears
+live pending state; failures leave it set so matching metadata cannot suppress retry.
+The scan itself does not change published bytes, metadata, tokens or ASTs.
+
+Only a successful whole-module scan marks unseen entries deleted. A failed scan
+leaves unvisited entries alone and aborts synchronization before frontend publication.
+Deletion publication retires the old declarations; reappearance reuses the source
+record. File collection order requires no reconciliation. Unchanged files retain
+published snapshots; a changed file still replaces its complete token/AST snapshot.
+
+Accepted debt: mtime plus size misses equal-size edits with unchanged timestamps.
+Explicit notifications force rereading. Stronger content-based detection is deferred.
+Proof: `tests/file_scan.php` covers module-local identity, relative nested paths,
+metadata changes, unchanged reuse, forced reads, deletion/reappearance, revision
+rollover and failure/retry. Permission-based traversal failures run on non-root hosts.
 
 ## Stable sources and temporary comparisons
 
@@ -115,8 +142,8 @@ host presentation skip deleted rows before dereferencing them. Storage iteration
 not changed.
 
 A missing path that previously had published tokens is a deletion notification.
-An unreadable/newly missing discovered input still fails loading; a disappearing file
-after dispatch can also fail the read. Syntax failure retains the previous complete
+A disappearing file found by the next complete scan is marked deleted. A file that
+disappears after scanning/dispatch still fails its read. Syntax failure retains the previous complete
 file, clears generated output and raises the error. Earlier files in the batch may
 already have published; update batches are not transactions. Do not generate stale
 results after catching an update failure. Existing parser/backend diagnostics remain

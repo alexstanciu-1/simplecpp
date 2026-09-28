@@ -31,8 +31,8 @@ try
 		discovery_check($source->content === '', 'Discovery eagerly read a source');
 	}
 	discovery_check(count(Model::$modules) === 1, 'Nested directories became modules');
-	discovery_check($paths === [$directory . '/a.phs', $directory . '/nested/deep/b.phs', $directory . '/z.phs'], 'Wrong recursive file order');
-	$compiler->sync($paths);
+	discovery_check($paths === ['a.phs', 'nested/deep/b.phs', 'z.phs'], 'Wrong recursive file order');
+	$compiler->sync([]);
 	discovery_check(count(Model::syntax_files()) === 3, 'Nested initial files did not parse');
 
 	$new_path = $directory . '/nested/deep/new.phs';
@@ -47,7 +47,7 @@ try
 	discovery_check(Source_Publication::find_source($new_path)->content === 'return 5;', 'Nested edit did not replace its source');
 	unlink($new_path);
 	$compiler->sync([$new_path]);
-	discovery_check(Model::$modules[$directory]->sources[3]->file->changes === SYNC_DELETED, 'Nested deletion lost its tombstone');
+	discovery_check(Model::$modules[$directory]->sources['nested/deep/new.phs']->file->changes === SYNC_DELETED, 'Nested deletion lost its tombstone');
 	discovery_check(Source_Registry::find($new_path) === $stable, 'Edit or deletion replaced stable source membership');
 	discovery_check(Source_Registry::normalize($alias_path) === $new_path, 'Missing source lost parent alias normalization');
 	discovery_check(!Module_Loader::contains_path(Model::$modules[$directory], $directory . '-other/a.phs'), 'Sibling prefix treated as a descendant');
@@ -78,7 +78,7 @@ try
 	$compiler->init([$directory . '/nested/deep', $directory . '/other']);
 	$compiler->sync([$other_path, $deep_path]);
 	$parsed /** Storage<parsed_file> */ = Model::syntax_files();
-	discovery_check((count($parsed) === 2) && ($parsed[0]->source_file()->path === $deep_path) && ($parsed[1]->source_file()->path === $other_path), 'Completion order replaced module/source order');
+	discovery_check((count($parsed) === 2) && ($parsed[0]->source_file()->path === 'b.phs') && ($parsed[1]->source_file()->path === 'c.phs'), 'Completion order replaced module/source order');
 	discovery_check((Source_Registry::find($deep_path)->module === Model::$modules[$directory . '/nested/deep']) && (Source_Registry::find($other_path)->module === Model::$modules[$directory . '/other']), 'Disjoint sources lost exact module ownership');
 }
 finally

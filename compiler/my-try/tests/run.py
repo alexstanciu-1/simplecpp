@@ -44,6 +44,8 @@ def verify(root, output):
     (output / "module_discovery.log").write_text(discovery.stdout + discovery.stderr)
     module_sync = run(["php", str(root / "tests/module_sync.php")])
     (output / "module_sync.log").write_text(module_sync.stdout + module_sync.stderr)
+    file_scan = run(["php", str(root / "tests/file_scan.php")])
+    (output / "file_scan.log").write_text(file_scan.stdout + file_scan.stderr)
     pipeline = run(["php", str(root / "tests/pipeline.php")])
     (output / "pipeline.log").write_text(pipeline.stdout + pipeline.stderr)
     publication = run(["php", str(root / "tests/publication.php")])

@@ -39,15 +39,7 @@ final class Compiler
 		}
 		$modules /** Keyed_Storage<module> */ = Model::$modules;
 
-		// Rebase last-seen markers before the shared uint32 run counter wraps.
-		if ((int)Model::$revision === 4294967295) {
-			foreach ($modules as $record) {
-				$record->revision = 0;
-			}
-			Model::$revision = 0;
-		}
-		Model::$revision++;
-		$revision = (int)Model::$revision;
+		$revision = Compiler_Lifecycle::next_revision();
 		$changed = !Model::$modules_ready;
 
 		// Match by key, retaining existing identities while comparing the input position.
@@ -59,7 +51,7 @@ final class Compiler
 				if ($record->changes === change_state::deleted) {
 					$record->changes = change_state::added;
 				}
-				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position)) {
+				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position) || ($record->disk_source !== $candidate->disk_source)) {
 					$record->changes = change_state::changed;
 				}
 				else {
@@ -68,6 +60,7 @@ final class Compiler
 				$record->declared_path = $candidate->declared_path;
 				$record->resolved_path = $candidate->resolved_path;
 				$record->position = $candidate->position;
+				$record->disk_source = $candidate->disk_source;
 				$record->revision = $revision;
 				if ($record->changes !== change_state::unchanged) {
 					$changed = true;
@@ -168,15 +161,22 @@ final class Compiler
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		self::require_modules();
-		if (Model::$full_sync_pending) {
-			$all_paths /** vector<string> */ = $this->live_paths();
-			foreach ($paths as $path) {
-				$all_paths[] = $path;
-			}
-			$paths = $all_paths;
-		}
 		Compiler_Lifecycle::reset_llvm();
 		Compiler_Lifecycle::reset_preparation();
+		foreach (Model::$modules as $module) {
+			if (($module->changes !== change_state::deleted) && $module->disk_source) {
+				Module_Loader::discover($module);
+			}
+		}
+		foreach (Model::sources() as $record)
+		{
+			if (($record->changes === change_state::deleted) && ($record->file->changes === \scpp\compiler\SYNC_DELETED)) {
+				continue;
+			}
+			if (Model::$full_sync_pending || ($record->changes !== change_state::unchanged)) {
+				$paths[] = Source_Registry::full_path($record->owning_module(), $record->path);
+			}
+		}
 		$queue = Source_Synchronization::plan($paths);
 		$items /** vector<source_work> */ = $queue->items();
 		$published = task_run_publish_unordered($items, $this->jobs,
@@ -256,23 +256,16 @@ final class Compiler
 		Model::$llvm_files = (new LLVM_Generator())->generate($prepared_files, $policy);
 	}
 
-	/** Initial generation paths share the same source synchronization. */
+	/** Scanning selects filesystem changes; explicit notifications can additionally force reads. */
 	private function sync_live(): void
-	{
-		$this->sync($this->live_paths());
-	}
-
-	/** Collect live input paths in the declared module order. */
-	private function live_paths(): array /** vector<string> */
 	{
 		$paths /** vector<string> */ = [];
 		foreach (Model::sources() as $record) {
-			$source = $record->file;
-			if ($source->changes !== \scpp\compiler\SYNC_DELETED) {
-				$paths[] = $source->path;
+			if (!$record->file->disk_source) {
+				$paths[] = Source_Registry::full_path($record->owning_module(), $record->path);
 			}
 		}
-		return $paths;
+		$this->sync($paths);
 	}
 
 	private static function require_modules(): void

@@ -17,7 +17,7 @@ final class Source_Frontend
 				}
 			}
 			if ($operation !== frontend_operation::parse) {
-				$work->tokens = (new Tokenizer($work->source))->tokenize();
+				$work->tokens = (new Tokenizer($work->source))->tokenize(Source_Registry::full_path($work->record->owning_module(), $work->record->path));
 			}
 			if ($operation !== frontend_operation::scan) {
 				$tokens = object_cast($work->tokens, token_list::class);

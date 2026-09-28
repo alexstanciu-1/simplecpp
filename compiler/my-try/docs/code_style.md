@@ -44,7 +44,8 @@ strings, embedded sample programs or other executable content.
 
 ## Verification
 
-Run `python3 compiler/my-try/tools/style_check.py` from the repository root. It
+When explicitly requested, run `python3 compiler/my-try/tools/style_check.py` from
+the repository root. Follow the focused-test default in AGENTS.md. The checker
 checks block layout, separation between methods, and the presence of documentation
 on longer named functions. Code containing interpolated strings is indented while
 multiline string/comment contents and heredoc terminators remain intact.

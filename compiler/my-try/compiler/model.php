@@ -39,8 +39,6 @@ final class Model
 	public static Storage $prepared_files /** Storage<prepared_file> */;
 	/** Final C++ artifacts. @storage.owner */
 	public static Storage $cpp_files /** Storage<cpp_module> */;
-	/** Unique path index; module.sources owns the stable records. @reference.weak */
-	public static Keyed_Storage $sources_by_path /** Keyed_Storage<source_record> */;
 
 	/** Ordered snapshot of stable source membership, never a second retained store. */
 	public static function sources(): Storage /** Storage<source_record> */

@@ -24,7 +24,7 @@ final class Model_Test
 		}
 		foreach (Model::tokens() as $position => $tokens)
 		{
-			if (!is_int($position) || ($tokens->file !== Model::$modules[dirname(__DIR__) . '/tests/samples/01_base']->sources[$position]->file)) {
+			if (!is_int($position) || ($tokens->file !== Model::$modules[dirname(__DIR__) . '/tests/samples/01_base']->sources[$tokens->file->path]->file)) {
 				throw new \RuntimeException('Source identity or numeric order changed');
 			}
 			if (($tokens->file->tokens !== $tokens) || (Model::collected_files()[$position]->token_snapshot() !== $tokens) || (Model::syntax_files()[$position]->tokens !== $tokens) || (Model::syntax_files()[$position]->collection !== Model::collected_files()[$position])) {
@@ -181,9 +181,9 @@ final class Model_Test
 		foreach (['struct Empty {} return 0;', '$x void; return 0;', 'missing(); return 0;'] as $content)
 		{
 			Compiler_Lifecycle::reset();
-			$module = new module('memory', 'memory', 'memory');
+			$module = new module('memory', Source_Registry::normalize('memory'), 'memory');
 			$file = new file();
-			$file->path = 'memory/invalid.phs';
+			$file->path = 'invalid.phs';
 			$file->mtime = 0;
 			$file->size = strlen($content);
 			$file->content = $content;
@@ -226,8 +226,9 @@ final class Model_Test
 		{
 			file_put_contents($path, '$value = 12;');
 			$file = new file();
+			$file->path = basename($path);
 			File_Loader::init($file, $path);
-			if (($file->path !== $path) || ($file->size !== 12) || ($file->mtime <= 0) || ($file->content !== '$value = 12;') || ($file->tokens !== null)) {
+			if (($file->path !== basename($path)) || ($file->size !== 12) || ($file->mtime <= 0) || ($file->content !== '$value = 12;') || ($file->tokens !== null)) {
 				throw new \LogicException('Source published incomplete metadata or content');
 			}
 			$scanner = new Tokenizer($file);

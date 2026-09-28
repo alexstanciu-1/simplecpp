@@ -31,24 +31,18 @@ final class Source_Synchronization
 			$record = Source_Registry::resolve($path);
 			$previous = $record->file;
 			$candidate = new file();
-			$candidate->path = $path;
-			$candidate->disk_source = true;
-			if ($previous !== null) {
-				$old /** file */ = $previous;
-				$candidate->disk_source = $old->disk_source;
-				$candidate->content = $old->content;
-			}
-			if ($candidate->disk_source)
-			{
-				if (!fs_is_file($path))
-				{
-					if ($previous !== null) {
-						$old /** file */ = $previous;
-						if ($old->tokens !== null) {
-							$candidate->changes = \scpp\compiler\SYNC_DELETED;
-						}
+			$candidate->path = $record->path;
+			$candidate->disk_source = $previous->disk_source;
+			$candidate->content = $previous->content;
+			if ($candidate->disk_source) {
+				if (($record->changes === change_state::deleted) || !fs_is_file($path)) {
+					if (($record->changes === change_state::deleted) || ($previous->tokens !== null)) {
+						$candidate->changes = \scpp\compiler\SYNC_DELETED;
 					}
 				}
+			}
+			if ($record->changes === change_state::unchanged) {
+				$record->changes = change_state::changed;
 			}
 			$queue->enqueue($record, $candidate);
 		}

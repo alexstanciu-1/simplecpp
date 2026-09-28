@@ -9,13 +9,12 @@ object-list boundary; scalar lists remain explicit typed arrays.
 `Key_Storage_List<T>` owns duplicate-key membership, ordered traversal and lookup.
 Storage and Keyed_Storage share Storage_Abstract. Module membership is keyed and
 ordered; stage-result collections remain numeric. Keyed_Storage also provides
-unique-key indexes, including the source-path index.
+module-local source indexes.
 
 | Root | Owned data |
 | --- | --- |
-| modules | One `Keyed_Storage<module>` owns keyed records in current input order, followed by tombstones. Each module owns `Storage<source_record>` in source order. |
+| modules | One `Keyed_Storage<module>` owns keyed records in current input order, followed by tombstones. Each module owns `Keyed_Storage<source_record>` by module-relative path. |
 | revision | General uint32 reconciliation counter; participating records retain inline last-seen revisions. |
-| sources_by_path | Unique normalized-path index referencing module-owned source records. |
 | language_scope | Owns language/runtime type definitions; the built-in Simple C++ `int`, `bool`, `float`, fixed-width integer aliases and `void`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
 | prepared_files | Completed preparation records pointing to source files; AST specialization records own the facts. |
@@ -26,7 +25,9 @@ unique-key indexes, including the source-path index.
 
 A `source_record` owns the current file snapshot, optional token result and optional
 parsed result. The parsed result owns its collection and shares the exact token
-result. A weak module backlink records stable membership. Edits, deletion and
+result. A weak module backlink records stable membership. Source/file paths are relative to
+that module; only IO and external notification boundaries construct full paths.
+The source record retains pending change_state and a uint32 scan revision. Edits, deletion and
 reappearance retain that identity; a failed candidate leaves prior results intact.
 Deletion marks retained syntax and declarations as tombstones. Overlapping module
 roots (including duplicate/canonical aliases) are rejected at discovery.
@@ -173,7 +174,7 @@ bounded native execution with locked completion-order publication. Unchanged sou
 
 ## Per-file frontend pipeline
 
-Module discovery now publishes paths only. A discovered file has disk_source=true;
+Module scanning checks mtime/size and updates module-relative membership without reading source bytes. A discovered file has disk_source=true;
 its initially empty content/zero metadata are pending placeholders. Tokenizer reads
 those files in the worker, then scans their bytes. Explicit in-memory records keep
 disk_source=false. Each Compiler.exec_llvm work order immediately parses its own token

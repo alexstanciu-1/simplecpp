@@ -9,7 +9,7 @@ try
 	$compiler = new Compiler();
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
-	$source = Model::$modules[$directory]->sources[0]->file;
+	$source = Model::$modules[$directory]->sources['a.phs']->file;
 	if (!$source->disk_source || $source->content !== '' || !Model::tokens()->is_empty()) {
 		throw new \LogicException('Discovery read source bytes');
 	}
@@ -40,7 +40,7 @@ try
 	$compiler->init([$directory]);
 	unlink($directory . '/a.phs');
 	try {
-		$compiler->exec_llvm();
+		$compiler->tokenize();
 		throw new \LogicException('Missing file after discovery was accepted');
 	}
 	catch (\RuntimeException $expected) {

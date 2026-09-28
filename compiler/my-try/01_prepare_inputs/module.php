@@ -25,6 +25,7 @@ final class Module_Loader
 			}
 			$candidate = new module($input->declared_path, $resolved, $input->name);
 			$candidate->position = $position;
+			$candidate->disk_source = true;
 			$position++;
 			foreach ($result as $existing) {
 				if (($existing->resolved_path === $resolved) || Module_Loader::contains_path($existing, $resolved) || Module_Loader::contains_path($candidate, $existing->resolved_path)) {
@@ -36,10 +37,16 @@ final class Module_Loader
 		return $result;
 	}
 
-	/** Discover an already validated canonical root. */
+	/** Update module membership directly; only a complete scan can establish deletions. */
 	public static function discover(module $module): void
 	{
-		self::scan($module, $module->resolved_path);
+		$revision = Compiler_Lifecycle::next_revision();
+		self::scan($module, '', $revision);
+		foreach ($module->sources as $source) {
+			if ((int)$source->revision !== $revision) {
+				$source->changes = change_state::deleted;
+			}
+		}
 	}
 
 	/** Compare directory ancestors, including missing files reported for deletion. */
@@ -57,32 +64,49 @@ final class Module_Loader
 		return true;
 	}
 
-	/** Recurse through real directories; directory symlinks must not introduce cycles. */
-	private static function scan(module $module, string $path): void
+	/** Folders are traversal context; every file belongs to the module's relative-path index. */
+	private static function scan(module $module, string $folder, int $revision): void
 	{
+		$path = Source_Registry::full_path($module, $folder);
 		$names /** vector<string> */ = [];
 		if (!take_false($names, fs_scan($path))) {
 			throw new \RuntimeException('Cannot scan input folder: ' . $path);
 		}
-
+		$members /** Keyed_Storage<source_record> */ = $module->sources;
 		foreach ($names as $name)
 		{
-			$file_path = $path . '/' . $name;
-			if (fs_is_dir($file_path)) {
-				if (!fs_is_link($file_path)) {
-					self::scan($module, $file_path);
+			$relative = $folder . $name;
+			$full_path = Source_Registry::full_path($module, $relative);
+			if (fs_is_dir($full_path)) {
+				if (!fs_is_link($full_path)) {
+					self::scan($module, $relative . '/', $revision);
 				}
 				continue;
 			}
-
-			if (!string_byte_ends_with($name, '.phs') || !fs_is_file($file_path)) {
+			if (!string_byte_ends_with($name, '.phs') || !fs_is_file($full_path)) {
 				continue;
 			}
-
-			$loaded = new file();
-			$loaded->path = $file_path;
-			$loaded->disk_source = true;
-			Source_Registry::add($module, $loaded);
+			$mtime = 0;
+			$size = 0;
+			if (!take_false($mtime, fs_mtime($full_path)) || !take_false($size, fs_size($full_path))) {
+				throw new \RuntimeException('Cannot read file metadata: ' . $full_path);
+			}
+			if (!isset($members[$relative])) {
+				$loaded = new file();
+				$loaded->path = $relative;
+				$loaded->disk_source = true;
+				Source_Registry::add($module, $loaded);
+			}
+			$record = $members[$relative];
+			$record->revision = $revision;
+			if ($record->changes === change_state::deleted) {
+				$record->changes = change_state::added;
+			}
+			elseif (($record->file->mtime !== $mtime) || ($record->file->size !== $size)) {
+				if ($record->changes === change_state::unchanged) {
+					$record->changes = change_state::changed;
+				}
+			}
 		}
 	}
 }

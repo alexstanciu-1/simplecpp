@@ -8,7 +8,7 @@ final class Source_Publication
 	/** Compatibility query for external callers; work publication already holds the record. */
 	public static function find_source(string $path): ?file
 	{
-		$record = Source_Registry::find(Source_Registry::normalize($path));
+		$record = Source_Registry::find($path);
 		if ($record === null) {
 			return null;
 		}
@@ -27,6 +27,7 @@ final class Source_Publication
 		if ($source->changes === \scpp\compiler\SYNC_DELETED)
 		{
 			$record->file->changes = \scpp\compiler\SYNC_DELETED;
+			$record->changes = change_state::deleted;
 			if ($previous !== null) {
 				$old /** parsed_file */ = $previous;
 				$entries /** Storage<collected_name> */ = $old->collection->entries;
@@ -60,6 +61,7 @@ final class Source_Publication
 	{
 		Scope_Publication::publish($parsed->root_scope(), Model::$global_scope);
 		$record->file = $parsed->source_file();
+		$record->changes = change_state::unchanged;
 		$record->tokens = $parsed->tokens;
 		$record->parsed = $parsed;
 		$record->file->tokens = $parsed->tokens;

@@ -37,10 +37,10 @@ if (q_count(Model::syntax_files()) !== 1) {
 Compiler_Lifecycle::reset();
 $sync_module = new module('/sync-proof', '/sync-proof', '/sync-proof');
 $definition = new file();
-$definition->path = '/sync-proof/a.phs';
+$definition->path = 'a.phs';
 $definition->content = 'function answer(): int { return 7; }';
 $use_file = new file();
-$use_file->path = '/sync-proof/b.phs';
+$use_file->path = 'b.phs';
 $use_file->content = 'return answer();';
 Source_Registry::add($sync_module, $definition);
 Source_Registry::add($sync_module, $use_file);
@@ -55,8 +55,8 @@ $first_function = $first_candidates[0];
 if ($first_function->changes !== \scpp\compiler\SYNC_ADDED) {
 	throw new \LogicException('Initial sync did not mark additions');
 }
-$current_inputs /** Storage<source_record> */ = $sync_module->sources;
-$current_inputs[0]->file->content = 'function answer(): int { return 8; }';
+$current_inputs /** Keyed_Storage<source_record> */ = $sync_module->sources;
+$current_inputs['a.phs']->file->content = 'function answer(): int { return 8; }';
 $changed_paths /** vector<string> */ = ['/sync-proof/a.phs'];
 $sync_compiler->update_llvm($changed_paths);
 $syntax_after /** Storage<parsed_file> */ = Model::syntax_files();
@@ -65,19 +65,19 @@ $next_function = $next_candidates[0];
 if (($next_function->changes !== \scpp\compiler\SYNC_BODY_CHANGED) || ($next_function->node === $first_function->node) || ($syntax_after[1] !== $kept_caller)) {
 	throw new \LogicException('Native sync lost body flags or reparsed the unchanged caller');
 }
-$current_inputs[0]->file->content = 'function answer(): int { return 8; } function answer(): int { return 9; }';
+$current_inputs['a.phs']->file->content = 'function answer(): int { return 8; } function answer(): int { return 9; }';
 $sync_compiler->sync($changed_paths);
 $duplicates /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions_named('answer'));
 if (q_count($duplicates) !== 2) {
 	throw new \LogicException('Native sync merged duplicate declarations');
 }
-$current_inputs[0]->file->content = 'function answer(): int { return 9; }';
+$current_inputs['a.phs']->file->content = 'function answer(): int { return 9; }';
 $sync_compiler->update_llvm($changed_paths);
 $survivors /** vector<collected_name> */ = Scope_Lookup::live(Model::$global_scope->functions_named('answer'));
 if ((q_count($survivors) !== 1) || ($survivors[0]->changes !== 0)) {
 	throw new \LogicException('Native sync failed exact duplicate matching or tombstone filtering');
 }
-$current_inputs[0]->file->disk_source = true; // Absent path represents deletion of the published source.
+$current_inputs['a.phs']->file->disk_source = true; // Absent path represents deletion of the published source.
 $sync_compiler->sync($changed_paths);
 $survivors = Scope_Lookup::live(Model::$global_scope->functions_named('answer'));
 if (q_count($survivors) !== 0) {
