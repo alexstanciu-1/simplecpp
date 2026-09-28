@@ -14,6 +14,9 @@ Doc Status: planning
 
 Start here or with [AGENTS.md](AGENTS.md), [code style](code_style.md),
 [the v0.2 handoff](handoff_catalog_v02.md) and [the current S2S slice](s2s_integer_slice.md).
+The [incremental strategy discussion](planning/incremental_strategy.md) records the
+proposed declaration/body lifecycle and its open decisions.
+
 Historical/planning labels within documents still distinguish earlier proposals
 from current contracts. The helper implementation remains under `../helpers/`.
 

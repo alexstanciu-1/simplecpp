@@ -1,0 +1,321 @@
+# Incremental compiler strategy
+Doc Status: planning
+
+Discussion started: 2026-09-28. Status: working proposal with the module slice
+agreed below. Module implementation is authorized but not yet applied; the remaining
+file/declaration/body strategy stays under discussion.
+
+This is the shared planning document for incremental compilation in `my-try`.
+[Current file synchronization](../lifecycle/incremental.md) describes implemented
+behavior; [the retained model](../architecture/MODEL.md) describes current ownership.
+This proposal does not redefine language semantics or resume parked LLVM work.
+
+## Objective and boundaries
+
+Retain useful compiler data between updates. Rebuild affected declarations and
+whole executable bodies, including the file's top-level executable body. Preserve
+source order and reliable declaration relationships without introducing incremental
+tracking for every executable statement or expression.
+
+For S2S, generating all outputs and avoiding writes when bytes match can reduce
+native recompilation. It does not remove repeated frontend/semantic work, so it is
+not a substitute for this strategy on larger projects. Output comparison remains
+an independent useful step; output partitioning is a separate decision.
+
+A **session** owns retained compiler data. A **run** is one initial build or update
+within that session. Current `Compiler::init()` clears the session: an incremental
+run must not accidentally use that reset as its starting operation.
+
+In this document, **body rebuild** means replacing a body's derived semantic facts,
+resolutions and backend work together. It does not necessarily mean reparsing:
+an unchanged source file whose dependencies changed can reuse its syntax.
+
+## Direction supplied by the user
+
+The following records the requested direction. Exact representation, matching,
+publication and dependency mechanics remain discussion items below.
+
+1. Start a new run while retaining the preceding run's useful data.
+2. Reconcile modules and files as added, changed, removed or unchanged.
+3. Tokenize and parse added or changed files. Avoid that work for unchanged files.
+4. Replace the active token sequence with the newly tokenized sequence; no
+   token-by-token incremental merge is requested.
+5. Reconcile declarations across stages. Rebuild executable statements as their
+   containing body, instead of matching individual acting statements across runs.
+6. Match each new declaration to its predecessor. Construct the current AST in
+   current source order, pulling matched declarations from the old run into it.
+7. Update the retained global scope in the opposite direction: push current
+   declaration information into its existing entries rather than reconstructing
+   the scope as if every declaration were new.
+8. Retain deletion information for declarations missing from the new run, in
+   both AST/declaration tracking and scopes. Interpreting the original wording:
+   old but absent from new means deleted; new but absent from old means added.
+9. Resolutions refer back to the declarations/types they use and to their owning
+   declaration or body. Discuss suitable storage and weak-reference relationships.
+10. Global symbol changes update affected resolutions. The semantic rebuild unit
+    is a whole function body, including the file's top-level body.
+11. Incremental work operates at declaration/body granularity.
+12. Physical removal of deleted data is deferred cleanup debt. Decide when
+    added/changed flags return to unchanged, or how retained flags are qualified.
+
+Functions, structs and their current frontend forms are the immediate examples.
+Classes, constants and other declarations must fit the approach when implemented;
+their mention here does not authorize adding their syntax now. Templates remain
+outside the current implementation slice.
+
+## Current implementation and gaps
+
+| Concern | Implemented today | Proposed direction / gap |
+| --- | --- | --- |
+| File identity | Module-owned `source_record` survives updates and deletion. | Keep that identity; agree module/configuration reconciliation. |
+| Discovery | Initial module discovery; subsequent updates receive file paths. Module membership changes require a fresh initialization. | Reconcile the known source set each run; discovery mechanism remains open. |
+| Previous/current results | `source_work.previous` holds the published parse; `source_work.result` holds a private candidate. | Retain a clear candidate/publication boundary when reconciling declarations. |
+| Changed input | Notified files are scanned/parsed, including unchanged notifications. | Establish no-change before unnecessary frontend work where possible. |
+| Tokens and syntax | Successful synchronization replaces a file's tokens, AST and scopes together. | Replace active tokens while retaining whatever old data comparison/reuse needs. |
+| Declaration matching | Kind/name/enclosing context groups; exact matches first; ambiguous leftovers become additions/deletions. | Decide matching sufficient for stable declaration identity. |
+| Declaration identity | Matched occurrences and source `type_definition` records are newly constructed. | Identify the stable object that resolutions and scopes retain. |
+| AST reuse | A fresh tree is published; nodes have one-parent links, linked once. | Actual node transfer needs an explicit ownership/relinking contract. |
+| Scope update | Old live collection references are removed; new ones are exported. | Update matched retained entries while preserving duplicate candidates. |
+| Preparation | All attached preparation facts and generated output are reset before synchronization. | Preserve unaffected facts; retire/rebuild selected declaration/body facts. |
+| Dependencies | Some facts point to declarations; no shared reverse dependency index. | Add a bounded way to find affected owners and revisit lookups. |
+| Failure | A failed file keeps its previous parse; earlier successful files may already have published. | Decide failure/publication policy; do not imply whole-run rollback already exists. |
+
+`Parser`/`Parser_Run` currently isolate parser invocation state; neither owns a
+previous/current result pair. That pair lives in `source_work` and `source_record`.
+Keep the class decision open until this lifecycle is settled.
+
+Implementation anchors: `compiler/sync/sources.php`, `compiler/work_queue.php`,
+`compiler/frontend.php`, `compiler/publication.php`, `compiler/sync/declarations.php`,
+`compiler/scope_publication.php`, `compiler/lifecycle.php` and `03_parse/structures.php`
+(paths relative to `compiler/my-try/`).
+
+## Proposed run sequence — to review
+
+1. Establish the run's source changes, including additions and removals. Keep
+   unchanged file data. Retain enough previous state to compare changed candidates.
+2. Tokenize and parse changed/added files privately. As an initial simplification,
+   parse each changed file completely, then reconcile declarations. Skipping the
+   parsing of individual unchanged bodies inside a changed file is not required.
+3. Walk each candidate's declarations in new source order. Match against the
+   previous inventory, retain matched identity according to the agreed ownership
+   rule, classify header/body/member changes, and record unmatched old declarations
+   as deleted. Keep executable statements in their enclosing body's new order.
+4. Publish reconciled syntax and push declaration changes into retained scope/type
+   entries. Update old and new lookup buckets for removals, additions or renames.
+5. After the relevant declaration changes are visible, schedule affected declaration
+   and body owners. Include bodies changed in source and owners affected by lookup
+   or declaration changes, even when their source files were untouched.
+6. Rebuild those owners' preparation and resolutions. Replace their dependency
+   memberships as a unit. Propagate changes to dependent declarations until no
+   additional owner requires work. Process cycles as a bounded group/worklist;
+   exact scheduling and comparison rules remain open.
+7. Generate from current prepared data. Publish valid output and avoid rewriting
+   identical generated files. Failed/dirty owners must not supply apparently current
+   semantic facts or successful output.
+8. Complete change consumption, then advance/reset transient state. Physical
+   reclamation is deferred, but removing stale dependency memberships is necessary
+   for correct selective rebuilding from its first implementation.
+
+These are logical dependencies, not a requirement to serialize all file work.
+Concurrent parsing can continue; semantic consumers must see a coherent scope view.
+A declaration-publication barrier before semantic rebuilding is the simplest
+proposal. Whole-run transactional publication is not assumed.
+
+## Agreed first slice: module synchronization
+
+Any module configuration change triggers a full rebuild, including a change only
+in module order. File scanning and AST reconciliation optimizations are later slices.
+This slice should be efficient and straightforward; it is not an optimization pass.
+
+Each module stores its name, declared path and resolved path, even when the two
+paths are identical. An explicit name/tag is the key; otherwise the exact declared
+path is the key, preserving relative spelling. Match old/new modules by that key.
+Reject duplicate incoming keys and overlapping resolved module roots.
+
+Keep the retained collection indexed by key behind access methods. Incoming entries
+need not be indexed. Use a common synchronization helper for presence tracking,
+leaving module comparison and update decisions with the module process:
+
+1. Walk incoming entries in order. Find the old entry by key, compare its configuration
+   and position, mark it present, and update or insert it in the retained collection.
+2. Walk retained entries and mark those not present in this run deleted.
+
+Keep run presence separate from change flags. A run marker avoids a preliminary
+pass clearing presence. Detect order changes by comparing positions. With an indexed
+old collection, matching takes expected O(old + new) time; path resolution and
+configuration validation have their own costs.
+
+Validate the complete incoming configuration before destructive reset. When it
+changes, retire the prior compilation roots and rediscover/rebuild all active modules.
+Avoid traversing discarded ASTs just to clear preparation facts; partial resets that
+retain syntax still need their existing cleanup. Releasing a graph does not promise
+constant-time destruction. Failed discovery must not expose old output as current.
+An unchanged module configuration should retain the current compilation data.
+
+Wrap reset and synchronization behind methods so storage and matching can evolve.
+Do not add file/AST synchronization machinery in this slice. When file scanning is
+addressed, prefer updating existing records directly from scan results over creating
+replacement records solely for comparison. Physical tombstone cleanup remains debt.
+
+## Declaration identity, AST order and scope order
+
+The intended directions are compatible:
+
+- AST reconciliation follows **new source order**, locating matching old identities.
+- Scope reconciliation follows **retained symbol identity**, applying current facts.
+- Scope insertion order must not become the authority for executable source order.
+
+The outstanding question is what is physically retained:
+
+| Option | Benefit | Consequence to resolve |
+| --- | --- | --- |
+| Transfer the actual old declaration AST node into the current tree. | Closest to the proposed AST pull; retains node identity. | Its links, spans, specialization children and collected occurrence may need updating. The old tree can no longer remain an immutable intact snapshot of that same node. |
+| Retain a declaration identity/entry and replace its current syntax reference. | Existing consumers can retain one target while each parse has independent syntax. | This is identity reuse, not literal reuse of the old AST object; must be explicitly agreed if selected. |
+
+No option is selected yet. Do not add both a stable-node mechanism and a separate
+identity registry without demonstrating that both are necessary. Existing scope
+entries/type definitions are candidates for reuse; an extra ID table is not assumed.
+
+The present node API rejects a child already attached to a parent. Named child
+lists also retain aliases, and occurrence attachment is currently permanent.
+Consequently, pulling nodes cannot be implemented merely by appending old node
+handles to a new list. We must decide when transfer is safe and how all associated
+links and provenance change together.
+
+Matching proposal for discussion: group by declaration kind, owner and name;
+match equal candidates before changed candidates; do not arbitrarily pick among
+ambiguous duplicates. A signature change should not automatically destroy identity
+if there is one clear predecessor. Renames, moves between owners/files and ambiguous
+matches can initially be delete/add, unless a stronger rule is agreed. Token indexes
+and source offsets are not stable identities.
+
+Local variable declarations/initializers inside an executable body need a boundary
+rule too. Proposed: rebuild them with that body, retaining cross-run identity for
+externally addressable declarations. A typed local initializer both declares and
+executes; treating every declaration-shaped statement as independently reusable
+would defeat the intended body granularity.
+
+## Token replacement and deleted data
+
+Replacing the active token store is compatible with retaining the previous snapshot
+until comparison and publication finish. It must not mean overwriting token memory
+while previous AST spans/occurrences still refer to it.
+
+For a reused node after an insertion or move, choose one explicit policy: update all
+spans/provenance to the new snapshot, or retain the exact old snapshot its references
+require. This applies to specialized token indexes as well as the common node span.
+Location-only changes may require updated diagnostics even when semantic facts remain
+valid. Physical token sharing/compaction is not needed for the first design.
+
+Deleted declarations must remain observable to invalidation and inspection while
+being excluded from live lookup and code generation. Decide whether AST deletion
+records live in a separate retained inventory or in a traversal that explicitly
+filters tombstones. They must not appear as executable nodes in current source order.
+Deleting a file/module must retire its declarations, bodies and dependency memberships.
+
+## Resolutions and dependency storage — options, not final layout
+
+Recommended ownership direction for discussion:
+
+- A declaration or body owns its current resolution/dependency records.
+- A resolution has a non-owning reference to its selected declaration/type.
+- A reverse index lets a changed declaration or lookup bucket find affected owners.
+- Rebuilding an owner replaces its old dependency memberships; duplicate uses may
+  be retained locally, but the owner should not be rebuilt once per use.
+
+Whole-body rebuilding permits a compact reverse index of dependent owners rather
+than a reverse pointer to every expression. Exact resolution records can remain
+attached to the specialized syntax that already owns them. Avoid introducing a
+second copy of all prepared facts just to drive invalidation.
+
+A weak reference avoids retaining an obsolete target. It does **not** establish
+semantic freshness: a still-live declaration can change its signature or fields,
+or remain alive as a deleted tombstone. Change tracking must determine whether a
+resolution is valid independently of whether its weak reference can be acquired.
+Whether reverse memberships store weak owner handles or stable owned records remains
+open; lifetimes and removal responsibility must be explicit before choosing storage.
+
+Selected-target dependencies alone are insufficient:
+
+- An unresolved name must be revisited when a declaration is added.
+- A previously unique match can become ambiguous when a second declaration appears.
+- A nearer declaration can shadow the previously selected outer declaration.
+- Removing one ambiguous candidate can make lookup succeed.
+
+Therefore also retain the relevant lookup dependency (scope/name/category, including
+searched scopes where necessary), or agree a conservative owner invalidation rule
+when those buckets change. The precise index representation is an open decision;
+`Key_Storage_List` is available but is not chosen merely because it supports duplicates.
+
+## Rebuild granularity and propagation examples
+
+| Change | Expected minimum semantic work, subject to dependency policy |
+| --- | --- |
+| Ordinary function body only | Rebuild that body; callers need no semantic rebuild if they consume only its unchanged explicit signature. Backend/link work is separate. |
+| Function signature | Rebuild the declaration, its body and affected call-site owners. |
+| Struct field/type/order | Rebuild the declaration and affected declaration/body owners consuming its members or value layout; propagate through containing value types. |
+| File-level executable statement | Rebuild the file's executable body, preserving statement order. |
+| New/removed/renamed global name | Revisit affected lookup owners, including unresolved and ambiguous lookups. |
+| Declaration move or location-only edit | Preserve current AST order and provenance; reuse semantic facts only when their dependencies and context remain valid. |
+| Unchanged file, changed dependency | Reuse tokens/AST; rebuild affected declarations/bodies semantically. |
+
+Do not confuse "body changed" with "only the body can affect dependents." A future
+compile-time consumer of a body, or inferred exported facts, would require that
+specific dependency. Templates/metaprogramming remain deferred; the current explicit
+function-signature case should not acquire speculative machinery for them.
+
+## Change flags and run completion
+
+Current flags distinguish added, declaration-changed, body-changed and deleted.
+The new design needs an equally clear distinction between current-run events,
+persistent deletion state and work still awaiting rebuild. Their exact fields or
+enums are not decided here.
+
+Options: clear consumed added/changed flags at an agreed boundary, or associate them
+with a run/revision so they cannot be mistaken for a new change later. Leaving bare
+added/changed flags indefinitely is unsafe if the next run treats them as fresh work.
+Failed or unprocessed work must not disappear merely because transient flags reset.
+Deleted state remains until cleanup or an explicitly matched reappearance policy.
+
+Deferred debt: physically remove tombstones, release obsolete source/token/AST
+snapshots and compact stores after dependents can no longer access them. Tombstones
+are deletion evidence, not an unlimited history service.
+
+## Discussion order and acceptance examples
+
+Resolve these decisions before selecting classes or implementing:
+
+1. What identity is pulled forward: the actual declaration node or a stable entry
+   referring to current syntax? Must previous syntax remain inspectable after publication?
+2. Where do declaration identity and body ownership start/end, especially for locals
+   and file-level executable code?
+3. What matching ambiguity and rename/move policies are acceptable initially?
+4. When do token/AST/scope changes become visible, and what remains usable after a
+   failed parse or semantic rebuild? Are partial per-file publications acceptable?
+5. How are selected-target and lookup dependencies stored and removed?
+6. How are dirty owners scheduled, cycles bounded, and change flags consumed?
+7. Module configuration changes, including order, now require a full rebuild; see
+   the agreed first slice above. File and AST reconciliation remain separate work.
+
+Future proofs should compare incremental results with a fresh compilation of the
+same final inputs, while also asserting the intended retained identities and skipped
+work. Cover unchanged notifications; insertion/reordering before a retained declaration;
+body-only and signature edits; struct layout changes; additions/removals of lookup
+candidates; file/module deletion; duplicate ambiguity; parse failure and retry;
+semantic failure and retry; and multiple successive edits before cleanup.
+
+Performance evidence should count rescanned/reparsed files, rebuilt declarations and
+bodies, revisited dependencies, regenerated outputs and rewritten files. Matching
+output bytes alone does not prove that incremental work was avoided.
+
+## Decision log
+
+- 2026-09-28: Recorded the user's declaration/body strategy and current implementation
+  gaps. No representation, parser-class consolidation or implementation change approved.
+- Physical removal of deleted data remains deferred debt. Storage choices and flag
+  completion policy remain open. Continue discussion in this document.
+
+- 2026-09-28: Approved module-first implementation: explicit name/tag or declared-path
+  key, both path forms retained, indexed two-pass reconciliation, and full rebuild
+  on any module configuration/order change. Keep this efficient without an optimization
+  pass; revisit more detailed optimization with file scanning and AST nodes.

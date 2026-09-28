@@ -1,6 +1,10 @@
 # File synchronization
 Doc Status: supporting
 
+This document describes current behavior. The proposed declaration/body incremental
+strategy is being discussed in [Incremental compiler strategy](../planning/incremental_strategy.md);
+its identity and dependency rules are not implemented yet.
+
 Compiler.init(paths) starts an empty session and discovers module files. Compiler.exec_llvm()
 submits every live file to Compiler.sync(paths), then invokes the existing full
 preparation/generation path. Compiler.update_llvm(paths) submits only notified files and
