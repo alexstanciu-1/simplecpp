@@ -81,6 +81,12 @@ or automatically as a finishing gate. The explicitly requested full test runner
 still includes its existing mechanical checks. Generated files and saved historical evidence
 are excluded; do not reformat them.
 
+## Branch publication
+
+User decision, 2026-09-28: on `feature/scpp-native-portability-fixes`, push each
+completed commit to the existing remote branch and provide its GitHub commit link
+for review. This is standing authorization; do not ask again for each push.
+
 ## Default procedure for each imported slice
 
 1. The initial full import from
