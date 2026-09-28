@@ -22,6 +22,8 @@ final class Model
 	public static bool $modules_ready = true;
 	/** Module changes require every discovered file to cross the frontend barrier. */
 	public static bool $full_sync_pending = false;
+	/** Unexpected preparation errors make retained semantic state unsafe to reuse. */
+	public static bool $rebuild_required = false;
 	/**
 	 * Established by reset; sync updates candidate lists while retaining deleted entries.
 	 * @ownership owner
@@ -39,6 +41,8 @@ final class Model
 	public static Storage $prepared_files /** Storage<prepared_file> */;
 	/** Final C++ artifacts. @storage.owner */
 	public static Storage $cpp_files /** Storage<cpp_module> */;
+	/** Retained C++ fragments survive output invalidation, but not a full compilation reset. */
+	public static cpp_program $cpp_program;
 
 	/** Ordered snapshot of stable source membership, never a second retained store. */
 	public static function sources(): Storage /** Storage<source_record> */

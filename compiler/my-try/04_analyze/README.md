@@ -1,12 +1,19 @@
 # Analysis
 Doc Status: supporting
 
-[collect/](collect/) records canonical names supplied by the frontend during parsing
-and registers declarations in file-local scopes after a successful parse. Serialized
-global publication belongs to `compiler/publication.php`.
+[collect/](collect/) is called directly by the parser, not run as a separate pass.
+It reuses existing declaration identities and registers new declarations as they
+are recognized. File/member/signature scopes are private to their worker; global
+function/type registration goes through `task_synchronize` and `Scope_Publication`.
+File executable variables remain local. Unresolved occurrences retain syntax and
+scope context for resolution after all parsing/collection workers have joined.
+
+Parsing ends before resolution. After its successful join, standalone `prepare()`
+selects changed declarations and affected bodies, retains unaffected facts, and removes
+deleted collected entries. Combined `sync` now uses the same incremental frontend phases. See the [incremental strategy](../docs/planning/incremental_strategy.md).
 
 [prepare/](prepare/) owns the active backend-neutral semantic direction:
-`File_Preparation` prepares supported syntax and attaches facts to AST specializations.
+`Preparation_Worker` schedules the shared `File_Preparation` algorithms, which prepare supported syntax and attaches facts to AST specializations.
 Completed-file records reference that syntax; they do not own token-indexed fact maps.
 [The C++ backend](../05_backend/cpp/) currently consumes those shared facts.
 

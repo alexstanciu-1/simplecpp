@@ -25,3 +25,24 @@ no new thread pool. Generic callbacks require a header template. One instantiati
 per callback pair adds compile work; no compile-time saving is claimed. Strict
 runtime registry and shallow STAN signatures expose the operation; portable PHP
 provides sequential execution with matching callback/error boundaries.
+
+
+## Worker-side synchronized callback
+
+`task_synchronize(callback): void` invokes a zero-argument callback synchronously
+under the active `task_run_publish_unordered` batch's publication mutex. Work may
+call it repeatedly before returning its final result. It shares serialization
+with the final publish callback; it does not queue another task or expose a mutex.
+
+It is valid only while executing that batch's work callback. Calls outside work,
+inside a publish callback, or recursively inside a synchronized callback reject.
+An exception releases the lock and restores the context before propagating.
+Batch context is thread-local; nested batch execution restores the caller's context.
+The callback must not wait for other work in its batch: it holds the publication lock.
+Separate batches have separate locks, so the caller must still prevent overlapping
+batches from writing the same destination. PHP invokes the callback sequentially
+and enforces the same context boundaries.
+
+This permits parser workers to register shared global symbols during parsing,
+while keeping local parsing outside the lock. Consumers must wait for the complete
+parse/collection join before resolving those symbols.

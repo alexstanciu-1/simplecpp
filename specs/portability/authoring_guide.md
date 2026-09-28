@@ -343,3 +343,22 @@ them sequentially. Native work is concurrent, publication is mutex-serialized, a
 return/rethrow joins workers. Work may only mutate its private result; shared writes
 belong in publish. Do not mutate batch membership during execution. See
 [builtin contract](../builtins/tasks/unordered_publication.md).
+
+## Nullable named locals and action callbacks
+
+Local annotations may spell `nullable<Row>` or a qualified named class, alongside
+the existing nullable scalar forms. The converter preserves the declared spelling;
+it does not infer identity, class declarations or unwrap validity. `mixed`, `object`,
+`void`, nested wrappers and arbitrary generic payloads remain excluded at this site.
+
+Closures accept zero or one explicitly typed by-value parameter and an explicit
+return type, including `void`. Explicit by-value captures remain supported. This
+allows `task_synchronize(function () use ($record): void { ... })` without dummy
+parameters or results. Callable-local invocation, multiple parameters, references,
+default arguments and variadics remain outside this converter slice. API-specific
+callback compatibility belongs to the target.
+
+Focused checks: `tests/portability/nullable_locals_callbacks.php`; the converted native
+fixture is `tests/portability/fixtures/nullable_locals_callbacks.php`, exercised by
+`tests/portability/nullable_locals_callbacks.py`. The native proof checks captured
+object mutation under task synchronization and nullable shared identity.

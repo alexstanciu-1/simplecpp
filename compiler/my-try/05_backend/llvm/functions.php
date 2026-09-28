@@ -12,9 +12,8 @@ trait LLVM_Functions
 	public function generate(): llvm_function
 	{
 		$prepared = $this->instance;
-		$body_scope /** scope */ = Syntax_Nodes::block_data($prepared->body)->lexical_scope();
 		foreach ($prepared->locals as $local) {
-			if ((object_cast(weakref_get($local->declaration->scope), scope::class) === $body_scope) && (!$local->borrowed)) {
+			if (LLVM_Legacy_Name_Preparation::belongs($prepared, $local->declaration) && (!$local->borrowed)) {
 				$this->emit($local->address . ' = alloca ' . $local->type);
 			}
 		}

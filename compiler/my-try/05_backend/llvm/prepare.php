@@ -190,7 +190,6 @@ final class LLVM_Preparation_Run
 		$struct_types /** Keyed_Storage<llvm_struct_type> */ = $file->struct_types;
 		$parameters /** Storage<llvm_parameter> */ = $function->parameters;
 		$external_functions /** Keyed_Storage<llvm_prepared_function> */ = $file->external_functions;
-		$function_scope /** scope */ = Syntax_Nodes::block_data($function->body)->lexical_scope();
 		foreach ($file->source->defined_elements as $index)
 		{
 			$declaration = $entries[$index];
@@ -198,7 +197,7 @@ final class LLVM_Preparation_Run
 			if (($declaration->changes === \scpp\compiler\SYNC_DELETED) || ($declaration->kind !== collected_name_kind::variable_declaration)) {
 				continue;
 			}
-			if (object_cast(weakref_get($declaration->scope), scope::class) !== $function_scope) {
+			if (!LLVM_Legacy_Name_Preparation::belongs($function, $declaration)) {
 				continue;
 			}
 			$is_parameter = $declaration->node->kind() === node_kind::parameter_declaration;
@@ -269,7 +268,7 @@ final class LLVM_Preparation_Run
 		foreach ($file->source->function_references as $index)
 		{
 			$use = $entries[$index];
-			if (object_cast(weakref_get($use->scope), scope::class) !== $function_scope) {
+			if (!LLVM_Legacy_Name_Preparation::belongs($function, $use)) {
 				continue;
 			}
 			$definition = $file->names->function_references[$use->token_index];

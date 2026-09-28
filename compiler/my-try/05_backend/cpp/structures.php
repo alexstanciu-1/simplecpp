@@ -32,7 +32,7 @@ enum cpp_record_state {
 final class cpp_generation_context
 {
 	public array $headers /** hash<bool> */ = [];
-	/** Declaration token indexes are unique within the current single-source emission unit. */
+	/** Scoped source names are stable across token movement in the current single-source grammar. */
 	public array $record_states /** hash<cpp_record_state> */ = [];
 
 	/** Output sections are assembled after traversal so declarations precede all uses. */
@@ -44,4 +44,33 @@ final class cpp_generation_context
 	public ?type_definition $return_type = null;
 	/** Invocation-local allocation keeps nested argument temporaries distinct. */
 	public int $next_temporary = 0;
+	/** Fragment rendering leaves dependency ordering to assembly. */
+	public bool $expand_records = true;
+}
+
+/** One independently replaceable C++ fragment; no references to transient generation workers. */
+final class cpp_fragment
+{
+	public change_state $change_status = change_state::added;
+	public int $version = -1;
+	public string $text = '';
+	public array $headers /** hash<bool> */ = [];
+	/** Declaration dependencies needed before a value-record definition. */
+	public Storage $records /** Storage<collected_name> */;
+
+	public function __construct()
+	{
+		$this->records = new Storage /** Storage<collected_name> */();
+	}
+}
+
+/** Retained fragments are keyed by independent signature/body preparation identities. */
+final class cpp_program
+{
+	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
+
+	public function __construct()
+	{
+		$this->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+	}
 }

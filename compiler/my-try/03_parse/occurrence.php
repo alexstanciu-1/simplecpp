@@ -5,6 +5,11 @@ namespace scpp\compiler;
 
 trait Collected_Occurrence
 {
+	public function optional_occurrence(): ?collected_name
+	{
+		return weakref_get($this->collected_occurrence);
+	}
+
 	/** Attach once during collection; preparation cleanup never changes this relationship. */
 	public function attach_occurrence(collected_name $entry): void
 	{

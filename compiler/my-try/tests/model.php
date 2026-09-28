@@ -128,6 +128,7 @@ final class Model_Test
 		$old_content = $old_tokens->content;
 		$old_tokens->file->disk_source = false; // Deliberately supply a broken in-memory snapshot.
 		$old_tokens->file->content = '$';
+		Compiler_Lifecycle::reset_tokens();
 		try {
 			$compiler->tokenize();
 			throw new \LogicException('Expected lexical failure');
@@ -153,13 +154,14 @@ final class Model_Test
 		$compiler->exec_llvm();
 		// Corrupt the first token only to exercise parse failure after a successful run.
 		Model::tokens()[0]->tokens[0] = new token(0, 1, ')');
+		Model::sources()[0]->changes = change_state::changed;
 		try {
 			$compiler->parse();
 			throw new \LogicException('Expected parse failure');
 		}
 		catch (\RuntimeException $expected) {
 		}
-		if (!Model::syntax_files()->is_empty() || !Model::collected_files()->is_empty() || !Model::$llvm_files->is_empty()) {
+		if (Model::syntax_files()[0]->complete || !Model::$llvm_files->is_empty()) {
 			throw new \LogicException('Parse failure retained stale output');
 		}
 		$compiler->exec_llvm();
@@ -274,7 +276,8 @@ final class Model_Test
 		$source = new token_list();
 		$token = new token(0, 4, 'name');
 		$source->tokens[] = $token;
-		$collector = new Symbol_Collector($source);
+		$scope = new scope();
+		$collector = new Symbol_Collector(new collected_file($source), $source, $scope, null, 1);
 		$node = Syntax_Nodes::make(node_kind::identifier, 0, 1);
 		$scope = new scope();
 		$collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
@@ -358,13 +361,16 @@ final class Model_Test
 		catch (\RuntimeException $error) {
 			$failed = true;
 		}
-		if (!$failed || !Model::syntax_files()->is_empty() || !Model::collected_files()->is_empty() || Model::$global_scope->has_functions()) {
-			throw new \RuntimeException('Failed file published parse output');
+		if (!$failed || ($lexical && !Model::syntax_files()->is_empty())) {
+			throw new \RuntimeException('Failure did not respect the tokenization boundary');
+		}
+		if (!$lexical && Model::syntax_files()[0]->complete) {
+			throw new \RuntimeException('Failed parse was marked complete');
 		}
 		if ($lexical && (!Model::tokens()->is_empty() || ($file->tokens !== null))) {
 			throw new \RuntimeException('Failed scan published token output');
 		}
-		if (!$lexical && ((count(Model::tokens()) !== 1) || ($file->tokens !== Model::tokens()[0]))) {
+		if (!$lexical && ((count(Model::tokens()) !== 1) || (Model::sources()[0]->file->tokens !== Model::tokens()[0]))) {
 			throw new \RuntimeException('Parse failure lost completed token output');
 		}
 	}

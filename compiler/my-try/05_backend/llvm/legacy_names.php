@@ -9,6 +9,17 @@ namespace scpp\compiler;
 
 final class LLVM_Legacy_Name_Preparation
 {
+	/** Adapt the parked backend to distinct file-body and function-signature scopes. */
+	public static function belongs(llvm_prepared_function $function, collected_name $entry): bool
+	{
+		$entry_scope = object_cast(weakref_get($entry->scope), scope::class);
+		$body_scope = Syntax_Nodes::block_data($function->body)->lexical_scope();
+		if ($function->is_entry) {
+			return !$entry_scope->is_function() && ($entry_scope->parent_scope() === $body_scope);
+		}
+		return ($entry_scope === $body_scope) || (($entry->node->kind() === node_kind::parameter_declaration) && ($entry_scope === $body_scope->parent_scope()));
+	}
+
 	/** Prepare only unambiguous explicit variables for the initial LLVM experiment. */
 	public function prepare(collected_file $file): llvm_legacy_prepared_names
 	{
@@ -39,7 +50,14 @@ final class LLVM_Legacy_Name_Preparation
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$candidates /** vector<collected_name> */ = [];
 			$variable_scope = Scope_Lookup::visible($entry_scope);
-			$candidates = Scope_Lookup::live($variable_scope->variables_named($entry->name));
+			while (true) {
+				$candidates = Scope_Lookup::live($variable_scope->variables_named($entry->name));
+				$parent = $variable_scope->parent_scope();
+				if ((q_count($candidates) !== 0) || ($parent === null)) {
+					break;
+				}
+				$variable_scope = $parent;
+			}
 			if (q_count($candidates) !== 1) {
 				throw new \RuntimeException(("LLVM experiment needs one same-file declaration for " . $entry->name . " at token " . $entry->token_index));
 			}

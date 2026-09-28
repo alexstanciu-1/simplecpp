@@ -97,7 +97,7 @@ def main():
         convert(body);run(['php',cli,'build','--build-runtime'],cwd=project,ok=False)
     for callback in ['function ($x): int { return 1; }','function (int &$x): int { return $x; }',
                      'function (int $x = 1): int { return $x; }','function (int $x) use (&$n): int { return $x; }',
-                     'function (int $x): void {}','fn(int $x): int => $x']:
+                     'function (int $x, int $y): int { return $x; }','fn(int $x): int => $x']:
         convert('$n = 1; $v /** vector<int> */ = []; sequence_map($v, '+callback+');',ok=False)
     convert(BODY)
     assert not run(['git','-C',checkout,'status','--porcelain']).strip()

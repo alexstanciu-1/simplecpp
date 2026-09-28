@@ -45,7 +45,7 @@ try
 	// Size changes detect modifications even within the same timestamp tick.
 	file_put_contents($first, 'function first(): int { return 12; }');
 	$compiler->sync([]);
-	file_scan_check(($one->sources['main.phs'] === $a) && ($a->parsed !== $syntax_a) && ($b->parsed === $syntax_b) && ($c->parsed === $syntax_c), 'Metadata scan rebuilt the wrong files or replaced source identity');
+	file_scan_check(($one->sources['main.phs'] === $a) && ($a->parsed === $syntax_a) && ($b->parsed === $syntax_b) && ($c->parsed === $syntax_c), 'Metadata scan rebuilt the wrong files or replaced source identity');
 	$syntax_a = $a->parsed;
 	$mtime = $a->file->mtime;
 	file_put_contents($first, 'function first(): int { return 13; }');
@@ -53,7 +53,7 @@ try
 	$compiler->sync([]);
 	file_scan_check($a->parsed === $syntax_a, 'Equal metadata did not follow the accepted initial change detector');
 	$compiler->sync([$first]);
-	file_scan_check(($a->parsed !== $syntax_a) && str_contains($a->file->content, '13'), 'Explicit notification did not force a reread');
+	file_scan_check(($a->parsed === $syntax_a) && str_contains($a->file->content, '13'), 'Explicit notification did not force a reread');
 
 	// A failed forced read/parse remains pending even with matching filesystem metadata.
 	$good = $a->file->content;
@@ -71,7 +71,7 @@ try
 	file_put_contents($first, str_replace('13', '14', $good));
 	touch($first, $a->file->mtime);
 	$compiler->sync([]);
-	file_scan_check(($a->parsed !== $syntax_a) && str_contains($a->file->content, '14'), 'Pending work disappeared behind equal metadata');
+	file_scan_check(($a->parsed === $syntax_a) && str_contains($a->file->content, '14'), 'Pending work disappeared behind equal metadata');
 
 	// Add and remove nested files without allocating a folder owner or replacing the index.
 	$new_path = $root . '/one/nested/new.phs';

@@ -4,6 +4,33 @@ namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 require_once __DIR__ . '/s2s_proof.php';
 
+/** Compare syntax/scopes independently of retained preparation and dependency bookkeeping. */
+function s2s_snapshot(parsed_file $syntax): string
+{
+	$seen = new \SplObjectStorage();
+	$visit = function ($value) use (&$visit, $seen) {
+		if (is_array($value)) {
+			return array_map($visit, $value);
+		}
+		if (!is_object($value) || $value instanceof \UnitEnum) {
+			return $value;
+		}
+		if (isset($seen[$value])) {
+			return ['ref' => $seen[$value]];
+		}
+		$seen[$value] = spl_object_id($value);
+		$result = ['class' => get_class($value), 'id' => spl_object_id($value)];
+		foreach ((new \ReflectionClass($value))->getProperties() as $property) {
+			if (in_array($property->name, ['prepared_facts', 'preparation', 'body_preparation', 'prepared', 'preparation_lookups', 'change_status', 'preparation_changes'], true)) {
+				continue;
+			}
+			$result[$property->name] = $visit($property->getValue($value));
+		}
+		return $result;
+	};
+	return serialize($visit($syntax));
+}
+
 /** Standalone source setup also verifies private roots publish through global scope. */
 function s2s_parse(string $text): parsed_file
 {
@@ -86,12 +113,12 @@ foreach ($cases as $name => [$source, $exit])
 {
 	Compiler_Lifecycle::reset();
 	$syntax = s2s_parse($source);
-	$before = serialize($syntax);
+	$before = s2s_snapshot($syntax);
 	$compiler = new Compiler();
 	$compiler->prepare();
 	$compiler->cpp();
 	Preparation_Cleanup::tree($syntax->root);
-	if (serialize($syntax) !== $before) {
+	if (s2s_snapshot($syntax) !== $before) {
 		throw new \LogicException('Preparation/emission changed source syntax or its scopes');
 	}
 	$path = $directory . '/' . $name . '.cpp';
@@ -101,12 +128,12 @@ foreach ($cases as $name => [$source, $exit])
 	if (str_starts_with($name, 'field_')) {
 		$alias = substr($name, strlen('field_'));
 		$native = $alias === 'byte' ? 'uint8' : $alias;
-		$probe = 'static_assert(std::is_same_v<decltype(record_1{}.field_4), scpp::int_t<std::' . $native . '_t>>);';
+		$probe = 'static_assert(std::is_same_v<decltype(record_Item{}.field_value), scpp::int_t<std::' . $native . '_t>>);';
 		file_put_contents($path, Model::$cpp_files[0]->text . "\n" . $probe . "\n");
 	}
 
 	if (($name === 'bool_true') || ($name === 'bool_false')) {
-		$probe = "\tstatic_assert(std::is_same_v<decltype(local_0), scpp::bool_t>);\n";
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::bool_t>);\n";
 		$probe_path = $directory . '/' . $name . '_type.cpp';
 		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", Model::$cpp_files[0]->text);
 		file_put_contents($probe_path, $probe_text);
@@ -120,8 +147,8 @@ foreach ($cases as $name => [$source, $exit])
 		if (!str_contains($text, 'static_cast<scpp::float_t>(' . $spelling . ')')) {
 			throw new \LogicException('Float literal spelling was rounded or changed');
 		}
-		$probe = "\tstatic_assert(std::is_same_v<decltype(local_0), scpp::float_t>);\n";
-		$probe .= "\tif (local_0.native_value() != " . $spelling . ") { return 91; }\n";
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::float_t>);\n";
+		$probe .= "\tif (local_a.native_value() != " . $spelling . ") { return 91; }\n";
 		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", $text));
 	}
 
@@ -129,8 +156,8 @@ foreach ($cases as $name => [$source, $exit])
 	if (($name === 'wide') || ($name === 'maximum'))
 	{
 		$magnitude = $name === 'wide' ? '4294967296' : '9223372036854775807';
-		$probe = "\tstatic_assert(std::is_same_v<decltype(local_0), scpp::int_t<>>);\n";
-		$probe .= "\tif (local_0.native_value() != " . $magnitude . "LL) { return 91; }\n";
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
+		$probe .= "\tif (local_a.native_value() != " . $magnitude . "LL) { return 91; }\n";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", Model::$cpp_files[0]->text);
 		file_put_contents($probe_path, $probe_text);
@@ -153,7 +180,7 @@ foreach ($rejections as $source)
 {
 	Compiler_Lifecycle::reset();
 	$syntax = s2s_parse($source);
-	$before = serialize($syntax);
+	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
 		(new Compiler())->prepare();
@@ -162,28 +189,27 @@ foreach ($rejections as $source)
 	catch (\RuntimeException $expected) {
 		$failed = true;
 	}
-	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (serialize($syntax) !== $before)) {
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
 		throw new \LogicException('Unsupported generation published output');
 	}
 }
 
-// Layout recursion is a bounded emission failure; completed shared facts remain reusable.
+// Required by-value completion rejects cycles before body preparation or emission.
 foreach (['struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }'] as $source)
 {
 	Compiler_Lifecycle::reset();
 	$syntax = s2s_parse($source);
 	$compiler = new Compiler();
-	$compiler->prepare();
-	$before = serialize($syntax);
+	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		$compiler->cpp();
+		$compiler->prepare();
 	}
 	catch (\RuntimeException $error) {
-		$failed = str_contains($error->getMessage(), 'recursive by-value');
+		$failed = str_contains($error->getMessage(), 'Cyclic by-value');
 	}
-	if ((!$failed) || (!Model::$cpp_files->is_empty()) || (Model::$prepared_files->is_empty()) || (serialize($syntax) !== $before)) {
-		throw new \LogicException('Recursive layout failure changed shared facts or published C++');
+	if ((!$failed) || (!Model::$cpp_files->is_empty()) || (!Model::$prepared_files->is_empty()) || (s2s_snapshot($syntax) !== $before)) {
+		throw new \LogicException('Recursive layout failure changed syntax or published output');
 	}
 }
 
@@ -209,7 +235,7 @@ $syntax = s2s_parse('$a = 1.2345678901234567; $b = $a;');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $float_node = Syntax_Nodes::binding_data($children[0])->value;
 $float_data = Syntax_Nodes::float_data($float_node);
-$before = serialize($syntax);
+$before = s2s_snapshot($syntax);
 $compiler = new Compiler();
 $compiler->prepare();
 $float_facts = $float_data->require_preparation();
@@ -224,7 +250,7 @@ if ($float_data->require_preparation() !== $float_facts) {
 	throw new \LogicException('Output reset changed floating facts');
 }
 Compiler_Lifecycle::reset_preparation();
-if (($float_data->preparation() !== null) || (serialize($syntax) !== $before)) {
+if (($float_data->preparation() !== null) || (s2s_snapshot($syntax) !== $before)) {
 	throw new \LogicException('Floating cleanup changed syntax or retained facts');
 }
 
@@ -236,7 +262,7 @@ $binding_data = Syntax_Nodes::binding_data($children[0]);
 $literal_node = $binding_data->value;
 $literal_data = Syntax_Nodes::boolean_data($literal_node);
 $reference_data = Syntax_Nodes::reference_data(Syntax_Nodes::binding_data($children[1])->value);
-$before = serialize($syntax);
+$before = s2s_snapshot($syntax);
 $compiler = new Compiler();
 $compiler->prepare();
 $boolean_type = Language_Types::boolean(Model::$language_scope);
@@ -250,7 +276,7 @@ foreach ($syntax->collection->entries as $entry) {
 	}
 }
 $compiler->cpp();
-$expected = "#include \"scpp/bool_t.hpp\"\n\nint main()\n{\n\tauto local_0 = static_cast<scpp::bool_t>(false);\n\tauto local_4 = local_0;\n\treturn static_cast<int>((local_4).native_value());\n\treturn 0;\n}\n";
+$expected = "#include \"scpp/bool_t.hpp\"\n\nint main()\n{\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
 if (Model::$cpp_files[0]->text !== $expected) {
 	throw new \LogicException('Unexpected boolean C++ representation or includes');
 }
@@ -259,17 +285,17 @@ if ($literal_data->require_preparation() !== $literal_facts) {
 	throw new \LogicException('Boolean facts lost across output reset');
 }
 Compiler_Lifecycle::reset_preparation();
-if (($literal_data->preparation() !== null) || ($reference_data->preparation() !== null) || (serialize($syntax) !== $before)) {
+if (($literal_data->preparation() !== null) || ($reference_data->preparation() !== null) || (s2s_snapshot($syntax) !== $before)) {
 	throw new \LogicException('Boolean cleanup missed facts or changed syntax');
 }
 
-// A standalone preparation failure must clear an earlier successful statement too.
+// A standalone failure must preserve syntax; partial-fact recovery remains deferred.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; $b = $missing;');
 $children = Syntax_Nodes::block_data($syntax->root)->children;
 $first_data = Syntax_Nodes::binding_data($children[0]);
 $first_literal_data = Syntax_Nodes::integer_data($first_data->value);
-$before = serialize($syntax);
+$before = s2s_snapshot($syntax);
 $failed = false;
 try {
 	(new File_Preparation($syntax->collection, Model::$language_scope))->prepare();
@@ -277,7 +303,7 @@ try {
 catch (\RuntimeException $expected) {
 	$failed = true;
 }
-if ((!$failed) || ($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null) || (serialize($syntax) !== $before)) {
+if ((!$failed) || (s2s_snapshot($syntax) !== $before)) {
 	throw new \LogicException('Standalone failure left prepared facts or changed syntax');
 }
 
@@ -313,6 +339,8 @@ if (($first_data->require_preparation() !== $binding_facts) || (Model::$prepared
 }
 $compiler->cpp();
 Language_Types::integer(Model::$language_scope)->value_bits = 32;
+// Fault injection must invalidate the fragment whose prepared representation was altered.
+Model::$cpp_program->fragments[$syntax->collection->body_preparation]->change_status = change_state::changed;
 $failed = false;
 try {
 	$compiler->cpp();
@@ -329,8 +357,8 @@ if (Model::$cpp_files[0]->text !== $output->text) {
 	throw new \LogicException('Emission retry changed output');
 }
 $compiler->prepare();
-if (($first_data->require_preparation() === $binding_facts) || !Model::$cpp_files->is_empty()) {
-	throw new \LogicException('Repreparation reused facts or left stale output');
+if (($first_data->require_preparation() !== $binding_facts) || !Model::$cpp_files->is_empty()) {
+	throw new \LogicException('No-op preparation replaced facts or left stale output');
 }
 $compiler->cpp();
 Compiler_Lifecycle::reset_preparation();
@@ -345,13 +373,13 @@ $children = Syntax_Nodes::block_data($syntax->root)->children;
 $body = Syntax_Nodes::function_data($children[0])->body;
 $statements = Syntax_Nodes::block_data($body)->children;
 $nested_literal_data = Syntax_Nodes::integer_data(Syntax_Nodes::return_data($statements[0])->expression);
-$before = serialize($syntax);
+$before = s2s_snapshot($syntax);
 $facts = new prepared_integer_literal();
 $facts->type = Language_Types::integer(Model::$language_scope);
 $facts->decimal = '7';
 $nested_literal_data->set_preparation($facts);
 Compiler_Lifecycle::reset_preparation();
-if (($nested_literal_data->preparation() !== null) || (serialize($syntax) !== $before)) {
+if (($nested_literal_data->preparation() !== null) || (s2s_snapshot($syntax) !== $before)) {
 	throw new \LogicException('Nested node cleanup changed syntax or missed attached facts');
 }
 
@@ -379,7 +407,8 @@ if (count($found) !== 1 || $found[0]->origin !== type_origin::source || $found[0
 	throw new \LogicException('Source type did not shadow parent or publication copied its identity');
 }
 $entry = $found[0]->declaration;
-$entry->changes = SYNC_DELETED;
+$entry->change_status = change_state::deleted;
+(new Preparation_Worker(Model::$language_scope))->remove_deleted_sources(Model::collected_files());
 $found = Scope_Lookup::types($local, 'int');
 if (count($found) !== 1 || $found[0] !== Language_Types::integer(Model::$language_scope)) {
 	throw new \LogicException('Deleted source type blocked parent lookup');

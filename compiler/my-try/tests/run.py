@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+import time
 
 
 def run(command, expected=0):
@@ -16,6 +17,33 @@ def run(command, expected=0):
             f"{result.stdout}\n{result.stderr}"
         )
     return result
+
+
+def verify_php(root, output):
+    """Run every PHP test, retaining all failures; some PHP suites execute generated samples."""
+    results = []
+    for source in sorted((root / "tests").glob("*.php")):
+        command = ["php", str(source)]
+        if source.stem in ("calls", "llvm", "s2s"):
+            directory = output / source.stem
+            directory.mkdir()
+            command.append(str(directory))
+        if source.stem == "incremental_smoke":
+            command.append("--restore")
+        started = time.monotonic()
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+            code, log = result.returncode, result.stdout + result.stderr
+        except subprocess.TimeoutExpired as error:
+            code, log = 124, str(error)
+        (output / f"{source.stem}.log").write_text(log)
+        results.append({"test": source.name, "exit_code": code,
+                        "seconds": round(time.monotonic() - started, 3)})
+        print(f"{source.name}: {'PASS' if code == 0 else 'FAIL'}", flush=True)
+    summary = {"tests": results, "passed": sum(row["exit_code"] == 0 for row in results)}
+    (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    if summary["passed"] != len(results):
+        raise RuntimeError(f"PHP tests failed; see {output / 'summary.json'}")
 
 
 def verify(root, output):
@@ -113,12 +141,14 @@ def verify(root, output):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", type=Path, help="New directory in which to retain evidence")
+    parser.add_argument("--php-only", action="store_true", help="Run all PHP suites without the additional lint/style/native fixture sweep")
     arguments = parser.parse_args()
+    verify_selected = verify_php if arguments.php_only else verify
     root = Path(__file__).resolve().parents[1]
     if arguments.results:
         output = arguments.results.resolve()
         output.mkdir(parents=True, exist_ok=False)
-        verify(root, output)
+        verify_selected(root, output)
     else:
         with tempfile.TemporaryDirectory(prefix="scpp-my-try-proof-") as directory:
-            verify(root, Path(directory))
+            verify_selected(root, Path(directory))

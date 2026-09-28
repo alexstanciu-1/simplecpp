@@ -4688,6 +4688,7 @@ final class StanExpressionTypeResolver
 			$record = trim($parts[1]);
 			$methods = [
 				'add' => ['void', [['name' => 'key', 'type' => 'string'], ['name' => 'record', 'type' => $record]]],
+				'remove' => ['void', [['name' => 'key', 'type' => 'string'], ['name' => 'record', 'type' => $record]]],
 				'named' => ['vector<' . $record . '>', [['name' => 'key', 'type' => 'string']]],
 				'items' => ['vector<' . $record . '>', []],
 				'is_empty' => ['bool', []],

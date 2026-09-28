@@ -85,12 +85,16 @@ This is PHP/conversion coverage; the whole compiler has not passed native valida
 insertion. `add(key, record)` never deduplicates identity. `named(key)` returns a
 per-key ordered vector snapshot; `items()` returns the full insertion-order vector
 snapshot. Returned vectors copy membership and retain the same objects.
-`is_empty()` reports whether anything was inserted. Collection aliases share
+`is_empty()` reports whether any live members remain. Collection aliases share
 membership. Keys are exact byte strings, including numeric-looking names.
 
 This separate helper owns its ordered records and private per-key position index;
 consumers do not maintain parallel lists or hash buckets. Scope variable/function
 pools, scope type definitions, and temporary declaration comparison groups use it.
 Names must stay stable while indexed; scope replacement rebuilds the collection.
-There is no unique-key replacement, position API or removal API in this slice.
+`remove(key, record)` removes all insertions of that identity under the given key;
+other candidates and insertions under other keys survive. Absent identities are a
+no-op. Remaining iteration order is preserved and snapshots are packed. Internal
+positions are not reused; native storage retains empty slots until release (compaction
+debt). There is no unique-key replacement or public position API.
 PHP helper code and the compiler runtime wrapper implement the same contract.

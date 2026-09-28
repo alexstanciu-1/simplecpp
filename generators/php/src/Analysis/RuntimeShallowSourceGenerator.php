@@ -434,6 +434,7 @@ final class RuntimeShallowSourceGenerator
 					['name' => 'error', 'type' => 'mixed', 'has_default' => true],
 					['name' => 'timeout_ms', 'type' => 'int', 'has_default' => true],
 				]],
+				'task_synchronize' => ['return' => 'void', 'params' => [['name' => 'callback', 'type' => 'mixed']]],
 				'task_run_publish_unordered' => ['return' => 'int', 'params' => [
 					['name' => 'items', 'type' => 'mixed'],
 					['name' => 'workers', 'type' => 'int'],

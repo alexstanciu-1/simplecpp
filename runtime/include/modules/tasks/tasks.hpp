@@ -21,6 +21,7 @@
 #include <exception>
 #include <functional>
 #include <mutex>
+#include "publication_context.hpp"
 #include <optional>
 #include <thread>
 #include <type_traits>
@@ -2131,13 +2132,21 @@ template <typename TItem, typename TWork, typename TPublish>
 	std::mutex publication;
 	std::int64_t published = 0;
 	(void) run(items, workers, [&](TItem item) -> bool_t {
+		detail::publication_context context(&publication);
 		auto result = work(item);
+		detail::publication_context unavailable(nullptr);
 		std::lock_guard<std::mutex> guard(publication);
 		(void) publish(result);
 		++published;
 		return bool_t(true);
 	});
 	return int_t<>(published);
+}
+
+// Synchronous callback under the active batch's publication lock; no mutex is exposed.
+template <typename Callback>
+void synchronize(Callback callback) {
+    detail::synchronized_publication(std::move(callback));
 }
 
 } // namespace scpp::tasks

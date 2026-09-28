@@ -2,6 +2,13 @@
 
 Doc Status: planning
 
+Incremental migration update (2026-09-28): the candidate-replacement observations
+below are historical. Combined `sync()` now calls the retained tokenizer/parser
+phases; `publish_update`, `replace_collection` and `Declaration_Changes` were removed.
+Deletion cleanup and dependency notification belong to shared preparation. See
+[the current lifecycle](../lifecycle/incremental.md).
+
+
 Review date: 2026-09-27
 
 ## Purpose

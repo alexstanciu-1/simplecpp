@@ -1,10 +1,26 @@
 <?php
 
-/* Role: publish scope references and retain deletion evidence during source replacement. */
+/* Role: publish canonical scope references under the parser task lock. */
 namespace scpp\compiler;
 
 final class Scope_Publication
 {
+	/** Collector invokes this under the task batch lock; local variables never enter this path. */
+	public static function register(scope $local_scope, scope $global, collected_name $entry): void
+	{
+		if ($entry->kind === collected_name_kind::function_declaration) {
+			$global->register($entry);
+		}
+		elseif ($entry->kind === collected_name_kind::struct_declaration) {
+			foreach ($local_scope->types_named($entry->name) as $definition) {
+				if ($definition->declaration === $entry) {
+					$global->register_type($definition);
+					break;
+				}
+			}
+		}
+	}
+
 	/** Export a completed local scope exactly once without copying declaration identities. */
 	public static function publish(scope $local_scope, scope $global): void
 	{
@@ -12,44 +28,16 @@ final class Scope_Publication
 			throw new \LogicException('Parsed file was already published');
 		}
 		foreach ($local_scope->declarations() as $entry) {
+			$entry->exported = true;
 			$global->register($entry);
 		}
 		foreach ($local_scope->type_definitions() as $definition) {
+			if ($definition->declaration !== null) {
+				$definition->declaration->exported = true;
+			}
 			$global->register_type($definition);
 		}
 		$local_scope->set_publication($global);
 	}
 
-	/** Superseded live rows leave the index; deleted rows and built-ins stay observable. */
-	public static function replace_collection(scope $global, collected_file $previous): void
-	{
-		$entries /** vector<collected_name> */ = [];
-		foreach ($global->declarations() as $entry) {
-			if (self::retain($entry, $previous)) {
-				$entries[] = $entry;
-			}
-		}
-		$definitions /** vector<type_definition> */ = [];
-		foreach ($global->type_definitions() as $definition)
-		{
-			$keep = true;
-			if ($definition->declaration !== null) {
-				$declaration /** collected_name */ = $definition->declaration;
-				$keep = self::retain($declaration, $previous);
-			}
-			if ($keep) {
-				$definitions[] = $definition;
-			}
-		}
-		$global->replace_declarations($entries);
-		$global->replace_types($definitions);
-	}
-
-	private static function retain(collected_name $entry, collected_file $previous): bool
-	{
-		if ($entry->changes === \scpp\compiler\SYNC_DELETED) {
-			return true;
-		}
-		return $entry->collection !== $previous;
-	}
 }

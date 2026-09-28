@@ -19,10 +19,17 @@ enum collected_name_kind
 	case binding;
 }
 
-/** Identity is the owning file collection plus its append-only local index. */
+/** Retained declarations keep identity and index; replaced body/reference rows leave holes. */
 final class collected_name
 {
-	/** Current-update flags; deleted entries must not be dereferenced by consumers. */
+	/** Only named declarations outside replaceable bodies participate in symbol reconciliation. */
+	public bool $retained_symbol = false;
+	public ?preparation_owner $preparation = null;
+	public bool $exported = false;
+	public int $revision /** uint32 */ = 0;
+	public change_state $change_status = change_state::added;
+
+	/** Legacy combined-pipeline flags. The incremental parse path uses change_status and revision. */
 	public int $changes = 0;
 	/**
 	 * Backlink to the owning occurrence collection.
@@ -65,9 +72,16 @@ final class collected_name
 	}
 }
 
-/** One parse's occurrences plus retained deleted declarations; duplicate names never merge. */
+/** Mutable file inventory: persistent declarations and the current parse's unresolved occurrences. */
 final class collected_file
 {
+	public bool $parse_complete = false;
+	public bool $deleted = false;
+	public ?preparation_owner $body_preparation = null;
+	public ?prepared_file $prepared = null;
+	/** Completed changes awaiting backend consumption, including retired owners. */
+	public \SplObjectStorage $preparation_changes /** hash<bool, shared<preparation_owner>> */;
+	public int $revision /** uint32 */ = 0;
 	/**
 	 * @storage.reference model.tokens
 	 */
@@ -119,7 +133,14 @@ final class collected_file
 	public function __construct(token_list $tokens)
 	{
 		$this->tokens = $tokens;
+		$this->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		$this->entries = new Storage /** Storage<collected_name> */();
+	}
+
+	/** Advance provenance only for this mutable file; old tokens remain owned by the parser cursor. */
+	public function set_tokens(token_list $tokens): void
+	{
+		$this->tokens = $tokens;
 	}
 
 	public function source_file(): file

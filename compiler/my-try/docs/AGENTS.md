@@ -81,6 +81,14 @@ or automatically as a finishing gate. The explicitly requested full test runner
 still includes its existing mechanical checks. Generated files and saved historical evidence
 are excluded; do not reformat them.
 
+## Active refactoring phase
+
+User decision: tokenization, parsing and 04_analyze are being refactored in sequence.
+Temporary pipeline breakage is expected. Implement only the agreed phase; do not add
+compatibility workarounds or change later stages to restore the old pipeline without
+discussion. No commits or pushes until the user agrees the code is working and ready
+again. This overrides the default commit/push workflow below during this phase.
+
 ## Branch publication
 
 User decision, 2026-09-28: on `feature/scpp-native-portability-fixes`, push each

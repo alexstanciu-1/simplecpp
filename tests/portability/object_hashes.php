@@ -58,3 +58,18 @@ foreach ([
     throw new RuntimeException('Accepted invalid object hash: ' . $body);
 }
 echo "Object hashes: identity, replacement, removal, typed boundaries and native type mapping passed\n";
+
+$iteration = <<<'SOURCE'
+<?php
+$keys /** hash<bool, shared<Key>> */ = new \SplObjectStorage /** hash<bool, shared<Key>> */();
+foreach ($keys as $key /** @object-key */) { $name = $key->name; }
+SOURCE;
+$lowered = $converter->convert($iteration, 'object_keys.php');
+ensure(str_contains($lowered, 'as $key => $__scpp_object_value_'), 'Object-key foreach was lowered as value iteration');
+$keys = new SplObjectStorage();
+$key1 = new stdClass(); $key2 = new stdClass();
+$keys[$key1] = true; $keys[$key2] = false;
+$seen = [];
+foreach ($keys as $key /** @object-key */) { $seen[] = $key; }
+ensure($seen === [$key1, $key2], 'PHP key iteration changed identity or read values');
+echo "Object-key foreach: explicit carrier lowering and PHP identity passed\n";

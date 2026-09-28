@@ -205,11 +205,23 @@ final class call_structure extends expression_node_structure
 	{
 		return object_cast($this->prepared_facts, prepared_call::class);
 	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->name_token_index = $this->name_token_index + $delta;
+		$this->left_parenthesis_token_index = $this->left_parenthesis_token_index + $delta;
+		$this->right_parenthesis_token_index = $this->right_parenthesis_token_index + $delta;
+	}
 }
 
 /** The body block references a file-owned local scope and an ordered statement list. */
 final class function_structure extends statement_node_structure
 {
+	public bool $body_changed = true;
+	public ?preparation_owner $body_preparation = null;
+	/** Signature declarations persist; body locals belong to each replacement body. */
+	public scope $signature_scope;
 	use Preparation_Facts;
 
 	/** @ownership owner */
@@ -240,11 +252,11 @@ final class function_structure extends statement_node_structure
 	 */
 	public Storage $parameters /** Storage<ast_node> */;
 
-	public function __construct(ast_node $return_type, ast_node $body)
+	public function __construct()
 	{
 		$this->parameters = new Storage /** Storage<ast_node> */();
-		$this->return_type = $return_type;
-		$this->body = $body;
+		$this->signature_scope = new scope();
+		$this->signature_scope->mark_function();
 	}
 
 	/** Expose signature children before the body; the return type follows the parameters. */
@@ -276,6 +288,12 @@ final class function_structure extends statement_node_structure
 	public function require_preparation(): prepared_function
 	{
 		return object_cast($this->prepared_facts, prepared_function::class);
+	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->name_token_index = $this->name_token_index + $delta;
 	}
 }
 
@@ -319,6 +337,15 @@ final class parameter_structure extends unsupported_node_structure
 	public function require_preparation(): prepared_parameter
 	{
 		return object_cast($this->prepared_facts, prepared_parameter::class);
+	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		if ($this->reference_token_index !== null) {
+			$this->reference_token_index = $this->reference_token_index + $delta;
+		}
+		$this->name_token_index = $this->name_token_index + $delta;
 	}
 }
 
@@ -384,6 +411,12 @@ final class binary_structure extends unsupported_node_structure
 		$result->append($this->left);
 		$result->append($this->right);
 	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->operator_token_index = $this->operator_token_index + $delta;
+	}
 }
 
 /** An expression used as a statement owns its terminating semicolon here. */
@@ -416,6 +449,12 @@ final class expression_statement_structure extends statement_node_structure
 	{
 		return CPP_Generator::generate_expression_statement(Syntax_Nodes::statement_data($node), $context);
 	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->semicolon_token_index = $this->semicolon_token_index + $delta;
+	}
 }
 
 /** expression is null for a bare return; keyword and semicolon remain required. */
@@ -447,6 +486,13 @@ final class return_structure extends statement_node_structure
 	public function generate_cpp_statement(ast_node $node, cpp_generation_context $context): string
 	{
 		return CPP_Generator::generate_return(Syntax_Nodes::return_data($node), $context);
+	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->keyword_token_index = $this->keyword_token_index + $delta;
+		$this->semicolon_token_index = $this->semicolon_token_index + $delta;
 	}
 }
 
@@ -519,6 +565,16 @@ final class binding_structure extends statement_node_structure
 	public function require_preparation(): prepared_binding
 	{
 		return object_cast($this->prepared_facts, prepared_binding::class);
+	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->name_token_index = $this->name_token_index + $delta;
+		if ($this->equals_token_index !== null) {
+			$this->equals_token_index = $this->equals_token_index + $delta;
+		}
+		$this->semicolon_token_index = $this->semicolon_token_index + $delta;
 	}
 }
 
@@ -604,6 +660,8 @@ final class index_structure extends unsupported_node_structure
 
 final class struct_structure extends statement_node_structure
 {
+	/** Retained member index, private to this source worker. */
+	public scope $member_scope;
 	use Preparation_Facts;
 
 	/** @ownership owner */
@@ -629,6 +687,7 @@ final class struct_structure extends statement_node_structure
 	public function __construct()
 	{
 		$this->fields = new Storage /** Storage<ast_node> */();
+		$this->member_scope = new scope();
 	}
 
 	/** Access the existing child list in grammar order, without copying membership. */
@@ -655,6 +714,12 @@ final class struct_structure extends statement_node_structure
 	public function require_preparation(): prepared_record
 	{
 		return object_cast($this->prepared_facts, prepared_record::class);
+	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->name_token_index = $this->name_token_index + $delta;
 	}
 }
 
@@ -693,6 +758,12 @@ final class field_structure extends unsupported_node_structure
 	public function require_preparation(): prepared_field
 	{
 		return object_cast($this->prepared_facts, prepared_field::class);
+	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->name_token_index = $this->name_token_index + $delta;
 	}
 }
 
@@ -743,5 +814,11 @@ final class field_access_structure extends expression_node_structure
 	public function require_preparation(): prepared_field_access
 	{
 		return object_cast($this->prepared_facts, prepared_field_access::class);
+	}
+
+	/** Relocate token members when an unchanged body moves in its file. */
+	public function shift_tokens(int $delta): void
+	{
+		$this->name_token_index = $this->name_token_index + $delta;
 	}
 }

@@ -37,6 +37,19 @@ control-flow expansion, new construction syntax or general validation pass is ad
 Recursive signatures compile, but terminating recursive programs require frontend
 control flow that this slice does not add. Missing-return analysis remains deferred.
 
+## Deferred v0.2 planning: explicit captures for functions and methods
+
+Track `use` captures for ordinary functions and methods as a v0.2 planning item.
+Implementation is deferred until a later language-development discussion; it may
+be deferred beyond v0.2 explicitly, but must remain tracked here.
+
+The intended direction is alignment with lambda `use` captures, including
+value/reference intent. Exact syntax, capture sources, binding time and lifetime
+rules require review before implementation. This is a proposed language addition,
+not a claim of current frontend or S2S support. Coordinate with
+[closures](12_closures.md) and the originating
+[incremental planning debt](../planning/incremental_strategy.md#agreed-debts).
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

@@ -5,48 +5,22 @@ namespace scpp\compiler;
 
 final class File_Preparation
 {
-	private preparation_context $context;
+	private collected_file $source;
+	private scope $language;
 
-	/** Every invocation owns fresh results and source-order declaration state. */
 	public function __construct(collected_file $source, scope $language_scope)
 	{
-		$context = new preparation_context();
-		$context->collection = $source;
-		$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
-		$context->integer = Language_Types::integer($language_scope);
-		$context->boolean = Language_Types::boolean($language_scope);
-		$context->floating = Language_Types::floating($language_scope);
-
-		$this->context = $context;
+		$this->source = $source;
+		$this->language = $language_scope;
 	}
 
-	/** Prepare declarations before bodies and discard every attached fact on failure. */
+	/** Standalone callers use the same incremental worker and selections as the compiler. */
 	public function prepare(): prepared_file
 	{
-		$context = $this->context;
-		Preparation_Cleanup::tree($context->collection->root);
-		$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
-
-		try
-		{
-			// Signatures precede every body, including bodies that call later declarations.
-			$child = $context->collection->root->first_child();
-			while ($child !== null) {
-				$node /** ast_node */ = $child;
-				$node->payload()->prepare_declaration($node, $context);
-				$child = $node->next();
-			}
-
-			self::prepare_statements($context->collection->root, $context);
-		}
-		catch (\Throwable $error) {
-			Preparation_Cleanup::tree($context->collection->root);
-			throw $error;
-		}
-
-		$result = new prepared_file();
-		$result->source = $context->collection;
-		return $result;
+		$sources /** Storage<collected_file> */ = new Storage();
+		$sources->append($this->source);
+		$prepared /** Storage<prepared_file> */ = (new Preparation_Worker($this->language))->prepare($sources);
+		return $prepared[0];
 	}
 
 	/** Workers control body traversal; specializations dispatch individual operations. */
@@ -90,7 +64,7 @@ final class File_Preparation
 				$binding->declaration = $entry;
 				if ($syntax->type_syntax !== null) {
 					$type_node /** ast_node */ = $syntax->type_syntax;
-					$binding->type = Declaration_Preparation::type($type_node);
+					$binding->type = Declaration_Preparation::type($type_node, $context);
 				}
 			}
 			else

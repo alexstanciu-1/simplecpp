@@ -32,8 +32,8 @@ try
 	catch (\RuntimeException $expected) {
 		$failed = true;
 	}
-	if (!$failed || count(Model::syntax_files()) !== 1 || count(Model::tokens()) !== 1 || !Model::$llvm_files->is_empty()) {
-		throw new \LogicException('Earlier file did not parse before a later tokenization failure');
+	if (!$failed || count(Model::syntax_files()) !== 0 || count(Model::tokens()) !== 1 || !Model::$llvm_files->is_empty()) {
+		throw new \LogicException('Tokenization failure did not stop at the phase barrier');
 	}
 	unlink($directory . '/b.phs');
 	Compiler_Lifecycle::reset();
@@ -55,4 +55,4 @@ finally {
 	}
 	rmdir($directory);
 }
-echo "Pipeline: deferred reads, stage entrypoints, immediate parse and read-failure publication passed\n";
+echo "Pipeline: deferred reads, stage entrypoints, phase barriers and read-failure publication passed\n";

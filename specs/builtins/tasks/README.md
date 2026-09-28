@@ -27,7 +27,7 @@ First-pass builtins:
 
 - `task_run`
 - `task_run_publish`
-- [`task_run_publish_unordered`](unordered_publication.md)
+- [`task_run_publish_unordered` and `task_synchronize`](unordered_publication.md)
 - `task_start`
 - `task_join`
 - `task_cancel`

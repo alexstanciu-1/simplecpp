@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class Declaration_Preparation
 {
 	/** Named syntax resolves through the existing lexical/publication scope chain. */
-	public static function type(ast_node $node): type_definition
+	public static function type(ast_node $node, preparation_context $context): type_definition
 	{
 		if ($node->kind() !== node_kind::identifier) {
 			throw new \RuntimeException('S2S constructed types are not supported yet');
@@ -14,12 +14,17 @@ final class Declaration_Preparation
 
 		$entry = $node->payload()->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$types = Scope_Lookup::types($lexical_scope, $entry->name);
+		$types = Scope_Lookup::types($lexical_scope, $entry->name, $context);
 		if (q_count($types) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved type for ' . $entry->name);
 		}
 
-		return $types[0];
+		$type = $types[0];
+		if ($type->declaration !== null) {
+			$declaration /** collected_name */ = $type->declaration;
+			$context->worker->require_declaration($context->owner, $declaration);
+		}
+		return $type;
 	}
 
 	/** Publish a complete signature before any body so calls do not depend on source order. */
@@ -30,7 +35,7 @@ final class Declaration_Preparation
 		}
 
 		$facts = new prepared_function();
-		$facts->return_type = self::type($syntax->return_type);
+		$facts->return_type = self::type($syntax->return_type, $context);
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$nodes /** Storage<ast_node> */ = $syntax->parameters;
@@ -39,7 +44,7 @@ final class Declaration_Preparation
 			$parameter = Syntax_Nodes::parameter_data($node);
 			$prepared = new prepared_parameter();
 			$prepared->declaration = $parameter->occurrence();
-			$prepared->type = self::type($parameter->type_syntax);
+			$prepared->type = self::type($parameter->type_syntax, $context);
 			self::require_value_type($prepared->type);
 			$prepared->mode = $parameter->mode;
 			$parameter->set_preparation($prepared);
@@ -61,7 +66,7 @@ final class Declaration_Preparation
 			$field = Syntax_Nodes::field_data($node);
 			$prepared = new prepared_field();
 			$prepared->declaration = $field->occurrence();
-			$prepared->type = self::type($field->type_syntax);
+			$prepared->type = self::type($field->type_syntax, $context);
 
 			// Keep field eligibility within the current compact-layout contract.
 			$type = $prepared->type;
@@ -70,6 +75,7 @@ final class Declaration_Preparation
 				throw new \RuntimeException('S2S struct fields require bool, fixed-width integers or supported structs');
 			}
 
+			$context->worker->require_record($type, $context);
 			$field->set_preparation($prepared);
 			$fields->add($field->occurrence()->name, $prepared);
 		}
@@ -82,6 +88,8 @@ final class Declaration_Preparation
 	{
 		$context = new preparation_context();
 		$context->collection = $outer->collection;
+		$context->worker = $outer->worker;
+		$context->owner = $outer->owner;
 		$context->integer = $outer->integer;
 		$context->boolean = $outer->boolean;
 		$context->floating = $outer->floating;
@@ -109,11 +117,12 @@ final class Declaration_Preparation
 
 		$entry = $syntax->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$targets = Scope_Lookup::functions($lexical_scope, $entry->name);
+		$targets = Scope_Lookup::functions($lexical_scope, $entry->name, $context);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved function for ' . $entry->name);
 		}
 
+		$context->worker->require_declaration($context->owner, $targets[0]);
 		$facts = new prepared_call();
 		$facts->declaration = $targets[0];
 		$facts->signature = Syntax_Nodes::function_data($targets[0]->node)->require_preparation();
@@ -152,6 +161,7 @@ final class Declaration_Preparation
 			throw new \RuntimeException('S2S member access requires a struct value');
 		}
 
+		$context->worker->require_record($value->type, $context);
 		$declaration = object_cast($value->type->declaration, collected_name::class);
 		$record = Syntax_Nodes::struct_data($declaration->node)->require_preparation();
 		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;

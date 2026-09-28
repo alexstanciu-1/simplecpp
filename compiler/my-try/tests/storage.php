@@ -126,3 +126,24 @@ check($groups->named('absent') === []);
 $snapshot = $groups->named('1');
 array_pop($snapshot);
 check(count($groups->named('1')) === 2 && !$groups->is_empty());
+
+// Removal uses key plus identity; same-key alternatives and the same object under another key survive.
+$groups->add('other', $first);
+$groups->add('1', $second);
+$groups->remove('1', $first);
+check($groups->named('1') === [$second]);
+check($groups->named('other') === [$first]);
+check($groups->items() === [$second, $first, $second]);
+$groups->add('later', $first);
+check($groups->items() === [$second, $first, $second, $first]);
+$groups->remove('missing', $first);
+$groups->remove('01', $first);
+check($groups->named('01') === [$second]);
+$groups->remove('01', $second);
+$groups->remove('1', $second);
+$groups->remove('other', $first);
+$groups->remove('later', $first);
+check($groups->is_empty() && ($groups->items() === []));
+$groups->add('1', $first);
+check($groups->named('1') === [$first]);
+echo "Key_Storage_List: identity removal, duplicate keys, order, empty and reinsertion passed\n";

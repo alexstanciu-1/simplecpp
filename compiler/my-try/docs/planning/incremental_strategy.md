@@ -1,9 +1,10 @@
 # Incremental compiler strategy
 Doc Status: planning
 
-Discussion started: 2026-09-28. Status: working proposal with the module slice
-agreed below. Module implementation is now applied; the remaining
-file/declaration/body strategy stays under discussion.
+Discussion started: 2026-09-28. Modules, file scanning, token generations and the
+standalone parsing/collection slice are implemented. Resolution is the next slice;
+the combined sync pipeline now uses the same incremental phases. The agreed current
+parsing boundary below supersedes earlier exploration in this document.
 
 This is the shared planning document for incremental compilation in `my-try`.
 [Current file synchronization](../lifecycle/incremental.md) describes implemented
@@ -64,7 +65,7 @@ Classes, constants and other declarations must fit the approach when implemented
 their mention here does not authorize adding their syntax now. Templates remain
 outside the current implementation slice.
 
-## Current implementation and gaps
+## Original baseline and gaps (historical discussion)
 
 | Concern | Implemented today | Proposed direction / gap |
 | --- | --- | --- |
@@ -90,7 +91,7 @@ Implementation anchors: `compiler/sync/sources.php`, `compiler/work_queue.php`,
 `compiler/scope_publication.php`, `compiler/lifecycle.php` and `03_parse/structures.php`
 (paths relative to `compiler/my-try/`).
 
-## Proposed run sequence — to review
+## Original proposed run sequence — superseded for parsing
 
 1. Establish the run's source changes, including additions and removals. Keep
    unchanged file data. Retain enough previous state to compare changed candidates.
@@ -371,3 +372,223 @@ output bytes alone does not prove that incremental work was avoided.
   force reads. Failed scans do not delete unvisited entries, and failed frontend work
   stays pending. Absolute paths are computed at IO boundaries. The mtime/size detection
   limitation remains accepted debt; no new synchronization structures were introduced.
+
+## Tokenization refactor in progress
+
+The standalone tokenization and parsing/collection phases are migrated. source_record retains
+current tokens and previous_tokens. Added/changed files tokenize a private file
+snapshot; successful publication rotates the current list into previous_tokens and
+installs the new file/token snapshot. Read/lexical failure leaves both generations
+and the published file unchanged. Unchanged and deleted sources are skipped.
+Existing parsed results are retained and can still reference their old token snapshot.
+Change-state consumption, previous-token release and interrupted-run sequencing belong
+to the upcoming parsing/04_analyze discussion. Invoke this phase once per file update;
+this is a two-generation handoff, not token history or a retry scheduler.
+
+The combined sync pipeline now delegates to this same lifecycle.
+Do not claim end-to-end readiness or adapt later stages merely to keep old tests
+passing. No commits or pushes until the user agrees this refactor is ready.
+
+
+## Agreed parsing/collection slice — implemented, resolution deferred
+
+- `Compiler::tokenize()` hands current and previous token generations to
+  `Compiler::parse()`. Only added/changed sources enter parsing; unchanged files
+  retain their graph. Successful parsing consumes the pending source change.
+- Parser calls `Symbol_Collector` immediately when a declaration is recognized.
+  Collector has no separate pass or worker. It registers/reuses a symbol within
+  the supplied owning scope; it does not resolve references.
+- Existing function/struct/field/parameter nodes, specializations and collected
+  declaration identities are updated directly. Their scope indexes remain intact.
+  Matching is by kind and name within the owning file/member/signature scope;
+  duplicate spellings consume old entries in encounter order. Renames are
+  additions/deletions, not inferred moves. No overload resolution is attempted.
+- Existing `collected_name` owns enum `change_status` and uint32 `revision`.
+  No state is added to every AST node. Function specializations own a separate
+  `body_changed` flag; parsed_file owns the file executable-body flag. A trait
+  is unnecessary because symbol revision/status has one existing owner.
+- Each file collection advances its own revision in its worker, clearing retained
+  symbol markers on uint32 rollover. Local missing-symbol checks run only after
+  that file parses successfully. Global checks run coordinator-side after joining,
+  using each completed file's revision. Failed files are excluded from sweeping.
+- New exported functions/types register immediately under `task_synchronize`,
+  using the unordered batch's publication mutex. No resolver reads these partially
+  filled declarations during parsing. Existing global index membership is reused.
+- Changed body syntax is replaced as a unit, never treated as a persistent symbol.
+  Unchanged bodies and their collected occurrences are retained together, with
+  token positions rebased to the new generation.
+  Token cursors compare spelling/order without host numeric conversion or saved
+  order fields. File executable comparison skips declarations. Signature and body
+  changes are separate. Syntax spans and child/sibling links use current tokens.
+- A file has a private executable scope. Its variables are not exported globally.
+  Function signatures have their own scope, with retained unchanged or replacement changed body-local scopes.
+  Functions cannot implicitly obtain file-body variables through the scope chain.
+  `global` syntax and captures for named functions/methods are not implemented.
+- `collected_file.entries` retains symbol indexes. Obsolete body/reference rows
+  are removed without index reuse; current unresolved work lists are rebuilt.
+  References retain their node, token and lexical scope for the next resolution
+  implementation. Type definitions retain identity alongside their declaration.
+- Parse errors stop only that file. The incomplete mutable file and newly
+  registered symbols remain for retry; successful other files retain their work.
+  Errors are reported after joining. No deletion sweep runs for the failed file,
+  and no resolution/preparation/backend work is started by this phase.
+- `parsed_file.complete` is false during parsing and after failure. Previous
+  handles are mutable identities, not historical snapshots. The old token snapshot
+  alone supplies comparisons. Retrying a failed file conservatively marks matched
+  signatures/bodies changed because its partial spans are not an old snapshot.
+
+Focused proof: `tests/parse_collection.php`; token handoff:
+`tests/token_generations.php`. This is PHP evidence, not whole-compiler native proof.
+The runtime callback has separate PHP and native lock/context tests in
+`tests/portability/task_synchronize*` at the repository root.
+
+### Incremental shared preparation — implemented
+
+After the successful parsing/collection join, one preparation worker handles initial
+and update runs. Separate identity sets select declarations, function bodies and file
+executable bodies. Initial owners are pending; updates seed only affected owners.
+Declaration work settles first, including newly notified declarations; each selected
+body runs once afterward. Resolution remains within these preparation algorithms,
+against the complete declaration inventory; there is no duplicate resolution pass.
+
+`collected_name` owns optional declaration preparation state only where needed.
+`function_structure` separately owns body state; `collected_file` owns file-body state.
+Parameters and fields participate through their enclosing signature/record. Prepared
+facts stay attached to specializations. Effective declaration facts are compared before
+notifying consumers; unchanged facts retain identity. Source changes mark owners pending
+without discarding the old declaration facts needed for that comparison.
+
+Forward/reverse declaration dependencies and scope/name candidate observations use
+identity-keyed maps. Missing/ambiguous lookups are observed too. Required completed
+by-value record facts use pending/processing/ready cycle detection; ordinary recursive
+calls only need signatures. Nested record changes propagate conservatively.
+
+Deleted entries notify dependents, then leave collected storage, scope/type indexes and
+occurrence work lists. `Key_Storage_List::remove(key, object)` removes matching identity
+insertions, preserving other same-key candidates. Deletion filtering stays at this
+cleanup boundary. No cleanup or preparation starts after an earlier phase error.
+
+Parser retention of unchanged bodies was explicitly approved: preserve the body AST,
+local scope and occurrences as a unit, updating token offsets. Replace changed bodies.
+This avoids copying facts or references between equivalent body trees.
+
+Focused evidence: `tests/incremental_preparation.php`, `tests/parse_collection.php`,
+`tests/token_generations.php`, `tests/storage.php`, and repository
+`tests/portability/object_hashes.php`. The latter proves the explicit `@object-key`
+foreach annotation used for PHP/native identity-map iteration. No native compiler
+validation was requested for this slice.
+
+Combined `Compiler::sync()` is now migrated: scan and notifications select source
+records, then existing tokenize/parse phases run with their join boundaries. It removes
+deleted collected/index rows after the successful join, notifying pending preparation
+owners without preparing LLVM-only syntax. Old candidate replacement and declaration
+comparison code is removed. The parked LLVM adapter only accounts for the new scope
+layout. `tests/combined_sync.php` proves selective reuse and fresh C++ equivalence.
+No new language forms or independent field queues are introduced.
+
+### Preparation recovery implemented (2026-09-28)
+
+Preparation uses persistent change/error state on existing preparation owners, with
+independent signature and body owners. Parsing does not settle collected declaration
+changes; successful preparation settles the declaration and its fields/parameters.
+Starting an increment or an attempt does not clear unfinished work or its error.
+
+The existing declaration, function-body and file-body lists select added/changed work.
+Expected preparation errors mark the failing owner and its transitive consumers
+failed/changed. Independent work continues. Each failing unit is attempted at most once
+per invocation and retried on the next invocation, including a no-edit increment.
+Required declaration facts are completed before consumption; failed facts remain
+unavailable. New edges also check previously ready dependency chains for cycles.
+Removing an erroneous dependency from a consumer allows that consumer to recover.
+
+Success clears failure/change state. Declaration recovery notifies consumers even if
+its signature equals the last successful signature. A body error does not poison its
+valid signature or callers. Completion/output is withheld while any selected work is
+unfinished; partial mutable facts are not rollback snapshots.
+
+Function-body comparison now uses raw source text bounded by the existing inclusive
+`token_index` and exclusive `end_token_index`. The byte range starts at the first token
+and ends after the last token. Internal whitespace changes count as changes; moving
+identical body text retains its AST, occurrences and facts with rebased token positions.
+Signature and file executable comparisons retain their existing token comparison.
+
+`tests/preparation_recovery.php` proves retry without edits, independent progress,
+recovery to an identical signature, new consumers of failed declarations, removed
+prerequisites, initial/new declaration cycles, cycle deletion and body-text retention.
+
+### Retained C++ generation implemented
+
+Preparation accumulates successful declaration/body changes and deletions in a
+per-file identity handoff. C++ generation retains separate declaration and body
+fragments with completion versions, dirty state, rendered text, include requirements
+and record-order dependencies. Only selected fragments are rerendered; unchanged
+bodies are not traversed. Successful assembly consumes the pending handoff. Rendering
+failure withholds output and retains dirty work for retry; unexpected exceptions
+request the existing full-rebuild fallback.
+
+The output remains one `main.cpp`, assembled in the existing record/prototype/function/
+entry-body order. Source identifiers with role prefixes replace token-index names in
+current supported scopes; temporary numbering is independent per body. No output
+partitioning, disk writer, Ninja integration or token-ownership change is introduced.
+Future namespaces/overloads/richer local scopes must revisit name qualification.
+
+Focused evidence: `tests/incremental_cpp.php` covers cached identity, body/signature
+independence, moved declarations, fresh equivalence, failed generation retry, deletion,
+signature-dependent consumers and removal of unused includes. Rigorous/native testing
+remains deferred as agreed.
+
+### Preparation debts
+
+- Unexpected exceptions escaping preparation now set `Model::$rebuild_required`.
+  The next attempt resets all compilation roots and rebuilds from retained inputs,
+  including in-memory source bytes. It does not traverse potentially corrupt facts.
+  Expected `RuntimeException` diagnostics retain incremental retry. Remaining debt:
+  distinguish internal bugs reported as `RuntimeException` from source diagnostics;
+  no transactional rollback is promised.
+- Dependency/lookup cleanup uses explicit unlinking with existing strong identity
+  storage. Deletion marks the whole batch, notifies transitive consumers while links
+  remain intact, then detaches both directions and removes indexes. Full compilation
+  and syntax resets sever these registrations before dropping roots; body preparation
+  replaces outgoing registrations. Weak references are deferred unless a concrete
+  need appears. Broader AST/scope ownership cycles remain a separate lifetime review.
+  Focused evidence: `tests/dependency_cleanup.php`; rigorous validation remains deferred.
+- Compact sparse occurrence and duplicate-key storage when useful. Removal preserves
+  stable positions; native duplicate-key storage retains empty slots until release.
+- Review more precise record invalidation after the current conservative path is proven.
+
+### Agreed debts
+
+- C++ output partitioning: retain the current single `main.cpp` layout for now.
+  Later, group retained generation records into `.hpp`/`.cpp` units to reduce
+  native compilation cost without coupling those groups to source-file boundaries.
+- Old/new token ownership: review whether unchanged nodes should retain their old
+  token generation while changed nodes use the new generation. Keep current token
+  rebasing for now; generated declaration names must not depend on token positions.
+- Rigorous validation of the current incremental implementation is deferred to a
+  later testing pass. Existing focused tests provide limited evidence, not exhaustive
+  coverage. Include preparation recovery, repeated increments and native behavior
+  in that pass; this note does not require additional testing during each change.
+- Add `use` to normal functions and methods, following lambda capture semantics
+  (value/reference intent). Tracked in the [v0.2 function catalog](../catalog/04_functions.md#deferred-v02-planning-explicit-captures-for-functions-and-methods).
+  Implementation is for later; capture syntax and lifetime rules need their own slice.
+- Review reconciliation of nested sub-structures and declaration relationships
+  such as extends/implements as their frontend syntax is introduced. This slice
+  adds no classes, methods, constants or inheritance syntax that the frontend
+  does not already support.
+- Evaluate error boundaries across files and subsequent processes: continue as
+  much independent work as is safe, without rollback machinery. The current
+  parser stops a failing file, preserves partial identities and blocks progression
+  by reporting failure after the join. Lexical/read error continuation and broader
+  failure classification remain separate decisions.
+- Release obsolete generations/tombstones and compact sparse occurrence storage
+  when its observers permit it; positions currently grow without reuse.
+
+### Combined migration validation (2026-09-28)
+
+`python3 compiler/my-try/tests/run.py --php-only --results <fresh-directory>` runs
+all 24 current PHP test files, including incremental smoke with restoration and fresh
+output comparison. All passed after the combined migration. The affected repository
+portability tests `object_hashes.php` and `task_synchronize.php` also passed. PHP tests
+that exercise Native_Runner still compile generated sample programs; the compiler
+itself was not compiled natively. Preparation recovery was implemented afterward, as
+described above; that later slice has focused PHP coverage only.

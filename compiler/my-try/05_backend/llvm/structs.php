@@ -74,7 +74,7 @@ final class LLVM_Struct_Preparation
 			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
 				continue;
 			}
-			if (object_cast(weakref_get($entry->scope), scope::class) !== Syntax_Nodes::block_data($function->body)->lexical_scope()) {
+			if (!LLVM_Legacy_Name_Preparation::belongs($function, $entry)) {
 				continue;
 			}
 			$base = Syntax_Nodes::field_access_data($entry->node)->base;

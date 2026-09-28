@@ -30,9 +30,11 @@ $selected /** vector<int> */ = sequence_filter(
 );
 ```
 
-This slice accepts `function` and `static function` expressions with exactly one
-explicit scalar/named by-value parameter, an explicit non-void return type and
-optional explicit by-value captures. Callback bodies use the existing structural
+The converter accepts `function` and `static function` expressions with zero or one
+explicit scalar/named by-value parameter, an explicit return type (including `void`),
+and optional explicit by-value captures. Collection helpers still require their
+one-argument value/predicate signatures; the receiving API validates compatibility.
+Zero-argument void actions also serve `task_synchronize`. Callback bodies use the existing structural
 statement grammar. References, defaults, variadics, untyped parameters/returns,
 arrow functions and general callable-local invocation remain outside this slice.
 The import policy distinguishes closure capture lists from namespace imports;

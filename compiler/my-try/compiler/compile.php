@@ -2,7 +2,7 @@
 
 /*
  * Role: coordinate the currently imported compiler stages.
- * Call map: init -> exec_cpp/update_cpp or exec_llvm/update_llvm -> sync (private read/tokenize/parse, locked replacement) -> prepare + cpp / llvm.
+ * Call map: init -> exec_cpp/update_cpp or exec_llvm/update_llvm -> sync (scan, notify, tokenize, retained parse/collect, cleanup) -> prepare + cpp / llvm.
  * Output: retained sources, syntax, collection and separately selected C++/LLVM artifacts.
  */
 namespace scpp\compiler;
@@ -154,77 +154,95 @@ final class Compiler
 		$this->cpp();
 	}
 
-	/** Initial compilation and later updates share private work and the same publication path. */
+	/** Combined entrypoint uses the same retained tokenization and parsing phases as direct callers. */
 	public function sync(array $paths /** vector<string> */): void
 	{
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		self::require_modules();
+		if (Model::$rebuild_required) {
+			Compiler_Lifecycle::reset_compilation(true);
+			Model::$full_sync_pending = true;
+		}
+		Compiler_Lifecycle::reset_cpp();
 		Compiler_Lifecycle::reset_llvm();
-		Compiler_Lifecycle::reset_preparation();
+		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
 		foreach (Model::$modules as $module) {
 			if (($module->changes !== change_state::deleted) && $module->disk_source) {
 				Module_Loader::discover($module);
 			}
 		}
-		foreach (Model::sources() as $record)
-		{
-			if (($record->changes === change_state::deleted) && ($record->file->changes === \scpp\compiler\SYNC_DELETED)) {
-				continue;
-			}
-			if (Model::$full_sync_pending || ($record->changes !== change_state::unchanged)) {
-				$paths[] = Source_Registry::full_path($record->owning_module(), $record->path);
+		Source_Synchronization::notify($paths);
+		$this->tokenize();
+		$this->parse();
+
+		// Both backends must see the same live declaration inventory after the successful join.
+		$sources /** Storage<collected_file> */ = new Storage();
+		foreach (Model::sources() as $record) {
+			if ($record->parsed !== null) {
+				$source = $record->parsed->collection;
+				$source->deleted = $record->changes === change_state::deleted;
+				if ($source->deleted) {
+					$record->file->changes = \scpp\compiler\SYNC_DELETED;
+				}
+				$sources->append($source);
 			}
 		}
-		$queue = Source_Synchronization::plan($paths);
-		$items /** vector<source_work> */ = $queue->items();
-		$published = task_run_publish_unordered($items, $this->jobs,
-		function (source_work $work) use ($queue): source_work {
-			return Source_Frontend::run($work, $queue, frontend_operation::synchronize);
-		},
-		function (source_work $work) use ($queue): bool {
-			Source_Publication::publish_update($work);
-			$queue->complete($work);
-			return true;
-		});
-		if (($published !== q_count($items)) || (!$queue->finished())) {
-			throw new \LogicException('Update barrier reached before publication completed');
-		}
+		(new Preparation_Worker(Model::$language_scope))->remove_deleted_sources($sources);
 		Model::$full_sync_pending = false;
 	}
 
-	/** Standalone parallel scanning; compilation uses the combined pipeline without this barrier. */
+	/** Tokenize added/changed files, retaining the previous generation for the parsing refactor. */
 	public function tokenize(): void
 	{
 		$this->frontend(frontend_operation::scan);
 	}
 
-	/** Explicitly reparse existing snapshots without rereading their source files. */
+	/** Parse changed token generations and join collection; resolution is a subsequent phase. */
 	public function parse(): void
 	{
 		$this->frontend(frontend_operation::parse);
 	}
 
-	/** Prepare synchronized source independently of backend emission. */
+	/** Earlier failures block this phase; initial and subsequent preparation use identical work lists. */
 	public function prepare(): void
 	{
-		Compiler_Lifecycle::reset_preparation();
+		if (Model::$rebuild_required) {
+			$this->sync([]);
+		}
 		$sources /** Storage<collected_file> */ = new Storage();
-		foreach (Model::collected_files() as $source) {
-			if ($source->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
+		foreach (Model::sources() as $record)
+		{
+			if ($record->changes !== change_state::deleted) {
+				if (($record->changes !== change_state::unchanged) || ($record->parsed === null)) {
+					throw new \RuntimeException('Finish tokenization and parsing before preparation');
+				}
+				if (!$record->parsed->complete) {
+					throw new \RuntimeException('Preparation is blocked by a failed parse');
+				}
+			}
+			if ($record->parsed !== null) {
+				$source = $record->parsed->collection;
+				$source->deleted = $record->changes === change_state::deleted;
+				if ($source->deleted) {
+					$record->file->changes = \scpp\compiler\SYNC_DELETED;
+				}
 				$sources->append($source);
 			}
 		}
-		if (q_count($sources) !== 1) {
-			throw new \RuntimeException('The current preparation slice requires exactly one source file');
-		}
+		Compiler_Lifecycle::reset_cpp();
+		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
 		try {
-			$prepared = (new File_Preparation($sources[0], Model::$language_scope))->prepare();
-			Model::$prepared_files[] = $prepared;
+			Model::$prepared_files = (new Preparation_Worker(Model::$language_scope))->prepare($sources);
+		}
+		catch (\RuntimeException $error) {
+			// Expected diagnostics retain the existing incremental retry state.
+			throw $error;
 		}
 		catch (\Throwable $error) {
-			Compiler_Lifecycle::reset_preparation();
+			Model::$rebuild_required = true;
+			Compiler_Lifecycle::reset_llvm();
 			throw $error;
 		}
 	}
@@ -237,7 +255,16 @@ final class Compiler
 		if (q_count($prepared) !== 1) {
 			throw new \RuntimeException('C++ emission requires one prepared source file; run prepare first');
 		}
-		$output = (new CPP_Generator())->generate($prepared[0]);
+		try {
+			$output = (new CPP_Generator(Model::$cpp_program))->generate($prepared[0]);
+		}
+		catch (\RuntimeException $error) {
+			throw $error;
+		}
+		catch (\Throwable $error) {
+			Model::$rebuild_required = true;
+			throw $error;
+		}
 		Model::$cpp_files[] = $output;
 	}
 
@@ -275,33 +302,52 @@ final class Compiler
 		}
 	}
 
-	/** One bounded worker reads, tokenizes and immediately parses its file before publication. */
+	/** Dispatch one frontend phase; parsing mutates retained declarations and reports errors after joining. */
 	private function frontend(frontend_operation $operation): void
 	{
-		self::require_modules();
-		if ($operation === frontend_operation::scan) {
-			Compiler_Lifecycle::reset_tokens();
+		if (Model::$rebuild_required) {
+			$this->sync([]);
+			return;
 		}
-		else {
-			Compiler_Lifecycle::reset_syntax();
+		self::require_modules();
+		if ($operation === frontend_operation::parse) {
+			Compiler_Lifecycle::reset_cpp();
+			Compiler_Lifecycle::reset_llvm();
 		}
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');
 		}
 		$queue = new Source_Work_Queue();
-		if ($operation === frontend_operation::scan) {
-			foreach (Model::sources() as $record) {
-				$source = $record->file;
+		if ($operation === frontend_operation::scan)
+		{
+			foreach (Model::sources() as $record)
+			{
+				if (($record->changes !== change_state::added) && ($record->changes !== change_state::changed)) {
+					continue;
+				}
+				// Reads and lexical failures must not mutate the currently published snapshot.
+				$source = new file();
+				$source->path = $record->path;
+				$source->disk_source = $record->file->disk_source;
+				$source->content = $record->file->content;
+				$source->mtime = $record->file->mtime;
+				$source->size = $record->file->size;
+				$source->changes = $record->file->changes;
 				$queue->enqueue($record, $source);
 			}
 		}
 		else
 		{
-			foreach (Model::sources() as $record) {
-				if ($record->tokens !== null) {
-					$tokens /** token_list */ = $record->tokens;
-					$queue->enqueue($record, $tokens->file, $tokens);
+			foreach (Model::sources() as $record)
+			{
+				if (($record->changes !== change_state::added) && ($record->changes !== change_state::changed)) {
+					continue;
 				}
+				if ($record->tokens === null) {
+					throw new \LogicException('Tokenize changed files before parsing');
+				}
+				$tokens /** token_list */ = $record->tokens;
+				$queue->enqueue($record, $tokens->file, $tokens);
 			}
 		}
 		$items /** vector<source_work> */ = $queue->items();
@@ -311,11 +357,46 @@ final class Compiler
 		},
 		function (source_work $work) use ($queue, $operation): bool {
 			Source_Publication::publish_stage($work, $operation);
-			$queue->complete($work);
+			if ($work->state !== work_state::failed) {
+				$queue->complete($work);
+			}
 			return true;
 		});
+		if ($operation === frontend_operation::parse) {
+			$this->finish_collection($items);
+		}
 		if (($published !== q_count($items)) || (!$queue->finished())) {
 			throw new \LogicException('Frontend barrier reached before work completed');
+		}
+	}
+
+	/** Global deletion checks run after the join; a failed file cannot prove an unseen symbol absent. */
+	private function finish_collection(array $items /** vector<source_work> */): void
+	{
+		foreach (Model::sources() as $record)
+		{
+			if ($record->parsed === null) {
+				continue;
+			}
+			$parsed /** parsed_file */ = $record->parsed;
+			if ($record->changes === change_state::deleted) {
+				$entries /** Storage<collected_name> */ = $parsed->collection->entries;
+				foreach ($entries as $entry) {
+					$entry->change_status = change_state::deleted;
+				}
+			}
+			elseif ($parsed->complete) {
+				Symbol_Collector::sweep($parsed->collection, true);
+			}
+		}
+		$errors = '';
+		foreach ($items as $work) {
+			if ($work->state === work_state::failed) {
+				$errors .= $work->error . "\n";
+			}
+		}
+		if ($errors !== '') {
+			throw new \RuntimeException($errors);
 		}
 	}
 }

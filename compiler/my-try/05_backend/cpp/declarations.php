@@ -40,7 +40,7 @@ final class CPP_Declarations
 			$separator = ', ';
 		}
 
-		return self::type($facts->return_type, $context) . ' function_' . $syntax->occurrence()->token_index . '(' . $parts . ')';
+		return self::type($facts->return_type, $context) . ' function_' . $syntax->occurrence()->name . '(' . $parts . ')';
 	}
 
 	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */
@@ -61,7 +61,7 @@ final class CPP_Declarations
 	/** Complete nested value layouts before their users; reject a recursive by-value layout. */
 	public static function generate_struct(struct_structure $syntax, cpp_generation_context $context): string
 	{
-		$key = '' . $syntax->occurrence()->token_index;
+		$key = '' . $syntax->occurrence()->name;
 		if (isset($context->record_states[$key])) {
 			if ($context->record_states[$key] === cpp_record_state::visiting) {
 				throw new \RuntimeException('S2S recursive by-value struct layout is unsupported');
@@ -77,13 +77,13 @@ final class CPP_Declarations
 		foreach ($fields->items() as $field)
 		{
 			$type = $field->type;
-			if ($type->kind === type_kind::record) {
+			if (($type->kind === type_kind::record) && $context->expand_records) {
 				$entry = object_cast($type->declaration, collected_name::class);
 				self::generate_struct(Syntax_Nodes::struct_data($entry->node), $context);
 			}
 
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
-			$text .= "\t" . self::type($type, $context) . ' field_' . $entry->token_index . ";\n";
+			$text .= "\t" . self::type($type, $context) . ' field_' . $entry->name . ";\n";
 		}
 
 		$context->records .= $text . "};\n\n";
@@ -120,7 +120,7 @@ final class CPP_Declarations
 			$separator = ', ';
 		}
 
-		$text .= "\treturn function_" . $entry->token_index . '(' . $names . ");\n}())";
+		$text .= "\treturn function_" . $entry->name . '(' . $names . ");\n}())";
 		return $text;
 	}
 
@@ -129,6 +129,6 @@ final class CPP_Declarations
 	{
 		$entry = object_cast(weakref_get($syntax->require_preparation()->field->declaration), collected_name::class);
 		$base = $syntax->base;
-		return '(' . $base->payload()->generate_cpp_expression($base, $context) . ').field_' . $entry->token_index;
+		return '(' . $base->payload()->generate_cpp_expression($base, $context) . ').field_' . $entry->name;
 	}
 }

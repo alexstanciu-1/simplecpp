@@ -9,6 +9,7 @@ final class scope
 	private ?scope $enclosing /** weak<scope> */ = null;
 	private ?scope $publication /** weak<scope> */ = null;
 	private bool $function_boundary = false;
+	private Key_Storage_List $preparation_lookups /** Key_Storage_List<preparation_lookup> */;
 	private array $template_parameters /** hash<int> */ = [];
 	/** @storage.reference collected_file.entries @reference.weak */
 	private Key_Storage_List $variables /** Key_Storage_List<collected_name> */;
@@ -20,6 +21,7 @@ final class scope
 	public function __construct()
 	{
 		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
+		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_name> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition> */();
 	}
@@ -81,6 +83,40 @@ final class scope
 	{
 		$types /** Key_Storage_List<type_definition> */ = $this->types;
 		$types->add($definition->name, $definition);
+	}
+
+	/** Remove index membership by identity; same-name declarations from other owners survive. */
+	public function unregister(collected_name $entry): void
+	{
+		$functions /** Key_Storage_List<collected_name> */ = $this->functions;
+		$variables /** Key_Storage_List<collected_name> */ = $this->variables;
+		$types /** Key_Storage_List<type_definition> */ = $this->types;
+		$functions->remove($entry->name, $entry);
+		$variables->remove($entry->name, $entry);
+		foreach ($types->named($entry->name) as $definition) {
+			if ($definition->declaration === $entry) {
+				$types->remove($entry->name, $definition);
+			}
+		}
+	}
+
+	/** Lookups are grouped by name; the kind disambiguates independent type/function pools. */
+	public function preparation_lookups_named(string $name): array /** vector<preparation_lookup> */
+	{
+		$items /** Key_Storage_List<preparation_lookup> */ = $this->preparation_lookups;
+		return $items->named($name);
+	}
+
+	public function add_preparation_lookup(preparation_lookup $lookup): void
+	{
+		$items /** Key_Storage_List<preparation_lookup> */ = $this->preparation_lookups;
+		$items->add($lookup->name, $lookup);
+	}
+
+	public function remove_preparation_lookup(preparation_lookup $lookup): void
+	{
+		$items /** Key_Storage_List<preparation_lookup> */ = $this->preparation_lookups;
+		$items->remove($lookup->name, $lookup);
 	}
 
 	/** Local inventories include tombstones; callers choose live resolution explicitly. */

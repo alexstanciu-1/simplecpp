@@ -2,26 +2,24 @@
 Doc Status: supporting
 
 ```text
-Compiler::init(paths) -> Compiler_Lifecycle::reset + Module_Loader discovery (no reads)
-Compiler::exec_cpp() -> sync(all live paths) -> cpp()
-Compiler::exec_llvm() -> sync(all live paths) -> llvm()
-Compiler::update_cpp(paths) -> sync(notified paths) -> cpp()
-Compiler::update_llvm(paths) -> sync(notified paths) -> llvm()
+Compiler::init(paths) -> module reconciliation -> discovery when configuration changes
+Compiler::exec_cpp() -> sync -> prepare -> cpp
+Compiler::exec_llvm() -> sync -> parked llvm preparation/emission
+Compiler::update_cpp(paths) -> sync(paths) -> prepare -> cpp
+Compiler::update_llvm(paths) -> sync(paths) -> llvm
 Compiler::sync(paths)
-  private file -> worker read/tokenize -> parse/collect
-  locked publish_update -> compare declarations -> replace file + update globals
-  join -> restore model root order
-Compiler::llvm() -> full live-program preparation -> generation
-
-Standalone inspection: tokenize() / parse() retain explicit stage/reset behavior.
-Module changes: init(complete module list), then exec().
-Host_Report owns display and optional native sample execution.
+  module scan -> mark explicit notifications
+  tokenize -> join -> retained parse/collect -> join/revision sweep
+  notify dependents and remove deleted collected/index memberships
+Compiler::prepare() -> declaration list -> function-body list -> file-body list -> pending preparation changes
+Compiler::cpp() -> select dirty definition/body fragments -> render selected fragments -> assemble main.cpp
 ```
 
-Collection occurs during parsing. Preparation resolves names, checks symbolic
-template contracts and prepares demanded instances before generation. Native
-execution is enabled by the host debug constant; non-debug tests explicitly call
-the same Native_Runner when they need execution.
+Standalone tokenize/parse/prepare entrypoints use these same phases. Parser calls
+collector directly; new global entries register under the task batch lock. The C++
+path retains unaffected prepared facts. LLVM name/template preparation remains
+parked and runs on the whole live program; it does not define shared semantics.
+Host_Report owns display and optional native sample execution.
 
 Tokenizer returns `token_list`; Parser consumes it and returns `parsed_file`.
 Only these data records are published in Model, never the workers.

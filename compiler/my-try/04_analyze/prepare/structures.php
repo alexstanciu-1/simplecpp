@@ -101,6 +101,8 @@ final class prepared_file {
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {
+	public Preparation_Worker $worker;
+	public preparation_owner $owner;
 	public collected_file $collection;
 	/** Invocation-local lookup of attached binding/parameter facts; does not mutate source scopes. */
 	public Key_Storage_List $locals /** Key_Storage_List<prepared_storage> */;
@@ -109,4 +111,69 @@ final class preparation_context
 	public type_definition $integer;
 	public type_definition $boolean;
 	public type_definition $floating;
+}
+
+/** Processing kinds have separate work lists; a body is not a language symbol. */
+enum preparation_kind {
+	case declaration;
+	case function_body;
+	case file_body;
+}
+
+enum preparation_state {
+	case pending;
+	case processing;
+	case ready;
+}
+
+enum preparation_lookup_kind {
+	case type;
+	case function_name;
+}
+
+/** Stable work/dependency identity attached to an existing declaration or file/body owner. */
+final class preparation_owner
+{
+	public preparation_kind $kind;
+	public preparation_state $state = preparation_state::pending;
+	/** Persistent work selection; only successful preparation settles it. */
+	public change_state $change_status = change_state::added;
+	public bool $failed = false;
+	public string $failure_message = '';
+	public collected_file $source;
+	public ?collected_name $declaration = null;
+	public int $version = 0;
+	/** Strong identity keys; explicit cleanup severs registrations on replacement, deletion and reset. */
+	public \SplObjectStorage $dependencies /** hash<int, shared<preparation_owner>> */;
+	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
+	public \SplObjectStorage $lookups /** hash<bool, shared<preparation_lookup>> */;
+
+	/** Retained graph data never references a processing worker. */
+	public function __construct(preparation_kind $kind, collected_file $source, ?collected_name $declaration = null)
+	{
+		$this->kind = $kind;
+		$this->source = $source;
+		$this->declaration = $declaration;
+		$this->dependencies = new \SplObjectStorage /** hash<int, shared<preparation_owner>> */();
+		$this->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$this->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
+	}
+}
+
+/** Name-pool observation also represents absent or ambiguous lookup results. */
+final class preparation_lookup
+{
+	public scope $scope;
+	public string $name;
+	public preparation_lookup_kind $kind;
+	public array $candidates /** vector<collected_name> */ = [];
+	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
+
+	public function __construct(scope $scope, string $name, preparation_lookup_kind $kind)
+	{
+		$this->scope = $scope;
+		$this->name = $name;
+		$this->kind = $kind;
+		$this->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+	}
 }

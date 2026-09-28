@@ -5,17 +5,40 @@ namespace scpp\compiler;
 
 final class Key_Storage_List
 {
-	/** @var list<object> */
+	/** @var array<int, object> Removed positions are not reused. */
 	private array $ordered = [];
 	/** @var array<string, list<int>> */
 	private array $positions = [];
+	private int $next_position = 0;
 
 	/** Every insertion is distinct, even when its key and object identity repeat. */
 	public function add(string $key, object $record): void
 	{
-		$position = count($this->ordered);
-		$this->ordered[] = $record;
+		$position = $this->next_position++;
+		$this->ordered[$position] = $record;
 		$this->positions["\0" . $key][] = $position;
+	}
+
+	/** Remove every insertion of this identity under this key, preserving other keys and duplicates. */
+	public function remove(string $key, object $record): void
+	{
+		$encoded = "\0" . $key;
+		$remaining = [];
+		foreach ($this->positions[$encoded] ?? [] as $position)
+		{
+			if ($this->ordered[$position] === $record) {
+				unset($this->ordered[$position]);
+			}
+			else {
+				$remaining[] = $position;
+			}
+		}
+		if (count($remaining) === 0) {
+			unset($this->positions[$encoded]);
+		}
+		else {
+			$this->positions[$encoded] = $remaining;
+		}
 	}
 
 	/** Copy membership without copying or changing the records themselves. */
@@ -30,7 +53,7 @@ final class Key_Storage_List
 
 	public function items(): array
 	{
-		return $this->ordered;
+		return array_values($this->ordered);
 	}
 
 	public function is_empty(): bool

@@ -1,6 +1,17 @@
 # Retained compiler model
 Doc Status: supporting
 
+Incremental refactor checkpoint: standalone `Compiler::parse()` now updates existing
+declaration nodes and collected identities in place. Collector is invoked by the
+parser and registers globals under the task batch lock. Bodies/references are
+replaceable; symbol revisions and change state belong to `collected_name`, not
+all AST headers. Failed files retain an incomplete mutable graph for retry.
+Standalone preparation now follows the join with separate declaration/function-body/
+file-body work lists and retained dependency links. Unchanged bodies retain their
+syntax, occurrences and facts. Combined sync uses these same phases and removes
+deleted symbols after a successful join. See [the current boundary](../planning/incremental_strategy.md#agreed-parsingcollection-slice--implemented-resolution-deferred).
+
+
 Model owns the shared compiler roots. `Compiler_Lifecycle` sequences initialization,
 resets, built-in installation and tree cleanup. Model does not call processors.
 Workers process records; retained records
@@ -18,6 +29,7 @@ module-local source indexes.
 | language_scope | Owns language/runtime type definitions; the built-in Simple C++ `int`, `bool`, `float`, fixed-width integer aliases and `void`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
 | prepared_files | Completed preparation records pointing to source files; AST specialization records own the facts. |
+| cpp_program | Retained C++ fragments keyed by declaration/body preparation owners; cached text, includes and record-order dependencies. |
 | cpp_files | Final C++ artifact names and bytes; no preparation backlinks. |
 | llvm_files | llvm_module records; each owns output functions, blocks, operands and text. |
 
@@ -28,7 +40,8 @@ parsed result. The parsed result owns its collection and shares the exact token
 result. A weak module backlink records stable membership. Source/file paths are relative to
 that module; only IO and external notification boundaries construct full paths.
 The source record retains pending change_state and a uint32 scan revision. Edits, deletion and
-reappearance retain that identity; a failed candidate leaves prior results intact.
+reappearance retain that identity. Read/tokenization failures preserve published tokens;
+parse failures retain incomplete mutable syntax for retry.
 Deletion marks retained syntax and declarations as tombstones. Overlapping module
 roots (including duplicate/canonical aliases) are rejected at discovery.
 
@@ -67,10 +80,15 @@ Named structure child fields/lists remain retaining aliases for existing workers
 The parser validates and links completed children before publishing each node.
 See [AST layout](ast_layout.md) for child order, traversal and mutation rules.
 
-parsed_file.scopes remains the uniform owner of local scopes and a standalone
-parser's root scope. Blocks reference the appropriate local/global scope. Global
-name pools reference collected entries; these are indexes, not additional declarations.
-Collection entries keep their existing local positions and syntax object identity.
+In the incremental parser, parsed_file.scopes owns the file declaration scope and
+replacement executable scopes. Function specializations own retained signature
+scopes; struct specializations own retained member scopes. Blocks and occurrences
+observe their lexical scope. Global name pools index the same collected declarations.
+Retained declaration entries preserve their storage positions and syntax identity;
+obsolete body/reference entries leave holes. During parsing an early registered
+symbol may have unfinished required syntax fields. Its file remains incomplete,
+and consumers must wait for the successful parsing/collection join before reading
+those fields.
 
 ## Lifetime and mutation
 
@@ -186,7 +204,8 @@ stage entrypoints and failure/publication boundaries.
 
 See [incremental sync](../lifecycle/incremental.md). file and collected_name carry only a
 changes field; tokens and AST have no flags and are replaced completely. Existing
-source records retain deleted files; global candidate collections retain deleted symbols.
+source records retain deleted files; successful-join cleanup removes deleted symbols
+from collected storage and global indexes.
 Consumers must filter tombstones before accessing their old syntax/scopes. No new
 change-record store or persistent identity layer is introduced.
 
@@ -223,10 +242,15 @@ inventory and published scopes remain unchanged.
 `Preparation_Cleanup::tree` walks owned child/sibling links and calls each node's
 `clear_preparation` method, which delegates to the specialization. Syntax-only
 records do nothing; expression and binding records clear their own slots. Compiler_Lifecycle resets clean the retained tree before dropping/replacing
-roots. Preparation starts clean and clears partial facts on failure. C++ emission
+roots. Incremental preparation clears only selected body facts and compares declaration
+facts before notification. Preparation owners retain change/error state across increments;
+success settles it, failure propagates to consumers, and independent work can complete.
+Pending work retries without source edits; failed declaration facts cannot be consumed.
+Recovery notifies consumers even for equivalent facts. Unexpected exceptions escaping preparation force a full rebuild on the next attempt.
+Internal `RuntimeException` classification remains debt; partial facts are not rollback snapshots. C++ emission
 failure clears output but preserves completed shared preparation. Old prepared-file handles reference the
-same mutable source tree, not immutable snapshots of its former facts. No selective
-invalidation machinery is introduced by this lifecycle.
+same mutable source tree, not immutable snapshots of its former facts. Dependency
+selection is owned by Preparation_Worker; explicit reset marks all owners pending.
 
 `Compiler::prepare()` prepares synchronized sources and publishes completed facts
 without emitting code. `cpp()` consumes that preparation, and rejects an unprepared
@@ -285,3 +309,29 @@ preparation and C++ generation hooks. Algorithms use per-invocation context reco
 and typed processing routines; syntax never retains those contexts. Unsupported
 operations throw before walking children. Native optimization of virtual calls
 requires separate evidence. See [dispatch ownership](ast_layout.md#specialization-dispatch).
+
+### Retained C++ generation
+
+`collected_file.preparation_changes` is an identity-keyed handoff of completed
+semantic changes and deleted owners. C++ consumes it only after successful assembly.
+Preparation versions remain the completion stamps; repeated preparation before
+emission cannot lose pending generation work.
+
+`Model.cpp_program` owns separate fragments for signatures, record definitions,
+function bodies and file executable bodies, keyed by their existing preparation
+owners. Selection builds definition/body work lists from missing, dirty or outdated
+fragments. Successful rendering replaces one fragment; a failed render leaves it
+dirty, preserves pending handoff and publishes no complete output. Unchanged fragments
+retain their objects and text. Unexpected generation exceptions request a full rebuild.
+
+Assembly still walks top-level declarations to preserve current order; it does not
+walk unchanged bodies. Struct dependencies order cached definitions. Includes are
+reassembled from current fragments, so removed fragments cannot leave stale includes.
+`reset_cpp()` drops final artifacts and retired fragments; compilation/syntax reset
+also drops the complete fragment store. No filesystem publication is introduced.
+
+Generated names use role prefixes and normalized source names in the currently
+supported scopes. They are deterministic across fresh/incremental runs and independent
+of token positions. Function-body temporary counters are independent. Namespace,
+overload and richer shadowing support must review naming when those features arrive.
+Output partitioning and old/new token ownership remain explicit planning debts.

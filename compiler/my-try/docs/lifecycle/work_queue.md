@@ -1,71 +1,43 @@
 # Compiler source work queue and publication
 Doc Status: supporting
 
-File synchronization now uses this queue; see [incremental.md](incremental.md) for
-replacement, flags and deletion rules. Compiler.init continues to reset Model.
-Folder discovery remains synchronous
-and records paths without reading source bytes.
-The queue processes each file through reading, tokenization and parsing.
+Both `sync()` and standalone entrypoints use the same per-phase work queue.
+Scanning selects source records in place. Tokenization joins before parsing starts;
+parsing joins before cleanup and preparation. No private whole-file replacement
+pipeline or second declaration comparison remains.
 
 ## Work and execution
 
-Compiler owns a transient Source_Work_Queue of file work records. exec dispatches
-one read/tokenize/parse chain per file: parsing begins immediately after that file
-is tokenized, without a project-wide tokenization barrier. A worker holds its slot
-for the whole chain, so these stages share one concurrency budget.
-Membership is sealed before dispatch. The same source record cannot be queued
-twice, preventing concurrent writes to its metadata/content. Parse-only snapshots
-must belong to the queued source. Each work record moves from queued to running,
-then published (only after publication) or failed. Completion verifies queue
-membership and state. The queue never enters the retained Model.
+`Source_Work_Queue` is invocation-local. Membership is sealed before dispatch; each
+source has at most one work item. Items move queued -> running -> published or failed.
+Completion checks ownership and state. Records carry the retained source/previous parse,
+a private tokenization input, and the current phase result. Model never owns workers.
 
-Compiler.jobs is the positive native concurrency limit, initialized from the
-namespace constant DEFAULT_COMPILER_JOBS (currently 12). Callers may override it:
+`Compiler.jobs` is the positive concurrency limit, defaulting to
+`DEFAULT_COMPILER_JOBS` (12). PHP runs the same callbacks sequentially; the native task
+executor bounds work, serializes publication and joins the batch. Native compiler
+validation of this refactor remains on demand.
 
-```php
-$compiler = new Compiler();
-$compiler->jobs = 4;
-```
+## Parsing and publication
 
-The task executor bounds concurrent work, serializes publication and joins workers.
-PHP implements the same work/publish calls sequentially; native uses actual worker
-threads. The compiler's success barrier checks the returned publication count and
-all work states AFTER joining. Shared `File_Preparation` starts only after that
-barrier. The parked LLVM regression entry also waits before running its separate
-legacy name/template preparation. Work/publisher errors join workers and escape, so generation does not
-run. Already published files can remain visible until the next reset; no rollback
-is promised. Which error wins when several jobs fail is not specified.
+Parser invokes collector methods as declarations are recognized. Private scope updates
+need no lock. Exported declaration registration calls `task_synchronize`, using the
+batch publication mutex. `Source_Publication::publish_stage` installs tokens or the
+mutable parse result, including incomplete results retained for retry.
 
-## Isolated parsing and locked publication
+After joining, successful-file revision sweeps mark deleted symbols. Parse errors are
+reported after other files finish. Earlier read/tokenization errors prevent parsing.
+No rollback or transactional batch guarantee is implied. Concurrent compiler sessions
+remain unsupported because Model is static.
 
-Compiler invokes Parser without a caller-owned global scope. Each result owns its
-file root and nested scopes. Symbol_Collector writes only those private scopes.
-The legacy direct Parser API accepting an external scope remains available; it is
-not used by compiler workers.
+`publish_parsed` remains a standalone helper for completed isolated parses; it is not
+used by the incremental compiler worker. It exports declarations once and marks their
+membership so shared deletion cleanup can remove both local and global indexes.
+Scope publication links make all global duplicate candidates visible during lookup.
+File executable variables stay private to their separate scope.
 
-Source_Publication::publish_parsed (shared by initial publication and sync replacement) installs
-references to root-scope declarations in
-Model.global_scope, retains the completed parse/collection, and records the root
-scope's native weak publication link. Function locals are not exported. Declaration
-records remain file-owned. Duplicate publication is rejected before index writes.
-
-The executor calls this compiler-owned operation under one dedicated batch-local
-native publication mutex, immediately after work completes, without waiting for an
-earlier input. Work runs outside the lock. Direct callers of publish_parsed must
-serialize themselves. Concurrent compiler sessions remain unsupported because Model
-is static; the batch lock is not a global lock between independent compilations.
-
-Scope_Lookup::visible follows the publication link during resolution. A file's
-ownership boundary does not introduce a new language-level global scope: global
-duplicate candidates remain visible even if the file defines its own matching name.
-Unpublished standalone parses still use local maps. AST/occurrence scope identity
-is preserved, including the LLVM experiment's same-file variable rules.
-
-Each work item carries its stable source record, prior parse and private candidate.
-Publication replaces that record's completed stages together. Module/source membership
-already determines traversal order, independently of worker completion; no retained
-root reordering or path-based join is required.
-Global declaration pools keep every candidate; scheduling cannot select a winner.
+Module/source indexes determine traversal order independently of worker completion.
+No retained root reordering or path-based publication join is required.
 
 ## Runtime boundary and validation
 

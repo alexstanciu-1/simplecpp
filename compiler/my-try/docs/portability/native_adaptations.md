@@ -283,3 +283,65 @@ Final PHP regression evidence: `/tmp/scpp-functions-native-php-final/summary.jso
 (82 linted PHP files, mandatory style check, 19 LLVM executions, 28 call executions
 and 73 generated C++ executions). Conversion and execution used the authored PHP
 source; no generated C++ fixes were retained.
+
+## Incremental pipeline native investigation — 2026-09-28
+
+Native verification was explicitly requested, with simple adaptations authorized and
+new support gaps reserved for discussion. The candidate is the current repository
+working tree (`79889f32` plus local changes), not the older `/tmp/scpp-native-244`
+overlay or a change to the verified target pin.
+
+Six conversion attempts exposed and corrected these source-level portability issues:
+
+- Tokenizer's absent IO path now uses the supported nullable parameter/null default.
+- Nullable fields explicitly initialize to null.
+- Token-offset arithmetic uses ordinary assignment instead of unsupported compound
+  assignment/decrement syntax.
+- Optional scalar local annotations use the supported `nullable<int>` spelling.
+- Native driver assertions now reflect phase barriers, retained declaration identity,
+  and enum change state instead of the removed candidate-replacement lifecycle.
+
+Conversion remains blocked by two new converter gaps, left for discussion:
+
+1. The collector's `task_synchronize(function () use (...) : void { ... })` needs a
+   zero-argument void closure. The converter currently only accepts one typed argument
+   and a value return. PHP and runtime synchronization support do not prove this
+   PHP-to-PHS conversion form.
+2. Preparation lookup selection uses a nullable named-object local. The converter
+   accepts `nullable<int>` locals and named nullable parameters/returns, but rejects
+   the local annotation `nullable<preparation_lookup>`.
+
+Recommendation: extend those two explicit structural conversion forms with focused
+conversion/native proofs, retaining the current clear compiler source. No dummy
+callback arguments, artificial return values, or extra lookup wrappers were added.
+No STAN or C++ build has been reached, so further native issues remain unknown.
+
+Evidence: `/tmp/scpp-incremental-native-20260928/`, numbered attempt logs, source
+hashes and candidate fingerprints. Independent conversion inventory processed all 60
+files (including expanded traits): 58 passed, two failed as listed above. Five focused
+PHP tests passed (tokenizer, token generations, parse/collection, incremental preparation,
+combined sync). The updated native driver also passed in PHP for `s2s-proof`.
+
+### Converter extensions approved and proved
+
+The user approved extending the converter for both missing forms. It now accepts
+nullable named-object locals and zero/one-argument explicit closures with void or
+value returns. Multiple closure parameters, by-reference captures/parameters and
+dynamic callable invocation remain outside this slice. Conversion syntax/rejection
+checks live in `tests/portability/nullable_locals_callbacks.php`; the reproducible
+native entry is `tests/portability/nullable_locals_callbacks.py`.
+
+Native focused evidence: `/tmp/scpp-converter-forms-proof/summary.json` and command
+logs. Normal STAN-enabled conversion/build/execution passed on the current working
+tree toolchain. PHP/native both produced `9`, proving captured object mutation under
+task synchronization and nullable shared identity. Existing collection, task and
+incremental preparation/combined-sync PHP checks also passed.
+
+Whole-compiler attempt 8 converted all 60 source files successfully (0.758 seconds).
+Its normal build stopped at STAN with 42 blocking diagnostics, including unresolved
+`ast_node::payload`, `Parser::parse`, Storage methods and `fs_read_snapshot`.
+See `/tmp/scpp-incremental-native-20260928/logs-8/native-build.stderr`.
+This used the current repository toolchain; prior complete native checkpoints used
+the separate `/tmp/scpp-native-244` overlay. The diagnostics require investigation
+of toolchain/indexing differences before attributing them to compiler semantics.
+No STAN bypass, whole-compiler native execution, or verified-pin update was made.

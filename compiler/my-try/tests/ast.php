@@ -158,7 +158,7 @@ final class AST_Test
 		self::check($indexed->type_syntax === null && $indexed->target !== null && $indexed->equals_token_index !== null && $indexed->value !== null);
 	}
 
-	/** Failed files must not publish declarations to a caller-provided scope. */
+	/** Failed parsing keeps recognized declarations but marks its mutable result incomplete. */
 	private static function external_scope_reuse(): void
 	{
 		$scope = new scope();
@@ -174,14 +174,14 @@ final class AST_Test
 		catch (\RuntimeException $expected) {
 			$failed = true;
 		}
-		self::check($failed && serialize($scope) === $before);
+		self::check($failed && !$parser->result()->complete && count($scope->types_named('Pending')) === 1);
 		$parser->init(self::tokens('function next(): void { return; }'), $scope);
 		$next = $parser->parse();
 		self::verify($next);
 		self::check($next->root->payload()->lexical_scope() === $scope);
-		self::check($next->scopes[0]->parent_scope() === $scope);
+		self::check($next->body_scope->parent_scope() === $scope);
 		self::check(count($scope->functions_named('kept')) === 1 && count($scope->functions_named('next')) === 1);
-		self::check((count($scope->functions_named('broken')) === 0) && (count($scope->types_named('Pending')) === 0));
+		self::check((count($scope->functions_named('broken')) === 1) && (count($scope->types_named('Pending')) === 1));
 		// Omitting the target on re-init must clear the previous external scope.
 		$parser->init(self::tokens(''));
 		$standalone = $parser->parse();
@@ -202,9 +202,9 @@ final class AST_Test
 		$binding->type_syntax = Syntax_Nodes::make(node_kind::identifier, 1, 2);
 		$node = Syntax_Nodes::make(node_kind::variable_binding_statement, 0, 3, $binding);
 		$scope = new scope();
-		$collector = new Symbol_Collector($tokens);
+		$collector = new Symbol_Collector(new collected_file($tokens), $tokens, $scope, null, 1);
 		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
-		self::check(!$scope->has_variables());
+		self::check($scope->has_variables());
 		self::check($node->payload()->occurrence()->node === $node);
 		try {
 			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'duplicate');
@@ -232,7 +232,7 @@ final class AST_Test
 		catch (\LogicException $expected) {
 			++$rejections;
 		}
-		self::check($rejections === 2 && serialize($result) === $before && count($scope->variables_named('canonical_name')) === 1);
+		self::check($rejections === 1 && serialize($result) === $before && count($scope->variables_named('canonical_name')) === 1);
 	}
 
 	/** Exercise payload coverage, retained syntax identity, and parser reuse across failures. */
@@ -297,7 +297,7 @@ $scanner = new Tokenizer($file);
 $parser = new Parser($scanner->tokenize());
 $first = $parser->parse();
 $second = $parser->parse();
-if (count($first->scopes) !== 2 || count($second->scopes) !== 2 || $first->scopes[0] === $second->scopes[0]) {
+if (count($first->scopes) !== 3 || count($second->scopes) !== 3 || $first->scopes[0] === $second->scopes[0]) {
 	throw new \LogicException('Standalone parser scope ownership failed');
 }
 try {

@@ -21,6 +21,8 @@ $return_node = $body->first_child();
 $literal = Syntax_Nodes::integer_data(Syntax_Nodes::return_data($return_node)->expression);
 $context = new preparation_context();
 $context->collection = $parsed->collection;
+$context->worker = new Preparation_Worker(Model::$language_scope);
+$context->owner = new preparation_owner(preparation_kind::function_body, $parsed->collection, $function->payload()->occurrence());
 $context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
 $context->integer = Language_Types::integer(Model::$language_scope);
 $context->boolean = Language_Types::boolean(Model::$language_scope);
@@ -112,11 +114,11 @@ $integer_output = $generator->generate($integer_prepared);
 $boolean_source = dispatch_parse('$a bool = false; return $a;');
 $boolean_prepared = (new File_Preparation($boolean_source->collection, Model::$language_scope))->prepare();
 $boolean_output = $generator->generate($boolean_prepared);
-if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($boolean_output->text, 'scpp/bool_t.hpp') || (substr_count($integer_output->text, 'auto local_0') !== 1)) {
+if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($boolean_output->text, 'scpp/bool_t.hpp') || (substr_count($integer_output->text, 'auto local_a') !== 1)) {
 	throw new \LogicException('Generation leaked context or visited a binding twice');
 }
 
-// Public phase cleanup remains responsible for clearing partial success on a later unsupported node.
+// Independent successful work survives a failing body; the phase still withholds completion.
 $mixed = dispatch_parse('$a = 10; function unsupported(): int { return missing(); }');
 $first_data = Syntax_Nodes::binding_data($mixed->root->first_child());
 $first_literal = Syntax_Nodes::integer_data($first_data->value);
@@ -127,7 +129,7 @@ try {
 catch (\RuntimeException $error) {
 	$failed = true;
 }
-if (!$failed || ($first_data->preparation() !== null) || ($first_literal->preparation() !== null)) {
-	throw new \LogicException('Specialization dispatch bypassed failed-phase cleanup');
+if (!$failed || ($first_data->preparation() === null) || ($first_literal->preparation() === null) || $mixed->collection->body_preparation->failed) {
+	throw new \LogicException('Preparation did not preserve independent successful body work');
 }
 echo "Specialization dispatch: inherited contract, unsupported-parent isolation, phase cleanup and invocation state passed\n";

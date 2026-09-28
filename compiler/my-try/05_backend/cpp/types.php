@@ -11,7 +11,7 @@ final class CPP_Types
 		$result = new cpp_type();
 		if ($definition->kind === type_kind::record) {
 			$entry = object_cast($definition->declaration, collected_name::class);
-			$result->spelling = 'record_' . $entry->token_index;
+			$result->spelling = 'record_' . $entry->name;
 			$result->header = '';
 			$result->literal = cpp_literal_kind::none;
 		}

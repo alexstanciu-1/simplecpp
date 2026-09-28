@@ -29,14 +29,14 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_llvm();
-	sync_check(sync_function('value')->changes === SYNC_ADDED, 'Initial build is not all-added');
+	sync_check(sync_function('value')->change_status === change_state::added, 'Initial build is not all-added');
 	$old_node = sync_function('value')->node;
 	$old_tokens = Model::tokens()[0];
 	$unchanged = Model::syntax_files()[1];
 	file_put_contents($a, 'function value(): int { return 2; } struct Box { int $item; }');
 	$compiler->update_llvm([$a]);
-	sync_check(sync_function('value')->changes === SYNC_BODY_CHANGED, 'Body edit changed signature');
-	sync_check(sync_function('value')->node !== $old_node && Model::tokens()[0] !== $old_tokens, 'Syntax was patched instead of replaced');
+	sync_check((sync_function('value')->change_status === change_state::added) && Syntax_Nodes::function_data(sync_function('value')->node)->body_changed, 'Body edit lost pending signature state');
+	sync_check(sync_function('value')->node === $old_node && Model::tokens()[0] !== $old_tokens, 'Declaration identity or new token generation lost');
 	sync_check(Model::syntax_files()[1] === $unchanged, 'Unchanged file was reparsed');
 	$resolved = (new LLVM_Legacy_Name_Preparation())->prepare($unchanged->collection);
 	$reference = $unchanged->collection->entries[$unchanged->collection->function_references[0]];
@@ -44,22 +44,22 @@ try
 
 	file_put_contents($a, "\nfunction value( ): int { return 2; }\nstruct Box { int \$item; }");
 	$compiler->sync([$a]);
-	sync_check(sync_function('value')->changes === 0, 'Whitespace retained stale change flags');
+	sync_check(sync_function('value')->change_status === change_state::added, 'Reparse cleared unprepared declaration state');
 	file_put_contents($a, 'function value(int $x): int { return 2; } struct Box { int $other; }');
 	$compiler->sync([$a]);
-	sync_check(sync_function('value')->changes === SYNC_CHANGED, 'Signature-only edit flags wrong');
+	sync_check(sync_function('value')->change_status === change_state::added, 'Signature edit lost pending addition');
 	$fields = [];
 	foreach (Model::collected_files()[0]->entries as $entry) {
 		if ($entry->kind === collected_name_kind::field_declaration) {
-			$fields[$entry->name] = $entry->changes;
+			$fields[$entry->name] = $entry->change_status;
 		}
 	}
-	sync_check($fields['item'] === SYNC_DELETED && $fields['other'] === SYNC_ADDED, 'Field deletion/addition lost');
+	sync_check(!isset($fields['item']) && $fields['other'] === change_state::added, 'Field deletion/addition lost');
 	file_put_contents($a, 'function replacement(): int { return 3; }');
 	$compiler->sync([$a]);
 	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 0, 'Deleted function still resolves');
-	sync_check(Model::$global_scope->functions_named('value')[0]->changes === SYNC_DELETED, 'Missing global tombstone');
-	sync_check(sync_function('replacement')->changes === SYNC_ADDED, 'Added function flag missing');
+	sync_check(count(Model::$global_scope->functions_named('value')) === 0, 'Deleted global index member survived');
+	sync_check(sync_function('replacement')->change_status === change_state::added, 'Added function flag missing');
 	try {
 		(new LLVM_Legacy_Name_Preparation())->prepare($unchanged->collection);
 		throw new \LogicException('Removed target still resolved');
@@ -76,7 +76,7 @@ try
 	}
 	catch (\RuntimeException $expected) {
 	}
-	sync_check(Model::syntax_files()[0] === $kept && sync_function('replacement')->collection === $kept->collection, 'Failed candidate damaged publication');
+	sync_check(Model::syntax_files()[0] === $kept && !$kept->complete, 'Failed parse did not retain incomplete mutable identity');
 	sync_check(Model::$modules[$directory]->sources['a.phs']->file->content === $kept->tokens->content, 'Failed candidate changed published source');
 	sync_check(Model::$llvm_files->is_empty(), 'Failed update retained generated output');
 
@@ -87,21 +87,21 @@ try
 	file_put_contents($a, 'function value(): int { return 5; } function value(): int { return 4; }');
 	$compiler->sync([$a]);
 	foreach (Scope_Lookup::live(Model::$global_scope->functions_named('value')) as $entry) {
-		sync_check($entry->changes === 0, 'Reordered equivalent duplicate changed');
+		sync_check(Syntax_Nodes::function_data($entry->node)->body_changed, 'Reordered duplicate body edit was not recorded');
 	}
 	file_put_contents($a, 'function value(): int { return 4; }');
 	$compiler->update_llvm([$a]);
-	sync_check(sync_function('value')->changes === 0, 'Surviving duplicate lost exact match');
+	sync_check(sync_function('value')->change_status === change_state::added, 'Surviving duplicate lost pending state');
 	unlink($a);
 	$compiler->sync([$a]);
 	sync_check((Model::$modules[$directory]->sources['a.phs']->file->changes & SYNC_DELETED) !== 0, 'Deleted file disappeared instead of remaining marked');
 	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 0, 'Deleted file still exports functions');
 	file_put_contents($a, 'function value(): int { return 6; }');
 	$compiler->update_llvm([$a]);
-	sync_check(sync_function('value')->changes === SYNC_ADDED, 'Historical tombstone participated in matching');
+	sync_check(sync_function('value')->change_status === change_state::added, 'Historical tombstone participated in matching');
 	sync_check(count(Model::$llvm_files) === 2, 'Deleted file was generated');
 	$compiler->sync([]);
-	sync_check(sync_function('value')->changes === 0, 'No-op update retained added flag');
+	sync_check(sync_function('value')->change_status === change_state::added, 'No-op unexpectedly reparsed the source');
 	// New-file duplicates must not erase another file's contribution on deletion.
 	$c = $directory . '/c.phs';
 	file_put_contents($c, 'function value(): int { return 99; }');
@@ -109,10 +109,10 @@ try
 	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 2, 'New file erased another definition');
 	unlink($c);
 	$compiler->update_llvm([$c]);
-	sync_check(sync_function('value')->changes === 0, 'Deletion damaged another file definition');
+	sync_check(sync_function('value')->change_status === change_state::added, 'Deletion damaged another file definition');
 	file_put_contents($a, 'function value(int $x): int { return 10; }');
 	$compiler->sync([$a]);
-	sync_check(sync_function('value')->changes === (SYNC_CHANGED + SYNC_BODY_CHANGED), 'Combined declaration/body flags wrong');
+	sync_check((sync_function('value')->change_status === change_state::added) && Syntax_Nodes::function_data(sync_function('value')->node)->body_changed, 'Combined declaration/body flags wrong');
 	file_put_contents($a, 'function value(): int { return 6; }');
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);

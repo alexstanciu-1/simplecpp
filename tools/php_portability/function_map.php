@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 // Fixed global authoring names; php is the internal implementation, target the native binding.
 return [
+	'task_synchronize' => ['php' => 'scpp\\task_synchronize', 'target' => 'task_synchronize', 'arity' => 1],
 	'task_run_publish_unordered' => ['php' => 'scpp\\task_run_publish_unordered', 'target' => 'task_run_publish_unordered', 'arity' => 4],
 	'weakref_get' => array ('php' => 'scpp\\weakref_get', 'target' => 'weakref_get', 'arity' => 1),
 	'object_cast' => array ('php' => 'scpp\\object_cast', 'target' => 'scpp_portability_object_cast', 'arity' => 2),

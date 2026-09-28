@@ -3,40 +3,27 @@
 /* Role: lookup shared names through lexical and publication scopes. */
 namespace scpp\compiler;
 
-/** File-local ownership does not introduce a separate language-level global scope. */
+/** Deletion cleanup precedes resolution; lookups see only active index membership. */
 final class Scope_Lookup
 {
-	/** Tombstones remain indexed for update consumers but are never resolution candidates. */
+	/** Kept for parked callers; active indexes have already been cleaned at the preparation boundary. */
 	public static function live(array $entries /** vector<collected_name> */): array /** vector<collected_name> */
 	{
-		$result /** vector<collected_name> */ = [];
-		foreach ($entries as $entry) {
-			if ($entry->changes !== \scpp\compiler\SYNC_DELETED) {
-				$result[] = $entry;
-			}
-		}
-		return $result;
+		return $entries;
 	}
 
 	/** Resolve the nearest live type pool, including the language/runtime parent. */
-	public static function types(scope $start, string $name): array /** vector<type_definition> */
+	public static function types(scope $start, string $name, ?preparation_context $context = null): array /** vector<type_definition> */
 	{
 		$current_scope = $start;
 		$result /** vector<type_definition> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);
-			$result = [];
-			foreach ($current_scope->types_named($name) as $definition)
-			{
-				if ($definition->declaration !== null) {
-					$entry /** collected_name */ = $definition->declaration;
-					if ($entry->changes === \scpp\compiler\SYNC_DELETED) {
-						continue;
-					}
-				}
-				$result[] = $definition;
+			if ($context !== null) {
+				$context->worker->observe($current_scope, $name, preparation_lookup_kind::type, $context->owner);
 			}
+			$result = $current_scope->types_named($name);
 			if (q_count($result) !== 0) {
 				break;
 			}
@@ -51,14 +38,17 @@ final class Scope_Lookup
 	}
 
 	/** Callable lookup follows the same nearest-pool rule as type lookup. */
-	public static function functions(scope $start, string $name): array /** vector<collected_name> */
+	public static function functions(scope $start, string $name, ?preparation_context $context = null): array /** vector<collected_name> */
 	{
 		$current_scope = $start;
 		$result /** vector<collected_name> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);
-			$result = self::live($current_scope->functions_named($name));
+			if ($context !== null) {
+				$context->worker->observe($current_scope, $name, preparation_lookup_kind::function_name, $context->owner);
+			}
+			$result = $current_scope->functions_named($name);
 			if (q_count($result) !== 0) {
 				break;
 			}

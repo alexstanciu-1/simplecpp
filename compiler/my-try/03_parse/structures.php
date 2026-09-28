@@ -22,6 +22,18 @@ interface node_operations_i {
 /** Common structure contract; leaves have no children or local preparation to clear. */
 abstract class node_structure implements node_operations_i
 {
+	/** Only name-bearing specializations return an occurrence. */
+	public function optional_occurrence(): ?collected_name
+	{
+		return null;
+	}
+
+	/** Specializations relocate their own token positions; the parser owns traversal. */
+	public function shift_tokens(int $delta): void
+	{
+		return;
+	}
+
 	public function attach_occurrence(collected_name $entry): void
 	{
 		throw new \LogicException('This syntax specialization does not collect a name');
@@ -207,6 +219,22 @@ final class ast_node
 		return $result;
 	}
 
+	/** Detach direct links before relinking retained declarations in current source order. */
+	public function detach_children(): void
+	{
+		$child = $this->first_node;
+		$this->first_node = null;
+		while ($child !== null)
+		{
+			$current /** ast_node */ = $child;
+			$child = $current->next_node;
+			$current->parent_node = null;
+			$current->previous_node = null;
+			$current->next_node = null;
+			$current->position = 0;
+		}
+	}
+
 	/** Link a complete child list once; explicit handles avoid manufacturing ownership from $this. */
 	public static function link_children(ast_node $owner, Storage $children /** Storage<ast_node> */): void
 	{
@@ -258,6 +286,10 @@ final class ast_node
 
 final class parsed_file
 {
+	/** False while parsing or after failure; consumers must wait for a successful join. */
+	public bool $complete = false;
+	public bool $body_changed = true;
+	public ?scope $body_scope = null;
 	/** @storage.reference model.tokens */
 	public token_list $tokens;
 	/** Syntax child owned through this link.

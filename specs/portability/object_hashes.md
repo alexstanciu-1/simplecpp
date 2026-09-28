@@ -33,7 +33,11 @@ Important authoring boundaries:
   identity remains shared in either language.
 - Do not iterate this PHP carrier as if it were a PHP associative array:
   SplObjectStorage iteration exposes keys differently from native hash iteration.
-  Current compiler consumers use only keyed operations.
+  For deliberate key iteration, write
+  `foreach ($map as $key /** @object-key */) { ... }`. PHP yields its object keys;
+  the converter emits a native key/value foreach with an unused generated value
+  binding. This is explicit syntax intent, not inferred receiver typing. Do not
+  mutate membership while continuing that iteration.
 - Do not use null keys/values, SplObjectStorage-specific methods, weak keys, or
   assignment that relies on shared map membership. Those require a separate contract.
 - PHP arrays cannot carry object keys. Keep object-keyed maps in the explicit

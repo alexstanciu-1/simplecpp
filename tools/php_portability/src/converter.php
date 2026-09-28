@@ -26,6 +26,7 @@ final class Converter {
 	private bool $inClass = false;
 	private bool $validatingTrait = false;
 	private int $exceptionCounter = 0;
+	private int $objectKeyCounter = 0;
 	private array $seenLocals = [];
 	private array $borrowedLocals = [];
 	private array $parameterLocals = [];
@@ -56,6 +57,7 @@ final class Converter {
 	public function convertTokens(array $tokens, string $path): string {
 		$this->path = $path;
 		$this->exceptionCounter = 0;
+		$this->objectKeyCounter = 0;
 		$this->inClass = false;
 		$this->validatingTrait = false;
 		$this->seenLocals = [];
@@ -380,6 +382,10 @@ final class Converter {
 				$this->fail($token[2], 'boolean payload wrappers require explicit tagged states (not implemented)');
 			}
 			return $type;
+		}
+		if (preg_match('~^/\*\*\s*nullable<\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*>\s*\*/$~D', $annotation, $match)
+			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
+			return 'nullable<' . Exception_Policy::name($match[1]) . '>';
 		}
 		if (preg_match('~^/\*\*\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*\*/$~D', $annotation, $match)
 			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
@@ -796,6 +802,13 @@ final class Converter {
 		$this->requireLocalName($first[1], $first[2]);
 		$binding = $first[1];
 		$separator = $this->significant();
+		// Explicit carrier intent: PHP SplObjectStorage yields object keys, native hash foreach yields values.
+		if ($separator[0] === T_DOC_COMMENT && trim($separator[1]) === '/** @object-key */') {
+			$this->expect(')');
+			$this->expect('{');
+			$binding .= ' => $__scpp_object_value_' . (++$this->objectKeyCounter);
+			return new Node('foreach', $binding, $line, [new Node('body', '', $line, $iterable), new Node('body', '', $line, $this->sequence('}'))]);
+		}
 		if ($separator[0] === T_DOUBLE_ARROW) {
 			$value = $this->significant();
 			if ($value[0] !== T_VARIABLE) { $this->fail($value[2], 'foreach requires a by-value variable binding'); }
@@ -873,12 +886,18 @@ final class Converter {
 		return new Node('keyed_removal', 'unset(' . $text . ');', $line);
 	}
 
-	/** A locally spelled single-value callback; no callable or capture resolution. */
+	/** Zero/one-argument explicitly typed callbacks; callable validity belongs to the target. */
 	private function closure(int $line, bool $static): Node {
 		$this->expect('(');
-		$type = $this->signatureType(false);
-		$parameter = $this->significant();
-		if ($parameter[0] !== T_VARIABLE) { $this->fail($line, 'callback requires one by-value parameter'); }
+		$parameters = [];
+		$bindings = [];
+		if (($this->tokens[$this->nextSignificant($this->position)][1] ?? '') !== ')') {
+			$type = $this->signatureType(false);
+			$parameter = $this->significant();
+			if ($parameter[0] !== T_VARIABLE) { $this->fail($line, 'callback requires a by-value parameter'); }
+			$parameters[] = $type . ' ' . $parameter[1];
+			$bindings[] = $parameter[1];
+		}
 		$this->expect(')');
 		$captures = [];
 		if (($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_USE) {
@@ -894,11 +913,10 @@ final class Converter {
 		}
 		$this->expect(':');
 		$return = $this->signatureType(true);
-		if ($return === 'void') { $this->fail($line, 'collection callback must return a value'); }
 		$this->expect('{');
-		$signature = ($static ? 'static ' : '') . 'function (' . $type . ' ' . $parameter[1] . ')'
+		$signature = ($static ? 'static ' : '') . 'function (' . implode(', ', $parameters) . ')'
 			. ($captures === [] ? '' : ' use (' . implode(', ', $captures) . ')') . ': ' . $return;
-		return new Node('method', $signature, $line, $this->localBody([$parameter[1], ...$captures]));
+		return new Node('method', $signature, $line, $this->localBody([...$bindings, ...$captures]));
 	}
 
 	/** Local binding restriction, matching the target keyword vocabulary. No symbol lookup. */

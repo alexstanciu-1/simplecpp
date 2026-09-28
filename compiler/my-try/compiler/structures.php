@@ -23,11 +23,12 @@ final class source_work
 	/** Position in the transient queue, used to validate completion ownership. */
 	public int $position;
 	public work_state $state = work_state::queued;
+	/** A file failure is reported after all independent parsing work has joined. */
+	public string $error = '';
 }
 
 /** A per-file operation; publication policy stays with the coordinator's caller. */
 enum frontend_operation {
 	case scan;
 	case parse;
-	case synchronize;
 }
