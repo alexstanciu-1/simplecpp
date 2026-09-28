@@ -11,12 +11,14 @@ final class Declaration_Preparation
 		if ($node->kind() !== node_kind::identifier) {
 			throw new \RuntimeException('S2S constructed types are not supported yet');
 		}
+
 		$entry = $node->payload()->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
 		$types = Scope_Lookup::types($lexical_scope, $entry->name);
 		if (q_count($types) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved type for ' . $entry->name);
 		}
+
 		return $types[0];
 	}
 
@@ -26,8 +28,10 @@ final class Declaration_Preparation
 		if (q_count($syntax->template_parameters) !== 0) {
 			throw new \RuntimeException('S2S function templates are deferred');
 		}
+
 		$facts = new prepared_function();
 		$facts->return_type = self::type($syntax->return_type);
+
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$nodes /** Storage<ast_node> */ = $syntax->parameters;
 		foreach ($nodes as $node)
@@ -41,6 +45,7 @@ final class Declaration_Preparation
 			$parameter->set_preparation($prepared);
 			$parameters->append($prepared);
 		}
+
 		$syntax->set_preparation($facts);
 	}
 
@@ -49,6 +54,7 @@ final class Declaration_Preparation
 	{
 		$facts = new prepared_record();
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
+
 		$nodes /** Storage<ast_node> */ = $syntax->fields;
 		foreach ($nodes as $node)
 		{
@@ -56,14 +62,18 @@ final class Declaration_Preparation
 			$prepared = new prepared_field();
 			$prepared->declaration = $field->occurrence();
 			$prepared->type = self::type($field->type_syntax);
+
+			// Keep field eligibility within the current compact-layout contract.
 			$type = $prepared->type;
 			$fixed_integer = ($type->kind === type_kind::integer) && ($type->name !== 'int');
 			if ((!$fixed_integer) && ($type->kind !== type_kind::boolean) && ($type->kind !== type_kind::record)) {
 				throw new \RuntimeException('S2S struct fields require bool, fixed-width integers or supported structs');
 			}
+
 			$field->set_preparation($prepared);
 			$fields->add($field->occurrence()->name, $prepared);
 		}
+
 		$syntax->set_preparation($facts);
 	}
 
@@ -76,6 +86,7 @@ final class Declaration_Preparation
 		$context->boolean = $outer->boolean;
 		$context->floating = $outer->floating;
 		$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
+
 		$signature = $syntax->require_preparation();
 		$context->return_type = $signature->return_type;
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
@@ -84,6 +95,7 @@ final class Declaration_Preparation
 			$entry = object_cast(weakref_get($parameter->declaration), collected_name::class);
 			$locals->add($entry->name, $parameter);
 		}
+
 		File_Preparation::prepare_statements($syntax->body, $context);
 	}
 
@@ -94,21 +106,26 @@ final class Declaration_Preparation
 		if (!$templates->is_empty()) {
 			throw new \RuntimeException('S2S template calls are deferred');
 		}
+
 		$entry = $syntax->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
 		$targets = Scope_Lookup::functions($lexical_scope, $entry->name);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved function for ' . $entry->name);
 		}
+
 		$facts = new prepared_call();
 		$facts->declaration = $targets[0];
 		$facts->signature = Syntax_Nodes::function_data($targets[0]->node)->require_preparation();
 		$facts->type = $facts->signature->return_type;
+
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
 		$arguments /** Storage<ast_node> */ = $syntax->arguments;
 		if (q_count($parameters) !== q_count($arguments)) {
 			throw new \RuntimeException('S2S call argument count does not match its signature');
 		}
+
+		// Prepare arguments in source order; references must preserve the selected storage.
 		foreach ($arguments as $index => $argument)
 		{
 			$value = $argument->payload()->prepare_expression($argument, $context);
@@ -122,6 +139,7 @@ final class Declaration_Preparation
 				self::require_assignable($parameter->type, $value->type);
 			}
 		}
+
 		return $facts;
 	}
 
@@ -133,6 +151,7 @@ final class Declaration_Preparation
 		if ($value->type->kind !== type_kind::record) {
 			throw new \RuntimeException('S2S member access requires a struct value');
 		}
+
 		$declaration = object_cast($value->type->declaration, collected_name::class);
 		$record = Syntax_Nodes::struct_data($declaration->node)->require_preparation();
 		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;
@@ -140,10 +159,12 @@ final class Declaration_Preparation
 		if (q_count($matches) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved struct field');
 		}
+
 		$facts = new prepared_field_access();
 		$facts->field = $matches[0];
 		$facts->type = $matches[0]->type;
 		$facts->addressable = $value->addressable;
+
 		return $facts;
 	}
 
@@ -153,6 +174,7 @@ final class Declaration_Preparation
 		if ($left === $right) {
 			return true;
 		}
+
 		return ($left->kind === type_kind::integer) && ($right->kind === type_kind::integer)
 		&& ($left->value_bits === $right->value_bits) && ($left->signed === $right->signed);
 	}
@@ -174,6 +196,7 @@ final class Declaration_Preparation
 		if (($destination->kind === type_kind::integer) && ($source->kind === type_kind::integer)) {
 			return;
 		}
+
 		throw new \RuntimeException('S2S value boundary requires matching types or an integer conversion');
 	}
 }

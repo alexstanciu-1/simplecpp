@@ -53,9 +53,12 @@ final class CPP_Generator
 			$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
 			$name = self::local_name($declaration);
 		}
+
+		// Typed declarations without initializers retain their normal C++ default construction.
 		if ($syntax->value === null) {
 			return "\t" . CPP_Declarations::type($binding->type, $context) . ' ' . $name . ";\n";
 		}
+
 		$initializer /** ast_node */ = $syntax->value;
 		$value = $initializer->payload()->generate_cpp_expression($initializer, $context);
 		if (($syntax->type_syntax !== null) || ($binding->resolved_kind === binding_kind::assignment)) {
@@ -70,6 +73,7 @@ final class CPP_Generator
 		if ($syntax->expression === null) {
 			return $context->return_type === null ? "\treturn 0;\n" : "\treturn;\n";
 		}
+
 		$expression /** ast_node */ = $syntax->expression;
 		$value = $expression->payload()->generate_cpp_expression($expression, $context);
 		if ($context->return_type !== null) {
@@ -93,6 +97,7 @@ final class CPP_Generator
 		if ($mapping->literal !== cpp_literal_kind::signed_integer) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
+
 		return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . 'LL)';
 	}
 
@@ -104,6 +109,7 @@ final class CPP_Generator
 		if ($mapping->literal !== cpp_literal_kind::floating) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
+
 		return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . ')';
 	}
 
@@ -115,7 +121,9 @@ final class CPP_Generator
 		if ($mapping->literal !== cpp_literal_kind::boolean) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
+
 		$spelling = $literal->value ? 'true' : 'false';
+
 		return 'static_cast<' . $mapping->spelling . '>(' . $spelling . ')';
 	}
 

@@ -41,11 +41,12 @@ abstract class prepared_storage {
 	public type_definition $type;
 }
 
-/** Declaration/assignment result shares the local declaration's canonical type. */
+/** A local binding or member write retains its resolved storage declaration and canonical type. */
 final class prepared_binding extends prepared_storage {
 	public binding_kind $resolved_kind;
 }
 
+/** Parameter facts add the source passing mode to the resolved storage identity. */
 final class prepared_parameter extends prepared_storage {
 	public passing_mode $mode;
 }
@@ -63,6 +64,7 @@ final class prepared_function
 	}
 }
 
+/** Field identity is scoped by its owning prepared record. */
 final class prepared_field extends prepared_storage {
 }
 
@@ -77,11 +79,13 @@ final class prepared_record {
 	}
 }
 
+/** Member access references the declaration facts without copying its field schema. */
 final class prepared_field_access extends prepared_expression {
 	/** @reference.source field_structure.prepared_facts */
 	public prepared_field $field;
 }
 
+/** Resolved call target and signature; evaluation order remains with the process workers. */
 final class prepared_call extends prepared_expression {
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_name $declaration /** weak<collected_name> */;
@@ -100,6 +104,7 @@ final class preparation_context
 	public collected_file $collection;
 	/** Invocation-local lookup of attached binding/parameter facts; does not mutate source scopes. */
 	public Key_Storage_List $locals /** Key_Storage_List<prepared_storage> */;
+	/** Null identifies the entry body; function bodies retain their declared return type. */
 	public ?type_definition $return_type = null;
 	public type_definition $integer;
 	public type_definition $boolean;

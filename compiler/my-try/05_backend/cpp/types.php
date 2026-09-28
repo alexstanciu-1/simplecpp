@@ -25,6 +25,8 @@ final class CPP_Types
 			if (($definition->name === 'int') && (((int) $definition->value_bits !== 64) || (!$definition->signed))) {
 				throw new \RuntimeException('Invalid canonical default integer representation');
 			}
+
+			// Default int and fixed-width aliases share the wrapper family, not its source spelling.
 			$result->spelling = 'scpp::int_t<>';
 			if ($definition->name !== 'int') {
 				$prefix = $definition->signed ? 'int' : 'uint';
@@ -46,6 +48,7 @@ final class CPP_Types
 		else {
 			throw new \RuntimeException('No C++ representation for this type');
 		}
+
 		return $result;
 	}
 }

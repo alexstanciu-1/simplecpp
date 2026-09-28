@@ -12,6 +12,7 @@ final class CPP_Declarations
 		if ($mapping->header !== '') {
 			$context->headers[$mapping->header] = true;
 		}
+
 		return $mapping->spelling;
 	}
 
@@ -21,6 +22,7 @@ final class CPP_Declarations
 		if ($destination->kind === type_kind::integer) {
 			return 'static_cast<' . self::type($destination, $context) . '>((' . $expression . ').native_value())';
 		}
+
 		return $expression;
 	}
 
@@ -37,6 +39,7 @@ final class CPP_Declarations
 			$parts .= $separator . self::type($parameter->type, $context) . $reference . ' ' . CPP_Generator::local_name($entry);
 			$separator = ', ';
 		}
+
 		return self::type($facts->return_type, $context) . ' function_' . $syntax->occurrence()->token_index . '(' . $parts . ')';
 	}
 
@@ -45,9 +48,12 @@ final class CPP_Declarations
 	{
 		$signature = self::signature($syntax, $context);
 		$context->prototypes .= $signature . ";\n";
+
+		// The parser permits functions only at file scope; entry return handling resumes below.
 		$context->return_type = $syntax->require_preparation()->return_type;
 		$body = CPP_Generator::generate_statements($syntax->body, $context);
 		$context->return_type = null;
+
 		$context->functions .= $signature . "\n{\n" . $body . "}\n\n";
 		return '';
 	}
@@ -62,8 +68,11 @@ final class CPP_Declarations
 			}
 			return '';
 		}
+
+		// Mark before descending so a by-value cycle fails before a partial layout is emitted.
 		$context->record_states[$key] = cpp_record_state::visiting;
 		$text = 'struct record_' . $key . "\n{\n";
+
 		$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 		foreach ($fields->items() as $field)
 		{
@@ -72,9 +81,11 @@ final class CPP_Declarations
 				$entry = object_cast($type->declaration, collected_name::class);
 				self::generate_struct(Syntax_Nodes::struct_data($entry->node), $context);
 			}
+
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$text .= "\t" . self::type($type, $context) . ' field_' . $entry->token_index . ";\n";
 		}
+
 		$context->records .= $text . "};\n\n";
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
@@ -87,6 +98,8 @@ final class CPP_Declarations
 		$entry = object_cast(weakref_get($facts->declaration), collected_name::class);
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
 		$arguments /** Storage<ast_node> */ = $syntax->arguments;
+
+		// The immediately invoked lambda sequences arguments and contains their temporaries.
 		$text = '([&]() -> ' . self::type($facts->type, $context) . " {\n";
 		$names = '';
 		$separator = '';
@@ -101,10 +114,12 @@ final class CPP_Declarations
 			if ($parameter->mode === passing_mode::value) {
 				$value = self::value($value, $parameter->type, $context);
 			}
+
 			$text .= "\t" . self::type($parameter->type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";
 			$names .= $separator . $name;
 			$separator = ', ';
 		}
+
 		$text .= "\treturn function_" . $entry->token_index . '(' . $names . ");\n}())";
 		return $text;
 	}

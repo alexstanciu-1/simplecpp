@@ -29,12 +29,14 @@ final class File_Preparation
 
 		try
 		{
+			// Signatures precede every body, including bodies that call later declarations.
 			$child = $context->collection->root->first_child();
 			while ($child !== null) {
 				$node /** ast_node */ = $child;
 				$node->payload()->prepare_declaration($node, $context);
 				$child = $node->next();
 			}
+
 			self::prepare_statements($context->collection->root, $context);
 		}
 		catch (\Throwable $error) {
@@ -70,8 +72,10 @@ final class File_Preparation
 			if (!$place->addressable) {
 				throw new \RuntimeException('S2S assignment requires stable storage');
 			}
+
 			$binding->type = $place->type;
 			$binding->resolved_kind = binding_kind::assignment;
+
 			// Member writes are emitted through their prepared target, not a local declaration.
 			$member = Syntax_Nodes::field_access_data($target)->require_preparation();
 			$binding->declaration = $member->field->declaration;
@@ -94,12 +98,14 @@ final class File_Preparation
 				if (q_count($previous) !== 1) {
 					throw new \RuntimeException('S2S needs one local assignment target');
 				}
+
 				$binding->resolved_kind = binding_kind::assignment;
 				$binding->declaration = $previous[0]->declaration;
 				$binding->type = $previous[0]->type;
 			}
 		}
 
+		// An initializer cannot see the declaration currently being introduced.
 		if ($syntax->value !== null)
 		{
 			$initializer /** ast_node */ = $syntax->value;
@@ -109,6 +115,8 @@ final class File_Preparation
 			}
 			Declaration_Preparation::require_assignable($binding->type, $value->type);
 		}
+
+		// Publish complete facts before making a new declaration available to later statements.
 		Declaration_Preparation::require_value_type($binding->type);
 		$syntax->set_preparation($binding);
 		if ($binding->resolved_kind === binding_kind::declaration) {
@@ -136,6 +144,7 @@ final class File_Preparation
 			}
 			return;
 		}
+
 		$expression /** ast_node */ = $syntax->expression;
 		$value = $expression->payload()->prepare_expression($expression, $context);
 		if ($context->return_type !== null) {
