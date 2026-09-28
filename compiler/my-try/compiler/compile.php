@@ -20,16 +20,20 @@ final class Compiler
 		$this->jobs = \scpp\compiler\DEFAULT_COMPILER_JOBS;
 	}
 
-	/** Discover one module per input folder, retaining the requested order. */
+	/** Unnamed modules use their declared path as the reconciliation key. */
 	public function init(array $paths /** vector<string> */): void
 	{
-		Compiler_Lifecycle::reset();
-
+		$inputs /** Storage<module_input> */ = new Storage();
 		foreach ($paths as $path) {
-			$input_module = new module();
-			Module_Loader::init($input_module, $path);
-			Model::$modules[] = $input_module;
+			$inputs->append(new module_input($path));
 		}
+		$this->init_modules($inputs);
+	}
+
+	/** Return whether module configuration required fresh discovery and compilation. */
+	public function init_modules(Storage $inputs /** Storage<module_input> */): bool
+	{
+		return Module_Synchronization::run($inputs);
 	}
 
 	/** Parked legacy LLVM entry remains available only for existing regression callers. */
@@ -67,6 +71,14 @@ final class Compiler
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');
 		}
+		self::require_modules();
+		if (Model::$full_sync_pending) {
+			$all_paths /** vector<string> */ = $this->live_paths();
+			foreach ($paths as $path) {
+				$all_paths[] = $path;
+			}
+			$paths = $all_paths;
+		}
 		Compiler_Lifecycle::reset_llvm();
 		Compiler_Lifecycle::reset_preparation();
 		$queue = Source_Synchronization::plan($paths);
@@ -83,6 +95,7 @@ final class Compiler
 		if (($published !== q_count($items)) || (!$queue->finished())) {
 			throw new \LogicException('Update barrier reached before publication completed');
 		}
+		Model::$full_sync_pending = false;
 	}
 
 	/** Standalone parallel scanning; compilation uses the combined pipeline without this barrier. */
@@ -150,8 +163,14 @@ final class Compiler
 	/** Initial generation paths share the same source synchronization. */
 	private function sync_live(): void
 	{
+		$this->sync($this->live_paths());
+	}
+
+	/** Collect live input paths in the declared module order. */
+	private function live_paths(): array /** vector<string> */
+	{
 		$paths /** vector<string> */ = [];
-		foreach (Model::$modules as $input_module)
+		foreach (Model::modules() as $input_module)
 		{
 			foreach ($input_module->sources as $record) {
 				$source = $record->file;
@@ -160,12 +179,20 @@ final class Compiler
 				}
 			}
 		}
-		$this->sync($paths);
+		return $paths;
+	}
+
+	private static function require_modules(): void
+	{
+		if (!Model::$modules_ready) {
+			throw new \LogicException('Module discovery failed: initialize modules successfully before compilation');
+		}
 	}
 
 	/** One bounded worker reads, tokenizes and immediately parses its file before publication. */
 	private function frontend(frontend_operation $operation): void
 	{
+		self::require_modules();
 		if ($operation === frontend_operation::scan) {
 			Compiler_Lifecycle::reset_tokens();
 		}
@@ -178,7 +205,7 @@ final class Compiler
 		$queue = new Source_Work_Queue();
 		if ($operation === frontend_operation::scan)
 		{
-			foreach (Model::$modules as $input_module) {
+			foreach (Model::modules() as $input_module) {
 				foreach ($input_module->sources as $record) {
 					$source = $record->file;
 					$queue->enqueue($record, $source);

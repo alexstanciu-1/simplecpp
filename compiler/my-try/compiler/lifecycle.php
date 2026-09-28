@@ -8,15 +8,35 @@ final class Compiler_Lifecycle
 	/** Initial reset has no prior syntax graph to clean. */
 	private static bool $syntax_initialized = false;
 
-	/** Start a fresh compilation without retaining output or indexes from an earlier run. */
+	public static function initialized(): bool
+	{
+		return self::$syntax_initialized;
+	}
+
+	/** Explicit fresh session also discards retained module identities and tombstones. */
 	public static function reset(): void
 	{
-		if (self::$syntax_initialized) {
-			self::reset_preparation();
+		Model::$modules = new module_collection();
+		self::reset_compilation();
+		Model::$modules_ready = true;
+		Model::$full_sync_pending = false;
+	}
+
+	/** Retire the whole graph by its roots; discarded syntax needs no fact-cleanup walk. */
+	public static function reset_compilation(): void
+	{
+		foreach (Model::$modules->inventory() as $module) {
+			$module->sources = new Storage /** Storage<source_record> */();
 		}
-		Model::$modules = new Storage /** Storage<module> */();
 		Model::$sources_by_path = new Keyed_Storage /** Keyed_Storage<source_record> */();
-		self::reset_tokens();
+		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Model::$language_scope = new scope();
+		Language_Types::install(Model::$language_scope);
+		Model::$global_scope = new scope();
+		Model::$global_scope->set_parent(Model::$language_scope);
+		self::reset_cpp();
+		self::reset_llvm();
+		self::$syntax_initialized = true;
 	}
 
 	/** Restart scanning: invalidate every dependent root and all source backlinks first. */

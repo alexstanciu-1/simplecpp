@@ -179,9 +179,11 @@ Model is static. Cross-file preparation starts after all workers join.
 
 ## Minimal incremental implementation: preserve this design
 
-- `init(module_paths)` resets/discovers an empty session.
+- `init(module_paths)` reconciles module keys, paths and positions; any configuration
+  change resets compilation data and rediscovers all active modules.
 - `exec()` synchronizes every live file, then runs existing full preparation/output.
-- `sync(changed_paths)` reads/parses only notified files and publishes replacements.
+- `sync(changed_paths)` reads/parses notified files and publishes replacements. After
+  a module change it includes every discovered file until a full sync succeeds.
 - `update(changed_paths)` performs sync, then full live-program preparation/output.
 - Module membership/configuration changes use init + exec for a full compilation.
 - There is one initial/update sync path; the first run is all additions.

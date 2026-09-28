@@ -94,9 +94,9 @@ try
 	$compiler->exec_llvm();
 
 	echo "Simple C++ — PHP compiler\n\n";
-	foreach (Model::$modules as $module)
+	foreach (Model::modules() as $module)
 	{
-		echo "Module: {$module->path}\n";
+		echo "Module: {$module->resolved_path}\n";
 		foreach ($module->sources as $record) {
 			$file = $record->file;
 			echo "\nSource: {$file->path}\n";

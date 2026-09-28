@@ -29,15 +29,25 @@ final class file
 
 final class module
 {
-	public string $path;
+	public string $name;
+	public string $declared_path;
+	public string $resolved_path;
+	public int $position = 0;
+	public int $changes = 0;
+	public sync_presence $presence;
 	/**
 	 * Numeric storage of stable source records.
 	 * @storage.owner
 	 */
 	public Storage $sources /** Storage<source_record> */;
 
-	public function __construct()
+	/** Initialize identity and both path forms before publishing module membership. */
+	public function __construct(string $declared_path, string $resolved_path, string $name)
 	{
+		$this->name = $name;
+		$this->declared_path = $declared_path;
+		$this->resolved_path = $resolved_path;
+		$this->presence = new sync_presence();
 		$this->sources = new Storage /** Storage<source_record> */();
 	}
 }
@@ -58,5 +68,73 @@ final class source_record
 		$this->module = $owner;
 		$this->path = $snapshot->path;
 		$this->file = $snapshot;
+	}
+}
+
+/** Incoming module configuration; an omitted name preserves the exact path spelling. */
+final class module_input
+{
+	public string $name;
+	public string $declared_path;
+
+	public function __construct(string $path, ?string $name = null)
+	{
+		$this->declared_path = $path;
+		$this->name = $name ?? $path;
+	}
+}
+
+/** Own module identities by key, retaining deleted records separately from active order. */
+final class module_collection
+{
+	/** @storage.owner Includes tombstones until a fresh session. */
+	private Keyed_Storage $records /** Keyed_Storage<module> */;
+	/** Ordered retaining aliases into records; excludes deleted modules. */
+	private Storage $ordered /** Storage<module> */;
+	private int $revision = 0;
+
+	public function __construct()
+	{
+		$this->records = new Keyed_Storage /** Keyed_Storage<module> */();
+		$this->ordered = new Storage /** Storage<module> */();
+	}
+
+	public function next_revision(): int
+	{
+		$this->revision++;
+		return $this->revision;
+	}
+
+	public function find(string $name): ?module
+	{
+		$records /** Keyed_Storage<module> */ = $this->records;
+		if (isset($records[$name])) {
+			return $records[$name];
+		}
+		return null;
+	}
+
+	/** Insert a unique identity and expose it in active order. */
+	public function add(module $record): void
+	{
+		$records /** Keyed_Storage<module> */ = $this->records;
+		$ordered /** Storage<module> */ = $this->ordered;
+		$records->add($record->name, $record);
+		$ordered->append($record);
+	}
+
+	public function items(): Storage /** Storage<module> */
+	{
+		return $this->ordered;
+	}
+
+	public function inventory(): Keyed_Storage /** Keyed_Storage<module> */
+	{
+		return $this->records;
+	}
+
+	public function set_order(Storage $ordered /** Storage<module> */): void
+	{
+		$this->ordered = $ordered;
 	}
 }

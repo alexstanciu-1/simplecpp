@@ -20,8 +20,9 @@ collection bounds, references and index maintenance alongside representation
 changes. Keep existing PHP storage until a change is agreed; this model does not
 require a database, a generic ORM framework, stored IDs or immediate weakrefs.
 The agreed Model root uses static fields accessed as `Model::$field`; compiler
-instances share this data. Start a new compilation through `Compiler::init()`,
-which resets the model. Static-property conversion and required-field declarations are proved in focused
+instances share this data. Reconcile module configuration through `Compiler::init()`; changes reset compilation
+data, while identical configuration preserves it. Use `Compiler_Lifecycle::reset()`
+for an explicitly fresh session. Static-property conversion and required-field declarations are proved in focused
 fixtures; Storage templates have explicit PHP/conversion bindings; whole-compiler native proof remains a follow-up. Review native initialization
 checks at each worker boundary.
 

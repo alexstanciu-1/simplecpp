@@ -62,6 +62,8 @@ require_once __DIR__ . '/compiler/lifecycle.php';
 require_once __DIR__ . '/compiler/scope_publication.php';
 require_once __DIR__ . '/compiler/structures.php';
 require_once __DIR__ . '/compiler/work_queue.php';
+require_once __DIR__ . '/compiler/sync/keys.php';
+require_once __DIR__ . '/compiler/sync/modules.php';
 require_once __DIR__ . '/compiler/sync/declarations.php';
 require_once __DIR__ . '/compiler/sync/sources.php';
 require_once __DIR__ . '/compiler/publication.php';

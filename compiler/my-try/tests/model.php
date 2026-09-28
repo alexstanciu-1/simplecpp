@@ -12,19 +12,19 @@ final class Model_Test
 	{
 		$compiler = new Compiler();
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
-		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
+		foreach ([Model::modules(), Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
 			if (!$storage instanceof Storage) {
 				throw new \RuntimeException('Model collection is not Storage');
 			}
 		}
 		$empty_output = Model::$llvm_files;
 		$compiler->exec_llvm();
-		if ((count(Model::$modules) !== 1) || (count(Model::tokens()) !== 2) || (count(Model::syntax_files()) !== 2) || (count(Model::collected_files()) !== 2) || (count(Model::$llvm_files) !== 2)) {
+		if ((count(Model::modules()) !== 1) || (count(Model::tokens()) !== 2) || (count(Model::syntax_files()) !== 2) || (count(Model::collected_files()) !== 2) || (count(Model::$llvm_files) !== 2)) {
 			throw new \RuntimeException('Unexpected model collection counts');
 		}
 		foreach (Model::tokens() as $position => $tokens)
 		{
-			if (!is_int($position) || ($tokens->file !== Model::$modules[0]->sources[$position]->file)) {
+			if (!is_int($position) || ($tokens->file !== Model::modules()[0]->sources[$position]->file)) {
 				throw new \RuntimeException('Source identity or numeric order changed');
 			}
 			if (($tokens->file->tokens !== $tokens) || (Model::collected_files()[$position]->token_snapshot() !== $tokens) || (Model::syntax_files()[$position]->tokens !== $tokens) || (Model::syntax_files()[$position]->collection !== Model::collected_files()[$position])) {
@@ -41,7 +41,7 @@ final class Model_Test
 
 		$old_output = Model::$llvm_files;
 		$compiler->init([]);
-		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
+		foreach ([Model::modules(), Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
 			if (!$storage->is_empty()) {
 				throw new \RuntimeException('Reset retained previous rows');
 			}
@@ -139,7 +139,7 @@ final class Model_Test
 				throw new \LogicException('Stale downstream result');
 			}
 		}
-		foreach (Model::$modules[0]->sources as $record) {
+		foreach (Model::modules()[0]->sources as $record) {
 			$file = $record->file;
 			if (($file->tokens !== null)) {
 				throw new \LogicException('Stale token backlink');
@@ -180,16 +180,15 @@ final class Model_Test
 		$before = serialize($prepared);
 		foreach (['struct Empty {} return 0;', '$x void; return 0;', 'missing(); return 0;'] as $content)
 		{
-			$compiler->init([]);
-			$module = new module();
-			$module->path = 'memory';
+			Compiler_Lifecycle::reset();
+			$module = new module('memory', 'memory', 'memory');
 			$file = new file();
 			$file->path = 'memory/invalid.phs';
 			$file->mtime = 0;
 			$file->size = strlen($content);
 			$file->content = $content;
 			Source_Registry::add($module, $file);
-			Model::$modules[] = $module;
+			Model::$modules->add($module);
 			$compiler->tokenize();
 			$compiler->parse();
 			$failed = false;
@@ -338,17 +337,16 @@ final class Model_Test
 	/** Failed files must not publish partially built token or syntax records. */
 	private static function check_failure(Compiler $compiler, string $content, bool $lexical): void
 	{
-		$compiler->init([]);
+		Compiler_Lifecycle::reset();
 		$file = new file();
 		if ($file->tokens !== null) {
 			throw new \LogicException('New source has a token backlink');
 		}
 		$file->path = 'invalid.phs';
 		$file->content = $content;
-		$module = new module();
-		$module->path = Source_Registry::normalize('.');
+		$module = new module('.', Source_Registry::normalize('.'), '.');
 		Source_Registry::add($module, $file);
-		Model::$modules[] = $module;
+		Model::$modules->add($module);
 		$failed = false;
 		try {
 			$compiler->tokenize();

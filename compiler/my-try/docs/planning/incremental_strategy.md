@@ -2,7 +2,7 @@
 Doc Status: planning
 
 Discussion started: 2026-09-28. Status: working proposal with the module slice
-agreed below. Module implementation is authorized but not yet applied; the remaining
+agreed below. Module implementation is now applied; the remaining
 file/declaration/body strategy stays under discussion.
 
 This is the shared planning document for incremental compilation in `my-try`.
@@ -23,8 +23,9 @@ not a substitute for this strategy on larger projects. Output comparison remains
 an independent useful step; output partitioning is a separate decision.
 
 A **session** owns retained compiler data. A **run** is one initial build or update
-within that session. Current `Compiler::init()` clears the session: an incremental
-run must not accidentally use that reset as its starting operation.
+within that session. `Compiler::init()` now reconciles module configuration and resets compilation data
+only on configuration changes. `Compiler_Lifecycle::reset()` explicitly clears the
+session, including retained module identities.
 
 In this document, **body rebuild** means replacing a body's derived semantic facts,
 resolutions and backend work together. It does not necessarily mean reparsing:
@@ -67,8 +68,8 @@ outside the current implementation slice.
 
 | Concern | Implemented today | Proposed direction / gap |
 | --- | --- | --- |
-| File identity | Module-owned `source_record` survives updates and deletion. | Keep that identity; agree module/configuration reconciliation. |
-| Discovery | Initial module discovery; subsequent updates receive file paths. Module membership changes require a fresh initialization. | Reconcile the known source set each run; discovery mechanism remains open. |
+| File identity | Module-owned `source_record` survives updates and deletion. | Keep that identity within unchanged module configuration; module reconciliation is implemented. |
+| Discovery | Module changes trigger full discovery/reset; identical configuration retains data. File updates receive notified paths. | Reconcile the known source set each run; discovery mechanism remains open. |
 | Previous/current results | `source_work.previous` holds the published parse; `source_work.result` holds a private candidate. | Retain a clear candidate/publication boundary when reconciling declarations. |
 | Changed input | Notified files are scanned/parsed, including unchanged notifications. | Establish no-change before unnecessary frontend work where possible. |
 | Tokens and syntax | Successful synchronization replaces a file's tokens, AST and scopes together. | Replace active tokens while retaining whatever old data comparison/reuse needs. |
@@ -319,3 +320,8 @@ output bytes alone does not prove that incremental work was avoided.
   key, both path forms retained, indexed two-pass reconciliation, and full rebuild
   on any module configuration/order change. Keep this efficient without an optimization
   pass; revisit more detailed optimization with file scanning and AST nodes.
+
+- 2026-09-28: Implemented the module slice, including stored ordinal position,
+  named/path keys, separate declared/resolved paths, presence tracking, full-root
+  retirement, and pending full frontend synchronization. File/AST reuse optimizations
+  remain deferred. Current behavior and proof are in the lifecycle document.

@@ -57,6 +57,7 @@ try
 		smoke_require($restored === $baseline, 'Restore differs from original full-build output');
 		smoke_require(Model::syntax_files()[1] === $kept_caller, 'Restore reparsed unchanged caller');
 		$fresh = new Compiler();
+		Compiler_Lifecycle::reset();
 		$fresh->init([$directory]);
 		$fresh->exec_llvm();
 		smoke_require(smoke_output() === $restored, 'Restored incremental output differs from fresh build');

@@ -5,7 +5,8 @@ This document describes current behavior. The proposed declaration/body incremen
 strategy is being discussed in [Incremental compiler strategy](../planning/incremental_strategy.md);
 its identity and dependency rules are not implemented yet.
 
-Compiler.init(paths) starts an empty session and discovers module files. Compiler.exec_llvm()
+Compiler.init(paths) reconciles the complete ordered module configuration and discovers
+files when that configuration changes. Identical configuration retains compilation data. Compiler.exec_llvm()
 submits every live file to Compiler.sync(paths), then invokes the existing full
 preparation/generation path. Compiler.update_llvm(paths) submits only notified files and
 then runs that same full preparation. Compiler.sync(paths) publishes source changes
@@ -13,11 +14,50 @@ without invoking the backend, so duplicate declarations can be retained for late
 validation. No watcher or background process loop is introduced: the caller keeps
 its Compiler instance alive and supplies notifications.
 
-Changes to module membership/configuration require init(complete module paths) and
-exec(), a full compilation. Unknown-module file notifications are rejected rather
+Changes to module membership/configuration require init(complete module paths).
+Any change, including order, retires the compilation graph and rediscovers every
+active module. The next sync/update includes all discovered sources as well as any
+explicit notifications; it clears that full-sync obligation only on success. Unknown-module file notifications are rejected rather
 than silently extending module membership. Module roots use canonical filesystem paths and reject overlap. Notifications
 normalize lexical path components (including missing deletion paths) before the
 unique source-path lookup.
+
+## Module reconciliation and full reset
+
+`init_modules(Storage<module_input>)` accepts explicit names and returns whether a
+rebuild/discovery was required. `init(vector<string>)` is the unnamed adapter.
+`module_input(path, name)` uses the exact declared path as its name when the name is
+omitted. A module retains `name`, `declared_path`, `resolved_path`, `position`, change
+flags and independent run presence. A changed position triggers a full rebuild.
+
+`Model::$modules` owns a `module_collection`: a unique key index of retained identities
+(including deletions), plus ordered aliases for active modules. `Model::modules()`
+exposes active order. Collection maintenance goes through its methods. Removed modules
+are marked deleted; reappearance under the same key reuses the identity as added.
+Renaming is delete/add. Changing a named module's path preserves its identity.
+
+`Module_Synchronization` validates all incoming roots and keys before mutation. It
+then matches incoming entries against the indexed records and sweeps retained entries
+for missing keys. `Key_Synchronization` shares revision-based presence/duplicate checks;
+module comparison and publication remain with the module worker. Matching is expected
+linear in input plus retained records; the small-module overlap check is pairwise.
+
+A change calls `Compiler_Lifecycle::reset_compilation()`: replace source, scope,
+preparation and output roots and empty module source stores. It does not walk discarded
+ASTs merely to clear their facts. External handles to retired results are not current
+compiler data; releasing roots does not promise constant-time memory reclamation.
+Partial stage resets still clean retained syntax. `Compiler_Lifecycle::reset()` starts
+an explicitly fresh session, dropping module identities and tombstones too.
+
+Invalid configuration preserves the prior session. Failure during discovery clears
+partial source data and blocks frontend work; identical initialization can retry.
+Failed frontend synchronization leaves the full-sync obligation pending. Identical
+successful initialization does not rescan for file additions: use file notifications
+or an explicit fresh reset until the file-discovery slice is implemented.
+
+Proof: `tests/module_sync.php` covers identity, both paths, named path changes,
+canonical-root changes, ordering, deletion/reappearance, invalid configuration,
+full-sync retry and discovery failure/recovery (permission case on non-root hosts).
 
 ## Stable sources and temporary comparisons
 

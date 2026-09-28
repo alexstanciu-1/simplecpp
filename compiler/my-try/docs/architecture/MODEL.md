@@ -12,7 +12,7 @@ Keyed_Storage provides unique-key indexes, including the source-path index.
 
 | Root | Owned data |
 | --- | --- |
-| modules | Module records; each owns `Storage<source_record>` in source order. |
+| modules | `module_collection` owns a unique name index including deleted records and ordered aliases for active modules. Each module owns `Storage<source_record>` in source order. |
 | sources_by_path | Unique normalized-path index referencing module-owned source records. |
 | language_scope | Owns language/runtime type definitions; the built-in Simple C++ `int`, `bool`, `float`, fixed-width integer aliases and `void`. |
 | global_scope | Shared global lexical scope, with language_scope as its parent. |
@@ -84,7 +84,10 @@ file token backlink; a failed read preserves the prior record. Direct loader cal
 do not invalidate Model roots; rebuild through the coordinator before using new
 stage results. See [the initialization audit](../lifecycle/initialization_audit.md).
 
-Compiler.init resets all roots before loading. Tokenization clears syntax,
+Compiler.init reconciles module keys, paths and positions. Any configuration change
+resets compilation roots without walking discarded ASTs; identical configuration
+preserves them. `Compiler_Lifecycle::reset()` explicitly starts a fresh session,
+including module identities. See [module synchronization](../lifecycle/incremental.md#module-reconciliation-and-full-reset). Tokenization clears syntax,
 collection, global scope, LLVM and all file token backlinks before rebuilding.
 Parsing clears syntax/collection/global scope/LLVM; LLVM generation clears old output.
 Completed files can publish before a later file fails: this is not atomic rollback.

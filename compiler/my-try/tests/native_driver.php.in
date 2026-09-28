@@ -35,8 +35,7 @@ if (q_count(Model::syntax_files()) !== 1) {
 
 // The native proof reuses the same session across updates, with in-memory source input.
 Compiler_Lifecycle::reset();
-$sync_module = new module();
-$sync_module->path = '/sync-proof';
+$sync_module = new module('/sync-proof', '/sync-proof', '/sync-proof');
 $definition = new file();
 $definition->path = '/sync-proof/a.phs';
 $definition->content = 'function answer(): int { return 7; }';
@@ -45,7 +44,7 @@ $use_file->path = '/sync-proof/b.phs';
 $use_file->content = 'return answer();';
 Source_Registry::add($sync_module, $definition);
 Source_Registry::add($sync_module, $use_file);
-Model::$modules[] = $sync_module;
+Model::$modules->add($sync_module);
 $sync_compiler = new Compiler();
 $sync_compiler->exec_llvm();
 $syntax_before /** Storage<parsed_file> */ = Model::syntax_files();

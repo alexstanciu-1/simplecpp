@@ -7,8 +7,9 @@ try
 {
 	file_put_contents($directory . '/a.phs', 'return 1;');
 	$compiler = new Compiler();
+	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
-	$source = Model::$modules[0]->sources[0]->file;
+	$source = Model::modules()[0]->sources[0]->file;
 	if (!$source->disk_source || $source->content !== '' || !Model::tokens()->is_empty()) {
 		throw new \LogicException('Discovery read source bytes');
 	}
@@ -22,6 +23,7 @@ try
 		throw new \LogicException('Standalone parse failed');
 	}
 	file_put_contents($directory . '/b.phs', '$');
+	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$failed = false;
 	try {
@@ -34,6 +36,7 @@ try
 		throw new \LogicException('Earlier file did not parse before a later tokenization failure');
 	}
 	unlink($directory . '/b.phs');
+	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	unlink($directory . '/a.phs');
 	try {

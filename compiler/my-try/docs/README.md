@@ -27,7 +27,7 @@ compiler rewrite in `../src/` is parked; this intake does not change its files,
 proof registration, or tooling.
 
 [model.php](../compiler/model.php) holds the retained graph exposed through static
-fields such as `Model::$modules`. `Compiler::init()` resets it for each new run.
+fields such as `Model::$modules`. `Compiler::init()` reconciles module configuration; changes reset compilation data.
 [MODEL.md](architecture/MODEL.md) documents its current boundaries, references and mutation
 owners. The coordinator retains processing responsibility.
 
@@ -56,7 +56,8 @@ SHA-256 checksums identify the imported content for provenance only:
 
 The checksums above describe the original imports, before local adaptation.
 Data now lives in `01_prepare_inputs/structures.php`; `File_Loader::init()` and
-`Module_Loader::init()` populate caller-owned records. All use `scpp\compiler`.
+`Module_Loader::discover()` populate caller-owned records after module configuration
+validation by `Module_Synchronization`. All use `scpp\compiler`.
 The original imported PHP pipeline included loading, tokenization, parsing/collection,
 name/template preparation, LLVM generation and Clang execution. Name/template
 preparation is now parked under `05_backend/llvm/` for existing regressions. Active

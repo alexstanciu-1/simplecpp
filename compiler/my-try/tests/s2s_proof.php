@@ -10,13 +10,12 @@ final class S2S_Proof
 	{
 		Compiler_Lifecycle::reset();
 		self::collection_membership();
-		$input_module = new module();
-		$input_module->path = '/s2s-proof';
+		$input_module = new module('/s2s-proof', '/s2s-proof', '/s2s-proof');
 		$source = new file();
 		$source->path = '/s2s-proof/main.phs';
 		$source->content = '$a = 10; $b int = $a; $a = 12; return $b;';
 		$stable = Source_Registry::add($input_module, $source);
-		Model::$modules[] = $input_module;
+		Model::$modules->add($input_module);
 		$compiler = new Compiler();
 		$compiler->exec_cpp();
 

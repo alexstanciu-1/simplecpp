@@ -17,3 +17,8 @@ final class declaration_comparison {
 	public string $body;
 	public bool $paired = false;
 }
+
+/** Presence is independent of change flags; a revision avoids a preliminary clearing pass. */
+final class sync_presence {
+	public int $revision = 0;
+}

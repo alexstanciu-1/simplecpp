@@ -12,9 +12,8 @@ function parse_private(string $name, string $content): parsed_file
 }
 
 Compiler_Lifecycle::reset();
-$module = new module();
-$module->path = Source_Registry::normalize('.');
-Model::$modules[] = $module;
+$module = new module('.', Source_Registry::normalize('.'), '.');
+Model::$modules->add($module);
 $first = parse_private('first.phs', 'function exported(): int { $private int = 4; return $private; }');
 $second = parse_private('second.phs', 'return exported();');
 if (!Model::syntax_files()->is_empty() || Model::$global_scope->has_functions()) {

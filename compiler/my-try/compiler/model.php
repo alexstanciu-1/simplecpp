@@ -12,10 +12,14 @@ namespace scpp\compiler;
 final class Model
 {
 	/**
-	 * Numeric storage of module records.
+	 * Keyed module identities and current active order.
 	 * @storage.owner
 	 */
-	public static Storage $modules /** Storage<module> */;
+	public static module_collection $modules;
+	/** Discovery failure blocks frontend use until initialization succeeds. */
+	public static bool $modules_ready = true;
+	/** Module changes require every discovered file to cross the frontend barrier. */
+	public static bool $full_sync_pending = false;
 	/**
 	 * Established by reset; sync updates candidate lists while retaining deleted entries.
 	 * @ownership owner
@@ -36,11 +40,16 @@ final class Model
 	/** Unique path index; module.sources owns the stable records. @reference.weak */
 	public static Keyed_Storage $sources_by_path /** Keyed_Storage<source_record> */;
 
+	public static function modules(): Storage /** Storage<module> */
+	{
+		return self::$modules->items();
+	}
+
 	/** Ordered snapshot of stable source membership, never a second retained store. */
 	public static function sources(): Storage /** Storage<source_record> */
 	{
 		$result /** Storage<source_record> */ = new Storage();
-		foreach (self::$modules as $module) {
+		foreach (self::modules() as $module) {
 			foreach ($module->sources as $source) {
 				$result->append($source);
 			}

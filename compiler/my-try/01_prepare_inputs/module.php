@@ -2,29 +2,23 @@
 
 /*
  * Role: discover a module's recursive PHS files.
- * Call map: Compiler::init -> Module_Loader::init.
+ * Call map: Module_Synchronization -> Module_Loader::discover.
  * Flow: sorted depth-first directory traversal -> ordered module file records.
  */
 namespace scpp\compiler;
 
 final class Module_Loader
 {
-	/** Collect descendant PHS files, preserving sorted depth-first directory order. */
-	public static function init(module $module, string $path): void
+	/** Discover an already validated canonical root. */
+	public static function discover(module $module): void
 	{
-		$module->path = fs_require_realpath($path);
-		foreach (Model::$modules as $existing) {
-			if (($existing->path === $module->path) || self::contains_path($existing, $module->path) || self::contains_path($module, $existing->path)) {
-				throw new \LogicException('Overlapping module roots are not supported');
-			}
-		}
-		self::scan($module, $module->path);
+		self::scan($module, $module->resolved_path);
 	}
 
 	/** Compare directory ancestors, including missing files reported for deletion. */
 	public static function contains_path(module $module, string $path): bool
 	{
-		$root = fs_dirname($module->path . "/__module_member__");
+		$root = fs_dirname($module->resolved_path . "/__module_member__");
 		$directory = fs_dirname($path);
 		while ($directory !== $root) {
 			$parent = fs_dirname($directory);
