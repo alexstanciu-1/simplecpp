@@ -67,7 +67,11 @@ That probe is now replaced by explicit `has_parsed_body()` / `set_parsed_body()`
 construction state; failed replacements retain the established body. Focused parsing,
 AST and preparation-recovery tests pass. Retry `logs-3` advances to
 `03_parse/structures/abstractions.php:103`: `abstract public function` is rejected
-because the converter currently expects visibility before the abstract modifier.
+because the converter expected visibility before the abstract modifier. That order
+restriction is now removed: both forms normalize to the same declaration and focused
+inheritance/method-signature conversion tests pass. Retry `logs-4` advances to
+`04_analyze/collect/structures.php:136`, `parent::__construct($collection)`:
+`expected literal type name`. Parent constructor calls are the next conversion gap.
 Whole-compiler STAN/build/execution remain unreached.
 
 ## Current authoring contracts

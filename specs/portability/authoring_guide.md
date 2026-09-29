@@ -67,6 +67,12 @@ details; do not call them directly from portable source. The fixed
 [function map](../../tools/php_portability/function_map.php) owns available names,
 arities and target bindings. Arbitrary q_-prefixed PHP builtins are not supported.
 
+Abstract methods accept both `abstract public/protected function` and
+`public/protected abstract function`. Conversion normalizes to visibility followed
+by `abstract`; explicit visibility and an abstract containing class remain required.
+Private abstract methods, bodies on abstract declarations and missing signatures
+remain invalid. This does not expand the supported static/final modifier combinations.
+
 ## Additive compound assignments
 
 The converter preserves `+=` and `-=` directly, as it already does `.=`; it must

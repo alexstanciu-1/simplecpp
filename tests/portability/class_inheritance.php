@@ -25,3 +25,28 @@ foreach ([
     throw new RuntimeException('Accepted malformed declaration: ' . $body);
 }
 echo "Class conversion: abstract base, literal inheritance, uint32 defaults and rejection passed\n";
+
+// Both legal modifier orders have one canonical target spelling.
+foreach (['public', 'protected'] as $visibility) {
+    $canonical = $converter->convert('<?php abstract class Base { ' . $visibility . ' abstract function value(): int; }', 'canonical.php');
+    $reordered = $converter->convert('<?php abstract class Base { abstract /* order */ ' . $visibility . ' function value(): int; }', 'reordered.php');
+    if ($canonical !== $reordered || !str_contains($reordered, $visibility . ' abstract function value(): int;')) {
+        throw new LogicException('Abstract modifier order changed the declaration');
+    }
+}
+foreach ([
+    'abstract class Bad { abstract private function value(): int; }',
+    'class Bad { abstract public function value(): int; }',
+    'abstract class Bad { abstract function value(): int; }',
+    'abstract class Bad { abstract public function value(): int {} }',
+] as $body) {
+    try { $converter->convert('<?php ' . $body, 'bad_modifiers.php'); }
+    catch (RuntimeException $error) {
+        if (!str_contains($error->getMessage(), 'bad_modifiers.php')) {
+            throw new LogicException('Modifier diagnostic lost source location');
+        }
+        continue;
+    }
+    throw new LogicException('Accepted invalid modifier declaration: ' . $body);
+}
+echo "Abstract methods: normalized visibility order and rejected invalid modifiers passed\n";

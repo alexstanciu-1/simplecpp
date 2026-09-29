@@ -610,10 +610,24 @@ final class Converter {
 				$fields[] = new Node('comment', $text, $at);
 				continue;
 			}
-			if (!in_array($id, [T_PUBLIC, T_PRIVATE, T_PROTECTED], true)) { $this->fail($at, 'expected explicit member visibility'); }
-			$visibility = $text;
-			$type = $this->significant();
-			if ($type[0] === T_ABSTRACT) {
+			// Visibility and abstractness are independent modifiers; normalize their source order.
+			$visibility = '';
+			$abstractMethod = false;
+			$type = [$id, $text, $at];
+			while (in_array($type[0], [T_PUBLIC, T_PRIVATE, T_PROTECTED, T_ABSTRACT], true)) {
+				if ($type[0] === T_ABSTRACT) {
+					if ($abstractMethod) { $this->fail($type[2], 'duplicate abstract modifier'); }
+					$abstractMethod = true;
+				} else {
+					if ($visibility !== '') { $this->fail($type[2], 'duplicate or conflicting member visibility'); }
+					$visibility = $type[1];
+				}
+				$type = $this->significant();
+			}
+			if ($visibility === '') { $this->fail($at, 'expected explicit member visibility'); }
+			if ($abstractMethod) {
+				// methodSignature owns the function token and the complete required signature.
+				--$this->position;
 				if (!$abstract || $visibility === 'private') { $this->fail($at, 'abstract methods require a public/protected member of an abstract class'); }
 				$signature = $this->methodSignature($at, $visibility . ' abstract', false);
 				$this->expect(';');
