@@ -1206,7 +1206,7 @@ final class Converter {
 				continue;
 			}
 			$allowed = [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_VARIABLE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING,
-				T_COALESCE, T_MATCH, T_SWITCH, T_CASE, T_DEFAULT, T_DOUBLE_ARROW, T_DO, T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_IS_SMALLER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
+				T_COALESCE, T_MATCH, T_SWITCH, T_CASE, T_DEFAULT, T_DOUBLE_ARROW, T_DO, T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_PLUS_EQUAL, T_MINUS_EQUAL, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_IS_SMALLER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
 			if ($id === T_STRING && in_array(strtolower($text), ['true', 'false', 'null'], true)) {
 				// Literal keywords only; arbitrary calls/names are outside this slice.
 			} elseif (!in_array($id, $allowed, true) && !($id === 0 && in_array($text, ['=', ';', ',', '?', ':', '!', '.', '+', '-', '*', '/', '%', '<', '>'], true))) {

@@ -101,6 +101,7 @@ def main():
         run('process-launch-ack', [sys.executable, TESTS / 'process_launch_ack.py', '--results', results / 'process-launch-ack'])
         run('object-casts', ['php', TESTS / 'object_casts.php'])
         run('object-hashes', ['php', TESTS / 'object_hashes.php'])
+        run('additive-assignment', ['php', TESTS / 'additive_assignment.php'])
         run('storage-bindings', ['php', TESTS / 'storage_bindings.php'])
         run('weak-fields', ['php', TESTS / 'weak_fields.php'])
         run('class-inheritance', ['php', TESTS / 'class_inheritance.php'])

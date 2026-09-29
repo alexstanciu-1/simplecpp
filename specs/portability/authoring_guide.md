@@ -67,6 +67,17 @@ details; do not call them directly from portable source. The fixed
 [function map](../../tools/php_portability/function_map.php) owns available names,
 arities and target bindings. Arbitrary q_-prefixed PHP builtins are not supported.
 
+## Additive compound assignments
+
+The converter preserves `+=` and `-=` directly, as it already does `.=`; it must
+not expand them into repeated receiver/index expressions. Existing locals, fixed
+properties and indexed targets use the target's operator/type rules. This slice does
+not admit the other compound operators or model PHP dynamic numeric coercion.
+`tests/portability/additive_assignment.php` checks conversion and PHP effects;
+`additive_assignment.py` checks normal STAN-enabled native execution. Its `--compact`
+variant reproduces the current mixed-width `uint32 += int` / `uint32 -= int` runtime
+limitation; converter acceptance alone does not solve that target overload gap.
+
 ## Supported forms and their limits
 
 | Form available now | Limit and existing proof |

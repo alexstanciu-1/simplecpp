@@ -48,6 +48,21 @@ Attempt logs: `/tmp/my-try-native-20260929-bfd12958/logs/`; the runner retained
 source hashes and candidate toolchain hashes. No source workaround, STAN bypass or
 verified-target update was made.
 
+### Converter follow-up — additive assignments
+
+The converter now preserves `+=`/`-=` without duplicating receiver/index evaluation.
+Focused PHP conversion tests and the ordinary-integer native proof pass with normal
+STAN (`/tmp/my-try-additive-ordinary-20260929/`). The compact-field variant exposed
+missing runtime overloads for `uint32 += int` and `uint32 -= int`; see
+`tests/portability/additive_assignment.py --compact` and the failed native proof at
+`/tmp/my-try-additive-proof-20260929/`. No runtime workaround was applied.
+
+Whole-compiler retry (`logs-2` in the attempt directory above) passes the additive
+syntax and now stops at `03_parse/parser.php:513`, `isset($function->body)`: the
+converter supports keyed probes, not required-property initialization probes.
+This needs a publication/initialization contract review; it is not merely another
+operator token. Whole-compiler STAN/build/execution remain unreached.
+
 ## Current authoring contracts
 
 Use the [portable PHP guide](../../../../specs/portability/authoring_guide.md) and
