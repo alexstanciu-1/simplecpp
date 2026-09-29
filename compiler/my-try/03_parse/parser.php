@@ -47,7 +47,7 @@ final class Parser
 final class Parser_Run
 {
 	private token_list $tokens;
-	private ?token_list $old_tokens = null;
+	private bool $reuse_previous = false;
 	private Storage $scopes /** Storage<scope> */;
 	private scope $current_scope;
 	private scope $file_scope;
@@ -58,7 +58,15 @@ final class Parser_Run
 	/** Establish the retained file and symbol inventory before any declaration can be registered. */
 	public function __construct(token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
 	{
+		if ($previous !== null) {
+			if (($tokens !== $previous->tokens) && ($tokens->first_token === 0) && ($tokens->content_offset === 0)) {
+				Token_Cleanup::file($previous);
+				Token_Buffer::append($tokens, $previous->tokens);
+			}
+		}
+		$tokens->retained_ranges = new Storage /** Storage<retained_token_range> */();
 		$this->tokens = $tokens;
+		$this->position = $tokens->first_token;
 		$this->scopes = new Storage /** Storage<scope> */();
 		if ($previous === null) {
 			$file_scope = $target_scope ?? new scope();
@@ -75,7 +83,7 @@ final class Parser_Run
 			$this->parsed = $previous;
 			$file_scope = $previous->root_scope();
 			if ($previous->complete && $previous->collection->parse_complete) {
-				$this->old_tokens = $previous->tokens;
+				$this->reuse_previous = true;
 			}
 		}
 		$this->file_scope = $file_scope;
@@ -119,9 +127,9 @@ final class Parser_Run
 		$body = new function_body_node($this->current_scope);
 		$statements /** Storage<statement_node> */ = $body->statements;
 		$declarations /** Storage<declaration_node> */ = new Storage();
-		$body_changed = $this->old_tokens === null;
+		$body_changed = !$this->reuse_previous;
 		$index = 0;
-		while ($this->position < q_count($this->tokens->tokens))
+		while ($this->position < $this->tokens->end_token)
 		{
 			$start = $this->position;
 			$node = $this->statement();
@@ -148,8 +156,7 @@ final class Parser_Run
 		if (!$body_changed) {
 			foreach ($statements as $index => $temporary) {
 				$old = $old_statements[$index];
-				$this->retain_tree($temporary, 0, true);
-				$this->retain_tree($old, $temporary->start_token() - $old->start_token(), false);
+				$this->retain_range($old, $temporary->start_token());
 			}
 			$body = $old_body;
 			$scopes /** Storage<scope> */ = $this->scopes;
@@ -159,12 +166,10 @@ final class Parser_Run
 			$this->transfer_body_work($old_body, $body);
 		}
 		$body->syntax_changed = $body_changed;
-		$body->set_span(0, $this->position);
+		$body->set_span($this->tokens->first_token, $this->position);
 		$root->body = $body;
 		$root->declarations = $declarations;
-		$root->set_span(0, $this->position);
-		Syntax_Attachment::publish($body);
-		Syntax_Attachment::publish($root);
+		$root->set_span($this->tokens->first_token, $this->position);
 		$this->collector->finish($root);
 		$this->parsed->complete = true;
 		$this->parsed->collection->parse_complete = true;
@@ -179,7 +184,7 @@ final class Parser_Run
 		}
 		$depth = 0;
 		$rows /** Storage<token> */ = $this->tokens->tokens;
-		for ($index = $this->position; $index < q_count($rows); $index++)
+		for ($index = $this->position; $index < $this->tokens->end_token; $index++)
 		{
 			$text = $rows[$index]->text();
 			if ($text === '{') {
@@ -192,7 +197,7 @@ final class Parser_Run
 				}
 			}
 		}
-		return q_count($rows);
+		return $this->tokens->end_token;
 	}
 
 	/** Reuse the entire file executable body only when every statement matched. */
@@ -204,32 +209,27 @@ final class Parser_Run
 			$work->change_status = change_state::changed;
 			$body->attach_work($work);
 		}
-		$old->set_inspection_parent(null);
 	}
 
-	/** Relocate kept syntax/occurrences together, or retire the temporary replacement's occurrences. */
-	private function retain_tree(ast_node $node, int $delta, bool $discard): void
+	/** Retain indexes during compilation; collection and deferred cleanup use this interval. */
+	private function retain_range(ast_node $node, int $current_first): void
 	{
-		$node->maintain(new Syntax_Relocation($this->collector, $delta, $discard));
+		$ranges /** Storage<retained_token_range> */ = $this->tokens->retained_ranges;
+		$ranges->append(new retained_token_range($node->start_token(), $node->end_token(), $current_first));
 	}
-
-	/** Declarations do not participate in the executable-body order comparison. */
-
 
 	/** Existing half-open token bounds identify the exact body bytes, including internal whitespace. */
 	private function same_body_text(int $old_start, int $old_end, int $start, int $end): bool
 	{
-		if (($this->old_tokens === null) || ($old_start < 0)) {
+		if ((!$this->reuse_previous) || ($old_start < 0)) {
 			return false;
 		}
 		if (($old_end <= $old_start) || ($end <= $start)) {
 			return false;
 		}
-		$old /** token_list */ = $this->old_tokens;
-		$previous /** Storage<token> */ = $old->tokens;
 		$current /** Storage<token> */ = $this->tokens->tokens;
-		$old_first = $previous[$old_start];
-		$old_last = $previous[$old_end - 1];
+		$old_first = $current[$old_start];
+		$old_last = $current[$old_end - 1];
 		$first = $current[$start];
 		$last = $current[$end - 1];
 		$old_length = (int)$old_last->offset + (int)$old_last->length - (int)$old_first->offset;
@@ -237,21 +237,20 @@ final class Parser_Run
 		if ($old_length !== $length) {
 			return false;
 		}
-		return string_byte_slice($old->content, (int)$old_first->offset, $old_length) === string_byte_slice($this->tokens->content, (int)$first->offset, $length);
+		return string_byte_slice($this->tokens->content, (int)$old_first->offset, $old_length) === string_byte_slice($this->tokens->content, (int)$first->offset, $length);
 	}
 
 	/** Token spellings preserve literal accuracy and ignore source offset/whitespace changes. */
 	private function same_tokens(int $old_start, int $old_end, int $start, int $end): bool
 	{
-		if (($this->old_tokens === null) || ($old_start < 0)) {
+		if ((!$this->reuse_previous) || ($old_start < 0)) {
 			return false;
 		}
 		if (($old_end - $old_start) !== ($end - $start)) {
 			return false;
 		}
-		$old /** token_list */ = $this->old_tokens;
 		while ($start < $end) {
-			if ($old->text_at($old_start) !== $this->tokens->text_at($start)) {
+			if ($this->tokens->text_at($old_start) !== $this->tokens->text_at($start)) {
 				return false;
 			}
 			$old_start++;
@@ -260,7 +259,7 @@ final class Parser_Run
 		return true;
 	}
 
-	/** Refresh spans and direct links without replacing a matched declaration or specialization. */
+	/** Refresh source spans without replacing a matched declaration. */
 	private function finish_declaration(ast_node $node, int $start, bool $same): void
 	{
 		$entry = object_cast($node->optional_occurrence(), collected_name::class);
@@ -274,7 +273,6 @@ final class Parser_Run
 				$entry->preparation->change_status = change_state::changed;
 			}
 		}
-		Syntax_Attachment::publish($node);
 	}
 
 	/** Select a statement from its leading syntax; names are never looked up here. */
@@ -455,7 +453,7 @@ final class Parser_Run
 		$old_body_start = $old_start;
 		$old_body_end = $old_start;
 		if ($previous !== null) {
-			if (($this->old_tokens !== null) && ($old_start >= 0)) {
+			if (($this->reuse_previous) && ($old_start >= 0)) {
 				$old_body_start = $function->body->start_token();
 				$old_body_end = $function->body->end_token();
 			}
@@ -500,7 +498,7 @@ final class Parser_Run
 			$body = $function->body;
 			$body_scope = $body->local_scope();
 			$scopes->append($body_scope);
-			$this->retain_tree($body, $body_start - $old_body_start, false);
+			$this->retain_range($body, $body_start);
 			$this->position = $body_end;
 		}
 		else
@@ -810,11 +808,10 @@ final class Parser_Run
 		return $call;
 	}
 
-	/** Complete source provenance and inspection links without erasing concrete types. */
+	/** Complete source provenance without erasing concrete types. */
 	private function finish_node(ast_node $node, int $start): void
 	{
 		$node->set_span($start, $this->position);
-		Syntax_Attachment::publish($node);
 	}
 
 	/** Type names retain spelling independently of token generations. */
@@ -854,7 +851,7 @@ final class Parser_Run
 	private function text(): string
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
-		if (!isset($token_rows[$this->position])) {
+		if ($this->position >= $this->tokens->end_token) {
 			return '';
 		}
 		return $token_rows[$this->position]->text();
@@ -872,9 +869,9 @@ final class Parser_Run
 	private function error_message(string $message): string
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
-		$offset = string_byte_len($this->tokens->content);
+		$offset = string_byte_len($this->tokens->content) - $this->tokens->content_offset;
 		if (isset($token_rows[$this->position])) {
-			$offset = $token_rows[$this->position]->offset;
+			$offset = (int)$token_rows[$this->position]->offset - $this->tokens->content_offset;
 		}
 		return $message . " at " . $this->tokens->file->path . ": byte " . $offset;
 	}

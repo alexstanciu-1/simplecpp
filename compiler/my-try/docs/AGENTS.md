@@ -177,7 +177,7 @@ Keep compiler decisions outside retained structures. Structures may initialize d
 maintain local representation invariants, expose typed access/navigation and simple
 queries, and clear their own derived fields. Stage sequencing and tree cleanup belong
 to Compiler_Lifecycle/Preparation_Cleanup; scope publication and replacement policy
-belong to Scope_Publication. Prefer concrete node fields and typed operation dispatch. children()/parent() are inspection-only; children() uses lazy cursors. Preserve source
+belong to Scope_Publication. Prefer concrete node fields and typed operation dispatch. children() is inspection-only and uses lazy cursors. AST nodes have no inspection-parent links. Preserve source
 order and stable storage positions; do not sort AST/storage membership as a convenience.
 Specializations may also expose operation dispatch and traversal hooks that forward
 to the owning process, including backend-specific operations. The worker retains

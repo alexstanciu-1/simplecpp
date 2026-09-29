@@ -67,9 +67,8 @@ final class source_record
 	public module $module /** weak<module> */;
 	/** Current published input and its optional completed stages. @ownership owner */
 	public file $file;
-	/** Current tokenization and the preceding generation needed by parsing/analysis. */
+	/** Current input range and retained token/source storage. */
 	public ?token_list $tokens = null;
-	public ?token_list $previous_tokens = null;
 	public ?parsed_file $parsed = null;
 
 	public function __construct(module $owner, file $snapshot)

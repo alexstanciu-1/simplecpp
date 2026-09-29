@@ -25,7 +25,7 @@ try
 	$compiler->tokenize();
 	$first = $a->tokens;
 	$other = $b->tokens;
-	generation_check(($first !== null) && ($a->previous_tokens === null), 'Initial tokenization did not establish the first generation');
+	generation_check(($first !== null) && ($first->first_token === 0), 'Initial tokenization did not establish the first generation');
 	generation_check(($a->file === $first->file) && ($a->file->tokens === $first), 'Current file and token backlinks disagree');
 
 	// Simulate the previous completed run; parsing/analysis coordination is deliberately deferred.
@@ -34,16 +34,17 @@ try
 	$a->changes = change_state::unchanged;
 	$b->changes = change_state::unchanged;
 	$compiler->tokenize();
-	generation_check(($a->tokens === $first) && ($a->previous_tokens === null), 'Unchanged source was retokenized');
+	generation_check(($a->tokens === $first) && ($first->first_token === 0), 'Unchanged source was retokenized');
 	file_put_contents($path, 'return 22;');
 	Module_Loader::discover($module);
 	$compiler->tokenize();
 	$current = $a->tokens;
 	$published_file = $a->file;
-	generation_check(($current !== $first) && ($a->previous_tokens === $first), 'Changed source did not rotate its token generation');
-	generation_check(($current->content === 'return 22;') && ($first->content === 'return 1;') && ($first->file->content === 'return 1;'), 'Token replacement mutated the old source snapshot');
+	generation_check(($current !== $first) && ($current->first_token === $first->end_token), 'Changed source did not append its token generation');
+	generation_check(($current->content === 'return 1;return 22;') && ($first->content === 'return 1;') && ($first->file->content === 'return 1;'), 'Token replacement mutated the old source snapshot');
 	generation_check(($a->parsed === $old_ast) && ($old_ast->tokens === $first), 'Tokenization cleared or rewired the old AST');
-	generation_check(($b->tokens === $other) && ($b->previous_tokens === null), 'Changed file caused an unchanged file to rotate');
+	generation_check(($b->tokens === $other) && ($other->first_token === 0), 'Changed file caused an unchanged file to rotate');
+	generation_check(($current->tokens === $first->tokens) && ($current->tokens[$current->first_token]->offset === strlen('return 1;')), 'Append lost shared storage or source offset');
 	generation_check($a->changes === change_state::changed, 'Tokenization consumed the change needed by later phases');
 
 	file_put_contents($path, '$');
@@ -54,7 +55,7 @@ try
 	catch (\RuntimeException $expected) {
 		$failed = true;
 	}
-	generation_check($failed && ($a->tokens === $current) && ($a->previous_tokens === $first), 'Lexical failure rotated token generations');
+	generation_check($failed && ($a->tokens === $current) && ($current->first_token === $first->end_token), 'Lexical failure rotated token generations');
 	generation_check(($a->file === $published_file) && ($published_file->content === 'return 22;'), 'Lexical failure changed the published input');
 	unlink($path);
 	$failed = false;
@@ -64,10 +65,10 @@ try
 	catch (\RuntimeException $expected) {
 		$failed = true;
 	}
-	generation_check($failed && ($a->tokens === $current) && ($a->previous_tokens === $first), 'Read failure changed retained token generations');
+	generation_check($failed && ($a->tokens === $current) && ($current->first_token === $first->end_token), 'Read failure changed retained token generations');
 	$a->changes = change_state::deleted;
 	$compiler->tokenize();
-	generation_check(($a->tokens === $current) && ($a->previous_tokens === $first), 'Deleted source was tokenized or discarded prematurely');
+	generation_check(($a->tokens === $current) && ($current->first_token === $first->end_token), 'Deleted source was tokenized or discarded prematurely');
 }
 finally {
 	foreach (glob($directory . '/*') as $file_path) {
@@ -75,4 +76,4 @@ finally {
 	}
 	rmdir($directory);
 }
-echo "Token generations: added/changed replacement, unchanged/deleted skip, old AST retention and failure isolation passed\n";
+echo "Token generations: added/changed append, unchanged/deleted skip, old AST retention and failure isolation passed\n";

@@ -14,7 +14,6 @@ interface ast_node_i
 	public function prepare(preparation_worker_i $worker): void;
 	public function generate_cpp(cpp_generation_worker_i $worker): string;
 	public function maintain(node_maintenance_worker_i $worker): void;
-	public function parent(): ?ast_node;
 	/**
 	 * Iterate direct children; do not mutate membership during traversal.
 	 */
@@ -27,7 +26,6 @@ abstract class ast_node implements ast_node_i
 	public abstract function set_span(int $first, int $end): void;
 	public abstract function start_token(): int;
 	public abstract function end_token(): int;
-	public abstract function set_inspection_parent(?ast_node $parent): void;
 
 	public function optional_occurrence(): ?collected_name
 	{
@@ -49,7 +47,6 @@ abstract class ast_node implements ast_node_i
 	}
 
 	public abstract function kind(): node_kind;
-	public abstract function parent(): ?ast_node;
 	public abstract function maintain(node_maintenance_worker_i $worker): void;
 
 	/** Trivia and semantic forms without active preparation support fail explicitly. */
@@ -113,7 +110,7 @@ abstract class trivia_node extends ast_node
 /**
  * Source-backed nodes share a half-open span; the abstract bases retain no data.
  * The owning parsed-file/worker context selects and retains the token snapshot.
- * Do not read these indexes against a replacement token list before relocation.
+ * Retained indexes address appended storage until deferred token cleanup.
  */
 trait Node_Source_Span
 {
@@ -141,23 +138,6 @@ trait Node_Source_Span
 	public int $first_token_index /** uint32 */;
 	/** Exclusive end: token count is end - first, including zero for an empty span. */
 	public int $end_token_index /** uint32 */;
-}
-
-/** Optional weak navigation for inspection, independent of source provenance. */
-trait Node_Inspection_Parent
-{
-	private ?ast_node $inspection_parent /** weak<ast_node> */ = null;
-
-	public function parent(): ?ast_node
-	{
-		return \weakref_get($this->inspection_parent);
-	}
-
-	/** Parser attachment/replacement maintains this observer; processes never navigate it. */
-	public function set_inspection_parent(?ast_node $parent): void
-	{
-		$this->inspection_parent = $parent;
-	}
 }
 
 /**
@@ -249,48 +229,17 @@ interface preparation_worker_i
 }
 
 /**
- * Common typed dispatch for syntax maintenance, not an inspection traversal.
- * Relocation and preparation-cleanup workers implement this contract separately;
- * no enum switches between unrelated lifecycle algorithms. Every concrete node,
- * including unsupported syntax and trivia, must dispatch: there is no silent fallback.
- *
- * Each worker follows only owning named syntax fields/collections, once per edge.
- * Do not follow parent(), scopes, occurrences, prepared references or dependency
- * graphs, and do not call children(). Leaves update/clear only their own state.
- * Relocation keeps the source context alive and updates spans and occurrence sites
- * without reattaching occurrences or changing declaration/work identity.
- * Cleanup clears attached facts via their accessors; dependency notification and
- * unregistering retained owners are orchestrated before scope/record release.
- * Parser publication/reparenting is controlled by the existing lifecycle owners,
- * never initiated by a node. A maintenance worker may carry their selected context.
- * No worker is stored on a node, scope or other retained data record.
+ * Nodes enumerate their named owning syntax fields; workers supply the operation.
+ * enter acts on one node. edge may recurse through maintain or only inspect the
+ * immediate relationship. token_index preserves or remaps additional token sites.
+ * No inspection iterators, semantic references, parent links or scopes are followed.
+ * Workers are transient and never stored on nodes. Lifecycle owners initiate work.
  */
 interface node_maintenance_worker_i
 {
-	public function visit_file(file_node $node): void;
-	public function visit_function_body(function_body_node $node): void;
-	public function visit_block(block_node $node): void;
-	public function visit_named_type(named_type_node $node): void;
-	public function visit_punctuation(punctuation_node $node): void;
-	public function visit_comment(comment_node $node): void;
-	public function visit_integer_literal(integer_literal_node $node): void;
-	public function visit_float_literal(float_literal_node $node): void;
-	public function visit_boolean_literal(boolean_literal_node $node): void;
-	public function visit_variable_reference(variable_reference_node $node): void;
-	public function visit_call(call_node $node): void;
-	public function visit_function(function_node $node): void;
-	public function visit_parameter(parameter_node $node): void;
-	public function visit_binary_expression(binary_expression_node $node): void;
-	public function visit_assignment_expression(assignment_expression_node $node): void;
-	public function visit_expression_statement(expression_statement_node $node): void;
-	public function visit_return(return_node $node): void;
-	public function visit_variable_declaration(variable_declaration_node $node): void;
-	public function visit_array_type(array_type_node $node): void;
-	public function visit_array_literal(array_literal_node $node): void;
-	public function visit_index(index_node $node): void;
-	public function visit_struct(struct_node $node): void;
-	public function visit_field(field_node $node): void;
-	public function visit_field_access(field_access_node $node): void;
+	public function enter(ast_node $node): void;
+	public function edge(ast_node $parent, ast_node $child): void;
+	public function token_index(int $index): int;
 }
 
 /**

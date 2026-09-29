@@ -129,13 +129,6 @@ final class Symbol_Collector
 		return $this->collection;
 	}
 
-	/** Retained bodies stamp their old occurrences instead of allocating replacement identities. */
-	public function retain(collected_name $entry, int $delta): void
-	{
-		$entry->revision = $this->collection->revision;
-		$entry->token_index = $entry->token_index + $delta;
-	}
-
 	/** Retire obsolete occurrences after reuse decisions, rebuilding current work lists once. */
 	private function refresh_occurrences(): void
 	{
@@ -148,8 +141,22 @@ final class Symbol_Collector
 		$collection->pending_bindings = [];
 		$entries /** Storage<collected_name> */ = $collection->entries;
 		$retired /** vector<int> */ = [];
+		$ranges /** Storage<retained_token_range> */ = $collection->token_snapshot()->retained_ranges;
 		foreach ($entries as $entry)
 		{
+			// Reused regions retain old identities; temporary parses of their new interval retire.
+			foreach ($ranges as $range)
+			{
+				if (($entry->token_index >= $range->first) && ($entry->token_index < $range->end)) {
+					$entry->revision = $collection->revision;
+					break;
+				}
+				$current_end = $range->current_first + ($range->end - $range->first);
+				if (($entry->token_index >= $range->current_first) && ($entry->token_index < $current_end)) {
+					$entry->revision = 0;
+					break;
+				}
+			}
 			$index = $entry->local_index;
 			if (!$entry->retained_symbol && ((int)$entry->revision !== (int)$collection->revision)) {
 				$retired[] = $index;

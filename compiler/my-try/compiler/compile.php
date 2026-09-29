@@ -195,9 +195,32 @@ final class Compiler
 		Model::$full_sync_pending = false;
 	}
 
-	/** Tokenize added/changed files, retaining the previous generation for the parsing refactor. */
+	/** Host may call after delivering output; the next scan also finishes pending compaction. */
+	public function cleanup_tokens(): void
+	{
+		try
+		{
+			foreach (Model::sources() as $record)
+			{
+				if ($record->parsed === null) {
+					continue;
+				}
+				$parsed /** parsed_file */ = $record->parsed;
+				if (($record->tokens === $parsed->tokens) && ($record->changes !== change_state::deleted)) {
+					Token_Cleanup::file($parsed);
+				}
+			}
+		}
+		catch (\Throwable $error) {
+			Model::$rebuild_required = true;
+			throw $error;
+		}
+	}
+
+	/** Tokenize added/changed files into appended storage after any pending compaction. */
 	public function tokenize(): void
 	{
+		$this->cleanup_tokens();
 		$this->frontend(frontend_operation::scan);
 	}
 

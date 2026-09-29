@@ -373,22 +373,45 @@ output bytes alone does not prove that incremental work was avoided.
   stays pending. Absolute paths are computed at IO boundaries. The mtime/size detection
   limitation remains accepted debt; no new synchronization structures were introduced.
 
-## Tokenization refactor in progress
+## Appended token storage and deferred cleanup — implemented
 
-The standalone tokenization and parsing/collection phases are migrated. source_record retains
-current tokens and previous_tokens. Added/changed files tokenize a private file
-snapshot; successful publication rotates the current list into previous_tokens and
-installs the new file/token snapshot. Read/lexical failure leaves both generations
-and the published file unchanged. Unchanged and deleted sources are skipped.
-Existing parsed results are retained and can still reference their old token snapshot.
-Change-state consumption, previous-token release and interrupted-run sequencing belong
-to the upcoming parsing/04_analyze discussion. Invoke this phase once per file update;
-this is a two-generation handoff, not token history or a retry scheduler.
+Changed files tokenize privately. Only successful tokenization appends records to
+retained token storage and source bytes to retained text. Each new token's byte
+offset receives the fixed text-prefix offset. `first_token` / exclusive `end_token`
+select the new parse interval; `content_offset` identifies its source-text start.
+Unchanged/deleted files are skipped. Lexical/read failure does not publish a partial
+append. The separate `previous_tokens` link and parser's old-token selector are gone.
 
-The combined sync pipeline now delegates to this same lifecycle.
-Do not claim end-to-end readiness or adapt later stages merely to keep old tests
-passing. No commits or pushes until the user agrees this refactor is ready.
+Unchanged bodies/statements keep their original nodes, facts and token indexes.
+The parser records one old/current interval correspondence per reused region.
+The existing collection pass uses these intervals to retain old occurrences and
+retire temporary replacements, without walking those ASTs during compilation.
+New declarations/signatures still use their newly parsed token positions. Saved
+names remain independent of all token positions. Parser byte diagnostics subtract
+the appended source offset; raw retained AST spans remain storage indexes.
 
+`Compiler::cleanup_tokens()` is an explicit host operation after output delivery.
+It remaps live syntax and collected indexes to the latest input, then replaces
+storage/text with that input alone. It preserves prepared facts and cached C++ text.
+`Syntax_Relocation` is removed; `Token_Cleanup` owns deferred normalization.
+Each specialized node owns its maintenance traversal. Cleanup workers supply
+operations and choose recursion through the three-method maintenance interface;
+the abstract `Syntax_Maintenance` visitor has been removed. Inspection-parent links
+and their attachment worker are deferred until an actual consumer needs them.
+
+No background scheduler is introduced. If the host does not request idle cleanup,
+the next tokenization performs it synchronously before scanning. It may block:
+optimizing cleanup latency is not a requirement for this slice. Incomplete parses,
+unparsed published input and outstanding deleted occurrences retain their buffers
+until recovery/deletion makes compaction safe. Repeated failures may therefore
+retain several appended inputs; full reset releases them. Unexpected cleanup
+failures set the existing full-rebuild flag. External debug cursors/references must
+not be traversed concurrently with cleanup.
+
+The one-shot CLI may simply exit after output; a retained host uses the explicit
+cleanup operation. Focused evidence: `tests/token_cleanup.php` and
+`tests/token_generations.php`, plus retained parse/preparation/generation regressions.
+No native compiler validation or rigorous incremental proof is claimed.
 
 ## Agreed parsing/collection slice — implemented, resolution deferred
 
@@ -561,9 +584,9 @@ remains deferred as agreed.
 - C++ output partitioning: retain the current single `main.cpp` layout for now.
   Later, group retained generation records into `.hpp`/`.cpp` units to reduce
   native compilation cost without coupling those groups to source-file boundaries.
-- Old/new token ownership: review whether unchanged nodes should retain their old
-  token generation while changed nodes use the new generation. Keep current token
-  rebasing for now; generated declaration names must not depend on token positions.
+- Token storage: the appended-buffer ownership policy is implemented above. Future
+  cleanup scheduling/performance and memory limits under repeated failed increments
+  remain review items; generated names stay independent of token positions.
 - Rigorous validation of the current incremental implementation is deferred to a
   later testing pass. Existing focused tests provide limited evidence, not exhaustive
   coverage. Include preparation recovery, repeated increments and native behavior

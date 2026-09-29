@@ -58,7 +58,6 @@ final class Compiler_Lifecycle
 			foreach ($module->sources as $source)
 			{
 				$source->tokens = null;
-				$source->previous_tokens = null;
 				$source->parsed = null;
 				$source->file->tokens = null;
 				if ($source->changes !== change_state::deleted) {

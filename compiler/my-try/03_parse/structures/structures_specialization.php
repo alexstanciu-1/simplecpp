@@ -7,7 +7,6 @@ namespace scpp\compiler;
 final class file_node extends ast_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public Storage $declarations /** Storage<declaration_node> */;
 	public function_body_node $body;
@@ -49,10 +48,15 @@ final class file_node extends ast_node
 		$worker->prepare_file($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_file($this);
+		$worker->enter($this);
+		$items /** Storage<declaration_node> */ = $this->declarations;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
+		$worker->edge($this, $this->body);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -73,7 +77,6 @@ final class file_node extends ast_node
 final class function_body_node extends ast_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public Storage $statements /** Storage<statement_node> */;
 	/**
@@ -155,10 +158,14 @@ final class function_body_node extends ast_node
 		$worker->prepare_function_body($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_function_body($this);
+		$worker->enter($this);
+		$items /** Storage<statement_node> */ = $this->statements;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -172,7 +179,6 @@ final class function_body_node extends ast_node
 final class block_node extends statement_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public Storage $statements /** Storage<statement_node> */;
 
@@ -201,10 +207,14 @@ final class block_node extends statement_node
 		$worker->prepare_block($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_block($this);
+		$worker->enter($this);
+		$items /** Storage<statement_node> */ = $this->statements;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -218,7 +228,6 @@ final class block_node extends statement_node
 final class named_type_node extends type_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Preparation_Facts;
 
 	/** Canonical type alias; clearing syntax facts must not destroy or mutate the type definition. */
@@ -239,10 +248,10 @@ final class named_type_node extends type_node
 		$worker->prepare_named_type($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_named_type($this);
+		$worker->enter($this);
 	}
 
 	public function require_preparation(): type_definition
@@ -254,41 +263,38 @@ final class named_type_node extends type_node
 final class punctuation_node extends trivia_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public function kind(): node_kind
 	{
 		return node_kind::punctuation;
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_punctuation($this);
+		$worker->enter($this);
 	}
 }
 
 final class comment_node extends trivia_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public function kind(): node_kind
 	{
 		return node_kind::comment;
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_comment($this);
+		$worker->enter($this);
 	}
 }
 
 final class integer_literal_node extends expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Preparation_Facts;
 
 	private ?prepared_integer_literal $prepared_facts = null;
@@ -309,10 +315,10 @@ final class integer_literal_node extends expression_node
 		$worker->prepare_integer_literal($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_integer_literal($this);
+		$worker->enter($this);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -325,7 +331,6 @@ final class integer_literal_node extends expression_node
 final class float_literal_node extends expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Preparation_Facts;
 
 	private ?prepared_float_literal $prepared_facts = null;
@@ -346,10 +351,10 @@ final class float_literal_node extends expression_node
 		$worker->prepare_float_literal($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_float_literal($this);
+		$worker->enter($this);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -362,7 +367,6 @@ final class float_literal_node extends expression_node
 final class boolean_literal_node extends expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Preparation_Facts;
 
 	private ?prepared_boolean_literal $prepared_facts = null;
@@ -385,10 +389,10 @@ final class boolean_literal_node extends expression_node
 		$worker->prepare_boolean_literal($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_boolean_literal($this);
+		$worker->enter($this);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -401,7 +405,6 @@ final class boolean_literal_node extends expression_node
 final class variable_reference_node extends assignable_expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -426,10 +429,10 @@ final class variable_reference_node extends assignable_expression_node
 		$worker->prepare_variable_reference($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_variable_reference($this);
+		$worker->enter($this);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -442,7 +445,6 @@ final class variable_reference_node extends assignable_expression_node
 final class call_node extends expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -485,10 +487,18 @@ final class call_node extends expression_node
 		$worker->prepare_call($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_call($this);
+		$worker->enter($this);
+		$items /** Storage<named_type_node> */ = $this->template_arguments;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
+		$items /** Storage<expression_node> */ = $this->arguments;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -501,7 +511,6 @@ final class call_node extends expression_node
 final class function_node extends declaration_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -558,10 +567,16 @@ final class function_node extends declaration_node
 		$worker->prepare_function_signature($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_function($this);
+		$worker->enter($this);
+		$items /** Storage<parameter_node> */ = $this->parameters;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
+		$worker->edge($this, $this->return_type);
+		$worker->edge($this, $this->body);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -574,7 +589,6 @@ final class function_node extends declaration_node
 final class parameter_node extends ast_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -609,10 +623,11 @@ final class parameter_node extends ast_node
 		$worker->prepare_parameter($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_parameter($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->type_syntax);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -625,7 +640,6 @@ final class parameter_node extends ast_node
 final class binary_expression_node extends expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public expression_node $left;
 	public int $operator_token_index;
@@ -644,10 +658,13 @@ final class binary_expression_node extends expression_node
 		return new binary_expression_children_iterator($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_binary_expression($this);
+		$this->operator_token_index = $worker->token_index($this->operator_token_index);
+		$worker->enter($this);
+		$worker->edge($this, $this->left);
+		$worker->edge($this, $this->right);
 	}
 }
 
@@ -661,7 +678,6 @@ final class binary_expression_node extends expression_node
 final class assignment_expression_node extends expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Preparation_Facts;
 
 	private ?prepared_assignment $prepared_facts = null;
@@ -691,10 +707,12 @@ final class assignment_expression_node extends expression_node
 		$worker->prepare_assignment($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_assignment_expression($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->target);
+		$worker->edge($this, $this->value);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -707,7 +725,6 @@ final class assignment_expression_node extends expression_node
 final class expression_statement_node extends statement_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public expression_node $expression;
 
@@ -730,10 +747,11 @@ final class expression_statement_node extends statement_node
 		$worker->prepare_expression_statement($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_expression_statement($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->expression);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -746,7 +764,6 @@ final class expression_statement_node extends statement_node
 final class return_node extends statement_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public ?expression_node $expression = null;
 
@@ -769,10 +786,13 @@ final class return_node extends statement_node
 		$worker->prepare_return($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_return($this);
+		$worker->enter($this);
+		if ($this->expression !== null) {
+			$worker->edge($this, $this->expression);
+		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -791,7 +811,6 @@ final class return_node extends statement_node
 final class variable_declaration_node extends statement_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -826,10 +845,14 @@ final class variable_declaration_node extends statement_node
 		$worker->prepare_variable_declaration($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_variable_declaration($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->type_syntax);
+		if ($this->initializer !== null) {
+			$worker->edge($this, $this->initializer);
+		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -842,7 +865,6 @@ final class variable_declaration_node extends statement_node
 final class array_type_node extends type_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Preparation_Facts;
 
 	/** Canonical type alias; clearing syntax facts must not destroy or mutate the type definition. */
@@ -871,10 +893,12 @@ final class array_type_node extends type_node
 		$worker->prepare_array_type($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_array_type($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->element_type);
+		$worker->edge($this, $this->count);
 	}
 
 	public function require_preparation(): type_definition
@@ -886,7 +910,6 @@ final class array_type_node extends type_node
 final class array_literal_node extends expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public Storage $elements /** Storage<expression_node> */;
 
@@ -909,17 +932,20 @@ final class array_literal_node extends expression_node
 		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->elements));
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_array_literal($this);
+		$worker->enter($this);
+		$items /** Storage<expression_node> */ = $this->elements;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
 	}
 }
 
 final class index_node extends assignable_expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 
 	public expression_node $base;
 	public expression_node $index;
@@ -937,17 +963,18 @@ final class index_node extends assignable_expression_node
 		return new index_children_iterator($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_index($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->base);
+		$worker->edge($this, $this->index);
 	}
 }
 
 final class struct_node extends declaration_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -998,10 +1025,14 @@ final class struct_node extends declaration_node
 		$worker->prepare_struct($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_struct($this);
+		$worker->enter($this);
+		$items /** Storage<field_node> */ = $this->fields;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -1014,7 +1045,6 @@ final class struct_node extends declaration_node
 final class field_node extends ast_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -1048,10 +1078,11 @@ final class field_node extends ast_node
 		$worker->prepare_field($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_field($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->type_syntax);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -1064,7 +1095,6 @@ final class field_node extends ast_node
 final class field_access_node extends assignable_expression_node
 {
 	use Node_Source_Span;
-	use Node_Inspection_Parent;
 	use Collected_Occurrence;
 	use Preparation_Facts;
 
@@ -1098,10 +1128,11 @@ final class field_access_node extends assignable_expression_node
 		$worker->prepare_field_access($this);
 	}
 
-	/** Dispatch only; the maintenance worker owns traversal and lifecycle policy. */
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$worker->visit_field_access($this);
+		$worker->enter($this);
+		$worker->edge($this, $this->base);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */

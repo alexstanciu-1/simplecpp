@@ -136,7 +136,7 @@ final class collected_file
 		$this->entries = new Storage /** Storage<collected_name> */();
 	}
 
-	/** Advance provenance only for this mutable file; old tokens remain owned by the parser cursor. */
+	/** Select the current input; retained occurrences still address its appended token storage. */
 	public function set_tokens(token_list $tokens): void
 	{
 		$this->tokens = $tokens;

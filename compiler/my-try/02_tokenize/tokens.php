@@ -62,6 +62,7 @@ final class Tokenizer
 			$tokens[] = $span;
 		}
 
+		$result->end_token = q_count($tokens);
 		return $result;
 	}
 

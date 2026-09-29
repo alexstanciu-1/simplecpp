@@ -139,7 +139,7 @@ else
 		{
 			$compiler->init($paths);
 			$compiler->exec_llvm();
-			// Exercise private-link traversal natively as well as the named syntax aliases.
+			// Exercise lazy typed inspection without parent or sibling links.
 			$syntax_files /** Storage<parsed_file> */ = Model::syntax_files();
 			foreach ($syntax_files as $syntax_file)
 			{
@@ -148,36 +148,13 @@ else
 				for ($node_index = 0; $node_index < q_count($queue); $node_index++)
 				{
 					$syntax_node = $queue[$node_index];
-					$children /** Storage<ast_node> */ = $syntax_node->children_snapshot();
-					$named /** Storage<ast_node> */ = Syntax_Nodes::child_nodes($syntax_node);
-					if (q_count($children) !== q_count($named)) {
-						throw new \LogicException('AST traversal lost named children');
-					}
-					foreach ($children as $child_index => $child)
+					$position = 0;
+					foreach ($syntax_node->children() as $child_index => $child)
 					{
-						if (($child !== $named[$child_index]) || ($child->child_position() !== $child_index) || ($child->parent() !== $syntax_node)) {
-							throw new \LogicException('AST child identity or parent position changed');
+						if ($child_index !== $position) {
+							throw new \LogicException('Inspection cursor lost sequential child keys');
 						}
-						if ($child_index === 0) {
-							if (($child->prev() !== null) || ($syntax_node->first_child() !== $child)) {
-								throw new \LogicException('Invalid AST first child');
-							}
-						}
-						else {
-							if ($child->prev() !== $children[$child_index - 1]) {
-								throw new \LogicException('Invalid AST previous sibling');
-							}
-						}
-						if ($child_index + 1 === q_count($children)) {
-							if ($child->next() !== null) {
-								throw new \LogicException('Invalid AST last child');
-							}
-						}
-						else {
-							if ($child->next() !== $children[$child_index + 1]) {
-								throw new \LogicException('Invalid AST next sibling');
-							}
-						}
+						$position++;
 						$queue->append($child);
 					}
 				}

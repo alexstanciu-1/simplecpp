@@ -76,8 +76,7 @@ backend. The two implementations remain behaviorally separate in this isolation 
 parsed_file.root owns a file_node. A property-free abstract ast_node defines common
 operation/inspection contracts; concrete nodes own their named syntax fields and
 uint32 spans. There is no separate payload object or sibling chain. Typed worker
-hooks traverse owned fields. The parser attaches inspection parents before publishing
-completed syntax. See [AST layout](ast_layout.md) for ownership and traversal rules.
+hooks traverse owned fields. Syntax owns no inspection-parent links. See [AST layout](ast_layout.md) for ownership and traversal rules.
 
 In the incremental parser, parsed_file.scopes owns the file declaration scope and
 replacement executable scopes. Function specializations own retained signature
@@ -163,8 +162,8 @@ or change retained ownership. See [binding details](../../../../specs/portabilit
 
 The property-free abstract `ast_node` supplies common contracts. Concrete nodes own
 narrow typed fields, applicable facts and exact fixed kind methods. Workers consume
-those fields through typed dispatch; `children()` and `parent()` are inspection
-APIs, not processing paths. No payload accessors, sibling links or parallel child
+those fields through typed dispatch; `children()` is an inspection
+API, not a processing path. Inspection parents are deferred until needed. No payload accessors, sibling links or parallel child
 membership remain. See [AST layout](ast_layout.md).
 
 collected_name.collection names the owning occurrence collection. collected_file
@@ -332,4 +331,14 @@ Generated names use role prefixes and normalized source names in the currently
 supported scopes. They are deterministic across fresh/incremental runs and independent
 of token positions. Function-body temporary counters are independent. Namespace,
 overload and richer shadowing support must review naming when those features arrive.
-Output partitioning and old/new token ownership remain explicit planning debts.
+Output partitioning remains deferred. Token/source storage now appends new inputs;
+retained nodes keep their indexes until post-output cleanup. See the appended-token
+section in the incremental strategy for ownership and failure handling.
+
+
+Maintenance traversal is node-owned: specialized `maintain()` methods enumerate
+named owning syntax fields. Transient workers implement node entry, child-edge
+handling and additional token-index mapping. Edge handling controls recursion;
+inspection-parent links and their attachment worker are absent. Preparation and generation retain
+their existing specialized worker dispatch. No generic maintenance visitor class
+or inspection iterator is needed for these operations.

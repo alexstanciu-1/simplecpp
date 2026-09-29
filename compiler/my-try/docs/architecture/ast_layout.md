@@ -42,7 +42,7 @@ enclosing lexical scope. Ordinary nodes do not duplicate that link.
 
 The file scope and file executable-body scope are distinct. The latter's variables
 are file-local. Function-body scopes parent to signature scopes, which parent to
-the file scope. AST inspection parents never determine lexical lookup.
+the file scope. AST nodes have no inspection-parent links; lexical lookup follows scopes.
 
 Each executable body owns one optional canonical preparation work record.
 Unchanged bodies keep syntax, scope, occurrences and facts. Replaced bodies receive
@@ -59,8 +59,12 @@ node or iterator does not by itself authorize semantic work after retirement.
 ## Specialization dispatch
 
 Nodes forward `prepare`, `generate_cpp` and `maintain` to typed worker methods.
-`Syntax_Preparation`, `CPP_Syntax` and maintenance workers own algorithms, contexts
-and traversal over named fields. Unsupported operations fail explicitly. There is
+`Syntax_Preparation` and `CPP_Syntax` own their algorithms, contexts and traversal.
+For maintenance, each node enumerates its own named owning fields in grammar order;
+workers implement `enter`, `edge` and `token_index`. The edge callback chooses
+whether to recurse. No abstract maintenance visitor or per-kind visitor methods
+remain. Token-index remapping is supplied by the worker, including extra sites
+such as a binary operator. Unsupported operations fail explicitly. There is
 no fallback that silently walks unsupported syntax.
 
 The `Preparation_Facts` trait groups access, replacement and local clearing. Each
@@ -68,13 +72,16 @@ concrete node retains its exact nullable field and required typed accessor. Requ
 same-type nullable/weak returns use the checked return boundary; actual narrowing
 still uses `object_cast`. `prepared_assignment` belongs to preparation structures.
 
-`Syntax_Attachment` establishes inspection parents; `Syntax_Relocation` updates
-source spans and retained occurrence revisions. `Preparation_Cleanup` visits typed
-owned edges and clears local facts. None uses the debug iterator to run compilation.
+Reused syntax retains indexes
+into appended token/source storage during compilation; collection stamps retained
+occurrences by reused intervals. `Token_Cleanup` normalizes indexes after output
+or before the next scan. `Preparation_Cleanup` visits typed owned edges and clears
+local facts. None uses the debug iterator to run compilation.
 
 ## Inspection
 
-`parent()` is a weak inspection observer. `children()` returns an independent lazy
+Inspection parents are deferred until a concrete consumer needs them. There is no
+parent field, accessor or attachment pass. `children()` returns an independent lazy
 `child_iterator_i`. Composite cursors retain their source, and single-list cursors
 retain the original collection. No child lists are copied. Order is grammar order;
 file inspection groups declarations before its executable body. Mutation during
@@ -90,5 +97,5 @@ compiler portability from those proofs.
 
 - Punctuation/token storage and inspection allocation costs require later profiling.
 - Native devirtualization and memory/layout gains are not claimed.
-- Old/new token ownership, C++ partitioning and parked LLVM index-map convergence
-  remain in the incremental/v0.2 planning documents.
+- Appended-token cleanup scheduling/performance, C++ partitioning and parked LLVM
+  index-map convergence remain in the incremental/v0.2 planning documents.

@@ -24,6 +24,9 @@ $base = new \ReflectionClass(ast_node::class);
 if (!$base->isAbstract() || ($base->getProperties() !== [])) {
 	throw new \LogicException('AST base must remain abstract and property-free');
 }
+if (method_exists(ast_node::class, 'parent') || method_exists(ast_node::class, 'set_inspection_parent')) {
+	throw new \LogicException('Unused inspection parent API returned');
+}
 $type = new named_type_node();
 $type->name = 'int';
 $type->set_span(0, 1);
@@ -66,11 +69,10 @@ rejected(function () use ($target, $entry): void {
 if ($target->occurrence() !== $entry) {
 	throw new \LogicException('Occurrence attachment lost identity');
 }
-Syntax_Attachment::publish($assignment);
 $cursor = $assignment->children();
 $other = $assignment->children();
-if (($cursor->current() !== $target) || ($other->current() !== $target) || ($target->parent() !== $assignment)) {
-	throw new \LogicException('Inspection lost child order or parent ownership');
+if (($cursor->current() !== $target) || ($other->current() !== $target)) {
+	throw new \LogicException('Inspection lost child order');
 }
 $cursor->next();
 if (($cursor->current() !== $literal) || ($other->current() !== $target)) {
@@ -84,6 +86,48 @@ rejected(function () use ($cursor): void {
 	$cursor->rewind();
 }, \LogicException::class);
 
+/** Record traversal independently of inspection iterators, including additional token sites. */
+final class Maintenance_Trace implements node_maintenance_worker_i
+{
+	public array $nodes /** vector<ast_node> */ = [];
+	public bool $recursive = false;
+
+	public function enter(ast_node $node): void
+	{
+		$this->nodes[] = $node;
+	}
+
+	public function edge(ast_node $parent, ast_node $child): void
+	{
+		if ($this->recursive) {
+			$child->maintain($this);
+		}
+	}
+
+	public function token_index(int $index): int
+	{
+		return $index + 10;
+	}
+}
+
+$binary = new binary_expression_node();
+$binary->left = $assignment;
+$right = new integer_literal_node();
+$right->set_span(4, 5);
+$binary->right = $right;
+$binary->operator_token_index = 3;
+$binary->set_span(1, 5);
+$trace = new Maintenance_Trace();
+$binary->maintain($trace);
+if (($trace->nodes !== [$binary]) || ($binary->operator_token_index !== 13)) {
+	throw new \LogicException('Maintenance ignored shallow traversal or an additional token site');
+}
+$trace->nodes = [];
+$trace->recursive = true;
+$binary->maintain($trace);
+if (($trace->nodes !== [$binary, $assignment, $target, $literal, $right]) || ($binary->operator_token_index !== 23)) {
+	throw new \LogicException('Node-owned maintenance lost grammar order or visited a node twice');
+}
 // Work guards use canonical owner state; no per-expression deletion fields are needed.
 $source = new collected_file(new token_list());
 $owner = new preparation_owner(preparation_kind::file_body, $source);

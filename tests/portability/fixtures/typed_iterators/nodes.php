@@ -10,12 +10,12 @@ abstract class ast_node
 
 interface optional_node_i
 {
-	public function parent(): ?ast_node;
+	public function optional_node(): ?ast_node;
 }
 
 final class parameter_node extends ast_node implements optional_node_i
 {
-	public function parent(): ?ast_node
+	public function optional_node(): ?ast_node
 	{
 		return null;
 	}

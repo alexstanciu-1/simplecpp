@@ -45,7 +45,6 @@ final class AST_Test
 		self::check($node->start_token() <= $node->end_token());
 		$payloads->attach($node);
 		foreach ($node->children() as $child) {
-			self::check($child->parent() === $node);
 			self::visit($child, $syntax, $nodes, $payloads);
 		}
 	}

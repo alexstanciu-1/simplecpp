@@ -26,12 +26,11 @@ function parse_update(Compiler $compiler, source_record $source, string $content
 	$compiler->parse();
 }
 
-/** Check relinked ownership and produce a fresh/incremental structural comparison. */
+/** Produce a fresh/incremental comparison through owning syntax children. */
 function syntax_shape(ast_node $node): array
 {
 	$result = [$node->kind()->name, $node->start_token(), $node->end_token()];
 	foreach ($node->children() as $child) {
-		parse_check($child->parent() === $node, 'Broken inspection parent');
 		$result[] = syntax_shape($child);
 	}
 	return $result;

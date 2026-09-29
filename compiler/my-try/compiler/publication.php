@@ -29,14 +29,23 @@ final class Source_Publication
 		$record->file->tokens = $parsed->tokens;
 	}
 
-	/** Publish token generations or retain the mutable parse, including failed-file retry state. */
+	/** Publish appended token input or retain the mutable parse, including failed-file retry state. */
 	public static function publish_stage(source_work $work, frontend_operation $operation): void
 	{
 		if ($operation === frontend_operation::scan)
 		{
 			$tokens = object_cast($work->tokens, token_list::class);
 			$record = $work->record;
-			$record->previous_tokens = $record->tokens;
+			if ($record->tokens !== null)
+			{
+				try {
+					Token_Buffer::append($tokens, $record->tokens);
+				}
+				catch (\Throwable $error) {
+					Model::$rebuild_required = true;
+					throw $error;
+				}
+			}
 			$record->tokens = $tokens;
 			$record->file = $tokens->file;
 			$record->file->tokens = $tokens;

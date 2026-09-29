@@ -18,7 +18,7 @@ None was replaced with a generic node/payload, common children list or dummy fac
 | `function_body_node` | Typed statements; observed local scope; canonical body work and syntax change flag |
 | `block_node` | Typed statements; no extra lexical scope |
 | `named_type_node` | Saved name, occurrence, nullable canonical type facts |
-| `punctuation_node`, `comment_node` | Source span and inspection parent; no semantic data |
+| `punctuation_node`, `comment_node` | Source span; no semantic data |
 | `integer_literal_node`, `float_literal_node`, `boolean_literal_node` | Specialized nullable expression facts; bool also saves its value |
 | `variable_reference_node` | Saved name, occurrence, specialized nullable reference facts |
 | `call_node` | Saved name, typed template arguments and expressions, occurrence and call facts |
@@ -42,9 +42,9 @@ boundaries and native collection annotations preserve the intended categories.
 
 ## Deliberate implementation differences
 
-1. **Common provenance methods:** `set_span`, `start_token`, `end_token` and
-   `set_inspection_parent` are abstract methods on `ast_node`, implemented by the
-   concrete traits. Generic relocation/attachment can access provenance without
+1. **Common provenance methods:** `set_span`, `start_token` and `end_token`
+   are abstract methods on `ast_node`, implemented by the
+   concrete traits. Generic cleanup can access provenance without
    requiring base properties or dynamic field access. Span mutation checks uint32
    bounds before changing either endpoint.
 2. **Optional occurrence access:** the base has a null `optional_occurrence` and
@@ -155,3 +155,18 @@ Focused compiler Storage typing, portability Storage bindings and strict STAN
 discipline regressions pass. Existing advisory STAN diagnostics remain; these are
 successful normal STAN-enabled builds, not a zero-diagnostic claim. No complete
 native compiler conversion/build/test suite was run.
+
+## Follow-up: appended tokens
+
+The subsequent token-ownership simplification removes `Syntax_Relocation` from
+parsing. Reused syntax keeps old indexes into appended token/source storage;
+collection retains its occurrences by reused intervals. `Token_Cleanup` performs
+normalization after output or before the next scan. Maintenance traversal now lives directly in each specialized node. Workers supply
+`enter`, `edge` and `token_index`; `Syntax_Maintenance` and its 24 visitor methods
+have been removed. Cleanup workers recurse. Inspection-parent fields/accessors, parser attachment
+calls and `Syntax_Attachment` have since been removed: no compiler process needed
+them. The frozen proposal retains this historical design; reintroducing parents
+requires a concrete consumer. Lexical scope parents are independent and unchanged.
+This changes ownership and removes a dispatch layer; no performance gain is claimed
+without native measurement.
+See [the incremental strategy](incremental_strategy.md#appended-token-storage-and-deferred-cleanup--implemented).

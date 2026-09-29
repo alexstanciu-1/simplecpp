@@ -67,7 +67,7 @@ try
 	catch (\RuntimeException $expected) {
 	}
 
-	// A failed candidate cannot mutate the published bytes, syntax, or global contributions.
+	// Successful lexing publishes the new input; a failed parse retains an incomplete graph.
 	$kept = Model::syntax_files()[0];
 	file_put_contents($a, 'function broken(');
 	try {
@@ -77,7 +77,7 @@ try
 	catch (\RuntimeException $expected) {
 	}
 	sync_check(Model::syntax_files()[0] === $kept && !$kept->complete, 'Failed parse did not retain incomplete mutable identity');
-	sync_check(Model::$modules[$directory]->sources['a.phs']->file->content === $kept->tokens->content, 'Failed candidate changed published source');
+	sync_check(Model::$modules[$directory]->sources['a.phs']->file->content === substr($kept->tokens->content, $kept->tokens->content_offset), 'Failed candidate changed published source');
 	sync_check(Model::$llvm_files->is_empty(), 'Failed update retained generated output');
 
 	// Duplicate definitions survive sync; deleting one makes lookup unambiguous again.

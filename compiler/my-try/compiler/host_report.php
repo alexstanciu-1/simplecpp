@@ -14,8 +14,9 @@ final class Host_Report
 			}
 			echo "\nTokens: " . htmlspecialchars($tokens->file->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			echo "offset\tlength\ttext\n";
-			foreach ($tokens->tokens as $token) {
-				echo $token->offset . "\t" . $token->length . "\t" . htmlspecialchars($token->text(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
+			for ($index = $tokens->first_token; $index < $tokens->end_token; $index++) {
+				$token = $tokens->tokens[$index];
+				echo ((int)$token->offset - $tokens->content_offset) . "\t" . $token->length . "\t" . htmlspecialchars($token->text(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			}
 		}
 		foreach (Model::syntax_files() as $syntax) {
