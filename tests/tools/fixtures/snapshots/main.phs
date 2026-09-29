@@ -1,0 +1,17 @@
+function snapshot(string $path, int $mtime, int $size): result<string> {
+	return fs_read_snapshot($path, $mtime, $size);
+}
+function check_snapshot(): bool {
+	$text string;
+	$err error;
+	if (!take($text, $err, snapshot("unchanged", 1700000000, 6)) || $text !== "abcdef") { return false; }
+	if (!take($text, $err, snapshot("empty", 1700000000, 0)) || $text !== "") { return false; }
+	if (take($text, $err, snapshot("missing", 1700000000, 0))) { return false; }
+	if (take($text, $err, snapshot("unchanged", 1700000001, 6))) { return false; }
+	if (take($text, $err, snapshot("unchanged", 1700000000, 5))) { return false; }
+	if (take($text, $err, snapshot("link", 1700000000, 6))) { return false; }
+	if (take($text, $err, snapshot("directory", 1700000000, 0))) { return false; }
+	if (take($text, $err, snapshot("unchanged", 1700000000, -1))) { return false; }
+	return true;
+}
+echo check_snapshot() ? "snapshot-ok\n" : "snapshot-failed\n";

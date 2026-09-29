@@ -300,15 +300,23 @@ final class Converter {
 					if (!$containerReturn) { $this->fail($line, 'container interface parameters require a separately proved contract'); }
 					$type = $this->containerAnnotation($this->significant());
 				}
+				$objectHash = $type === '\\SplObjectStorage';
+				if ($objectHash) {
+					if (!$containerReturn) { $this->fail($line, 'object hash interface parameters require a separately proved contract'); }
+					$type = $this->objectHashAnnotation($this->significant());
+				}
 				$nullable = str_starts_with($type, 'nullable<');
-				$declaration = ($container || $storage || $nullable) ? $parameter[1] . ' ' . $type : $type . ' ' . $parameter[1];
+				$declaration = ($container || $storage || $objectHash || $nullable) ? $parameter[1] . ' ' . $type : $type . ' ' . $parameter[1];
 				$separator = $this->significant();
 				if ($separator[1] === '=') {
 					$value = $this->significant();
-					if (!$nullable || strtolower($value[1]) !== 'null') {
-						$this->fail($value[2], 'method parameter defaults require an explicit nullable type and null');
+					if ($nullable && strtolower($value[1]) === 'null') {
+						$declaration .= ' = null';
+					} elseif ($type === 'bool' && in_array(strtolower($value[1]), ['true', 'false'], true)) {
+						$declaration .= ' = ' . strtolower($value[1]);
+					} else {
+						$this->fail($value[2], 'method parameter defaults require nullable null or a matching boolean literal');
 					}
-					$declaration .= ' = null';
 					$optionalSeen = true;
 					$separator = $this->significant();
 				} elseif ($optionalSeen) {
@@ -1187,7 +1195,7 @@ final class Converter {
 				continue;
 			}
 			$allowed = [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_VARIABLE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING,
-				T_COALESCE, T_MATCH, T_SWITCH, T_CASE, T_DEFAULT, T_DOUBLE_ARROW, T_DO, T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
+				T_COALESCE, T_MATCH, T_SWITCH, T_CASE, T_DEFAULT, T_DOUBLE_ARROW, T_DO, T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_IS_SMALLER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
 			if ($id === T_STRING && in_array(strtolower($text), ['true', 'false', 'null'], true)) {
 				// Literal keywords only; arbitrary calls/names are outside this slice.
 			} elseif (!in_array($id, $allowed, true) && !($id === 0 && in_array($text, ['=', ';', ',', '?', ':', '!', '.', '+', '-', '*', '/', '%', '<', '>'], true))) {

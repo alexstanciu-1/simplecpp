@@ -8,7 +8,8 @@ require_once __DIR__ . '/s2s_proof.php';
 function s2s_snapshot(parsed_file $syntax): string
 {
 	$seen = new \SplObjectStorage();
-	$visit = function ($value) use (&$visit, $seen) {
+	$visit = function ($value) use (&$visit, $seen)
+	{
 		if (is_array($value)) {
 			return array_map($visit, $value);
 		}

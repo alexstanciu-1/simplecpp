@@ -179,10 +179,8 @@ try
 	preparation_edit($compiler, $c, '$again = 4; return $again;');
 	$compiler->prepare();
 	preparation_check($c->parsed->collection->body_preparation->state === preparation_state::ready, 'Deleted file could not reappear after cleanup');
-
 }
-finally
-{
+finally {
 	foreach (glob($directory . '/*') as $path) {
 		unlink($path);
 	}

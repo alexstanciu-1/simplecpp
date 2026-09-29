@@ -49,7 +49,8 @@ final class Compiler_Lifecycle
 		if (self::$syntax_initialized) {
 			self::discard_preparation_links();
 		}
-		foreach (Model::$modules as $module) {
+		foreach (Model::$modules as $module)
+		{
 			if (!$retain_inputs) {
 				$module->sources = new Keyed_Storage /** Keyed_Storage<source_record> */();
 				continue;
@@ -113,7 +114,8 @@ final class Compiler_Lifecycle
 	/** Clear node-owned facts before releasing preparation/output roots or replacing syntax. */
 	public static function reset_preparation(): void
 	{
-		if (self::$syntax_initialized) {
+		if (self::$syntax_initialized)
+		{
 			foreach (Model::syntax_files() as $parsed)
 			{
 				Preparation_Cleanup::tree($parsed->root);

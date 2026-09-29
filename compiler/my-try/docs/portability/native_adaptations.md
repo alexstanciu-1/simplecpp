@@ -345,3 +345,126 @@ This used the current repository toolchain; prior complete native checkpoints us
 the separate `/tmp/scpp-native-244` overlay. The diagnostics require investigation
 of toolchain/indexing differences before attributing them to compiler semantics.
 No STAN bypass, whole-compiler native execution, or verified-pin update was made.
+
+
+## Retained C++ generation checkpoint — 3b55d9e9
+
+The implementation was committed and pushed before the requested guidelines/native
+pass. Block layout was normalized with token-preservation checks; all 93 PHP sources
+passed the style checker. The complete PHP suite passed all 27 test files after its
+model graph checker was extended to visit identity-map keys and values.
+
+Native conversion exposed three bounded syntax gaps: `<=`, annotated object-hash
+method parameters, and matching boolean literal parameter defaults. These now convert;
+`tests/portability/object_hashes.php` covers the added forms. A fragment's unused
+negative initial version sentinel was replaced by zero; dirty state controls whether
+its completion version is valid. Native probes now use the stable generated names.
+
+All 60 compiler source files convert. The normal native build then stops at STAN with
+37 compile-errors, predominantly unresolved calls to methods present in the converted
+source (`ast_node::payload`, `Parser::parse`, Storage methods), plus `fs_read_snapshot`
+and a downstream unknown enum operand. This resembles the earlier toolchain/indexing
+blocker; its cause has not been established. No STAN bypass was used. C++ compilation,
+native compiler execution and native parity tests were not reached.
+
+Evidence: `/tmp/my-try-native-3b55d9e9/logs-5/` (conversion and build),
+`/tmp/my-try-php-3b55d9e9-final/summary.json` (27 PHP suites). Formatting and the
+native-pass fixes follow the implementation commit and are not part of that commit.
+
+### Resolution investigation: missing candidate-toolchain capabilities
+
+The unresolved methods are downstream diagnostics, not evidence that the methods
+are absent from the compiler. Twenty cached file summaries contain
+`STAN extraction failed: syntax error, unexpected token ">"` and empty class/function
+inventories. Direct extraction of `03_parse/structures.phs` fails at the typed
+`new Storage<ast_node>()` construction. A minimal InputLoader probe reproduces this
+for both `Storage<Row>` and `Keyed_Storage<Row>`; `Key_Storage_List<Row>` parses.
+The current constructor scanner recognizes only the latter collection family.
+
+The current checkout also lacks native `storage.hpp`/`keyed_storage.hpp`, their type
+mapping, and `fs_read_snapshot` support. Historical successful proof manifests name
+`/tmp/scpp-native-244` with revision `unversioned-d8ddde93-overlay` and include those
+runtime headers. That temporary checkout is no longer available here. Existing Git
+history contains storage work (`7eee1b79`, with predecessors) and checked source reads
+(`361b1e97`); neither is an ancestor of this branch. The overlay base `d8ddde93` is also
+not an ancestor. Its uncommitted adaptations must not be assumed reconstructible by
+cherry-picking just those commits.
+
+An experimental namespace-context lookup change was discarded: it did not address
+missing extraction inventories. No diagnostic suppression or STAN bypass is warranted.
+The integration was approved; its outcome and remaining blockers follow below.
+
+
+### Approved candidate integration and remaining initialization findings
+
+Recovered PR #244 head `d8ddde93b04d0e23d295e30f662c3a81b0d50fd1` and integrated
+its Storage/Keyed_Storage source bindings and runtime wrappers alongside the
+current Key_Storage_List. Integrated `fs_read_snapshot` from `361b1e97` with its
+runtime registration, concrete shallow signature, Linux implementation and tests.
+Unrelated historical process/file-lock and generic callback-call changes were
+excluded. `StanCollectionTypeResolver` owns the restored collection type/method
+metadata and participates in both STAN cache fingerprints.
+
+All converted compiler files now extract successfully. The original missing
+inventories and unresolved-call diagnostics are gone. The strict Storage fixture
+builds and runs, covering nested/static collections, aliases, retained handles,
+holes, exact keys and ordering, runtime errors and compile rejections. Its assertion
+helper uses debug-exit plus the harness's required success output, avoiding an
+unrelated namespaced Exception-base lowering failure in the historical fixture.
+The strict snapshot fixture also builds/runs, including bad argument rejection.
+
+The normal whole-compiler build still stops at STAN, before C++ emission, with
+23 findings (`/tmp/my-try-native-integrated/logs-3/native-build.stderr`):
+
+- 22 initialization diagnostics. These include constructor delegation through
+  `Parser::init`, required specialization fields populated by the parser before
+  publication, and the Preparation_Worker/CPP_Generator constructor assignments.
+  STAN's current method baseline tracks direct constructor assignments, not the
+  parser's staged publication protocol. The map-construction and null-coalescing
+  assignment cases need separate minimal extraction/analysis proofs.
+- One unresolved `mixed` receiver while updating candidates through nested
+  object-key maps in `Preparation_Worker::changed_lookups`.
+
+These are a separate initialization/type-analysis slice. No dummy field defaults,
+nullable weakening, diagnostic suppression or STAN bypass were introduced.
+A truthful resolution needs agreement on required-field construction/publication
+and the analysis it should support, plus focused regressions for valid and invalid
+reads. Constructor delegation and expression-summary gaps may be bounded fixes;
+modeling external staged initialization is a broader decision. Native compiler
+execution and parity tests remain unverified.
+
+Integration evidence: `/tmp/my-try-storage-integration-2.log`,
+`/tmp/my-try-snapshot-integration-2.log`, and the native build log above.
+These working-tree changes are separate from commit `3b55d9e9`.
+
+Focused integration regressions passed: pre-tokenizer fixtures, strict runtime
+catalog, Storage typing, STAN diagnostics session, and the native snapshot test
+(including its injected race/error checks). The latter was compiled directly with
+`clang++ -std=c++23 -O0 -g -Iruntime/include tests/runtime/native/test_snapshot.cpp
+runtime/include/modules/filesystem/snapshot.cpp -o /tmp/my-try-test-snapshot`
+and exited successfully. These checks supplement the earlier 27 passing PHP
+compiler suites; they do not bypass the remaining whole-compiler STAN gate.
+
+
+### Bounded STAN inference follow-up
+
+Property assignment extraction now uses the existing expression descriptor model
+instead of dropping writes whose RHS is not a simple alias, chain, literal or
+constructor. Coalescing is distinguished from a ternary: only its left arm loses
+null. RHS initialization checks visit nested arithmetic/conditional descriptors
+before recording the write, preserving self-read diagnostics. Member receivers
+accept authored `shared<T>` as well as lowered `shared_p<T>`, including writes
+through nested object-key maps. No compiler records or defaults changed.
+
+`tests/tools/test_scpp_stan_bounded_inference.php` proves constructor empty-map and
+coalescing assignments, nested shared-key writes, rejected wrong property types,
+nullable fallback/ternary boundaries, partial initialization and self-read errors.
+The existing STAN diagnostics-session suite also passes.
+
+The normal compiler build now reports 17 findings, down from 23:
+`/tmp/my-try-native-integrated/logs-5/native-build.stderr`. The map-key receiver and
+direct constructor assignment findings are resolved. Remaining findings concern
+Parser's delegated init and specialization fields populated externally by parsing.
+Delegation requires modeling method initialization effects; external field setup
+requires the previously deferred publication-policy decision. Neither is bypassed.
+Native compiler execution remains blocked at STAN.

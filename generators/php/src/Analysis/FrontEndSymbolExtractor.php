@@ -1559,33 +1559,9 @@ final class FrontEndSymbolExtractor
 				'statement_kind' => 'assign',
 			];
 
-			$expr = $payload['expr'] ?? null;
-			$alias = $this->extractAssignedVariableName($expr);
-			if ($alias !== null) {
-				$assignment['source'] = ['kind' => 'alias', 'source' => $alias];
-				$assignments[] = $assignment;
-				continue;
-			}
-
-			$chain = $this->extractChainDescriptor($expr, $statement->line);
-			if ($chain !== null) {
-				$assignment['source'] = ['kind' => 'chain', 'chain' => $chain];
-				$assignments[] = $assignment;
-				continue;
-			}
-
-			$type = $this->inferLiteralType($expr);
-			if ($type !== null) {
-				$assignment['source'] = ['kind' => 'type', 'type' => $type];
-				$assignments[] = $assignment;
-				continue;
-			}
-
-			$type = $this->inferConstructedClassType($expr);
-			if ($type !== null) {
-				$assignment['source'] = ['kind' => 'type', 'type' => $type];
-				$assignments[] = $assignment;
-			}
+			// Keep the assignment even when its value needs descriptor-based inference.
+			$assignment['source'] = $this->describeExpression($payload['expr'] ?? null, $statement->line);
+			$assignments[] = $assignment;
 		}
 		return $assignments;
 	}
@@ -2416,6 +2392,7 @@ final class FrontEndSymbolExtractor
 		}
 		return [
 			'kind' => 'conditional',
+			'coalesce' => true,
 			'if_true' => $left,
 			'if_false' => $right,
 		];

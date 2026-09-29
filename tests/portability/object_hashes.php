@@ -73,3 +73,20 @@ $seen = [];
 foreach ($keys as $key /** @object-key */) { $seen[] = $key; }
 ensure($seen === [$key1, $key2], 'PHP key iteration changed identity or read values');
 echo "Object-key foreach: explicit carrier lowering and PHP identity passed\n";
+
+// Annotated method parameters use the same explicit carrier contract as returns/properties.
+$method = <<<'SOURCE'
+<?php
+namespace identity_proof;
+final class Key {}
+final class Check {
+    public function read(\SplObjectStorage $rows /** hash<int, shared<Key>> */, Key $key, bool $enabled = false): bool {
+        return $rows[$key] <= 7;
+    }
+}
+SOURCE;
+$lowered = $converter->convert($method, 'object_parameter.php');
+ensure(str_contains($lowered, '$rows hash<int, shared<Key>>'), 'Object hash parameter annotation was lost');
+ensure(str_contains($lowered, 'bool $enabled = false'), 'Boolean default was lost');
+ensure(str_contains($lowered, '<= 7'), 'Less-or-equal comparison was lost');
+echo "Object hash method parameters and less-or-equal: conversion passed\n";

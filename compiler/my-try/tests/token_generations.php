@@ -69,8 +69,7 @@ try
 	$compiler->tokenize();
 	generation_check(($a->tokens === $current) && ($a->previous_tokens === $first), 'Deleted source was tokenized or discarded prematurely');
 }
-finally
-{
+finally {
 	foreach (glob($directory . '/*') as $file_path) {
 		unlink($file_path);
 	}

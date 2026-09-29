@@ -62,8 +62,7 @@ final class Parser_Run
 	{
 		$this->tokens = $tokens;
 		$this->scopes = new Storage /** Storage<scope> */();
-		if ($previous === null)
-		{
+		if ($previous === null) {
 			$file_scope = $target_scope ?? new scope();
 			$root = Syntax_Nodes::make(node_kind::file, 0, 0, new block_structure($file_scope));
 			$collection = new collected_file($tokens);
@@ -97,8 +96,7 @@ final class Parser_Run
 		$this->parsed->scopes = $this->scopes;
 		$collection = $this->parsed->collection;
 		$revision = (int)$collection->revision + 1;
-		if ($revision > 4294967295)
-		{
+		if ($revision > 4294967295) {
 			$entries /** Storage<collected_name> */ = $collection->entries;
 			foreach ($entries as $entry) {
 				$entry->revision = 0;
@@ -132,8 +130,7 @@ final class Parser_Run
 			if ($old_cursor === null) {
 				$body_changed = true;
 			}
-			else
-			{
+			else {
 				$old /** ast_node */ = $old_cursor;
 				if (!$this->same_tokens((int)$old->token_index, (int)$old->end_token_index, $start, $this->position)) {
 					$body_changed = true;
@@ -217,7 +214,8 @@ final class Parser_Run
 	private function retain_tree(ast_node $node, int $delta, bool $discard): void
 	{
 		$entry = $node->payload()->optional_occurrence();
-		if ($entry !== null) {
+		if ($entry !== null)
+		{
 			$occurrence /** collected_name */ = $entry;
 			if ($discard) {
 				$occurrence->revision = 0;
@@ -242,8 +240,7 @@ final class Parser_Run
 	/** Declarations do not participate in the executable-body order comparison. */
 	private function next_executable(?ast_node $cursor): ?ast_node
 	{
-		while ($cursor !== null)
-		{
+		while ($cursor !== null) {
 			$node /** ast_node */ = $cursor;
 			if (($node->kind() !== node_kind::function_declaration) && ($node->kind() !== node_kind::struct_declaration)) {
 				return $node;
@@ -287,8 +284,7 @@ final class Parser_Run
 			return false;
 		}
 		$old /** token_list */ = $this->old_tokens;
-		while ($start < $end)
-		{
+		while ($start < $end) {
 			if ($old->text_at($old_start) !== $this->tokens->text_at($start)) {
 				return false;
 			}
@@ -532,8 +528,7 @@ final class Parser_Run
 		$body_end = $this->body_end();
 		$function->body_changed = !$this->same_body_text($old_body_start, $old_body_end, $body_start, $body_end);
 		$scopes /** Storage<scope> */ = $this->scopes;
-		if (!$function->body_changed)
-		{
+		if (!$function->body_changed) {
 			$body = $function->body;
 			$body_scope = object_cast($body->payload(), block_structure::class)->lexical_scope();
 			$scopes->append($body_scope);

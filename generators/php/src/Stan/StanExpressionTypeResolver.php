@@ -3016,7 +3016,8 @@ final class StanExpressionTypeResolver
 		if ($kind === 'conditional') {
 			$merged = [];
 			if (is_array($descriptor['if_true'] ?? null)) {
-				$merged = array_merge($merged, $this->resolveBranchDescriptorTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup));
+				$leftTypes = $this->resolveBranchDescriptorTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup);
+				$merged = ($descriptor['coalesce'] ?? false) ? $this->removeNullTypes($leftTypes) : $leftTypes;
 			}
 			if (is_array($descriptor['if_false'] ?? null)) {
 				$merged = array_merge($merged, $this->resolveBranchDescriptorTypes($descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup));
@@ -3512,7 +3513,7 @@ final class StanExpressionTypeResolver
 			return null;
 		}
 		$propertyName = (string) ($propertySegment['name'] ?? '');
-		$receiverInfo = $this->findClassInfo($receiverTypes[0], $classLookup, $selfType);
+		$receiverInfo = $this->findClassInfo($this->unwrapMemberReceiverType($receiverTypes[0]), $classLookup, $selfType);
 		if ($receiverInfo === null || !isset($receiverInfo['property_types'][$propertyName])) {
 			return null;
 		}
@@ -3760,7 +3761,8 @@ final class StanExpressionTypeResolver
 		if ($kind === 'conditional') {
 			$merged = [];
 			if (is_array($descriptor['if_true'] ?? null)) {
-				$merged = array_merge($merged, $this->resolveExpressionDescriptorTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup));
+				$leftTypes = $this->resolveExpressionDescriptorTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup);
+				$merged = ($descriptor['coalesce'] ?? false) ? $this->removeNullTypes($leftTypes) : $leftTypes;
 			}
 			if (is_array($descriptor['if_false'] ?? null)) {
 				$merged = array_merge($merged, $this->resolveExpressionDescriptorTypes($descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup));
@@ -3871,21 +3873,9 @@ final class StanExpressionTypeResolver
 		$sourceTypes = $this->resolveExpressionDescriptorTypes($sourceDescriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 		$elementTypes = [];
 		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-			if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$elementTypes[] = trim((string) $matches[1]);
-				continue;
-			}
-			if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-				if (($parts[0] ?? '') !== '') {
-					$elementTypes[] = $parts[0];
-				}
-				continue;
-			}
-			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$inner = trim((string) $matches[1]);
-				$parts = array_map('trim', explode(',', $inner, 2));
-				$elementTypes[] = count($parts) === 2 ? $parts[1] : $parts[0];
+			$carrier = StanCollectionTypeResolver::carrier($sourceType) ?? StanCollectionTypeResolver::storageCarrier($sourceType);
+			if ($carrier !== null) {
+				$elementTypes[] = $carrier['value'];
 			}
 		}
 		return $this->canonicalizeTypeSet($elementTypes, $classLookup, $selfType);
@@ -4180,7 +4170,7 @@ final class StanExpressionTypeResolver
 			return;
 		}
 
-		$receiverInfo = $this->findClassInfo($receiverTypes[0], $classLookup, $selfType);
+		$receiverInfo = $this->findClassInfo($this->unwrapMemberReceiverType($receiverTypes[0]), $classLookup, $selfType);
 		$propertyName = (string) ($propertySegment['name'] ?? '');
 		if ($receiverInfo === null) {
 			$failureKind = $this->isKnownNonObjectType($receiverTypes[0]) ? 'non_object_receiver_type' : 'unknown_receiver_type';
@@ -4290,6 +4280,18 @@ final class StanExpressionTypeResolver
 		}
 		if ($kind === 'chain' && is_array($descriptor['chain'] ?? null)) {
 			$this->checkChainInitialization($diagnostics, $initializationKeys, $descriptor['chain'], $line, $context, $path, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup);
+		}
+		// RHS reads precede publication of an assignment's initialized state.
+		$children = match ($kind) {
+			'arithmetic', 'comparison' => ['left', 'right'],
+			'conditional' => ($descriptor['coalesce'] ?? false) ? ['if_false'] : ['if_true', 'if_false'],
+			'element' => ['source'],
+			default => [],
+		};
+		foreach ($children as $child) {
+			if (is_array($descriptor[$child] ?? null)) {
+				$this->checkDescriptorInitialization($diagnostics, $initializationKeys, $descriptor[$child], $line, $context, $path, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup);
+			}
 		}
 	}
 
@@ -4701,6 +4703,9 @@ final class StanExpressionTypeResolver
 			return ['fqcn' => $resolved, 'name' => $resolved, 'method_signatures' => $signatures,
 				'method_return_types' => $returns, 'property_types' => [], 'ancestor_types' => []];
 		}
+		if (($storage = StanCollectionTypeResolver::storageClass($resolved)) !== null) {
+			return $storage;
+		}
 		$normalized = strtolower($resolved);
 		if ($normalized === '') {
 			return null;
@@ -4982,7 +4987,7 @@ final class StanExpressionTypeResolver
 				$current = trim((string) $matches[1]);
 				continue;
 			}
-			if (preg_match('/^shared_p\s*<\s*(.+)\s*>$/i', $current, $matches) === 1) {
+			if (preg_match('/^(?:shared|shared_p)\s*<\s*(.+)\s*>$/i', $current, $matches) === 1) {
 				$current = trim((string) $matches[1]);
 				continue;
 			}
@@ -5049,46 +5054,13 @@ final class StanExpressionTypeResolver
 		$sourceTypes = $source !== null
 			? $this->resolveExpressionDescriptorTypes($source, $localTypes, $selfType, $classLookup, $functionLookup)
 			: [];
-		if ($role === 'key') {
-			$keyTypes = [];
-			foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-				if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType) === 1) {
-					$keyTypes[] = 'int';
-					continue;
-				}
-				if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType) === 1) {
-					$keyTypes[] = 'int';
-					continue;
-				}
-				if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-					$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-					$keyTypes[] = count($parts) === 2 ? $parts[1] : 'string';
-				}
-			}
-			return $this->normalizeTypeSet($keyTypes !== [] ? $keyTypes : ['mixed']);
-		}
-		$valueTypes = [];
-		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-			if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$valueTypes[] = trim((string) $matches[1]);
-				continue;
-			}
-			if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-				if (($parts[0] ?? '') !== '') {
-					$valueTypes[] = $parts[0];
-				}
-				continue;
-			}
-			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-				if (count($parts) === 2) {
-					$valueTypes[] = $parts[0];
-				} elseif (count($parts) === 1 && $parts[0] !== '') {
-					$valueTypes[] = $parts[0];
-				}
+		$types = [];
+		foreach ($this->normalizeTypeSet($sourceTypes) as $type) {
+			$carrier = StanCollectionTypeResolver::carrier($type) ?? StanCollectionTypeResolver::storageCarrier($type);
+			if ($carrier !== null) {
+				$types[] = $carrier[$role === 'key' ? 'key' : 'value'];
 			}
 		}
-		return $this->normalizeTypeSet($valueTypes);
+		return $this->normalizeTypeSet($types !== [] ? $types : ($role === 'key' ? ['mixed'] : []));
 	}
 }

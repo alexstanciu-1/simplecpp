@@ -148,8 +148,7 @@ try
 	$compiler->parse();
 	parse_check($get->change_status === change_state::deleted, 'Deleted file retained a live global declaration');
 }
-finally
-{
+finally {
 	foreach (glob($directory . '/*') as $path) {
 		unlink($path);
 	}

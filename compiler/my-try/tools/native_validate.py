@@ -159,8 +159,8 @@ def main():
         if spelling is not None:
             if 'static_cast<scpp::float_t>(' + spelling + ')' not in generated:
                 raise RuntimeError(name + ': native compiler changed float precision/spelling')
-            probe = ('\tstatic_assert(std::is_same_v<decltype(local_0), scpp::float_t>);\n'
-                     '\tif (local_0.native_value() != ' + spelling + ') { return 91; }\n')
+            probe = ('\tstatic_assert(std::is_same_v<decltype(local_a), scpp::float_t>);\n'
+                     '\tif (local_a.native_value() != ' + spelling + ') { return 91; }\n')
             generated = generated.replace('\treturn 0;', probe + '\treturn 0;')
         (folder / 'main.cpp').write_text(generated)
         run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
@@ -186,7 +186,7 @@ def main():
         if name.startswith('field_'):
             alias = name[len('field_'):]
             native_type = 'uint8' if alias == 'byte' else alias
-            generated += ('\nstatic_assert(std::is_same_v<decltype(record_1{}.field_4), '
+            generated += ('\nstatic_assert(std::is_same_v<decltype(record_Item{}.field_value), '
                           'scpp::int_t<std::' + native_type + '_t>>);\n')
         (folder / 'main.cpp').write_text(generated)
         run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',

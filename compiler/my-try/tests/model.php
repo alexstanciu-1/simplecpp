@@ -319,6 +319,13 @@ final class Model_Test
 			}
 			return;
 		}
+		if ($value instanceof \SplObjectStorage) {
+			foreach ($value as $key) {
+				self::check_graph($key, $seen);
+				self::check_graph($value[$key], $seen);
+			}
+			return;
+		}
 		if ($value instanceof \UnitEnum) {
 			return;
 		}

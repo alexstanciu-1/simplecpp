@@ -11,6 +11,10 @@ excluded. They do not import compiler 3's lifecycle or join architecture.
   than inserting a blank line at a fixed interval.
 - Explain non-obvious purpose, invariants, ownership or control flow immediately
   above the relevant declaration or group. Avoid comments that merely repeat code.
+- For multiline block comments and docblocks, put the opening `/*` or `/**` on
+  its own line. Begin text on the next line, prefix each content line with ` *`,
+  and put the closing ` */` on its own line. Align the asterisks. Single-line
+  comments and inline type annotations may remain on one line.
 - Functions and methods with more than five counted body lines need a purpose
   documentation comment immediately above the declaration. Type annotations alone
   are not purpose documentation. Short methods need comments when intent is unclear.
@@ -41,6 +45,16 @@ removing their repeated checks is [debt for the new S2S generator](architecture/
 Use tabs for block indentation, matching the active compiler sources. Keep required
 conversion annotations next to their declarations. Formatting must not rewrite
 strings, embedded sample programs or other executable content.
+
+Multiline comment example:
+
+```php
+/**
+ * Required observer; the parser retains this scope in parsed_file.scopes.
+ * @storage.reference parsed_file.scopes
+ * @reference.weak
+ */
+```
 
 ## Verification
 

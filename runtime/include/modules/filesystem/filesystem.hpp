@@ -12,6 +12,7 @@
 
 namespace scpp::fs {
 
+[[nodiscard]] result<string_t> read_snapshot(const string_t &path, const int_t<> &expected_mtime, const int_t<> &expected_size);
 [[nodiscard]] bool_t is_file(const string_t &path);
 [[nodiscard]] bool_t is_dir(const string_t &path);
 [[nodiscard]] bool_t is_link(const string_t &path);

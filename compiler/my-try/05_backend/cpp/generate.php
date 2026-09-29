@@ -50,7 +50,8 @@ final class CPP_Generator
 				$this->program->fragments[$owner] = new cpp_fragment();
 			}
 			$fragment = $this->program->fragments[$owner];
-			if (($fragment->version !== $owner->version) || ($fragment->change_status !== change_state::unchanged)) {
+			if (($fragment->version !== $owner->version) || ($fragment->change_status !== change_state::unchanged))
+			{
 				$fragment->change_status = change_state::changed;
 				if ($owner->kind === preparation_kind::declaration) {
 					$definitions->append($owner);
@@ -83,7 +84,8 @@ final class CPP_Generator
 				$signature_owner = object_cast($entry->preparation, preparation_owner::class);
 				$context->functions .= $this->program->fragments[$signature_owner]->text . "\n{\n" . $fragment->text . "}\n\n";
 			}
-			else {
+			else
+			{
 				$entry = object_cast($owner->declaration, collected_name::class);
 				if ($entry->kind === collected_name_kind::struct_declaration) {
 					$this->assemble_record($entry, $context);
@@ -186,8 +188,7 @@ final class CPP_Generator
 	{
 		$text = '';
 		$child = $root->first_child();
-		while ($child !== null)
-		{
+		while ($child !== null) {
 			$node /** ast_node */ = $child;
 			if (($node->kind() !== node_kind::function_declaration) && ($node->kind() !== node_kind::struct_declaration)) {
 				$text .= $node->payload()->generate_cpp_statement($node, $context);

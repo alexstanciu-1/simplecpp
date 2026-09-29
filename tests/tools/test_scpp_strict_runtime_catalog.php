@@ -27,11 +27,14 @@ final class ScppStrictRuntimeCatalogTest
 
 		$this->assertSame('result<mixed>', $catalog->returnType('json_decode'), 'STAN should expose the checked JSON result');
 		$this->assertSame('result<string>', $catalog->returnType('json_encode'), 'STAN should expose the checked JSON encoding result');
+		$this->assertSame('result<string>', $catalog->returnType('fs_read_snapshot'), 'fs_read_snapshot return contract');
+		$this->assertSame('filesystem', $catalog->requiredModule('fs_read_snapshot'), 'fs_read_snapshot module ownership');
 
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 		$this->assertContains('public function get_message(): string', $strictRuntimeSymbols, 'captured errors should expose their message to STAN');
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
+		$this->assertContains('function fs_read_snapshot(string $path, int $expected_mtime, int $expected_size): result<string>', $strictRuntimeSymbols, 'filesystem concrete signature');
 		$this->assertContains('function layout_sizeof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_sizeof');
 		$this->assertContains('function layout_alignof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_alignof');
 		$this->assertContains('function layout_offsetof(mixed $type_name, mixed $field_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_offsetof');

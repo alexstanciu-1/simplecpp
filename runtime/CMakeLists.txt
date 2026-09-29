@@ -26,6 +26,7 @@ target_compile_features(scpp_json PUBLIC cxx_std_23)
 
 add_library(scpp_filesystem SHARED
 	include/modules/filesystem/filesystem.cpp
+	include/modules/filesystem/snapshot.cpp
 )
 
 target_include_directories(scpp_filesystem

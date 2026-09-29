@@ -17,7 +17,6 @@ final class Symbol_Collector
 		$this->global = $global;
 		$collection->set_tokens($tokens);
 		$collection->revision = $revision;
-
 	}
 
 	/** Matching is owner-local; duplicate spellings consume existing identities in encounter order. */
@@ -33,8 +32,7 @@ final class Symbol_Collector
 		else {
 			$entries = $scope->variables_named($name);
 		}
-		foreach ($entries as $entry)
-		{
+		foreach ($entries as $entry) {
 			if (($entry->kind === $kind) && $entry->retained_symbol && ((int)$entry->revision !== (int)$this->collection->revision)) {
 				return $entry->node;
 			}
@@ -187,8 +185,7 @@ final class Symbol_Collector
 	public static function sweep(collected_file $collection, bool $exported): void
 	{
 		$entries /** Storage<collected_name> */ = $collection->entries;
-		foreach ($collection->defined_elements as $index)
-		{
+		foreach ($collection->defined_elements as $index) {
 			$entry = $entries[$index];
 			if ($entry->retained_symbol && ($entry->exported === $exported) && ((int)$entry->revision !== (int)$collection->revision)) {
 				$entry->change_status = change_state::deleted;

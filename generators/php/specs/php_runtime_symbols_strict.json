@@ -242,6 +242,7 @@
         "webview_message_id": "webview_runtime::message_id",
         "webview_message_command": "webview_runtime::message_command",
         "webview_message_payload_json": "webview_runtime::message_payload_json",
-        "webview_close": "webview_runtime::close"
+        "webview_close": "webview_runtime::close",
+        "fs_read_snapshot": "fs::read_snapshot"
     }
 }

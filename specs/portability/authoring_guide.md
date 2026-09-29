@@ -75,7 +75,7 @@ arities and target bindings. Arbitrary q_-prefixed PHP builtins are not supporte
 | Explicit named locals | Literal class/interface names pass through without resolution; [type-reference proof](compiler_type_references_slice.md). No unions, arbitrary generics or named wrapper payloads. |
 | Scalar wrapper locals and `take_nullable`, `take_false`, `take_bool` | Fixed supported wrapper spellings, not arbitrary result types; bool payloads in false/bool-sentinel wrappers are rejected. [Executable fixture](../../tests/portability/fixtures/take.php). |
 | Classes, fields, literal construction and fixed member calls | Supported scalar/named/container field forms, including private/protected initialized scalars and separately declared [readonly scalar fields initialized in constructors](compiler_native_project_slice.md); not arbitrary PHP declarations or inheritance. [Context](compiler_context_slice.md), [token vocabulary](compiler_token_slice.md). |
-| Explicit public/private/protected instance/static methods | Explicit scalar/named types, concrete nullable returns and `void`, plus [annotated container returns](container_returns.md) on class/trait methods; [explicit nullable parameters with optional null defaults](nullable_parameters.md) are supported; generic/reference parameters and other ordinary-method defaults remain outside this slice. [Signature proof](method_signatures.md). |
+| Explicit public/private/protected instance/static methods | Explicit scalar/named types, concrete nullable returns and `void`, plus [annotated container returns](container_returns.md) on class/trait methods; [explicit nullable parameters with optional null defaults](nullable_parameters.md) are supported; explicit object-hash method parameters and matching boolean literal defaults are also supported; generic/reference parameters and other ordinary-method defaults remain outside this slice. [Signature proof](method_signatures.md). |
 | Constructors | Public constructors accept explicit ordinary or promoted parameters and supported statements. Container defaults require nullable null; bare empty-container defaults remain rejected. Named constants as promoted-parameter defaults are also rejected; pass the constant explicitly at construction. [Token storage](compiler_token_store_slice.md). |
 | Explicit vectors of supported elements | Annotated PHP arrays; a PHP `array` alone does not select a native container. Nullable list fields/promoted parameters are now supported with explicit element annotations; see [discovery records](compiler_discovery_records_slice.md). Recursive vectors and typed maps now use [explicit container annotations](container_annotations.md); see its native access limitation. [Cursors](compiler_cursor_slice.md), [storage](compiler_storage_slice.md). |
 | Unit/integer enums and declaration-only interfaces | Narrow declaration forms; literal class `implements` lists now pass through ([Source_Set proof](compiler_source_set_slice.md)); do not assume enum reflection or general polymorphic bodies follow from declaration support. [Steps](compiler_step_slice.md). |
@@ -362,3 +362,15 @@ Focused checks: `tests/portability/nullable_locals_callbacks.php`; the converted
 fixture is `tests/portability/fixtures/nullable_locals_callbacks.php`, exercised by
 `tests/portability/nullable_locals_callbacks.py`. The native proof checks captured
 object mutation under task synchronization and nullable shared identity.
+
+
+## Required returns from nullable values
+
+For a known `?T` payload returned as the same required `T`, the compiler review
+selects a direct typed return rather than object_cast. Nullability reflects the
+record lifecycle; class narrowing is a different operation. See the
+[nullable extraction decision and tooling status](nullable_parameters.md#nullable-extraction-versus-class-narrowing)
+before changing accessors. `take_nullable` is the existing branching helper;
+`require_non_null` is an agreed explicit-extraction name, not yet an implemented
+portable helper. Current checked runtime conversion does not establish STAN/native
+pipeline acceptance by itself.

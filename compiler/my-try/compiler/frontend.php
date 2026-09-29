@@ -12,8 +12,7 @@ final class Source_Frontend
 		if ($operation === frontend_operation::parse) {
 			return self::parse($work, $queue);
 		}
-		try
-		{
+		try {
 			$work->tokens = (new Tokenizer($work->source))->tokenize(Source_Registry::full_path($work->record->owning_module(), $work->record->path));
 		}
 		catch (\Throwable $error) {

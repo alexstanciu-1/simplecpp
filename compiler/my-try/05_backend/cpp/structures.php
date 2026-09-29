@@ -52,7 +52,8 @@ final class cpp_generation_context
 final class cpp_fragment
 {
 	public change_state $change_status = change_state::added;
-	public int $version = -1;
+	/** Completion version is meaningful only for an unchanged fragment. */
+	public int $version = 0;
 	public string $text = '';
 	public array $headers /** hash<bool> */ = [];
 	/** Declaration dependencies needed before a value-record definition. */
@@ -65,8 +66,7 @@ final class cpp_fragment
 }
 
 /** Retained fragments are keyed by independent signature/body preparation identities. */
-final class cpp_program
-{
+final class cpp_program {
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()

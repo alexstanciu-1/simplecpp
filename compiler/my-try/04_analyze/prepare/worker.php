@@ -41,8 +41,10 @@ final class Preparation_Worker
 		$this->changed_lookups();
 
 		// Declaration processing may schedule more declarations; identity sets coalesce notifications.
-		while (q_count($this->declarations) !== 0) {
-			foreach ($this->declarations as $owner /** @object-key */) {
+		while (q_count($this->declarations) !== 0)
+		{
+			foreach ($this->declarations as $owner /** @object-key */)
+			{
 				try {
 					$this->declaration($owner);
 				}
@@ -201,8 +203,7 @@ final class Preparation_Worker
 		if ($owner->source->deleted || ($owner->change_status === change_state::deleted)) {
 			return;
 		}
-		if ($owner->declaration !== null)
-		{
+		if ($owner->declaration !== null) {
 			$declaration /** collected_name */ = $owner->declaration;
 			if ($declaration->change_status === change_state::deleted) {
 				return;
@@ -211,8 +212,7 @@ final class Preparation_Worker
 		if ($owner->change_status !== change_state::added) {
 			$owner->change_status = change_state::changed;
 		}
-		if ($owner->kind === preparation_kind::declaration)
-		{
+		if ($owner->kind === preparation_kind::declaration) {
 			$entry = object_cast($owner->declaration, collected_name::class);
 			if ($entry->change_status !== change_state::added) {
 				$entry->change_status = change_state::changed;
@@ -379,8 +379,7 @@ final class Preparation_Worker
 		$context = $this->context($owner);
 		try
 		{
-			if ($owner->kind === preparation_kind::function_body)
-			{
+			if ($owner->kind === preparation_kind::function_body) {
 				$entry = object_cast($owner->declaration, collected_name::class);
 				$syntax = Syntax_Nodes::function_data($entry->node);
 				$this->require_declaration($owner, $entry);
@@ -413,8 +412,8 @@ final class Preparation_Worker
 	{
 		$entry->change_status = change_state::unchanged;
 		$nodes /** Storage<ast_node> */ = $entry->kind === collected_name_kind::function_declaration
-			? Syntax_Nodes::function_data($entry->node)->parameters
-			: Syntax_Nodes::struct_data($entry->node)->fields;
+		? Syntax_Nodes::function_data($entry->node)->parameters
+		: Syntax_Nodes::struct_data($entry->node)->fields;
 		foreach ($nodes as $node) {
 			$node->payload()->occurrence()->change_status = change_state::unchanged;
 		}
@@ -593,7 +592,8 @@ final class Preparation_Worker
 		$source->type_references = $this->present($entries, $source->type_references);
 		$source->field_references = $this->present($entries, $source->field_references);
 		$source->pending_bindings = $this->present($entries, $source->pending_bindings);
-		if ($source->deleted) {
+		if ($source->deleted)
+		{
 			if ($source->body_preparation !== null) {
 				$source->body_preparation = null;
 			}

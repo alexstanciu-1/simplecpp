@@ -38,3 +38,7 @@ This folder contains one contract file per filesystem or stdio builtin in the fi
 - `basename`
 
 See also: `specs/builtins/filesystem/first_pass.md`.
+
+## Checked source reads
+
+- [fs_read_snapshot](fs_read_snapshot.md) provides checked bounded source reads.

@@ -68,7 +68,7 @@ final class TokenSiteScanner
 		$tokens = $source->tokens;
 		$i = $start + 1;
 		while (isset($tokens[$i]) && in_array($tokens[$i]['id'], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) ++$i;
-		if (!in_array($tokens[$i]['text'] ?? '', ['Key_Storage_List'], true)) return null;
+		if (!in_array($tokens[$i]['text'] ?? '', ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) return null;
 		$first = $i;
 		++$i;
 		while (isset($tokens[$i]) && $tokens[$i]['id'] === T_WHITESPACE) ++$i;

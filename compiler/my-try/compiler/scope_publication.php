@@ -11,7 +11,8 @@ final class Scope_Publication
 		if ($entry->kind === collected_name_kind::function_declaration) {
 			$global->register($entry);
 		}
-		elseif ($entry->kind === collected_name_kind::struct_declaration) {
+		elseif ($entry->kind === collected_name_kind::struct_declaration)
+		{
 			foreach ($local_scope->types_named($entry->name) as $definition) {
 				if ($definition->declaration === $entry) {
 					$global->register_type($definition);
@@ -39,5 +40,4 @@ final class Scope_Publication
 		}
 		$local_scope->set_publication($global);
 	}
-
 }

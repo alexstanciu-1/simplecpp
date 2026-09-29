@@ -179,8 +179,10 @@ final class Compiler
 
 		// Both backends must see the same live declaration inventory after the successful join.
 		$sources /** Storage<collected_file> */ = new Storage();
-		foreach (Model::sources() as $record) {
-			if ($record->parsed !== null) {
+		foreach (Model::sources() as $record)
+		{
+			if ($record->parsed !== null)
+			{
 				$source = $record->parsed->collection;
 				$source->deleted = $record->changes === change_state::deleted;
 				if ($source->deleted) {
@@ -214,7 +216,8 @@ final class Compiler
 		$sources /** Storage<collected_file> */ = new Storage();
 		foreach (Model::sources() as $record)
 		{
-			if ($record->changes !== change_state::deleted) {
+			if ($record->changes !== change_state::deleted)
+			{
 				if (($record->changes !== change_state::unchanged) || ($record->parsed === null)) {
 					throw new \RuntimeException('Finish tokenization and parsing before preparation');
 				}
@@ -222,7 +225,8 @@ final class Compiler
 					throw new \RuntimeException('Preparation is blocked by a failed parse');
 				}
 			}
-			if ($record->parsed !== null) {
+			if ($record->parsed !== null)
+			{
 				$source = $record->parsed->collection;
 				$source->deleted = $record->changes === change_state::deleted;
 				if ($source->deleted) {

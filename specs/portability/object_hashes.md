@@ -14,8 +14,9 @@ $this->owners = $owners;
 ```
 
 The property becomes a native hash. The construction becomes `[]` at the explicitly
-typed local boundary. A SplObjectStorage return has an adjacent hash annotation as
-well. Bare or incorrectly annotated constructors/properties reject. The native
+typed local boundary. A SplObjectStorage return or concrete method parameter has an adjacent hash
+annotation as well. Method parameters use the same explicit carrier grammar;
+interface object-hash parameters remain outside this slice. Bare or incorrectly annotated constructors/properties reject. The native
 source has no dependency on the PHP SplObjectStorage class. `shared<Key>` states the
 key ownership/type explicitly; the native type mapper supplies shared handles for
 ordinary record values too. Scalar values, such as file indexes, remain scalars.

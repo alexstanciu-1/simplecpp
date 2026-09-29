@@ -380,6 +380,7 @@ final class RuntimeShallowSourceGenerator
 				'fs_is_dir' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_is_link' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_exists' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'fs_read_snapshot' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'expected_mtime', 'type' => 'int'], ['name' => 'expected_size', 'type' => 'int']]],
 				'fs_get' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_put' => ['return' => 'result<int>', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'data', 'type' => 'string']]],
 				'fs_mkdir' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],

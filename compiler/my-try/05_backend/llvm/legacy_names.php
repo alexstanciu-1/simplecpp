@@ -50,7 +50,8 @@ final class LLVM_Legacy_Name_Preparation
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$candidates /** vector<collected_name> */ = [];
 			$variable_scope = Scope_Lookup::visible($entry_scope);
-			while (true) {
+			while (true)
+			{
 				$candidates = Scope_Lookup::live($variable_scope->variables_named($entry->name));
 				$parent = $variable_scope->parent_scope();
 				if ((q_count($candidates) !== 0) || ($parent === null)) {

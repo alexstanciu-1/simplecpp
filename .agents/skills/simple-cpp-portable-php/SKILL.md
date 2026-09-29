@@ -64,6 +64,17 @@ an old slice's limits or a feature-catalog proposal as the current support matri
 - Keep null, false and present empty/zero values distinct. Check the guide for the
   particular declaration, wrapper, callback or exception form being authored;
   related native language support does not establish converter support.
+- Separate nullable extraction from class narrowing. For an already known `?T`
+  returned as the same required `T`, the agreed compiler accessor uses `return $value;`,
+  not object_cast. Current native nullable conversion checks presence; PHP rejects
+  null at the required return boundary. Keep object_cast for actual class narrowing.
+  Use existing take_nullable for a branching extraction. `require_non_null` is the
+  chosen name for explicit value-or-failure extraction, but is not yet a registered
+  portable helper. Read the [decision and tooling status](../../../specs/portability/nullable_parameters.md#nullable-extraction-versus-class-narrowing):
+  STAN acceptance of the direct return remains pending. Do not mislabel this analysis
+  limitation as a language prohibition, claim native proof from runtime inspection,
+  or silently add casts/dummy facts to bypass it. Prepared facts may stay nullable
+  before preparation/after cleanup; this does not decide required-field construction.
 - On the current target, use nested conditions or early returns when RHS safety,
   errors or side effects depend on `&&`/`||` skipping evaluation, even for boolean
   operands. Independent safe comparisons may stay compound. This is source
@@ -80,6 +91,11 @@ an old slice's limits or a feature-catalog proposal as the current support matri
   capabilities/representations and completed components, not every small edit. Compare
   meaningful results and clean/incremental agreement; require exact bytes only where
   the contract does. Defer unions/deeper layout tuning unless concretely needed.
+- Preserve portability know-how in the owning guide and link it here when it changes
+  authoring decisions. Distinguish agreed source/model rules, temporary toolchain
+  limitations, and verified behavior. Record the exact candidate revision and any
+  overlay changes; a historical native pass with advisories is not a clean STAN proof.
+  Do not leave necessary adaptations or their retirement conditions only in chat.
 - Consolidate once per component, record major changes/reasons and measured effort,
   and extend conversion only for demonstrated needs. Report cross-owner decisions
   and target defects without silently redesigning contracts or fixing generated C++.

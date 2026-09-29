@@ -1328,3 +1328,22 @@ If a symbol is not present in the registry, the generator will **not** rewrite i
 - `take(...)` output arguments must be simple local variables in v1. Wrong arity, wrong output type, or a non-wrapper source is a compile-time generator error when the source or output type is known.
 - `take(...)` evaluates its source expression exactly once and returns `bool_t`; for `result_or_bool<T>`, the helper returns `true` for both wrapped-value and bool-true states so mysqli-style APIs remain representable.
 - `take(...)` is the preferred explicit payload-extraction form for `result*<T>` wrappers because the generator does not perform symbol-resolution-driven wrapper inference.
+
+## Compiler object collection bindings
+
+Strict PHS `Storage<T>` and `Keyed_Storage<T>` are explicitly mapped runtime value
+wrappers with shared collection state, not ordinary source classes wrapped again
+in `shared_p`. T is an authored record class name. The contract and accepted source
+forms are in `specs/compiler_storage.md`.
+
+The scanner preserves generic constructor type arguments through annotations and
+the input loader restores only those constructor nodes before IR construction.
+Lowering may inspect the explicitly spelled collection family, locally declared
+fields (including static fields), parameters, returns and typed locals to select
+required reads, validated assignment, unset and method result scalar wrappers.
+This is a narrow structural rule, not permission for general type inference.
+Iteration reuses `foreach_range` with value keys and shared record handles.
+Cross-file member metadata is not inferred; use explicit typed locals there.
+
+String literals containing NUL are emitted with an explicit byte length, so exact
+string keys retain their full bytes through the native boundary.

@@ -105,7 +105,6 @@ try
 	file_put_contents($path, 'return 0;');
 	$compiler->update_cpp([$path]);
 	cpp_check(!str_contains(Model::$cpp_files[0]->text, 'scpp/float_t.hpp'), 'Deleted fragment retained stale include');
-
 }
 finally {
 	unlink($path);

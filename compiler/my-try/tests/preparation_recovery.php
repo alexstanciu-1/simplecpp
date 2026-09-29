@@ -171,10 +171,11 @@ try
 		recovery_check(!Model::$rebuild_required && Model::$global_scope !== $old_global, 'Retry retained unsafe semantic state');
 		recovery_check(Model::sources()[0]->tokens !== $before && recovery_function('replacement') !== $broken, 'Retry did not rebuild tokens and syntax');
 	}
-
 }
 finally {
-	foreach (glob($directory . '/*') as $path) { unlink($path); }
+	foreach (glob($directory . '/*') as $path) {
+		unlink($path);
+	}
 	rmdir($directory);
 }
 echo "Preparation recovery: persistent changes, failure propagation, no-edit retries, independent progress, recovery and body text comparison passed\n";

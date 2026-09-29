@@ -12,6 +12,78 @@ use Scpp\S2S\Support\GenerationException;
  */
 final class TypeMapper
 {
+	// Atomic names whose declarations come from the runtime umbrella. Declaration
+	// ownership is separate from representation: runtime class aliases still use
+	// the ordinary shared class-handle mapping, unlike runtime value types.
+	private const RUNTIME_PROVIDED_TYPES = [
+		'int',
+		'int8',
+		'int16',
+		'int32',
+		'int64',
+		'uint8',
+		'byte',
+		'uint16',
+		'uint32',
+		'uint64',
+		'float',
+		'bool',
+		'string',
+		'array',
+		'mixed',
+		'dynamic',
+		'void',
+		'false',
+		'null',
+		'Storage',
+		'Keyed_Storage',
+		'vector',
+		'vector_t',
+		'fixed_array',
+		'fixed_array_t',
+		'hash',
+		'hash_t',
+		'error',
+		'resource_handle',
+		'nullable_resource_handle',
+		'falseable_resource_handle',
+		'token_buffer',
+		'string_parts_builder',
+		'text_builder',
+		'source_buffer',
+		'byte_span',
+		'source_line_index',
+		'source_location',
+		'int_t',
+		'int_t<>',
+		'float_t',
+		'bool_t',
+		'string_t',
+		'mixed_t',
+		'dynamic_t<>',
+		'error_t',
+		'resource_handle_t',
+		'nullable_resource_handle_t',
+		'falseable_resource_handle_t',
+		'token_buffer_t',
+		'tokenizer::token_buffer_t',
+		'str::string_parts_builder',
+		'str::text_builder',
+		'source::source_buffer',
+		'source::byte_span',
+		'source::source_line_index',
+		'source::source_location',
+		'file_lock_handle',
+		'process_handle',
+		'process_output',
+	];
+
+	/** Called after traversing container/wrapper arguments; never match by basename. */
+	public function isRuntimeProvidedType(string $type): bool
+	{
+		return in_array(ltrim(trim($type), '\\'), self::RUNTIME_PROVIDED_TYPES, true);
+	}
+
 	/** @var array<string, bool> */
 	private array $enumNames = [];
 	/** @var array<string, string> */
@@ -121,6 +193,8 @@ final class TypeMapper
 		if ($this->isFunctionType($normalized)) {
 			return $this->mapFunctionType($normalized);
 		}
+
+		if ($this->isStorageType($phpType)) return $this->mapStorageType($phpType);
 
 		$phpType = $this->guardTypeDefinitionSyntax($phpType);
 		if ($this->isKeyStorageListType($phpType)) {
@@ -284,6 +358,23 @@ final class TypeMapper
 	public function isKeyStorageListType(string $type): bool
 	{
 		return preg_match('/^Key_Storage_List\s*<\s*\\\\?[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*\s*>$/', trim($type)) === 1;
+	}
+
+	public function isStorageType(string $type): bool
+	{
+		return preg_match('/^(Storage|Keyed_Storage)\s*<(.+)>$/s', trim($type)) === 1;
+	}
+
+	public function mapStorageType(string $type): string
+	{
+		preg_match('/^(Storage|Keyed_Storage)\s*<(.+)>$/s', trim($type), $parts);
+		$record = trim($parts[2]);
+		// Only an authored class name belongs here, never a second ownership wrapper.
+		if (preg_match('/^\\\\?[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*$/', $record) !== 1
+			|| $this->isRuntimeProvidedType($record)) {
+			throw new GenerationException('Storage<T> requires a record class name: ' . $type);
+		}
+		return '::scpp::compiler::' . $parts[1] . '<' . $this->mapUserTypeName($record) . '>';
 	}
 
 	public function isVectorType(string $phpType): bool
@@ -821,7 +912,7 @@ final class TypeMapper
 		if ($this->hasDisallowedNullableMarkerPosition($normalized)) {
 			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
 		}
-		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|Key_Storage_List|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$|^int_t\s*<\s*>$/', $normalized) !== 1) {
+		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|Storage|Keyed_Storage|Key_Storage_List|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$|^int_t\s*<\s*>$/', $normalized) !== 1) {
 			throw new GenerationException('Unsupported explicit type syntax: ' . $phpType);
 		}
 		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
@@ -1001,6 +1092,7 @@ final class TypeMapper
 	private function isObjectType(string $phpType): bool
 	{
 		if ($this->isKeyStorageListType($phpType)) return false;
+		if ($this->isStorageType($phpType)) return false;
 		if ($this->isVectorType($phpType)) {
 			return false;
 		}
