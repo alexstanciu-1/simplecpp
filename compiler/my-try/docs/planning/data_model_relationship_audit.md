@@ -65,7 +65,7 @@ the binding/reference node's token index to recover its occurrence.
 Relevant code:
 
 - [`04_analyze/prepare/file.php`](../../04_analyze/prepare/file.php)
-- [`04_analyze/prepare/structures.php`](../../04_analyze/prepare/structures.php)
+- [`04_analyze/prepare/data/structures.php`](../../04_analyze/prepare/data/structures.php)
 - [`04_analyze/collect/structures.php`](../../04_analyze/collect/structures.php)
 - [`04_analyze/collect/collect.php`](../../04_analyze/collect/collect.php)
 

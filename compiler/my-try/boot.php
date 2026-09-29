@@ -27,7 +27,7 @@ require_once __DIR__ . '/03_parse/structures/structures_kinds.php';
 require_once __DIR__ . '/03_parse/structures/abstractions.php';
 require_once __DIR__ . '/03_parse/structures/iterators.php';
 require_once __DIR__ . '/03_parse/structures/structures.php';
-require_once __DIR__ . '/04_analyze/prepare/structures.php';
+require_once __DIR__ . '/04_analyze/prepare/data/structures.php';
 require_once __DIR__ . '/03_parse/structures/structures_specialization.php';
 require_once __DIR__ . '/03_parse/syntax.php';
 require_once __DIR__ . '/02_tokenize/buffer.php';
@@ -35,7 +35,7 @@ require_once __DIR__ . '/03_parse/token_cleanup.php';
 require_once __DIR__ . '/03_parse/parser.php';
 require_once __DIR__ . '/04_analyze/collect/structures.php';
 // Concrete work accessors use collected-role covariance, which PHP checks while loading classes.
-require_once __DIR__ . '/04_analyze/prepare/work_records.php';
+require_once __DIR__ . '/04_analyze/prepare/data/work_records.php';
 require_once __DIR__ . '/04_analyze/collect/collect.php';
 require_once __DIR__ . '/04_analyze/prepare/changes.php';
 require_once __DIR__ . '/04_analyze/prepare/worker.php';

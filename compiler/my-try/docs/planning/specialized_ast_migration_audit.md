@@ -55,7 +55,7 @@ boundaries and native collection annotations preserve the intended categories.
    Cached generation checks active owners too. Cleanup remains able to visit deleted
    nodes. No scheduler or per-node deleted flag was introduced.
 4. **Fact ownership:** `prepared_assignment` moved from the proposal's node file to
-   `04_analyze/prepare/structures.php`. Its shape is unchanged: inherited expression
+   `04_analyze/prepare/data/structures.php`. Its shape is unchanged: inherited expression
    type plus a prepared binding. Actual preparation/generation reuse existing
    storage algorithms for explicit declarations and assignments.
 5. **Existing containing records:** `parsed_file.root` and `collected_file.root` are

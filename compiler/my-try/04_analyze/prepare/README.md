@@ -11,11 +11,12 @@ Doc Status: supporting
 - `semantics/declarations.php`: `Declaration_Preparation`, function signatures, parameters and record fields.
 - `semantics/literals.php`: exact integer literal preparation under the Simple C++ contract.
 - `cleanup.php`: tree traversal invoking each specialization's cleanup.
-- `structures.php`: backend-neutral facts, completed-file records, lookup observations and invocation data.
-- `work_records.php`: typed retained preparation-work identities and dependency/error state.
+- `data/structures.php`: backend-neutral facts, completed-file records, lookup observations and invocation data.
+- `data/work_records.php`: typed retained preparation-work identities and dependency/error state.
 
-`semantics/` groups language-processing algorithms. The preparation root retains
-entry/scheduling, data, comparison and cleanup ownership.
+`semantics/` groups language-processing algorithms; `data/` groups prepared facts
+and retained work records. The preparation root retains entry/scheduling, comparison
+and cleanup ownership.
 
 Shared types live in `../../compiler/types/`; scope representation and lookup live in
 `../../03_parse/scopes/`. This grouping changes locations, not processing behavior.
