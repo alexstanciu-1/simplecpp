@@ -20,6 +20,64 @@ final class identifier_structure extends unsupported_node_structure {
 final class empty_node_structure extends unsupported_node_structure {
 }
 
+/* Role: share structural traversal for specializations backed by one ordered child list. */
+/** Consumers expose their existing list through child_list(); no extra child storage is created. */
+trait Child_List
+{
+	/** Append direct syntax children in grammar order before links are published. */
+	public function append_children(Storage $result /** Storage<ast_node> */): void
+	{
+		$items /** Storage<ast_node> */ = $this->child_list();
+		foreach ($items as $child) {
+			$result->append($child);
+		}
+	}
+}
+
+/* Share canonical occurrence access only among name-bearing specializations. */
+trait Collected_Occurrence
+{
+	public function optional_occurrence(): ?collected_name
+	{
+		return weakref_get($this->collected_occurrence);
+	}
+
+	/** Attach once during collection; preparation cleanup never changes this relationship. */
+	public function attach_occurrence(collected_name $entry): void
+	{
+		if ($this->occurrence_attached) {
+			throw new \LogicException('Syntax occurrence is already attached');
+		}
+		$this->collected_occurrence = $entry;
+		$this->occurrence_attached = true;
+	}
+
+	public function occurrence(): collected_name
+	{
+		return object_cast(weakref_get($this->collected_occurrence), collected_name::class);
+	}
+}
+
+
+/** Method grouping only; the consuming class declares its concrete prepared_facts field. */
+trait Preparation_Facts
+{
+	public function preparation(): ?object /** @field-type prepared_facts */
+	{
+		return $this->prepared_facts;
+	}
+
+	public function set_preparation(object /** @field-type prepared_facts */ $facts): void
+	{
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->prepared_facts = null;
+	}
+}
+
 /** Specialized facts are attached by preparation and cleared locally. */
 final class integer_literal_structure extends expression_node_structure
 {

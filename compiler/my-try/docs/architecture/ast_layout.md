@@ -197,11 +197,11 @@ compiler itself was not built or run for this refactor.
 
 The subsequent user-requested native verification passed after making required
 child initialization explicit in specialization constructors and separating syntax
-enums into `03_parse/kinds.php`. See [native evidence and adaptations](../portability/native_adaptations.md#specialization-dispatch-native-verification).
+enums into `03_parse/structures_kinds.php`. See [native evidence and adaptations](../portability/native_adaptations.md#specialization-dispatch-native-verification).
 
 ## Shared preparation accessors and review debt
 
-`03_parse/preparation_facts.php` groups `preparation()`, `set_preparation()` and
+`Preparation_Facts` in `03_parse/structures_specialization.php` groups `preparation()`, `set_preparation()` and
 `clear_preparation()` in a method-only trait. Each final specialization retains its
 concrete nullable field and `require_preparation()` with its concrete `object_cast`.
 The converter's explicit `@field-type prepared_facts` signature annotation preserves
@@ -217,7 +217,7 @@ colliding trait methods. Native verification of this consolidation remains opt-i
 ## Single-list structural traversal
 
 Blocks, array literals and structs share `Child_List::append_children()` through
-`03_parse/child_list.php`. Each exposes its existing `children`, `elements` or
+`03_parse/structures_specialization.php`. Each exposes its existing `children`, `elements` or
 `fields` storage through `child_list()` in grammar order. This accessor returns the
 existing storage, not a snapshot or a second owning list. Composite specializations
 retain explicit child assembly; the common node structure retains its empty leaf
