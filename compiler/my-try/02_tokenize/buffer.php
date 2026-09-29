@@ -11,15 +11,17 @@ final class Token_Buffer
 		if (($incoming === $previous) || ($incoming->first_token !== 0) || ($incoming->content_offset !== 0)) {
 			return;
 		}
-		$offset = string_byte_len($previous->content);
-		if (($offset === 0) && ($previous->end_token === 0)) {
+		$prefix_length = string_byte_len($previous->content);
+		if (($prefix_length === 0) && ($previous->end_token === 0)) {
 			return;
 		}
 		$first = q_count($previous->tokens);
 		$rows /** Storage<token> */ = $incoming->tokens;
-		if (($offset + string_byte_len($incoming->content) > 4294967295) || ($first + q_count($rows) > 4294967295)) {
+		if (($prefix_length + string_byte_len($incoming->content) > 4294967295) || ($first + q_count($rows) > 4294967295)) {
 			throw new \RuntimeException('Retained token buffer exceeds uint32 capacity');
 		}
+		// Narrow only after checking the complete appended range.
+		$offset /** uint32 */ = $prefix_length;
 		$storage /** Storage<token> */ = $previous->tokens;
 		foreach ($rows as $row) {
 			$row->offset += $offset;

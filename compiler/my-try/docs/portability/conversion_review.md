@@ -53,9 +53,12 @@ verified-target update was made.
 The converter now preserves `+=`/`-=` without duplicating receiver/index evaluation.
 Focused PHP conversion tests and the ordinary-integer native proof pass with normal
 STAN (`/tmp/my-try-additive-ordinary-20260929/`). The compact-field variant exposed
-missing runtime overloads for `uint32 += int` and `uint32 -= int`; see
-`tests/portability/additive_assignment.py --compact` and the failed native proof at
-`/tmp/my-try-additive-proof-20260929/`. No runtime workaround was applied.
+missing runtime overloads for `uint32 += int` and `uint32 -= int`; see the failed native proof at
+`/tmp/my-try-additive-proof-20260929/`. The user chose a `uint32` offset, not wider runtime overloads. Token_Buffer now
+checks the full range before narrowing the delta; focused token tests pass. The
+updated native fixture uses `uint32` deltas and preserves single receiver/index
+evaluation. Its normal STAN-enabled build and PHP/native execution passed at
+`/tmp/my-try-additive-uint32-20260929/`. No runtime behavior changed.
 
 Whole-compiler retry (`logs-2` in the attempt directory above) passes the additive
 syntax and now stops at `03_parse/parser.php:513`, `isset($function->body)`: the

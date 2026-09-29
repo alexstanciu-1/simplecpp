@@ -74,9 +74,10 @@ not expand them into repeated receiver/index expressions. Existing locals, fixed
 properties and indexed targets use the target's operator/type rules. This slice does
 not admit the other compound operators or model PHP dynamic numeric coercion.
 `tests/portability/additive_assignment.php` checks conversion and PHP effects;
-`additive_assignment.py` checks normal STAN-enabled native execution. Its `--compact`
-variant reproduces the current mixed-width `uint32 += int` / `uint32 -= int` runtime
-limitation; converter acceptance alone does not solve that target overload gap.
+`additive_assignment.py` checks normal STAN-enabled native execution. The native fixture covers ordinary signed integers and `uint32` fields with
+`uint32` deltas. Keep offset arithmetic in its declared compact domain; validate
+wide source lengths before narrowing. Mixed-width compound runtime overloads are
+not added by this converter feature.
 
 ## Supported forms and their limits
 

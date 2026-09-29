@@ -8,7 +8,6 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', type=Path, required=True)
-parser.add_argument('--compact', action='store_true', help='Reproduce mixed-width uint32 field updates; requires target runtime support')
 parser.add_argument('--target-checkout', type=Path, required=True)
 args = parser.parse_args()
 output = args.results.resolve()
@@ -16,8 +15,6 @@ output.mkdir(parents=True, exist_ok=False)
 source = output / 'source'
 source.mkdir()
 fixture = (ROOT / 'tests/portability/fixtures/additive_assignment.php').read_text()
-if args.compact:
-    fixture = fixture.replace('public int $offset = 7;', 'public int $offset /** uint32 */ = 7;')
 (source / 'main.php').write_text(fixture)
 commands = []
 
