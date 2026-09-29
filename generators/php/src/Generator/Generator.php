@@ -3010,10 +3010,11 @@ final class Generator
 		return $class->isInterface || $method->isAbstract;
 	}
 
+	/** Extract the leading parent call from the expression object's IR payload. */
 	private function extractParentConstructorArgs(array $statements): ?array
 	{
 		$first = $statements[0] ?? null;
-		if (!$first instanceof Statement || $first->kind !== 'expr' || !is_array($first->payload)) {
+		if (!$first instanceof Statement || $first->kind !== 'expr' || !is_object($first->payload)) {
 			return null;
 		}
 		$expr = $first->payload;

@@ -77,8 +77,10 @@ inheritance/method-signature conversion tests pass. Retry `logs-4` advances to
 The isolated parent-call proof in `/tmp/my-try-parent-proof-isolated-20260929`
 exposes a separate generator defect: constructor extraction rejects the IR object
 payload because its guard expects an array, leaving `Base::__construct(...)`
-in the C++ body. Generator repair needs cross-owner approval; this is not a runtime
-operator/type limitation.
+in the C++ body. The approved generator fix now accepts the expression object.
+The same proof passes conversion, normal STAN, native build and PHP/native execution
+(`10:2`) in `/tmp/my-try-parent-proof-fixed-20260929`, against `cf4d4d9d` plus
+the extractor fix. No runtime changes were needed.
 Whole-compiler STAN/build/execution remain unreached.
 
 ## Current authoring contracts

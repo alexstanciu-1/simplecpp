@@ -76,12 +76,13 @@ remain invalid. This does not expand the supported static/final modifier combina
 Literal `parent::method(...)` calls, including `parent::__construct(...)`, are now
 preserved inside class expressions. Parent constants/properties and dynamic calls
 remain outside this converter slice. The target owns ancestry and constructor
-placement; conversion does not establish native support. The focused
-[parent-call proof](../../tests/portability/parent_calls.py) currently exposes a
-generator blocker: constructor extraction expects an array expression payload,
-while the IR builder supplies an object, so the call is not lifted into a base
-initializer. PHP produces `10:2`; native compilation remains blocked pending a
-generator fix. No runtime extension is indicated by this failure.
+placement. A leading `parent::__construct(...)` in a derived constructor is
+lifted into its C++ base initializer. Constructor extraction consumes the IR
+expression object, matching the builder; it must not require an array payload.
+The focused [parent-call proof](../../tests/portability/parent_calls.py) passes
+conversion, normal STAN, native compilation and PHP/native execution (`10:2`).
+It checks base initialization, parent method dispatch, shared argument identity and
+single argument evaluation. No runtime extension was needed.
 
 ## Additive compound assignments
 
