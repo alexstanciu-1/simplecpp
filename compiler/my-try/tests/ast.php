@@ -78,8 +78,8 @@ final class AST_Test
 		}
 		foreach ($syntax->collection->entries as $position => $entry) {
 			self::initialized($entry);
-			self::check($entry->node->occurrence() === $entry);
-			self::check($entry->local_index === $position && $nodes->contains($entry->node));
+			self::check($entry->syntax()->occurrence() === $entry);
+			self::check($entry->local_index === $position && $nodes->contains($entry->syntax()));
 		}
 		return $nodes;
 	}
@@ -151,7 +151,7 @@ final class AST_Test
 		$collector = new Symbol_Collector(new collected_file($tokens), $tokens, $scope, null, 1);
 		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
 		self::check($scope->has_variables());
-		self::check($node->occurrence()->node === $node);
+		self::check($node->occurrence()->syntax() === $node);
 		try {
 			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'duplicate');
 			throw new \RuntimeException('Expected duplicate occurrence rejection');

@@ -3,7 +3,7 @@ Doc Status: supporting
 
 - `worker.php`: `Preparation_Worker`, incremental selection, dependency maintenance,
   declaration completion and separate function/file body work lists.
-- `syntax.php`: typed node dispatch into preparation algorithms.
+- `syntax.php`: typed node dispatch and active context forwarding into preparation algorithms.
 - `file.php`: `File_Preparation`, single-file entry adapter and expression/statement algorithms.
 - `changes.php`: comparison of declaration facts and preservation of unchanged fact identities.
 - `declarations.php`: signature/type lookup, function-local contexts, struct fields,
@@ -48,10 +48,22 @@ roots; there are no surviving consumers to notify. Strong identity storage is re
 weak references are deferred. Body replacement detaches outgoing registrations before
 rebuilding facts. Incomplete parsing blocks this boundary entirely.
 
-Each concrete node delegates through its preparation hook; typed routines
-retain resolution/inference algorithms. Resolution runs here after the parsing join,
+Polymorphic syntax delegates through node preparation hooks to `Syntax_Preparation`;
+typed routines retain resolution/inference algorithms. The scheduler deliberately calls
+known declaration routines directly when comparing old/new specialized facts and settling
+work. Function-body entry establishes its local/return context before traversing statements.
+The file hook is named `prepare_file_body`: it prepares only executable statements,
+not the independently scheduled declarations. Bodies and ordinary blocks share one
+source-order statement loop and reuse the supplied operation worker.
+
+Parameter and field algorithms belong to `Declaration_Preparation`. Local declarations
+and variable assignments share the local-storage routine; member writes use a separate
+typed field-write routine and never introduce locals. Literal/reference helpers accept
+their concrete node types rather than arbitrary AST nodes.
+
+Resolution runs here after the parsing join,
 not in a second pre-resolution pass. Unchanged bodies retain syntax, occurrences and
-facts while parsing rebases token positions; changed bodies replace their facts and
+facts at their retained positions in appended token storage; changed bodies replace their facts and
 outgoing dependencies. Prepared completion records publish only after success.
 Preparation owners retain `change_status`, `failed` and their diagnostic across
 increments. Selection uses change status; only successful preparation settles an
@@ -75,8 +87,9 @@ that also use `RuntimeException` from source diagnostics remains classification 
 
 Function bodies compare exact source bytes using the existing `token_index` and
 exclusive `end_token_index`: first-token offset through last-token offset plus length.
-Internal whitespace changes replace a body; moving identical text retains it and rebases
-its token positions. Signatures and file executable statements still compare tokens.
+Internal whitespace changes replace a body; moving identical text retains it with its old
+token positions until deferred token cleanup remaps retained spans. Signatures and file
+executable statements still compare tokens.
 
 Combined `sync` now uses the same tokenization/parsing phases. It clears completion
 and output roots without clearing retained facts. Successful joins remove deleted

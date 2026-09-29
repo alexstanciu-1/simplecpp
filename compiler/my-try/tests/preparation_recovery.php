@@ -11,7 +11,7 @@ function recovery_check(bool $condition, string $message): void
 
 function recovery_function(string $name): function_node
 {
-	return object_cast(Model::$global_scope->functions_named($name)[0]->node, function_node::class);
+	return object_cast(Model::$global_scope->functions_named($name)[0]->syntax(), function_node::class);
 }
 
 /** Assert that a failed preparation withholds completed results and preserves its diagnostic. */

@@ -51,6 +51,17 @@ final class Declaration_Preparation
 		$syntax->set_preparation($facts);
 	}
 
+	/** Prepare one parameter with the same signature context used by its enclosing function. */
+	public static function prepare_parameter(parameter_node $node, preparation_context $context): void
+	{
+		$facts = new prepared_parameter();
+		$facts->declaration = $node->occurrence();
+		$facts->type = self::type($node->type_syntax, $context);
+		self::require_value_type($facts->type);
+		$facts->mode = $node->mode;
+		$node->set_preparation($facts);
+	}
+
 	/** Fields belong to their record, never to the surrounding local-variable scope. */
 	public static function prepare_struct(struct_node $syntax, preparation_context $context): void
 	{
@@ -102,7 +113,7 @@ final class Declaration_Preparation
 			$locals->add($entry->name, $parameter);
 		}
 
-		File_Preparation::prepare_statements($syntax->body, $context);
+		File_Preparation::prepare_statements($syntax->body->statements, new Syntax_Preparation($context));
 	}
 
 	/** Resolve one named callable and establish reference/value argument boundaries. */
@@ -123,7 +134,7 @@ final class Declaration_Preparation
 		$context->worker->require_declaration($context->owner, $targets[0]);
 		$facts = new prepared_call();
 		$facts->declaration = $targets[0];
-		$facts->signature = object_cast($targets[0]->node, function_node::class)->require_preparation();
+		$facts->signature = object_cast($targets[0], collected_function::class)->syntax()->require_preparation();
 		$facts->type = $facts->signature->return_type;
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
@@ -161,7 +172,7 @@ final class Declaration_Preparation
 
 		$context->worker->require_record($value->type, $context);
 		$declaration = object_cast($value->type->declaration, collected_name::class);
-		$record = object_cast($declaration->node, struct_node::class)->require_preparation();
+		$record = object_cast($declaration, collected_struct::class)->syntax()->require_preparation();
 		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;
 		$matches /** vector<prepared_field> */ = $fields->named($syntax->occurrence()->name);
 		if (q_count($matches) !== 1) {

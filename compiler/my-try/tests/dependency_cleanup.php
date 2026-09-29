@@ -22,7 +22,7 @@ try
 	$compiler->prepare();
 	$a = Model::$global_scope->functions_named('a')[0]->preparation;
 	$b = Model::$global_scope->functions_named('b')[0]->preparation;
-	$b_body = object_cast($b->declaration->node, function_node::class)->body->work();
+	$b_body = object_cast($b->declaration, collected_function::class)->syntax()->body->work();
 	$file_body = Model::collected_files()[0]->root->body->work();
 	$lookup = null;
 	foreach ($b_body->lookups as $candidate) {

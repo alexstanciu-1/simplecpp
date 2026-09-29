@@ -18,22 +18,20 @@ final class Syntax_Preparation implements preparation_worker_i
 		return $node->require_preparation();
 	}
 
-	public function prepare_file(file_node $node): void
+	/** Prepare only the scheduled executable body; declarations have separate work owners. */
+	public function prepare_file_body(file_node $node): void
 	{
 		$this->prepare_function_body($node->body);
 	}
 
 	public function prepare_function_body(function_body_node $node): void
 	{
-		File_Preparation::prepare_statements($node, $this->context);
+		File_Preparation::prepare_statements($node->statements, $this);
 	}
 
 	public function prepare_block(block_node $node): void
 	{
-		$statements /** Storage<statement_node> */ = $node->statements;
-		foreach ($statements as $statement) {
-			$statement->prepare($this);
-		}
+		File_Preparation::prepare_statements($node->statements, $this);
 	}
 
 	public function prepare_named_type(named_type_node $node): void
@@ -88,12 +86,7 @@ final class Syntax_Preparation implements preparation_worker_i
 
 	public function prepare_parameter(parameter_node $node): void
 	{
-		$facts = new prepared_parameter();
-		$facts->declaration = $node->occurrence();
-		$facts->type = Declaration_Preparation::type($node->type_syntax, $this->context);
-		Declaration_Preparation::require_value_type($facts->type);
-		$facts->mode = $node->mode;
-		$node->set_preparation($facts);
+		Declaration_Preparation::prepare_parameter($node, $this->context);
 	}
 
 	public function prepare_field(field_node $node): void
@@ -113,21 +106,11 @@ final class Syntax_Preparation implements preparation_worker_i
 
 	public function prepare_variable_declaration(variable_declaration_node $node): void
 	{
-		$node->set_preparation(File_Preparation::prepare_storage($node->occurrence(), $node->type_syntax, null, $node->initializer, $this->context));
+		$node->set_preparation(File_Preparation::prepare_local_storage($node->occurrence(), $node->type_syntax, $node->initializer, $this->context));
 	}
 
-	/** A plain-variable write enters the binding path, never premature read resolution. */
 	public function prepare_assignment(assignment_expression_node $node): void
 	{
-		$entry /** nullable<collected_name> */ = null;
-		$target /** nullable<assignable_expression_node> */ = $node->target;
-		if ($target instanceof variable_reference_node) {
-			$entry = object_cast($target, variable_reference_node::class)->occurrence();
-			$target = null;
-		}
-		$facts = new prepared_assignment();
-		$facts->binding = File_Preparation::prepare_storage($entry, null, $target, $node->value, $this->context);
-		$facts->type = $facts->binding->type;
-		$node->set_preparation($facts);
+		$node->set_preparation(File_Preparation::prepare_assignment($node, $this->context));
 	}
 }

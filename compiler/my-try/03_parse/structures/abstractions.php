@@ -196,18 +196,17 @@ trait Preparation_Facts
 }
 
 /**
- * Typed preparation dispatch contract, not a worker implementation. The worker
- * carries the active preparation context, owns ordering/dependency decisions and
- * attaches facts to concrete nodes. Returning void keeps this shared entry point
+ * Typed syntax dispatch implemented by Syntax_Preparation, carrying the active
+ * context into preparation algorithms. Preparation_Worker owns scheduling and
+ * dependency settlement. Returning void keeps this shared entry point
  * independent of the specialized fact type; typed accessors expose those facts.
  * Signature and executable-body work are scheduled independently. Type syntax,
  * parameters and fields are processed in their owning declaration/body context.
- * Pending native migration must adapt existing workers to these typed signatures;
- * these declarations do not claim that production workers implement this interface.
+ * File dispatch prepares only its executable body, not its declarations.
  */
 interface preparation_worker_i
 {
-	public function prepare_file(file_node $node): void;
+	public function prepare_file_body(file_node $node): void;
 	public function prepare_function_body(function_body_node $node): void;
 	public function prepare_block(block_node $node): void;
 	public function prepare_named_type(named_type_node $node): void;

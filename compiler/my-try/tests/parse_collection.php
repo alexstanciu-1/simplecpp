@@ -52,13 +52,13 @@ try
 	$parsed = $a->parsed;
 	parse_check($parsed->complete && $b->parsed->complete, 'Initial collection did not complete');
 	$get = Model::$global_scope->functions_named('get')[0];
-	$function_node = $get->node;
+	$function_node = $get->syntax();
 	$function = object_cast($function_node, function_node::class);
 	$body = $function->body;
 	$parameter = $function->parameters[0];
 	$parameter_entry = $parameter->occurrence();
 	$type = Model::$global_scope->types_named('Box')[0];
-	$box = $type->declaration->node;
+	$box = $type->declaration->syntax();
 	$field = object_cast($box, struct_node::class)->fields[0];
 	$removed = object_cast($box, struct_node::class)->fields[1]->occurrence();
 	$old_revision = $get->revision;
@@ -70,7 +70,7 @@ try
 	parse_update($compiler, $a, 'function get(int $x): int { return $x; } struct Box { int $value; bool $ready; } $local int = 1; get($local);');
 	parse_check($a->parsed === $parsed, 'Parsed file identity was replaced');
 	parse_check(Model::$global_scope->functions_named('get')[0] === $get, 'Function symbol identity was replaced');
-	parse_check($get->node === $function_node, 'Function node identity was replaced');
+	parse_check($get->syntax() === $function_node, 'Function node identity was replaced');
 	parse_check(($function->parameters[0] === $parameter) && ($parameter->occurrence() === $parameter_entry), 'Parameter identity was replaced');
 	parse_check($function->body === $body, 'Unchanged function body was not retained');
 	parse_check(!$function->body->syntax_changed && !$parsed->root->body->syntax_changed, 'Declaration order or token offsets changed an executable-body flag');
@@ -103,7 +103,7 @@ try
 		$failed = true;
 	}
 	parse_check($failed && !$a->parsed->complete && $b->parsed->complete, 'Failure did not isolate the file');
-	parse_check(object_cast($other->node, function_node::class)->body->syntax_changed, 'Independent file was not updated after another file failed');
+	parse_check(object_cast($other, collected_function::class)->syntax()->body->syntax_changed, 'Independent file was not updated after another file failed');
 	parse_check($get->change_status !== change_state::deleted, 'Failure incorrectly deleted an unvisited function');
 	$added = Model::$global_scope->functions_named('added')[0];
 	$broken = Model::$global_scope->functions_named('broken')[0];
@@ -125,16 +125,16 @@ try
 	parse_update($compiler, $a, '');
 	parse_update($compiler, $a, 'function get(int $x): int { return $x; }');
 	parse_check($get->change_status === change_state::added, 'Reappearance after an empty file was not added');
-	parse_check($get->node === $function_node, 'Reappearance after an empty file replaced the node');
+	parse_check($get->syntax() === $function_node, 'Reappearance after an empty file replaced the node');
 	$parameter_index = $parameter_entry->local_index;
 	$a->parsed->collection->revision = 4294967295;
 	parse_update($compiler, $a, 'function get(int $x): int { return $x; }');
 	parse_check(($get->revision === 1) && ($parameter_entry->local_index === $parameter_index), 'Revision rollover lost declaration identity/index');
 	parse_check($get->change_status === change_state::unchanged, 'Revision rollover changed an unchanged signature');
 	$tokens = $a->tokens;
-	$body = object_cast($get->node, function_node::class)->body;
+	$body = object_cast($get, collected_function::class)->syntax()->body;
 	$compiler->parse();
-	parse_check(($a->tokens === $tokens) && (object_cast($get->node, function_node::class)->body === $body), 'Unchanged source was reparsed');
+	parse_check(($a->tokens === $tokens) && (object_cast($get, collected_function::class)->syntax()->body === $body), 'Unchanged source was reparsed');
 	$a->changes = change_state::deleted;
 	$compiler->parse();
 	parse_check($get->change_status === change_state::deleted, 'Deleted file retained a live global declaration');

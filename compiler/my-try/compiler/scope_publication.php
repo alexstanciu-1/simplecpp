@@ -8,10 +8,10 @@ final class Scope_Publication
 	/** Collector invokes this under the task batch lock; local variables never enter this path. */
 	public static function register(scope $local_scope, scope $global, collected_name $entry): void
 	{
-		if ($entry->kind === collected_name_kind::function_declaration) {
+		if ($entry instanceof collected_function) {
 			$global->register($entry);
 		}
-		elseif ($entry->kind === collected_name_kind::struct_declaration)
+		elseif ($entry instanceof collected_struct)
 		{
 			foreach ($local_scope->types_named($entry->name) as $definition) {
 				if ($definition->declaration === $entry) {
@@ -29,12 +29,12 @@ final class Scope_Publication
 			throw new \LogicException('Parsed file was already published');
 		}
 		foreach ($local_scope->declarations() as $entry) {
-			$entry->exported = true;
+			object_cast($entry, collected_declaration::class)->exported = true;
 			$global->register($entry);
 		}
 		foreach ($local_scope->type_definitions() as $definition) {
 			if ($definition->declaration !== null) {
-				$definition->declaration->exported = true;
+				object_cast($definition->declaration, collected_declaration::class)->exported = true;
 			}
 			$global->register_type($definition);
 		}

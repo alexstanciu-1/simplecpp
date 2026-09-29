@@ -53,7 +53,7 @@ final class Host_Report
 						continue;
 					}
 					$scope_label = $entry->scope->is_function() ? 'function-local' : 'global';
-					echo "      entry {$entry->local_index} " . $entry->kind->name . ': ' . htmlspecialchars($entry->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . " at token {$entry->token_index} ($scope_label)\n";
+					echo "      entry {$entry->local_index} " . $entry->kind()->name . ': ' . htmlspecialchars($entry->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . " at token {$entry->token_index} ($scope_label)\n";
 				}
 			}
 		}

@@ -272,7 +272,7 @@ if (($literal_node->kind() !== node_kind::boolean_literal) || (Syntax_Nodes::cat
 	throw new \LogicException('Boolean syntax, false value or inferred type changed');
 }
 foreach ($syntax->collection->entries as $entry) {
-	if ($entry->node === $literal_node) {
+	if ($entry->syntax() === $literal_node) {
 		throw new \LogicException('Boolean literal was collected as a name');
 	}
 }

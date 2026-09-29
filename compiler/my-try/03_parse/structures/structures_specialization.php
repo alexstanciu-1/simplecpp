@@ -23,7 +23,7 @@ final class file_node extends ast_node
 		$this->declarations = new Storage /** Storage<declaration_node> */();
 	}
 
-	/** Required lexical context; AST parent() is unrelated to scope lookup. */
+	/** Required lexical context, independent of syntax ownership. */
 	public function file_scope(): scope
 	{
 		return \weakref_get($this->file_scope);
@@ -42,10 +42,10 @@ final class file_node extends ast_node
 		return new file_children_iterator($this);
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
+	/** Dispatch only the file executable body; declarations are independently scheduled. */
 	public function prepare(preparation_worker_i $worker): void
 	{
-		$worker->prepare_file($this);
+		$worker->prepare_file_body($this);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -106,7 +106,7 @@ final class function_body_node extends ast_node
 		$this->statements = new Storage /** Storage<statement_node> */();
 	}
 
-	/** Required lexical context; AST parent() is unrelated to scope lookup. */
+	/** Required lexical context, independent of syntax ownership. */
 	public function local_scope(): scope
 	{
 		return \weakref_get($this->local_scope);
@@ -570,6 +570,11 @@ final class function_node extends declaration_node
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
+		// Formal names are stable keys; their source locations follow the worker's token policy.
+		$formals /** hash<int> */ = $this->template_parameters;
+		foreach ($formals as $name => $index) {
+			$this->template_parameters[$name] = $worker->token_index($index);
+		}
 		$worker->enter($this);
 		$items /** Storage<parameter_node> */ = $this->parameters;
 		foreach ($items as $child) {

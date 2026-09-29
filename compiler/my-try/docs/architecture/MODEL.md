@@ -58,6 +58,15 @@ specializations hold no occurrence field. Declaration comparison creates tempora
 records with cached structural keys and spellings; `Key_Storage_List` groups them.
 These keys do not become persistent declaration identity.
 
+The collected identity itself is specialized by role; it is not a separate wrapper
+around a second symbol object. Concrete collected declarations, references and
+unresolved variable writes own typed syntax links. Only declaration records carry
+retention/export flags, and only function/struct definitions carry independent
+preparation owners. Common revision/change state is also needed when refreshing or
+retiring body occurrences. `kind()` is a computed compatibility classification;
+the class and its typed syntax cannot acquire conflicting mutable tags. See the
+[collected-record model](../../04_analyze/README.md) for the role hierarchy.
+
 ## Semantic preparation direction
 
 `File_Preparation` and specialization-attached facts are the active backend-neutral

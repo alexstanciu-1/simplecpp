@@ -33,8 +33,8 @@ final class Symbol_Collector
 			$entries = $scope->variables_named($name);
 		}
 		foreach ($entries as $entry) {
-			if (($entry->kind === $kind) && $entry->retained_symbol && ((int)$entry->revision !== (int)$this->collection->revision)) {
-				return $entry->node;
+			if (($entry->kind() === $kind) && $entry->is_retained() && ((int)$entry->revision !== (int)$this->collection->revision)) {
+				return $entry->syntax();
 			}
 		}
 		return null;
@@ -53,7 +53,7 @@ final class Symbol_Collector
 		else
 		{
 			$entry = $this->append($node, $index, $kind, $scope, $name);
-			$entry->retained_symbol = true;
+			object_cast($entry, collected_declaration::class)->retained_symbol = true;
 			$this->collection->defined_elements[] = $entry->local_index;
 			if ($kind === collected_name_kind::struct_declaration) {
 				$scope->register_type(Source_Types::definition($entry));
@@ -65,7 +65,7 @@ final class Symbol_Collector
 			{
 				$global /** scope */ = $this->global;
 				if (($kind === collected_name_kind::struct_declaration) || ($kind === collected_name_kind::function_declaration)) {
-					$entry->exported = true;
+					object_cast($entry, collected_declaration::class)->exported = true;
 					task_synchronize(function () use ($entry, $scope, $global): void {
 						Scope_Publication::register($scope, $global, $entry);
 					});
@@ -107,17 +107,51 @@ final class Symbol_Collector
 		if ($node->optional_occurrence() !== null) {
 			throw new \LogicException('Syntax already has a collected occurrence');
 		}
-		$entry = new collected_name($this->collection);
+		$entry = $this->new_occurrence($node, $kind);
 		$entry->name = $name;
-		$entry->kind = $kind;
 		$entry->scope = $scope;
-		$entry->node = $node;
 		$entry->token_index = $index;
 		$entry->revision = $this->collection->revision;
 		$entries /** Storage<collected_name> */ = $this->collection->entries;
 		$entry->local_index = $entries->append($entry);
 		$node->attach_occurrence($entry);
 		return $entry;
+	}
+
+	/** Allocate the role once; retained declarations and resolved writes never change record class. */
+	private function new_occurrence(ast_node $node, collected_name_kind $kind): collected_name
+	{
+		if ($kind === collected_name_kind::function_declaration) {
+			return new collected_function($this->collection, object_cast($node, function_node::class));
+		}
+		if ($kind === collected_name_kind::struct_declaration) {
+			return new collected_struct($this->collection, object_cast($node, struct_node::class));
+		}
+		if ($kind === collected_name_kind::field_declaration) {
+			return new collected_field($this->collection, object_cast($node, field_node::class));
+		}
+		if ($kind === collected_name_kind::variable_declaration) {
+			if ($node instanceof parameter_node) {
+				return new collected_parameter($this->collection, object_cast($node, parameter_node::class));
+			}
+			return new collected_variable($this->collection, object_cast($node, variable_declaration_node::class));
+		}
+		if ($kind === collected_name_kind::function_reference) {
+			return new collected_function_reference($this->collection, object_cast($node, call_node::class));
+		}
+		if ($kind === collected_name_kind::field_reference) {
+			return new collected_field_reference($this->collection, object_cast($node, field_access_node::class));
+		}
+		if ($kind === collected_name_kind::variable_reference) {
+			return new collected_variable_reference($this->collection, object_cast($node, variable_reference_node::class));
+		}
+		if ($kind === collected_name_kind::type_reference) {
+			return new collected_type_reference($this->collection, object_cast($node, named_type_node::class));
+		}
+		if ($kind === collected_name_kind::binding) {
+			return new collected_variable_write($this->collection, object_cast($node, variable_reference_node::class));
+		}
+		throw new \LogicException('Unsupported collected occurrence role');
 	}
 
 	/** A completed file can retire unseen local symbols; exported rows wait until the join. */
@@ -158,12 +192,12 @@ final class Symbol_Collector
 				}
 			}
 			$index = $entry->local_index;
-			if (!$entry->retained_symbol && ((int)$entry->revision !== (int)$collection->revision)) {
+			if (!$entry->is_retained() && ((int)$entry->revision !== (int)$collection->revision)) {
 				$retired[] = $index;
 				continue;
 			}
-			$kind = $entry->kind;
-			if ($entry->retained_symbol || ($kind === collected_name_kind::variable_declaration)) {
+			$kind = $entry->kind();
+			if ($entry->is_retained() || ($kind === collected_name_kind::variable_declaration)) {
 				$collection->defined_elements[] = $index;
 			}
 			elseif ($kind === collected_name_kind::variable_reference) {
@@ -194,7 +228,7 @@ final class Symbol_Collector
 		$entries /** Storage<collected_name> */ = $collection->entries;
 		foreach ($collection->defined_elements as $index) {
 			$entry = $entries[$index];
-			if ($entry->retained_symbol && ($entry->exported === $exported) && ((int)$entry->revision !== (int)$collection->revision)) {
+			if ($entry->is_retained() && ($entry->is_exported() === $exported) && ((int)$entry->revision !== (int)$collection->revision)) {
 				$entry->change_status = change_state::deleted;
 			}
 		}

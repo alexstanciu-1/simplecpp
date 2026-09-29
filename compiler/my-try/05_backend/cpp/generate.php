@@ -23,7 +23,7 @@ final class CPP_Generator
 		{
 			if (($node->kind() === node_kind::function_declaration) || ($node->kind() === node_kind::struct_declaration)) {
 				$entry = $node->occurrence();
-				$ordered->append(object_cast($entry->preparation, preparation_owner::class));
+				$ordered->append(object_cast($entry->preparation_owner(), preparation_owner::class));
 				if ($node->kind() === node_kind::function_declaration) {
 					$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
 				}
@@ -81,13 +81,13 @@ final class CPP_Generator
 			}
 			elseif ($owner->kind === preparation_kind::function_body) {
 				$entry = object_cast($owner->declaration, collected_name::class);
-				$signature_owner = object_cast($entry->preparation, preparation_owner::class);
+				$signature_owner = object_cast($entry->preparation_owner(), preparation_owner::class);
 				$context->functions .= $this->program->fragments[$signature_owner]->text . "\n{\n" . $fragment->text . "}\n\n";
 			}
 			else
 			{
 				$entry = object_cast($owner->declaration, collected_name::class);
-				if ($entry->kind === collected_name_kind::struct_declaration) {
+				if ($entry instanceof collected_struct) {
 					$this->assemble_record($entry, $context);
 				}
 				else {
@@ -139,16 +139,16 @@ final class CPP_Generator
 		{
 			$entry = object_cast($owner->declaration, collected_name::class);
 			if ($owner->kind === preparation_kind::function_body) {
-				$syntax = object_cast($entry->node, function_node::class);
+				$syntax = object_cast($entry, collected_function::class)->syntax();
 				$context->return_type = $syntax->require_preparation()->return_type;
 				$next->text = self::generate_statements($syntax->body, $context);
 			}
-			elseif ($entry->kind === collected_name_kind::function_declaration) {
-				$next->text = CPP_Declarations::signature(object_cast($entry->node, function_node::class), $context);
+			elseif ($entry instanceof collected_function) {
+				$next->text = CPP_Declarations::signature(object_cast($entry, collected_function::class)->syntax(), $context);
 			}
 			else
 			{
-				$syntax = object_cast($entry->node, struct_node::class);
+				$syntax = object_cast($entry, collected_struct::class)->syntax();
 				CPP_Declarations::generate_struct($syntax, $context);
 				$next->text = $context->records;
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
@@ -177,7 +177,7 @@ final class CPP_Generator
 			return;
 		}
 		$context->record_states[$key] = cpp_record_state::visiting;
-		$owner = object_cast($entry->preparation, preparation_owner::class);
+		$owner = object_cast($entry->preparation_owner(), preparation_owner::class);
 		$fragment = $this->program->fragments[$owner];
 		$records /** Storage<collected_name> */ = $fragment->records;
 		foreach ($records as $dependency) {

@@ -268,9 +268,10 @@ final class Parser_Run
 		}
 		$node->set_span($start, $this->position);
 		if (!$same) {
-			if ($entry->preparation !== null) {
-				$entry->preparation->state = preparation_state::pending;
-				$entry->preparation->change_status = change_state::changed;
+			$work = $entry->preparation_owner();
+			if ($work !== null) {
+				$work->state = preparation_state::pending;
+				$work->change_status = change_state::changed;
 			}
 		}
 	}

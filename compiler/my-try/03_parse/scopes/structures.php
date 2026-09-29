@@ -69,7 +69,7 @@ final class scope
 	/** Register source identities without merging duplicates or doing name resolution. */
 	public function register(collected_name $entry): void
 	{
-		if ($entry->kind === collected_name_kind::function_declaration) {
+		if ($entry instanceof collected_function) {
 			$functions /** Key_Storage_List<collected_name> */ = $this->functions;
 			$functions->add($entry->name, $entry);
 		}

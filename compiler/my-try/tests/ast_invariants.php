@@ -61,7 +61,7 @@ if (($literal->start_token() !== 1) || ($literal->end_token() !== 2)) {
 rejected(function () use ($literal): void {
 	$literal->require_preparation();
 }, \TypeError::class);
-$entry = new collected_name(new collected_file(new token_list()));
+$entry = new collected_variable_write(new collected_file(new token_list()), $target);
 $target->attach_occurrence($entry);
 rejected(function () use ($target, $entry): void {
 	$target->attach_occurrence($entry);

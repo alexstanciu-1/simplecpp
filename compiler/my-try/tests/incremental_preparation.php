@@ -22,7 +22,7 @@ function preparation_edit(Compiler $compiler, source_record $source, string $tex
 function preparation_function(string $name): function_node
 {
 	$entries = Model::$global_scope->functions_named($name);
-	return object_cast($entries[0]->node, function_node::class);
+	return object_cast($entries[0], collected_function::class)->syntax();
 }
 
 $directory = sys_get_temp_dir() . '/scpp_incremental_preparation_' . bin2hex(random_bytes(6));

@@ -121,11 +121,11 @@ final class Preparation_Worker
 				if ((!$all) && (!$source->deleted) && ($entry->change_status !== change_state::deleted)) {
 					continue;
 				}
-				if ($entry->preparation !== null) {
-					$result[$entry->preparation] = true;
+				if ($entry->preparation_owner() !== null) {
+					$result[$entry->preparation_owner()] = true;
 				}
-				if ($entry->kind === collected_name_kind::function_declaration) {
-					$function = object_cast($entry->node, function_node::class);
+				if ($entry instanceof collected_function) {
+					$function = object_cast($entry, collected_function::class)->syntax();
 					if (isset($function->body)) {
 						if ($function->body->work() !== null) {
 							$result[$function->body->work()] = true;
@@ -238,10 +238,11 @@ final class Preparation_Worker
 
 	public function declaration_owner(collected_name $entry): preparation_owner
 	{
-		if ($entry->preparation === null) {
-			$entry->preparation = new preparation_owner(preparation_kind::declaration, $entry->collection, $entry);
+		$definition = object_cast($entry, collected_definition::class);
+		if ($definition->preparation === null) {
+			$definition->preparation = new preparation_owner(preparation_kind::declaration, $entry->collection, $entry);
 		}
-		$owner /** preparation_owner */ = $entry->preparation;
+		$owner /** preparation_owner */ = $definition->preparation;
 		return $owner;
 	}
 
@@ -336,7 +337,6 @@ final class Preparation_Worker
 			}
 		}
 		$entry = object_cast($owner->declaration, collected_name::class);
-		$node = $entry->node;
 		$recovering = $owner->failed;
 		$old_dependencies /** hash<int, shared<preparation_owner>> */ = $owner->dependencies;
 		$this->detach_dependencies($owner);
@@ -344,10 +344,11 @@ final class Preparation_Worker
 		$context = $this->context($owner);
 		try
 		{
-			if ($entry->kind === collected_name_kind::function_declaration)
+			if ($entry instanceof collected_function)
 			{
-				$function_syntax = object_cast($node, function_node::class);
+				$function_syntax = object_cast($entry, collected_function::class)->syntax();
 				$old_signature = $function_syntax->preparation();
+				// The scheduler knows the declaration type and compares its specialized facts.
 				Declaration_Preparation::prepare_function($function_syntax, $context);
 				$changed = !Preparation_Changes::function_signature($old_signature, $function_syntax->require_preparation());
 				if (!$changed) {
@@ -358,7 +359,7 @@ final class Preparation_Worker
 			}
 			else
 			{
-				$record_syntax = object_cast($node, struct_node::class);
+				$record_syntax = object_cast($entry, collected_struct::class)->syntax();
 				$old_record = $record_syntax->preparation();
 				Declaration_Preparation::prepare_struct($record_syntax, $context);
 				$changed = !Preparation_Changes::record($old_record, $record_syntax->require_preparation());
@@ -400,7 +401,7 @@ final class Preparation_Worker
 		{
 			if ($owner->kind === preparation_kind::function_body) {
 				$entry = object_cast($owner->declaration, collected_name::class);
-				$syntax = object_cast($entry->node, function_node::class);
+				$syntax = object_cast($entry, collected_function::class)->syntax();
 				$this->require_declaration($owner, $entry);
 				Preparation_Cleanup::tree($syntax->body);
 				Declaration_Preparation::prepare_body($syntax, $context);
@@ -432,14 +433,14 @@ final class Preparation_Worker
 	private function settle_members(collected_name $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
-		if ($entry->kind === collected_name_kind::function_declaration) {
-			$parameters /** Storage<parameter_node> */ = object_cast($entry->node, function_node::class)->parameters;
+		if ($entry instanceof collected_function) {
+			$parameters /** Storage<parameter_node> */ = object_cast($entry, collected_function::class)->syntax()->parameters;
 			foreach ($parameters as $parameter) {
 				$parameter->occurrence()->change_status = change_state::unchanged;
 			}
 		}
 		else {
-			$fields /** Storage<field_node> */ = object_cast($entry->node, struct_node::class)->fields;
+			$fields /** Storage<field_node> */ = object_cast($entry, collected_struct::class)->syntax()->fields;
 			foreach ($fields as $field) {
 				$field->occurrence()->change_status = change_state::unchanged;
 			}
@@ -498,7 +499,7 @@ final class Preparation_Worker
 	private function file_body(file_node $root, preparation_context $context): void
 	{
 		Preparation_Cleanup::tree($root->body);
-		File_Preparation::prepare_statements($root->body, $context);
+		File_Preparation::prepare_statements($root->body->statements, new Syntax_Preparation($context));
 	}
 
 	/** Context is transient and always uses the selected owner's source token generation. */
@@ -584,11 +585,11 @@ final class Preparation_Worker
 			if (!$source->deleted && ($entry->change_status !== change_state::deleted)) {
 				continue;
 			}
-			if ($entry->preparation !== null) {
-				$entry->preparation = null;
+			if ($entry->preparation_owner() !== null) {
+				object_cast($entry, collected_definition::class)->preparation = null;
 			}
-			if ($entry->kind === collected_name_kind::function_declaration) {
-				$function = object_cast($entry->node, function_node::class);
+			if ($entry instanceof collected_function) {
+				$function = object_cast($entry, collected_function::class)->syntax();
 				if (isset($function->body)) {
 					$function->body->detach_work();
 				}
@@ -596,7 +597,7 @@ final class Preparation_Worker
 			$scope = object_cast(weakref_get($entry->scope), scope::class);
 			$scope->unregister($entry);
 			$global = $scope->published_scope();
-			if ($entry->exported && ($global !== null)) {
+			if ($entry->is_exported() && ($global !== null)) {
 				$published /** scope */ = $global;
 				$published->unregister($entry);
 			}

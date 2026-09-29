@@ -20,10 +20,10 @@ final class LLVM_Struct_Preparation
 			foreach ($file->defined_elements as $index)
 			{
 				$entry = $entries[$index];
-				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 					continue;
 				}
-				if ($entry->kind !== collected_name_kind::struct_declaration) {
+				if ($entry->kind() !== collected_name_kind::struct_declaration) {
 					continue;
 				}
 				if (isset($policy->types[$entry->name]) || (q_count(Scope_Lookup::live(Scope_Lookup::visible(object_cast(weakref_get($entry->scope), scope::class))->source_types_named($entry->name))) !== 1)) {
@@ -33,7 +33,7 @@ final class LLVM_Struct_Preparation
 				$type->declaration = $entry;
 				$type->name = '%' . LLVM_Names::encode($entry->name);
 				$fields /** Keyed_Storage<llvm_field> */ = $type->fields;
-				foreach (object_cast($entry->node, struct_node::class)->fields as $field_node)
+				foreach (object_cast($entry, collected_struct::class)->syntax()->fields as $field_node)
 				{
 					$syntax = object_cast($field_node, field_node::class);
 					$spelling = '$' . $syntax->name;
@@ -71,13 +71,13 @@ final class LLVM_Struct_Preparation
 		foreach ($file->source->field_references as $index)
 		{
 			$entry = $entries[$index];
-			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 				continue;
 			}
 			if (!LLVM_Legacy_Name_Preparation::belongs($function, $entry)) {
 				continue;
 			}
-			$base = object_cast($entry->node, field_access_node::class)->base;
+			$base = object_cast($entry, collected_field_reference::class)->syntax()->base;
 			if ($base->kind() !== node_kind::variable_reference) {
 				throw new \RuntimeException('Nested aggregate field access is not supported yet');
 			}

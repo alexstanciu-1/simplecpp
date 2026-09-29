@@ -126,12 +126,13 @@ final class Compiler_Lifecycle
 				$entries /** Storage<collected_name> */ = $source->entries;
 				foreach ($entries as $entry)
 				{
-					if ($entry->preparation !== null) {
-						$entry->preparation->state = preparation_state::pending;
-						$entry->preparation->change_status = change_state::changed;
+					$work = $entry->preparation_owner();
+					if ($work !== null) {
+						$work->state = preparation_state::pending;
+						$work->change_status = change_state::changed;
 					}
-					if ($entry->kind === collected_name_kind::function_declaration) {
-						$function = object_cast($entry->node, function_node::class);
+					if ($entry instanceof collected_function) {
+						$function = object_cast($entry, collected_function::class)->syntax();
 						if ($function->body->work() !== null) {
 							$function->body->work()->state = preparation_state::pending;
 							$function->body->work()->change_status = change_state::changed;

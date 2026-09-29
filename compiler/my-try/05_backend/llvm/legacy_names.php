@@ -17,7 +17,7 @@ final class LLVM_Legacy_Name_Preparation
 		if ($function->is_entry) {
 			return !$entry_scope->is_function() && ($entry_scope === $body_scope);
 		}
-		return ($entry_scope === $body_scope) || (($entry->node->kind() === node_kind::parameter_declaration) && ($entry_scope === $body_scope->parent_scope()));
+		return ($entry_scope === $body_scope) || (($entry->syntax()->kind() === node_kind::parameter_declaration) && ($entry_scope === $body_scope->parent_scope()));
 	}
 
 	/** Prepare only unambiguous explicit variables for the initial LLVM experiment. */
@@ -28,11 +28,11 @@ final class LLVM_Legacy_Name_Preparation
 		foreach ($file->defined_elements as $index)
 		{
 			$entry = $entries[$index];
-			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 				continue;
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
-			if (($entry->kind === collected_name_kind::variable_declaration) && $entry_scope->has_template($entry->name)) {
+			if (($entry->kind() === collected_name_kind::variable_declaration) && $entry_scope->has_template($entry->name)) {
 				throw new \RuntimeException('Variable conflicts with template parameter: ' . $entry->name);
 			}
 			$result->declarations[$entry->token_index] = $entry;
@@ -44,7 +44,7 @@ final class LLVM_Legacy_Name_Preparation
 		foreach ($references as $index)
 		{
 			$entry = $entries[$index];
-			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 				continue;
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
@@ -65,7 +65,7 @@ final class LLVM_Legacy_Name_Preparation
 			if ($candidates[0]->collection !== $file) {
 				throw new \RuntimeException('LLVM experiment needs one same-file declaration for ' . $entry->name . ' at token ' . $entry->token_index);
 			}
-			if (($entry->kind === collected_name_kind::binding) && ($candidates[0]->token_index >= $entry->token_index)) {
+			if (($entry->kind() === collected_name_kind::binding) && ($candidates[0]->token_index >= $entry->token_index)) {
 				throw new \RuntimeException('Assignment requires an existing declaration');
 			}
 			$result->references[$entry->token_index] = $candidates[0];
@@ -73,7 +73,7 @@ final class LLVM_Legacy_Name_Preparation
 		foreach ($file->function_references as $index)
 		{
 			$entry = $entries[$index];
-			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 				continue;
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
@@ -102,7 +102,7 @@ final class LLVM_Legacy_Name_Preparation
 		foreach ($file->type_references as $index)
 		{
 			$entry = $entries[$index];
-			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 				continue;
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);

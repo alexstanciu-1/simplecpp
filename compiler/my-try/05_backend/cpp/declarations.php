@@ -79,7 +79,7 @@ final class CPP_Declarations
 			$type = $field->type;
 			if (($type->kind === type_kind::record) && $context->expand_records) {
 				$entry = object_cast($type->declaration, collected_name::class);
-				self::generate_struct(object_cast($entry->node, struct_node::class), $context);
+				self::generate_struct(object_cast($entry, collected_struct::class)->syntax(), $context);
 			}
 
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);

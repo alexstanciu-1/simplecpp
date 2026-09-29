@@ -21,7 +21,7 @@ try
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$record = Model::$modules[$directory]->sources['main.phs'];
-	$function = object_cast(Model::$global_scope->functions_named('value')[0]->node, function_node::class);
+	$function = object_cast(Model::$global_scope->functions_named('value')[0]->syntax(), function_node::class);
 	$body = $function->body;
 	$first = $body->start_token();
 	$entry = $record->parsed->collection->entries[$record->parsed->collection->function_references[0]];
@@ -97,5 +97,48 @@ try
 finally {
 	unlink($path);
 	rmdir($directory);
+}
+// Template formal locations are parser-owned token sites, even without template generation.
+$template = 'template<typename T, typename U> function pair(T $x, U $y): T { return $x; }';
+$prefix = 'function extra(): int { return 9; } ';
+$previous = null;
+$identity = null;
+foreach ([$template, $prefix . $template, $prefix . 'function other(): int { return 8; } ' . $template] as $text)
+{
+	$source = new file();
+	$source->path = 'template_cleanup.phs';
+	$source->content = $text;
+	$parsed = (new Parser((new Tokenizer($source))->tokenize(), null, $previous))->parse();
+	$function = null;
+	foreach ($parsed->root->declarations as $declaration) {
+		if ($declaration->occurrence()->name === 'pair') {
+			$function = object_cast($declaration, function_node::class);
+		}
+	}
+	token_cleanup_check($function !== null, 'Missing template declaration');
+	if ($identity !== null) {
+		token_cleanup_check($function === $identity, 'Template declaration identity changed');
+	}
+	$identity = $function;
+	$before = $function->template_parameters;
+	Preparation_Cleanup::tree($function);
+	token_cleanup_check($function->template_parameters === $before, 'Fact cleanup changed template locations');
+
+	// A fresh tokenization supplies expected current positions independently of compaction.
+	$fresh = (new Tokenizer($source))->tokenize();
+	$expected = [];
+	foreach ($fresh->tokens as $index => $row) {
+		if (in_array($row->text(), ['T', 'U'], true) && !isset($expected[$row->text()])) {
+			$expected[$row->text()] = $index;
+		}
+	}
+	Token_Cleanup::file($parsed);
+	token_cleanup_check($function->template_parameters === $expected, 'Template indexes differ from fresh source positions after cleanup');
+	foreach ($function->template_parameters as $name => $index) {
+		token_cleanup_check($parsed->tokens->text_at($index) === $name, 'Template location does not point to its formal name');
+	}
+	Token_Cleanup::file($parsed);
+	token_cleanup_check($function->template_parameters === $expected, 'Repeated cleanup moved template locations twice');
+	$previous = $parsed;
 }
 echo "Token cleanup: stable compile-time indexes, retained bytes/facts, deferred compaction, immediate increments, diagnostics and retry passed\n";

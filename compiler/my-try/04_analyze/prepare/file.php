@@ -23,59 +23,57 @@ final class File_Preparation
 		return $prepared[0];
 	}
 
-	/** Workers control body traversal; specializations dispatch individual operations. */
-	public static function prepare_statements(function_body_node $body, preparation_context $context): void
+	/** Bodies and blocks share source-order traversal through the caller's operation worker. */
+	public static function prepare_statements(Storage $nodes /** Storage<statement_node> */, preparation_worker_i $worker): void
 	{
-		$nodes /** Storage<statement_node> */ = $body->statements;
-		$worker = new Syntax_Preparation($context);
 		foreach ($nodes as $node) {
 			$node->prepare($worker);
 		}
 	}
 
-	/** Establish source-order local storage or resolve a member write before publishing facts. */
-	public static function prepare_storage(?collected_name $entry, ?type_node $type_syntax, ?assignable_expression_node $target, ?expression_node $initializer, preparation_context $context): prepared_binding
+	/** A variable write enters local binding; supported member writes retain their exact field target. */
+	public static function prepare_assignment(assignment_expression_node $node, preparation_context $context): prepared_assignment
+	{
+		$target = $node->target;
+		$facts = new prepared_assignment();
+		if ($target instanceof variable_reference_node) {
+			$variable = object_cast($target, variable_reference_node::class);
+			$facts->binding = self::prepare_local_storage($variable->occurrence(), null, $node->value, $context);
+		}
+		elseif ($target instanceof field_access_node) {
+			$field = object_cast($target, field_access_node::class);
+			$facts->binding = self::prepare_field_write($field, $node->value, $context);
+		}
+		else {
+			throw new \RuntimeException('S2S assignment target is not supported yet');
+		}
+		$facts->type = $facts->binding->type;
+		return $facts;
+	}
+
+	/** Establish source-order local storage before publishing it to later statements. */
+	public static function prepare_local_storage(collected_name $entry, ?type_node $type_syntax, ?expression_node $initializer, preparation_context $context): prepared_binding
 	{
 		$binding = new prepared_binding();
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
-		if ($target !== null)
+		$previous /** vector<prepared_storage> */ = $locals->named($entry->name);
+		if (($type_syntax !== null) || (q_count($previous) === 0))
 		{
-			$write_target /** assignable_expression_node */ = $target;
-			$place = Syntax_Preparation::expression($write_target, $context);
-			if (!$place->addressable) {
-				throw new \RuntimeException('S2S assignment requires stable storage');
+			$binding->resolved_kind = binding_kind::declaration;
+			$binding->declaration = $entry;
+			if ($type_syntax !== null) {
+				$type /** type_node */ = $type_syntax;
+				$binding->type = Declaration_Preparation::type($type, $context);
 			}
-
-			$binding->type = $place->type;
-			$binding->resolved_kind = binding_kind::assignment;
-
-			// Member writes are emitted through their prepared target, not a local declaration.
-			$member = object_cast($target, field_access_node::class)->require_preparation();
-			$binding->declaration = $member->field->declaration;
 		}
 		else
 		{
-
-			$previous /** vector<prepared_storage> */ = $locals->named($entry->name);
-			if (($type_syntax !== null) || (q_count($previous) === 0))
-			{
-				$binding->resolved_kind = binding_kind::declaration;
-				$binding->declaration = $entry;
-				if ($type_syntax !== null) {
-					$type_node /** type_node */ = $type_syntax;
-					$binding->type = Declaration_Preparation::type($type_node, $context);
-				}
+			if (q_count($previous) !== 1) {
+				throw new \RuntimeException('S2S needs one local assignment target');
 			}
-			else
-			{
-				if (q_count($previous) !== 1) {
-					throw new \RuntimeException('S2S needs one local assignment target');
-				}
-
-				$binding->resolved_kind = binding_kind::assignment;
-				$binding->declaration = $previous[0]->declaration;
-				$binding->type = $previous[0]->type;
-			}
+			$binding->resolved_kind = binding_kind::assignment;
+			$binding->declaration = $previous[0]->declaration;
+			$binding->type = $previous[0]->type;
 		}
 
 		// An initializer cannot see the declaration currently being introduced.
@@ -88,14 +86,28 @@ final class File_Preparation
 			}
 			Declaration_Preparation::require_assignable($binding->type, $value->type);
 		}
-
-		// Publish complete facts before making a new declaration available to later statements.
 		Declaration_Preparation::require_value_type($binding->type);
-
 		if ($binding->resolved_kind === binding_kind::declaration) {
-
 			$locals->add($entry->name, $binding);
 		}
+		return $binding;
+	}
+
+	/** Member assignment requires an addressable prepared field and never introduces a local. */
+	private static function prepare_field_write(field_access_node $target, expression_node $initializer, preparation_context $context): prepared_binding
+	{
+		$target->prepare(new Syntax_Preparation($context));
+		$place = $target->require_preparation();
+		if (!$place->addressable) {
+			throw new \RuntimeException('S2S assignment requires stable storage');
+		}
+		$binding = new prepared_binding();
+		$binding->type = $place->type;
+		$binding->resolved_kind = binding_kind::assignment;
+		$binding->declaration = $place->field->declaration;
+		$value = Syntax_Preparation::expression($initializer, $context);
+		Declaration_Preparation::require_assignable($binding->type, $value->type);
+		Declaration_Preparation::require_value_type($binding->type);
 		return $binding;
 	}
 
@@ -119,7 +131,7 @@ final class File_Preparation
 			return;
 		}
 
-		$expression /** ast_node */ = $syntax->expression;
+		$expression /** expression_node */ = $syntax->expression;
 		$value = Syntax_Preparation::expression($expression, $context);
 		if ($context->return_type !== null) {
 			$type /** type_definition */ = $context->return_type;
@@ -130,7 +142,7 @@ final class File_Preparation
 		}
 	}
 
-	public static function prepare_integer(ast_node $node, preparation_context $context): prepared_integer_literal
+	public static function prepare_integer(integer_literal_node $node, preparation_context $context): prepared_integer_literal
 	{
 		$value = new prepared_integer_literal();
 		$value->decimal = Integer_Literals::decimal($context->collection->token_snapshot()->text_at($node->start_token()));
@@ -139,7 +151,7 @@ final class File_Preparation
 	}
 
 	/** Retain source spelling so the target, rather than host PHP, performs rounding. */
-	public static function prepare_float(ast_node $node, preparation_context $context): prepared_float_literal
+	public static function prepare_float(float_literal_node $node, preparation_context $context): prepared_float_literal
 	{
 		$value = new prepared_float_literal();
 		$value->decimal = $context->collection->token_snapshot()->text_at($node->start_token());
@@ -156,7 +168,7 @@ final class File_Preparation
 	}
 
 	/** Resolve source-order locals without modifying the retained declaration inventory. */
-	public static function prepare_reference(ast_node $node, preparation_context $context): prepared_variable_reference
+	public static function prepare_reference(variable_reference_node $node, preparation_context $context): prepared_variable_reference
 	{
 		$entry = $node->occurrence();
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;

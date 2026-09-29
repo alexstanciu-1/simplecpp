@@ -57,11 +57,11 @@ final class LLVM_Preparation_Run
 			foreach ($source->defined_elements as $entry_index)
 			{
 				$entry = $entries[$entry_index];
-				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 					continue;
 				}
 				$this->owners[$entry] = $file;
-				if ($entry->kind === collected_name_kind::struct_declaration) {
+				if ($entry->kind() === collected_name_kind::struct_declaration) {
 					$type = $this->structs[$entry];
 					$struct_types[$type->name] = $type;
 				}
@@ -80,11 +80,11 @@ final class LLVM_Preparation_Run
 			foreach ($file->source->defined_elements as $index)
 			{
 				$entry = $entries[$index];
-				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind === collected_name_kind::field_declaration)) {
+				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 					continue;
 				}
-				if ($entry->kind === collected_name_kind::function_declaration) {
-					if (q_count(object_cast($entry->node, function_node::class)->template_parameters) === 0) {
+				if ($entry->kind() === collected_name_kind::function_declaration) {
+					if (q_count(object_cast($entry, collected_function::class)->syntax()->template_parameters) === 0) {
 						$this->register($file, $entry, []);
 					}
 				}
@@ -101,7 +101,7 @@ final class LLVM_Preparation_Run
 	{
 		$formals /** hash<int> */ = [];
 		if ($definition !== null) {
-			$formals = object_cast($definition->node, function_node::class)->template_parameters;
+			$formals = object_cast($definition, collected_function::class)->syntax()->template_parameters;
 		}
 		if (q_count($formals) !== q_count($arguments)) {
 			throw new \RuntimeException('Explicit template argument count mismatch');
@@ -128,7 +128,7 @@ final class LLVM_Preparation_Run
 		$function->declaration = $definition;
 		$function->arguments = $arguments;
 		$function->is_entry = $definition === null;
-		$function->body = $definition === null ? $file->source->root->body : object_cast($definition->node, function_node::class)->body;
+		$function->body = $definition === null ? $file->source->root->body : object_cast($definition, collected_function::class)->syntax()->body;
 		if ($definition === null) {
 			$function->name = $this->policy->entry_name;
 			$function->return_type = $this->policy->entry_return_type;
@@ -140,7 +140,7 @@ final class LLVM_Preparation_Run
 			}
 			$name = LLVM_Names::declaration($definition, $this->file_indexes[$file]);
 			$function->name = q_count($arguments) === 0 ? $name : $name . LLVM_Names::encode('<' . LLVM_Text::join($arguments, ',') . '>');
-			$type = $this->type_name($function, object_cast($definition->node, function_node::class)->return_type);
+			$type = $this->type_name($function, object_cast($definition, collected_function::class)->syntax()->return_type);
 			if (!isset($this->policy->types[$type])) {
 				throw new \RuntimeException('Unsupported function return type');
 			}
@@ -171,10 +171,10 @@ final class LLVM_Preparation_Run
 	/** A required declaration type is checked before the native nullable boundary. */
 	private function declaration_type(collected_name $declaration): ast_node
 	{
-		if ($declaration->node->kind() === node_kind::parameter_declaration) {
-			return object_cast($declaration->node, parameter_node::class)->type_syntax;
+		if ($declaration->syntax()->kind() === node_kind::parameter_declaration) {
+			return object_cast($declaration, collected_parameter::class)->syntax()->type_syntax;
 		}
-		$binding = object_cast($declaration->node, variable_declaration_node::class);
+		$binding = object_cast($declaration, collected_variable::class)->syntax();
 		if ($binding->type_syntax === null) {
 			throw new \RuntimeException('LLVM preparation requires an explicitly typed variable');
 		}
@@ -194,13 +194,13 @@ final class LLVM_Preparation_Run
 		{
 			$declaration = $entries[$index];
 			// Tombstones retain syntax evidence, not the old parsed scope owner.
-			if (($declaration->changes === \scpp\compiler\SYNC_DELETED) || ($declaration->kind !== collected_name_kind::variable_declaration)) {
+			if (($declaration->changes === \scpp\compiler\SYNC_DELETED) || ($declaration->kind() !== collected_name_kind::variable_declaration)) {
 				continue;
 			}
 			if (!LLVM_Legacy_Name_Preparation::belongs($function, $declaration)) {
 				continue;
 			}
-			$is_parameter = $declaration->node->kind() === node_kind::parameter_declaration;
+			$is_parameter = $declaration->syntax()->kind() === node_kind::parameter_declaration;
 			$type_syntax = $this->declaration_type($declaration);
 			$is_array = $type_syntax->kind() === node_kind::array_type;
 			$name = $this->type_name($function, $type_syntax);
@@ -251,7 +251,7 @@ final class LLVM_Preparation_Run
 		}
 		if ($function->declaration !== null)
 		{
-			foreach (object_cast($function->declaration->node, function_node::class)->parameters as $index => $syntax)
+			foreach (object_cast($function->declaration, collected_function::class)->syntax()->parameters as $index => $syntax)
 			{
 				$entry = $file->names->declarations[object_cast($syntax, parameter_node::class)->occurrence()->token_index];
 				$parameter = new llvm_parameter();
@@ -273,7 +273,7 @@ final class LLVM_Preparation_Run
 			}
 			$definition = $file->names->function_references[$use->token_index];
 			$arguments /** vector<string> */ = [];
-			foreach (object_cast($use->node, call_node::class)->template_arguments as $argument) {
+			foreach (object_cast($use, collected_function_reference::class)->syntax()->template_arguments as $argument) {
 				$arguments[] = $this->type_name($function, $argument);
 			}
 			$target = $this->register($this->owners[$definition], $definition, $arguments);

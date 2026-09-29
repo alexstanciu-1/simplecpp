@@ -22,8 +22,8 @@ try
 	$compiler->exec_cpp();
 	$record = Model::$modules[$directory]->sources['main.phs'];
 	$parsed = $record->parsed;
-	$target = object_cast(Model::$global_scope->functions_named('target')[0]->node, function_node::class);
-	$caller = object_cast(Model::$global_scope->functions_named('caller')[0]->node, function_node::class);
+	$target = object_cast(Model::$global_scope->functions_named('target')[0]->syntax(), function_node::class);
+	$caller = object_cast(Model::$global_scope->functions_named('caller')[0]->syntax(), function_node::class);
 	$signature = $target->require_preparation();
 	$caller_body = $caller->body;
 	$version = $caller->body->work()->version;

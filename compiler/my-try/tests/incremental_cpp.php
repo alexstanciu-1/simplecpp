@@ -11,7 +11,7 @@ function cpp_check(bool $condition, string $message): void
 
 function cpp_function(string $name): function_node
 {
-	return object_cast(Model::$global_scope->functions_named($name)[0]->node, function_node::class);
+	return object_cast(Model::$global_scope->functions_named($name)[0]->syntax(), function_node::class);
 }
 
 $directory = sys_get_temp_dir() . '/scpp_cpp_' . bin2hex(random_bytes(6));
