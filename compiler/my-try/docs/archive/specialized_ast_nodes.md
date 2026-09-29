@@ -1,5 +1,8 @@
 # Specialized AST nodes
-Doc Status: planning
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 ## Agreed direction
 

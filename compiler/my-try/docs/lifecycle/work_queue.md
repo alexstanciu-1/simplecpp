@@ -42,30 +42,7 @@ No retained root reordering or path-based publication join is required.
 ## Runtime boundary and validation
 
 `task_run_publish_unordered` is the narrow operation used here. Existing ordered
-`task_run_publish` is unchanged. See specs/builtins/tasks/unordered_publication.md.
-The tasks runtime module must be enabled for native builds. The compiler native
-harness enables it and uses the default worker limit, except for the explicitly
-single-worker pipeline-order check.
-
-PHP tests exercise reversed publication, cross-file identity, local visibility,
-duplicates, sealed membership and failure barriers. A native runtime probe gates a
-slow earlier job on publication of a later job, proving completion-order publication;
-it also checks exclusion, concurrency bounds and joining after work/publisher errors.
-The native compiler harness checks PHP/output parity, repeated runs and recovery.
-
-Compiler.tokenize is an explicit read/tokenize-only batch for callers that want a
-stage boundary; Compiler.parse reparses retained snapshots without disk reads.
-Compiler.exec_llvm uses sync, the combined update chain, instead of these two batch APIs.
-Tokens and parsing results are published together after a successful full-chain job.
-A parse failure in exec therefore does not publish that job's private token result;
-explicit tokenize() followed by parse() retains the already published token batch.
-
-Module discovery sets disk_source=true. Tokenizer then invokes File_Loader before
-scanning. In-memory callers retain disk_source=false and supply content directly.
-Discovered file records have empty content and zero metadata placeholders until the
-worker reads them; those placeholders are not authoritative filesystem observations.
-The host report displays source text after execution. Disk contents are reread for each notified file; unchanged files retain their parse.
-
-Directory discovery must still complete before dispatch. Dynamic discovery and
-independent stage queues/work stealing remain possible later work. This slice uses
-a fixed batch of per-file chains per update.
+`task_run_publish` is unchanged. See the [runtime contract](../../../../specs/builtins/tasks/unordered_publication.md).
+The tasks runtime module must be enabled for native builds. PHP executes callbacks
+sequentially; concurrency/lifetime claims require native evidence. Historical proof
+checkpoints are linked from the [portability review](../portability/conversion_review.md).

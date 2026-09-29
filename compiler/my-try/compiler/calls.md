@@ -25,10 +25,10 @@ Tokenizer returns `token_list`; Parser consumes it and returns `parsed_file`.
 Only these data records are published in Model, never the workers.
 
 Parser builds a direct object graph rooted at parsed_file.root. Its private
-productions return ast_node objects. Payloads own child references and Storage
+productions return ast_node objects. Concrete nodes own typed fields and Storage
 child lists; collector links point to those same objects. No registry lookup or
 view membership step is involved.
 
 LLVM preparation returns Storage<llvm_prepared_file>; template checking and LLVM
 generation consume it. Internal named object collections use Keyed_Storage;
-[MODEL.md](../docs/architecture/MODEL.md#collection-choices-during-llvm-preparation) lists the boundaries.
+[LLVM backend](../05_backend/llvm/README.md) lists the boundaries.

@@ -1,5 +1,8 @@
 # Native build adaptations for review
-Doc Status: planning
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 Active goal: build and run the ported compiler with PHP/native parity. These are
 source adaptations to the existing v0.1 toolchain, not new compiler features.

@@ -30,14 +30,14 @@ record does not acquire a hidden owner, ID, readonly flag or serialization polic
 Storage has no string-key mode. Neither collection needs a position/key map,
 secondary-index hooks, reentrancy guard, failed-owner state, Storage_View hierarchy
 or internal_* operations.
-Current compiler name indexes are separate typed arrays maintained by their worker.
+Compiler name pools use Key_Storage_List; workers maintain their membership.
 Do not restore removed machinery without an actual use case.
 
 ## Conversion boundary
 
 Write explicit element intent as `public Storage $tokens /** Storage<token> */;`.
 Construction capacity is an argument, never a template policy. The PHP helper is
-not itself the intended native implementation. Generic binding remains pending.
+not itself the native implementation; explicit collection bindings select the runtime wrappers.
 Future native specialization may improve allocation/layout/serialization while
 preserving observable identity and mutation behavior, or explicitly revising that
 contract when needed. No low-level layout work is required for this PHP cleanup.
@@ -63,13 +63,13 @@ coercion again; that is outside the collection's iteration contract.
 Iteration follows insertion order. Replacement keeps order; removal and reinsertion
 move a key to the end. Duplicate add rejects without replacing. Existing object
 handles survive replacement/removal exactly as in numeric Storage. Compiler usage includes named struct types/fields, external targets and the
-instance registry. Scope overload pools and sparse integer indexes remain typed
+instance registry. Scope overload pools use Key_Storage_List; sparse integer indexes remain typed
 arrays; collection membership does not duplicate record identity or redefine
-semantic ownership. See [MODEL.md](../architecture/MODEL.md#collection-choices-during-llvm-preparation) for the collection inventory.
+semantic ownership. See [LLVM backend](../../05_backend/llvm/README.md) for the collection inventory.
 
 Host boot loads storage_abstract.php before storage.php and keyed_storage.php.
-Generic bindings and native class structure remain pending; PHP inheritance is
-code reuse, not proof of converter support for arbitrary inheritance.
+Native bindings exist for these concrete families; PHP inheritance is not proof
+of converter support for arbitrary inheritance.
 
 ## PHP portability binding checkpoint
 
@@ -77,7 +77,7 @@ Fields/locals/parameters/returns now retain explicit Storage<T>/Keyed_Storage<T>
 annotations. Constructions require `new Storage /** Storage<row> */(capacity)`
 (or Keyed_Storage) so the converter never infers T. See
 [the binding contract](../../../../specs/portability/storage_collections.md).
-This is PHP/conversion coverage; the whole compiler has not passed native validation.
+Current whole-compiler proof limits are in the [conversion review](../portability/conversion_review.md).
 
 ## Duplicate-key lists
 
@@ -91,7 +91,7 @@ membership. Keys are exact byte strings, including numeric-looking names.
 This separate helper owns its ordered records and private per-key position index;
 consumers do not maintain parallel lists or hash buckets. Scope variable/function
 pools, scope type definitions, and temporary declaration comparison groups use it.
-Names must stay stable while indexed; scope replacement rebuilds the collection.
+Names must stay stable while indexed; workers explicitly remove/register changed membership.
 `remove(key, record)` removes all insertions of that identity under the given key;
 other candidates and insertions under other keys survive. Absent identities are a
 no-op. Remaining iteration order is preserved and snapshots are packed. Internal

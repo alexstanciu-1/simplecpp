@@ -1,7 +1,10 @@
 # Storage audit and native implementation preparation
 Doc Status: historical
 
-Superseded by the [current model](../architecture/MODEL.md) and [collection API](STORAGE.md).
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
+
+Superseded by the [current model](../architecture/MODEL.md) and [collection API](../storage/STORAGE.md).
 Views, parallel AST registries and inline-row lifetime machinery are not current
 requirements. The text below records earlier exploration only; references to removed
 helpers/tests and “current” behavior describe that historical checkpoint.
@@ -15,7 +18,7 @@ is private; all five mutation entry points reject reentrancy; replacement hooks
 receive the primary key. Guard cleanup is exception-safe. Focused tests cover all
 six hooks and both key modes, plus collector IDs after a historical hole.
 
-The remaining preparation is now settled in [STORAGE.md](STORAGE.md) and
+The remaining preparation is now settled in [STORAGE.md](../storage/STORAGE.md) and
 [STORAGE_NATIVE_TASK.md](STORAGE_NATIVE_TASK.md): fail-closed write failures,
 shared container/record identity, iteration invalidation, reserve/constructor
 capacity, nullable position lookup and explicit overflow rejection. PHP behavior

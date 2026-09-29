@@ -1,5 +1,8 @@
 # Non-expression structure extensibility audit
-Doc Status: planning
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 Review date: 2026-09-29. This complements the
 [expression audit](expression_model_audit.md); expression nodes, operators,
@@ -42,7 +45,7 @@ This is not a full converter-capability certification or a layout/performance pr
 - [Object storage](../../../../specs/compiler_storage.md),
   [compiler ownership](../architecture/ownership.md),
   [retained model](../architecture/MODEL.md),
-  [incremental strategy](incremental_strategy.md),
+  [incremental strategy](../planning/incremental_strategy.md),
   [earlier migration plan](specialized_ast_nodes.md).
 - Catalog chapters [03](../catalog/03_control_flow.md),
   [04](../catalog/04_functions.md), [07](../catalog/07_references_lifetime.md),

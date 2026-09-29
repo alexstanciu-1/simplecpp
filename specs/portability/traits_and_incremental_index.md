@@ -217,4 +217,4 @@ object accessors and safe retained `$this`. The separate `typed_iterators.py` pr
 converts the production model files and executes its common/function cursors
 natively, including empty concrete methods and nullable interface returns. Full
 compiler native validation remains separate. See
-[the migration audit](../../compiler/my-try/docs/planning/specialized_ast_migration_audit.md).
+[the migration audit](../../compiler/my-try/docs/archive/specialized_ast_migration_audit.md).

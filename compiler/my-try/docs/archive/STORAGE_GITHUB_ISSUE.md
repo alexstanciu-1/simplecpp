@@ -1,10 +1,13 @@
 # Historical GitHub issue snapshot
 Doc Status: historical
 
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
+
 This snapshot predates removal of views and the separate Keyed_Storage design.
 “Latest” and “current” below describe the publication checkpoint only. It is not
 the current local requirement. Use [the native brief](STORAGE_NATIVE_TASK.md) and
-[collection API](STORAGE.md); GitHub was updated on 2026-09-24 with the replacement contract; this saved
+[collection API](../storage/STORAGE.md); GitHub was updated on 2026-09-24 with the replacement contract; this saved
 older body remains historical. See the native brief for the update link.
 
 Verified issue-body snapshot after the default shared-record update, 2026-09-24.

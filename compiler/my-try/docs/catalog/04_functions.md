@@ -19,7 +19,7 @@ function bodies and the entry body. Calls snapshot value arguments left-to-right
 reference arguments keep their original stable storage. PHP preparation and
 emitted C++ execution proofs live in `../../tests/s2s.php`. The user-requested
 native compiler build also passed these declaration cases; see
-[the native checkpoint](../portability/native_adaptations.md#ordinary-functions-and-value-structs--2026-09-27).
+[the native checkpoint](../archive/native_adaptations.md#ordinary-functions-and-value-structs--2026-09-27).
 
 Legacy intake review: `generators/php/src/Generator/Generator.php` declaration,
 struct and typed-initializer lowering; `Lowering/TypeMapper.php` fixed integer

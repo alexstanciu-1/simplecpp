@@ -1,6 +1,9 @@
 # Native layout debt
 Doc Status: historical
 
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
+
 Superseded by the [current model](../architecture/MODEL.md) and [collection API](../storage/STORAGE.md).
 Views, parallel AST registries and inline-row lifetime machinery are not current
 requirements. The text below records earlier exploration only; references to removed

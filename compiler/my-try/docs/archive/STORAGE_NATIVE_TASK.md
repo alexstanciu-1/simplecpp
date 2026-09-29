@@ -1,5 +1,8 @@
 # Simplified native Storage delivery brief
-Doc Status: planning
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 This local contract supersedes the earlier owner/view and hook-heavy design.
 [Issue #242](https://github.com/alexstanciu-1/simplecpp/issues/242) was replaced with
@@ -56,7 +59,7 @@ order, removal/reinsertion moves to the end. Both types hold shared_p<T> objects
 The native issue now requests this contract; implementation and binding are pending. Current compiler
 uses include named struct types/fields, external targets and the instance registry.
 Sparse integer indexes, scope overload pools and scalar arrays retain their existing
-typed representation; see [collection inventory](../architecture/MODEL.md#collection-choices-during-llvm-preparation).
+typed representation; see [collection inventory](../../05_backend/llvm/README.md).
 
 Keyed parity proofs must cover empty, numeric-looking and embedded-NUL string keys;
 wrong key types; duplicate add; insert/replace/remove; first-insertion ordering; and

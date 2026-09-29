@@ -1,5 +1,8 @@
 # Expression model coverage review
-Doc Status: planning
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 Review date: 2026-09-29. Scope: PHP++/PHS strict-first expression representation in
 [the AST proposal](../../03_parse/proposal/structures.php.example), compared with

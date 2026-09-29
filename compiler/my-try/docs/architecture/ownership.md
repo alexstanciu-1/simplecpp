@@ -1,152 +1,63 @@
-# Model ownership and reference intent
+# Ownership and reference intent
 Doc Status: supporting
 
-Ownership describes the application graph; PHP deliberately uses ordinary strong
-object references. Native owning links use shared_p<T>. An adjacent `/** weak<T> */`
-on a named object property now emits a native weak_p<T> field; the three direct
-scope links use this binding. `@reference.weak` alone remains documentary intent,
-including the collection/index annotations. No automatic lifetime analysis or
-serialization follows from these tags.
+PHP uses ordinary shared object references. Native reference classes use shared
+handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
+`@reference.weak` alone does not implement expiration or reclaim cycles.
 
-| Tag | Meaning |
+| Annotation | Intent |
 | --- | --- |
-| @storage.owner | Owns a Storage or Keyed_Storage collection and its membership. |
-| @ownership owner | Owns a direct record, AST child or payload. |
-| @storage.reference path | References a record in the named Storage or Keyed_Storage. |
-| @reference.source path | References data in a direct owner/graph or transient collection. |
-| @reference.weak | Convenience/backward/index link; non-retaining intent for later native review. |
-| @storage.index path | Integer positions into the named Storage. |
-| @storage.boundary path | Token span end; an exclusive end can equal count. |
+| `@storage.owner` | Owns collection membership |
+| `@ownership owner` | Owns a direct record or syntax child |
+| `@storage.reference path` | Observes a record in the named collection |
+| `@reference.source path` | Reference provenance in a direct/transient graph |
+| `@reference.weak` | Non-retaining/backward/index intent |
+| `@storage.index path` | Position in the named collection |
+| `@storage.boundary path` | Exclusive boundary, possibly equal to count |
 
 ## Current graph
 
-Model owns modules, output results and global/language scopes. Modules own stable
-source records, which own current file/token/parse state. The path registry is an
-index of these same records; each source has a weak module backlink. Token lists own token objects and captured source text. Parsed
-files own their root AST and local scopes. AST nodes own additional structures and first-child/next-sibling chains. Native
-parent/previous backlinks are weak. Named structure child fields and lists remain
-retaining aliases during this migration; see ast_layout.md. No shared backing node
-store or Storage_View remains. Collection files own occurrence entries and work lists.
-LLVM modules own functions; functions own operands and blocks; blocks own text.
+Model owns modules and global/language scopes. Modules own source records; sources
+own file/token/parse state and observe their module. Tokens own captured text and
+token records. Parsed files own typed AST roots, collected records and applicable
+scopes. Concrete nodes own named children; there is no payload or parent/sibling graph.
 
-file.tokens is a convenience backlink to its source record's completed scan.
-parsed_file.collection owns the occurrence collection.
-collected_file.root mirrors parsed_file.root. collected_name.collection/scope and scope.enclosing
-are backward/context links; scope Key_Storage_List collections index occurrence entries. Named specializations
-carry a weak collected occurrence backlink; unnamed specializations do not. AST operands
-and type syntax are direct child relationships. Collection/preparation node references
-point into parsed_file.root's syntax graph, not a nonexistent parsed_file.nodes store.
-Local scope ownership stays uniform in parsed_file.scopes; blocks reference scopes.
+Functions own signature scopes; structs own member scopes. File/body scopes observe
+owners retained by the parsed file. Occurrences observe syntax, collection and scope;
+name-bearing nodes observe their canonical occurrence. Scope indexes reference
+those same records. Publication shares identities rather than copying definitions.
 
-Parked LLVM preparation returns Storage<llvm_prepared_file>; each file owns its function list,
-and functions own ordered parameter lists and sparse declaration-keyed locals.
-The transient struct registry and per-file Keyed_Storage type maps share type
-records; each type owns Keyed_Storage<llvm_field>. The instance registry and pending
-queue reference functions already owned by files. Calls, keyed external-function collections and
-resolved-name maps reference existing targets. A cleaner native preparation-type
-owner remains future work. Emission copies operand values into independent output.
-
-## Native scope observers
-
-`scope.enclosing`, `block_structure.scope` and `collected_name.scope` are native
-weak fields. `parsed_file.scopes` and `Model.global_scope` remain strong owners.
-Assignments accept the existing shared records; reads use `weakref_get` to acquire
-a shared handle. Required block/occurrence scopes then use `object_cast` to reject
-an absent or expired scope. Parent traversal ends on an empty acquisition. A local
-acquisition keeps its target alive for that use; it does not turn the stored link
-back into an owner.
-
-The PHP facade returns the ordinary reference unchanged. PHP checks prove functional
-behavior, not native expiration. Retaining an AST or collection result alone does
-not guarantee its native scope owner survives model reset. Keep the parsed-file or
-model owner alive when those scope links must remain usable. Other graph cycles
-(including occurrence/file links and indexed records) are not solved by this slice.
+Prepared facts retain canonical types and reference collected declarations.
+Declaration work belongs to collected definitions; body work belongs to body nodes.
+Dependency and lookup memberships currently use strong identity containers with
+explicit unlinking. C++ fragments refer to existing work identities. Retained model
+records never own workers or operation contexts.
 
 ## Explicit nullability and publication
 
-No ? means required, even without an initializer. Assign required fields before
-reading/publishing. ?T means absence is valid; initialize/reset explicitly to null.
-Weak intent does not imply nullable, and empty collections are not absent collections.
-The wider nullability audit remains debt in REVIEW.md. Native STAN may require
-constructor assignment for worker fields; a separate populate call is not always
-proved automatically. Syntax_Nodes validates payload kinds and local binding/parameter field relationships
-before parser publication. Binding equals/value presence must match, untyped writes
-need a value, declarations agree with type syntax, and explicit targets require
-assignment classification. Parameter reference mode agrees with ampersand presence.
-These checks do not recursively revalidate children or replace required-field
-initialization checks. Public records remain mutable; callers must maintain or rebuild indexes when indexed data changes.
+Required fields may be populated after construction, but must be assigned before
+read or publication. `?T` means absence is usable state and needs explicit reset and
+checked extraction. An empty collection is valid, not absent. Weak intent does not
+make a required relationship nullable.
 
-Stage invalidation and source-snapshot authority are described in ../MODEL.md.
-No strong cycle reclamation, rollback, concurrent mutation or snapshot machinery is
-introduced by this cleanup. Retaining a PHP object can retain other linked records;
-future native optimizations must preserve needed behavior or state the change.
+Parsing may register a declaration before completing its fields. Its file remains
+incomplete and later phases wait for a successful join. Mutation is not transactional;
+failed parses retain partial identities for retry. Retired nodes must not re-enter
+the active graph. Stage entry checks reject incomplete/deleted owners; cleanup may
+visit them. See [lifecycle](../lifecycle/incremental.md).
 
-File root scopes now remain owned by parsed_file.scopes on the compiler path.
-Their native weak `publication` link points to Model.global_scope after compiler
-publication. Global symbol pools reference the original collected_file entries;
-they do not move/copy declarations. Scope_Lookup preserves shared-global lookup
-rules. See work_queue.md; publication currently requires a serialized caller.
+Acquire weak links through `weakref_get` before use. Same-type nullable required
+returns use their checked return boundary; genuine class narrowing uses `object_cast`.
+Keep an owning parsed-file/model handle when native scope observers must remain
+usable. PHP behavior does not prove native expiration or cycle reclamation.
 
-## v0.2 scope/type ownership
+## Mutation responsibilities
 
-Scope fields are private. `parent_scope()` and `published_scope()` acquire the
-native weak observers; setters/publication methods preserve the existing owners.
-Model strongly owns the language/runtime scope and global scope. Global scope's
-parent observer reaches the language/runtime scope. Parsed-file scopes remain owned
-by parsed_file.scopes. Type definitions live in scope-owned Storage; publication
-shares their identity rather than manufacturing a second source definition.
+Workers maintain indexes when indexed names/membership change. Scope methods expose
+encapsulated membership operations; publication policy stays in `Scope_Publication`.
+Removal leaves previously acquired object handles alive but does not authorize those
+handles as current compiler data. Collection positions are not live counts.
 
-Binding, integer-literal and variable-reference specialization records own their
-nullable prepared facts. Facts retain canonical types, observe collected declarations
-through explicit weak fields, and have no reverse syntax link. The binding's
-initializer remains an AST child rather than a second prepared-record link. Model
-owns completed-file records and independent C++ artifacts; no token-keyed binding
-or expression maps remain. See MODEL.md for per-node cleanup before reset/reuse and
-on preparation failure. Emission failure/reset preserves shared prepared facts. The source-order scope remains transient; attaching
-facts does not modify source scope membership or parsed syntax.
-
-The new node slots, cleanup overrides and declaration weak fields have PHP coverage;
-native compiler verification for this change is deferred until explicitly requested.
-
-## Process and file responsibilities
-
-`Compiler` selects stages, schedules per-file work and enforces completion barriers.
-`compiler/frontend.php` performs each private scan/parse operation; an enum identifies
-scan-only, parse-only and synchronization work. `compiler/sync/sources.php` plans
-source candidates and resets notification flags; `compiler/sync/declarations.php`
-compares declaration inventories. `compiler/publication.php` publishes completed
-work and restores retained root ordering. It delegates scope replacement policy to `compiler/scope_publication.php`: remove
-superseded live references, retain deletion evidence. Scope exposes membership and
-private-index operations; it does not select the publication/replacement policy.
-
-`03_parse/scopes/structures.php` encapsulates the shared scope representation;
-`03_parse/scopes/lookup.php` owns ordinary parent/publication lookup. The parser supplies
-canonical occurrence names to the collector, including removal of PHS variable
-sigils. The collector registers completed declarations and obtains source type
-definitions from `compiler/types/source.php`; scope insertion does not manufacture
-type definitions. `04_analyze/prepare/semantics/literals.php` prepares integer literals;
-`04_analyze/prepare/file.php` prepares supported file expressions and bindings;
-`05_backend/cpp/types.php` maps canonical types to C++ representations.
-
-`compiler/lifecycle.php` owns reset sequencing. `Compiler_Lifecycle::reset_syntax` establishes a complete usable
-root graph, including installing built-ins through `Language_Types`. Every reset
-caller uses that single processing owner; Model only retains the resulting roots. Tokenizer's
-public operation continues to acquire disk bytes through `File_Loader` as well as
-accepting in-memory input. The frontend worker preserves that per-file chain;
-standalone reparse consumes existing snapshots without reading disk. Host reporting
-and experimental execution remain in the existing host adapter and Native_Runner.
-
-Legacy name preparation and template checking now live under `05_backend/llvm/`
-with LLVM-specific names and data. They remain regression infrastructure; source-only
-type projection is retained for their existing callers. New semantic work extends
-`File_Preparation` and attached facts. LLVM must be reviewed and adapted to consume
-that shared model before development resumes. Semantic consolidation and parser
-name-rule validation remain deferred.
-
-## Operation contexts
-
-`preparation_context` and `cpp_generation_context` are invocation-local processing
-data. Specialization hooks borrow their handles for synchronous calls and never
-store them. Workers retain algorithms, phase entry and publication/cleanup policy;
-specializations own structural child access and typed operation routing. This does
-not add worker references or processing state to the retained AST.
+[Storage](../storage/STORAGE.md) defines shared membership and snapshots.
+[AST layout](ast_layout.md) defines typed ownership and inspection.
+[Portability review](../portability/REVIEW.md) tracks lifetime/publication proof gaps.

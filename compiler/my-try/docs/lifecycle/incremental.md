@@ -1,146 +1,100 @@
-# File synchronization
+# Incremental lifecycle
 Doc Status: supporting
 
-The combined and standalone frontend entrypoints now share the incremental phases.
-See [Incremental compiler strategy](../planning/incremental_strategy.md) for decisions
-and remaining error-recovery and ownership debts.
+Fresh and incremental builds use the same stages. `sync(paths)` scans modules,
+marks explicit notifications, tokenizes selected files, parses/collects, then cleans
+retired symbols after the successful join. `exec_cpp`/`update_cpp` add preparation
+and C++ generation; LLVM uses the same frontend followed by its parked preparation.
+See the [call map](../../compiler/calls.md) and [work queue](work_queue.md).
 
-Compiler.init(paths) reconciles the complete ordered module configuration and discovers
-files when that configuration changes. Identical configuration retains compilation data.
-Compiler.sync(paths) scans configured filesystem modules, then reads/parses only new,
-changed, pending or explicitly notified files. Compiler.exec_cpp/exec_llvm use that
-same scan. C++ selects affected preparation work; parked LLVM still prepares its
-whole live program. Both regenerate backend output. update_cpp/update_llvm
-also accept explicit notifications that force rereading even with equal metadata.
-No watcher or background loop is introduced. In-memory test modules are not scanned;
-their explicit execution/notifications supply input through the existing pipeline.
+## Modules and files
 
-Changes to module membership/configuration require init(complete module paths).
-Any change, including order, retires the compilation graph and rediscovers every
-active module. The next sync/update includes all discovered sources as well as any
-explicit notifications; it clears that full-sync obligation only on success. Unknown-module file notifications are rejected rather
-than silently extending module membership. Module roots use canonical filesystem paths and reject overlap. Notifications
-normalize lexical path components (including missing deletion paths) before the
-owning-module lookup followed by its relative-path index.
+`init_modules(Storage<module_input>)` validates complete module configuration before
+mutation. Omitted names use the exact declared path. Modules retain declared/resolved
+paths, input position, shared `change_state` and last-seen uint32 revision.
 
-## Module reconciliation and full reset
+Initialization matches existing records by key, stamps presence, then marks unseen
+records deleted. Any membership/path/order change resets compilation roots and
+rebuilds the keyed module list in input order, with tombstones afterward. Identical
+input retains the existing list. Overlapping canonical roots reject. Revision rollover
+clears presence markers and restarts at one; there is no generic synchronization layer.
 
-`init_modules(Storage<module_input>)` accepts explicit names and returns whether a
-rebuild/discovery was required. `init(vector<string>)` is the unnamed adapter.
-`module_input(path, name)` uses the exact declared path as its name when the name is
-omitted. A module retains `name`, `declared_path`, `resolved_path`, `position`, a shared `change_state` (`unchanged`, `added`, `changed`, `deleted`),
-and an inline `uint32` revision for run presence. A changed position triggers a full rebuild.
+A full reset drops source/scope/preparation/output roots rather than traversing AST
+facts. It first severs retained dependency registrations. Discovery failure blocks
+frontend work and leaves a retry obligation. Invalid configuration preserves the
+previous session. `Compiler_Lifecycle::reset()` also drops module identities.
 
-`Model::$modules` is one `Keyed_Storage<module>`, keyed by name. Live modules occur
-in input order and deleted records follow them. Consumers skip `change_state::deleted`.
-Removed modules retain identity; reappearance under the same key reuses that identity
-as added. Renaming is delete/add. Changing a named module's path preserves identity.
+Recursive scans work within module/folder context, skip directory symlinks and
+update each module's existing source index directly. Keys and stored file paths are
+module-relative. Only additions allocate source records. Changed mtime/size, pending
+state or explicit notification selects reading; notifications force rereads even
+when metadata matches. No global file index or folder-record hierarchy is retained.
+Only a successful whole-module scan marks unseen files deleted. A failed scan cannot
+delete unvisited entries. In-memory modules use explicit input/notifications.
 
-`Module_Loader::configuration()` validates all incoming roots and keys before mutation.
-`Compiler::init_modules()` directly loops that input, matches retained records by key,
-compares paths and position, and stamps their last-seen revision. A second loop marks
-missing records deleted. There is no module collection wrapper or synchronization
-worker/helper class. `Model::$revision` is the general uint32 reconciliation counter;
-modules retain their last-seen uint32 revision inline. Before rollover, initialization
-clears retained module and source markers and restarts at one.
+## Token storage and retained parsing
 
-When configuration changes, initialization builds a replacement keyed collection in
-input order using the retained objects, then appends tombstones. Only that collection
-is retained; unchanged input keeps the existing collection object. PHP and the native
-compiler collection both preserve insertion order, so no sorting API or separate
-active-order store is necessary. Matching is expected linear in input plus retained
-records; the small-module overlap validation remains pairwise.
+Reading/tokenization is private until success. New tokens/text append to the retained
+buffer; byte offsets gain the text-prefix offset. `first_token`, exclusive `end_token`
+and `content_offset` identify the new input. Unchanged nodes keep their old indexes
+and facts. Saved symbol names never depend on those positions.
 
-A change calls `Compiler_Lifecycle::reset_compilation()`: replace source, scope,
-preparation and output roots and empty module source stores. It does not walk discarded
-ASTs merely to clear their facts. External handles to retired results are not current
-compiler data; releasing roots does not promise constant-time memory reclamation.
-Partial stage resets still clean retained syntax. `Compiler_Lifecycle::reset()` starts
-an explicitly fresh session, dropping module identities and tombstones too.
+Parser matches and updates existing declaration nodes/collected identities, allocating
+only new declarations. Duplicate names consume identities in encounter order. Body
+comparison uses exact source bytes between its first and last tokens: whitespace
+changes matter. Unchanged bodies retain syntax/scopes/occurrences; changed bodies
+are replaced. Signatures and file executable syntax use token comparison.
 
-Invalid configuration preserves the prior session. Failure during discovery clears
-partial source data and blocks frontend work; identical initialization can retry.
-Failed frontend synchronization leaves the full-sync obligation pending. Identical
-successful initialization retains data; the next sync/exec/update performs file scanning.
+Parser invokes the collector immediately. Local scopes are worker-private; global
+function/type registration uses the task publication mutex. After joining, revision
+sweeps mark missing declarations. Failed files retain incomplete mutable state and
+are not swept as completed files; preparation is blocked. No separate collection or
+resolution pass runs during parsing. Resolution belongs to shared preparation.
 
-Proof: `tests/module_sync.php` covers identity, both paths, named path changes,
-canonical-root changes, ordering, deletion/reappearance, invalid configuration,
-full-sync retry and discovery failure/recovery (permission case on non-root hosts).
+## Preparation and deletion
 
-## Direct file scanning
+[Preparation](../../04_analyze/prepare/README.md) schedules declaration work before
+separate function/file body lists. Pending work is identity-deduplicated. Unchanged
+ready facts remain attached; effective signature/layout and lookup changes notify
+consumers, while body-only changes leave callers alone.
 
-Each module owns one `Keyed_Storage<source_record>` keyed by its normalized relative
-path, including subfolders. Both source_record.path and file.path stay relative.
-There is no global absolute-path file index and no retained folder collection.
-Same-named files in different modules are distinct. External notifications select
-the owning module, then its relative key. Filesystem reads receive a temporary full
-path constructed from the module root; Tokenizer passes that path to File_Loader
-without storing it on the file snapshot.
+Deletion marks the retiring batch, notifies consumers through intact reverse links,
+then unlinks dependencies/observations and removes collected rows and scope indexes.
+Consumers need to be scheduled before removal, not already rebuilt. This boundary
+also precedes LLVM lookup without preparing LLVM-only forms through S2S algorithms.
+Deleted source/module records remain available for reconciliation/reappearance.
 
-Module_Loader traverses module/folder context and updates existing entries directly.
-Only additions allocate source records. It stamps last-seen revisions and compares
-mtime/size with the last published file metadata. source_record.changes records
-pending work using the shared change_state enum. Successful parse publication clears
-live pending state; failures leave it set so matching metadata cannot suppress retry.
-The scan itself does not change published bytes, metadata, tokens or ASTs.
+Preparation owners retain pending change/error state until success. Expected source
+errors propagate pending/failed state; independent work continues. The next increment
+retries even without source edits. Failed prerequisite facts are unavailable, and
+recovery notifies consumers even if the recovered signature matches its old value.
+Signature and body failures remain independent. Unexpected exceptions escaping the
+worker request a full rebuild on the next attempt. No rollback is promised.
 
-Only a successful whole-module scan marks unseen entries deleted. A failed scan
-leaves unvisited entries alone and aborts synchronization before frontend publication.
-Deletion publication retires the old declarations; reappearance reuses the source
-record. File collection order requires no reconciliation. Unchanged files retain
-published snapshots. A changed file replaces tokens, reuses declaration identities
-and unchanged bodies, and replaces changed bodies.
+## Generation and cleanup
 
-Accepted debt: mtime plus size misses equal-size edits with unchanged timestamps.
-Explicit notifications force rereading. Stronger content-based detection is deferred.
-Proof: `tests/file_scan.php` covers module-local identity, relative nested paths,
-metadata changes, unchanged reuse, forced reads, deletion/reappearance, revision
-rollover and failure/retry. Permission-based traversal failures run on non-root hosts.
+C++ selects dirty/outdated retained fragments and reuses unchanged text/includes.
+Assembly still produces one `main.cpp`; see the [model](../architecture/MODEL.md#retained-c-generation).
+A failed stage cannot expose completed output from the previous run. Generation work
+settles and consumes preparation changes only after successful assembly.
 
-## Retained parsing and preparation
+`cleanup_tokens()` may run after output delivery. Specialized maintenance traversal
+remaps live syntax, template/operator token sites and occurrences to the newest input,
+then releases the obsolete buffer prefix. Facts and cached text survive. If the host
+does not call it, the next tokenization performs synchronous cleanup first.
 
-`sync(paths)` scans filesystem modules, applies explicit notifications directly to
-source records, calls `tokenize()`, then `parse()`. Each phase joins before the next
-starts. Notifications force reads even with equal metadata; duplicate notifications
-only mark the record again and do not create duplicate work. In-memory inputs use
-explicit notifications. New files start pending, including after a full module reset.
+Incomplete parses, unparsed published input and outstanding deleted occurrences can
+prevent cleanup. Repeated failed increments may retain several inputs; full reset
+releases them. Unexpected cleanup failures request a full rebuild. Inspection handles
+must not be traversed concurrently with mutation/cleanup. No background scheduler or
+constant-time destruction guarantee is implied.
 
-The tokenizer publishes a new token generation only on successful reading/scanning.
-Parsing updates the existing file, declarations and collected symbols in place.
-Unchanged bodies retain syntax, scopes and occurrences with rebased token positions;
-changed bodies are replaced. Signatures and bodies have separate change state.
-Duplicate declaration names consume old identities in encounter order; there is no
-second whole-file comparison or candidate-publication algorithm.
+## Evidence and remaining work
 
-Parser calls collector methods immediately. Local indexes are worker-private; new
-global function/type entries register under `task_synchronize`. After joining,
-revision sweeps mark missing declarations. Failed files retain partial mutable state;
-they are not swept as completed files. Preparation does not start after such errors.
+Focused tests: `module_sync`, `file_scan`, `token_generations`, `token_cleanup`,
+`parse_collection`, `combined_sync`, `incremental_preparation`, `preparation_recovery`,
+`dependency_cleanup` and `incremental_cpp` under `tests/`. LLVM frontend compatibility
+uses `incremental` and `incremental_smoke --restore`.
 
-## Deletion and consumers
-
-After a successful combined join, the shared preparation worker's cleanup boundary
-notifies dependents and removes deleted collected rows and scope/type memberships.
-This cleanup also precedes parked LLVM resolution; it does not run shared S2S
-semantic preparation on LLVM-only forms. Standalone `prepare()` uses the same cleanup.
-Source records remain marked deleted for scanning/reappearance. Reappearing files
-start new declarations in the retained source record, without stale scope entries.
-
-C++ preparation uses separate declaration, function-body and file-body identity sets.
-No-op runs retain facts, implementation-only edits leave callers alone, and effective
-signature/layout changes notify consumers. Emission still generates complete output.
-`sync` clears completion/output roots before work without clearing retained facts;
-failed updates therefore cannot expose stale completed results. Preparation owners
-retain change/error state until success. Failures propagate to consumers; independent
-work may settle. Later increments retry pending owners even without source edits,
-and signature recovery notifies consumers even when its facts match the previous value.
-Body errors leave valid signatures independent. Required failed declaration facts are
-unavailable; no rollback of mutable partial facts is promised. Unexpected exceptions escaping preparation force a full rebuild on the next attempt.
-Distinguishing internal `RuntimeException` bugs from source diagnostics remains debt. `tests/preparation_recovery.php` covers this
-policy and exact source-text body comparison, including whitespace and moved bodies.
-
-Proofs: `tests/combined_sync.php` checks no-op identity, body reuse, signature
-invalidation, fresh/incremental C++ equivalence and failure/retry.
-`tests/incremental.php` and `tests/incremental_smoke.php --restore` retain LLVM
-regression coverage using the same frontend path. LLVM's scope adapter accounts for
-the separate executable/signature scopes; its semantic redesign remains deferred.
+These tests are not exhaustive incremental/native proof. Accepted limitations and
+future changes live in the [debt register](../planning/incremental_strategy.md).

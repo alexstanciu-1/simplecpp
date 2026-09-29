@@ -1,5 +1,8 @@
 # AST object graph
-Doc Status: supporting
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 parsed_file.root is the AST entry. ast_node.specialization directly owns its concrete
 payload. Payloads hold direct child-node references and Storage<ast_node> child lists:

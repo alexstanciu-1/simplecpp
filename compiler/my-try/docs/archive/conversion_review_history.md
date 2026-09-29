@@ -1,7 +1,10 @@
 # Historical model conversion checkpoints
 Doc Status: historical
 
-Superseded by [the current conversion review](conversion_review.md).
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
+
+Superseded by [the current conversion review](../portability/conversion_review.md).
 Descriptions of pending work below apply only to their recorded checkpoint.
 
 This file preserves conversion checkpoints from before the object-list simplification.
@@ -14,7 +17,7 @@ Syntax_Nodes. No production behavior, converter or runtime changes in this pass.
 
 ## Evidence and limits
 
-[Saved evidence](conversion_review_evidence.json) records source hashes, checker
+[Saved evidence](../portability/conversion_review_evidence.json) records source hashes, checker
 results, elapsed checker times and complete focused probe inputs. Each of 12 files
 was copied unchanged into a separate temporary directory, then checked with
 `php tools/php_portability/check.php TEMP_DIRECTORY`. Only

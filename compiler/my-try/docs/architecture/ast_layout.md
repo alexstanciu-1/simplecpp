@@ -5,7 +5,7 @@ The active PHP model uses a property-free `ast_node` abstract base and concrete
 syntax nodes. Each node owns its named syntax fields, source span and applicable
 facts. There is no outer node/payload pair, mutable kind/payload agreement, sibling
 chain or parallel child list. The frozen review proposal remains under
-`03_parse/proposal/`; see the [migration audit](../planning/specialized_ast_migration_audit.md)
+`03_parse/proposal/`; see the [migration audit](../archive/specialized_ast_migration_audit.md)
 for implemented differences and the bounded native iterator checkpoint.
 
 ## Typed ownership
@@ -102,3 +102,10 @@ compiler portability from those proofs.
 - Native devirtualization and memory/layout gains are not claimed.
 - Appended-token cleanup scheduling/performance, C++ partitioning and parked LLVM
   index-map convergence remain in the incremental/v0.2 planning documents.
+
+### Deferred narrowing after a type or kind check
+
+Keep `object_cast` for actual class narrowing, including after a matching
+`instanceof`/kind guard, until the new S2S path can lower the established type without
+repeating the check. This is toolchain debt, not a reason to weaken typed boundaries.
+Same-type nullable extraction is a separate operation; see the portability guide.

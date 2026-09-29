@@ -1,8 +1,11 @@
 # Initialization and explicit-nullability audit
-Doc Status: supporting
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 The constructor/per-invocation worker refactor and its native analysis results are
-documented in [worker lifetimes](worker_lifetimes.md). The record audit below remains
+documented in [worker lifetimes](../lifecycle/worker_lifetimes.md). The record audit below remains
 valid; historical init-before-use worker descriptions are superseded by that note.
 
 Reviewed areas: Model roots, source-loading records, tokenization, AST and parser state. This is

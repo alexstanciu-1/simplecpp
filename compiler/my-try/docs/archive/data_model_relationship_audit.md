@@ -1,6 +1,9 @@
 # Data-model relationship audit
 
-Doc Status: planning
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 Incremental migration update (2026-09-28): the candidate-replacement observations
 below are historical. Combined `sync()` now calls the retained tokenizer/parser
@@ -279,7 +282,7 @@ It recomputes those keys and declaration spellings during nested matching passes
 
 Relevant code:
 
-- [`compiler/sync/declarations.php`](../../compiler/sync/declarations.php)
+- `compiler/sync/declarations.php` (removed after this checkpoint)
 
 Some structural matching is unavoidable across fresh parse snapshots. The concern
 is not the absence of object identity across versions; it is that declaration
@@ -482,6 +485,6 @@ and the required converter/native bindings are included in the same consolidatio
 
 PHP lint/style and the complete PHP regression runner pass. Native compiler
 conversion/build/execution passes 142 PHP/native cases plus integer and scalar S2S
-proofs. See [native adaptations](../portability/native_adaptations.md) for the
+proofs. See [native adaptations](native_adaptations.md) for the
 candidate toolchain and advisory analysis limits. Section 6 is still debt; its index
 maps were not consolidated. A tombstone guard preserves its native regressions.

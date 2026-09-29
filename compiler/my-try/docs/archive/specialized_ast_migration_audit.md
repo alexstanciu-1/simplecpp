@@ -1,5 +1,8 @@
 # Specialized AST migration audit
-Doc Status: planning
+Doc Status: historical
+
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
 
 Comparison baseline: frozen proposal in commit `deee122a`. This audit describes the
 implemented migration, not an accepted language specification. The proposal
@@ -169,4 +172,4 @@ them. The frozen proposal retains this historical design; reintroducing parents
 requires a concrete consumer. Lexical scope parents are independent and unchanged.
 This changes ownership and removes a dispatch layer; no performance gain is claimed
 without native measurement.
-See [the incremental strategy](incremental_strategy.md#appended-token-storage-and-deferred-cleanup--implemented).
+See [the incremental strategy](incremental_strategy_history.md#appended-token-storage-and-deferred-cleanup--implemented).

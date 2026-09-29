@@ -1,12 +1,15 @@
 # Model data and storage separation
 Doc Status: historical
 
-Superseded by the [current model](MODEL.md) and [collection API](../storage/STORAGE.md).
+Archived 2026-09-29. This records an earlier design/checkpoint, not current instructions.
+See [the documentation index](../README.md) for active guidance.
+
+Superseded by the [current model](../architecture/MODEL.md) and [collection API](../storage/STORAGE.md).
 Views, parallel AST registries and inline-row lifetime machinery are not current
 requirements. The text below records earlier exploration only; references to removed
 helpers/tests and “current” behavior describe that historical checkpoint.
 
-The approved cleanup is implemented. See [MODEL.md](MODEL.md) for the current
+The approved cleanup is implemented. See [MODEL.md](../architecture/MODEL.md) for the current
 ownership, segmentation and index-maintenance contract.
 
 ## Resolved worker links
