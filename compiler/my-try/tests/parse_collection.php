@@ -107,11 +107,28 @@ try
 	parse_check($get->change_status !== change_state::deleted, 'Failure incorrectly deleted an unvisited function');
 	$added = Model::$global_scope->functions_named('added')[0];
 	$broken = Model::$global_scope->functions_named('broken')[0];
+	parse_check(!$broken->syntax()->has_parsed_body(), 'Incomplete first parse claimed an established body');
 	parse_update($compiler, $a, 'function added(): int { return 1; } function broken(): int { return 3; }');
 	parse_check($a->parsed->complete, 'Failed parse could not retry');
 	parse_check(Model::$global_scope->functions_named('added')[0] === $added, 'Retry replaced a completed declaration identity');
 	parse_check(Model::$global_scope->functions_named('broken')[0] === $broken, 'Retry replaced an incomplete declaration identity');
 	parse_check($get->change_status === change_state::deleted, 'Successful retry did not delete a missing global');
+	parse_check($broken->syntax()->has_parsed_body(), 'Successful retry did not establish its body');
+
+	// A failed replacement keeps the last established body, even while the file is incomplete.
+	$established_body = $broken->syntax()->body;
+	$failed = false;
+	try {
+		parse_update($compiler, $a, 'function added(): int { return 1; } function broken(): int {');
+	}
+	catch (\RuntimeException $expected) {
+		$failed = true;
+	}
+	parse_check($failed && !$a->parsed->complete, 'Replacement-body failure was not retained');
+	parse_check($broken->syntax()->has_parsed_body() && ($broken->syntax()->body === $established_body), 'Failed replacement lost established body state');
+	parse_update($compiler, $a, 'function added(): int { return 1; } function broken(): int { return 4; }');
+	parse_check(($broken->syntax()->body !== $established_body) && $broken->syntax()->has_parsed_body(), 'Retry did not replace the established body');
+
 
 	// Reintroduction reuses the tombstone; independent files with the same name remain distinct.
 	parse_update($compiler, $a, 'function get(int $x): int { return $x; } function other(): int { return 4; }');

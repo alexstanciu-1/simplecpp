@@ -545,6 +545,8 @@ final class function_node extends declaration_node
 	public Storage $parameters /** Storage<parameter_node> */;
 	public type_node $return_type;
 	public function_body_node $body;
+	/** A failed later parse may retain an earlier body; this is not current-file completion. */
+	private bool $parsed_body = false;
 	/**
 	 * Scope introduced and owned by this declaration; parent wiring belongs to parsing.
 	 * @ownership owner
@@ -559,6 +561,19 @@ final class function_node extends declaration_node
 		$this->signature_scope = new scope();
 		$this->signature_scope->mark_function();
 		$this->parameters = new Storage /** Storage<parameter_node> */();
+	}
+
+	/** Query construction state without reading a potentially uninitialized required field. */
+	public function has_parsed_body(): bool
+	{
+		return $this->parsed_body;
+	}
+
+	/** Attach only a successfully parsed body; failures before attachment preserve the prior state. */
+	public function set_parsed_body(function_body_node $body): void
+	{
+		$this->body = $body;
+		$this->parsed_body = true;
 	}
 
 	public function signature_scope(): scope

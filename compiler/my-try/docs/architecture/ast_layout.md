@@ -44,6 +44,11 @@ The file scope and file executable-body scope are distinct. The latter's variabl
 are file-local. Function-body scopes parent to signature scopes, which parent to
 the file scope. AST nodes have no inspection-parent links; lexical lookup follows scopes.
 
+A function's required body may not yet exist during an incomplete first parse.
+`has_parsed_body()` queries explicit construction state without reading the field;
+`set_parsed_body()` attaches a successful body and marks it established. A failed
+later parse preserves the old body and this state. File completion remains separate.
+
 Each executable body owns one optional canonical preparation work record.
 Unchanged bodies keep syntax, scope, occurrences and facts. Replaced bodies receive
 the same work identity; dependency cleanup and preparation replace its derived

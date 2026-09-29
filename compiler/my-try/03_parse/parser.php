@@ -510,14 +510,16 @@ final class Parser_Run
 			$body_scope->mark_function();
 			$scopes->append($body_scope);
 			$body = $this->block($body_scope);
-			if ($previous !== null && isset($function->body)) {
-				$this->transfer_body_work($function->body, $body);
+			if ($previous !== null) {
+				if ($function->has_parsed_body()) {
+					$this->transfer_body_work($function->body, $body);
+				}
 			}
 		}
 
 		$function->return_type = $return_type;
 		$body->syntax_changed = $body_changed;
-		$function->body = $body;
+		$function->set_parsed_body($body);
 		$function->parameters = $parameters;
 		$function->template_parameters = $formals;
 		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_body_start, $start, $body_start));

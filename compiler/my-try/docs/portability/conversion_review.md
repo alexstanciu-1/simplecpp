@@ -63,8 +63,12 @@ evaluation. Its normal STAN-enabled build and PHP/native execution passed at
 Whole-compiler retry (`logs-2` in the attempt directory above) passes the additive
 syntax and now stops at `03_parse/parser.php:513`, `isset($function->body)`: the
 converter supports keyed probes, not required-property initialization probes.
-This needs a publication/initialization contract review; it is not merely another
-operator token. Whole-compiler STAN/build/execution remain unreached.
+That probe is now replaced by explicit `has_parsed_body()` / `set_parsed_body()`
+construction state; failed replacements retain the established body. Focused parsing,
+AST and preparation-recovery tests pass. Retry `logs-3` advances to
+`03_parse/structures/abstractions.php:103`: `abstract public function` is rejected
+because the converter currently expects visibility before the abstract modifier.
+Whole-compiler STAN/build/execution remain unreached.
 
 ## Current authoring contracts
 
