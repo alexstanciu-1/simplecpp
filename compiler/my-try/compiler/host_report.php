@@ -75,21 +75,16 @@ final class Host_Report
 	private function dump_node(ast_node $node, int $depth, token_list $tokens): void
 	{
 		$label = $node->kind()->name;
-		$payload = $node->payload();
-		if ($payload instanceof binding_structure) {
-			$label .= ' (' . $payload->syntax_kind->name . ')';
-		}
+
 		$words /** vector<string> */ = [];
-		for ($index = $node->token_index; $index < $node->end_token_index; $index++) {
+		for ($index = $node->start_token(); $index < $node->end_token(); $index++) {
 			$words[] = $tokens->tokens[$index]->text();
 		}
-		echo str_repeat('  ', $depth) . $label . " [{$node->token_index}, {$node->end_token_index}) " . htmlspecialchars(implode(' ', $words), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
+		echo str_repeat('  ', $depth) . $label . ' [' . $node->start_token() . ', ' . $node->end_token() . ') ' . htmlspecialchars(implode(' ', $words), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 
-		$child = $node->first_child();
-		while ($child !== null) {
+		foreach ($node->children() as $child) {
 			$child_node /** ast_node */ = $child;
 			$this->dump_node($child_node, $depth + 1, $tokens);
-			$child = $child_node->next();
 		}
 	}
 }

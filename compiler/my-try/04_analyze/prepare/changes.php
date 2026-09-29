@@ -48,23 +48,23 @@ final class Preparation_Changes
 	}
 
 	/** Unchanged signatures keep the exact fact objects already referenced by their consumers. */
-	public static function restore_parameters(function_structure $syntax, prepared_function $facts): void
+	public static function restore_parameters(function_node $syntax, prepared_function $facts): void
 	{
-		$nodes /** Storage<ast_node> */ = $syntax->parameters;
+		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		foreach ($nodes as $index => $node) {
-			Syntax_Nodes::parameter_data($node)->set_preparation($parameters[$index]);
+			$node->set_preparation($parameters[$index]);
 		}
 	}
 
 	/** Preserve field fact identities when record preparation finds no effective change. */
-	public static function restore_fields(struct_structure $syntax, prepared_record $facts): void
+	public static function restore_fields(struct_node $syntax, prepared_record $facts): void
 	{
-		$nodes /** Storage<ast_node> */ = $syntax->fields;
+		$nodes /** Storage<field_node> */ = $syntax->fields;
 		$store /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		$fields /** vector<prepared_field> */ = $store->items();
 		foreach ($nodes as $index => $node) {
-			Syntax_Nodes::field_data($node)->set_preparation($fields[$index]);
+			$node->set_preparation($fields[$index]);
 		}
 	}
 }

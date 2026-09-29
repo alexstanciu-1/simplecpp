@@ -29,18 +29,10 @@ function parse_update(Compiler $compiler, source_record $source, string $content
 /** Check relinked ownership and produce a fresh/incremental structural comparison. */
 function syntax_shape(ast_node $node): array
 {
-	$result = [$node->kind()->name, $node->token_index, $node->end_token_index];
-	$child = $node->first_child();
-	$previous = null;
-	$position = 0;
-	while ($child !== null)
-	{
-		parse_check(($child->parent() === $node) && ($child->prev() === $previous), 'Broken AST parent/previous links');
-		parse_check($child->child_position() === $position, 'Broken AST child position');
+	$result = [$node->kind()->name, $node->start_token(), $node->end_token()];
+	foreach ($node->children() as $child) {
+		parse_check($child->parent() === $node, 'Broken inspection parent');
 		$result[] = syntax_shape($child);
-		$previous = $child;
-		$child = $child->next();
-		$position++;
 	}
 	return $result;
 }
@@ -62,14 +54,14 @@ try
 	parse_check($parsed->complete && $b->parsed->complete, 'Initial collection did not complete');
 	$get = Model::$global_scope->functions_named('get')[0];
 	$function_node = $get->node;
-	$function = Syntax_Nodes::function_data($function_node);
+	$function = object_cast($function_node, function_node::class);
 	$body = $function->body;
 	$parameter = $function->parameters[0];
-	$parameter_entry = $parameter->payload()->occurrence();
+	$parameter_entry = $parameter->occurrence();
 	$type = Model::$global_scope->types_named('Box')[0];
 	$box = $type->declaration->node;
-	$field = Syntax_Nodes::struct_data($box)->fields[0];
-	$removed = Syntax_Nodes::struct_data($box)->fields[1]->payload()->occurrence();
+	$field = object_cast($box, struct_node::class)->fields[0];
+	$removed = object_cast($box, struct_node::class)->fields[1]->occurrence();
 	$old_revision = $get->revision;
 	parse_check(q_count(Model::$global_scope->variables_named('local')) === 0, 'File-local variable leaked into the global scope');
 	parse_check(q_count($parsed->collection->function_references) === 1, 'Call occurrence was not retained for resolution');
@@ -80,21 +72,21 @@ try
 	parse_check($a->parsed === $parsed, 'Parsed file identity was replaced');
 	parse_check(Model::$global_scope->functions_named('get')[0] === $get, 'Function symbol identity was replaced');
 	parse_check($get->node === $function_node, 'Function node identity was replaced');
-	parse_check(($function->parameters[0] === $parameter) && ($parameter->payload()->occurrence() === $parameter_entry), 'Parameter identity was replaced');
+	parse_check(($function->parameters[0] === $parameter) && ($parameter->occurrence() === $parameter_entry), 'Parameter identity was replaced');
 	parse_check($function->body === $body, 'Unchanged function body was not retained');
-	parse_check(!$function->body_changed && !$parsed->body_changed, 'Declaration order or token offsets changed an executable-body flag');
+	parse_check(!$function->body->syntax_changed && !$parsed->root->body->syntax_changed, 'Declaration order or token offsets changed an executable-body flag');
 	parse_check($get->change_status === change_state::unchanged, 'Unchanged signature marked changed');
 	parse_check($get->revision !== $old_revision, 'Presence revision was not advanced');
 	parse_check(Model::$global_scope->types_named('Box')[0] === $type, 'Canonical type identity was replaced');
-	parse_check(Syntax_Nodes::struct_data($box)->fields[0] === $field, 'Field node identity was replaced');
+	parse_check(object_cast($box, struct_node::class)->fields[0] === $field, 'Field node identity was replaced');
 	parse_check(q_count(Model::$global_scope->functions_named('get')) === 1, 'Repeated registration duplicated a global symbol');
-	parse_check($parsed->root->first_child() === $function_node, 'AST source order was not rebuilt');
+	parse_check($parsed->root->declarations[0] === $function_node, 'AST source order was not rebuilt');
 
 	parse_update($compiler, $a, 'function get(bool $x): int { return 7; } struct Box { float $value; } get(1); $local int = 1;');
 	parse_check($get->change_status === change_state::changed, 'Signature change was missed');
 	parse_check($parameter_entry->change_status === change_state::changed, 'Parameter change was missed');
-	parse_check($function->body_changed && $parsed->body_changed, 'Executable changes were missed');
-	parse_check($field->payload()->occurrence()->change_status === change_state::changed, 'Field change was missed');
+	parse_check($function->body->syntax_changed && $parsed->root->body->syntax_changed, 'Executable changes were missed');
+	parse_check($field->occurrence()->change_status === change_state::changed, 'Field change was missed');
 	parse_check($removed->change_status === change_state::deleted, 'Removed field was not marked deleted');
 
 	// The failing file stops, but a later independent file completes and retains its progress.
@@ -112,7 +104,7 @@ try
 		$failed = true;
 	}
 	parse_check($failed && !$a->parsed->complete && $b->parsed->complete, 'Failure did not isolate the file');
-	parse_check(Syntax_Nodes::function_data($other->node)->body_changed, 'Independent file was not updated after another file failed');
+	parse_check(object_cast($other->node, function_node::class)->body->syntax_changed, 'Independent file was not updated after another file failed');
 	parse_check($get->change_status !== change_state::deleted, 'Failure incorrectly deleted an unvisited function');
 	$added = Model::$global_scope->functions_named('added')[0];
 	$broken = Model::$global_scope->functions_named('broken')[0];
@@ -141,9 +133,9 @@ try
 	parse_check(($get->revision === 1) && ($parameter_entry->local_index === $parameter_index), 'Revision rollover lost declaration identity/index');
 	parse_check($get->change_status === change_state::unchanged, 'Revision rollover changed an unchanged signature');
 	$tokens = $a->tokens;
-	$body = Syntax_Nodes::function_data($get->node)->body;
+	$body = object_cast($get->node, function_node::class)->body;
 	$compiler->parse();
-	parse_check(($a->tokens === $tokens) && (Syntax_Nodes::function_data($get->node)->body === $body), 'Unchanged source was reparsed');
+	parse_check(($a->tokens === $tokens) && (object_cast($get->node, function_node::class)->body === $body), 'Unchanged source was reparsed');
 	$a->changes = change_state::deleted;
 	$compiler->parse();
 	parse_check($get->change_status === change_state::deleted, 'Deleted file retained a live global declaration');

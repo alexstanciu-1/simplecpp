@@ -35,7 +35,7 @@ try
 	$unchanged = Model::syntax_files()[1];
 	file_put_contents($a, 'function value(): int { return 2; } struct Box { int $item; }');
 	$compiler->update_llvm([$a]);
-	sync_check((sync_function('value')->change_status === change_state::added) && Syntax_Nodes::function_data(sync_function('value')->node)->body_changed, 'Body edit lost pending signature state');
+	sync_check((sync_function('value')->change_status === change_state::added) && object_cast(sync_function('value')->node, function_node::class)->body->syntax_changed, 'Body edit lost pending signature state');
 	sync_check(sync_function('value')->node === $old_node && Model::tokens()[0] !== $old_tokens, 'Declaration identity or new token generation lost');
 	sync_check(Model::syntax_files()[1] === $unchanged, 'Unchanged file was reparsed');
 	$resolved = (new LLVM_Legacy_Name_Preparation())->prepare($unchanged->collection);
@@ -87,7 +87,7 @@ try
 	file_put_contents($a, 'function value(): int { return 5; } function value(): int { return 4; }');
 	$compiler->sync([$a]);
 	foreach (Scope_Lookup::live(Model::$global_scope->functions_named('value')) as $entry) {
-		sync_check(Syntax_Nodes::function_data($entry->node)->body_changed, 'Reordered duplicate body edit was not recorded');
+		sync_check(object_cast($entry->node, function_node::class)->body->syntax_changed, 'Reordered duplicate body edit was not recorded');
 	}
 	file_put_contents($a, 'function value(): int { return 4; }');
 	$compiler->update_llvm([$a]);
@@ -112,7 +112,7 @@ try
 	sync_check(sync_function('value')->change_status === change_state::added, 'Deletion damaged another file definition');
 	file_put_contents($a, 'function value(int $x): int { return 10; }');
 	$compiler->sync([$a]);
-	sync_check((sync_function('value')->change_status === change_state::added) && Syntax_Nodes::function_data(sync_function('value')->node)->body_changed, 'Combined declaration/body flags wrong');
+	sync_check((sync_function('value')->change_status === change_state::added) && object_cast(sync_function('value')->node, function_node::class)->body->syntax_changed, 'Combined declaration/body flags wrong');
 	file_put_contents($a, 'function value(): int { return 6; }');
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);

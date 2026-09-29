@@ -80,7 +80,7 @@ arities and target bindings. Arbitrary q_-prefixed PHP builtins are not supporte
 | Explicit vectors of supported elements | Annotated PHP arrays; a PHP `array` alone does not select a native container. Nullable list fields/promoted parameters are now supported with explicit element annotations; see [discovery records](compiler_discovery_records_slice.md). Recursive vectors and typed maps now use [explicit container annotations](container_annotations.md); see its native access limitation. [Cursors](compiler_cursor_slice.md), [storage](compiler_storage_slice.md). |
 | Unit/integer enums and declaration-only interfaces | Narrow declaration forms; literal class `implements` lists now pass through ([Source_Set proof](compiler_source_set_slice.md)); do not assume enum reflection or general polymorphic bodies follow from declaration support. [Steps](compiler_step_slice.md). |
 | Bounded expressions, branches and loops | While loops now have a [production comparison proof](compiler_syntax_comparer_slice.md). Braced by-value `foreach`, bare break/continue, keyed `isset` and single hash-slot `unset` are now [proved](map_iteration.md). Use proved forms; accepting some operators is not complete PHP expression semantics. [Decimal algorithm](compiler_decimal_slice.md). |
-| Direct same-namespace method-only traits | No trait composition, adaptations, properties, constants, magic methods or method collisions. Shared direct consumers are allowed. [Trait contract](traits_and_incremental_index.md). |
+| Direct same-namespace traits | Methods and explicit instance fields expand structurally; collisions reject. No trait composition, adaptations, static fields, constants or magic methods. Shared direct consumers are allowed. [Trait contract](traits_and_incremental_index.md). |
 | Fixed handled exception family | Supported root exceptions and catch dispatch only; no general exception inheritance; `finally` is structurally preserved with [target restrictions](compiler_syntax.md). [Exception contract](compiler_exception_slice.md). |
 | Sequence/keyed map and filter | Explicit carrier policy and bounded typed `function` callbacks; [contract and candidate target](collection_helpers.md). |
 | Managed text and explicit byte helpers | Text helpers validate UTF-8 and use code points; byte helpers serve source offsets/binary data. [String contract](utf8_text_contract.md). |
@@ -374,3 +374,17 @@ before changing accessors. `take_nullable` is the existing branching helper;
 `require_non_null` is an agreed explicit-extraction name, not yet an implemented
 portable helper. Current checked runtime conversion does not establish STAN/native
 pipeline acceptance by itself.
+
+
+### Lazy typed compiler inspection
+
+Use specialized cursor classes behind an interface extending `\Iterator`, with
+explicit typed `current`/`key` methods and forward-only traversal where appropriate.
+`Storage_Cursor<T>` retains original numeric Storage membership and can safely
+widen yielded object handles without widening the mutable collection. Composite
+cursors retain their source and advance through named fields. Do not use Generator
+lowering or allocate temporary child lists for this pattern. See the
+[cursor contract and native proof](storage_collections.md#lazy-typed-inspection).
+The bounded toolchain now also distinguishes concrete empty methods from abstract
+ones and supports exact nullable interface returns. Full compiler native parity
+remains a separate validation task.

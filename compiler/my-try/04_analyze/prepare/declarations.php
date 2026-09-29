@@ -6,13 +6,16 @@ namespace scpp\compiler;
 final class Declaration_Preparation
 {
 	/** Named syntax resolves through the existing lexical/publication scope chain. */
-	public static function type(ast_node $node, preparation_context $context): type_definition
+	public static function type(type_node $node, preparation_context $context): type_definition
 	{
-		if ($node->kind() !== node_kind::identifier) {
-			throw new \RuntimeException('S2S constructed types are not supported yet');
-		}
+		$node->prepare(new Syntax_Preparation($context));
+		return $node->require_preparation();
+	}
 
-		$entry = $node->payload()->occurrence();
+	/** Named types resolve against the collected lexical scope and record dependencies. */
+	public static function prepare_named_type(named_type_node $node, preparation_context $context): void
+	{
+		$entry = $node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
 		$types = Scope_Lookup::types($lexical_scope, $entry->name, $context);
 		if (q_count($types) !== 1) {
@@ -24,11 +27,11 @@ final class Declaration_Preparation
 			$declaration /** collected_name */ = $type->declaration;
 			$context->worker->require_declaration($context->owner, $declaration);
 		}
-		return $type;
+		$node->set_preparation($type);
 	}
 
 	/** Publish a complete signature before any body so calls do not depend on source order. */
-	public static function prepare_function(function_structure $syntax, preparation_context $context): void
+	public static function prepare_function(function_node $syntax, preparation_context $context): void
 	{
 		if (q_count($syntax->template_parameters) !== 0) {
 			throw new \RuntimeException('S2S function templates are deferred');
@@ -38,53 +41,48 @@ final class Declaration_Preparation
 		$facts->return_type = self::type($syntax->return_type, $context);
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
-		$nodes /** Storage<ast_node> */ = $syntax->parameters;
-		foreach ($nodes as $node)
-		{
-			$parameter = Syntax_Nodes::parameter_data($node);
-			$prepared = new prepared_parameter();
-			$prepared->declaration = $parameter->occurrence();
-			$prepared->type = self::type($parameter->type_syntax, $context);
-			self::require_value_type($prepared->type);
-			$prepared->mode = $parameter->mode;
-			$parameter->set_preparation($prepared);
-			$parameters->append($prepared);
+		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
+		$worker = new Syntax_Preparation($context);
+		foreach ($nodes as $parameter) {
+			$parameter->prepare($worker);
+			$parameters->append($parameter->require_preparation());
 		}
 
 		$syntax->set_preparation($facts);
 	}
 
 	/** Fields belong to their record, never to the surrounding local-variable scope. */
-	public static function prepare_struct(struct_structure $syntax, preparation_context $context): void
+	public static function prepare_struct(struct_node $syntax, preparation_context $context): void
 	{
 		$facts = new prepared_record();
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 
-		$nodes /** Storage<ast_node> */ = $syntax->fields;
-		foreach ($nodes as $node)
-		{
-			$field = Syntax_Nodes::field_data($node);
-			$prepared = new prepared_field();
-			$prepared->declaration = $field->occurrence();
-			$prepared->type = self::type($field->type_syntax, $context);
-
-			// Keep field eligibility within the current compact-layout contract.
-			$type = $prepared->type;
-			$fixed_integer = ($type->kind === type_kind::integer) && ($type->name !== 'int');
-			if ((!$fixed_integer) && ($type->kind !== type_kind::boolean) && ($type->kind !== type_kind::record)) {
-				throw new \RuntimeException('S2S struct fields require bool, fixed-width integers or supported structs');
-			}
-
-			$context->worker->require_record($type, $context);
-			$field->set_preparation($prepared);
-			$fields->add($field->occurrence()->name, $prepared);
+		$nodes /** Storage<field_node> */ = $syntax->fields;
+		$worker = new Syntax_Preparation($context);
+		foreach ($nodes as $field) {
+			$field->prepare($worker);
+			$fields->add($field->name, $field->require_preparation());
 		}
-
 		$syntax->set_preparation($facts);
 	}
 
+	/** Keep field eligibility within the current compact-layout contract. */
+	public static function prepare_field(field_node $field, preparation_context $context): void
+	{
+		$prepared = new prepared_field();
+		$prepared->declaration = $field->occurrence();
+		$prepared->type = self::type($field->type_syntax, $context);
+		$type = $prepared->type;
+		$fixed_integer = ($type->kind === type_kind::integer) && ($type->name !== 'int');
+		if ((!$fixed_integer) && ($type->kind !== type_kind::boolean) && ($type->kind !== type_kind::record)) {
+			throw new \RuntimeException('S2S struct fields require bool, fixed-width integers or supported structs');
+		}
+		$context->worker->require_record($type, $context);
+		$field->set_preparation($prepared);
+	}
+
 	/** Each body receives fresh locals; parameters enter before source-order bindings. */
-	public static function prepare_body(function_structure $syntax, preparation_context $outer): void
+	public static function prepare_body(function_node $syntax, preparation_context $outer): void
 	{
 		$context = new preparation_context();
 		$context->collection = $outer->collection;
@@ -108,9 +106,9 @@ final class Declaration_Preparation
 	}
 
 	/** Resolve one named callable and establish reference/value argument boundaries. */
-	public static function prepare_call(call_structure $syntax, preparation_context $context): prepared_call
+	public static function prepare_call(call_node $syntax, preparation_context $context): prepared_call
 	{
-		$templates /** Storage<ast_node> */ = $syntax->template_arguments;
+		$templates /** Storage<named_type_node> */ = $syntax->template_arguments;
 		if (!$templates->is_empty()) {
 			throw new \RuntimeException('S2S template calls are deferred');
 		}
@@ -125,11 +123,11 @@ final class Declaration_Preparation
 		$context->worker->require_declaration($context->owner, $targets[0]);
 		$facts = new prepared_call();
 		$facts->declaration = $targets[0];
-		$facts->signature = Syntax_Nodes::function_data($targets[0]->node)->require_preparation();
+		$facts->signature = object_cast($targets[0]->node, function_node::class)->require_preparation();
 		$facts->type = $facts->signature->return_type;
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
-		$arguments /** Storage<ast_node> */ = $syntax->arguments;
+		$arguments /** Storage<expression_node> */ = $syntax->arguments;
 		if (q_count($parameters) !== q_count($arguments)) {
 			throw new \RuntimeException('S2S call argument count does not match its signature');
 		}
@@ -137,7 +135,7 @@ final class Declaration_Preparation
 		// Prepare arguments in source order; references must preserve the selected storage.
 		foreach ($arguments as $index => $argument)
 		{
-			$value = $argument->payload()->prepare_expression($argument, $context);
+			$value = Syntax_Preparation::expression($argument, $context);
 			$parameter = $parameters[$index];
 			if ($parameter->mode === passing_mode::reference) {
 				if ((!$value->addressable) || !self::same_storage_type($value->type, $parameter->type)) {
@@ -153,17 +151,17 @@ final class Declaration_Preparation
 	}
 
 	/** A member selection carries the exact field identity and inherits base addressability. */
-	public static function prepare_field_access(field_access_structure $syntax, preparation_context $context): prepared_field_access
+	public static function prepare_field_access(field_access_node $syntax, preparation_context $context): prepared_field_access
 	{
 		$base = $syntax->base;
-		$value = $base->payload()->prepare_expression($base, $context);
+		$value = Syntax_Preparation::expression($base, $context);
 		if ($value->type->kind !== type_kind::record) {
 			throw new \RuntimeException('S2S member access requires a struct value');
 		}
 
 		$context->worker->require_record($value->type, $context);
 		$declaration = object_cast($value->type->declaration, collected_name::class);
-		$record = Syntax_Nodes::struct_data($declaration->node)->require_preparation();
+		$record = object_cast($declaration->node, struct_node::class)->require_preparation();
 		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;
 		$matches /** vector<prepared_field> */ = $fields->named($syntax->occurrence()->name);
 		if (q_count($matches) !== 1) {

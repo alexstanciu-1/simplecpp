@@ -6,6 +6,19 @@ namespace Scpp\S2S\Stan;
 /** Describes typed collection elements and compiler-storage method signatures for STAN. */
 final class StanCollectionTypeResolver
 {
+	/** Fixed cursor family shares progress and exposes only the read protocol. */
+	public static function cursorClass(string $type): ?array
+	{
+		if (preg_match('/^Storage_Cursor\s*<(.+)>$/', $type, $parts) !== 1) return null;
+		$returns = ['current' => trim($parts[1]), 'key' => 'int', 'valid' => 'bool', 'next' => 'void', 'rewind' => 'void'];
+		$signatures = [];
+		foreach ($returns as $name => $return) {
+			$signatures[$name] = ['name' => $name, 'params' => [], 'return_type' => $return, 'is_static' => false, 'visibility' => 'public'];
+		}
+		return ['fqcn' => $type, 'name' => $type, 'method_signatures' => $signatures,
+			'method_return_types' => $returns, 'property_types' => [], 'ancestor_types' => []];
+	}
+
 	/** @return array{value:string,key:string}|null */
 	public static function storageCarrier(string $type): ?array
 	{

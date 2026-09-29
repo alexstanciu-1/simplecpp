@@ -202,11 +202,22 @@ final class Converter {
 	private function interfaceDeclaration(int $line): Node {
 		$name = $this->significant();
 		if ($name[0] !== T_STRING) { $this->fail($line, 'expected interface name'); }
-		$this->expect('{');
+		$parents = [];
+		if (($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_EXTENDS) {
+			$this->significant();
+			do {
+				$parent = $this->significant();
+				if (!in_array($parent[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) { $this->fail($parent[2], 'expected literal parent interface'); }
+				$parents[] = $parent[1];
+				$separator = $this->significant();
+			} while ($separator[1] === ',');
+			if ($separator[1] !== '{') { $this->fail($separator[2], 'expected interface body'); }
+		} else { $this->expect('{'); }
+		$interfaceName = $name[1] . ($parents === [] ? '' : ' extends ' . implode(', ', $parents));
 		$members = [];
 		while (isset($this->tokens[$this->position])) {
 			[$id, $text, $at] = $this->tokens[$this->position++];
-			if ($text === '}') { return new Node('interface', $name[1], $line, $members); }
+			if ($text === '}') { return new Node('interface', $interfaceName, $line, $members); }
 			if ($id === T_DOC_COMMENT && str_contains($text, '@scpp-no-export')) { $this->fail($at, '@scpp-no-export requires a concrete method body'); }
 			if (in_array($id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
 				$members[] = new Node('comment', $text, $at);
@@ -266,7 +277,7 @@ final class Converter {
 		if ($nullable && strtolower($type[1]) === 'void') { $this->fail($type[2], 'nullable void is unsupported'); }
 		$mapped = Exception_Policy::name($type[1]);
 		if ($return && $mapped === '\\SplObjectStorage') { $mapped = $this->objectHashAnnotation($this->significant()); }
-		if ($return && in_array($mapped, ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
+		if ($return && in_array($mapped, ['Storage', 'Keyed_Storage', 'Key_Storage_List', 'Storage_Cursor'], true)) {
 			$mapped = $this->storageAnnotation($this->significant(), $mapped);
 		}
 		return $nullable ? 'nullable<' . $mapped . '>' : $mapped;
@@ -288,9 +299,9 @@ final class Converter {
 				$parameter = $this->significant();
 				if ($parameter[0] !== T_VARIABLE) { $this->fail($parameter[2], 'expected named parameter'); }
 				$parameterNames[] = $parameter[1];
-				$nullableStorage = in_array($type, ['nullable<Storage>', 'nullable<Keyed_Storage>', 'nullable<Key_Storage_List>'], true);
+				$nullableStorage = in_array($type, ['nullable<Storage>', 'nullable<Keyed_Storage>', 'nullable<Key_Storage_List>', 'nullable<Storage_Cursor>'], true);
 				$family = $nullableStorage ? substr($type, 9, -1) : $type;
-				$storage = in_array($family, ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true);
+				$storage = in_array($family, ['Storage', 'Keyed_Storage', 'Key_Storage_List', 'Storage_Cursor'], true);
 				if ($storage) {
 					if (!$containerReturn) { $this->fail($line, 'Storage interface signatures require a separately proved contract'); }
 					$type = $this->storageAnnotation($this->significant(), $family);
@@ -330,7 +341,7 @@ final class Converter {
 		}
 		$this->expect(':');
 		$return = $this->signatureType(true);
-		if (!$containerReturn && (str_starts_with($return, 'vector<') || str_starts_with($return, 'hash<') || str_starts_with($return, 'Storage<') || str_starts_with($return, 'Keyed_Storage<') || str_starts_with($return, 'Key_Storage_List<') || str_starts_with($return, 'nullable<'))) {
+		if (!$containerReturn && (str_starts_with($return, 'vector<') || str_starts_with($return, 'hash<') || str_starts_with($return, 'Storage<') || str_starts_with($return, 'Keyed_Storage<') || str_starts_with($return, 'Key_Storage_List<') || str_starts_with($return, 'Storage_Cursor<'))) {
 			$this->fail($line, 'container interface returns require a separately proved native contract');
 		}
 		return $visibility . ($static ? ' static' : '') . ' function ' . $name[1] . '(' . implode(', ', $parameters) . '): ' . $return;
@@ -378,7 +389,7 @@ final class Converter {
 	/** Local type spelling only; declarations, assignability and identity belong to the target. */
 	private function localAnnotation(array $token): string {
 		$annotation = $token[1];
-		if (preg_match('~^/\*\*\s*(?:vector|hash|Storage|Keyed_Storage|Key_Storage_List)\s*<~', $annotation)) {
+		if (preg_match('~^/\*\*\s*(?:vector|hash|Storage|Keyed_Storage|Key_Storage_List|Storage_Cursor)\s*<~', $annotation)) {
 			return $this->containerAnnotation($token, true);
 		}
 		if (preg_match('~^/\*\*\s*((?:(?:nullable|result_or_false|result_or_bool)<)?(?:int|uint32|bool|string)>?)\s*\*/$~D', $annotation, $match)) {
@@ -392,11 +403,11 @@ final class Converter {
 			return $type;
 		}
 		if (preg_match('~^/\*\*\s*nullable<\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*>\s*\*/$~D', $annotation, $match)
-			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
+			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'storage_cursor', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
 			return 'nullable<' . Exception_Policy::name($match[1]) . '>';
 		}
 		if (preg_match('~^/\*\*\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*\*/$~D', $annotation, $match)
-			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
+			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'storage_cursor', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
 			return Exception_Policy::name($match[1]);
 		}
 		$this->fail($token[2], 'unsupported local type annotation');
@@ -427,7 +438,7 @@ final class Converter {
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected promoted parameter name'); }
 			$parameterNames[] = $field[1];
-			if (in_array($mappedType, ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
+			if (in_array($mappedType, ['Storage', 'Keyed_Storage', 'Key_Storage_List', 'Storage_Cursor'], true)) {
 				$mappedType = $this->storageAnnotation($this->significant(), $mappedType);
 			}
 			if ($type[0] === T_ARRAY) {
@@ -455,7 +466,7 @@ final class Converter {
 				}
 				$separator = $this->significant();
 			}
-			$annotated = $nullable || $type[0] === T_ARRAY || in_array($type[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true);
+			$annotated = $nullable || $type[0] === T_ARRAY || in_array($type[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List', 'Storage_Cursor'], true);
 			$property = $annotated
 				? ($readonly ? '/** PHP readonly; native usage contract. */ ' : '') . $visibility[1] . ' ' . $field[1] . ' ' . $typeName . ';'
 				: $visibility[1] . ' ' . ($readonly ? 'readonly ' : '') . $typeName . ' ' . $field[1] . ';';
@@ -692,7 +703,7 @@ final class Converter {
 				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $collection . ';', $at);
 				continue;
 			}
-			if (in_array($type[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
+			if (in_array($type[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List', 'Storage_Cursor'], true)) {
 				$collection = $this->storageAnnotation($this->significant(), $type[1]);
 				$initializer = '';
 				if ($nullable) { $this->expect('='); $this->expect('null'); $initializer = ' = null'; }
@@ -1076,7 +1087,7 @@ final class Converter {
 					continue;
 				}
 				$storageName = null;
-				if (in_array($name[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List'], true)) {
+				if (in_array($name[1], ['Storage', 'Keyed_Storage', 'Key_Storage_List', 'Storage_Cursor'], true)) {
 					$annotationAt = $this->nextSignificant($this->position);
 					if (($this->tokens[$annotationAt][0] ?? null) === T_DOC_COMMENT) {
 						$storageName = $this->storageAnnotation($this->significant(), $name[1]);

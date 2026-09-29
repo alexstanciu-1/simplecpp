@@ -134,10 +134,10 @@ for review. This is standing authorization; do not ask again for each push.
    collection. Both inherit Storage_Abstract for common behavior. Native records
    use shared_p<T>; capacity is an
    optional constructor argument. No key-mode or readonly template arguments remain.
-   Prefer `$tokens /** Storage<token> */ = new Storage();` for direct local construction. The repeated construction annotation remains accepted. Property assignments and other construction sites still need `new Storage /** Storage<token> */()`. See [storage](storage/STORAGE.md) and [conversion review](portability/conversion_review.md). AST nodes use one final ast_node class with a kind tag, specialization records and private
-   traversal links. Named structure child lists remain retaining aliases; see
-   docs/architecture/ast_layout.md. Do not recreate parallel node/payload
-   registries or Storage_View infrastructure without a concrete approved need.
+   Prefer `$tokens /** Storage<token> */ = new Storage();` for direct local construction. The repeated construction annotation remains accepted. Property assignments and other construction sites still need `new Storage /** Storage<token> */()`. See [storage](storage/STORAGE.md) and [conversion review](portability/conversion_review.md). AST nodes use a property-free abstract base and concrete typed syntax nodes;
+   see docs/architecture/ast_layout.md. Workers consume named fields and typed
+   operation hooks. Do not recreate node/payload registries or parallel child lists.
+
 
 6. Follow compiler 3's formatting, purpose comments and method-order conventions
    (source links in README.md). Preserve behavior during this preparation;
@@ -177,7 +177,7 @@ Keep compiler decisions outside retained structures. Structures may initialize d
 maintain local representation invariants, expose typed access/navigation and simple
 queries, and clear their own derived fields. Stage sequencing and tree cleanup belong
 to Compiler_Lifecycle/Preparation_Cleanup; scope publication and replacement policy
-belong to Scope_Publication. Prefer typed specialization access and first_child()/next() over untyped payload chains. children_snapshot() explicitly copies membership. Preserve source
+belong to Scope_Publication. Prefer concrete node fields and typed operation dispatch. children()/parent() are inspection-only; children() uses lazy cursors. Preserve source
 order and stable storage positions; do not sort AST/storage membership as a convenience.
 Specializations may also expose operation dispatch and traversal hooks that forward
 to the owning process, including backend-specific operations. The worker retains

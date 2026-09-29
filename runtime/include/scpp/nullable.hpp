@@ -41,6 +41,12 @@ public:
 		: value_(std::move(value)) {
 	}
 
+	// Preserve safe shared-object upcasts at nullable return boundaries without
+	// enabling broad scalar coercion or requiring two implicit user conversions.
+	template<class U> requires (detail::is_shared_p_v<T> && detail::is_shared_p_v<U>
+		&& std::is_convertible_v<const U &, T> && !std::is_same_v<U, T>)
+	nullable(const U &value) : value_(T(value)) {}
+
 	nullable &operator=(null_t) noexcept {
 		value_.reset();
 		return *this;

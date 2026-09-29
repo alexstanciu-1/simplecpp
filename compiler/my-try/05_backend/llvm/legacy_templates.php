@@ -56,10 +56,10 @@ final class LLVM_Legacy_Template_File_Checker
 			if ($entry->kind !== collected_name_kind::function_declaration) {
 				continue;
 			}
-			if (q_count(Syntax_Nodes::function_data($entry->node)->template_parameters) === 0) {
+			if (q_count(object_cast($entry->node, function_node::class)->template_parameters) === 0) {
 				continue;
 			}
-			$syntax = Syntax_Nodes::function_data($entry->node);
+			$syntax = object_cast($entry->node, function_node::class);
 
 			// Each definition starts a new symbolic environment.
 			$bindings /** vector<string> */ = [];
@@ -74,24 +74,24 @@ final class LLVM_Legacy_Template_File_Checker
 			$this->locals = $locals;
 			foreach ($syntax->parameters as $parameter)
 			{
-				$type = $this->type($file, Syntax_Nodes::parameter_data($parameter)->type_syntax, $this->bindings);
-				if (($type === 'void') || ((Syntax_Nodes::parameter_data($parameter)->mode === passing_mode::reference) && string_byte_starts_with($type, 'parameter:'))) {
+				$type = $this->type($file, object_cast($parameter, parameter_node::class)->type_syntax, $this->bindings);
+				if (($type === 'void') || ((object_cast($parameter, parameter_node::class)->mode === passing_mode::reference) && string_byte_starts_with($type, 'parameter:'))) {
 					throw new \RuntimeException('Generic contract does not support void parameters or mutable borrowing of bare T');
 				}
-				$declaration = $file->names->declarations[Syntax_Nodes::parameter_data($parameter)->name_token_index];
+				$declaration = $file->names->declarations[object_cast($parameter, parameter_node::class)->occurrence()->token_index];
 				$this->locals[$declaration->local_index] = $type;
 			}
 
 			$return_type = $this->type($file, $syntax->return_type, $this->bindings);
-			$return_typeed = false;
-			foreach (Syntax_Nodes::block_data($syntax->body)->children as $statement) {
-				if ($return_typeed) {
+			$returned = false;
+			foreach (object_cast($syntax->body, function_body_node::class)->statements as $statement) {
+				if ($returned) {
 					throw new \RuntimeException('Statements after return are not supported in template definitions');
 				}
 				$this->statement($statement, $return_type);
-				$return_typeed = ($statement->kind() === node_kind::return_statement);
+				$returned = ($statement->kind() === node_kind::return_statement);
 			}
-			if (($return_type !== 'void') && (!$return_typeed)) {
+			if (($return_type !== 'void') && (!$returned)) {
 				throw new \RuntimeException('Template definition requires an explicit value return');
 			}
 		}
@@ -100,19 +100,19 @@ final class LLVM_Legacy_Template_File_Checker
 	/** Symbolic type terms retain parameter slots; unknown coverage fails before specialization. */
 	private function type(llvm_prepared_file $file, ast_node $node, array $bindings /** vector<string> */): string
 	{
-		if ($node->kind() !== node_kind::identifier) {
+		if ($node->kind() !== node_kind::named_type) {
 			throw new \RuntimeException('Aggregate types in template definitions are not supported yet');
 		}
-		$lookup_token_index /** int */ = (int) $node->token_index;
+		$lookup_token_index /** int */ = $node->start_token();
 		if (isset($file->names->template_slots[$lookup_token_index])) {
-			$slot /** int */ = $file->names->template_slots[(int) $node->token_index];
+			$slot /** int */ = $file->names->template_slots[$node->start_token()];
 			if (!isset($bindings[$slot])) {
 				throw new \RuntimeException('Missing symbolic template binding');
 			}
 			return $bindings[$slot];
 		}
 		$tokens /** Storage<token> */ = $file->source->token_snapshot()->tokens;
-		$name = $tokens[(int) $node->token_index]->text();
+		$name = $tokens[$node->start_token()]->text();
 		if (!isset($this->context->policy->types[$name])) {
 			throw new \RuntimeException('Template proof supports only int, void and bound type parameters');
 		}
@@ -122,43 +122,58 @@ final class LLVM_Legacy_Template_File_Checker
 	/** Check stores and returns against symbolic types, keeping initialization separate from assignment. */
 	private function statement(ast_node $node, string $return_type): void
 	{
-		if ($node->kind() === node_kind::variable_binding_statement)
-		{
-			$syntax = Syntax_Nodes::binding_data($node);
-			if (($syntax->target !== null) || ($syntax->value === null)) {
-				throw new \RuntimeException('Template proof requires explicit value initialization and simple variable stores');
-			}
-			$declaration = $syntax->type_syntax === null
-			? $this->file->names->references[(int) $node->token_index] : $this->file->names->declarations[(int) $node->token_index];
-			$type = '';
-			if ($syntax->type_syntax === null) {
-				if (isset($this->locals[$declaration->local_index])) {
-					$type = $this->locals[$declaration->local_index];
-				}
-			}
-			else {
-				$type = $this->type($this->file, $syntax->type_syntax, $this->bindings);
-			}
-			$value = $this->expression($syntax->value);
-			if (($value === 'void') || ($type !== $value)) {
-				throw new \RuntimeException('Generic store requires matching symbolic types');
-			}
-			$this->locals[$declaration->local_index] = $type;
+		if ($node instanceof variable_declaration_node) {
+			$declaration = object_cast($node, variable_declaration_node::class);
+			$this->store($declaration, $declaration->type_syntax, $declaration->initializer);
 		}
 		elseif ($node->kind() === node_kind::return_statement) {
-			$syntax = Syntax_Nodes::return_data($node);
+			$syntax = object_cast($node, return_node::class);
 			$type = $syntax->expression === null ? 'void' : $this->expression($syntax->expression);
 			if (($return_type !== $type) || (($return_type === 'void') && ($syntax->expression !== null))) {
 				throw new \RuntimeException('Generic return requires matching symbolic types');
 			}
 		}
 		elseif ($node->kind() === node_kind::expression_statement) {
-			$syntax = Syntax_Nodes::statement_data($node);
-			$this->expression($syntax->expression);
+			$syntax = object_cast($node, expression_statement_node::class);
+			$expression = $syntax->expression;
+			if ($expression instanceof assignment_expression_node) {
+				$assignment = object_cast($expression, assignment_expression_node::class);
+				if (!($assignment->target instanceof variable_reference_node)) {
+					throw new \RuntimeException('Template proof requires explicit value initialization and simple variable stores');
+				}
+				$this->store($assignment->target, null, $assignment->value);
+			}
+			else {
+				$this->expression($expression);
+			}
 		}
 		else {
 			throw new \RuntimeException('Unsupported statement in template definition');
 		}
+	}
+
+	/** Preserve the parked symbolic-store rules over the two explicit syntax forms. */
+	private function store(ast_node $node, ?type_node $type_syntax, ?expression_node $initializer): void
+	{
+		if ($initializer === null) {
+			throw new \RuntimeException('Template proof requires explicit value initialization and simple variable stores');
+		}
+		$declaration = $type_syntax === null
+		? $this->file->names->references[$node->start_token()] : $this->file->names->declarations[$node->start_token()];
+		$type = '';
+		if ($type_syntax === null) {
+			if (isset($this->locals[$declaration->local_index])) {
+				$type = $this->locals[$declaration->local_index];
+			}
+		}
+		else {
+			$type = $this->type($this->file, $type_syntax, $this->bindings);
+		}
+		$value = $this->expression($initializer);
+		if (($value === 'void') || ($type !== $value)) {
+			throw new \RuntimeException('Generic store requires matching symbolic types');
+		}
+		$this->locals[$declaration->local_index] = $type;
 	}
 
 	/** Call checking reads declared signatures only, allowing recursion without entering another body. */
@@ -168,7 +183,7 @@ final class LLVM_Legacy_Template_File_Checker
 			return 'int';
 		}
 		if ($node->kind() === node_kind::variable_reference) {
-			$declaration = $this->file->names->references[(int) $node->token_index];
+			$declaration = $this->file->names->references[$node->start_token()];
 			if (!isset($this->locals[$declaration->local_index])) {
 				throw new \RuntimeException('Generic variable is not initialized');
 			}
@@ -177,25 +192,25 @@ final class LLVM_Legacy_Template_File_Checker
 		if ($node->kind() !== node_kind::call_expression) {
 			throw new \RuntimeException('Generic member/index operations are not permitted by the current proof');
 		}
-		$target = $this->file->names->function_references[(int) $node->token_index];
-		$signature = Syntax_Nodes::function_data($target->node);
-		$parameters /** Storage<ast_node> */ = $signature->parameters;
+		$target = $this->file->names->function_references[$node->start_token()];
+		$signature = object_cast($target->node, function_node::class);
+		$parameters /** Storage<parameter_node> */ = $signature->parameters;
 		$arguments /** vector<string> */ = [];
-		foreach (Syntax_Nodes::call_data($node)->template_arguments as $argument) {
+		foreach (object_cast($node, call_node::class)->template_arguments as $argument) {
 			$type = $this->type($this->file, $argument, $this->bindings);
 			if ($type === 'void') {
 				throw new \RuntimeException('Template argument lacks the default generic value contract');
 			}
 			$arguments[] = $type;
 		}
-		if ((q_count($arguments) !== q_count($signature->template_parameters)) || (q_count(Syntax_Nodes::call_data($node)->arguments) !== q_count($signature->parameters))) {
+		if ((q_count($arguments) !== q_count($signature->template_parameters)) || (q_count(object_cast($node, call_node::class)->arguments) !== q_count($signature->parameters))) {
 			throw new \RuntimeException('Generic call argument count mismatch');
 		}
 		// Name bindings for a target file remain shared and independent of this checking context.
 		$target_file = $this->context->files[$target->collection];
-		foreach (Syntax_Nodes::call_data($node)->arguments as $index => $argument)
+		foreach (object_cast($node, call_node::class)->arguments as $index => $argument)
 		{
-			$parameter = Syntax_Nodes::parameter_data($parameters[$index]);
+			$parameter = object_cast($parameters[$index], parameter_node::class);
 			$expected = $this->type($target_file, $parameter->type_syntax, $arguments);
 			$actual = $this->expression($argument);
 			if (($actual === 'void') || ($actual !== $expected)) {

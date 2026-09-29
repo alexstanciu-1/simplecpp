@@ -73,16 +73,15 @@ backend. The two implementations remain behaviorally separate in this isolation 
 
 ## AST graph
 
-parsed_file.root owns a final ast_node. The common node owns an
-required node_structure and private first-child/next-sibling links, with native
-weak parent/previous links and a uint32 child ordinal. Node token spans are uint32.
-Named structure child fields/lists remain retaining aliases for existing workers.
-The parser validates and links completed children before publishing each node.
-See [AST layout](ast_layout.md) for child order, traversal and mutation rules.
+parsed_file.root owns a file_node. A property-free abstract ast_node defines common
+operation/inspection contracts; concrete nodes own their named syntax fields and
+uint32 spans. There is no separate payload object or sibling chain. Typed worker
+hooks traverse owned fields. The parser attaches inspection parents before publishing
+completed syntax. See [AST layout](ast_layout.md) for ownership and traversal rules.
 
 In the incremental parser, parsed_file.scopes owns the file declaration scope and
 replacement executable scopes. Function specializations own retained signature
-scopes; struct specializations own retained member scopes. Blocks and occurrences
+scopes; struct specializations own retained member scopes. Function bodies and occurrences
 observe their lexical scope. Global name pools index the same collected declarations.
 Retained declaration entries preserve their storage positions and syntax identity;
 obsolete body/reference entries leave holes. During parsing an early registered
@@ -160,21 +159,20 @@ without depending on membership aliases after publication. This does not add IDs
 or change retained ownership. See [binding details](../../../../specs/portability/object_hashes.md).
 
 
-### Concrete payload access
+### Typed syntax access
 
-The required node_structure payload remains privately node-owned. `kind()` exposes
-the fixed tag; `Syntax_Nodes::*_data` provides typed access to the specialization
-for all consumers. Specializations retain named syntax fields and child lists.
-These accessors return the same objects, not copies. Preparation and C++ emission
-walk first_child()/next() and read the corresponding specialized record.
-Payload/list mutation after publication is unsupported.
+The property-free abstract `ast_node` supplies common contracts. Concrete nodes own
+narrow typed fields, applicable facts and exact fixed kind methods. Workers consume
+those fields through typed dispatch; `children()` and `parent()` are inspection
+APIs, not processing paths. No payload accessors, sibling links or parallel child
+membership remain. See [AST layout](ast_layout.md).
 
 collected_name.collection names the owning occurrence collection. collected_file
 keeps its token snapshot private; token_snapshot() and source_file() expose the
 requested records directly. parsed_file also exposes source_file() and root_scope().
 These accessors preserve identity without introducing more stored backlinks.
 
-Direct scope links (`scope.enclosing`, `block_structure.scope_reference`,
+Direct scope links (`scope.enclosing`, `function_body_node.local_scope`,
 `collected_name.scope`) now carry adjacent `weak<scope>` annotations for native
 conversion. PHP keeps strong references; native consumers explicitly acquire live
 handles. Keep the owning parsed file/model alive when scope access is required.
@@ -231,7 +229,7 @@ and variable-reference structures own their typed preparation slots and local cl
 The common prepared_expression contains only type. prepared_integer_literal adds
 required decimal text; prepared_boolean_literal adds a required bool value;
 prepared_variable_reference adds its required weak declaration.
-No class extends ast_node.
+Concrete syntax categories extend the property-free ast_node base.
 There are no per-file token-keyed fact maps or reverse `syntax` links. Binding
 initializers remain ordinary AST children; generation reads their attached facts.
 Declaration links in facts are explicitly weak observers of collected occurrences;
@@ -239,8 +237,8 @@ canonical type links retain their definitions. An inferred declaration uses its
 existing binding occurrence as identity. Parsed classification, source declaration
 inventory and published scopes remain unchanged.
 
-`Preparation_Cleanup::tree` walks owned child/sibling links and calls each node's
-`clear_preparation` method, which delegates to the specialization. Syntax-only
+`Preparation_Cleanup::tree` uses typed maintenance dispatch over owned syntax fields
+and calls each concrete node's `clear_preparation` method. Syntax-only
 records do nothing; expression and binding records clear their own slots. Compiler_Lifecycle resets clean the retained tree before dropping/replacing
 roots. Incremental preparation clears only selected body facts and compares declaration
 facts before notification. Preparation owners retain change/error state across increments;
@@ -304,9 +302,9 @@ compiler operations, including backend-specific ones. Algorithms remain in their
 processing owners. A phase worker starts an independent pass; interlinked operations
 may be delegated when needed. Each operation defines one traversal owner to avoid
 double visits or unintended execution order. The abstract base should implement
-shared operation interfaces once. The base now implements `node_operations_i`, with explicit statement/expression
-preparation and C++ generation hooks. Algorithms use per-invocation context records
-and typed processing routines; syntax never retains those contexts. Unsupported
+shared operation interfaces once. The base implements `ast_node_i`; concrete hooks
+forward to typed preparation, C++ and maintenance worker interfaces. Algorithms use
+per-invocation context records; syntax never retains those contexts. Unsupported
 operations throw before walking children. Native optimization of virtual calls
 requires separate evidence. See [dispatch ownership](ast_layout.md#specialization-dispatch).
 

@@ -77,7 +77,6 @@ final class collected_file
 {
 	public bool $parse_complete = false;
 	public bool $deleted = false;
-	public ?preparation_owner $body_preparation = null;
 	public ?prepared_file $prepared = null;
 	/** Completed changes awaiting backend consumption, including retired owners. */
 	public \SplObjectStorage $preparation_changes /** hash<bool, shared<preparation_owner>> */;
@@ -91,7 +90,7 @@ final class collected_file
 	 * @reference.source parsed_file.root (syntax graph)
 	 * @reference.weak
 	 */
-	public ast_node $root;
+	public file_node $root;
 	/**
 	 * Numeric storage of collected_name records.
 	 * @storage.owner

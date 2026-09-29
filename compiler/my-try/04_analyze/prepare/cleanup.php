@@ -1,19 +1,22 @@
 <?php
 
-/* Role: traverse syntax while each specialized node clears its own derived state. */
+/* Clear attached facts along named syntax ownership, including retired nodes. */
 namespace scpp\compiler;
 
-final class Preparation_Cleanup
+final class Preparation_Cleanup extends Syntax_Maintenance
 {
-	/** Visit owned AST children, never declaration links, parent links or payload aliases. */
 	public static function tree(ast_node $root): void
 	{
-		$root->clear_preparation();
-		$child = $root->first_child();
-		while ($child !== null) {
-			$node /** ast_node */ = $child;
-			self::tree($node);
-			$child = $node->next();
-		}
+		$root->maintain(new Preparation_Cleanup());
+	}
+
+	protected function enter(ast_node $node): void
+	{
+		$node->clear_preparation();
+	}
+
+	protected function edge(ast_node $parent, ast_node $child): void
+	{
+		$child->maintain($this);
 	}
 }

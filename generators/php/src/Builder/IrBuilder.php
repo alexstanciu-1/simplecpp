@@ -444,6 +444,7 @@ final class IrBuilder
 			visibility: $this->readMemberVisibility((int) ($node->flags ?? 0)),
 			argNormalizationRules: $this->validateArgNormalizationRules($this->parseArgNormalizationRules($children['docComment'] ?? null, $owner)['rules'], $params, $owner),
 			isAsync: $this->hasAsyncTag($children['docComment'] ?? null),
+			isAbstract: ($children['stmts'] ?? null) === null,
 		);
 	}
 

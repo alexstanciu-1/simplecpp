@@ -284,6 +284,7 @@ final class FrontEndSymbolExtractor
 				'local_invalidations' => $this->summarizeLocalInvalidations($method->statements, $sourceLines),
 				'const_param_writes' => $this->summarizeConstParamWrites($method->params, $method->statements),
 				'statement_count' => count($method->statements),
+				'is_abstract' => $method->isAbstract,
 				'line' => $method->line,
 				'returns_by_reference' => $method->returnsByReference,
 				'is_static' => $method->isStatic,

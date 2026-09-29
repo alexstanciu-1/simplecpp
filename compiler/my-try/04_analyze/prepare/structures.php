@@ -55,7 +55,7 @@ final class prepared_parameter extends prepared_storage {
 final class prepared_function
 {
 	public type_definition $return_type;
-	/** Ordered aliases of facts owned by parameter specializations. @storage.reference parameter_structure.prepared_facts */
+	/** Ordered aliases of facts owned by parameter specializations. @storage.reference parameter_node.prepared_facts */
 	public Storage $parameters /** Storage<prepared_parameter> */;
 
 	public function __construct()
@@ -70,7 +70,7 @@ final class prepared_field extends prepared_storage {
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
 final class prepared_record {
-	/** Ordered aliases of facts owned by field specializations. @storage.reference field_structure.prepared_facts */
+	/** Ordered aliases of facts owned by field specializations. @storage.reference field_node.prepared_facts */
 	public Key_Storage_List $fields /** Key_Storage_List<prepared_field> */;
 
 	public function __construct()
@@ -81,7 +81,7 @@ final class prepared_record {
 
 /** Member access references the declaration facts without copying its field schema. */
 final class prepared_field_access extends prepared_expression {
-	/** @reference.source field_structure.prepared_facts */
+	/** @reference.source field_node.prepared_facts */
 	public prepared_field $field;
 }
 
@@ -89,7 +89,7 @@ final class prepared_field_access extends prepared_expression {
 final class prepared_call extends prepared_expression {
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_name $declaration /** weak<collected_name> */;
-	/** @reference.source function_structure.prepared_facts */
+	/** @reference.source function_node.prepared_facts */
 	public prepared_function $signature;
 }
 
@@ -176,4 +176,14 @@ final class preparation_lookup
 		$this->kind = $kind;
 		$this->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 	}
+}
+
+/**
+ * Expression facts for a write. Reuse prepared_binding for storage identity and
+ * declaration-versus-reassignment outcome; inherited type describes the result.
+ */
+final class prepared_assignment extends prepared_expression
+{
+	/** @ownership owner */
+	public prepared_binding $binding;
 }

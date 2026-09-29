@@ -120,9 +120,9 @@ final class Compiler_Lifecycle
 			{
 				Preparation_Cleanup::tree($parsed->root);
 				$source = $parsed->collection;
-				if ($source->body_preparation !== null) {
-					$source->body_preparation->state = preparation_state::pending;
-					$source->body_preparation->change_status = change_state::changed;
+				if ($source->root->body->work() !== null) {
+					$source->root->body->work()->state = preparation_state::pending;
+					$source->root->body->work()->change_status = change_state::changed;
 				}
 				$entries /** Storage<collected_name> */ = $source->entries;
 				foreach ($entries as $entry)
@@ -132,10 +132,10 @@ final class Compiler_Lifecycle
 						$entry->preparation->change_status = change_state::changed;
 					}
 					if ($entry->kind === collected_name_kind::function_declaration) {
-						$function = Syntax_Nodes::function_data($entry->node);
-						if ($function->body_preparation !== null) {
-							$function->body_preparation->state = preparation_state::pending;
-							$function->body_preparation->change_status = change_state::changed;
+						$function = object_cast($entry->node, function_node::class);
+						if ($function->body->work() !== null) {
+							$function->body->work()->state = preparation_state::pending;
+							$function->body->work()->change_status = change_state::changed;
 						}
 					}
 				}

@@ -142,6 +142,18 @@ final class StanDiagnosticCollector
 						continue;
 					}
 					$ancestor = $ancestorMembers[$memberKind][$memberName];
+					if ($memberKind === 'method') {
+						$expected = $classCatalog[$ancestor['class']]['method_signatures'][$memberName] ?? null;
+						$actual = $classInfo['method_signatures'][$memberName] ?? null;
+						if (is_array($expected) && is_array($actual)
+							&& ($expected['params'] ?? []) === [] && ($actual['params'] ?? []) === []
+							&& !($expected['is_static'] ?? false) && !($actual['is_static'] ?? false)
+							&& ($expected['visibility'] ?? '') === ($actual['visibility'] ?? '')
+							&& $this->namedReturnClass((string) $expected['return_type'], (string) $expected['declaring_namespace'], $classCatalog) !== null
+							&& $this->accessorReturnMatches($expected, $actual, $classCatalog)) {
+							continue;
+						}
+					}
 					$diagnostics[] = [
 						'kind' => 'override_declaration',
 						'member_kind' => $memberKind,
@@ -306,7 +318,7 @@ final class StanDiagnosticCollector
 					}
 					$interfaceReturnType = (string) ($interfaceMethod['return_type'] ?? '');
 					$implementedReturnType = (string) ($implementedMethod['return_type'] ?? '');
-					if ($interfaceReturnType !== '' && $implementedReturnType !== '' && $interfaceReturnType !== $implementedReturnType) {
+					if ($interfaceReturnType !== '' && $implementedReturnType !== '' && !$this->accessorReturnMatches($interfaceMethod, $implementedMethod, $classCatalog)) {
 						$diagnostics[] = [
 							'kind' => 'interface_contract_mismatch',
 							'mismatch_kind' => 'return_type',
@@ -341,7 +353,7 @@ final class StanDiagnosticCollector
 					];
 					continue;
 				}
-				if (!$this->interfaceMethodSignaturesMatch($abstractMethod, $implementedMethod)) {
+				if (!$this->interfaceMethodSignaturesMatch($abstractMethod, $implementedMethod, $classCatalog)) {
 					$diagnostics[] = [
 						'kind' => 'abstract_contract_mismatch',
 						'mismatch_kind' => 'method_signature',
@@ -689,13 +701,14 @@ final class StanDiagnosticCollector
 				$methods[$methodName] = (int) ($method['line'] ?? 0);
 				$methodSignatures[$methodName] = [
 					'name' => $methodName,
+					'declaring_namespace' => $namespace,
 					'line' => (int) ($method['line'] ?? 0),
 					'params' => is_array($method['params'] ?? null) ? $method['params'] : [],
 					'return_type' => (string) ($method['return_type'] ?? ''),
 					'visibility' => (string) ($method['visibility'] ?? 'public'),
 					'is_static' => (bool) ($method['is_static'] ?? false),
 					'statement_count' => $statementCount,
-					'is_abstract_method' => $isInterface || ($isAbstract && $statementCount === 0),
+					'is_abstract_method' => $isInterface || (bool) ($method['is_abstract'] ?? ($isAbstract && $statementCount === 0)),
 				];
 			}
 		}
@@ -851,9 +864,69 @@ final class StanDiagnosticCollector
 	}
 
 	/** @param array<string,mixed> $left @param array<string,mixed> $right */
-	private function interfaceMethodSignaturesMatch(array $left, array $right): bool
+	/** Bounded covariance for required named-object accessors; parameters remain invariant. */
+	private function accessorReturnMatches(array $expected, array $actual, array $catalog): bool
 	{
-		if ((string) ($left['return_type'] ?? '') !== (string) ($right['return_type'] ?? '')) {
+		$left = (string) ($expected['return_type'] ?? '');
+		$right = (string) ($actual['return_type'] ?? '');
+		if ($left === $right) {
+			$leftClass = $this->namedReturnClass($left, (string) ($expected['declaring_namespace'] ?? ''), $catalog);
+			$rightClass = $this->namedReturnClass($right, (string) ($actual['declaring_namespace'] ?? ''), $catalog);
+			if ($leftClass === $rightClass) {
+				return true;
+			}
+		}
+		if (($expected['params'] ?? []) !== [] || ($actual['params'] ?? []) !== []
+			|| ($expected['is_static'] ?? false) || ($actual['is_static'] ?? false)) {
+			return false;
+		}
+		$parent = $this->namedReturnClass($left, (string) ($expected['declaring_namespace'] ?? ''), $catalog);
+		$child = $this->namedReturnClass($right, (string) ($actual['declaring_namespace'] ?? ''), $catalog);
+		if ($parent === null || $child === null) {
+			return false;
+		}
+		$pending = [$child];
+		$seen = [];
+		while ($pending !== []) {
+			$current = array_pop($pending);
+			if ($current === $parent) {
+				return true;
+			}
+			if (isset($seen[$current])) {
+				continue;
+			}
+			$seen[$current] = true;
+			$info = $catalog[$current];
+			$bases = $info['interfaces'] ?? [];
+			if (($info['parent_class'] ?? null) !== null) {
+				$bases[] = $info['parent_class'];
+			}
+			foreach ($bases as $base) {
+				$key = $this->namedReturnClass($base, (string) $info['namespace'], $catalog);
+				if ($key !== null) {
+					$pending[] = $key;
+				}
+			}
+		}
+		return false;
+	}
+
+	/** Resolve only known reference classes; wrappers, scalars and value records never covary. */
+	private function namedReturnClass(string $type, string $namespace, array $catalog): ?string
+	{
+		$trimmed = ltrim($type, '\\');
+		$local = $namespace === '' ? $trimmed : $namespace . '\\' . $trimmed;
+		$key = str_starts_with($type, '\\') ? $trimmed : (isset($catalog[$local]) ? $local : $trimmed);
+		$info = $catalog[$key] ?? null;
+		if ($info === null || !in_array($info['declaration_kind'], ['class', 'interface'], true)) {
+			return null;
+		}
+		return $key;
+	}
+
+	private function interfaceMethodSignaturesMatch(array $left, array $right, array $classCatalog = []): bool
+	{
+		if (!$this->accessorReturnMatches($left, $right, $classCatalog)) {
 			return false;
 		}
 		$leftParams = is_array($left['params'] ?? null) ? $left['params'] : [];

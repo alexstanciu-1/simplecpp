@@ -72,3 +72,32 @@ Keyed_Storage, and the parked LLVM index maps are unchanged.
 Focused native proof (explicit opt-in):
 `python3 tests/portability/key_storage_list_native.py --target-checkout CHECKOUT --results FRESH`.
 The shared my-try S2S proof also exercises these invariants in the native compiler.
+
+## Lazy typed inspection
+
+Executable PHP uses the host-only `Storage_Cursor` helper with explicit
+`Storage_Cursor<T>` annotations, including construction inside call arguments:
+
+```php
+$cursor /** Storage_Cursor<ast_node> */ = new Storage_Cursor($nodes);
+```
+
+The converter reuses that direct local annotation as for Storage. Other construction
+sites spell `new Storage_Cursor /** Storage_Cursor<ast_node> */($nodes)`.
+The fixed native family owns the cursor and aliases membership; it safely widens
+read handles from a derived collection. It does not convert the mutable collection
+itself or introduce general user-class templates. Native ownership, mutation and
+restart rules are defined in [compiler collections](../compiler_storage.md#typed-read-cursors).
+
+Literal interface inheritance (`extends \Iterator`) and typed nullable interface
+returns are supported. Exact source `current`/`key` signatures are required for
+native value iteration; do not rely on PHP mixed-return reflection. Empty concrete
+methods are distinct from abstract declarations even inside abstract classes.
+Composite cursors should use explicit typed fields and state machines, not PHP
+Generator lowering or temporary child lists. Iteration accessors are observational.
+
+Reproduce the bounded PHP/conversion/native proof with:
+`python3 tests/portability/typed_iterators.py --target-checkout . --results /tmp/typed-cursors`.
+It converts all production AST model files, but natively builds only the common and
+function inspection cursors with small typed owners. It does not establish full
+compiler native parity, and existing advisory STAN diagnostics remain visible.

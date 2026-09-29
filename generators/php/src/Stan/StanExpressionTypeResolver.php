@@ -3877,6 +3877,13 @@ final class StanExpressionTypeResolver
 			if ($carrier !== null) {
 				$elementTypes[] = $carrier['value'];
 			}
+			else {
+				$info = $this->findClassInfo($sourceType, $classLookup, $selfType);
+				$methods = $info['method_return_types'] ?? [];
+				if (isset($methods['current'], $methods['key'], $methods['valid'], $methods['next'], $methods['rewind'])) {
+					$elementTypes[] = $methods['current'];
+				}
+			}
 		}
 		return $this->canonicalizeTypeSet($elementTypes, $classLookup, $selfType);
 	}
@@ -4703,6 +4710,7 @@ final class StanExpressionTypeResolver
 			return ['fqcn' => $resolved, 'name' => $resolved, 'method_signatures' => $signatures,
 				'method_return_types' => $returns, 'property_types' => [], 'ancestor_types' => []];
 		}
+		if (($cursor = StanCollectionTypeResolver::cursorClass($resolved)) !== null) return $cursor;
 		if (($storage = StanCollectionTypeResolver::storageClass($resolved)) !== null) {
 			return $storage;
 		}

@@ -43,14 +43,14 @@ foreach ([
 }
 // The current scope graph must keep these declarations weak in converted source.
 foreach ([
-    '03_parse/structures.php' => 'public $parent weak<scope> = null;',
-    '03_parse/structures_specialization.php' => 'public $scope weak<scope>;',
+    '03_parse/structures/structures.php' => 'public $parent weak<scope> = null;',
+    '03_parse/structures/structures_specialization.php' => 'public $scope weak<scope>;',
     '04_analyze/collect/structures.php' => 'public $scope weak<scope>;',
 ] as $path => $declaration) {
     $converted = $converter->convert(file_get_contents(__DIR__ . '/../../compiler/my-try/' . $path), $path);
     ensure(str_contains($converted, $declaration), 'Scope link lost its weak annotation: ' . $path);
 }
-$scopeOutput = $converter->convert(file_get_contents(__DIR__ . '/../../compiler/my-try/03_parse/structures.php'), 'structures.php');
+$scopeOutput = $converter->convert(file_get_contents(__DIR__ . '/../../compiler/my-try/03_parse/structures/structures.php'), 'structures.php');
 ensure(str_contains($scopeOutput, 'public $publication weak<scope> = null;'), 'File scope publication link is not weak');
 $lookup = (new Scpp\S2S\Stan\StanDependencyResolver())->buildResolutionLookup([]);
 ensure(isset($lookup['function|weakref_get']), 'STAN does not recognize the runtime weak acquisition primitive');

@@ -272,3 +272,67 @@ converter change made in this slice. Native build/STAN initialization work is se
 The working tree contains earlier uncommitted toolchain and formatting fixes. Preserve
 those changes and keep the migration's evidence distinguishable. Do not claim the
 existing native-build blocker is solved by this representation change.
+
+## Initial implementation checkpoint — 2026-09-29 (historical)
+
+Pre-migration checkpoint committed/pushed as `deee122a`. Implementation began with
+its bounded portability checkpoint; the production AST has not been replaced yet.
+The candidate toolchain is this working checkout based on `deee122a`, with the
+trait-property converter extension below, not the older pinned portability target.
+
+Completed prerequisite: direct trait instance fields now expand through the existing
+class-field converter. Field collisions with a consumer or another direct trait are
+rejected; no PHP property-merging or inherited-field resolution was introduced.
+Focused proofs passed: `trait_properties.py`, `traits.py`, `trait_field_types.py`
+under `tests/portability/`. These are PHP/conversion checks, not native execution.
+
+The bounded source fixture is
+`tests/portability/fixtures/specialized_ast/main.php`. It executes as `17:17` in PHP
+and converts successfully. A normal strict candidate build stops at STAN:
+`integer_node::require_preparation()` differs from the abstract return contract.
+For diagnosis only, generation with `--no-stan` followed by Clang 18 syntax checking
+confirmed two independent native representation gaps:
+
+1. `shared_p<integer_facts>` cannot override a virtual method returning
+   `shared_p<facts>` in C++. The existing emitter uses those signatures directly.
+   Supporting the proposal's covariance requires an agreed lowering plus coordinated
+   STAN contract checking. Disabling STAN does not solve it.
+2. `$this` passed to a worker emits raw `this`, while class arguments require
+   `shared_p<T>`. It cannot safely construct a new shared owner from that pointer.
+   Retaining node iterators have the same ownership requirement. The implementation
+   must preserve the existing control block, not introduce duplicate ownership.
+
+No native executable was produced. The normal build stopped at STAN; the diagnostic
+bypass generated source but lacked a runtime artifact. Direct `-fsyntax-only` on
+that source then reported the covariance and raw-pointer argument errors, without
+requiring or rebuilding the runtime. No full native my-try compilation was run.
+
+A decision was requested before widening into STAN/emitter/shared-ownership work,
+per the repository's cross-ownership refactor rule. Preserve the proposal pending
+that decision; do not silently replace typed accessors, manufacture unsafe handles,
+or present a PHP-only AST rewrite as portable.
+
+### Required final implementation audit
+
+After migration, compare the production structures against the frozen proposal at
+`deee122a`, recording each actual departure and its reason. The audit must cover:
+
+- all 24 concrete node families, category bases, exact kind tags and source spans;
+- typed owning fields/collections, stable saved names, and inspection-only traversal;
+- scope ownership/accessors and occurrence placement;
+- preparation facts/result types and declaration/assignment separation;
+- canonical body work, retained identities, replacement, deletion and retirement;
+- preparation/generation/maintenance dispatch and worker ownership;
+- iterator ownership and the proven PHP/converter/native capability boundary.
+
+The initial checkpoint above preceded authorization to extend the toolchain.
+
+## Current implementation and audit
+
+User authorized the covariance/shared-self extensions while preserving the proposal.
+The production PHP node migration is now implemented and its focused regressions
+pass. The [structure audit](specialized_ast_migration_audit.md) compares all 24 nodes
+against `deee122a`, records the small implementation differences and distinguishes
+the bounded native covariance/ownership and production iterator proofs from a full
+native compiler build. The separately authorized iterator tooling preserves lazy
+typed traversal; its small adapter change is recorded in the audit.

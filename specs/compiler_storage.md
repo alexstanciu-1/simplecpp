@@ -175,3 +175,30 @@ are outside this slice.
 
 Reproduction and validation commands are in
 `specs/planning/compiler_storage_native_slice.md`.
+
+## Typed read cursors
+
+`Storage_Cursor<T>` is a forward-only, owning read cursor over numeric `Storage<U>`.
+Its constructor requires that the record handle for U safely converts to the
+record handle for T. This permits derived-to-base reads without making mutable
+Storage covariant. It aliases membership and yields existing shared records; it
+never copies the child list. Membership mutation during traversal is unsupported.
+
+`valid(): bool`, `current(): T`, `key(): int`, `next(): void` and `rewind(): void`
+form its explicit cursor surface. Keys preserve original Storage positions and
+skip holes. Reads require a valid current position. Advancing an exhausted cursor
+is a no-op. Rewind is allowed only before the first advance; create another cursor
+to restart. Copies share progress; separate construction creates independent
+progress. A default-constructed native field must be assigned a source cursor
+before use. Invalid native cursor operations throw `std::logic_error`.
+
+Strict PHS uses `new Storage_Cursor<Base>($derived_records)`. The wrapper is emitted
+by value and owns shared cursor state. It supplies no mutable membership, subscript,
+count or by-reference iteration API. Compiler inspection iterators delegate to it.
+
+A source interface extending global `Iterator` can declare exact typed `current`,
+`key`, `valid`, `next` and `rewind` methods. Value `foreach` uses these methods,
+retains the iterator object, rewinds once at entry and advances after each iteration.
+The native nominal protocol and C++ method requirements enforce this bounded
+binding. `current` and `key` must be observational; no getter side-effect ordering
+contract is introduced. This is not arbitrary PHP Traversable/Generator support.

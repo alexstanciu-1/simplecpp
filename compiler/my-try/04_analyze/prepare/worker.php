@@ -111,8 +111,8 @@ final class Preparation_Worker
 		foreach ($sources as $source)
 		{
 			if ($all || $source->deleted) {
-				if ($source->body_preparation !== null) {
-					$result[$source->body_preparation] = true;
+				if ($source->root->body->work() !== null) {
+					$result[$source->root->body->work()] = true;
 				}
 			}
 			$entries /** Storage<collected_name> */ = $source->entries;
@@ -125,9 +125,11 @@ final class Preparation_Worker
 					$result[$entry->preparation] = true;
 				}
 				if ($entry->kind === collected_name_kind::function_declaration) {
-					$function = Syntax_Nodes::function_data($entry->node);
-					if ($function->body_preparation !== null) {
-						$result[$function->body_preparation] = true;
+					$function = object_cast($entry->node, function_node::class);
+					if (isset($function->body)) {
+						if ($function->body->work() !== null) {
+							$result[$function->body->work()] = true;
+						}
 					}
 				}
 			}
@@ -163,29 +165,27 @@ final class Preparation_Worker
 	/** Source change flags seed stable owners; dependencies extend the same work lists. */
 	private function select(collected_file $source): void
 	{
-		if ($source->body_preparation === null) {
-			$source->body_preparation = new preparation_owner(preparation_kind::file_body, $source);
+		if ($source->root->body->work() === null) {
+			$source->root->body->attach_work(new preparation_owner(preparation_kind::file_body, $source));
 		}
-		$file_body /** preparation_owner */ = $source->body_preparation;
+		$file_body /** preparation_owner */ = $source->root->body->work();
 		$this->select_owner($file_body);
-		$child = $source->root->first_child();
-		while ($child !== null)
+		$nodes /** Storage<declaration_node> */ = $source->root->declarations;
+		foreach ($nodes as $node)
 		{
-			$node /** ast_node */ = $child;
 			if (($node->kind() === node_kind::function_declaration) || ($node->kind() === node_kind::struct_declaration)) {
-				$owner = $this->declaration_owner($node->payload()->occurrence());
+				$owner = $this->declaration_owner($node->occurrence());
 				$this->select_owner($owner);
 			}
 			if ($node->kind() === node_kind::function_declaration)
 			{
-				$function = Syntax_Nodes::function_data($node);
-				if ($function->body_preparation === null) {
-					$function->body_preparation = new preparation_owner(preparation_kind::function_body, $source, $function->occurrence());
+				$function = object_cast($node, function_node::class);
+				if ($function->body->work() === null) {
+					$function->body->attach_work(new preparation_owner(preparation_kind::function_body, $source, $function->occurrence()));
 				}
-				$body /** preparation_owner */ = $function->body_preparation;
+				$body /** preparation_owner */ = $function->body->work();
 				$this->select_owner($body);
 			}
-			$child = $node->next();
 		}
 	}
 
@@ -289,9 +289,27 @@ final class Preparation_Worker
 		$owner->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
 	}
 
+	/** Reject stale work at process entry; recursive syntax dispatch needs no per-node flag. */
+	public static function require_active(preparation_owner $owner): void
+	{
+		if ($owner->source->deleted || ($owner->change_status === change_state::deleted)) {
+			throw new \LogicException('Deleted work cannot be prepared or generated');
+		}
+		$declaration = $owner->declaration;
+		if ($declaration !== null) {
+			if ($declaration->change_status === change_state::deleted) {
+				throw new \LogicException('Deleted declaration cannot be prepared or generated');
+			}
+		}
+		if (!$owner->source->parse_complete) {
+			throw new \LogicException('Semantic work requires a completed parse');
+		}
+	}
+
 	/** Rebuild selected signatures/layout facts; only effective changes propagate to consumers. */
 	public function declaration(preparation_owner $owner): void
 	{
+		self::require_active($owner);
 		if ($owner->state === preparation_state::processing) {
 			throw new \RuntimeException('Cyclic by-value declaration dependency');
 		}
@@ -328,7 +346,7 @@ final class Preparation_Worker
 		{
 			if ($entry->kind === collected_name_kind::function_declaration)
 			{
-				$function_syntax = Syntax_Nodes::function_data($node);
+				$function_syntax = object_cast($node, function_node::class);
 				$old_signature = $function_syntax->preparation();
 				Declaration_Preparation::prepare_function($function_syntax, $context);
 				$changed = !Preparation_Changes::function_signature($old_signature, $function_syntax->require_preparation());
@@ -340,7 +358,7 @@ final class Preparation_Worker
 			}
 			else
 			{
-				$record_syntax = Syntax_Nodes::struct_data($node);
+				$record_syntax = object_cast($node, struct_node::class);
 				$old_record = $record_syntax->preparation();
 				Declaration_Preparation::prepare_struct($record_syntax, $context);
 				$changed = !Preparation_Changes::record($old_record, $record_syntax->require_preparation());
@@ -374,6 +392,7 @@ final class Preparation_Worker
 	/** Declarations have settled; each selected body replaces facts and dependencies once. */
 	private function body(preparation_owner $owner): void
 	{
+		self::require_active($owner);
 		$this->detach_dependencies($owner);
 		$owner->state = preparation_state::processing;
 		$context = $this->context($owner);
@@ -381,13 +400,15 @@ final class Preparation_Worker
 		{
 			if ($owner->kind === preparation_kind::function_body) {
 				$entry = object_cast($owner->declaration, collected_name::class);
-				$syntax = Syntax_Nodes::function_data($entry->node);
+				$syntax = object_cast($entry->node, function_node::class);
 				$this->require_declaration($owner, $entry);
 				Preparation_Cleanup::tree($syntax->body);
 				Declaration_Preparation::prepare_body($syntax, $context);
+				$syntax->body->syntax_changed = false;
 			}
 			else {
 				$this->file_body($owner->source->root, $context);
+				$owner->source->root->body->syntax_changed = false;
 			}
 			$this->settle($owner);
 			$owner->version++;
@@ -411,11 +432,17 @@ final class Preparation_Worker
 	private function settle_members(collected_name $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
-		$nodes /** Storage<ast_node> */ = $entry->kind === collected_name_kind::function_declaration
-		? Syntax_Nodes::function_data($entry->node)->parameters
-		: Syntax_Nodes::struct_data($entry->node)->fields;
-		foreach ($nodes as $node) {
-			$node->payload()->occurrence()->change_status = change_state::unchanged;
+		if ($entry->kind === collected_name_kind::function_declaration) {
+			$parameters /** Storage<parameter_node> */ = object_cast($entry->node, function_node::class)->parameters;
+			foreach ($parameters as $parameter) {
+				$parameter->occurrence()->change_status = change_state::unchanged;
+			}
+		}
+		else {
+			$fields /** Storage<field_node> */ = object_cast($entry->node, struct_node::class)->fields;
+			foreach ($fields as $field) {
+				$field->occurrence()->change_status = change_state::unchanged;
+			}
 		}
 	}
 
@@ -468,18 +495,10 @@ final class Preparation_Worker
 	}
 
 	/** File declarations are prepared by their own list, never as executable entry statements. */
-	private function file_body(ast_node $root, preparation_context $context): void
+	private function file_body(file_node $root, preparation_context $context): void
 	{
-		$child = $root->first_child();
-		while ($child !== null)
-		{
-			$node /** ast_node */ = $child;
-			if (($node->kind() !== node_kind::function_declaration) && ($node->kind() !== node_kind::struct_declaration)) {
-				Preparation_Cleanup::tree($node);
-				$node->payload()->prepare_statement($node, $context);
-			}
-			$child = $node->next();
-		}
+		Preparation_Cleanup::tree($root->body);
+		File_Preparation::prepare_statements($root->body, $context);
 	}
 
 	/** Context is transient and always uses the selected owner's source token generation. */
@@ -569,9 +588,9 @@ final class Preparation_Worker
 				$entry->preparation = null;
 			}
 			if ($entry->kind === collected_name_kind::function_declaration) {
-				$function = Syntax_Nodes::function_data($entry->node);
-				if ($function->body_preparation !== null) {
-					$function->body_preparation = null;
+				$function = object_cast($entry->node, function_node::class);
+				if (isset($function->body)) {
+					$function->body->detach_work();
 				}
 			}
 			$scope = object_cast(weakref_get($entry->scope), scope::class);
@@ -594,13 +613,13 @@ final class Preparation_Worker
 		$source->pending_bindings = $this->present($entries, $source->pending_bindings);
 		if ($source->deleted)
 		{
-			if ($source->body_preparation !== null) {
-				$source->body_preparation = null;
+			if ($source->root->body->work() !== null) {
+				$source->root->body->detach_work();
 			}
 			$source->prepared = null;
 			$source->parse_complete = false;
-			$source->root->detach_children();
-			object_cast($source->root->payload(), block_structure::class)->children = new Storage /** Storage<ast_node> */();
+			$source->root->declarations = new Storage /** Storage<declaration_node> */();
+			$source->root->body->statements = new Storage /** Storage<statement_node> */();
 		}
 	}
 

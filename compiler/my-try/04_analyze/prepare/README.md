@@ -3,6 +3,7 @@ Doc Status: supporting
 
 - `worker.php`: `Preparation_Worker`, incremental selection, dependency maintenance,
   declaration completion and separate function/file body work lists.
+- `syntax.php`: typed node dispatch into preparation algorithms.
 - `file.php`: `File_Preparation`, single-file entry adapter and expression/statement algorithms.
 - `changes.php`: comparison of declaration facts and preservation of unchanged fact identities.
 - `declarations.php`: signature/type lookup, function-local contexts, struct fields,
@@ -16,8 +17,8 @@ Shared types live in `../../compiler/types/`; scope representation and lookup li
 
 Prepared facts are accessed through the specialization records: `preparation()`,
 `require_preparation()` and `set_preparation()`. The `Preparation_Facts` trait shares
-nullable access, assignment and cleanup; concrete fields and required casts stay in
-the final specialization. Literal and reference facts share only
+nullable access, assignment and cleanup; concrete fields and required typed accessors stay in
+the final node. Same-type nullable extraction is not a class-narrowing cast. Literal and reference facts share only
 the prepared_expression type and stable-storage flag; integer decimal text, floating decimal spelling,
 boolean value and reference declaration live in separate typed fact records. Floating
 spellings are retained verbatim from validated numeric tokens, without host rounding.
@@ -47,7 +48,7 @@ roots; there are no surviving consumers to notify. Strong identity storage is re
 weak references are deferred. Body replacement detaches outgoing registrations before
 rebuilding facts. Incomplete parsing blocks this boundary entirely.
 
-Each node delegates through its specialization's preparation hooks; typed routines
+Each concrete node delegates through its preparation hook; typed routines
 retain resolution/inference algorithms. Resolution runs here after the parsing join,
 not in a second pre-resolution pass. Unchanged bodies retain syntax, occurrences and
 facts while parsing rebases token positions; changed bodies replace their facts and

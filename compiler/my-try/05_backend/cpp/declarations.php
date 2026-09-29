@@ -27,7 +27,7 @@ final class CPP_Declarations
 	}
 
 	/** All signatures precede all bodies, including mutually recursive declarations. */
-	public static function signature(function_structure $syntax, cpp_generation_context $context): string
+	public static function signature(function_node $syntax, cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_preparation();
 		$parts = '';
@@ -44,7 +44,7 @@ final class CPP_Declarations
 	}
 
 	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */
-	public static function generate_function(function_structure $syntax, cpp_generation_context $context): string
+	public static function generate_function(function_node $syntax, cpp_generation_context $context): string
 	{
 		$signature = self::signature($syntax, $context);
 		$context->prototypes .= $signature . ";\n";
@@ -59,7 +59,7 @@ final class CPP_Declarations
 	}
 
 	/** Complete nested value layouts before their users; reject a recursive by-value layout. */
-	public static function generate_struct(struct_structure $syntax, cpp_generation_context $context): string
+	public static function generate_struct(struct_node $syntax, cpp_generation_context $context): string
 	{
 		$key = '' . $syntax->occurrence()->name;
 		if (isset($context->record_states[$key])) {
@@ -79,7 +79,7 @@ final class CPP_Declarations
 			$type = $field->type;
 			if (($type->kind === type_kind::record) && $context->expand_records) {
 				$entry = object_cast($type->declaration, collected_name::class);
-				self::generate_struct(Syntax_Nodes::struct_data($entry->node), $context);
+				self::generate_struct(object_cast($entry->node, struct_node::class), $context);
 			}
 
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
@@ -92,12 +92,12 @@ final class CPP_Declarations
 	}
 
 	/** Locals snapshot value arguments left-to-right; reference arguments keep the original place. */
-	public static function generate_call(call_structure $syntax, cpp_generation_context $context): string
+	public static function generate_call(call_node $syntax, cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_preparation();
 		$entry = object_cast(weakref_get($facts->declaration), collected_name::class);
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
-		$arguments /** Storage<ast_node> */ = $syntax->arguments;
+		$arguments /** Storage<expression_node> */ = $syntax->arguments;
 
 		// The immediately invoked lambda sequences arguments and contains their temporaries.
 		$text = '([&]() -> ' . self::type($facts->type, $context) . " {\n";
@@ -107,7 +107,7 @@ final class CPP_Declarations
 		{
 			$parameter = $parameters[$index];
 			// Generate nested calls before assigning the outer temporary name.
-			$value = $argument->payload()->generate_cpp_expression($argument, $context);
+			$value = $argument->generate_cpp(new CPP_Syntax($context));
 			$name = 'argument_' . $context->next_temporary;
 			$context->next_temporary++;
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
@@ -125,10 +125,10 @@ final class CPP_Declarations
 	}
 
 	/** Field identity comes from shared preparation, never a backend name lookup. */
-	public static function generate_field_access(field_access_structure $syntax, cpp_generation_context $context): string
+	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context): string
 	{
 		$entry = object_cast(weakref_get($syntax->require_preparation()->field->declaration), collected_name::class);
 		$base = $syntax->base;
-		return '(' . $base->payload()->generate_cpp_expression($base, $context) . ').field_' . $entry->name;
+		return '(' . $base->generate_cpp(new CPP_Syntax($context)) . ').field_' . $entry->name;
 	}
 }

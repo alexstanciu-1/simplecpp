@@ -12,7 +12,7 @@ trait LLVM_Expressions
 	private function to_llvm_integer_literal(ast_node $node): llvm_operand
 	{
 		$tokens /** Storage<token> */ = $this->prepared->source->token_snapshot()->tokens;
-		$text = $tokens[(int) $node->token_index]->text();
+		$text = $tokens[$node->start_token()]->text();
 		$text = LLVM_Text::decimal($text);
 		$text = $text === '' ? '0' : $text;
 		$maximum = $this->policy->integer_max;
@@ -51,11 +51,11 @@ trait LLVM_Expressions
 		if ($node->kind() !== node_kind::variable_reference) {
 			throw new \RuntimeException('Reference argument requires writable variable storage');
 		}
-		$lookup_token_index /** int */ = (int) $node->token_index;
+		$lookup_token_index /** int */ = $node->start_token();
 		if (!isset($this->prepared->names->references[$lookup_token_index])) {
 			throw new \RuntimeException('Missing prepared variable target');
 		}
-		$declaration /** collected_name */ = $this->prepared->names->references[(int) $node->token_index];
+		$declaration /** collected_name */ = $this->prepared->names->references[$node->start_token()];
 		if (!isset($this->initialized[$declaration->local_index])) {
 			throw new \RuntimeException('Variable must be initialized before reading or passing by reference');
 		}
@@ -71,9 +71,9 @@ trait LLVM_Expressions
 	/** Field identity was resolved in preparation; only address calculation remains. */
 	private function field_storage(ast_node $node): llvm_place
 	{
-		$syntax = Syntax_Nodes::field_access_data($node);
+		$syntax = object_cast($node, field_access_node::class);
 		$base = $this->expression_storage($syntax->base);
-		$field = $this->instance->fields[$syntax->name_token_index];
+		$field = $this->instance->fields[$syntax->occurrence()->token_index];
 		$place = new llvm_place();
 		$place->type = $field->type;
 		$place->address = $this->temporary();
@@ -84,7 +84,7 @@ trait LLVM_Expressions
 	/** Check every constant index before producing the element address for any consumer. */
 	private function index_storage(ast_node $node): llvm_place
 	{
-		$syntax = Syntax_Nodes::index_data($node);
+		$syntax = object_cast($node, index_node::class);
 		$base = $this->expression_storage($syntax->base);
 		if ($base->array_type === null) {
 			throw new \RuntimeException('Indexing requires a fixed array');
@@ -109,7 +109,7 @@ trait LLVM_Expressions
 		if ($node->kind() !== node_kind::array_literal) {
 			throw new \RuntimeException('Fixed arrays require an exact-length literal initializer');
 		}
-		$elements /** Storage<ast_node> */ = Syntax_Nodes::array_data($node)->elements;
+		$elements /** Storage<expression_node> */ = object_cast($node, array_literal_node::class)->elements;
 		if (q_count($elements) !== $local->array_type->count) {
 			throw new \RuntimeException('Fixed array initializer length does not match its type');
 		}
@@ -130,18 +130,18 @@ trait LLVM_Expressions
 	/** Emit a call using only its prepared signature and name; void supplies no value operand. */
 	private function to_llvm_call_expression(ast_node $node): llvm_operand
 	{
-		$lookup_token_index /** int */ = (int) $node->token_index;
+		$lookup_token_index /** int */ = $node->start_token();
 		if (!isset($this->instance->calls[$lookup_token_index])) {
 			throw new \RuntimeException('Missing prepared function target');
 		}
-		$target /** llvm_prepared_function */ = $this->instance->calls[(int) $node->token_index];
-		if (q_count(Syntax_Nodes::call_data($node)->arguments) !== q_count($target->parameters)) {
+		$target /** llvm_prepared_function */ = $this->instance->calls[$node->start_token()];
+		if (q_count(object_cast($node, call_node::class)->arguments) !== q_count($target->parameters)) {
 			throw new \RuntimeException(("Incorrect argument count for " . $target->name));
 		}
 		// Evaluate each argument expression in source order before emitting the call.
 		$parameters /** Storage<llvm_parameter> */ = $target->parameters;
 		$arguments /** vector<string> */ = [];
-		foreach (Syntax_Nodes::call_data($node)->arguments as $index => $argument)
+		foreach (object_cast($node, call_node::class)->arguments as $index => $argument)
 		{
 			$parameter = $parameters[$index];
 			$type = '';

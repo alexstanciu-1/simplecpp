@@ -13,9 +13,9 @@ final class LLVM_Legacy_Name_Preparation
 	public static function belongs(llvm_prepared_function $function, collected_name $entry): bool
 	{
 		$entry_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$body_scope = Syntax_Nodes::block_data($function->body)->lexical_scope();
+		$body_scope = object_cast($function->body, function_body_node::class)->local_scope();
 		if ($function->is_entry) {
-			return !$entry_scope->is_function() && ($entry_scope->parent_scope() === $body_scope);
+			return !$entry_scope->is_function() && ($entry_scope === $body_scope);
 		}
 		return ($entry_scope === $body_scope) || (($entry->node->kind() === node_kind::parameter_declaration) && ($entry_scope === $body_scope->parent_scope()));
 	}

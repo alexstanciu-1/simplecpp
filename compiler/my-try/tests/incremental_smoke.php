@@ -40,7 +40,7 @@ try
 	$compiler->update_llvm([$definition]);
 	$targets = Scope_Lookup::live(Model::$global_scope->functions_named('value'));
 	smoke_require(count($targets) === 1, 'Update lost unique function target');
-	smoke_require(($targets[0]->change_status === change_state::added) && Syntax_Nodes::function_data($targets[0]->node)->body_changed, 'Wrong body-change flags');
+	smoke_require(($targets[0]->change_status === change_state::added) && object_cast($targets[0]->node, function_node::class)->body->syntax_changed, 'Wrong body-change flags');
 	smoke_require(Model::syntax_files()[0] === $old_syntax, 'Declaration container identity was replaced');
 	smoke_require(Model::syntax_files()[1] === $kept_caller, 'Unchanged caller was reparsed');
 	smoke_require(smoke_output() !== $baseline, 'Edit did not change generated output');

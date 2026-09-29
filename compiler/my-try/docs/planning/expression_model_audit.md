@@ -112,7 +112,7 @@ Reviewed sources:
   `renderExpr`, assignment-chain lowering, compound assignment, match,
   interpolation, and call/target handling. Compared with the
   [current my-try parser](../../03_parse/parser.php) and
-  [active specializations](../../03_parse/structures_specialization.php).
+  [active specializations](../../03_parse/structures/structures_specialization.php).
 
 ## What the current proposal actually contains
 

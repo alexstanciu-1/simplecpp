@@ -64,7 +64,7 @@ preparation is now parked under `05_backend/llvm/` for existing regressions. Act
 semantic work belongs to `File_Preparation` and specialization-attached facts; see
 [the shared analysis direction](../04_analyze/README.md). Data records live
 in each process's `structures.php`; AST payloads are grouped separately in
-`03_parse/structures_specialization.php`. Processing owners use capitalized names.
+`03_parse/structures/structures_specialization.php`. Processing owners use capitalized names.
 These components are not yet registered or proved convertible-PHP components.
 
 ## Run the compiler

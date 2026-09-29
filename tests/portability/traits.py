@@ -151,7 +151,7 @@ def main():
         ('class Bad { use Operations, Operations; }', 'duplicate trait'),
         ('trait First {}', 'duplicate declaration'),
         ('class Bad { use Contract; }', 'missing trait'),
-        ('trait Bad { public int $x = 0; }', 'methods only'),
+        ('trait Bad { public static int $x = 0; }', 'instance fields'),
         ('trait Bad { public function __construct() {} }', 'magic methods'),
         ('if (true) { class Bad {} }', 'top-level'),
         ('namespace again; class Bad {}', 'prologue'),

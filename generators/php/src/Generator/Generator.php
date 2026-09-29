@@ -723,9 +723,19 @@ final class Generator
 		}
 
 		$phpClass = (string) ($classNode->children['name'] ?? '');
-		$flags = (int) ($classNode->flags ?? 0);
-		$resolvedClass = $this->nameRegistry->resolveClass($phpClass, $flags, $namespacePhp) ?? ltrim($phpClass, '\\');
-		return $this->methodDecls[$resolvedClass . '::' . $methodName] ?? null;
+		$special = strtolower(ltrim($phpClass, '\\'));
+		if ($special === 'parent') {
+			$phpClass = $this->currentParentClass ?? '';
+		}
+		elseif ($special === 'self') {
+			$phpClass = $this->currentClassName ?? '';
+		}
+		$key = $this->resolveClassDeclKey($phpClass, $namespacePhp);
+		$qualified = $this->qualifyClassNameForLookup($phpClass, $namespacePhp);
+		if (isset($this->classDecls[$qualified])) {
+			$key = $qualified;
+		}
+		return $key === null ? null : $this->resolveMethodDeclInClassHierarchy($key, $methodName);
 	}
 
 	private function lookupMethodDeclByCurrentClass(string $methodName, ?string $namespacePhp): ?MethodDecl
@@ -1927,7 +1937,7 @@ final class Generator
 			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out, $namespacePhp);
 			return;
 		}
-		if (preg_match('/^(?:Storage|Keyed_Storage|Key_Storage_List|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(?:Storage|Keyed_Storage|Key_Storage_List|Storage_Cursor|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			foreach ($this->typeMapper->splitTopLevelGenericArgs($matches[1]) as $arg) {
 				$this->collectForwardClassNamesFromType(trim($arg), $out, $namespacePhp);
 			}
@@ -2515,6 +2525,7 @@ final class Generator
 		foreach ($class->interfaces as $interface) {
 			$extends[] = 'public ' . $this->typeMapper->mapClassName($interface);
 		}
+		$extends[] = 'public virtual ::scpp::shared_self';
 		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
 		$this->appendHeaderLines($header, $this->code('public:', $class->line));
 		if ($class->isInterface && array_filter($class->methods, static fn(MethodDecl $method): bool => $method->name === '__destruct') === []) {
@@ -2566,6 +2577,11 @@ final class Generator
 				foreach ($artifacts as $line) {
 					$this->appendHeaderLines($header, $this->code($this->indent(1) . $line, $method->line));
 				}
+				continue;
+			}
+			$accessorType = $this->sharedAccessorType($method, $namespacePhp);
+			if ($accessorType !== null) {
+				$this->emitSharedAccessor($header, $source, $class, $method, $accessorType, $namespacePhp);
 				continue;
 			}
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';', $method->line));
@@ -2879,6 +2895,68 @@ final class Generator
 
 	 */
 
+	/**
+	 * Zero-argument object accessors use a return-type-tagged virtual slot.
+	 * The source accessor stays statically typed; bridges preserve the same shared owner.
+	 * No expression inference or runtime downcast is involved.
+	 */
+	private function sharedAccessorType(MethodDecl $method, ?string $namespacePhp): ?string
+	{
+		if ($method->isStatic || $method->returnsByReference || $method->params !== [] || $method->returnType === null) {
+			return null;
+		}
+		$type = $this->typeMapper->mapReturnType($this->qualifyDeclaredPhpType($method->returnType, $namespacePhp), false);
+		return str_starts_with($type, 'shared_p<') ? $type : null;
+	}
+
+	/** Gather declared ancestor return slots, including interface contracts, once per type. */
+	private function inheritedAccessorTypes(ClassDecl $class, string $methodName, ?string $namespacePhp, array $seen = []): array
+	{
+		$result = [];
+		$parents = $class->interfaces;
+		if ($class->parentClass !== null) {
+			$parents[] = $class->parentClass;
+		}
+		foreach ($parents as $parent) {
+			$key = $this->resolveClassDeclKey($parent, $namespacePhp);
+			if ($key === null || isset($seen[$key])) {
+				continue;
+			}
+			$seen[$key] = true;
+			$declaration = $this->classDecls[$key];
+			$parentNamespace = $this->namespaceFromQualifiedClassKey($key);
+			foreach ($declaration->methods as $candidate) {
+				if ($candidate->name === $methodName && $candidate->visibility !== 'private') {
+					$type = $this->sharedAccessorType($candidate, $parentNamespace);
+					if ($type !== null) {
+						$result[$type] = true;
+					}
+				}
+			}
+			$result += $this->inheritedAccessorTypes($declaration, $methodName, $parentNamespace, $seen);
+		}
+		return $result;
+	}
+
+	/** Declare typed entry and native dispatch slots; emit upcast bridges after type definitions. */
+	private function emitSharedAccessor(array &$header, array &$source, ClassDecl $class, MethodDecl $method, string $type, ?string $namespacePhp): void
+	{
+		$name = $this->cppIdentifier($method->name);
+		$slot = '__scpp_return_' . $name;
+		$tag = 'std::type_identity<' . $type . '>';
+		$abstract = $this->methodIsAbstract($method, $class);
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . $type . ' ' . $name . '() { return ' . $slot . '(' . $tag . '{}); }', $method->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'virtual ' . $type . ' ' . $slot . '(' . $tag . ')' . ($abstract ? ' = 0' : '') . ';', $method->line));
+		foreach ($this->inheritedAccessorTypes($class, $method->name, $namespacePhp) as $parentType => $unused) {
+			if ($parentType === $type) {
+				continue;
+			}
+			$parentTag = 'std::type_identity<' . $parentType . '>';
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . $parentType . ' ' . $slot . '(' . $parentTag . ') override;', $method->line));
+			$this->appendSourceLines($source, $this->code($parentType . ' ' . $class->name . '::' . $slot . '(' . $parentTag . ') { return ' . $slot . '(' . $tag . '{}); }', $method->line));
+		}
+	}
+
 	private function renderMethodDeclaration(MethodDecl $method, ClassDecl|string|null $classDecl = null, ?string $namespacePhp = null): string
 	{
 		$className = is_string($classDecl) ? $classDecl : ($classDecl?->name);
@@ -2929,7 +3007,7 @@ final class Generator
 	
 	private function methodIsAbstract(MethodDecl $method, ClassDecl $class): bool
 	{
-		return $class->isInterface || ($method->statements === [] && $method->name !== '__construct' && $method->name !== '__destruct');
+		return $class->isInterface || $method->isAbstract;
 	}
 
 	private function extractParentConstructorArgs(array $statements): ?array
@@ -3293,6 +3371,10 @@ final class Generator
 			$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
 			$this->currentReturnType = $returnType;
 			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
+			$accessorType = $this->sharedAccessorType($method, $namespacePhp);
+			if ($accessorType !== null) {
+				$signature = $returnType . ' ' . $className . '::__scpp_return_' . $this->cppIdentifier($method->name) . '(std::type_identity<' . $accessorType . '>)';
+			}
 		}
 		$body = $this->renderBody($statements, $namespacePhp);
 		array_unshift($body, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($className . '::' . $this->cppIdentifier($method->name), $method->line)));
@@ -4453,7 +4535,7 @@ final class Generator
 			$targetNode = $statement->payload;
 			if (is_object($targetNode) && (($targetNode->kind ?? null) === AstKind::DIM) && (($targetNode->children['dim'] ?? null) !== null)) {
 				$baseExpr = $targetNode->children['expr'] ?? null;
-				$base = $this->renderExpr($baseExpr, $namespacePhp);
+				$base = $this->extractSimpleVarName($baseExpr) === 'this' ? 'this' : $this->renderExpr($baseExpr, $namespacePhp);
 				$dim = $this->renderExpr($targetNode->children['dim'] ?? null, $namespacePhp);
 				$baseType = $this->inferExprTypeWithNamespace($baseExpr, $namespacePhp);
 				if ($this->storageTypeParts($baseType) !== null) return $this->statementCodeLines($statement, [$base . '.unset(' . $dim . ');']);
@@ -4528,7 +4610,7 @@ final class Generator
 				$caseLine = (int) ($case['line'] ?? $statement->line);
 				$lines[] = $this->code($caseCond === null
 					? $this->indent(1) . 'default:'
-					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':', $caseLine);
+					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond, $namespacePhp) . ':', $caseLine);
 				foreach ($this->renderNestedStatements($case['stmts'] ?? [], $namespacePhp) as $line) {
 					$lines[] = $line;
 				}
@@ -4928,7 +5010,7 @@ final class Generator
 				$caseLine = (int) ($case['line'] ?? $statement->line);
 				$lines[] = $this->code($caseCond === null
 					? $this->indent(1) . 'default:'
-					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':', $caseLine);
+					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond, $namespacePhp) . ':', $caseLine);
 				foreach ($this->renderFinallyAwareStatementSequence($case['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
 					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 				}
@@ -4992,6 +5074,17 @@ final class Generator
 		$isExplicitDynamicForeach = $sourceType === 'mixed_t';
 		$sourceTempName = $this->allocateGeneratedLocalName('__scpp_foreach_source_' . $statement->line);
 		$valueStoredType = $storage['record'] ?? null;
+		$iteratorCurrent = $this->lookupMethodDeclByMappedBaseType($sourceType, 'current');
+		$iteratorKey = $this->lookupMethodDeclByMappedBaseType($sourceType, 'key');
+		$isTypedIterator = $iteratorCurrent !== null && $iteratorKey !== null
+			&& $this->lookupMethodDeclByMappedBaseType($sourceType, 'valid') !== null
+			&& $this->lookupMethodDeclByMappedBaseType($sourceType, 'next') !== null
+			&& $this->lookupMethodDeclByMappedBaseType($sourceType, 'rewind') !== null;
+		if ($isTypedIterator) {
+			if ($byRef) $this->fail('Typed Iterator foreach yields values; by-reference iteration is unsupported.');
+			$valueStoredType = $this->typeMapper->mapReturnType($this->qualifyDeclaredPhpType($iteratorCurrent->returnType, $namespacePhp), false);
+		}
+
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
 		} elseif (($fixedArrayParts = $this->parseMappedFixedArrayType($sourceType)) !== null) {
@@ -5020,6 +5113,9 @@ final class Generator
 			$keyStoredType = $storage['key'] ?? ($isVectorLikeForeach
 				? 'int_t<>'
 				: ($hashTypeParts !== null ? $hashTypeParts['key'] : ($isExplicitDynamicForeach ? 'mixed_t' : null)));
+			if ($isTypedIterator) {
+				$keyStoredType = $this->typeMapper->mapReturnType($this->qualifyDeclaredPhpType($iteratorKey->returnType, $namespacePhp), false);
+			}
 			if ($keyStoredType !== null) {
 				$this->declaredLocalTypes[$keyName] = $keyStoredType;
 			}
@@ -5324,6 +5420,9 @@ final class Generator
 	private function renderSwitchExpr(mixed $expr, ?string $namespacePhp): string
 	{
 		$rendered = $this->renderExpr($expr, $namespacePhp);
+		if ($this->lookupEnumDeclByTypeName($this->inferExprTypeWithNamespace($expr, $namespacePhp)) !== null) {
+			return $rendered;
+		}
 		return is_object($expr) ? '(' . $rendered . ').native_value()' : $rendered;
 	}
 
@@ -5341,10 +5440,14 @@ final class Generator
 
 	 */
 
-	private function renderSwitchCaseValue(mixed $expr): string
+	private function renderSwitchCaseValue(mixed $expr, ?string $namespacePhp): string
 	{
 		if (is_int($expr) || is_float($expr)) {
 			return (string) $expr;
+		}
+		if (is_object($expr) && ($expr->kind ?? null) === AstKind::CLASS_CONST) {
+			$type = $this->inferExprTypeWithNamespace($expr, $namespacePhp);
+			if ($this->lookupEnumDeclByTypeName($type) !== null) return $this->renderExpr($expr, $namespacePhp);
 		}
 		return '/* unsupported-switch-case */';
 	}
@@ -5382,7 +5485,7 @@ final class Generator
 	private function renderDimAccess(mixed $expr, ?string $namespacePhp): string
 	{
 		$baseExpr = $expr->children['expr'] ?? null;
-		$base = $this->renderExpr($baseExpr, $namespacePhp);
+		$base = $this->extractSimpleVarName($baseExpr) === 'this' ? 'this' : $this->renderExpr($baseExpr, $namespacePhp);
 		$dimNode = $expr->children['dim'] ?? null;
 		if ($dimNode === null) {
 			$this->errors[] = 'Append syntax cannot be used as a read expression.';
@@ -5698,7 +5801,7 @@ final class Generator
 			$baseExpr = $expr->children['expr'] ?? null;
 			$baseType = $this->inferExprType($baseExpr);
 			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
-				$base = $this->renderExpr($baseExpr, $namespacePhp);
+				$base = $this->extractSimpleVarName($baseExpr) === 'this' ? 'this' : $this->renderExpr($baseExpr, $namespacePhp);
 				$propName = (string) ($expr->children['prop'] ?? 'prop');
 				return $base . '[string_t(' . json_encode($propName, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')]';
 			}
@@ -7305,7 +7408,7 @@ final class Generator
 			return '?' . ($this->qualifyDeclaredPhpType($inner, $namespacePhp) ?? $inner);
 		}
 
-		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|Storage|Keyed_Storage|Key_Storage_List|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|Storage|Keyed_Storage|Key_Storage_List|Storage_Cursor|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			$wrapper = $matches[1];
 			$args = $this->typeMapper->splitTopLevelGenericArgs($matches[2]);
 			$qualifiedArgs = [];
@@ -7416,7 +7519,9 @@ final class Generator
 		if ($kind === AstKind::VAR) {
 			$name = (string) ($expr->children['name'] ?? 'var');
 			if ($name === 'this') {
-				return 'this';
+				$class = $this->currentClassDeclForLateStatic($namespacePhp);
+				return ($class !== null && ($class->isStruct || $class->isUnion))
+					? 'this' : 'this->retain_self(this)';
 			}
 			$hasForeachByRefAlias = $this->hasForeachReferenceSlotAlias($name);
 			if ($name !== '' && !isset($this->declaredLocals[$name]) && !$hasForeachByRefAlias) {
@@ -7508,7 +7613,7 @@ final class Generator
 		}
 		if ($kind === AstKind::PROP) {
 			$baseExpr = $expr->children['expr'] ?? null;
-			$base = $this->renderExpr($baseExpr, $namespacePhp);
+			$base = $this->extractSimpleVarName($baseExpr) === 'this' ? 'this' : $this->renderExpr($baseExpr, $namespacePhp);
 			$propName = (string) ($expr->children['prop'] ?? 'prop');
 			$baseType = $this->inferExprType($baseExpr);
 			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
@@ -7519,7 +7624,7 @@ final class Generator
 		}
 		if ($kind === AstKind::NULLSAFE_PROP) {
 			$baseExpr = $expr->children['expr'] ?? null;
-			$base = $this->renderExpr($baseExpr, $namespacePhp);
+			$base = $this->extractSimpleVarName($baseExpr) === 'this' ? 'this' : $this->renderExpr($baseExpr, $namespacePhp);
 			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
 			return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? __scpp_tmp->' . $prop . ' : null; }())';
 		}
@@ -7549,7 +7654,7 @@ final class Generator
 		}
 		if ($kind === AstKind::NEW) {
 			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
-			if (($this->typeMapper->isStorageType($authoredType) || $this->typeMapper->isKeyStorageListType($authoredType))) {
+			if ($this->typeMapper->isStorageType($authoredType) || $this->typeMapper->isKeyStorageListType($authoredType) || $this->typeMapper->isStorageCursorType($authoredType)) {
 				$type = $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $namespacePhp));
 				return $type . '(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
 			}
@@ -7591,6 +7696,14 @@ final class Generator
 			$methodDecl = $this->lookupMethodDeclByStaticCall($classNode, $method, $namespacePhp);
 			$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
 			$callExpr = $class . '::' . $this->cppIdentifier($method) . '(' . $renderedArgs . ')';
+			// A qualified call bypasses virtual dispatch, including return-type bridge slots.
+			if ($methodDecl !== null) {
+				$accessorType = $this->sharedAccessorType($methodDecl, $namespacePhp);
+				if ($accessorType !== null) {
+					$callExpr = $class . '::__scpp_return_' . $this->cppIdentifier($method)
+						. '(std::type_identity<' . $accessorType . '>{})';
+				}
+			}
 			if (is_object($classNode) && ($classNode->kind ?? null) === AstKind::NAME) {
 				$phpClass = (string) ($classNode->children['name'] ?? '');
 				$resolvedKey = $this->resolveClassDeclKey($phpClass, $namespacePhp);
@@ -7681,10 +7794,13 @@ final class Generator
 		}
 		if ($kind === AstKind::METHOD_CALL) {
 			$baseExpr = $expr->children['expr'] ?? null;
-			$base = $this->renderExpr($baseExpr, $namespacePhp);
+			$base = $this->extractSimpleVarName($baseExpr) === 'this' ? 'this' : $this->renderExpr($baseExpr, $namespacePhp);
 			$method = (string) ($expr->children['method'] ?? 'call');
 			$args = $expr->children['args']->children ?? [];
 			$baseType = $this->inferExprType($baseExpr);
+			if (str_starts_with($baseType, '::scpp::compiler::Storage_Cursor<')) {
+				return $base . '.' . $this->cppIdentifier($method) . '(' . $this->renderArgs($args, $namespacePhp) . ')';
+			}
 			if (str_starts_with($baseType, '::scpp::compiler::Key_Storage_List<')) {
 				$call = $base . '.' . $this->cppIdentifier($method) . '(' . $this->renderArgs($args, $namespacePhp) . ')';
 				return $method === 'is_empty' ? 'bool_t(' . $call . ')' : $call;
@@ -9007,6 +9123,13 @@ final class Generator
 			$baseExpr = $expr->children['expr'] ?? null;
 			$methodName = (string) ($expr->children['method'] ?? '');
 			$baseType = $this->inferExprType($baseExpr);
+			if (preg_match('/^::scpp::compiler::Storage_Cursor<(.+)>$/', $baseType, $parts) === 1) {
+				return match ($methodName) {
+					'current' => 'shared_p<' . $parts[1] . '>',
+					'key' => 'int_t<>', 'valid' => 'bool_t',
+					'next', 'rewind' => 'void', default => 'auto',
+				};
+			}
 			if (preg_match('/^::scpp::compiler::Key_Storage_List<(.+)>$/', $baseType, $parts) === 1) {
 				if (in_array($methodName, ['items', 'named'], true)) return 'vector_t<shared_p<' . $parts[1] . '>>';
 				if ($methodName === 'is_empty') return 'bool_t';
@@ -9051,11 +9174,14 @@ final class Generator
 		}
 		if ($kind === AstKind::VAR) {
 			$name = (string) ($expr->children['name'] ?? '');
+			if ($name === 'this' && $this->currentClassName !== null) {
+				return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($this->currentClassName, $this->currentNamespacePhp));
+			}
 			$declared = $this->declaredLocalTypes[$name] ?? null;
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_starts_with($declared, '::scpp::compiler::Key_Storage_List<')) return $declared;
+			if (str_starts_with($declared, '::scpp::compiler::Key_Storage_List<') || str_starts_with($declared, '::scpp::compiler::Storage_Cursor<')) return $declared;
 			if ($this->storageTypeParts($declared) !== null) return $declared;
 			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || $declared === 'dynamic_t<>' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'fixed_array_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
@@ -9091,7 +9217,7 @@ final class Generator
 		}
 		if ($kind === AstKind::NEW) {
 			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
-			if (($this->typeMapper->isStorageType($authoredType) || $this->typeMapper->isKeyStorageListType($authoredType))) return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $this->currentNamespacePhp));
+			if ($this->typeMapper->isStorageType($authoredType) || $this->typeMapper->isKeyStorageListType($authoredType) || $this->typeMapper->isStorageCursorType($authoredType)) return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $this->currentNamespacePhp));
 			if ($this->isStdClassNewExpr($expr)) {
 				return 'dynamic_t<>';
 			}

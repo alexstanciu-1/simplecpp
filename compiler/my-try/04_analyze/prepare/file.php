@@ -24,25 +24,24 @@ final class File_Preparation
 	}
 
 	/** Workers control body traversal; specializations dispatch individual operations. */
-	public static function prepare_statements(ast_node $body, preparation_context $context): void
+	public static function prepare_statements(function_body_node $body, preparation_context $context): void
 	{
-		$child = $body->first_child();
-		while ($child !== null) {
-			$node /** ast_node */ = $child;
-			$node->payload()->prepare_statement($node, $context);
-			$child = $node->next();
+		$nodes /** Storage<statement_node> */ = $body->statements;
+		$worker = new Syntax_Preparation($context);
+		foreach ($nodes as $node) {
+			$node->prepare($worker);
 		}
 	}
 
 	/** Establish source-order local storage or resolve a member write before publishing facts. */
-	public static function prepare_binding(binding_structure $syntax, preparation_context $context): void
+	public static function prepare_storage(?collected_name $entry, ?type_node $type_syntax, ?assignable_expression_node $target, ?expression_node $initializer, preparation_context $context): prepared_binding
 	{
 		$binding = new prepared_binding();
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
-		if ($syntax->target !== null)
+		if ($target !== null)
 		{
-			$target /** ast_node */ = $syntax->target;
-			$place = $target->payload()->prepare_expression($target, $context);
+			$write_target /** assignable_expression_node */ = $target;
+			$place = Syntax_Preparation::expression($write_target, $context);
 			if (!$place->addressable) {
 				throw new \RuntimeException('S2S assignment requires stable storage');
 			}
@@ -51,19 +50,19 @@ final class File_Preparation
 			$binding->resolved_kind = binding_kind::assignment;
 
 			// Member writes are emitted through their prepared target, not a local declaration.
-			$member = Syntax_Nodes::field_access_data($target)->require_preparation();
+			$member = object_cast($target, field_access_node::class)->require_preparation();
 			$binding->declaration = $member->field->declaration;
 		}
 		else
 		{
-			$entry = $syntax->occurrence();
+
 			$previous /** vector<prepared_storage> */ = $locals->named($entry->name);
-			if (($syntax->type_syntax !== null) || (q_count($previous) === 0))
+			if (($type_syntax !== null) || (q_count($previous) === 0))
 			{
 				$binding->resolved_kind = binding_kind::declaration;
 				$binding->declaration = $entry;
-				if ($syntax->type_syntax !== null) {
-					$type_node /** ast_node */ = $syntax->type_syntax;
+				if ($type_syntax !== null) {
+					$type_node /** type_node */ = $type_syntax;
 					$binding->type = Declaration_Preparation::type($type_node, $context);
 				}
 			}
@@ -80,11 +79,11 @@ final class File_Preparation
 		}
 
 		// An initializer cannot see the declaration currently being introduced.
-		if ($syntax->value !== null)
+		if ($initializer !== null)
 		{
-			$initializer /** ast_node */ = $syntax->value;
-			$value = $initializer->payload()->prepare_expression($initializer, $context);
-			if (($binding->resolved_kind === binding_kind::declaration) && ($syntax->type_syntax === null)) {
+			$value_node /** expression_node */ = $initializer;
+			$value = Syntax_Preparation::expression($value_node, $context);
+			if (($binding->resolved_kind === binding_kind::declaration) && ($type_syntax === null)) {
 				$binding->type = $value->type;
 			}
 			Declaration_Preparation::require_assignable($binding->type, $value->type);
@@ -92,21 +91,22 @@ final class File_Preparation
 
 		// Publish complete facts before making a new declaration available to later statements.
 		Declaration_Preparation::require_value_type($binding->type);
-		$syntax->set_preparation($binding);
+
 		if ($binding->resolved_kind === binding_kind::declaration) {
-			$entry = $syntax->occurrence();
+
 			$locals->add($entry->name, $binding);
 		}
+		return $binding;
 	}
 
-	public static function prepare_expression_statement(expression_statement_structure $syntax, preparation_context $context): void
+	public static function prepare_expression_statement(expression_statement_node $syntax, preparation_context $context): void
 	{
 		$expression = $syntax->expression;
-		$expression->payload()->prepare_expression($expression, $context);
+		Syntax_Preparation::expression($expression, $context);
 	}
 
 	/** Function returns use the signature; program-entry returns remain scalar exit values. */
-	public static function prepare_return(return_structure $syntax, preparation_context $context): void
+	public static function prepare_return(return_node $syntax, preparation_context $context): void
 	{
 		if ($syntax->expression === null)
 		{
@@ -120,7 +120,7 @@ final class File_Preparation
 		}
 
 		$expression /** ast_node */ = $syntax->expression;
-		$value = $expression->payload()->prepare_expression($expression, $context);
+		$value = Syntax_Preparation::expression($expression, $context);
 		if ($context->return_type !== null) {
 			$type /** type_definition */ = $context->return_type;
 			Declaration_Preparation::require_assignable($type, $value->type);
@@ -133,7 +133,7 @@ final class File_Preparation
 	public static function prepare_integer(ast_node $node, preparation_context $context): prepared_integer_literal
 	{
 		$value = new prepared_integer_literal();
-		$value->decimal = Integer_Literals::decimal($context->collection->token_snapshot()->text_at((int) $node->token_index));
+		$value->decimal = Integer_Literals::decimal($context->collection->token_snapshot()->text_at($node->start_token()));
 		$value->type = $context->integer;
 		return $value;
 	}
@@ -142,7 +142,7 @@ final class File_Preparation
 	public static function prepare_float(ast_node $node, preparation_context $context): prepared_float_literal
 	{
 		$value = new prepared_float_literal();
-		$value->decimal = $context->collection->token_snapshot()->text_at((int) $node->token_index);
+		$value->decimal = $context->collection->token_snapshot()->text_at($node->start_token());
 		$value->type = $context->floating;
 		return $value;
 	}
@@ -158,7 +158,7 @@ final class File_Preparation
 	/** Resolve source-order locals without modifying the retained declaration inventory. */
 	public static function prepare_reference(ast_node $node, preparation_context $context): prepared_variable_reference
 	{
-		$entry = $node->payload()->occurrence();
+		$entry = $node->occurrence();
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
 		$targets /** vector<prepared_storage> */ = $locals->named($entry->name);
 		if (q_count($targets) !== 1) {

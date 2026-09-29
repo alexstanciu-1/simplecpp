@@ -22,25 +22,25 @@ try
 	$compiler->exec_cpp();
 	$record = Model::$modules[$directory]->sources['main.phs'];
 	$parsed = $record->parsed;
-	$target = Syntax_Nodes::function_data(Model::$global_scope->functions_named('target')[0]->node);
-	$caller = Syntax_Nodes::function_data(Model::$global_scope->functions_named('caller')[0]->node);
+	$target = object_cast(Model::$global_scope->functions_named('target')[0]->node, function_node::class);
+	$caller = object_cast(Model::$global_scope->functions_named('caller')[0]->node, function_node::class);
 	$signature = $target->require_preparation();
 	$caller_body = $caller->body;
-	$version = $caller->body_preparation->version;
+	$version = $caller->body->work()->version;
 	$tokens = $record->tokens;
 	$output = Model::$cpp_files[0]->text;
 	$compiler->exec_cpp();
-	combined_check($record->tokens === $tokens && $caller->body_preparation->version === $version && Model::$cpp_files[0]->text === $output, 'No-op combined compilation rebuilt facts or changed output');
+	combined_check($record->tokens === $tokens && $caller->body->work()->version === $version && Model::$cpp_files[0]->text === $output, 'No-op combined compilation rebuilt facts or changed output');
 
 	file_put_contents($path, str_replace('return $x;', 'return 11;', $initial));
 	$compiler->update_cpp([$path, $path]);
 	combined_check($record->parsed === $parsed && $record->tokens !== $tokens, 'Combined sync lost retained syntax or token replacement');
-	combined_check($target->require_preparation() === $signature && $caller->body === $caller_body && $caller->body_preparation->version === $version, 'Implementation-only edit rebuilt the caller');
+	combined_check($target->require_preparation() === $signature && $caller->body === $caller_body && $caller->body->work()->version === $version, 'Implementation-only edit rebuilt the caller');
 	combined_check(Model::$cpp_files[0]->text !== $output, 'Implementation edit did not reach emitted output');
 
 	file_put_contents($path, str_replace('target(int $x): int', 'target(int $x): uint8', $initial));
 	$compiler->update_cpp([$path]);
-	combined_check($caller->body === $caller_body && $caller->body_preparation->version === $version + 1, 'Signature change did not rebuild the retained caller exactly once');
+	combined_check($caller->body === $caller_body && $caller->body->work()->version === $version + 1, 'Signature change did not rebuild the retained caller exactly once');
 	$incremental = Model::$cpp_files[0]->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);

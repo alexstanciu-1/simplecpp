@@ -88,7 +88,7 @@ Keep the class decision open until this lifecycle is settled.
 
 Implementation anchors: `compiler/sync/sources.php`, `compiler/work_queue.php`,
 `compiler/frontend.php`, `compiler/publication.php`, `compiler/sync/declarations.php`,
-`compiler/scope_publication.php`, `compiler/lifecycle.php` and `03_parse/structures.php`
+`compiler/scope_publication.php`, `compiler/lifecycle.php` and `03_parse/structures/structures.php`
 (paths relative to `compiler/my-try/`).
 
 ## Original proposed run sequence — superseded for parsing

@@ -33,12 +33,12 @@ final class LLVM_Struct_Preparation
 				$type->declaration = $entry;
 				$type->name = '%' . LLVM_Names::encode($entry->name);
 				$fields /** Keyed_Storage<llvm_field> */ = $type->fields;
-				foreach (Syntax_Nodes::struct_data($entry->node)->fields as $field_node)
+				foreach (object_cast($entry->node, struct_node::class)->fields as $field_node)
 				{
-					$syntax = Syntax_Nodes::field_data($field_node);
-					$spelling = $tokens[$syntax->name_token_index]->text();
+					$syntax = object_cast($field_node, field_node::class);
+					$spelling = '$' . $syntax->name;
 					$name = string_byte_slice($spelling, 1, string_byte_len($spelling) - 1);
-					$source_type = $tokens[(int) $syntax->type_syntax->token_index]->text();
+					$source_type = $tokens[$syntax->type_syntax->start_token()]->text();
 					if (!isset($policy->types[$source_type])) {
 						throw new \RuntimeException('Struct proof supports only int fields');
 					}
@@ -77,11 +77,11 @@ final class LLVM_Struct_Preparation
 			if (!LLVM_Legacy_Name_Preparation::belongs($function, $entry)) {
 				continue;
 			}
-			$base = Syntax_Nodes::field_access_data($entry->node)->base;
+			$base = object_cast($entry->node, field_access_node::class)->base;
 			if ($base->kind() !== node_kind::variable_reference) {
 				throw new \RuntimeException('Nested aggregate field access is not supported yet');
 			}
-			$declaration = $file->names->references[(int) $base->token_index];
+			$declaration = $file->names->references[$base->start_token()];
 			$type = $function->locals[$declaration->local_index]->struct_type;
 			if ($type === null) {
 				throw new \RuntimeException('Field access requires a struct');

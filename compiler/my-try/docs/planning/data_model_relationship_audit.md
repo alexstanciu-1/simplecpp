@@ -216,7 +216,7 @@ membership agree.
 Relevant code:
 
 - [`compiler/model.php`](../../compiler/model.php)
-- [`03_parse/structures.php`](../../03_parse/structures.php)
+- [`03_parse/structures/structures.php`](../../03_parse/structures/structures.php)
 - [`compiler/publication.php`](../../compiler/publication.php)
 - [`architecture/MODEL.md`](../architecture/MODEL.md)
 

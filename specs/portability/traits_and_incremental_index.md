@@ -18,10 +18,11 @@ convertible. The production ready set is still eleven files.
   the same namespace as the class, including the global namespace. Unqualified
   local names and fully qualified same-namespace names are supported.
 - Traits cannot use traits. No adaptation blocks, `as`, or `insteadof`. Repeated
-  uses and method collisions with the class or another trait are errors. No PHP
+  uses and method/property collisions with the class or another trait are errors. No PHP
   override/precedence machinery is implemented.
-- This slice admits method-only traits. Trait properties, constants and magic
-  methods are rejected. Methods have explicit public/private/protected visibility,
+- Direct traits admit explicit instance properties using the existing scalar/named
+  class-field grammar (including nullable and weak named fields). Static trait
+  properties, constants and magic methods remain rejected. Methods have explicit public/private/protected visibility,
   optional static, explicit scalar/named parameters and returns (including void returns), and bodies
   already supported by the converter. See the later [signature slice](method_signatures.md).
 - All files still require the uniform managed function imports. Manual class,
@@ -50,8 +51,8 @@ class Counter {
 }
 ```
 
-The converter inserts the trait's method tokens into the consuming class, then
-uses the same method/body parser as ordinary class methods. It validates standalone
+The converter inserts the trait's member tokens into the consuming class, then
+uses the same field/method parser as ordinary classes. It validates standalone
 trait bodies too. Original trait file/line attribution is retained for conversion
 diagnostics. Native diagnostic source mapping is not added by this slice.
 
@@ -64,7 +65,7 @@ lookup, overload resolution or general semantic compiler.
 
 ## Shared accessors for concrete object fields
 
-Method-only traits may write `object /** @field-type facts */` in a parameter or
+Accessor traits may write `object /** @field-type facts */` in a parameter or
 return signature (`?object` for a nullable signature). During direct expansion,
 the converter copies the named type of the consuming class's explicitly declared
 instance field `facts`. The signature's own `?` controls nullability; the field
@@ -200,3 +201,20 @@ includes malformed-index rejection added during consolidation; its generated
 fixture bytes match the native-tested output. The
 [cumulative compiler proof](../planning/compiler_migration/results/traits-cumulative-01/summary.json)
 records strict native execution and all sixteen retained compiler fixtures.
+
+## Specialized AST migration checkpoint
+
+The property extension is structural expansion, with collisions rejected rather
+than PHP property-merging rules. `@field-type` still binds only a directly declared
+consumer field; it does not search other traits. `tests/portability/trait_properties.py`
+checks expansion, independent instance state, collisions, source diagnostics and
+incremental consumer invalidation. PHP/conversion coverage is not native proof.
+
+The specialized AST fixture in `tests/portability/fixtures/specialized_ast/` now has
+a bounded PHP/native proof, run by `tests/portability/specialized_ast.py` against an
+explicit candidate checkout. It includes trait fields, covariant zero-argument
+object accessors and safe retained `$this`. The separate `typed_iterators.py` proof
+converts the production model files and executes its common/function cursors
+natively, including empty concrete methods and nullable interface returns. Full
+compiler native validation remains separate. See
+[the migration audit](../../compiler/my-try/docs/planning/specialized_ast_migration_audit.md).

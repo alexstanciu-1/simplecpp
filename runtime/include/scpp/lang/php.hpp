@@ -2,6 +2,8 @@
 
 #include "scpp/runtime.hpp"
 #include "scpp/object_cast.hpp"
+#include "scpp/shared_self.hpp"
+#include "scpp/typed_iterator.hpp"
 #include "scpp/compiler.hpp"
 // Register lookup overloads before PHP forwarding templates bind qualified names.
 #include "lang/php/php_compiler.hpp"

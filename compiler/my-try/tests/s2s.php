@@ -22,7 +22,7 @@ function s2s_snapshot(parsed_file $syntax): string
 		$seen[$value] = spl_object_id($value);
 		$result = ['class' => get_class($value), 'id' => spl_object_id($value)];
 		foreach ((new \ReflectionClass($value))->getProperties() as $property) {
-			if (in_array($property->name, ['prepared_facts', 'preparation', 'body_preparation', 'prepared', 'preparation_lookups', 'change_status', 'preparation_changes'], true)) {
+			if (in_array($property->name, ['prepared_facts', 'preparation', 'body_preparation', 'body_work', 'prepared', 'preparation_lookups', 'change_status', 'preparation_changes'], true)) {
 				continue;
 			}
 			$result[$property->name] = $visit($property->getValue($value));
@@ -233,16 +233,16 @@ foreach (['.', '.e2', '1e', '1e+', '1e-', '1.2.3', '1e2e3', '1.0f', '1_0.5', '0x
 // Floating facts retain exact text and canonical identity; cleanup belongs to specialization.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 1.2345678901234567; $b = $a;');
-$children = Syntax_Nodes::block_data($syntax->root)->children;
-$float_node = Syntax_Nodes::binding_data($children[0])->value;
-$float_data = Syntax_Nodes::float_data($float_node);
+$children = $syntax->root->body->statements;
+$float_node = $children[0]->expression->value;
+$float_data = object_cast($float_node, float_literal_node::class);
 $before = s2s_snapshot($syntax);
 $compiler = new Compiler();
 $compiler->prepare();
 $float_facts = $float_data->require_preparation();
 $floating = Language_Types::floating(Model::$language_scope);
 $resolved = Scope_Lookup::types(Model::$global_scope, 'float');
-if (($resolved[0] !== $floating) || ($floating->value_bits !== 64) || !$floating->signed || ($float_facts->decimal !== '1.2345678901234567') || ($float_facts->type !== $floating) || (Syntax_Nodes::binding_data($children[1])->require_preparation()->type !== $floating)) {
+if (($resolved[0] !== $floating) || ($floating->value_bits !== 64) || !$floating->signed || ($float_facts->decimal !== '1.2345678901234567') || ($float_facts->type !== $floating) || ($children[1]->expression->require_preparation()->type !== $floating)) {
 	throw new \LogicException('Floating literal lost precision or canonical type identity');
 }
 $compiler->cpp();
@@ -258,11 +258,11 @@ if (($float_data->preparation() !== null) || (s2s_snapshot($syntax) !== $before)
 // Boolean literals keep canonical identity without entering reference/name collection.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = false; $b = $a; return $b;');
-$children = Syntax_Nodes::block_data($syntax->root)->children;
-$binding_data = Syntax_Nodes::binding_data($children[0]);
+$children = $syntax->root->body->statements;
+$binding_data = $children[0]->expression;
 $literal_node = $binding_data->value;
-$literal_data = Syntax_Nodes::boolean_data($literal_node);
-$reference_data = Syntax_Nodes::reference_data(Syntax_Nodes::binding_data($children[1])->value);
+$literal_data = object_cast($literal_node, boolean_literal_node::class);
+$reference_data = object_cast($children[1]->expression->value, variable_reference_node::class);
 $before = s2s_snapshot($syntax);
 $compiler = new Compiler();
 $compiler->prepare();
@@ -293,9 +293,9 @@ if (($literal_data->preparation() !== null) || ($reference_data->preparation() !
 // A standalone failure must preserve syntax; partial-fact recovery remains deferred.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; $b = $missing;');
-$children = Syntax_Nodes::block_data($syntax->root)->children;
-$first_data = Syntax_Nodes::binding_data($children[0]);
-$first_literal_data = Syntax_Nodes::integer_data($first_data->value);
+$children = $syntax->root->body->statements;
+$first_data = $children[0]->expression;
+$first_literal_data = object_cast($first_data->value, integer_literal_node::class);
 $before = s2s_snapshot($syntax);
 $failed = false;
 try {
@@ -323,9 +323,9 @@ if (!$failed || !Model::$prepared_files->is_empty() || !Model::$cpp_files->is_em
 	throw new \LogicException('Emission implicitly prepared source');
 }
 $compiler->prepare();
-$children = Syntax_Nodes::block_data($syntax->root)->children;
-$first_data = Syntax_Nodes::binding_data($children[0]);
-$first_literal_data = Syntax_Nodes::integer_data($first_data->value);
+$children = $syntax->root->body->statements;
+$first_data = $children[0]->expression;
+$first_literal_data = object_cast($first_data->value, integer_literal_node::class);
 $binding_facts = $first_data->require_preparation();
 $literal_facts = $first_literal_data->require_preparation();
 $completion = Model::$prepared_files[0];
@@ -341,7 +341,7 @@ if (($first_data->require_preparation() !== $binding_facts) || (Model::$prepared
 $compiler->cpp();
 Language_Types::integer(Model::$language_scope)->value_bits = 32;
 // Fault injection must invalidate the fragment whose prepared representation was altered.
-Model::$cpp_program->fragments[$syntax->collection->body_preparation]->change_status = change_state::changed;
+Model::$cpp_program->fragments[$syntax->collection->root->body->work()]->change_status = change_state::changed;
 $failed = false;
 try {
 	$compiler->cpp();
@@ -370,10 +370,10 @@ if (($first_data->preparation() !== null) || ($first_literal_data->preparation()
 // The cleanup traversal reaches nested expression specializations through syntax-only parents.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('function nested(): int { return 7; }');
-$children = Syntax_Nodes::block_data($syntax->root)->children;
-$body = Syntax_Nodes::function_data($children[0])->body;
-$statements = Syntax_Nodes::block_data($body)->children;
-$nested_literal_data = Syntax_Nodes::integer_data(Syntax_Nodes::return_data($statements[0])->expression);
+$children = $syntax->root->declarations;
+$body = object_cast($children[0], function_node::class)->body;
+$statements = $body->statements;
+$nested_literal_data = object_cast(object_cast($statements[0], return_node::class)->expression, integer_literal_node::class);
 $before = s2s_snapshot($syntax);
 $facts = new prepared_integer_literal();
 $facts->type = Language_Types::integer(Model::$language_scope);
@@ -389,9 +389,9 @@ Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
 (new Compiler())->prepare();
 (new Compiler())->cpp();
-$children = Syntax_Nodes::block_data($syntax->root)->children;
-$first_data = Syntax_Nodes::binding_data($children[0]);
-$first_literal_data = Syntax_Nodes::integer_data($first_data->value);
+$children = $syntax->root->body->statements;
+$first_data = $children[0]->expression;
+$first_literal_data = object_cast($first_data->value, integer_literal_node::class);
 Compiler_Lifecycle::reset_syntax();
 if (($first_data->preparation() !== null) || ($first_literal_data->preparation() !== null)) {
 	throw new \LogicException('Syntax reset dropped roots before cleaning their nodes');
@@ -400,7 +400,7 @@ if (($first_data->preparation() !== null) || ($first_literal_data->preparation()
 // Ordinary parent traversal permits source shadowing; reserved-name enforcement is deferred.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('struct int { int $field; }');
-$root = Syntax_Nodes::block_data($syntax->root)->lexical_scope();
+$root = $syntax->root->file_scope();
 $local = new scope();
 $local->set_parent($root);
 $found = Scope_Lookup::types($local, 'int');

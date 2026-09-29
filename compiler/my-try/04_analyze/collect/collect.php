@@ -44,7 +44,7 @@ final class Symbol_Collector
 	public function declaration(ast_node $node, int $index, collected_name_kind $kind, scope $scope, string $name, bool $existing): void
 	{
 		if ($existing) {
-			$entry = $node->payload()->occurrence();
+			$entry = $node->occurrence();
 			if ($entry->change_status === change_state::deleted) {
 				$entry->change_status = change_state::added;
 			}
@@ -104,7 +104,7 @@ final class Symbol_Collector
 	/** Allocate only new identities; the storage index is never reused by a later occurrence. */
 	private function append(ast_node $node, int $index, collected_name_kind $kind, scope $scope, string $name): collected_name
 	{
-		if ($node->payload()->optional_occurrence() !== null) {
+		if ($node->optional_occurrence() !== null) {
 			throw new \LogicException('Syntax already has a collected occurrence');
 		}
 		$entry = new collected_name($this->collection);
@@ -116,12 +116,12 @@ final class Symbol_Collector
 		$entry->revision = $this->collection->revision;
 		$entries /** Storage<collected_name> */ = $this->collection->entries;
 		$entry->local_index = $entries->append($entry);
-		$node->payload()->attach_occurrence($entry);
+		$node->attach_occurrence($entry);
 		return $entry;
 	}
 
 	/** A completed file can retire unseen local symbols; exported rows wait until the join. */
-	public function finish(ast_node $root): collected_file
+	public function finish(file_node $root): collected_file
 	{
 		$this->collection->root = $root;
 		$this->refresh_occurrences();

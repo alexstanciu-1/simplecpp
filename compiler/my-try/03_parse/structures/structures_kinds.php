@@ -18,7 +18,8 @@ enum node_kind
 	case function_declaration;
 	case parameter_declaration;
 	case block;
-	case identifier;
+	case function_body;
+	case named_type;
 	case punctuation;
 	case comment;
 	case array_type;
@@ -33,7 +34,7 @@ enum node_kind
 	case call_expression;
 	case expression_statement;
 	case return_statement;
-	case variable_binding_statement;
+	case variable_declaration;
 }
 
 /** Keep enum reflection beside its declaration for native lowering. */

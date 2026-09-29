@@ -19,10 +19,10 @@ function preparation_edit(Compiler $compiler, source_record $source, string $tex
 	$compiler->parse();
 }
 
-function preparation_function(string $name): function_structure
+function preparation_function(string $name): function_node
 {
 	$entries = Model::$global_scope->functions_named($name);
-	return Syntax_Nodes::function_data($entries[0]->node);
+	return object_cast($entries[0]->node, function_node::class);
 }
 
 $directory = sys_get_temp_dir() . '/scpp_incremental_preparation_' . bin2hex(random_bytes(6));
@@ -45,46 +45,46 @@ try
 	$caller = preparation_function('caller');
 	$untouched = preparation_function('untouched');
 	$caller_body = $caller->body;
-	$caller_version = $caller->body_preparation->version;
+	$caller_version = $caller->body->work()->version;
 	$target_facts = $target->require_preparation();
 	$untouched_body = $untouched->body;
-	$untouched_version = $untouched->body_preparation->version;
-	$entry_version = $c->parsed->collection->body_preparation->version;
-	$entry_node = $c->parsed->root->first_child();
-	$entry_facts = Syntax_Nodes::binding_data($entry_node)->require_preparation();
+	$untouched_version = $untouched->body->work()->version;
+	$entry_version = $c->parsed->collection->root->body->work()->version;
+	$entry_node = $c->parsed->root->body->statements[0];
+	$entry_facts = $entry_node->require_preparation();
 	$compiler->prepare();
-	preparation_check($caller->body_preparation->version === $caller_version, 'No-op preparation rebuilt a body');
+	preparation_check($caller->body->work()->version === $caller_version, 'No-op preparation rebuilt a body');
 	preparation_check($target->require_preparation() === $target_facts, 'No-op preparation replaced a signature');
 
 	preparation_edit($compiler, $a, 'function target(int $x): int { $y = 2; return $x; } function untouched(): int { return 8; }');
 	$compiler->prepare();
-	preparation_check($caller->body_preparation->version === $caller_version, 'Implementation-only change rebuilt a caller');
+	preparation_check($caller->body->work()->version === $caller_version, 'Implementation-only change rebuilt a caller');
 	preparation_check($target->require_preparation() === $target_facts, 'Body-only change replaced its signature');
-	preparation_check(($untouched->body === $untouched_body) && ($untouched->body_preparation->version === $untouched_version), 'Changed file rebuilt an unchanged neighboring body');
-	preparation_check($c->parsed->collection->body_preparation->version === $entry_version, 'Unrelated file body was rebuilt');
-	preparation_check(Syntax_Nodes::binding_data($entry_node)->require_preparation() === $entry_facts, 'Unrelated attached facts were cleared');
+	preparation_check(($untouched->body === $untouched_body) && ($untouched->body->work()->version === $untouched_version), 'Changed file rebuilt an unchanged neighboring body');
+	preparation_check($c->parsed->collection->root->body->work()->version === $entry_version, 'Unrelated file body was rebuilt');
+	preparation_check($entry_node->require_preparation() === $entry_facts, 'Unrelated attached facts were cleared');
 
 	preparation_edit($compiler, $a, 'function target(uint32 $x): int { return 5; } function untouched(): int { return 8; }');
 	$compiler->prepare();
 	preparation_check($caller->body === $caller_body, 'Dependency update reparsed the caller');
-	preparation_check($caller->body_preparation->version === ($caller_version + 1), 'Signature update did not rebuild the caller once');
-	$caller_version = $caller->body_preparation->version;
+	preparation_check($caller->body->work()->version === ($caller_version + 1), 'Signature update did not rebuild the caller once');
+	$caller_version = $caller->body->work()->version;
 
 	// Unchanged top-level executable syntax and facts survive declarations inserted before it.
 	preparation_edit($compiler, $c, 'function added(): int { return 1; } $local int = 3; return $local;');
 	$compiler->prepare();
-	preparation_check($c->parsed->collection->body_preparation->version === $entry_version, 'Declaration insertion rebuilt unchanged entry code');
-	preparation_check(Syntax_Nodes::binding_data($entry_node)->require_preparation() === $entry_facts, 'Moved entry syntax lost its facts');
+	preparation_check($c->parsed->collection->root->body->work()->version === $entry_version, 'Declaration insertion rebuilt unchanged entry code');
+	preparation_check($entry_node->require_preparation() === $entry_facts, 'Moved entry syntax lost its facts');
 
 	// Removing a dependency from a body removes both graph directions.
 	preparation_edit($compiler, $b, 'function caller(int $x): int { return $x; }');
 	$compiler->prepare();
-	$caller_version = $caller->body_preparation->version;
-	preparation_check(!isset($target->occurrence()->preparation->dependents[$caller->body_preparation]), 'Obsolete dependency edge survived body rebuilding');
+	$caller_version = $caller->body->work()->version;
+	preparation_check(!isset($target->occurrence()->preparation->dependents[$caller->body->work()]), 'Obsolete dependency edge survived body rebuilding');
 	preparation_edit($compiler, $a, 'function untouched(): int { return 8; }');
 	$compiler->prepare();
 	preparation_check(q_count(Model::$global_scope->functions_named('target')) === 0, 'Deleted function remained in the global index');
-	preparation_check($caller->body_preparation->version === $caller_version, 'Former dependency still invalidated the caller');
+	preparation_check($caller->body->work()->version === $caller_version, 'Former dependency still invalidated the caller');
 	foreach ($a->parsed->collection->entries as $entry) {
 		preparation_check($entry->change_status !== change_state::deleted, 'Deleted collected record remained owned');
 	}
@@ -101,7 +101,7 @@ try
 	preparation_check($failed, 'Missing function did not reject');
 	preparation_edit($compiler, $a, 'function missing(int $x): int { return $x; }');
 	$compiler->prepare();
-	preparation_check($caller->body_preparation->state === preparation_state::ready, 'Missing-name dependency could not recover after addition');
+	preparation_check($caller->body->work()->state === preparation_state::ready, 'Missing-name dependency could not recover after addition');
 
 	// A new duplicate candidate must invalidate an already successful global lookup.
 	preparation_edit($compiler, $c, 'function missing(int $x): int { return $x; }');
@@ -128,7 +128,7 @@ try
 	preparation_check($failed, 'By-value declaration cycle was not detected');
 	preparation_edit($compiler, $a, 'function missing(int $x): int { return missing($x); }');
 	$compiler->prepare();
-	preparation_check(preparation_function('missing')->body_preparation->state === preparation_state::ready, 'Recursive call was mistaken for a declaration cycle');
+	preparation_check(preparation_function('missing')->body->work()->state === preparation_state::ready, 'Recursive call was mistaken for a declaration cycle');
 
 	// A prior-phase error stops preparation before independent ready facts are touched.
 	$stable = $caller->require_preparation();
@@ -151,10 +151,10 @@ try
 	preparation_edit($compiler, $a, 'function left(int $x): int { return $x; } function right(int $x): int { return $x; }');
 	preparation_edit($compiler, $b, 'function caller(int $x): int { left($x); return right($x); }');
 	$compiler->prepare();
-	$version = preparation_function('caller')->body_preparation->version;
+	$version = preparation_function('caller')->body->work()->version;
 	preparation_edit($compiler, $a, 'function left(uint32 $x): int { return $x; } function right(uint32 $x): int { return $x; }');
 	$compiler->prepare();
-	preparation_check(preparation_function('caller')->body_preparation->version === ($version + 1), 'Two changed dependencies rebuilt one body more than once');
+	preparation_check(preparation_function('caller')->body->work()->version === ($version + 1), 'Two changed dependencies rebuilt one body more than once');
 
 	preparation_edit($compiler, $a, 'struct Inner { uint8 $x; } struct Outer { Inner $inner; }');
 	preparation_edit($compiler, $b, 'function inspect(Outer $x): uint8 { return $x->inner->x; }');
@@ -162,23 +162,23 @@ try
 	$outer = Model::$global_scope->source_types_named('Outer')[0];
 	$outer_version = $outer->preparation->version;
 	$inspect = preparation_function('inspect');
-	$inspect_version = $inspect->body_preparation->version;
+	$inspect_version = $inspect->body->work()->version;
 	preparation_edit($compiler, $a, 'struct Inner { uint16 $x; } struct Outer { Inner $inner; }');
 	$compiler->prepare();
 	preparation_check($outer->preparation->version === ($outer_version + 1), 'Nested record change did not propagate through declarations');
-	preparation_check($inspect->body_preparation->version === ($inspect_version + 1), 'Nested field dependency did not rebuild its body');
+	preparation_check($inspect->body->work()->version === ($inspect_version + 1), 'Nested field dependency did not rebuild its body');
 
 	// Explicit full invalidation feeds the same worker rather than selecting a second preparation path.
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
-	preparation_check($inspect->body_preparation->version === ($inspect_version + 2), 'Explicit reset failed to select existing owners');
+	preparation_check($inspect->body->work()->version === ($inspect_version + 2), 'Explicit reset failed to select existing owners');
 	$c->changes = change_state::deleted;
 	$compiler->parse();
 	$compiler->prepare();
 	preparation_check(q_count($c->parsed->collection->entries) === 0, 'Deleted file retained collected rows');
 	preparation_edit($compiler, $c, '$again = 4; return $again;');
 	$compiler->prepare();
-	preparation_check($c->parsed->collection->body_preparation->state === preparation_state::ready, 'Deleted file could not reappear after cleanup');
+	preparation_check($c->parsed->collection->root->body->work()->state === preparation_state::ready, 'Deleted file could not reappear after cleanup');
 }
 finally {
 	foreach (glob($directory . '/*') as $path) {

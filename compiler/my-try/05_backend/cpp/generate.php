@@ -18,20 +18,18 @@ final class CPP_Generator
 	{
 		$source = $prepared->source;
 		$ordered /** Storage<preparation_owner> */ = new Storage();
-		$child = $source->root->first_child();
-		while ($child !== null)
+		$nodes /** Storage<declaration_node> */ = $source->root->declarations;
+		foreach ($nodes as $node)
 		{
-			$node /** ast_node */ = $child;
 			if (($node->kind() === node_kind::function_declaration) || ($node->kind() === node_kind::struct_declaration)) {
-				$entry = $node->payload()->occurrence();
+				$entry = $node->occurrence();
 				$ordered->append(object_cast($entry->preparation, preparation_owner::class));
 				if ($node->kind() === node_kind::function_declaration) {
-					$ordered->append(object_cast(Syntax_Nodes::function_data($node)->body_preparation, preparation_owner::class));
+					$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
 				}
 			}
-			$child = $node->next();
 		}
-		$ordered->append(object_cast($source->body_preparation, preparation_owner::class));
+		$ordered->append(object_cast($source->root->body->work(), preparation_owner::class));
 
 		// Deletion remains pending until assembly succeeds, but stale fragments leave storage immediately.
 		foreach ($source->preparation_changes as $owner /** @object-key */) {
@@ -43,6 +41,7 @@ final class CPP_Generator
 		$bodies /** Storage<preparation_owner> */ = new Storage();
 		foreach ($ordered as $owner)
 		{
+			Preparation_Worker::require_active($owner);
 			if (($owner->change_status !== change_state::unchanged) || $owner->failed) {
 				throw new \RuntimeException('C++ generation requires completed preparation');
 			}
@@ -72,6 +71,7 @@ final class CPP_Generator
 		$entry_text = '';
 		foreach ($ordered as $owner)
 		{
+			Preparation_Worker::require_active($owner);
 			$fragment = $this->program->fragments[$owner];
 			foreach ($fragment->headers as $header => $used) {
 				$context->headers[$header] = true;
@@ -125,6 +125,10 @@ final class CPP_Generator
 	/** Each body owns its temporary numbering; publish a fragment only after successful rendering. */
 	private function render(preparation_owner $owner): void
 	{
+		Preparation_Worker::require_active($owner);
+		if (($owner->state !== preparation_state::ready) || $owner->failed) {
+			throw new \LogicException('C++ generation requires successfully prepared work');
+		}
 		$context = new cpp_generation_context();
 		$context->expand_records = false;
 		$next = new cpp_fragment();
@@ -135,16 +139,16 @@ final class CPP_Generator
 		{
 			$entry = object_cast($owner->declaration, collected_name::class);
 			if ($owner->kind === preparation_kind::function_body) {
-				$syntax = Syntax_Nodes::function_data($entry->node);
+				$syntax = object_cast($entry->node, function_node::class);
 				$context->return_type = $syntax->require_preparation()->return_type;
 				$next->text = self::generate_statements($syntax->body, $context);
 			}
 			elseif ($entry->kind === collected_name_kind::function_declaration) {
-				$next->text = CPP_Declarations::signature(Syntax_Nodes::function_data($entry->node), $context);
+				$next->text = CPP_Declarations::signature(object_cast($entry->node, function_node::class), $context);
 			}
 			else
 			{
-				$syntax = Syntax_Nodes::struct_data($entry->node);
+				$syntax = object_cast($entry->node, struct_node::class);
 				CPP_Declarations::generate_struct($syntax, $context);
 				$next->text = $context->records;
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
@@ -184,42 +188,31 @@ final class CPP_Generator
 	}
 
 	/** File executable statements form one body; declarations have their own fragments. */
-	private static function generate_file_body(ast_node $root, cpp_generation_context $context): string
+	private static function generate_file_body(file_node $root, cpp_generation_context $context): string
 	{
-		$text = '';
-		$child = $root->first_child();
-		while ($child !== null) {
-			$node /** ast_node */ = $child;
-			if (($node->kind() !== node_kind::function_declaration) && ($node->kind() !== node_kind::struct_declaration)) {
-				$text .= $node->payload()->generate_cpp_statement($node, $context);
-			}
-			$child = $node->next();
-		}
-		return $text;
+		return self::generate_statements($root->body, $context);
 	}
 
 	/** The worker visits executable children once; declaration hooks collect separate output sections. */
-	public static function generate_statements(ast_node $body, cpp_generation_context $context): string
+	public static function generate_statements(function_body_node $body, cpp_generation_context $context): string
 	{
 		$text = '';
-		$child = $body->first_child();
-		while ($child !== null) {
-			$node /** ast_node */ = $child;
-			$text .= $node->payload()->generate_cpp_statement($node, $context);
-			$child = $node->next();
+		$statements /** Storage<statement_node> */ = $body->statements;
+		$worker = new CPP_Syntax($context);
+		foreach ($statements as $node) {
+			$text .= $node->generate_cpp($worker);
 		}
 		return $text;
 	}
 
 	/** Prepared declarations and member targets share the same typed assignment boundary. */
-	public static function generate_binding(binding_structure $syntax, cpp_generation_context $context): string
+	public static function generate_storage(prepared_binding $binding, ?assignable_expression_node $target, ?expression_node $initializer, bool $explicit_type, cpp_generation_context $context): string
 	{
-		$binding = $syntax->require_preparation();
 		$prefix = $binding->resolved_kind === binding_kind::declaration ? 'auto ' : '';
 		$name = '';
-		if ($syntax->target !== null) {
-			$target /** ast_node */ = $syntax->target;
-			$name = $target->payload()->generate_cpp_expression($target, $context);
+		if ($target !== null) {
+			$target /** ast_node */ = $target;
+			$name = $target->generate_cpp(new CPP_Syntax($context));
 		}
 		else {
 			$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
@@ -227,27 +220,27 @@ final class CPP_Generator
 		}
 
 		// Typed declarations without initializers retain their normal C++ default construction.
-		if ($syntax->value === null) {
-			return "\t" . CPP_Declarations::type($binding->type, $context) . ' ' . $name . ";\n";
+		if ($initializer === null) {
+			return CPP_Declarations::type($binding->type, $context) . ' ' . $name;
 		}
 
-		$initializer /** ast_node */ = $syntax->value;
-		$value = $initializer->payload()->generate_cpp_expression($initializer, $context);
-		if (($syntax->type_syntax !== null) || ($binding->resolved_kind === binding_kind::assignment)) {
+		$initializer /** ast_node */ = $initializer;
+		$value = $initializer->generate_cpp(new CPP_Syntax($context));
+		if ($explicit_type || ($binding->resolved_kind === binding_kind::assignment)) {
 			$value = CPP_Declarations::value($value, $binding->type, $context);
 		}
-		return "\t" . $prefix . $name . ' = ' . $value . ";\n";
+		return $prefix . $name . ' = ' . $value;
 	}
 
 	/** Function returns retain their declared value type; entry returns become native exit codes. */
-	public static function generate_return(return_structure $syntax, cpp_generation_context $context): string
+	public static function generate_return(return_node $syntax, cpp_generation_context $context): string
 	{
 		if ($syntax->expression === null) {
 			return $context->return_type === null ? "\treturn 0;\n" : "\treturn;\n";
 		}
 
 		$expression /** ast_node */ = $syntax->expression;
-		$value = $expression->payload()->generate_cpp_expression($expression, $context);
+		$value = $expression->generate_cpp(new CPP_Syntax($context));
 		if ($context->return_type !== null) {
 			$type /** type_definition */ = $context->return_type;
 			return "\treturn " . CPP_Declarations::value($value, $type, $context) . ";\n";
@@ -255,10 +248,10 @@ final class CPP_Generator
 		return "\treturn static_cast<int>((" . $value . ").native_value());\n";
 	}
 
-	public static function generate_expression_statement(expression_statement_structure $syntax, cpp_generation_context $context): string
+	public static function generate_expression_statement(expression_statement_node $syntax, cpp_generation_context $context): string
 	{
 		$expression = $syntax->expression;
-		return "\t" . $expression->payload()->generate_cpp_expression($expression, $context) . ";\n";
+		return "\t" . $expression->generate_cpp(new CPP_Syntax($context)) . ";\n";
 	}
 
 	/** Emit exact signed integer magnitude using its canonical representation. */

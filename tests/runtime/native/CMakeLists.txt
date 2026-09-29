@@ -171,3 +171,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_test(NAME scpp_test_snapshot COMMAND test_snapshot)
 	set_tests_properties(scpp_test_snapshot PROPERTIES TIMEOUT 30)
 endif()
+
+# Recover the existing shared owner for retained self references.
+add_executable(test_shared_self test_shared_self.cpp)
+target_link_libraries(test_shared_self PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_shared_self COMMAND test_shared_self)
+
+# Typed cursors retain invariant Storage membership and widen only yielded handles.
+add_executable(test_storage_cursor test_storage_cursor.cpp)
+target_link_libraries(test_storage_cursor PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_storage_cursor COMMAND test_storage_cursor)

@@ -7,27 +7,6 @@ require_once dirname(__DIR__) . '/boot.php';
 
 final class AST_Test
 {
-	private const PAYLOADS = [
-		'identifiers' => identifier_structure::class,
-		'floats' => float_literal_structure::class,
-		'booleans' => boolean_literal_structure::class,
-		'integers' => integer_literal_structure::class,
-		'references' => variable_reference_structure::class,
-		'blocks' => block_structure::class,
-		'functions' => function_structure::class,
-		'parameters' => parameter_structure::class,
-		'calls' => call_structure::class,
-		'binaries' => binary_structure::class,
-		'expression_statements' => expression_statement_structure::class,
-		'returns' => return_structure::class,
-		'bindings' => binding_structure::class,
-		'array_types' => array_type_structure::class,
-		'array_literals' => array_literal_structure::class,
-		'indexes' => index_structure::class,
-		'structs' => struct_structure::class,
-		'fields' => field_structure::class,
-		'field_accesses' => field_access_structure::class,
-	];
 
 	private static function check(bool $condition): void
 	{
@@ -61,40 +40,13 @@ final class AST_Test
 		self::initialized($node);
 		self::check(!$nodes->contains($node)); // This fixture's AST is a tree logically.
 		$nodes->attach($node);
-		self::check(get_class($node) === ast_node::class);
-		$children = $node->children_snapshot();
-		$expected = Syntax_Nodes::child_nodes($node);
-		self::check(count($children) === count($expected));
-		self::check($node->has_children() === (count($children) > 0));
-		foreach ($children as $position => $child) {
-			self::check($child === $expected[$position]);
-			self::check($child->parent() === $node && $child->child_position() === $position);
-			self::check($child->prev() === ($position === 0 ? null : $children[$position - 1]));
-			self::check($child->next() === ($position + 1 === count($children) ? null : $children[$position + 1]));
-		}
-		self::check($node->first_child() === ($children->is_empty() ? null : $children[0]));
-
-		self::check($node->token_index >= 0 && $node->end_token_index <= count($syntax->tokens->tokens));
-		self::check($node->token_index <= $node->end_token_index);
-		$payload = $node->payload();
-		Syntax_Nodes::validate_payload($node->kind(), $payload);
-		self::initialized($payload);
-		self::check(!$payloads->contains($payload));
-		$payloads->attach($payload);
-		foreach (get_object_vars($payload) as $value)
-		{
-			if ($value instanceof ast_node) {
-				self::visit($value, $syntax, $nodes, $payloads);
-			}
-			elseif ($value instanceof Storage)
-			{
-				$start = -1;
-				foreach ($value as $position => $child) {
-					self::check($child->token_index >= $start);
-					$start = $child->token_index;
-					self::visit($child, $syntax, $nodes, $payloads);
-				}
-			}
+		self::check((new \ReflectionClass($node))->isFinal());
+		self::check($node->start_token() >= 0 && $node->end_token() <= count($syntax->tokens->tokens));
+		self::check($node->start_token() <= $node->end_token());
+		$payloads->attach($node);
+		foreach ($node->children() as $child) {
+			self::check($child->parent() === $node);
+			self::visit($child, $syntax, $nodes, $payloads);
 		}
 	}
 
@@ -106,7 +58,7 @@ final class AST_Test
 		foreach ($syntax->scopes as $scope) {
 			self::initialized($scope);
 		}
-		self::initialized($syntax->root->payload()->lexical_scope());
+		self::initialized($syntax->root->file_scope());
 		self::check($syntax->collection->root === $syntax->root);
 		self::check($syntax->collection->token_snapshot() === $syntax->tokens);
 		$nodes = new \SplObjectStorage();
@@ -114,11 +66,11 @@ final class AST_Test
 		self::visit($syntax->root, $syntax, $nodes, $payloads);
 		foreach ($payloads as $payload)
 		{
-			if ($payload instanceof block_structure && $payload->lexical_scope() !== $syntax->root->payload()->lexical_scope())
+			if ($payload instanceof function_body_node && $payload->local_scope() !== $syntax->root->file_scope())
 			{
 				$found = false;
 				foreach ($syntax->scopes as $owned) {
-					if ($owned === $payload->lexical_scope()) {
+					if ($owned === $payload->local_scope()) {
 						$found = true;
 					}
 				}
@@ -127,7 +79,7 @@ final class AST_Test
 		}
 		foreach ($syntax->collection->entries as $position => $entry) {
 			self::initialized($entry);
-			self::check($entry->node->payload()->occurrence() === $entry);
+			self::check($entry->node->occurrence() === $entry);
 			self::check($entry->local_index === $position && $nodes->contains($entry->node));
 		}
 		return $nodes;
@@ -139,23 +91,17 @@ final class AST_Test
 		$parser = new Parser(self::tokens('function f(int $a, int &$b): void { return; } $x int; $y int = 1; $x = 2; $items int[1] = []; $items[0] = 3;'));
 		$result = $parser->parse();
 		self::verify($result);
-		$children = $result->root->payload()->children;
-		$function = $children[0]->payload();
-		$value = $function->parameters[0]->payload();
-		$reference = $function->parameters[1]->payload();
-		self::check($value->mode === passing_mode::value && $value->reference_token_index === null);
-		self::check($reference->mode === passing_mode::reference && $reference->reference_token_index !== null);
-		self::check($result->tokens->tokens[$reference->reference_token_index]->text() === '&');
-		self::check($function->body->payload()->children[0]->payload()->expression === null);
-		$declaration = $children[1]->payload();
-		self::check($declaration->type_syntax !== null && $declaration->target === null && $declaration->equals_token_index === null && $declaration->value === null);
-		$initialized = $children[2]->payload();
-		self::check($initialized->type_syntax !== null && $initialized->target === null && $initialized->equals_token_index !== null && $initialized->value !== null);
-		$assignment = $children[3]->payload();
-		self::check($assignment->type_syntax === null && $assignment->target === null && $assignment->equals_token_index !== null && $assignment->value !== null);
-		self::check($children[4]->payload()->value->payload()->elements->is_empty());
-		$indexed = $children[5]->payload();
-		self::check($indexed->type_syntax === null && $indexed->target !== null && $indexed->equals_token_index !== null && $indexed->value !== null);
+		$function = $result->root->declarations[0];
+		self::check($function->parameters[0]->mode === passing_mode::value);
+		self::check($function->parameters[1]->mode === passing_mode::reference);
+		self::check($function->body->statements[0]->expression === null);
+		$statements = $result->root->body->statements;
+		self::check($statements[0] instanceof variable_declaration_node && $statements[0]->initializer === null);
+		self::check($statements[1]->initializer instanceof integer_literal_node);
+		self::check($statements[2]->expression instanceof assignment_expression_node);
+		self::check($statements[2]->expression->target instanceof variable_reference_node);
+		self::check($statements[3]->initializer->elements->is_empty());
+		self::check($statements[4]->expression->target instanceof index_node);
 	}
 
 	/** Failed parsing keeps recognized declarations but marks its mutable result incomplete. */
@@ -178,15 +124,15 @@ final class AST_Test
 		$parser->init(self::tokens('function next(): void { return; }'), $scope);
 		$next = $parser->parse();
 		self::verify($next);
-		self::check($next->root->payload()->lexical_scope() === $scope);
-		self::check($next->body_scope->parent_scope() === $scope);
+		self::check($next->root->file_scope() === $scope);
+		self::check($next->root->body->local_scope()->parent_scope() === $scope);
 		self::check(count($scope->functions_named('kept')) === 1 && count($scope->functions_named('next')) === 1);
 		self::check((count($scope->functions_named('broken')) === 1) && (count($scope->types_named('Pending')) === 1));
 		// Omitting the target on re-init must clear the previous external scope.
 		$parser->init(self::tokens(''));
 		$standalone = $parser->parse();
 		self::verify($standalone);
-		self::check($standalone->root->payload()->lexical_scope() !== $scope);
+		self::check($standalone->root->file_scope() !== $scope);
 		self::check($standalone->scopes[0]->parent_scope() === null);
 	}
 
@@ -196,22 +142,23 @@ final class AST_Test
 		$tokens = self::tokens('$x int;');
 		$parser = new Parser($tokens);
 		$syntax = $parser->parse();
-		$binding = new binding_structure();
-		$binding->name_token_index = 0;
-		$binding->syntax_kind = binding_kind::declaration;
-		$binding->type_syntax = Syntax_Nodes::make(node_kind::identifier, 1, 2);
-		$node = Syntax_Nodes::make(node_kind::variable_binding_statement, 0, 3, $binding);
+		$node = new variable_declaration_node();
+		$node->name = 'canonical_name';
+		$node->type_syntax = new named_type_node();
+		$node->type_syntax->name = 'int';
+		$node->type_syntax->set_span(1, 2);
+		$node->set_span(0, 3);
 		$scope = new scope();
 		$collector = new Symbol_Collector(new collected_file($tokens), $tokens, $scope, null, 1);
 		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
 		self::check($scope->has_variables());
-		self::check($node->payload()->occurrence()->node === $node);
+		self::check($node->occurrence()->node === $node);
 		try {
 			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'duplicate');
 			throw new \RuntimeException('Expected duplicate occurrence rejection');
 		}
 		catch (\LogicException $expected) {
-			self::check($node->payload()->occurrence()->name === 'canonical_name');
+			self::check($node->occurrence()->name === 'canonical_name');
 		}
 		// Canonical names come from the frontend, independently of the source token '$x'.
 		$result = $collector->finish($syntax->root);
@@ -258,10 +205,10 @@ PHS;
 		$first_nodes = self::verify($first);
 		$types = [];
 		foreach ($first_nodes as $node) {
-			$types[get_class($node->payload())] = true;
+			$types[get_class($node)] = true;
 		}
-		foreach (self::PAYLOADS as $field => $type) {
-			self::check($field === 'binaries' ? !isset($types[$type]) : isset($types[$type]));
+		foreach ([file_node::class, function_body_node::class, function_node::class, parameter_node::class, named_type_node::class, call_node::class, integer_literal_node::class, variable_reference_node::class, variable_declaration_node::class, assignment_expression_node::class, array_type_node::class, array_literal_node::class, index_node::class, struct_node::class, field_node::class, field_access_node::class] as $type) {
+			self::check(isset($types[$type]));
 		}
 		$before = serialize($first);
 		$parser->init(self::tokens($source));
@@ -283,9 +230,9 @@ PHS;
 		self::check($failed && serialize($first) === $before);
 		$parser->init(self::tokens(''));
 		$empty = $parser->parse();
-		self::check(count(self::verify($empty)) === 1);
-		self::check($empty->root->payload()->children->is_empty());
-		echo "AST: object graph, child lists, payload coverage, order, collection identity and parser reuse passed\n";
+		self::check(count(self::verify($empty)) === 2);
+		self::check($empty->root->body->statements->is_empty() && $empty->root->declarations->is_empty());
+		echo "AST: typed object graph, lazy children, node coverage, order, collection identity and parser reuse passed\n";
 	}
 }
 
@@ -299,17 +246,5 @@ $first = $parser->parse();
 $second = $parser->parse();
 if (count($first->scopes) !== 3 || count($second->scopes) !== 3 || $first->scopes[0] === $second->scopes[0]) {
 	throw new \LogicException('Standalone parser scope ownership failed');
-}
-try {
-	Syntax_Nodes::validate_payload(node_kind::integer_literal, new binary_structure(Syntax_Nodes::make(node_kind::identifier, 0, 1), Syntax_Nodes::make(node_kind::identifier, 1, 2)));
-	throw new \RuntimeException('Invalid payload accepted');
-}
-catch (\LogicException $expected) {
-}
-try {
-	Syntax_Nodes::validate_payload(node_kind::block, null);
-	throw new \RuntimeException('Missing payload accepted');
-}
-catch (\LogicException $expected) {
 }
 AST_Test::run();

@@ -15,62 +15,35 @@ function dispatch_parse(string $text): parsed_file
 
 Compiler_Lifecycle::reset();
 $parsed = dispatch_parse('function unsupported(): int { return 17; }');
-$function = $parsed->root->first_child();
-$body = Syntax_Nodes::function_data($function)->body;
-$return_node = $body->first_child();
-$literal = Syntax_Nodes::integer_data(Syntax_Nodes::return_data($return_node)->expression);
+$unsupported = new binary_expression_node();
+$literal = new integer_literal_node();
+$unsupported->left = $literal;
+$unsupported->right = $literal;
 $context = new preparation_context();
-$context->collection = $parsed->collection;
-$context->worker = new Preparation_Worker(Model::$language_scope);
-$context->owner = new preparation_owner(preparation_kind::function_body, $parsed->collection, $function->payload()->occurrence());
-$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
-$context->integer = Language_Types::integer(Model::$language_scope);
-$context->boolean = Language_Types::boolean(Model::$language_scope);
-$context->floating = Language_Types::floating(Model::$language_scope);
-$cpp_context = new cpp_generation_context();
-$syntax_before = serialize($parsed);
-
-// Unprepared function operations must reject before visiting their supported descendants.
-$specialization = $function->payload();
 $failures = 0;
 try {
-	$specialization->prepare_statement($function, $context);
+	$unsupported->prepare(new Syntax_Preparation($context));
 }
 catch (\RuntimeException $error) {
 	$failures++;
 }
 try {
-	$specialization->prepare_expression($function, $context);
+	$unsupported->generate_cpp(new CPP_Syntax(new cpp_generation_context()));
 }
 catch (\RuntimeException $error) {
 	$failures++;
 }
-try {
-	$specialization->generate_cpp_statement($function, $cpp_context);
-}
-catch (\RuntimeException $error) {
-	$failures++;
-}
-try {
-	$specialization->generate_cpp_expression($function, $cpp_context);
-}
-catch (\RuntimeException $error) {
-	$failures++;
-}
-if (($failures !== 4) || ($literal->preparation() !== null) || ($cpp_context->headers !== []) || (serialize($parsed) !== $syntax_before)) {
-	throw new \LogicException('Unsupported specialization walked children or published effects');
-}
-if (!($specialization instanceof node_operations_i)) {
-	throw new \LogicException('Specializations did not inherit the operation interface');
+if ($failures !== 2 || $literal->preparation() !== null || !($unsupported instanceof ast_node_i)) {
+	throw new \LogicException('Unsupported dispatch visited children or lost its interface');
 }
 
 // Shared accessors retain identity, typed assignment and per-instance cleanup for every fact slot.
 $fact_pairs = [
-	[new integer_literal_structure(), new prepared_integer_literal()],
-	[new float_literal_structure(), new prepared_float_literal()],
-	[new boolean_literal_structure(true), new prepared_boolean_literal()],
-	[new variable_reference_structure(), new prepared_variable_reference()],
-	[new binding_structure(), new prepared_binding()],
+	[new integer_literal_node(), new prepared_integer_literal()],
+	[new float_literal_node(), new prepared_float_literal()],
+	[new boolean_literal_node(), new prepared_boolean_literal()],
+	[new variable_reference_node(), new prepared_variable_reference()],
+	[new variable_declaration_node(), new prepared_binding()],
 ];
 foreach ($fact_pairs as $pair)
 {
@@ -98,7 +71,7 @@ foreach ($fact_pairs as $pair)
 	try {
 		$owner->require_preparation();
 	}
-	catch (\RuntimeException $expected) {
+	catch (\TypeError $expected) {
 		$rejected = true;
 	}
 	if (!$rejected || ($owner->preparation() !== null)) {
@@ -120,8 +93,8 @@ if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($bool
 
 // Independent successful work survives a failing body; the phase still withholds completion.
 $mixed = dispatch_parse('$a = 10; function unsupported(): int { return missing(); }');
-$first_data = Syntax_Nodes::binding_data($mixed->root->first_child());
-$first_literal = Syntax_Nodes::integer_data($first_data->value);
+$first_data = $mixed->root->body->statements[0]->expression;
+$first_literal = object_cast($first_data->value, integer_literal_node::class);
 $failed = false;
 try {
 	(new File_Preparation($mixed->collection, Model::$language_scope))->prepare();
@@ -129,7 +102,7 @@ try {
 catch (\RuntimeException $error) {
 	$failed = true;
 }
-if (!$failed || ($first_data->preparation() === null) || ($first_literal->preparation() === null) || $mixed->collection->body_preparation->failed) {
+if (!$failed || ($first_data->preparation() === null) || ($first_literal->preparation() === null) || $mixed->collection->root->body->work()->failed) {
 	throw new \LogicException('Preparation did not preserve independent successful body work');
 }
 echo "Specialization dispatch: inherited contract, unsupported-parent isolation, phase cleanup and invocation state passed\n";

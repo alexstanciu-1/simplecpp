@@ -94,9 +94,7 @@ final class Declaration_Index {
 				if (isset($methods[$name])) { self::fail($path, $tokens[$nameAt], 'duplicate method ' . $name); }
 				if ($kind === 'trait' && str_starts_with($name, '__')) { self::fail($path, $tokens[$nameAt], 'magic methods are unsupported in traits'); }
 				$methods[$name] = $tokens[$nameAt][2];
-			} elseif ($kind === 'trait') {
-				self::fail($path, $tokens[$start], 'traits support explicit methods only');
-			} elseif ($kind === 'class') {
+			} elseif ($kind === 'class' || $kind === 'trait') {
 				// Only a directly declared named instance field can bind a trait signature.
 				$typeAt = $tokens[$i][1] === '?' ? self::skip($tokens, $i + 1) : $i;
 				$fieldAt = self::skip($tokens, $typeAt + 1);
@@ -105,6 +103,8 @@ final class Declaration_Index {
 					&& in_array($tokens[$typeAt][0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)
 					&& !in_array(T_STATIC, $modifiers, true)) {
 					$fields[substr($tokens[$fieldAt][1], 1)] = $tokens[$typeAt];
+				} elseif ($kind === 'trait') {
+					self::fail($path, $tokens[$start], 'traits require explicit instance fields or methods');
 				}
 			}
 			// Skip one field/constant/case or a method signature and body. No callee lookup.
@@ -131,6 +131,7 @@ final class Declaration_Index {
 		$dependencies = [];
 		foreach ($this->files[$path]['declarations'] as $declaration) {
 			$methods = $declaration['methods'];
+			$fields = $declaration['fields'];
 			$seen = [];
 			foreach ($declaration['uses'] as $use) {
 				foreach ($use['names'] as $name) {
@@ -142,6 +143,10 @@ final class Declaration_Index {
 						foreach ($trait['methods'] as $method => $line) {
 							if (isset($methods[$method])) { $error = 'trait method collision ' . $method . ' from ' . $trait['file'] . ':' . $line; break; }
 							$methods[$method] = $line;
+						}
+						foreach ($trait['fields'] as $field => $type) {
+							if (isset($fields[$field])) { $error = 'trait field collision ' . $field . ' from ' . $trait['file'] . ':' . $type[2]; break; }
+							$fields[$field] = $type;
 						}
 					}
 					if ($error !== null) { throw new \RuntimeException($path . ':' . $use['line'] . ': ' . $error); }

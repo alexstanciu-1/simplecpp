@@ -22,13 +22,13 @@ final class S2S_Proof
 
 		$prepared_files /** Storage<prepared_file> */ = Model::$prepared_files;
 		$prepared = $prepared_files[0];
-		$children /** Storage<ast_node> */ = Syntax_Nodes::block_data($prepared->source->root)->children;
-		$first_data = Syntax_Nodes::binding_data($children[0]);
-		$assignment_data = Syntax_Nodes::binding_data($children[2]);
-		$literal_data = Syntax_Nodes::integer_data($first_data->value);
-		$reference_data = Syntax_Nodes::reference_data(Syntax_Nodes::binding_data($children[1])->value);
-		$first = $first_data->require_preparation();
-		$assignment = $assignment_data->require_preparation();
+		$children /** Storage<statement_node> */ = $prepared->source->root->body->statements;
+		$first_data = object_cast(object_cast($children[0], expression_statement_node::class)->expression, assignment_expression_node::class);
+		$assignment_data = object_cast(object_cast($children[2], expression_statement_node::class)->expression, assignment_expression_node::class);
+		$literal_data = object_cast($first_data->value, integer_literal_node::class);
+		$reference_data = object_cast(object_cast($children[1], variable_declaration_node::class)->initializer, variable_reference_node::class);
+		$first = $first_data->require_preparation()->binding;
+		$assignment = $assignment_data->require_preparation()->binding;
 		$literal = $literal_data->require_preparation();
 		$reference = $reference_data->require_preparation();
 		if (($literal->decimal !== '10') || (weakref_get($reference->declaration) !== weakref_get($first->declaration)) || ($reference->type !== $first->type)) {
@@ -45,7 +45,7 @@ final class S2S_Proof
 		if (($first->resolved_kind !== binding_kind::declaration) || ($assignment->resolved_kind !== binding_kind::assignment) || (weakref_get($assignment->declaration) !== weakref_get($first->declaration))) {
 			throw new \LogicException('First assignment and reassignment lost declaration identity');
 		}
-		if ($first_data->syntax_kind !== binding_kind::unresolved) {
+		if ($first_data->kind() !== node_kind::assignment_expression) {
 			throw new \LogicException('Preparation mutated the parsed binding');
 		}
 		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
@@ -59,7 +59,7 @@ final class S2S_Proof
 		if (($outputs[0]->text !== $expected) || ($outputs[0] === $old_output)) {
 			throw new \LogicException('Repeated generation changed bytes or reused output records');
 		}
-		if ($first_data->require_preparation() !== $first) {
+		if ($first_data->require_preparation()->binding !== $first) {
 			throw new \LogicException('Emission replaced shared prepared facts');
 		}
 		Compiler_Lifecycle::reset_cpp();
