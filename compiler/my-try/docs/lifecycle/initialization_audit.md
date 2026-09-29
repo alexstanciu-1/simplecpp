@@ -18,7 +18,7 @@ required fields are assigned before use/publication; optional absence uses ?T.
 | file | Module_Loader assigns a relative path and disk_source=true; content and metadata start as empty/zero pending placeholders. Tokenizer invokes File_Loader, which completes metadata/content reads before assigning their observed values. | tokens is the sole optional field, initially null. Successful reload clears it; failed load preserves the previous record and backlink. |
 | token_list | Constructor initializes tokens; Tokenizer assigns file and captured content before scanning, and returns only on success. | Empty input produces a completed empty list; no optional fields. |
 | token | Tokenizer assigns offset, length and text before append. | No optional fields. text remains required until a separately proved native representation replaces it. |
-| Tokenizer worker | Constructor requires source; tokenize receives a computed full IO path for disk sources and captures content before any token_end call. Each scan creates a fresh result. | No optional worker fields. init may select another source on an already valid worker; constructor assignment satisfies native initialization analysis. |
+| Tokenizer worker | Constructor requires source; tokenize receives a computed full IO path for disk sources and captures content before any token_end call. Each scan creates a fresh result. | No optional worker fields. Constructor assignment establishes the required source before scanning. |
 
 Compiler.tokenize clears downstream model roots and file backlinks before scanning.
 A lexical failure cannot publish the unfinished token list. Completed earlier files

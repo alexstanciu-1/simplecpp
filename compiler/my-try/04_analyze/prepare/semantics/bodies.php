@@ -86,18 +86,9 @@ final class Body_Preparation
 		}
 	}
 
-	/** Each body receives fresh locals; parameters enter before source-order bindings. */
-	public static function prepare_body(function_node $syntax, preparation_context $outer): void
+	/** Seed the worker-owned body context with parameters before source-order bindings. */
+	public static function prepare_body(function_node $syntax, preparation_context $context): void
 	{
-		$context = new preparation_context();
-		$context->collection = $outer->collection;
-		$context->worker = $outer->worker;
-		$context->owner = $outer->owner;
-		$context->integer = $outer->integer;
-		$context->boolean = $outer->boolean;
-		$context->floating = $outer->floating;
-		$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
-
 		$signature = $syntax->require_preparation();
 		$context->return_type = $signature->return_type;
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;

@@ -38,7 +38,7 @@ try
 
 	file_put_contents($definition, 'function value(): int { return 2; }');
 	$compiler->update_llvm([$definition]);
-	$targets = Scope_Lookup::live(Model::$global_scope->functions_named('value'));
+	$targets = Model::$global_scope->functions_named('value');
 	smoke_require(count($targets) === 1, 'Update lost unique function target');
 	smoke_require(($targets[0]->change_status === change_state::added) && object_cast($targets[0], collected_function::class)->syntax()->body->syntax_changed, 'Wrong body-change flags');
 	smoke_require(Model::syntax_files()[0] === $old_syntax, 'Declaration container identity was replaced');

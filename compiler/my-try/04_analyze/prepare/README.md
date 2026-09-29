@@ -77,8 +77,9 @@ Each concrete node calls its typed preparation algorithm and attaches the return
 there is no intermediate dispatch adapter or adapter allocation. The context remains
 invocation-local and is never stored on syntax or as mutable current state on the scheduler.
 Typed routines retain resolution/inference algorithms. Typed work hooks enter scheduler
-methods that compare old/new specialized facts and settle work. Function-body entry
-establishes its local/return context before traversing statements.
+methods that compare old/new specialized facts and settle work. The worker creates
+one isolated context per work invocation. Function-body entry
+seeds that context with parameters and its return type before traversing statements.
 The file node's hook delegates to its executable body: it prepares only statements,
 not the independently scheduled declarations. Bodies and ordinary blocks share one
 source-order statement loop and pass the same active context to their statements.
@@ -88,12 +89,10 @@ and variable assignments share the local-storage routine; member writes use a se
 typed field-write routine and never introduce locals. Literal/reference helpers accept
 their concrete node types rather than arbitrary AST nodes.
 
-Optimization debt: function-body setup still creates its own local context after
-the scheduler creates the outer invocation context. Selection still scans file
-declarations and registered lookup observations to discover
-work. Incremental execution skips unchanged semantic work, but selection is not yet
-limited to a changed-only input list. Context setup and direct change queues require
-separate measurement and must preserve context isolation and missing-name observations.
+Optimization debt: selection still scans file declarations and registered lookup
+observations to discover work. Incremental execution skips unchanged semantic work,
+but selection is not yet limited to a changed-only input list. Direct change queues
+require separate measurement and must preserve missing-name observations.
 
 Resolution runs here after the parsing join,
 not in a second pre-resolution pass. Unchanged bodies retain syntax, occurrences and

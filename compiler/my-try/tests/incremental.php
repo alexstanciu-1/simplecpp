@@ -10,10 +10,10 @@ function sync_check(bool $condition, string $message): void
 	}
 }
 
-/** Read live function candidates; the raw global buckets must still contain tombstones. */
+/** Read active function candidates after deletion cleanup removes retired membership. */
 function sync_function(string $name): collected_name
 {
-	$rows = Scope_Lookup::live(Model::$global_scope->functions_named($name));
+	$rows = Model::$global_scope->functions_named($name);
 	sync_check(count($rows) === 1, 'Expected one live ' . $name);
 	return $rows[0];
 }
@@ -57,8 +57,7 @@ try
 	sync_check(!isset($fields['item']) && $fields['other'] === change_state::added, 'Field deletion/addition lost');
 	file_put_contents($a, 'function replacement(): int { return 3; }');
 	$compiler->sync([$a]);
-	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 0, 'Deleted function still resolves');
-	sync_check(count(Model::$global_scope->functions_named('value')) === 0, 'Deleted global index member survived');
+	sync_check(count(Model::$global_scope->functions_named('value')) === 0, 'Deleted function still resolves');
 	sync_check(sync_function('replacement')->change_status === change_state::added, 'Added function flag missing');
 	try {
 		(new LLVM_Legacy_Name_Preparation())->prepare($unchanged->collection);
@@ -83,10 +82,10 @@ try
 	// Duplicate definitions survive sync; deleting one makes lookup unambiguous again.
 	file_put_contents($a, 'function value(): int { return 4; } function value(): int { return 5; }');
 	$compiler->sync([$a]);
-	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 2, 'Duplicate candidates collapsed');
+	sync_check(count(Model::$global_scope->functions_named('value')) === 2, 'Duplicate candidates collapsed');
 	file_put_contents($a, 'function value(): int { return 5; } function value(): int { return 4; }');
 	$compiler->sync([$a]);
-	foreach (Scope_Lookup::live(Model::$global_scope->functions_named('value')) as $entry) {
+	foreach (Model::$global_scope->functions_named('value') as $entry) {
 		sync_check(object_cast($entry, collected_function::class)->syntax()->body->syntax_changed, 'Reordered duplicate body edit was not recorded');
 	}
 	file_put_contents($a, 'function value(): int { return 4; }');
@@ -95,7 +94,7 @@ try
 	unlink($a);
 	$compiler->sync([$a]);
 	sync_check((Model::$modules[$directory]->sources['a.phs']->file->changes & SYNC_DELETED) !== 0, 'Deleted file disappeared instead of remaining marked');
-	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 0, 'Deleted file still exports functions');
+	sync_check(count(Model::$global_scope->functions_named('value')) === 0, 'Deleted file still exports functions');
 	file_put_contents($a, 'function value(): int { return 6; }');
 	$compiler->update_llvm([$a]);
 	sync_check(sync_function('value')->change_status === change_state::added, 'Historical tombstone participated in matching');
@@ -106,7 +105,7 @@ try
 	$c = $directory . '/c.phs';
 	file_put_contents($c, 'function value(): int { return 99; }');
 	$compiler->sync([$c]);
-	sync_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('value'))) === 2, 'New file erased another definition');
+	sync_check(count(Model::$global_scope->functions_named('value')) === 2, 'New file erased another definition');
 	unlink($c);
 	$compiler->update_llvm([$c]);
 	sync_check(sync_function('value')->change_status === change_state::added, 'Deletion damaged another file definition');

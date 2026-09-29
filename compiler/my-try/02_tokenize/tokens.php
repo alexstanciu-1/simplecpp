@@ -16,11 +16,6 @@ final class Tokenizer
 		$this->source = $file;
 	}
 
-	public function init(file $file): void
-	{
-		$this->source = $file;
-	}
-
 	/** Scan the source into token spans, skipping whitespace without changing offsets. */
 	public function tokenize(?string $full_path = null): token_list
 	{
@@ -66,16 +61,6 @@ final class Tokenizer
 		return $result;
 	}
 
-	private static function letter(int $byte): bool
-	{
-		return ($byte === 95) || (($byte >= 65) && ($byte < 91)) || (($byte >= 97) && ($byte < 123));
-	}
-
-	private static function digit(int $byte): bool
-	{
-		return ($byte >= 48) && ($byte < 58);
-	}
-
 	/** Recognize names, variables, decimal numbers and assignment punctuation. */
 	private function token_end(int $start): int
 	{
@@ -84,21 +69,21 @@ final class Tokenizer
 		if ($byte === 36) {
 			$offset++;
 			$byte = string_byte_at($this->content, $offset);
-			if (!self::letter($byte)) {
+			if (!Source_Text::letter($byte)) {
 				throw new \RuntimeException('Expected variable name at ' . $this->source->path . ': byte ' . $start);
 			}
 		}
-		if (self::letter($byte))
+		if (Source_Text::letter($byte))
 		{
 			$offset++;
 			$next = string_byte_at($this->content, $offset);
-			while (self::letter($next) || self::digit($next)) {
+			while (Source_Text::letter($next) || Source_Text::digit($next)) {
 				$offset++;
 				$next = string_byte_at($this->content, $offset);
 			}
 			return $offset;
 		}
-		if (self::digit($byte) || ($byte === 46)) {
+		if (Source_Text::digit($byte) || ($byte === 46)) {
 			return $this->numeric_end($start);
 		}
 		if (string_byte_slice($this->content, $offset, 2) === '->') {
@@ -123,7 +108,7 @@ final class Tokenizer
 	private function numeric_end(int $start): int
 	{
 		$offset = $start;
-		while (self::digit(string_byte_at($this->content, $offset))) {
+		while (Source_Text::digit(string_byte_at($this->content, $offset))) {
 			$offset++;
 		}
 
@@ -132,7 +117,7 @@ final class Tokenizer
 		{
 			$offset++;
 			$fraction = $offset;
-			while (self::digit(string_byte_at($this->content, $offset))) {
+			while (Source_Text::digit(string_byte_at($this->content, $offset))) {
 				$offset++;
 			}
 			$digits = $digits + ($offset - $fraction);
@@ -151,7 +136,7 @@ final class Tokenizer
 				$offset++;
 			}
 			$exponent = $offset;
-			while (self::digit(string_byte_at($this->content, $offset))) {
+			while (Source_Text::digit(string_byte_at($this->content, $offset))) {
 				$offset++;
 			}
 			if ($offset === $exponent) {
@@ -160,7 +145,7 @@ final class Tokenizer
 		}
 
 		$next = string_byte_at($this->content, $offset);
-		if (self::letter($next) || ($next === 46)) {
+		if (Source_Text::letter($next) || ($next === 46)) {
 			throw new \RuntimeException('Unsupported numeric literal at ' . $this->source->path . ': byte ' . $start);
 		}
 		return $offset;

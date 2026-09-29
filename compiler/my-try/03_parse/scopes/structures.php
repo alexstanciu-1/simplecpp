@@ -193,23 +193,4 @@ final class scope
 		}
 		return $result;
 	}
-
-	/** Rebuild local indexes from a caller-selected membership. */
-	public function replace_declarations(array $entries /** vector<collected_name> */): void
-	{
-		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_name> */();
-		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
-		foreach ($entries as $entry) {
-			$this->register($entry);
-		}
-	}
-
-	/** Replace membership without deciding which definitions belong in this scope. */
-	public function replace_types(array $definitions /** vector<type_definition> */): void
-	{
-		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition> */();
-		foreach ($definitions as $definition) {
-			$this->register_type($definition);
-		}
-	}
 }

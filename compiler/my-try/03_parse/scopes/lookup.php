@@ -6,12 +6,6 @@ namespace scpp\compiler;
 /** Deletion cleanup precedes resolution; lookups see only active index membership. */
 final class Scope_Lookup
 {
-	/** Kept for parked callers; active indexes have already been cleaned at the preparation boundary. */
-	public static function live(array $entries /** vector<collected_name> */): array /** vector<collected_name> */
-	{
-		return $entries;
-	}
-
 	/** Resolve the nearest live type pool, including the language/runtime parent. */
 	public static function types(scope $start, string $name, ?preparation_context $context = null): array /** vector<type_definition> */
 	{

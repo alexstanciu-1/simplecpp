@@ -51,12 +51,13 @@ final class Source_Text
 		return false;
 	}
 
-	private static function letter(int $byte): bool
+	/** ASCII identifier-start byte, including underscore. */
+	public static function letter(int $byte): bool
 	{
 		return ($byte === 95) || (($byte >= 65) && ($byte < 91)) || (($byte >= 97) && ($byte < 123));
 	}
 
-	private static function digit(int $byte): bool
+	public static function digit(int $byte): bool
 	{
 		return ($byte >= 48) && ($byte < 58);
 	}

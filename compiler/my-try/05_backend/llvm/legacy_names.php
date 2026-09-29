@@ -52,7 +52,7 @@ final class LLVM_Legacy_Name_Preparation
 			$variable_scope = Scope_Lookup::visible($entry_scope);
 			while (true)
 			{
-				$candidates = Scope_Lookup::live($variable_scope->variables_named($entry->name));
+				$candidates = $variable_scope->variables_named($entry->name);
 				$parent = $variable_scope->parent_scope();
 				if ((q_count($candidates) !== 0) || ($parent === null)) {
 					break;
@@ -83,7 +83,7 @@ final class LLVM_Legacy_Name_Preparation
 			{
 				$current_scope = Scope_Lookup::visible($current_scope);
 				$candidates = [];
-				$candidates = Scope_Lookup::live($current_scope->functions_named($entry->name));
+				$candidates = $current_scope->functions_named($entry->name);
 				if (q_count($candidates) !== 0) {
 					break;
 				}
@@ -115,7 +115,7 @@ final class LLVM_Legacy_Name_Preparation
 					break;
 				}
 				$type_candidates /** vector<collected_name> */ = [];
-				$type_candidates = Scope_Lookup::live($current_scope->source_types_named($entry->name));
+				$type_candidates = $current_scope->source_types_named($entry->name);
 				if (q_count($type_candidates) !== 0) {
 					if (q_count($type_candidates) !== 1) {
 						throw new \RuntimeException('Ambiguous struct type: ' . $entry->name);

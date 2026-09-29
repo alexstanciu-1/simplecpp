@@ -17,7 +17,7 @@ parked regression workers, not an alternative semantic development path.
 
 | Entry point | State lifetime |
 | --- | --- |
-| `new Tokenizer(file)` | Required source exists immediately. `tokenize()` captures current content and creates a fresh token list. `init(file)` can select the next source. |
+| `new Tokenizer(file)` | Required source exists immediately. `tokenize()` captures current content and creates a fresh token list. |
 | `new Parser(tokens, target_scope)` | Required tokens exist immediately; target scope remains explicitly optional. `init()` selects the next input. Each `parse()` creates a `Parser_Run` with its real syntax result, scope and collector initialized. |
 | `LLVM_Legacy_Template_Checker::check(files, policy)` | Creates a complete `llvm_legacy_template_check_context` once, sharing its file index and policy across fresh `LLVM_Legacy_Template_File_Checker` workers. Symbolic locals/bindings reset per template. |
 | `LLVM_Preparation::prepare_program(sources, policy)` | Creates `LLVM_Preparation_Run` with a fresh registry, work queue, indexes and prepared struct types. A failed invocation cannot retain state in the reusable facade. |

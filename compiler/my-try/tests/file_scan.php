@@ -82,7 +82,7 @@ try
 	unlink($nested);
 	$compiler->sync([]);
 	file_scan_check(($one->sources['nested/item.phs'] === $c) && ($c->changes === change_state::deleted) && ($c->file->changes === SYNC_DELETED), 'Deleted file lost its tombstone');
-	file_scan_check(count(Scope_Lookup::live(Model::$global_scope->functions_named('nested'))) === 0, 'Deleted file remained visible in scope');
+	file_scan_check(count(Model::$global_scope->functions_named('nested')) === 0, 'Deleted file remained visible in scope');
 	file_put_contents($nested, 'function nested(): int { return 4; }');
 	$compiler->sync([]);
 	file_scan_check(($one->sources['nested/item.phs'] === $c) && ($c->changes === change_state::unchanged), 'Reappearance lost retained identity');
