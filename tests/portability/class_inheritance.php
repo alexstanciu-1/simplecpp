@@ -50,3 +50,22 @@ foreach ([
     throw new LogicException('Accepted invalid modifier declaration: ' . $body);
 }
 echo "Abstract methods: normalized visibility order and rejected invalid modifiers passed\n";
+
+// Preserve parent dispatch; the target owns ancestry and constructor placement.
+$parentSource = file_get_contents(__DIR__ . '/fixtures/parent_calls.php');
+$parentOutput = $converter->convert($parentSource, 'parent_calls.php');
+foreach (['parent::__construct(', 'parent::value('] as $expected) {
+    if (!str_contains($parentOutput, $expected)) {
+        throw new LogicException('Lost parent dispatch: ' . $expected);
+    }
+}
+foreach ([
+    'parent::run();',
+    'class Child extends Base { public function value(): int { return parent::VALUE; } }',
+    'class Child extends Base { public function value(): int { return parent::$value; } }',
+] as $body) {
+    try { $converter->convert('<?php ' . $body, 'bad_parent.php'); }
+    catch (RuntimeException $error) { continue; }
+    throw new LogicException('Accepted unsupported parent access: ' . $body);
+}
+echo "Parent calls: literal dispatch preserved and unsupported access rejected\n";

@@ -71,7 +71,14 @@ because the converter expected visibility before the abstract modifier. That ord
 restriction is now removed: both forms normalize to the same declaration and focused
 inheritance/method-signature conversion tests pass. Retry `logs-4` advances to
 `04_analyze/collect/structures.php:136`, `parent::__construct($collection)`:
-`expected literal type name`. Parent constructor calls are the next conversion gap.
+`expected literal type name`. The converter now preserves literal parent method/constructor calls. Retry
+`logs-5` reaches `04_analyze/prepare/worker.php:129`, another
+`isset($function->body)` requiring the existing parsed-body query.
+The isolated parent-call proof in `/tmp/my-try-parent-proof-isolated-20260929`
+exposes a separate generator defect: constructor extraction rejects the IR object
+payload because its guard expects an array, leaving `Base::__construct(...)`
+in the C++ body. Generator repair needs cross-owner approval; this is not a runtime
+operator/type limitation.
 Whole-compiler STAN/build/execution remain unreached.
 
 ## Current authoring contracts

@@ -231,15 +231,22 @@ final class Converter {
 		$this->fail($line, 'unclosed interface');
 	}
 
-	/** Literal type/self members; expression access adds fields/calls to constant defaults. */
+	/** Literal type/self members and parent calls; ancestry remains a target responsibility. */
 	private function staticMember(array $type, bool $expression = false): string {
 		if (!in_array($type[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)
-			|| in_array(strtolower($type[1]), ['parent', 'static'], true)
+			|| strtolower($type[1]) === 'static'
+			|| (strtolower($type[1]) === 'parent' && (!$expression || !$this->inClass))
 			|| (strtolower($type[1]) === 'self' && (!$expression || !$this->inClass))) {
 			$this->fail($type[2], 'expected literal type name');
 		}
 		$this->expect('::');
 		$member = $this->significant();
+		if (strtolower($type[1]) === 'parent') {
+			$next = $this->nextSignificant($this->position);
+			if ($member[0] !== T_STRING || ($this->tokens[$next][1] ?? '') !== '(') {
+				$this->fail($member[2], 'parent access requires a literal method call');
+			}
+		}
 		if ($expression && $member[0] === T_VARIABLE) {
 			$next = $this->nextSignificant($this->position);
 			if (($this->tokens[$next][1] ?? '') === '(') { $this->fail($member[2], 'calls through static properties are unsupported'); }
