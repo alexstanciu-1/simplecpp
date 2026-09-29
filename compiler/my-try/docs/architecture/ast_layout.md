@@ -58,8 +58,11 @@ node or iterator does not by itself authorize semantic work after retirement.
 
 ## Specialization dispatch
 
-Nodes forward `prepare`, `generate_cpp` and `maintain` to typed worker methods.
-`Syntax_Preparation` and `CPP_Syntax` own their algorithms, contexts and traversal.
+Nodes receive `preparation_context` directly in `prepare()` and forward themselves
+to the appropriate typed preparation algorithm. Facts remain attached to the node;
+algorithms and statement traversal remain in preparation classes. No separate
+preparation adapter is allocated, and nested work retains its own explicit context.
+`generate_cpp` continues to dispatch through `CPP_Syntax`.
 For maintenance, each node enumerates its own named owning fields in grammar order;
 workers implement `enter`, `edge` and `token_index`. The edge callback chooses
 whether to recurse. No abstract maintenance visitor or per-kind visitor methods

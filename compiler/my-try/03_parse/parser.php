@@ -309,7 +309,7 @@ final class Parser_Run
 		}
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
-		$previous = $this->collector->previous($this->file_scope, $name, collected_name_kind::struct_declaration);
+		$previous = $this->collector->previous_struct($this->file_scope, $name);
 		if ($previous === null) {
 			$node = new struct_node();
 			$node->set_span($start, $start);
@@ -326,7 +326,7 @@ final class Parser_Run
 		$old_end = $node->end_token();
 		$record = object_cast($node, struct_node::class);
 		$record->name = $name;
-		$this->collector->declaration($node, $name_index, collected_name_kind::struct_declaration, $this->file_scope, $name, $previous !== null);
+		$record->collect($this->collector, $this->file_scope, $name_index);
 		$record->member_scope()->set_parent($this->file_scope);
 		$fields /** Storage<field_node> */ = new Storage();
 		$this->expect('{');
@@ -351,13 +351,13 @@ final class Parser_Run
 		}
 		$type_start = $this->position++;
 		$type = $this->named_type($type_start);
-		$this->record_name($type, $type_start, collected_name_kind::type_reference, $scope);
+		$type->collect($this->collector, $scope, $type_start);
 		if (!string_byte_starts_with($this->text(), '$')) {
 			throw new \RuntimeException($this->error_message('Expected field variable name'));
 		}
 		$name_index = $this->position++;
 		$name = $this->name_at($name_index);
-		$previous = $this->collector->previous($scope, $name, collected_name_kind::field_declaration);
+		$previous = $this->collector->previous_field($scope, $name);
 		if ($previous === null) {
 			$node = new field_node();
 			$node->set_span($start, $start);
@@ -375,7 +375,7 @@ final class Parser_Run
 		$field = object_cast($node, field_node::class);
 		$field->type_syntax = $type;
 		$field->name = $name;
-		$this->collector->declaration($node, $name_index, collected_name_kind::field_declaration, $scope, $name, $previous !== null);
+		$field->collect($this->collector, $scope, $name_index);
 		$this->expect(';');
 		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
 		return $field;
@@ -436,7 +436,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Template parameter conflicts with function name'));
 		}
 
-		$previous = $this->collector->previous($this->file_scope, $function_name, collected_name_kind::function_declaration);
+		$previous = $this->collector->previous_function($this->file_scope, $function_name);
 		if ($previous === null) {
 			$node = new function_node();
 			$node->set_span($start, $start);
@@ -459,7 +459,8 @@ final class Parser_Run
 				$old_body_end = $function->body->end_token();
 			}
 		}
-		$this->collector->declaration($node, $name_token_index, collected_name_kind::function_declaration, $this->file_scope, $function_name, $previous !== null);
+		$function->name = $function_name;
+		$function->collect($this->collector, $this->file_scope, $name_token_index);
 		$local_scope = $function->signature_scope();
 		$local_scope->set_parent($this->file_scope);
 		$slots /** hash<int> */ = [];
@@ -489,7 +490,7 @@ final class Parser_Run
 
 		$type_start = $this->position++;
 		$return_type = $this->named_type($type_start);
-		$this->record_name($return_type, $type_start, collected_name_kind::type_reference, $local_scope);
+		$return_type->collect($this->collector, $local_scope, $type_start);
 
 		$body_start = $this->position;
 		$body_end = $this->body_end();
@@ -518,7 +519,6 @@ final class Parser_Run
 		$body->syntax_changed = $body_changed;
 		$function->body = $body;
 		$function->parameters = $parameters;
-		$function->name = $function_name;
 		$function->template_parameters = $formals;
 		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_body_start, $start, $body_start));
 		return $function;
@@ -533,7 +533,7 @@ final class Parser_Run
 		}
 		$this->position++;
 		$type = $this->named_type($start);
-		$this->record_name($type, $start, collected_name_kind::type_reference, $scope);
+		$type->collect($this->collector, $scope, $start);
 		$mode = passing_mode::value;
 		if ($this->text() === '&') {
 			$mode = passing_mode::reference;
@@ -544,7 +544,7 @@ final class Parser_Run
 		}
 		$name_index = $this->position++;
 		$name = $this->name_at($name_index);
-		$previous = $this->collector->previous($scope, $name, collected_name_kind::variable_declaration);
+		$previous = $this->collector->previous_parameter($scope, $name);
 		if ($previous === null) {
 			$node = new parameter_node();
 			$node->set_span($start, $start);
@@ -564,7 +564,7 @@ final class Parser_Run
 		$parameter->mode = $mode;
 
 		$parameter->name = $name;
-		$this->collector->declaration($node, $name_index, collected_name_kind::variable_declaration, $scope, $name, $previous !== null);
+		$parameter->collect($this->collector, $scope, $name_index);
 		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
 		return $parameter;
 	}
@@ -621,7 +621,7 @@ final class Parser_Run
 			$declaration->name = $name;
 			$type_start = $this->position++;
 			$type = $this->named_type($type_start);
-			$this->record_name($type, $type_start, collected_name_kind::type_reference, $this->current_scope);
+			$type->collect($this->collector, $this->current_scope, $type_start);
 			$declaration->type_syntax = $this->text() === '[' ? $this->array_type($type) : $type;
 			if ($this->text() === '=') {
 				$this->position++;
@@ -629,18 +629,18 @@ final class Parser_Run
 			}
 			$this->expect(';');
 			$this->finish_node($declaration, $start);
-			$this->record_name($declaration, $start, collected_name_kind::variable_declaration, $this->current_scope);
+			$declaration->collect($this->collector, $this->current_scope, $start);
 			return $declaration;
 		}
 		$target = $this->variable_reference($start);
 		$target->name = $name;
 		$assignment = new assignment_expression_node();
 		if (($this->text() === '[') || ($this->text() === '->')) {
-			$this->record_name($target, $start, collected_name_kind::variable_reference, $this->current_scope);
+			$target->collect($this->collector, $this->current_scope, $start);
 			$assignment->target = object_cast($this->access_suffix($target), assignable_expression_node::class);
 		}
 		else {
-			$this->record_name($target, $start, collected_name_kind::binding, $this->current_scope);
+			$target->collect_write($this->collector, $this->current_scope, $start);
 			$assignment->target = $target;
 		}
 		if ($this->text() !== '=') {
@@ -678,8 +678,9 @@ final class Parser_Run
 		$this->position++;
 		$node /** expression_node */;
 		if (string_byte_starts_with($text, '$')) {
-			$node = $this->variable_reference($start);
-			$this->record_name($node, $start, collected_name_kind::variable_reference, $this->current_scope);
+			$variable = $this->variable_reference($start);
+			$variable->collect($this->collector, $this->current_scope, $start);
+			$node = $variable;
 		}
 		elseif (($text !== '') && Source_Text::digits($text)) {
 			$node = new integer_literal_node();
@@ -749,7 +750,7 @@ final class Parser_Run
 				$field->name = $this->name_at($field_index);
 				$this->finish_node($field, $base->start_token());
 				$base = $field;
-				$this->record_name($base, $field_index, collected_name_kind::field_reference, $this->current_scope);
+				$field->collect($this->collector, $this->current_scope, $field_index);
 				continue;
 			}
 			$this->position++;
@@ -782,7 +783,7 @@ final class Parser_Run
 				$type_start = $this->position++;
 				$type = $this->named_type($type_start);
 				$template_arguments->append($type);
-				$this->record_name($type, $type_start, collected_name_kind::type_reference, $this->current_scope);
+				$type->collect($this->collector, $this->current_scope, $type_start);
 				if ($this->text() !== ',') {
 					break;
 				}
@@ -805,7 +806,7 @@ final class Parser_Run
 		}
 		$this->expect(')');
 		$this->finish_node($call, $start);
-		$this->record_name($call, $start, collected_name_kind::function_reference, $this->current_scope);
+		$call->collect($this->collector, $this->current_scope, $start);
 		return $call;
 	}
 
@@ -831,16 +832,6 @@ final class Parser_Run
 		$node->name = $this->name_at($start);
 		$this->finish_node($node, $start);
 		return $node;
-	}
-
-	/** Normalize PHS name spelling before entering the shared occurrence model. */
-	private function record_name(ast_node $node, int $index, collected_name_kind $kind, scope $scope): int
-	{
-		$tokens /** Storage<token> */ = $this->tokens->tokens;
-		$text = $tokens[$index]->text();
-		$name = string_byte_starts_with($text, '$') ? string_byte_slice($text, 1, string_byte_len($text) - 1) : $text;
-
-		return $this->collector->record($node, $index, $kind, $scope, $name);
 	}
 
 	private function name_at(int $index): string

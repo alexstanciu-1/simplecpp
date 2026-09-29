@@ -67,6 +67,15 @@ retiring body occurrences. `kind()` is a computed compatibility classification;
 the class and its typed syntax cannot acquire conflicting mutable tags. See the
 [collected-record model](../../04_analyze/README.md) for the role hierarchy.
 
+Preparation work is specialized too: function signatures, record definitions,
+function bodies and file bodies share dependency/error bookkeeping, while required
+declaration links live only on the appropriate concrete work records. File-body
+work has no named declaration. Syntax nodes dispatch selection; work records
+dispatch queueing/rebuilding/member settlement to typed worker methods. The worker
+retains scheduling, comparison and recovery algorithms. Body replacement transfers
+the same body-work identity; it does not create a body symbol. See the
+[preparation owners and algorithm boundaries](../../04_analyze/prepare/README.md).
+
 ## Semantic preparation direction
 
 `File_Preparation` and specialization-attached facts are the active backend-neutral

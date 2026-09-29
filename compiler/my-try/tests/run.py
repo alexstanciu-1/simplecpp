@@ -66,6 +66,8 @@ def verify(root, output):
     (output / "ast_invariants.log").write_text(invariants.stdout + invariants.stderr)
     roles = run(["php", str(root / "tests/collected_roles.php")])
     (output / "collected_roles.log").write_text(roles.stdout + roles.stderr)
+    work = run(["php", str(root / "tests/preparation_work.php")])
+    (output / "preparation_work.log").write_text(work.stdout + work.stderr)
     dispatch = run(["php", str(root / "tests/specialization_dispatch.php")])
     (output / "specialization_dispatch.log").write_text(dispatch.stdout + dispatch.stderr)
     incremental = run(["php", str(root / "tests/incremental.php")])

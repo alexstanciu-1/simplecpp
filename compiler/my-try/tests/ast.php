@@ -149,11 +149,12 @@ final class AST_Test
 		$node->set_span(0, 3);
 		$scope = new scope();
 		$collector = new Symbol_Collector(new collected_file($tokens), $tokens, $scope, null, 1);
-		$position = $collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
+		$node->collect($collector, $scope, 0);
+		$position = $node->occurrence()->local_index;
 		self::check($scope->has_variables());
 		self::check($node->occurrence()->syntax() === $node);
 		try {
-			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'duplicate');
+			$node->collect($collector, $scope, 0);
 			throw new \RuntimeException('Expected duplicate occurrence rejection');
 		}
 		catch (\LogicException $expected) {
@@ -173,7 +174,7 @@ final class AST_Test
 			++$rejections;
 		}
 		try {
-			$collector->record($node, 0, collected_name_kind::variable_declaration, $scope, 'canonical_name');
+			$node->collect($collector, $scope, 0);
 		}
 		catch (\LogicException $expected) {
 			++$rejections;

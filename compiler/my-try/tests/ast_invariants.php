@@ -130,7 +130,7 @@ if (($trace->nodes !== [$binary, $assignment, $target, $literal, $right]) || ($b
 }
 // Work guards use canonical owner state; no per-expression deletion fields are needed.
 $source = new collected_file(new token_list());
-$owner = new preparation_owner(preparation_kind::file_body, $source);
+$owner = new file_body_work($source);
 rejected(function () use ($owner): void {
 	Preparation_Worker::require_active($owner);
 }, \LogicException::class);

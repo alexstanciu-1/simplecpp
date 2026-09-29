@@ -8,9 +8,9 @@ final class Preparation_Worker
 	private scope $language;
 	/** A failed item is attempted at most once by this invocation, but stays changed for the next. */
 	private \SplObjectStorage $attempt_failed /** hash<bool, shared<preparation_owner>> */;
-	private \SplObjectStorage $declarations /** hash<bool, shared<preparation_owner>> */;
-	private \SplObjectStorage $function_bodies /** hash<bool, shared<preparation_owner>> */;
-	private \SplObjectStorage $file_bodies /** hash<bool, shared<preparation_owner>> */;
+	private \SplObjectStorage $declarations /** hash<bool, shared<declaration_work>> */;
+	private \SplObjectStorage $function_bodies /** hash<bool, shared<function_body_work>> */;
+	private \SplObjectStorage $file_bodies /** hash<bool, shared<file_body_work>> */;
 	private \SplObjectStorage $owners /** hash<bool, shared<preparation_owner>> */;
 
 	/** Work lists are invocation-local; retained dependency records never reference this worker. */
@@ -18,9 +18,9 @@ final class Preparation_Worker
 	{
 		$this->language = $language;
 		$this->attempt_failed = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		$this->declarations = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		$this->function_bodies = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		$this->file_bodies = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$this->declarations = new \SplObjectStorage /** hash<bool, shared<declaration_work>> */();
+		$this->function_bodies = new \SplObjectStorage /** hash<bool, shared<function_body_work>> */();
+		$this->file_bodies = new \SplObjectStorage /** hash<bool, shared<file_body_work>> */();
 		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 	}
 
@@ -162,31 +162,35 @@ final class Preparation_Worker
 		}
 	}
 
-	/** Source change flags seed stable owners; dependencies extend the same work lists. */
+	/** Source change flags seed stable owners; concrete nodes select their typed work. */
 	private function select(collected_file $source): void
 	{
 		if ($source->root->body->work() === null) {
-			$source->root->body->attach_work(new preparation_owner(preparation_kind::file_body, $source));
+			$source->root->body->attach_work(new file_body_work($source));
 		}
-		$file_body /** preparation_owner */ = $source->root->body->work();
+		$file_body /** body_work */ = $source->root->body->work();
 		$this->select_owner($file_body);
 		$nodes /** Storage<declaration_node> */ = $source->root->declarations;
-		foreach ($nodes as $node)
-		{
-			if (($node->kind() === node_kind::function_declaration) || ($node->kind() === node_kind::struct_declaration)) {
-				$owner = $this->declaration_owner($node->occurrence());
-				$this->select_owner($owner);
-			}
-			if ($node->kind() === node_kind::function_declaration)
-			{
-				$function = object_cast($node, function_node::class);
-				if ($function->body->work() === null) {
-					$function->body->attach_work(new preparation_owner(preparation_kind::function_body, $source, $function->occurrence()));
-				}
-				$body /** preparation_owner */ = $function->body->work();
-				$this->select_owner($body);
-			}
+		foreach ($nodes as $node) {
+			$node->select_preparation($this);
 		}
+	}
+
+	/** Signature and implementation remain independent work identities. */
+	public function select_function(function_node $node): void
+	{
+		$entry = object_cast($node->occurrence(), collected_function::class);
+		$this->select_owner($this->function_owner($entry));
+		if ($node->body->work() === null) {
+			$node->body->attach_work(new function_body_work($entry));
+		}
+		$body /** body_work */ = $node->body->work();
+		$this->select_owner($body);
+	}
+
+	public function select_record(struct_node $node): void
+	{
+		$this->select_owner($this->record_owner(object_cast($node->occurrence(), collected_struct::class)));
 	}
 
 	private function select_owner(preparation_owner $owner): void
@@ -203,8 +207,8 @@ final class Preparation_Worker
 		if ($owner->source->deleted || ($owner->change_status === change_state::deleted)) {
 			return;
 		}
-		if ($owner->declaration !== null) {
-			$declaration /** collected_name */ = $owner->declaration;
+		if ($owner->declaration() !== null) {
+			$declaration /** collected_name */ = $owner->declaration();
 			if ($declaration->change_status === change_state::deleted) {
 				return;
 			}
@@ -212,42 +216,68 @@ final class Preparation_Worker
 		if ($owner->change_status !== change_state::added) {
 			$owner->change_status = change_state::changed;
 		}
-		if ($owner->kind === preparation_kind::declaration) {
-			$entry = object_cast($owner->declaration, collected_name::class);
-			if ($entry->change_status !== change_state::added) {
-				$entry->change_status = change_state::changed;
-			}
-		}
+		$owner->enqueue($this);
+	}
+
+	/** Apply the common queue guard after recording any declaration change. */
+	private function queue_ready(preparation_owner $owner): bool
+	{
 		if ($owner->state === preparation_state::processing) {
-			return;
+			return false;
 		}
 		$owner->state = preparation_state::pending;
-		if (isset($this->attempt_failed[$owner])) {
-			return;
+		return !isset($this->attempt_failed[$owner]);
+	}
+
+	/** Declaration change state follows its work state even during recursive processing. */
+	public function enqueue_declaration(declaration_work $owner): void
+	{
+		$entry = $owner->declaration();
+		if ($entry->change_status !== change_state::added) {
+			$entry->change_status = change_state::changed;
 		}
-		if ($owner->kind === preparation_kind::declaration) {
+		if ($this->queue_ready($owner)) {
 			$this->declarations[$owner] = true;
 		}
-		elseif ($owner->kind === preparation_kind::function_body) {
+	}
+
+	public function enqueue_function_body(function_body_work $owner): void
+	{
+		if ($this->queue_ready($owner)) {
 			$this->function_bodies[$owner] = true;
 		}
-		else {
+	}
+
+	public function enqueue_file_body(file_body_work $owner): void
+	{
+		if ($this->queue_ready($owner)) {
 			$this->file_bodies[$owner] = true;
 		}
 	}
 
-	public function declaration_owner(collected_name $entry): preparation_owner
+	public function declaration_owner(collected_definition $entry): declaration_work
 	{
-		$definition = object_cast($entry, collected_definition::class);
-		if ($definition->preparation === null) {
-			$definition->preparation = new preparation_owner(preparation_kind::declaration, $entry->collection, $entry);
+		return $entry->preparation_work($this);
+	}
+
+	public function function_owner(collected_function $entry): declaration_work
+	{
+		if ($entry->preparation === null) {
+			$entry->preparation = new function_signature_work($entry);
 		}
-		$owner /** preparation_owner */ = $definition->preparation;
-		return $owner;
+		return $entry->preparation;
+	}
+
+	public function record_owner(collected_struct $entry): declaration_work
+	{
+		if ($entry->preparation === null) {
+			$entry->preparation = new record_definition_work($entry);
+		}
+		return $entry->preparation;
 	}
 
 	/** Identity lookup alone does not require a completed declaration; callers choose when it does. */
-	public function depend(preparation_owner $owner, collected_name $entry): preparation_owner
+	public function depend(preparation_owner $owner, collected_definition $entry): declaration_work
 	{
 		$target = $this->declaration_owner($entry);
 		$owner->dependencies[$target] = $target->version;
@@ -256,7 +286,7 @@ final class Preparation_Worker
 	}
 
 	/** Register the dependency before demanding completed facts; failed facts are never consumed. */
-	public function require_declaration(preparation_owner $owner, collected_name $entry): preparation_owner
+	public function require_declaration(preparation_owner $owner, collected_definition $entry): declaration_work
 	{
 		$target = $this->depend($owner, $entry);
 		$this->declaration($target);
@@ -270,7 +300,7 @@ final class Preparation_Worker
 		if ($type->kind !== type_kind::record) {
 			return;
 		}
-		$entry = object_cast($type->declaration, collected_name::class);
+		$entry /** collected_struct */ = $type->declaration;
 		$this->require_declaration($context->owner, $entry);
 	}
 
@@ -286,7 +316,7 @@ final class Preparation_Worker
 				$lookup->scope->remove_preparation_lookup($lookup);
 			}
 		}
-		$owner->dependencies = new \SplObjectStorage /** hash<int, shared<preparation_owner>> */();
+		$owner->dependencies = new \SplObjectStorage /** hash<int, shared<declaration_work>> */();
 		$owner->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
 	}
 
@@ -296,7 +326,7 @@ final class Preparation_Worker
 		if ($owner->source->deleted || ($owner->change_status === change_state::deleted)) {
 			throw new \LogicException('Deleted work cannot be prepared or generated');
 		}
-		$declaration = $owner->declaration;
+		$declaration = $owner->declaration();
 		if ($declaration !== null) {
 			if ($declaration->change_status === change_state::deleted) {
 				throw new \LogicException('Deleted declaration cannot be prepared or generated');
@@ -308,7 +338,7 @@ final class Preparation_Worker
 	}
 
 	/** Rebuild selected signatures/layout facts; only effective changes propagate to consumers. */
-	public function declaration(preparation_owner $owner): void
+	public function declaration(declaration_work $owner): void
 	{
 		self::require_active($owner);
 		if ($owner->state === preparation_state::processing) {
@@ -336,46 +366,16 @@ final class Preparation_Worker
 				return;
 			}
 		}
-		$entry = object_cast($owner->declaration, collected_name::class);
 		$recovering = $owner->failed;
-		$old_dependencies /** hash<int, shared<preparation_owner>> */ = $owner->dependencies;
+		$old_dependencies /** hash<int, shared<declaration_work>> */ = $owner->dependencies;
 		$this->detach_dependencies($owner);
 		$owner->state = preparation_state::processing;
 		$context = $this->context($owner);
 		try
 		{
-			if ($entry instanceof collected_function)
-			{
-				$function_syntax = object_cast($entry, collected_function::class)->syntax();
-				$old_signature = $function_syntax->preparation();
-				// The scheduler knows the declaration type and compares its specialized facts.
-				Declaration_Preparation::prepare_function($function_syntax, $context);
-				$changed = !Preparation_Changes::function_signature($old_signature, $function_syntax->require_preparation());
-				if (!$changed) {
-					$previous_signature /** prepared_function */ = $old_signature;
-					$function_syntax->set_preparation($previous_signature);
-					Preparation_Changes::restore_parameters($function_syntax, $previous_signature);
-				}
-			}
-			else
-			{
-				$record_syntax = object_cast($entry, collected_struct::class)->syntax();
-				$old_record = $record_syntax->preparation();
-				Declaration_Preparation::prepare_struct($record_syntax, $context);
-				$changed = !Preparation_Changes::record($old_record, $record_syntax->require_preparation());
-				foreach ($old_dependencies as $target /** @object-key */) {
-					if ($old_dependencies[$target] !== $target->version) {
-						$changed = true;
-					}
-				}
-				if (!$changed) {
-					$previous_record /** prepared_record */ = $old_record;
-					$record_syntax->set_preparation($previous_record);
-					Preparation_Changes::restore_fields($record_syntax, $previous_record);
-				}
-			}
+			$changed = $owner->rebuild($this, $context, $old_dependencies);
 			$this->settle($owner);
-			$this->settle_members($entry);
+			$owner->settle_members($this);
 			if ($changed || $recovering) {
 				$owner->version++;
 				$owner->source->preparation_changes[$owner] = true;
@@ -391,7 +391,7 @@ final class Preparation_Worker
 	}
 
 	/** Declarations have settled; each selected body replaces facts and dependencies once. */
-	private function body(preparation_owner $owner): void
+	private function body(body_work $owner): void
 	{
 		self::require_active($owner);
 		$this->detach_dependencies($owner);
@@ -399,18 +399,7 @@ final class Preparation_Worker
 		$context = $this->context($owner);
 		try
 		{
-			if ($owner->kind === preparation_kind::function_body) {
-				$entry = object_cast($owner->declaration, collected_name::class);
-				$syntax = object_cast($entry, collected_function::class)->syntax();
-				$this->require_declaration($owner, $entry);
-				Preparation_Cleanup::tree($syntax->body);
-				Declaration_Preparation::prepare_body($syntax, $context);
-				$syntax->body->syntax_changed = false;
-			}
-			else {
-				$this->file_body($owner->source->root, $context);
-				$owner->source->root->body->syntax_changed = false;
-			}
+			$owner->rebuild($this, $context);
 			$this->settle($owner);
 			$owner->version++;
 			$owner->source->preparation_changes[$owner] = true;
@@ -429,21 +418,75 @@ final class Preparation_Worker
 		$owner->failure_message = '';
 	}
 
-	/** Parameters and fields settle with their enclosing declaration, not during parsing. */
-	private function settle_members(collected_name $entry): void
+	/** Preserve parameter fact identities when the effective signature is unchanged. */
+	public function prepare_function_signature(function_signature_work $owner, preparation_context $context): bool
 	{
-		$entry->change_status = change_state::unchanged;
-		if ($entry instanceof collected_function) {
-			$parameters /** Storage<parameter_node> */ = object_cast($entry, collected_function::class)->syntax()->parameters;
-			foreach ($parameters as $parameter) {
-				$parameter->occurrence()->change_status = change_state::unchanged;
+		$syntax = $owner->declaration()->syntax();
+		$old = $syntax->preparation();
+		Declaration_Preparation::prepare_function($syntax, $context);
+		$changed = !Preparation_Changes::same_signature($old, $syntax->require_preparation());
+		if (!$changed) {
+			$previous /** prepared_function */ = $old;
+			$syntax->set_preparation($previous);
+			Preparation_Changes::restore_parameters($syntax, $previous);
+		}
+		return $changed;
+	}
+
+	/** Nested layout versions matter even if this record retains the same field type identities. */
+	public function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
+	{
+		$syntax = $owner->declaration()->syntax();
+		$old = $syntax->preparation();
+		Declaration_Preparation::prepare_struct($syntax, $context);
+		$changed = !Preparation_Changes::same_record($old, $syntax->require_preparation());
+		foreach ($previous as $target /** @object-key */) {
+			if ($previous[$target] !== $target->version) {
+				$changed = true;
 			}
 		}
-		else {
-			$fields /** Storage<field_node> */ = object_cast($entry, collected_struct::class)->syntax()->fields;
-			foreach ($fields as $field) {
-				$field->occurrence()->change_status = change_state::unchanged;
-			}
+		if (!$changed) {
+			$facts /** prepared_record */ = $old;
+			$syntax->set_preparation($facts);
+			Preparation_Changes::restore_fields($syntax, $facts);
+		}
+		return $changed;
+	}
+
+	/** Demand the signature before replacing selected body facts. */
+	public function prepare_function_body(function_body_work $owner, preparation_context $context): void
+	{
+		$entry = $owner->declaration();
+		$syntax = $entry->syntax();
+		$this->require_declaration($owner, $entry);
+		Preparation_Cleanup::tree($syntax->body);
+		Body_Preparation::prepare_body($syntax, $context);
+		$syntax->body->syntax_changed = false;
+	}
+
+	public function prepare_file_body(file_body_work $owner, preparation_context $context): void
+	{
+		$this->file_body($owner->source->root, $context);
+		$owner->source->root->body->syntax_changed = false;
+	}
+
+	/** Members settle with their enclosing declaration, never during parsing. */
+	public function settle_parameters(collected_function $entry): void
+	{
+		$entry->change_status = change_state::unchanged;
+		$parameters /** Storage<parameter_node> */ = $entry->syntax()->parameters;
+		foreach ($parameters as $parameter) {
+			$parameter->occurrence()->change_status = change_state::unchanged;
+		}
+	}
+
+	/** Fields share their record's completion boundary. */
+	public function settle_fields(collected_struct $entry): void
+	{
+		$entry->change_status = change_state::unchanged;
+		$fields /** Storage<field_node> */ = $entry->syntax()->fields;
+		foreach ($fields as $field) {
+			$field->occurrence()->change_status = change_state::unchanged;
 		}
 	}
 
@@ -499,7 +542,7 @@ final class Preparation_Worker
 	private function file_body(file_node $root, preparation_context $context): void
 	{
 		Preparation_Cleanup::tree($root->body);
-		File_Preparation::prepare_statements($root->body->statements, new Syntax_Preparation($context));
+		Body_Preparation::prepare_statements($root->body->statements, $context);
 	}
 
 	/** Context is transient and always uses the selected owner's source token generation. */

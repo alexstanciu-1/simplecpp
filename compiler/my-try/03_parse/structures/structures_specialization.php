@@ -43,9 +43,9 @@ final class file_node extends ast_node
 	}
 
 	/** Dispatch only the file executable body; declarations are independently scheduled. */
-	public function prepare(preparation_worker_i $worker): void
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_file_body($this);
+		$this->body->prepare($context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -88,7 +88,7 @@ final class function_body_node extends ast_node
 	/**
 	 * Parser comparison result for this executable unit, not an expression fact.
 	 * Parsing marks text/structure changes; successful body preparation settles this
-	 * flag. Scheduling also checks body_work state for dependency changes/retries.
+	 * flag. Scheduling also checks body_preparation state for dependency changes/retries.
 	 * This flag never gates backend work and is not a duplicate change_status.
 	 */
 	public bool $syntax_changed = true;
@@ -98,7 +98,7 @@ final class function_body_node extends ast_node
 	 * Signature/declaration work remains on collected occurrences. This is not
 	 * Preparation_Facts and does not supply preparation()/require_preparation().
 	 */
-	private ?preparation_owner $body_work = null;
+	private ?body_work $body_preparation = null;
 
 	public function __construct(scope $local_scope)
 	{
@@ -113,18 +113,18 @@ final class function_body_node extends ast_node
 	}
 
 	/** One canonical body schedule/dependency identity, shared with existing work lists. */
-	public function work(): ?preparation_owner
+	public function work(): ?body_work
 	{
-		return $this->body_work;
+		return $this->body_preparation;
 	}
 
 	/** Attach only after scheduling or an explicit transfer from a replaced body. */
-	public function attach_work(preparation_owner $work): void
+	public function attach_work(body_work $work): void
 	{
-		if (($this->body_work !== null) && ($this->body_work !== $work)) {
+		if (($this->body_preparation !== null) && ($this->body_preparation !== $work)) {
 			throw new \LogicException('Body already has a different preparation owner');
 		}
-		$this->body_work = $work;
+		$this->body_preparation = $work;
 	}
 
 	/**
@@ -132,10 +132,10 @@ final class function_body_node extends ast_node
 	 * dependencies before retirement, or transfer this exact record to the new body.
 	 * Clearing this slot alone is not dependency cleanup or successful preparation.
 	 */
-	public function detach_work(): ?preparation_owner
+	public function detach_work(): ?body_work
 	{
-		$work = $this->body_work;
-		$this->body_work = null;
+		$work = $this->body_preparation;
+		$this->body_preparation = null;
 		return $work;
 	}
 
@@ -152,10 +152,10 @@ final class function_body_node extends ast_node
 		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->statements));
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_function_body($this);
+		Body_Preparation::prepare_statements($this->statements, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -201,10 +201,10 @@ final class block_node extends statement_node
 		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->statements));
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_block($this);
+		Body_Preparation::prepare_statements($this->statements, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -237,15 +237,21 @@ final class named_type_node extends type_node
 	/** Stored reference spelling, independent of the token buffer lifetime. */
 	public string $name;
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_type_reference($this, $scope, $index);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::named_type;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_named_type($this);
+		Type_Preparation::prepare_named_type($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -309,10 +315,10 @@ final class integer_literal_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_integer_literal($this);
+		$this->set_preparation(Expression_Preparation::prepare_integer($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -345,10 +351,10 @@ final class float_literal_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_float_literal($this);
+		$this->set_preparation(Expression_Preparation::prepare_float($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -383,10 +389,10 @@ final class boolean_literal_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_boolean_literal($this);
+		$this->set_preparation(Expression_Preparation::prepare_boolean($this->value, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -413,6 +419,18 @@ final class variable_reference_node extends assignable_expression_node
 	/** Stored reference spelling, independent of the token buffer lifetime. */
 	public string $name;
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_variable_reference($this, $scope, $index);
+	}
+
+	/** A plain write has a distinct unresolved role; member/index bases are ordinary reads. */
+	public function collect_write(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_variable_write($this, $scope, $index);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::variable_reference;
@@ -423,10 +441,10 @@ final class variable_reference_node extends assignable_expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_variable_reference($this);
+		$this->set_preparation(Expression_Preparation::prepare_reference($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -463,6 +481,12 @@ final class call_node extends expression_node
 		$this->arguments = new Storage /** Storage<expression_node> */();
 	}
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_function_reference($this, $scope, $index);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::call_expression;
@@ -481,10 +505,10 @@ final class call_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_call($this);
+		$this->set_preparation(Expression_Preparation::prepare_call($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -542,6 +566,18 @@ final class function_node extends declaration_node
 		return $this->signature_scope;
 	}
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_function($this, $scope, $index);
+	}
+
+	/** Forward scheduling by concrete role; the worker owns selection and work state. */
+	public function select_preparation(Preparation_Worker $worker): void
+	{
+		$worker->select_function($this);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::function_declaration;
@@ -561,10 +597,10 @@ final class function_node extends declaration_node
 	}
 
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_function_signature($this);
+		Declaration_Preparation::prepare_function($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -604,6 +640,12 @@ final class parameter_node extends ast_node
 	public string $name;
 	public passing_mode $mode = passing_mode::value;
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_parameter($this, $scope, $index);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::parameter_declaration;
@@ -622,10 +664,10 @@ final class parameter_node extends ast_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_parameter($this);
+		Declaration_Preparation::prepare_parameter($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -707,9 +749,9 @@ final class assignment_expression_node extends expression_node
 	}
 
 	/** Forward the whole write; the worker must not prepare its target as an ordinary read. */
-	public function prepare(preparation_worker_i $worker): void
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_assignment($this);
+		$this->set_preparation(Expression_Preparation::prepare_assignment($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -746,10 +788,10 @@ final class expression_statement_node extends statement_node
 		return new expression_statement_children_iterator($this);
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_expression_statement($this);
+		Body_Preparation::prepare_expression_statement($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -785,10 +827,10 @@ final class return_node extends statement_node
 		return new return_children_iterator($this);
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_return($this);
+		Body_Preparation::prepare_return($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -826,6 +868,12 @@ final class variable_declaration_node extends statement_node
 	public type_node $type_syntax;
 	public ?expression_node $initializer = null;
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_variable($this, $scope, $index);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::variable_declaration;
@@ -844,10 +892,10 @@ final class variable_declaration_node extends statement_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_variable_declaration($this);
+		$this->set_preparation(Body_Preparation::prepare_local_storage($this->occurrence(), $this->type_syntax, $this->initializer, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -892,10 +940,10 @@ final class array_type_node extends type_node
 		return new array_type_children_iterator($this);
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_array_type($this);
+		Type_Preparation::prepare_array_type($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1006,6 +1054,18 @@ final class struct_node extends declaration_node
 		return $this->member_scope;
 	}
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_struct($this, $scope, $index);
+	}
+
+	/** Forward scheduling by concrete role; the worker owns selection and work state. */
+	public function select_preparation(Preparation_Worker $worker): void
+	{
+		$worker->select_record($this);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::struct_declaration;
@@ -1024,10 +1084,10 @@ final class struct_node extends declaration_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_struct($this);
+		Declaration_Preparation::prepare_struct($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1059,6 +1119,12 @@ final class field_node extends ast_node
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_field($this, $scope, $index);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::field_declaration;
@@ -1077,10 +1143,10 @@ final class field_node extends ast_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_field($this);
+		Declaration_Preparation::prepare_field($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1109,6 +1175,12 @@ final class field_access_node extends assignable_expression_node
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
 
+	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_field_reference($this, $scope, $index);
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::field_expression;
@@ -1127,10 +1199,10 @@ final class field_access_node extends assignable_expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward typed syntax; the worker owns preparation, context and traversal. */
-	public function prepare(preparation_worker_i $worker): void
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
 	{
-		$worker->prepare_field_access($this);
+		$this->set_preparation(Expression_Preparation::prepare_field_access($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */

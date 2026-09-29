@@ -3,14 +3,19 @@ Doc Status: supporting
 
 - `worker.php`: `Preparation_Worker`, incremental selection, dependency maintenance,
   declaration completion and separate function/file body work lists.
-- `syntax.php`: typed node dispatch and active context forwarding into preparation algorithms.
-- `file.php`: `File_Preparation`, single-file entry adapter and expression/statement algorithms.
+- `file.php`: `File_Preparation`, standalone file entry into the shared incremental scheduler.
+- `semantics/bodies.php`: `Body_Preparation`, body contexts, source-order locals and statement boundaries.
+- `semantics/expressions.php`: `Expression_Preparation`, literals, references, assignments, calls and member access.
+- `semantics/types.php`: `Type_Preparation`, named type resolution and supported value/storage boundaries.
 - `changes.php`: comparison of declaration facts and preservation of unchanged fact identities.
-- `declarations.php`: signature/type lookup, function-local contexts, struct fields,
-  named calls and reference/value boundaries.
-- `literals.php`: exact integer literal preparation under the Simple C++ contract.
+- `semantics/declarations.php`: `Declaration_Preparation`, function signatures, parameters and record fields.
+- `semantics/literals.php`: exact integer literal preparation under the Simple C++ contract.
 - `cleanup.php`: tree traversal invoking each specialization's cleanup.
-- `structures.php`: backend-neutral facts, completed-file records and invocation data.
+- `structures.php`: backend-neutral facts, completed-file records, lookup observations and invocation data.
+- `work_records.php`: typed retained preparation-work identities and dependency/error state.
+
+`semantics/` groups language-processing algorithms. The preparation root retains
+entry/scheduling, data, comparison and cleanup ownership.
 
 Shared types live in `../../compiler/types/`; scope representation and lookup live in
 `../../03_parse/scopes/`. This grouping changes locations, not processing behavior.
@@ -36,6 +41,24 @@ work settles before the separate function-body and file-body lists run. Identity
 sets deduplicate notifications. Function signatures and bodies have independent owners;
 parameters/fields are prepared with their enclosing signature/record.
 
+Declaration nodes select work through typed scheduling hooks. Retained work consists
+of `function_signature_work`, `record_definition_work`, `function_body_work` and
+`file_body_work`; only the file-body role has no named declaration. Required function/
+record links are typed and constructors derive their source collection from that
+declaration. Body nodes accept only `body_work`, preserving transfer of the existing
+work identity when parsing replaces their syntax. Bodies never become symbols.
+
+Work records dispatch queue selection, rebuilding and member settlement to typed
+worker methods. The worker retains dependency ordering, comparison, publication,
+error propagation and retry algorithms. Its dependency targets are declaration work;
+dependents can be any work role. `kind()` is a computed compatibility category for
+the existing C++ assembly path, not a mutable scheduling tag.
+
+Call facts identify `collected_function`; current source record types identify
+`collected_struct`. Storage facts intentionally share the broader occurrence identity:
+parameters, fields, explicit locals and inferred first writes can all provide storage.
+`same_signature()` and `same_record()` return true for equivalent observable facts.
+
 Dependencies link consumers to declarations and back. Scope/name observations also
 cover missing and ambiguous candidates. Effective signature/layout changes notify
 consumers; implementation-only function changes do not notify callers. Required
@@ -48,18 +71,28 @@ roots; there are no surviving consumers to notify. Strong identity storage is re
 weak references are deferred. Body replacement detaches outgoing registrations before
 rebuilding facts. Incomplete parsing blocks this boundary entirely.
 
-Polymorphic syntax delegates through node preparation hooks to `Syntax_Preparation`;
-typed routines retain resolution/inference algorithms. The scheduler deliberately calls
-known declaration routines directly when comparing old/new specialized facts and settling
-work. Function-body entry establishes its local/return context before traversing statements.
-The file hook is named `prepare_file_body`: it prepares only executable statements,
+Polymorphic syntax receives `preparation_context` directly through `node->prepare($context)`.
+Each concrete node calls its typed preparation algorithm and attaches the returned facts;
+there is no intermediate dispatch adapter or adapter allocation. The context remains
+invocation-local and is never stored on syntax or as mutable current state on the scheduler.
+Typed routines retain resolution/inference algorithms. Typed work hooks enter scheduler
+methods that compare old/new specialized facts and settle work. Function-body entry
+establishes its local/return context before traversing statements.
+The file node's hook delegates to its executable body: it prepares only statements,
 not the independently scheduled declarations. Bodies and ordinary blocks share one
-source-order statement loop and reuse the supplied operation worker.
+source-order statement loop and pass the same active context to their statements.
 
 Parameter and field algorithms belong to `Declaration_Preparation`. Local declarations
 and variable assignments share the local-storage routine; member writes use a separate
 typed field-write routine and never introduce locals. Literal/reference helpers accept
 their concrete node types rather than arbitrary AST nodes.
+
+Optimization debt: function-body setup still creates its own local context after
+the scheduler creates the outer invocation context. Selection still scans file
+declarations and registered lookup observations to discover
+work. Incremental execution skips unchanged semantic work, but selection is not yet
+limited to a changed-only input list. Context setup and direct change queues require
+separate measurement and must preserve context isolation and missing-name observations.
 
 Resolution runs here after the parsing join,
 not in a second pre-resolution pass. Unchanged bodies retain syntax, occurrences and

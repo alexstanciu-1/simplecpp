@@ -25,7 +25,7 @@ This is not a full converter-capability certification or a layout/performance pr
   [parse records](../../03_parse/structures/structures.php),
   [collection](../../04_analyze/collect/structures.php),
   [preparation](../../04_analyze/prepare/structures.php),
-  [field preparation](../../04_analyze/prepare/declarations.php),
+  [field preparation](../../04_analyze/prepare/semantics/declarations.php),
   [scope](../../03_parse/scopes/structures.php),
   [lookup](../../03_parse/scopes/lookup.php).
 - [Spec authority](../../../../specs/spec_map.md),

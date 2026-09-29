@@ -49,6 +49,26 @@ foreach ($parsed->collection->entries as $entry)
 }
 role_check(count($seen) === count($expected), 'Fixture did not exercise every collected role');
 role_check(count($writes) === 2, 'Fixture must contain first and repeated writes');
+
+// Refresh must publish every live occurrence exactly once in its role's existing list.
+$lists = [
+	'defined_elements' => collected_declaration::class,
+	'variable_references' => collected_variable_reference::class,
+	'function_references' => collected_function_reference::class,
+	'type_references' => collected_type_reference::class,
+	'field_references' => collected_field_reference::class,
+	'pending_bindings' => collected_variable_write::class,
+];
+$indexed = [];
+foreach ($lists as $property => $role) {
+	foreach ($parsed->collection->$property as $index) {
+		role_check(!isset($indexed[$index]), 'Occurrence indexed more than once');
+		role_check($parsed->collection->entries[$index] instanceof $role, 'Occurrence indexed in the wrong role list');
+		$indexed[$index] = true;
+	}
+}
+role_check(count($indexed) === count($parsed->collection->entries), 'Inventory refresh lost a collected occurrence');
+
 $function = object_cast($parsed->root->declarations[1], function_node::class);
 $first = object_cast($function->body->statements[1], expression_statement_node::class)->expression;
 $second = object_cast($function->body->statements[2], expression_statement_node::class)->expression;

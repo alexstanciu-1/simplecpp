@@ -11,7 +11,7 @@ enum assignment_operator {
 interface ast_node_i
 {
 	public function kind(): node_kind;
-	public function prepare(preparation_worker_i $worker): void;
+	public function prepare(preparation_context $context): void;
 	public function generate_cpp(cpp_generation_worker_i $worker): string;
 	public function maintain(node_maintenance_worker_i $worker): void;
 	/**
@@ -50,7 +50,7 @@ abstract class ast_node implements ast_node_i
 	public abstract function maintain(node_maintenance_worker_i $worker): void;
 
 	/** Trivia and semantic forms without active preparation support fail explicitly. */
-	public function prepare(preparation_worker_i $worker): void
+	public function prepare(preparation_context $context): void
 	{
 		throw new \RuntimeException('Preparation is not supported for this node');
 	}
@@ -100,6 +100,7 @@ abstract class statement_node extends ast_node
 /** File-level declarations only in the current grammar: functions and structs. */
 abstract class declaration_node extends ast_node
 {
+	abstract public function select_preparation(Preparation_Worker $worker): void;
 }
 
 /** Inspection-only syntax; punctuation/comments are not executable statements. */
@@ -193,38 +194,6 @@ trait Preparation_Facts
 	{
 		$this->prepared_facts = null;
 	}
-}
-
-/**
- * Typed syntax dispatch implemented by Syntax_Preparation, carrying the active
- * context into preparation algorithms. Preparation_Worker owns scheduling and
- * dependency settlement. Returning void keeps this shared entry point
- * independent of the specialized fact type; typed accessors expose those facts.
- * Signature and executable-body work are scheduled independently. Type syntax,
- * parameters and fields are processed in their owning declaration/body context.
- * File dispatch prepares only its executable body, not its declarations.
- */
-interface preparation_worker_i
-{
-	public function prepare_file_body(file_node $node): void;
-	public function prepare_function_body(function_body_node $node): void;
-	public function prepare_block(block_node $node): void;
-	public function prepare_named_type(named_type_node $node): void;
-	public function prepare_integer_literal(integer_literal_node $node): void;
-	public function prepare_float_literal(float_literal_node $node): void;
-	public function prepare_boolean_literal(boolean_literal_node $node): void;
-	public function prepare_variable_reference(variable_reference_node $node): void;
-	public function prepare_call(call_node $node): void;
-	public function prepare_function_signature(function_node $node): void;
-	public function prepare_parameter(parameter_node $node): void;
-	public function prepare_expression_statement(expression_statement_node $node): void;
-	public function prepare_return(return_node $node): void;
-	public function prepare_variable_declaration(variable_declaration_node $node): void;
-	public function prepare_assignment(assignment_expression_node $node): void;
-	public function prepare_array_type(array_type_node $node): void;
-	public function prepare_struct(struct_node $node): void;
-	public function prepare_field(field_node $node): void;
-	public function prepare_field_access(field_access_node $node): void;
 }
 
 /**

@@ -22,7 +22,8 @@ function s2s_snapshot(parsed_file $syntax): string
 		$seen[$value] = spl_object_id($value);
 		$result = ['class' => get_class($value), 'id' => spl_object_id($value)];
 		foreach ((new \ReflectionClass($value))->getProperties() as $property) {
-			if (in_array($property->name, ['prepared_facts', 'preparation', 'body_preparation', 'body_work', 'prepared', 'preparation_lookups', 'change_status', 'preparation_changes'], true)) {
+			// Successful preparation settles the body dirty flag without changing source syntax.
+			if (in_array($property->name, ['prepared_facts', 'preparation', 'body_preparation', 'body_work', 'syntax_changed', 'prepared', 'preparation_lookups', 'change_status', 'preparation_changes'], true)) {
 				continue;
 			}
 			$result[$property->name] = $visit($property->getValue($value));

@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class Source_Types
 {
 	/** Preserve declaration provenance while constructing one shared type identity. */
-	public static function definition(collected_name $entry): type_definition
+	public static function definition(collected_struct $entry): type_definition
 	{
 		$type = new type_definition();
 		$type->name = $entry->name;

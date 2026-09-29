@@ -52,7 +52,7 @@ final class CPP_Generator
 			if (($fragment->version !== $owner->version) || ($fragment->change_status !== change_state::unchanged))
 			{
 				$fragment->change_status = change_state::changed;
-				if ($owner->kind === preparation_kind::declaration) {
+				if ($owner->kind() === preparation_kind::declaration) {
 					$definitions->append($owner);
 				}
 				else {
@@ -76,17 +76,17 @@ final class CPP_Generator
 			foreach ($fragment->headers as $header => $used) {
 				$context->headers[$header] = true;
 			}
-			if ($owner->kind === preparation_kind::file_body) {
+			if ($owner->kind() === preparation_kind::file_body) {
 				$entry_text = $fragment->text;
 			}
-			elseif ($owner->kind === preparation_kind::function_body) {
-				$entry = object_cast($owner->declaration, collected_name::class);
+			elseif ($owner->kind() === preparation_kind::function_body) {
+				$entry = object_cast($owner->declaration(), collected_name::class);
 				$signature_owner = object_cast($entry->preparation_owner(), preparation_owner::class);
 				$context->functions .= $this->program->fragments[$signature_owner]->text . "\n{\n" . $fragment->text . "}\n\n";
 			}
 			else
 			{
-				$entry = object_cast($owner->declaration, collected_name::class);
+				$entry = object_cast($owner->declaration(), collected_name::class);
 				if ($entry instanceof collected_struct) {
 					$this->assemble_record($entry, $context);
 				}
@@ -132,13 +132,13 @@ final class CPP_Generator
 		$context = new cpp_generation_context();
 		$context->expand_records = false;
 		$next = new cpp_fragment();
-		if ($owner->kind === preparation_kind::file_body) {
+		if ($owner->kind() === preparation_kind::file_body) {
 			$next->text = self::generate_file_body($owner->source->root, $context);
 		}
 		else
 		{
-			$entry = object_cast($owner->declaration, collected_name::class);
-			if ($owner->kind === preparation_kind::function_body) {
+			$entry = object_cast($owner->declaration(), collected_name::class);
+			if ($owner->kind() === preparation_kind::function_body) {
 				$syntax = object_cast($entry, collected_function::class)->syntax();
 				$context->return_type = $syntax->require_preparation()->return_type;
 				$next->text = self::generate_statements($syntax->body, $context);

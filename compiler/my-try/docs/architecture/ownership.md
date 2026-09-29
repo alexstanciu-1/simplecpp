@@ -124,7 +124,7 @@ private-index operations; it does not select the publication/replacement policy.
 canonical occurrence names to the collector, including removal of PHS variable
 sigils. The collector registers completed declarations and obtains source type
 definitions from `compiler/types/source.php`; scope insertion does not manufacture
-type definitions. `04_analyze/prepare/literals.php` prepares integer literals;
+type definitions. `04_analyze/prepare/semantics/literals.php` prepares integer literals;
 `04_analyze/prepare/file.php` prepares supported file expressions and bindings;
 `05_backend/cpp/types.php` maps canonical types to C++ representations.
 

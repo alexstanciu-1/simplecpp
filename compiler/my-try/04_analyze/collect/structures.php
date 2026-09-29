@@ -54,8 +54,11 @@ abstract class collected_name
 	/** Concrete records own exactly one typed link to the existing syntax graph. */
 	abstract public function syntax(): ast_node;
 
-	/** Compatibility classification for lookup lists and the parked LLVM path. */
+	/** Compatibility classification for diagnostics and the parked LLVM path. */
 	abstract public function kind(): collected_name_kind;
+
+	/** Dispatch only; the collector owns occurrence-list maintenance. */
+	abstract public function index_collection(Symbol_Collector $collector): void;
 
 	public function is_retained(): bool
 	{
@@ -87,6 +90,11 @@ abstract class collected_name
 /** Declaration membership differs from unresolved uses; locals are replaced with their body. */
 abstract class collected_declaration extends collected_name
 {
+	public function index_collection(Symbol_Collector $collector): void
+	{
+		$collector->index_declaration($this);
+	}
+
 	public bool $retained_symbol = false;
 	public bool $exported = false;
 
@@ -104,12 +112,14 @@ abstract class collected_declaration extends collected_name
 /** Functions and records are independently scheduled; members settle with their owner. */
 abstract class collected_definition extends collected_declaration
 {
-	public ?preparation_owner $preparation = null;
+	public ?declaration_work $preparation = null;
 
 	public function preparation_owner(): ?preparation_owner
 	{
 		return $this->preparation;
 	}
+	abstract public function preparation_work(Preparation_Worker $worker): declaration_work;
+
 }
 
 /** Unresolved reads and named lookups have no declaration/publication or preparation-owner slot. */
@@ -125,6 +135,11 @@ final class collected_function extends collected_definition
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
+	}
+
+	public function preparation_work(Preparation_Worker $worker): declaration_work
+	{
+		return $worker->function_owner($this);
 	}
 
 	public function syntax(): function_node
@@ -147,6 +162,11 @@ final class collected_struct extends collected_definition
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
+	}
+
+	public function preparation_work(Preparation_Worker $worker): declaration_work
+	{
+		return $worker->record_owner($this);
 	}
 
 	public function syntax(): struct_node
@@ -228,6 +248,11 @@ final class collected_variable extends collected_declaration
 
 final class collected_function_reference extends collected_reference
 {
+	public function index_collection(Symbol_Collector $collector): void
+	{
+		$collector->index_function_reference($this);
+	}
+
 	/** @reference.source parsed_file.root (syntax graph) */
 	private call_node $syntax_node;
 
@@ -250,6 +275,11 @@ final class collected_function_reference extends collected_reference
 
 final class collected_field_reference extends collected_reference
 {
+	public function index_collection(Symbol_Collector $collector): void
+	{
+		$collector->index_field_reference($this);
+	}
+
 	/** @reference.source parsed_file.root (syntax graph) */
 	private field_access_node $syntax_node;
 
@@ -272,6 +302,11 @@ final class collected_field_reference extends collected_reference
 
 final class collected_variable_reference extends collected_reference
 {
+	public function index_collection(Symbol_Collector $collector): void
+	{
+		$collector->index_variable_reference($this);
+	}
+
 	/** @reference.source parsed_file.root (syntax graph) */
 	private variable_reference_node $syntax_node;
 
@@ -294,6 +329,11 @@ final class collected_variable_reference extends collected_reference
 
 final class collected_type_reference extends collected_reference
 {
+	public function index_collection(Symbol_Collector $collector): void
+	{
+		$collector->index_type_reference($this);
+	}
+
 	/** @reference.source parsed_file.root (syntax graph) */
 	private named_type_node $syntax_node;
 
@@ -317,6 +357,11 @@ final class collected_type_reference extends collected_reference
 /** An unresolved write keeps its identity when preparation discovers declaration or assignment. */
 final class collected_variable_write extends collected_name
 {
+	public function index_collection(Symbol_Collector $collector): void
+	{
+		$collector->index_variable_write($this);
+	}
+
 	/** @reference.source parsed_file.root (syntax graph) */
 	private variable_reference_node $syntax_node;
 

@@ -25,5 +25,5 @@ final class type_definition
 	public int $value_bits /** uint32 */ = 0;
 	public bool $signed = false;
 	/** Present only for source definitions. @reference.source collected_file.entries */
-	public ?collected_name $declaration = null;
+	public ?collected_struct $declaration = null;
 }

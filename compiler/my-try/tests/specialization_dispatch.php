@@ -22,7 +22,7 @@ $unsupported->right = $literal;
 $context = new preparation_context();
 $failures = 0;
 try {
-	$unsupported->prepare(new Syntax_Preparation($context));
+	$unsupported->prepare($context);
 }
 catch (\RuntimeException $error) {
 	$failures++;

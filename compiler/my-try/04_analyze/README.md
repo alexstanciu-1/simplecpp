@@ -26,9 +26,17 @@ syntax backlinks and dependency facts continue to reference these same objects;
 there is no second symbol graph. The collector owns allocation/registration and
 workers own resolution, preparation and lifecycle decisions.
 
+During parsing, participating syntax nodes forward `collect()` to typed collector
+methods. Plain variable writes use `collect_write()`; member/index bases use normal
+read collection. The collector reuses declarations, registers new identities and
+publishes globals under the existing lock. Typed `previous_*` queries select retained
+syntax before the parser updates it. No collection pass or kind-based factory exists.
+The existing end-of-parse inventory refresh invokes each record's `index_collection()`
+hook; the collector maintains the lists and retires obsolete body occurrences.
+
 `kind()` computes the existing enum classification from the concrete class. It is
-retained for parser reconciliation, occurrence lists and parked LLVM consumers, not
-stored as a mutable tag. Parameters and explicit variables intentionally share its
+retained for diagnostics and parked LLVM consumers, not stored as a mutable tag
+or used by the parser/collector. Parameters and explicit variables share its
 legacy `variable_declaration` classification while exposing different typed syntax.
 Generic syntax access and optional preparation-owner access support mixed inventories;
 consumers with a known role narrow the collected record and use its typed syntax.
@@ -38,7 +46,10 @@ selects changed declarations and affected bodies, retains unaffected facts, and 
 deleted collected entries. Combined `sync` now uses the same incremental frontend phases. See the [incremental strategy](../docs/planning/incremental_strategy.md).
 
 [prepare/](prepare/) owns the active backend-neutral semantic direction:
-`Preparation_Worker` schedules the shared `File_Preparation` algorithms, which prepare supported syntax and attaches facts to AST specializations.
+`Preparation_Worker` schedules typed declaration/body work; semantic algorithms live
+in `Declaration_Preparation`, `Body_Preparation`, `Expression_Preparation` and
+`Type_Preparation`. `File_Preparation` provides the standalone file entry into that
+same scheduler. Prepared facts remain attached to AST specializations.
 Completed-file records reference that syntax; they do not own token-indexed fact maps.
 [The C++ backend](../05_backend/cpp/) currently consumes those shared facts.
 

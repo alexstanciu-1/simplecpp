@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class Preparation_Changes
 {
 	/** Parameter identity matters because prepared signatures retain links to their declarations. */
-	public static function function_signature(?prepared_function $old, prepared_function $current): bool
+	public static function same_signature(?prepared_function $old, prepared_function $current): bool
 	{
 		if ($old === null) {
 			return false;
@@ -26,7 +26,7 @@ final class Preparation_Changes
 	}
 
 	/** Field order, identity and type define the current compact record facts. */
-	public static function record(?prepared_record $old, prepared_record $current): bool
+	public static function same_record(?prepared_record $old, prepared_record $current): bool
 	{
 		if ($old === null) {
 			return false;

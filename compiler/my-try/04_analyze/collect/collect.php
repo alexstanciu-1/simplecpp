@@ -19,95 +19,180 @@ final class Symbol_Collector
 		$collection->revision = $revision;
 	}
 
-	/** Matching is owner-local; duplicate spellings consume existing identities in encounter order. */
-	public function previous(scope $scope, string $name, collected_name_kind $kind): ?ast_node
+	/** Match the next unseen function identity in its owning scope. */
+	public function previous_function(scope $scope, string $name): ?function_node
 	{
-		$entries /** vector<collected_name> */ = [];
-		if ($kind === collected_name_kind::function_declaration) {
-			$entries = $scope->functions_named($name);
-		}
-		elseif ($kind === collected_name_kind::struct_declaration) {
-			$entries = $scope->source_types_named($name);
-		}
-		else {
-			$entries = $scope->variables_named($name);
-		}
-		foreach ($entries as $entry) {
-			if (($entry->kind() === $kind) && $entry->is_retained() && ((int)$entry->revision !== (int)$this->collection->revision)) {
-				return $entry->syntax();
+		foreach ($scope->functions_named($name) as $entry) {
+			if ($entry instanceof collected_function) {
+				if ($this->unseen($entry)) {
+					return object_cast($entry, collected_function::class)->syntax();
+				}
 			}
 		}
 		return null;
 	}
 
-	/** Reuse the canonical occurrence when the parser has matched a declaration node. */
-	public function declaration(ast_node $node, int $index, collected_name_kind $kind, scope $scope, string $name, bool $existing): void
+	/** Match the next unseen struct identity in its owning scope. */
+	public function previous_struct(scope $scope, string $name): ?struct_node
 	{
-		if ($existing) {
-			$entry = $node->occurrence();
-			if ($entry->change_status === change_state::deleted) {
-				$entry->change_status = change_state::added;
-			}
-			$entry->token_index = $index;
-		}
-		else
-		{
-			$entry = $this->append($node, $index, $kind, $scope, $name);
-			object_cast($entry, collected_declaration::class)->retained_symbol = true;
-			$this->collection->defined_elements[] = $entry->local_index;
-			if ($kind === collected_name_kind::struct_declaration) {
-				$scope->register_type(Source_Types::definition($entry));
-			}
-			else {
-				$scope->register($entry);
-			}
-			if (($scope === $this->file_scope) && ($this->global !== null))
-			{
-				$global /** scope */ = $this->global;
-				if (($kind === collected_name_kind::struct_declaration) || ($kind === collected_name_kind::function_declaration)) {
-					object_cast($entry, collected_declaration::class)->exported = true;
-					task_synchronize(function () use ($entry, $scope, $global): void {
-						Scope_Publication::register($scope, $global, $entry);
-					});
+		foreach ($scope->source_types_named($name) as $entry) {
+			if ($entry instanceof collected_struct) {
+				if ($this->unseen($entry)) {
+					return object_cast($entry, collected_struct::class)->syntax();
 				}
 			}
 		}
-		$entry->revision = $this->collection->revision;
+		return null;
 	}
 
-	/** Record unresolved uses and replaceable body declarations without lookup or binding. */
-	public function record(ast_node $node, int $token_index, collected_name_kind $kind, scope $scope, string $name): int
+	/** Match the next unseen field identity in its owning scope. */
+	public function previous_field(scope $scope, string $name): ?field_node
 	{
-		$entry = $this->append($node, $token_index, $kind, $scope, $name);
-		if ($kind === collected_name_kind::variable_declaration) {
-			$this->collection->defined_elements[] = $entry->local_index;
-			$scope->register($entry);
+		foreach ($scope->variables_named($name) as $entry) {
+			if ($entry instanceof collected_field) {
+				if ($this->unseen($entry)) {
+					return object_cast($entry, collected_field::class)->syntax();
+				}
+			}
 		}
-		elseif ($kind === collected_name_kind::field_reference) {
-			$this->collection->field_references[] = $entry->local_index;
+		return null;
+	}
+
+	/** Match the next unseen parameter identity in its owning scope. */
+	public function previous_parameter(scope $scope, string $name): ?parameter_node
+	{
+		foreach ($scope->variables_named($name) as $entry) {
+			if ($entry instanceof collected_parameter) {
+				if ($this->unseen($entry)) {
+					return object_cast($entry, collected_parameter::class)->syntax();
+				}
+			}
 		}
-		elseif ($kind === collected_name_kind::variable_reference) {
-			$this->collection->variable_references[] = $entry->local_index;
+		return null;
+	}
+
+	/** Duplicate spellings consume retained identities in encounter order. */
+	private function unseen(collected_name $entry): bool
+	{
+		return $entry->is_retained() && ((int)$entry->revision !== (int)$this->collection->revision);
+	}
+
+	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
+	public function collect_function(function_node $node, scope $scope, int $index): void
+	{
+		if ($this->reuse($node, $index)) {
+			return;
 		}
-		elseif ($kind === collected_name_kind::type_reference) {
-			$this->collection->type_references[] = $entry->local_index;
+		$entry = new collected_function($this->collection, $node);
+		$entry->retained_symbol = true;
+		$this->append($entry, $scope, $node->name, $index);
+		$scope->register($entry);
+		$this->publish($entry, $scope);
+	}
+
+	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
+	public function collect_struct(struct_node $node, scope $scope, int $index): void
+	{
+		if ($this->reuse($node, $index)) {
+			return;
 		}
-		elseif ($kind === collected_name_kind::function_reference) {
-			$this->collection->function_references[] = $entry->local_index;
+		$entry = new collected_struct($this->collection, $node);
+		$entry->retained_symbol = true;
+		$this->append($entry, $scope, $node->name, $index);
+		$scope->register_type(Source_Types::definition($entry));
+		$this->publish($entry, $scope);
+	}
+
+	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
+	public function collect_field(field_node $node, scope $scope, int $index): void
+	{
+		if ($this->reuse($node, $index)) {
+			return;
 		}
-		elseif ($kind === collected_name_kind::binding) {
-			$this->collection->pending_bindings[] = $entry->local_index;
+		$entry = new collected_field($this->collection, $node);
+		$entry->retained_symbol = true;
+		$this->append($entry, $scope, $node->name, $index);
+		$scope->register($entry);
+	}
+
+	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
+	public function collect_parameter(parameter_node $node, scope $scope, int $index): void
+	{
+		if ($this->reuse($node, $index)) {
+			return;
 		}
-		return $entry->local_index;
+		$entry = new collected_parameter($this->collection, $node);
+		$entry->retained_symbol = true;
+		$this->append($entry, $scope, $node->name, $index);
+		$scope->register($entry);
+	}
+
+	/** Record this occurrence without resolving names or allocating preparation facts. */
+	public function collect_variable(variable_declaration_node $node, scope $scope, int $index): void
+	{
+		$entry = new collected_variable($this->collection, $node);
+		$this->append($entry, $scope, $node->name, $index);
+		$scope->register($entry);
+	}
+
+	/** Record this occurrence without resolving names or allocating preparation facts. */
+	public function collect_variable_reference(variable_reference_node $node, scope $scope, int $index): void
+	{
+		$entry = new collected_variable_reference($this->collection, $node);
+		$this->append($entry, $scope, $node->name, $index);
+	}
+
+	/** Record this occurrence without resolving names or allocating preparation facts. */
+	public function collect_variable_write(variable_reference_node $node, scope $scope, int $index): void
+	{
+		$entry = new collected_variable_write($this->collection, $node);
+		$this->append($entry, $scope, $node->name, $index);
+	}
+
+	/** Record this occurrence without resolving names or allocating preparation facts. */
+	public function collect_function_reference(call_node $node, scope $scope, int $index): void
+	{
+		$entry = new collected_function_reference($this->collection, $node);
+		$this->append($entry, $scope, $node->name, $index);
+	}
+
+	/** Record this occurrence without resolving names or allocating preparation facts. */
+	public function collect_field_reference(field_access_node $node, scope $scope, int $index): void
+	{
+		$entry = new collected_field_reference($this->collection, $node);
+		$this->append($entry, $scope, $node->name, $index);
+	}
+
+	/** Record this occurrence without resolving names or allocating preparation facts. */
+	public function collect_type_reference(named_type_node $node, scope $scope, int $index): void
+	{
+		$entry = new collected_type_reference($this->collection, $node);
+		$this->append($entry, $scope, $node->name, $index);
+	}
+
+	/** Reconciliation refreshes provenance without allocating a replacement occurrence. */
+	private function reuse(ast_node $node, int $index): bool
+	{
+		$previous = $node->optional_occurrence();
+		if ($previous === null) {
+			return false;
+		}
+		$entry /** collected_name */ = $previous;
+		if ($entry->change_status === change_state::deleted) {
+			$entry->change_status = change_state::added;
+		}
+		$entry->token_index = $index;
+		$entry->revision = $this->collection->revision;
+		return true;
 	}
 
 	/** Allocate only new identities; the storage index is never reused by a later occurrence. */
-	private function append(ast_node $node, int $index, collected_name_kind $kind, scope $scope, string $name): collected_name
+	private function append(collected_name $entry, scope $scope, string $name, int $index): void
 	{
+		$node = $entry->syntax();
 		if ($node->optional_occurrence() !== null) {
 			throw new \LogicException('Syntax already has a collected occurrence');
 		}
-		$entry = $this->new_occurrence($node, $kind);
 		$entry->name = $name;
 		$entry->scope = $scope;
 		$entry->token_index = $index;
@@ -115,43 +200,59 @@ final class Symbol_Collector
 		$entries /** Storage<collected_name> */ = $this->collection->entries;
 		$entry->local_index = $entries->append($entry);
 		$node->attach_occurrence($entry);
-		return $entry;
+		$entry->index_collection($this);
 	}
 
-	/** Allocate the role once; retained declarations and resolved writes never change record class. */
-	private function new_occurrence(ast_node $node, collected_name_kind $kind): collected_name
+	/** Only file-level functions and records enter shared indexes, under the existing task lock. */
+	private function publish(collected_definition $entry, scope $scope): void
 	{
-		if ($kind === collected_name_kind::function_declaration) {
-			return new collected_function($this->collection, object_cast($node, function_node::class));
+		if ($scope !== $this->file_scope) {
+			return;
 		}
-		if ($kind === collected_name_kind::struct_declaration) {
-			return new collected_struct($this->collection, object_cast($node, struct_node::class));
+		if ($this->global === null) {
+			return;
 		}
-		if ($kind === collected_name_kind::field_declaration) {
-			return new collected_field($this->collection, object_cast($node, field_node::class));
-		}
-		if ($kind === collected_name_kind::variable_declaration) {
-			if ($node instanceof parameter_node) {
-				return new collected_parameter($this->collection, object_cast($node, parameter_node::class));
-			}
-			return new collected_variable($this->collection, object_cast($node, variable_declaration_node::class));
-		}
-		if ($kind === collected_name_kind::function_reference) {
-			return new collected_function_reference($this->collection, object_cast($node, call_node::class));
-		}
-		if ($kind === collected_name_kind::field_reference) {
-			return new collected_field_reference($this->collection, object_cast($node, field_access_node::class));
-		}
-		if ($kind === collected_name_kind::variable_reference) {
-			return new collected_variable_reference($this->collection, object_cast($node, variable_reference_node::class));
-		}
-		if ($kind === collected_name_kind::type_reference) {
-			return new collected_type_reference($this->collection, object_cast($node, named_type_node::class));
-		}
-		if ($kind === collected_name_kind::binding) {
-			return new collected_variable_write($this->collection, object_cast($node, variable_reference_node::class));
-		}
-		throw new \LogicException('Unsupported collected occurrence role');
+		$global /** scope */ = $this->global;
+		$entry->exported = true;
+		task_synchronize(function () use ($entry, $scope, $global): void {
+			Scope_Publication::register($scope, $global, $entry);
+		});
+	}
+
+	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
+	public function index_declaration(collected_declaration $entry): void
+	{
+		$this->collection->defined_elements[] = $entry->local_index;
+	}
+
+	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
+	public function index_variable_reference(collected_variable_reference $entry): void
+	{
+		$this->collection->variable_references[] = $entry->local_index;
+	}
+
+	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
+	public function index_function_reference(collected_function_reference $entry): void
+	{
+		$this->collection->function_references[] = $entry->local_index;
+	}
+
+	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
+	public function index_type_reference(collected_type_reference $entry): void
+	{
+		$this->collection->type_references[] = $entry->local_index;
+	}
+
+	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
+	public function index_field_reference(collected_field_reference $entry): void
+	{
+		$this->collection->field_references[] = $entry->local_index;
+	}
+
+	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
+	public function index_variable_write(collected_variable_write $entry): void
+	{
+		$this->collection->pending_bindings[] = $entry->local_index;
 	}
 
 	/** A completed file can retire unseen local symbols; exported rows wait until the join. */
@@ -196,25 +297,7 @@ final class Symbol_Collector
 				$retired[] = $index;
 				continue;
 			}
-			$kind = $entry->kind();
-			if ($entry->is_retained() || ($kind === collected_name_kind::variable_declaration)) {
-				$collection->defined_elements[] = $index;
-			}
-			elseif ($kind === collected_name_kind::variable_reference) {
-				$collection->variable_references[] = $index;
-			}
-			elseif ($kind === collected_name_kind::function_reference) {
-				$collection->function_references[] = $index;
-			}
-			elseif ($kind === collected_name_kind::type_reference) {
-				$collection->type_references[] = $index;
-			}
-			elseif ($kind === collected_name_kind::field_reference) {
-				$collection->field_references[] = $index;
-			}
-			elseif ($kind === collected_name_kind::binding) {
-				$collection->pending_bindings[] = $index;
-			}
+			$entry->index_collection($this);
 		}
 		foreach ($retired as $index) {
 			$entries->remove($index);

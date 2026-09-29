@@ -278,20 +278,21 @@ final class Model_Test
 		$source->tokens[] = $token;
 		$scope = new scope();
 		$collector = new Symbol_Collector(new collected_file($source), $source, $scope, null, 1);
-		$node = new named_type_node();
-		$node->name = 'int';
+		$node = new variable_reference_node();
+		$node->name = 'name';
 		$node->set_span(0, 1);
 		$scope = new scope();
-		$collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
+		$node->collect($collector, $scope, 0);
 		// Host test access only: the compiler still builds occurrence lists append-only.
 		$property = new \ReflectionProperty(Symbol_Collector::class, 'collection');
 		$file = $property->getValue($collector);
 		$file->entries->remove(0);
 		$file->variable_references = [];
-		$node = new named_type_node();
-		$node->name = 'int';
+		$node = new variable_reference_node();
+		$node->name = 'name';
 		$node->set_span(0, 1);
-		$position = $collector->record($node, 0, collected_name_kind::variable_reference, $scope, 'name');
+		$node->collect($collector, $scope, 0);
+		$position = $node->occurrence()->local_index;
 		$root = new file_node($scope);
 		$root->body = new function_body_node($scope);
 		$result = $collector->finish($root);
