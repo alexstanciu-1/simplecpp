@@ -27,6 +27,27 @@ Historical details, toolchain identities and logs:
 Temporary `/tmp` evidence paths in those records may no longer exist; retain their
 source/toolchain qualifications when interpreting them.
 
+## Latest attempted whole-compiler check — 2026-09-29
+
+Source/toolchain checkout: `bfd129588c5a06d0740c7b3b220174fad57a062e`.
+The normal `tools/native_validate.py` workflow stopped at conversion:
+`02_tokenize/buffer.php:25: unsupported syntax: +=` (`$row->offset += $offset`).
+STAN, C++ compilation, native compiler execution and parity were not reached.
+This is the first reported blocker, not an exhaustive list. Compound assignment
+also occurs in token cleanup; review the converter capability rather than assuming
+that earlier native checkpoints cover the appended-token implementation.
+
+Host validation: all 31 PHP test files passed. The full runner stopped at its source
+style gate (14 layout differences and three missing purpose comments). A separate
+continuation of the remaining checks passed lint for 103 PHP files, 19 LLVM, 28 call
+and 73 C++ S2S program executions, plus sample exit 9. The full suite remains failed
+on style. Evidence: `/tmp/my-try-all-php-20260929-bfd12958/summary.json` and
+`/tmp/my-try-full-remaining-20260929-bfd12958/summary.json`.
+
+Attempt logs: `/tmp/my-try-native-20260929-bfd12958/logs/`; the runner retained
+source hashes and candidate toolchain hashes. No source workaround, STAN bypass or
+verified-target update was made.
+
 ## Current authoring contracts
 
 Use the [portable PHP guide](../../../../specs/portability/authoring_guide.md) and

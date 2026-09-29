@@ -28,6 +28,20 @@ and ambiguous lookups, deletion/reappearance, failure/recovery and repeated incr
 Measure scanned/parsed files, prepared work and rerendered fragments separately from
 output equality. Native concurrency/lifetime behavior requires native evidence.
 
+## C++ incremental follow-up
+
+Deferred after the backend review (2026-09-29):
+
+1. Replace full fragment-selection scans with explicit pending work from
+   `preparation_changes`. Preserve scheduling for initial generation, cache recreation,
+   missing fragments and failed-render retries, even without new semantic changes.
+   Keep the current single-file output layout for this step.
+2. Introduce retained output units with fragment membership, output/include dependencies
+   and per-unit assembly/publication state. Rebuild only affected units; preserve
+   unchanged file bytes/timestamps and remove obsolete generated files. Semantic
+   dependency links do not replace output-unit dependencies. Partitioning and the
+   disk writer are later implementation, not part of the current cache.
+
 ## Agreed debts
 
 - Keep general validation/STAN and reserved-name enforcement in the later pass.
