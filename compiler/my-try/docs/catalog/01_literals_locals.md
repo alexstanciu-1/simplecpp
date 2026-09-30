@@ -37,7 +37,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-011](#note-011) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-021](#note-021) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-033](#note-033) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-034](#note-034) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-034](#note-034) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | Consolidated by [VAR-REASSIGN-001](#var-reassign-001) and its [prepared-identity/emission proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-035](#note-035) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 
 ### Deferred legacy syntax
@@ -1377,7 +1377,47 @@ ERROR
 
 **Source:** [generators/php/specs/rules.md:638](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** The v0.2 variable model separates source identity,
+semantic binding and backend spelling. For the focused inferred-local example:
+
+```php
+$a = 1;
+$a = 2;
+```
+
+preparation classifies the first write as a declaration, attaches its canonical
+integer type and retains that declaration identity. The second write resolves the
+same visible identity, retains the same type and is classified as reassignment. The
+AST and collected occurrence keep the source name `a`; semantic lookup never uses a
+generated C++ spelling.
+
+C++ lowering derives the role-prefixed name from the prepared declaration identity.
+It uses `auto` only for the inferred declaration and omits it for reassignment:
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(1LL);
+local_a = static_cast<scpp::int_t<>>(2LL);
+```
+
+This deliberately replaces the imported rule that lowering merely removes `$` and
+emits raw `a`. It also makes declaration-versus-reassignment a preparation decision,
+not emitter-maintained name state. Explicit typed declarations retain their explicit
+C++ type instead of `auto`, as covered by `TYPE-VAR-001`.
+
+The exact boundaries of visible scopes, nested-block behavior and shadowing belong
+to `NOTE-033`; this note does not settle them. Cross-type conversion, references,
+containers, fields, compound assignment and general identifier sanitization remain
+with their owning catalog entries. LLVM remains deferred.
+
+**Verification (2026-09-30):** `VAR-REASSIGN-001` already proves one declaration
+identity, declaration-versus-assignment classification, canonical type continuity,
+one `auto`, normalized literal lowering, cleanup and source purity. `VAR-ASSIGN-001`
+and the sequential-copy rows provide supporting first-write and reference-resolution
+evidence. No new compiler or test code is required for this consolidation. Generated
+C++ has not been compiled or executed in this documentation slice, so C++ S2S stays
+`in-progress` pending explicit-request native validation.
+
+Imported prose follows for provenance; its raw-name spelling is not the v0.2 target.
 
 > ## 5. Variable model
 >
