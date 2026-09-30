@@ -83,6 +83,8 @@ $cases = [
 	'var_chain_002' => ['$a = 1; $b = $a;', 0],
 	'var_chain_003' => ['$a = 1; $b = $a; $c = $b;', 0],
 	'var_chain_004' => ['$a = 1; $b = $a + 1;', 0],
+	'var_reassign_002' => ['$a = 1; $a = $a + 1;', 0],
+	'var_reassign_002_value' => ['$a = 1; $a = $a + 1; return $a;', 2],
 	'copy' => ['$a = 10; $b = $a; $a = 12; return $b;', 10],
 	'wide' => ['$a = 4294967296; return 7;', 7],
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
@@ -302,6 +304,30 @@ foreach ($cases as $name => [$source, $exit])
 			(weakref_get($left->require_variable_reference_preparation()->declaration) !== weakref_get($first_facts->binding->declaration)) ||
 			!str_contains($text, $expected) || !str_contains($text, '#include "scpp/generated/operators.hpp"')) {
 			throw new \LogicException('VAR-CHAIN-004 lost integer addition facts, source identity or normalized lowering');
+		}
+	}
+
+	if ($name === 'var_reassign_002')
+	{
+		$first = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$second = object_cast($syntax->root->body->statements[1]->expression, assignment_expression_node::class);
+		$binary = object_cast($second->value, binary_expression_node::class);
+		$self_reference = object_cast($binary->left, variable_reference_node::class);
+		$first_facts = $first->require_assignment_preparation();
+		$second_facts = $second->require_assignment_preparation();
+		$binary_facts = $binary->require_binary_preparation();
+		$declaration = weakref_get($first_facts->binding->declaration);
+		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
+			. "\tlocal_a = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
+		$text = Model::$cpp_files[0]->text;
+		if (($first_facts->binding->resolved_kind !== binding_kind::declaration) ||
+			($second_facts->binding->resolved_kind !== binding_kind::assignment) ||
+			(weakref_get($second_facts->binding->declaration) !== $declaration) ||
+			(weakref_get($self_reference->require_variable_reference_preparation()->declaration) !== $declaration) ||
+			($binary_facts->operation !== binary_operation::addition) ||
+			($first_facts->type !== $binary_facts->type) || ($second_facts->type !== $binary_facts->type) ||
+			!str_contains($text, $expected) || (substr_count($text, 'auto local_a =') !== 1)) {
+			throw new \LogicException('VAR-REASSIGN-002 redeclared its target or lost self-read/addition facts');
 		}
 	}
 

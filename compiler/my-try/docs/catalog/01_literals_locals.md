@@ -31,7 +31,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-CHAIN-003](#var-chain-003) | agreed | `$a = 1; $b = $a; $c = $b;` | proved | in-progress | deferred | [Exact prepared-identity and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-004](#var-chain-004) | agreed | `$a = 1; $b = $a + 1;` | proved | in-progress | deferred | [Canonical integer-addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-ORDER-001](#var-order-001) | agreed | `$a = $b; $b = 1;` | proved | not-applicable | deferred | [Exact source-order diagnostic and no-publication proof](../../tests/s2s.php); invalid standalone input has no C++ lowering |
-| [VAR-REASSIGN-002](#var-reassign-002) | pending-discussion | `$a = 1; $a = $a + 1;` | unverified | unverified | deferred | — |
+| [VAR-REASSIGN-002](#var-reassign-002) | agreed | `$a = 1; $a = $a + 1;` | proved | in-progress | deferred | [Exact reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-REASSIGN-003](#var-reassign-003) | pending-discussion | `$a = 1; $a = $a + $a;` | unverified | unverified | deferred | — |
 | [IDENT-VAR-001](#ident-var-001) | pending-discussion | `function f(int $int) { $while = $int; }` | unverified | unverified | deferred | — |
 | [NOTE-011](#note-011) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
@@ -1055,7 +1055,40 @@ auto a = b; b = static_cast<int_t>(1);
 
 ## VAR-REASSIGN-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** This row composes the established reassignment and
+canonical integer-addition paths without a new AST form, prepared fact or emitter
+case. The exact input emits:
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(1LL);
+local_a = (local_a + static_cast<scpp::int_t<>>(1LL));
+```
+
+Preparation classifies the first write as the declaration. While preparing the
+second statement's RHS, `$a` resolves to that established declaration; the binary
+expression retains the prepared `addition` operation and canonical integer result.
+The outer write is then classified as an assignment to the same declaration identity
+and type. C++ lowering consequently omits `auto` on the second write and evaluates
+the normalized RHS once.
+
+**Legacy edge-case review:** The old S2S also distinguished the first declaration
+from later writes and recursively normalized the RHS literal. Its applicable edge
+case is that a self-read is valid only after the earlier declaration; it is not the
+self-initialization case rejected by `VAR-ASSIGN-001`. v0.2 additionally proves the
+shared declaration identity and prepared result type instead of relying on emitted
+name coincidence.
+
+Compound `+=`, operators other than `+`, noncanonical integer promotion and
+effectful addition operands remain outside this row. `VAR-REASSIGN-003` remains a
+separate exact proof. LLVM remains deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs cover the exact source shape,
+declaration-versus-assignment classification, shared target/self-read identity,
+prepared addition and result types, one `auto`, normalized C++ spelling, cleanup and
+source purity. A value-bearing companion case records the expected result `2` for
+the on-demand native harness. Generated C++ is inspected but not compiled or
+executed in this slice; native compiler validation remains pending explicit request,
+so C++ S2S stays `in-progress`.
 
 ### Imported version 1
 
