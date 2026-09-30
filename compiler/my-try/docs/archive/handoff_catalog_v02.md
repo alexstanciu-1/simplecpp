@@ -34,7 +34,7 @@ Follow repository AGENTS.md: read specs/spec_map.md, docs/ai_onboarding/README.m
 docs/ai_onboarding/coding_style.md, specs/simple_cpp_php_strict_quick_learn.md,
 then the owning specs. Also read:
 
-- [Local AGENTS.md](../AGENTS.md), [code style](../code_style.md).
+- [Local AGENTS.md](../../AGENTS.md), [code style](../code_style.md).
 - [Catalog README](../catalog/README.md), then the selected card.
 - [Model](../architecture/MODEL.md), [ownership](../architecture/ownership.md) when touching retained data.
 - [Incremental contract/debt](../lifecycle/incremental.md), [work queue](../lifecycle/work_queue.md).

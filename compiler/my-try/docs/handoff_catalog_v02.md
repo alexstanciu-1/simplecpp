@@ -35,7 +35,7 @@ and assembles one `main.cpp`. See [model](architecture/MODEL.md),
 
 ## Validation and proof boundaries
 
-Use [AGENTS](AGENTS.md) for the focused-test/publication policy and
+Use [AGENTS](../AGENTS.md) for the focused-test/publication policy and
 [portability status](portability/conversion_review.md) for proof limits. Historical
 native passes do not certify the current compiler. Feature evidence belongs in the
 catalog or dated result records, not repeated global checkpoint summaries.

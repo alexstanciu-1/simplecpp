@@ -10,7 +10,7 @@ experiment retained for regressions, not a second semantic development path.
 
 | Need | Read |
 | --- | --- |
-| Operating rules and checks | [AGENTS](AGENTS.md), [code style](code_style.md) |
+| Operating rules and checks | [AGENTS](../AGENTS.md), [code style](code_style.md) |
 | Retained data and ownership | [Model](architecture/MODEL.md), [ownership](architecture/ownership.md) |
 | Specialized syntax and traversal | [AST layout](architecture/ast_layout.md) |
 | Incremental stages and failure handling | [Lifecycle](lifecycle/incremental.md), [work queue](lifecycle/work_queue.md) |

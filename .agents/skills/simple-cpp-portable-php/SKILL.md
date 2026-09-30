@@ -129,7 +129,7 @@ an old slice's limits or a feature-catalog proposal as the current support matri
   and extend conversion only for demonstrated needs. Report cross-owner decisions
   and target defects without silently redesigning contracts or fixing generated C++.
 
-For `compiler/my-try`, follow its [local operating rules](../../../compiler/my-try/docs/AGENTS.md)
+For `compiler/my-try`, follow its [local operating rules](../../../compiler/my-try/AGENTS.md)
 and [native validation guide](../../../compiler/my-try/docs/portability/conversion_review.md).
 Native compiler runs are on explicit request; that project's legacy STAN bypass is
 local policy, not a recommendation to disable STAN for strict applications. Its

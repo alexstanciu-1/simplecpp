@@ -80,5 +80,5 @@ See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation
 ## my-try compiler instructions
 
 When working under `compiler/my-try/`, also read and follow
-[its local operating rules](compiler/my-try/docs/AGENTS.md). They apply to the entire
-`compiler/my-try/` subtree; the file lives in docs to keep documentation together.
+[its local operating rules](compiler/my-try/AGENTS.md). They apply to the entire
+`compiler/my-try/` subtree.

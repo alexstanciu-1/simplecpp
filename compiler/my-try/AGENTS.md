@@ -12,7 +12,7 @@ the portable-PHP skill and existing converter/framework for adaptation.
   facts. LLVM must first be adapted to that model if development resumes.
 - Catalog work targets strict PHS first. Review the corresponding legacy S2S
   implementation, tests and edge cases before each slice. Legacy examples are
-  evidence, not semantic authority. Follow the [catalog workflow](catalog/README.md#per-example-workflow).
+  evidence, not semantic authority. Follow the [catalog workflow](docs/catalog/README.md#per-example-workflow).
 - Implement the agreed ownership area, review the code, run relevant focused tests,
   then commit. Style/lint runs, broad regressions, conversion and native compilation
   are on demand. In particular, do not run `tools/native_validate.py` automatically.
@@ -26,8 +26,8 @@ the portable-PHP skill and existing converter/framework for adaptation.
 
 ## Model and processing
 
-Read [MODEL](architecture/MODEL.md) before changing retained data and
-[ownership](architecture/ownership.md) before changing links or lifetime.
+Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
+[ownership](docs/architecture/ownership.md) before changing links or lifetime.
 
 - Model's static fields own shared roots; retained records never retain workers.
   `Compiler_Lifecycle` owns resets. Module configuration changes reset compilation;
@@ -45,7 +45,7 @@ Read [MODEL](architecture/MODEL.md) before changing retained data and
 
 ## Authoring
 
-Follow [code_style.md](code_style.md). Use `namespace scpp\compiler;`, lowercase
+Follow [code_style.md](docs/code_style.md). Use `namespace scpp\compiler;`, lowercase
 `snake_case` data types and `Capitalized_Snake_Case` workers. Qualify external
 exceptions/constants; prefer short same-namespace types in portability annotations.
 
@@ -57,7 +57,7 @@ host results after checking their truthful failure/union forms.
 Use `Storage<T>` for numeric shared-record lists, `Keyed_Storage<T>` for unique
 string keys and `Key_Storage_List<T>` for duplicate keys. Scalar/sparse value
 containers remain typed vectors/hashes. Bind nested collection receivers to typed
-locals where required by the converter. See [Storage](storage/STORAGE.md).
+locals where required by the converter. See [Storage](docs/storage/STORAGE.md).
 Ownership tags document intent; only supported bindings implement native behavior.
 
 ## Performance and documentation
@@ -70,4 +70,4 @@ measurement. Preserve semantics, lifetime and diagnostics during optimization.
 Keep current guidance compact. Update the owning guide and unresolved debt when
 behavior changes; archive completed proposals/checkpoints rather than appending
 contradictory “current” sections. Proof counts belong to dated evidence, not global
-instructions. The [documentation index](README.md) identifies the active owners.
+instructions. The [documentation index](docs/README.md) identifies the active owners.
