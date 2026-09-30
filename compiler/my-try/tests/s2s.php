@@ -80,6 +80,7 @@ $cases = [
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
+	'var_chain_002' => ['$a = 1; $b = $a;', 0],
 	'copy' => ['$a = 10; $b = $a; $a = 12; return $b;', 10],
 	'wide' => ['$a = 4294967296; return 7;', 7],
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
@@ -236,6 +237,16 @@ foreach ($cases as $name => [$source, $exit])
 
 	if (($name === 'chain_call_once') && (substr_count(Model::$cpp_files[0]->text, 'return function_value();') !== 1)) {
 		throw new \LogicException('Assignment chain evaluated its call RHS more than once');
+	}
+
+	if ($name === 'var_chain_002')
+	{
+		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
+			. "\tauto local_b = local_a;\n";
+		$text = Model::$cpp_files[0]->text;
+		if (!str_contains($text, $expected) || str_contains($text, 'auto local_b = static_cast')) {
+			throw new \LogicException('VAR-CHAIN-002 lost sequential declaration order or direct copy lowering');
+		}
 	}
 
 	if (isset($explicit_declarations[$name]))

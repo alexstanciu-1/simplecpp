@@ -27,7 +27,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-STR-003](#lit-str-003) | agreed | `$a = "";` | proved | in-progress | deferred | [Generalized string preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-CONST-001](#lit-const-001) | agreed | `$a = PHP_INT_MAX;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-001](#var-chain-001) | agreed | `$a = $b = 1;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-002](#var-chain-002) | pending-discussion | `$a = 1; $b = $a;` | unverified | unverified | deferred | — |
+| [VAR-CHAIN-002](#var-chain-002) | agreed | `$a = 1; $b = $a;` | proved | in-progress | deferred | [Exact emitted-C++ and variable-copy proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-003](#var-chain-003) | pending-discussion | `$a = 1; $b = $a; $c = $b;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-004](#var-chain-004) | pending-discussion | `$a = 1; $b = $a + 1;` | unverified | unverified | deferred | — |
 | [VAR-ORDER-001](#var-order-001) | pending-discussion | `$a = $b; $b = 1;` | unverified | unverified | deferred | — |
@@ -808,7 +808,22 @@ auto b = static_cast<int_t>(1); auto a = b;
 
 ## VAR-CHAIN-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** This row is sequential variable copying, not a
+nested assignment chain. It reuses the established source-order variable-reference
+and first-write binding path without new AST or backend cases. The exact input emits:
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(1LL);
+auto local_b = local_a;
+```
+
+Preparation resolves `$a` to its earlier declaration, gives `$b` a distinct
+declaration identity with the same canonical type, and rejects reads before an
+established declaration. The outer copy is direct: it does not repeat literal
+normalization or insert a conversion when both identities have the same type.
+The broader copy proof mutates `$a` afterward and verifies that `$b` retains its
+copied value. Longer sequential copy series remain independently tracked by
+`VAR-CHAIN-003`.
 
 ### Imported version 1
 
