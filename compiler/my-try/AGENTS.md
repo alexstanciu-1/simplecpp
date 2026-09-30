@@ -5,6 +5,15 @@ These rules apply to the entire `compiler/my-try/` subtree. Preserve unrelated I
 changes and reread touched files before editing. PHP remains authored source; use
 the portable-PHP skill and existing converter/framework for adaptation.
 
+## Starting or resuming work
+
+After the repository's required reading, read the [documentation index](docs/README.md)
+and follow its map to the guide owning the requested change. For feature work, inspect
+the [catalog](docs/catalog/README.md) chapter's progress and agree the next unfinished
+slice. For native work, read the [portability status](docs/portability/conversion_review.md)
+and distinguish its tested revision from the current checkout. Consult archives only
+when historical context is needed; their former plans are not current instructions.
+
 ## Scope and workflow
 
 - Default development is frontend + C++ S2S. LLVM is parked; change its semantics

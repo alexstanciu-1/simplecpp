@@ -26,9 +26,10 @@ Validate library names and other inherited source assumptions per selected examp
 
 Use one example at a time: discuss its behavior and C++ solution, split it if it
 combines several concepts, agree the general rule, implement it, and record proof.
-Start with [integer literals and local variables](01_literals_locals.md#lit-int-001),
-not classes. Existing compiler capabilities can be verified and recorded as we reach
-them; there is no requirement to implement them again.
+The original sequence began with [integer literals and local variables](01_literals_locals.md#lit-int-001).
+When resuming, inspect the relevant chapters' progress tables and agree the next
+unfinished slice, respecting its dependencies and deferred decisions. Existing
+compiler capabilities can be verified and recorded; do not restart completed work.
 
 ## Canonical language model
 
