@@ -7,21 +7,44 @@ and [preparation](../../04_analyze/prepare/README.md). The
 [original discussion](../archive/incremental_strategy_history.md) is historical;
 its superseded proposals and completed tasks are not an implementation backlog.
 
-## Top-priority v0.2 review: abstract-typed properties
+## Completed bounded abstract-property review (2026-09-30)
 
-Review properties declared as abstract classes or interfaces, including collection
-elements/keys and trait-provided fields. Identify which genuinely store several
-concrete roles and which erase a known specialization. Start with AST child/type
-fields, collected-occurrence links, scope indexes, preparation work/dependency
-records and C++ fragment records. Keep bodies as processing units, not symbols.
+Reviewed retained fields, collection elements/keys and trait fields in input,
+tokenization, parsing, collection, preparation, C++ generation and coordinator data
+at `e9e826cf`. Followed producers and consumers; transient worker fields were checked
+for accidental retention. Parked LLVM and future language structures were excluded.
+No architecture blocker was found. This review does not prove complete lifetime safety
+or approve a property redesign. Nullable concrete facts remain absence, not polymorphism.
 
-For each boundary, document the permitted concrete roles, ownership and nullability;
-retain intentional polymorphism and narrow unnecessarily broad declarations. A
-nullable concrete property represents absence, not multiple concrete object types.
-Do not mechanically specialize every shared field or duplicate the symbol model.
-Coordinate language implications with the
-[inheritance-contract review](../catalog/11_inheritance.md#v02-contract-review-debt).
-This is review debt; no property redesign is approved by this entry.
+| Boundary | Actual roles and ownership | Decision |
+| --- | --- | --- |
+| AST declarations/statements | File owns functions/structs; bodies and blocks own executable statement variants. | Keep `declaration_node` / `statement_node` collections. Bodies remain processing units. |
+| AST expressions/targets/types | Named fields own expression variants; assignment targets admit variables, fields and indexes; type fields admit named and array syntax. Optional return expressions/initializers represent absence. | Keep `expression_node`, `assignable_expression_node`, `type_node`; parser coverage and preparation support are separate. |
+| Inspection cursors | Iterator retains its typed source/cursor and optional current `ast_node`, across heterogeneous children. | Keep broad inspection view; no worker stored in syntax. |
+| `Collected_Occurrence` trait | Optional weak backlink before collection/after retirement. Roles follow the node: functions, structs, fields, parameters, explicit variables, references and writes. A variable-reference syntax can have read or write occurrence. | Keep shared trait; concrete collected records already retain concrete syntax fields. No per-node duplicate registry or trait specialization. |
+| `collected_file.entries`, scope variables | File owns heterogeneous declarations/references/writes; scope indexes refer to relevant entries. Variable pool contains fields, parameters and explicit variables. | Keep current common identity boundary. `Key_Storage_List` indexes currently retain handles; documentary weak intent does not implement weak storage. |
+| Prepared storage/reference declarations | Required weak links to explicit variables, parameters, fields or inferred first writes. First writes extend `collected_name`, not `collected_declaration`. | Keep `collected_name`; narrowing to declarations would exclude valid storage identities. Concrete expression facts and call targets are already specialized. |
+| `preparation_context.locals` | Invocation-local aliases of binding and parameter facts through `prepared_storage`; retained facts never own the context. | Keep common storage capability. |
+| Definition/body work | Definitions hold optional function-signature/record work; body nodes hold optional function-body/file-body work. Dependencies hold declaration work; dependents, change handoffs and backend keys admit all work roles. | Keep `declaration_work`, `body_work`, `preparation_owner`; shared bookkeeping is intentional. Strong graph links use explicit unlinking. |
+| Concrete roots/metadata | Source, parsed-file root/scopes, canonical type definitions and specialized facts already use concrete records. | No additional abstract-field specialization needed. |
+
+Three nonblocking narrowing candidates remain:
+
+1. `scope.functions`: only `collected_function` is inserted. Narrow the keyed list
+   and function lookup projections together; retain duplicate-name behavior and
+   base-identity removal APIs. No new type hierarchy is needed.
+2. `preparation_lookup.candidates`: currently only collected functions and structs,
+   both `collected_definition`. Narrow the snapshot and producer return boundaries
+   together. Empty snapshots still represent missing names; duplicate candidates
+   still represent ambiguity. Built-in types are not fabricated source declarations.
+3. `cpp_fragment.records`: only `collected_struct` dependencies from field type
+   definitions. Narrow its collection and `assemble_record()` together; preserve
+   dependency order and fragment ownership. This is independent of output partitioning.
+
+These are reviewed local follow-ups, not prerequisites for literal feature growth.
+Revisit the permitted roles when adding declarations, call targets or type forms.
+The broader [inheritance-contract review](../catalog/11_inheritance.md#v02-contract-review-debt)
+remains attached to that language chapter.
 
 ## Remaining incremental work
 

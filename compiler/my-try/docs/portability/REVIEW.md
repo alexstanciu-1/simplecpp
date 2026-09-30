@@ -68,7 +68,10 @@ both comparison directions, distinct objects, empty/present nullable values, and
 multiple/virtual inheritance; it passes with Clang and GCC. Unrelated static interface
 views retain the existing fallback and are not expanded by this slice.
 
-## STAN diagnostic catalog (2026-09-30)
+## Parked v0.1 STAN diagnostic catalog (2026-09-30)
+
+User decision: bypass v0.1 STAN and resume feature work. The proposed repairs were
+not started; the inventory below is retained for reference, not an active queue.
 
 Fresh analysis after `420cb2a3`: 71 converted units, 1,049 diagnostics (70 in the
 compile-error bucket, 760 STAN-error bucket, 219 warnings). These are analyzer

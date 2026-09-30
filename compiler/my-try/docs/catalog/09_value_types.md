@@ -5,7 +5,12 @@ Doc Status: planning
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)
 
-Requires canonical types and declarations. This imported inventory primarily covers enums; record coverage must be added when discussed.
+Requires canonical types and declarations. The imported cards primarily cover enums.
+A bounded value-struct slice already exists: named fields, default initialization,
+value copies, field access and value/reference function boundaries. Its scope and
+proofs are recorded with [ordinary functions](04_functions.md#current-ordinary-function-slice-2026-09-27)
+and [current native status](../portability/conversion_review.md). This does not mark
+the enum, ownership or imported annotation cards below complete.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 

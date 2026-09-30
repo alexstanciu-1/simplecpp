@@ -15,7 +15,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [LIT-INT-001](#lit-int-001) | agreed | `$a = 10;` | proved | proved | deferred | [S2S integer slice](../s2s_integer_slice.md); PHP preparation + Clang execution; compiler-native evidence recorded in handoff |
+| [LIT-INT-001](#lit-int-001) | agreed | `$a = 10;` | proved | proved | deferred | [S2S integer slice](../s2s_integer_slice.md); PHP preparation + Clang execution; [current native evidence](../portability/conversion_review.md) |
 | [LIT-BOOL-001](#lit-bool-001) | agreed | `$a = true;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-BOOL-002](#lit-bool-002) | agreed | `$a = false;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-FLOAT-001](#lit-float-001) | agreed | `$a = 10.5;` | proved | proved | deferred | [Scalar proof](../../tests/s2s.php), [float decision](#lit-float-001) |
@@ -55,11 +55,11 @@ retains the existing binding occurrence as declaration identity without mutating
 the AST. The first one-file entry emits:
 
 ```cpp
-auto local_0 = static_cast<scpp::int_t<>>(10LL);
+auto local_a = static_cast<scpp::int_t<>>(10LL);
 ```
 
-The generated name uses the declaration token position. The current runtime type
-is signed 64-bit; the native carrier suffix preserves the supported integer range.
+The generated name uses the saved declaration name and a role prefix, independent
+of token position. The current runtime type is signed 64-bit; the native carrier suffix preserves the supported integer range.
 Explicit `int` initialization, copies and reassignment have supporting proofs in
 [tests/s2s.php](../../tests/s2s.php). This does not mark other catalog cards complete.
 Scope encapsulation and the LANGUAGE+RUNTIME parent are described in the
@@ -107,13 +107,13 @@ auto a = static_cast<int_t>(10);
 ## LIT-BOOL-001
 
 **v0.2 decision / target C++:** Boolean literals follow the integer pipeline.
-The frontend normalizes `true` into a boolean_literal specialization. Preparation
+The frontend normalizes `true` into a boolean_literal_node. Preparation
 attaches a prepared_boolean_literal with canonical language `bool` identity and
 its boolean value. The shared binding path infers the local type and establishes
 its declaration on first assignment. Inside the program entry:
 
 ```cpp
-auto local_0 = static_cast<scpp::bool_t>(true);
+auto local_a = static_cast<scpp::bool_t>(true);
 ```
 
 Include only `scpp/bool_t.hpp` when this is the only literal type needed. True and
@@ -158,13 +158,13 @@ auto a = static_cast<bool_t>(true);
 ## LIT-BOOL-002
 
 **v0.2 decision / target C++:** Boolean literals follow the integer pipeline.
-The frontend normalizes `false` into a boolean_literal specialization. Preparation
+The frontend normalizes `false` into a boolean_literal_node. Preparation
 attaches a prepared_boolean_literal with canonical language `bool` identity and
 its boolean value. The shared binding path infers the local type and establishes
 its declaration on first assignment. Inside the program entry:
 
 ```cpp
-auto local_0 = static_cast<scpp::bool_t>(false);
+auto local_a = static_cast<scpp::bool_t>(false);
 ```
 
 Include only `scpp/bool_t.hpp` when this is the only literal type needed. True and
@@ -208,7 +208,7 @@ auto a = static_cast<bool_t>(false);
 
 **v0.2 decision / target C++:** Agreed decimal floating literals use canonical
 `float` (signed 64-bit, runtime `scpp::float_t` backed by `double`; current target
-IEEE binary64 with 53 significand bits). Emit `auto local_0 =
+IEEE binary64 with 53 significand bits). Emit `auto local_a =
 static_cast<scpp::float_t>(10.5);` with the narrow `scpp/float_t.hpp` header.
 
 Accept decimal point and exponent forms: `10.5`, `.5`, `10.`, `1e3`, `1E+3`,

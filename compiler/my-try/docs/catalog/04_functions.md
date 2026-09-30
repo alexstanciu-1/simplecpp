@@ -19,7 +19,7 @@ function bodies and the entry body. Calls snapshot value arguments left-to-right
 reference arguments keep their original stable storage. PHP preparation and
 emitted C++ execution proofs live in `../../tests/s2s.php`. The user-requested
 native compiler build also passed these declaration cases; see
-[the native checkpoint](../archive/native_adaptations.md#ordinary-functions-and-value-structs--2026-09-27).
+[current native status](../portability/conversion_review.md).
 
 Legacy intake review: `generators/php/src/Generator/Generator.php` declaration,
 struct and typed-initializer lowering; `Lowering/TypeMapper.php` fixed integer
@@ -57,25 +57,25 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [FUNC-DECL-001](#func-decl-001) | pending-discussion | `function f() { }` | unverified | unverified | deferred | — |
-| [FUNC-VOID-001](#func-void-001) | implemented | `function f(): void { return; }` | verified | verified | deferred | `tests/s2s.php` |
-| [FUNC-DECL-002](#func-decl-002) | implemented | `function f(): int { return 1; }` | verified | verified | deferred | `tests/s2s.php` |
-| [FUNC-RETURN-001](#func-return-001) | implemented | `return;` | verified | verified | deferred | `tests/s2s.php` |
-| [FUNC-DECL-003](#func-decl-003) | implemented | `function f(int $a): int { return $a; }` | verified | verified | deferred | `tests/s2s.php` |
-| [TYPE-PARAM-001](#type-param-001) | implemented | `function f(int $a, float $b, bool $c): void {}` | verified | verified | deferred | `tests/s2s.php` |
-| [FUNC-CALL-001](#func-call-001) | implemented | `f();` | verified | verified | deferred | `tests/s2s.php` |
-| [FUNC-CALL-002](#func-call-002) | implemented | `f($a);` | verified | verified | deferred | `tests/s2s.php` |
+| [FUNC-VOID-001](#func-void-001) | agreed | `function f(): void { return; }` | proved | proved | deferred | `tests/s2s.php` |
+| [FUNC-DECL-002](#func-decl-002) | agreed | `function f(): int { return 1; }` | proved | proved | deferred | `tests/s2s.php` |
+| [FUNC-RETURN-001](#func-return-001) | agreed | `return;` | proved | proved | deferred | `tests/s2s.php` |
+| [FUNC-DECL-003](#func-decl-003) | agreed | `function f(int $a): int { return $a; }` | proved | proved | deferred | `tests/s2s.php` |
+| [TYPE-PARAM-001](#type-param-001) | agreed | `function f(int $a, float $b, bool $c): void {}` | proved | proved | deferred | `tests/s2s.php` |
+| [FUNC-CALL-001](#func-call-001) | agreed | `f();` | proved | proved | deferred | `tests/s2s.php` |
+| [FUNC-CALL-002](#func-call-002) | agreed | `f($a);` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-DECL-004](#func-decl-004) | pending-discussion | `function f(int $a, string $b): int { return $a; }` | unverified | unverified | deferred | — |
 | [FUNC-DEFAULT-001](#func-default-001) | pending-discussion | `function f(int $a = 1): int { return $a; }` | unverified | unverified | deferred | — |
 | [FUNC-RECURSION-001](#func-recursion-001) | pending-discussion | `function f(int $a): int { return f($a - 1); }` | unverified | unverified | deferred | — |
 | [FUNC-OVERLOAD-001](#func-overload-001) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
 | [FUNC-DECL-005](#func-decl-005) | pending-discussion | `function f($a) { return $a; }` | unverified | unverified | deferred | — |
-| [FUNC-RETURN-002](#func-return-002) | implemented | `return $a;` | verified | verified | deferred | `tests/s2s.php` |
+| [FUNC-RETURN-002](#func-return-002) | agreed | `return $a;` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-RETURN-003](#func-return-003) | pending-discussion | `return $a + 1;` | unverified | unverified | deferred | — |
 | [FUNC-CALL-003](#func-call-003) | pending-discussion | `f($a, 1, "x", true);` | unverified | unverified | deferred | — |
 | [FUNC-CALL-004](#func-call-004) | pending-discussion | `sum_all(1, 2, 3);` | unverified | unverified | deferred | — |
 | [SCOPE-GLOBAL-001](#scope-global-001) | pending-discussion | `$a = 1; function f(): int { return $a; }` | unverified | unverified | deferred | — |
-| [SCOPE-LOCAL-001](#scope-local-001) | implemented | `function f(): void { $a = 1; $b = $a; }` | verified | verified | deferred | `tests/s2s.php` |
-| [SCOPE-SHADOW-001](#scope-shadow-001) | implemented | `$a = 1; function f(): void { $a = 2; }` | verified | verified | deferred | `tests/s2s.php` |
+| [SCOPE-LOCAL-001](#scope-local-001) | agreed | `function f(): void { $a = 1; $b = $a; }` | proved | proved | deferred | `tests/s2s.php` |
+| [SCOPE-SHADOW-001](#scope-shadow-001) | agreed | `$a = 1; function f(): void { $a = 2; }` | proved | proved | deferred | `tests/s2s.php` |
 | [TYPE-PARAM-003D](#type-param-003d) | pending-discussion | `function f(string $s): void { $s .= "x"; }` | unverified | unverified | deferred | — |
 | [NOTE-016](#note-016) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-039](#note-039) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |

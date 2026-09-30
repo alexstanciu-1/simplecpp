@@ -17,6 +17,8 @@ the portable-PHP skill and existing converter/framework for adaptation.
   then commit. Style/lint runs, broad regressions, conversion and native compilation
   are on demand. In particular, do not run `tools/native_validate.py` automatically.
   PHP checks do not prove native portability.
+- Bypass legacy v0.1 STAN for this compiler work (`--no-stan` on requested native
+  runs). Its repair catalog is parked; resume STAN work only on explicit request.
 - On `feature/scpp-native-portability-fixes`, push completed commits to the existing
   remote branch and provide a GitHub commit link. This is standing authorization.
 - An explicitly requested partial refactor may temporarily break later stages;
