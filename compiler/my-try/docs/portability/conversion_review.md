@@ -85,7 +85,14 @@ in the C++ body. The approved generator fix now accepts the expression object.
 The same proof passes conversion, normal STAN, native build and PHP/native execution
 (`10:2`) in `/tmp/my-try-parent-proof-fixed-20260929`, against `cf4d4d9d` plus
 the extractor fix. No runtime changes were needed.
-Whole-compiler STAN/build/execution remain unreached.
+Whole-compiler native compilation/execution remain unreached. The 2026-09-30
+STAN attempt (`logs-6`) reports 68 initialization checks, six unresolved calls,
+one override mismatch and one LLVM enum diagnostic. The user authorized bypassing
+STAN for native investigation. After the parser constructor/scope/type cleanups,
+conversion passes and the previous 27 parser visibility errors disappear.
+The next generation blocker is `Compiler::cpp()`: `$output` is created inside
+`try` and published outside its block. Evidence:
+`/tmp/my-try-native-20260930-scopes.stderr`. C++ compilation has not started.
 
 ## Current authoring contracts
 

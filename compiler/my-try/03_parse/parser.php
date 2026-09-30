@@ -71,20 +71,19 @@ final class Parser_Run
 		$this->tokens = $tokens;
 		$this->position = $tokens->first_token;
 		$this->scopes = new Storage /** Storage<scope> */();
+		$file_scope /** scope */ = $previous !== null ? $previous->root_scope() : ($target_scope ?? new scope());
 		if ($previous === null) {
-			$file_scope = $target_scope ?? new scope();
 			$root = new file_node($file_scope);
 			$root->set_span(0, 0);
 			$root->body = new function_body_node($file_scope);
 			$root->body->set_span(0, 0);
-			$collection = new collected_file($tokens);
-			$collection->root = $root;
-			$this->parsed = new parsed_file($tokens, $root, $collection, $this->scopes);
+			$new_collection = new collected_file($tokens);
+			$new_collection->root = $root;
+			$this->parsed = new parsed_file($tokens, $root, $new_collection, $this->scopes);
 		}
 		else
 		{
 			$this->parsed = $previous;
-			$file_scope = $previous->root_scope();
 			if ($previous->complete && $previous->collection->parse_complete) {
 				$this->reuse_previous = true;
 			}
@@ -313,21 +312,17 @@ final class Parser_Run
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
 		$previous = $this->collector->previous_struct($this->file_scope, $name);
+		$record /** struct_node */ = $previous ?? new struct_node();
 		if ($previous === null) {
-			$node = new struct_node();
-			$node->set_span($start, $start);
+			$record->set_span($start, $start);
 		}
-		else {
-			$node /** ast_node */ = $previous;
-		}
-		$old_start = $node->start_token();
+		$old_start = $record->start_token();
 		if ($previous !== null) {
-			if (object_cast($node->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
+			if (object_cast($record->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
 				$old_start = -1;
 			}
 		}
-		$old_end = $node->end_token();
-		$record = object_cast($node, struct_node::class);
+		$old_end = $record->end_token();
 		$record->name = $name;
 		$record->collect($this->collector, $this->file_scope, $name_index);
 		$record->member_scope()->set_parent($this->file_scope);
@@ -338,7 +333,7 @@ final class Parser_Run
 		}
 		$this->expect('}');
 		$record->fields = $fields;
-		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
+		$this->finish_declaration($record, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
 		return $record;
 	}
 
@@ -361,26 +356,22 @@ final class Parser_Run
 		$name_index = $this->position++;
 		$name = $this->name_at($name_index);
 		$previous = $this->collector->previous_field($scope, $name);
+		$field /** field_node */ = $previous ?? new field_node();
 		if ($previous === null) {
-			$node = new field_node();
-			$node->set_span($start, $start);
+			$field->set_span($start, $start);
 		}
-		else {
-			$node /** ast_node */ = $previous;
-		}
-		$old_start = $node->start_token();
+		$old_start = $field->start_token();
 		if ($previous !== null) {
-			if (object_cast($node->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
+			if (object_cast($field->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
 				$old_start = -1;
 			}
 		}
-		$old_end = $node->end_token();
-		$field = object_cast($node, field_node::class);
+		$old_end = $field->end_token();
 		$field->type_syntax = $type;
 		$field->name = $name;
 		$field->collect($this->collector, $scope, $name_index);
 		$this->expect(';');
-		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
+		$this->finish_declaration($field, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
 		return $field;
 	}
 
@@ -440,17 +431,13 @@ final class Parser_Run
 		}
 
 		$previous = $this->collector->previous_function($this->file_scope, $function_name);
+		$function /** function_node */ = $previous ?? new function_node();
 		if ($previous === null) {
-			$node = new function_node();
-			$node->set_span($start, $start);
+			$function->set_span($start, $start);
 		}
-		else {
-			$node /** ast_node */ = $previous;
-		}
-		$function = object_cast($node, function_node::class);
-		$old_start = $node->start_token();
+		$old_start = $function->start_token();
 		if ($previous !== null) {
-			if (object_cast($node->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
+			if (object_cast($function->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
 				$old_start = -1;
 			}
 		}
@@ -499,20 +486,18 @@ final class Parser_Run
 		$body_end = $this->body_end();
 		$body_changed = !$this->same_body_text($old_body_start, $old_body_end, $body_start, $body_end);
 		$scopes /** Storage<scope> */ = $this->scopes;
+		$selected_scope /** scope */ = !$body_changed ? $function->body->local_scope() : new scope();
+		if ($body_changed) {
+			$selected_scope->set_parent($local_scope);
+			$selected_scope->mark_function();
+		}
+		$scopes->append($selected_scope);
+		$body /** function_body_node */ = !$body_changed ? $function->body : $this->block($selected_scope);
 		if (!$body_changed) {
-			$body = $function->body;
-			$body_scope = $body->local_scope();
-			$scopes->append($body_scope);
 			$this->retain_range($body, $body_start);
 			$this->position = $body_end;
 		}
-		else
-		{
-			$body_scope = new scope();
-			$body_scope->set_parent($local_scope);
-			$body_scope->mark_function();
-			$scopes->append($body_scope);
-			$body = $this->block($body_scope);
+		else {
 			if ($previous !== null) {
 				if ($function->has_parsed_body()) {
 					$this->transfer_body_work($function->body, $body);
@@ -525,7 +510,7 @@ final class Parser_Run
 		$function->set_parsed_body($body);
 		$function->parameters = $parameters;
 		$function->template_parameters = $formals;
-		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_body_start, $start, $body_start));
+		$this->finish_declaration($function, $start, $this->same_tokens($old_start, $old_body_start, $start, $body_start));
 		return $function;
 	}
 
@@ -550,27 +535,23 @@ final class Parser_Run
 		$name_index = $this->position++;
 		$name = $this->name_at($name_index);
 		$previous = $this->collector->previous_parameter($scope, $name);
+		$parameter /** parameter_node */ = $previous ?? new parameter_node();
 		if ($previous === null) {
-			$node = new parameter_node();
-			$node->set_span($start, $start);
+			$parameter->set_span($start, $start);
 		}
-		else {
-			$node /** ast_node */ = $previous;
-		}
-		$old_start = $node->start_token();
+		$old_start = $parameter->start_token();
 		if ($previous !== null) {
-			if (object_cast($node->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
+			if (object_cast($parameter->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
 				$old_start = -1;
 			}
 		}
-		$old_end = $node->end_token();
-		$parameter = object_cast($node, parameter_node::class);
+		$old_end = $parameter->end_token();
 		$parameter->type_syntax = $type;
 		$parameter->mode = $mode;
 
 		$parameter->name = $name;
 		$parameter->collect($this->collector, $scope, $name_index);
-		$this->finish_declaration($node, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
+		$this->finish_declaration($parameter, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
 		return $parameter;
 	}
 
