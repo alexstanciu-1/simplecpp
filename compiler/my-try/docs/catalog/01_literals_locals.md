@@ -24,7 +24,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-VAR-001](#type-var-001) | agreed | `$x string = "test";` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-ASSIGN-001](#var-assign-001) | agreed | `$a = $b;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-REASSIGN-001](#var-reassign-001) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [LIT-STR-003](#lit-str-003) | pending-discussion | `$a = "";` | unverified | unverified | deferred | — |
+| [LIT-STR-003](#lit-str-003) | agreed | `$a = "";` | proved | in-progress | deferred | [Generalized string preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-CONST-001](#lit-const-001) | pending-discussion | `$a = PHP_INT_MAX;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-001](#var-chain-001) | pending-discussion | `$a = $b = 1;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-002](#var-chain-002) | pending-discussion | `$a = 1; $b = $a;` | unverified | unverified | deferred | — |
@@ -636,7 +636,37 @@ auto a = static_cast<int_t>(1); a = static_cast<int_t>(2);
 
 ## LIT-STR-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** The empty literal is already covered by the
+generalized string-literal path agreed for `LIT-STR-001` and `LIT-STR-002`:
+
+```php
+$a = "";
+```
+
+```cpp
+auto local_a = scpp::string_t("");
+```
+
+Preparation decodes both `""` and `''` to the same present zero-byte value with
+canonical `string` type. Empty does not mean `null`, `false` or absent. The ordinary
+string constructor is sufficient; the length-aware `std::string(literal, length)`
+path remains reserved for values containing embedded NUL bytes.
+
+**Legacy edge-case review:** The old S2S rendered the already decoded empty PHP
+string through its ordinary string-literal path, while separately preserving NUL-
+containing values with an explicit length. Existing legacy fixtures also use empty
+strings as valid initialized output buffers. Those distinctions still apply. String
+truthiness, `empty(...)`, comparisons, concatenation and interpolation are separate
+catalog concepts and are not inferred from this literal row.
+
+No production change is required: tokenization and parsing already retain either
+quote form, preparation owns exact byte decoding and canonical type, and C++ lowering
+owns target escaping and construction. Focused proofs cover both quote forms, exact
+zero length/value, canonical type and emitted `scpp::string_t("")`; the existing
+embedded-NUL proof guards the distinct length-aware path. Cleanup and source purity
+remain covered. LLVM stays deferred. Generated C++ is inspected but not compiled or
+executed; native compiler validation remains pending explicit request, so C++ S2S
+stays `in-progress`.
 
 ### Imported version 1
 

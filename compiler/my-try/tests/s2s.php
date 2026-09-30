@@ -64,6 +64,8 @@ $cases = [
 	'bool_and_int' => ['$a = true; $b = 7; return $b;', 7],
 	'string_single' => ['$a = \'x\';', 0],
 	'string_double' => ['$a = "x";', 0],
+	'string_empty_single' => ['$a = \'\';', 0],
+	'string_empty_double' => ['$a = "";', 0],
 	'string_explicit' => ['$x string = "test"; $x = "next";', 0],
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
@@ -151,13 +153,15 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 
-	if (($name === 'string_single') || ($name === 'string_double')) {
+	if (in_array($name, ['string_single', 'string_double', 'string_empty_single', 'string_empty_double'], true)) {
 		$text = Model::$cpp_files[0]->text;
-		if (!str_contains($text, 'auto local_a = scpp::string_t("x");')) {
+		$expected_value = str_contains($name, 'empty') ? '' : 'x';
+		if (!str_contains($text, 'auto local_a = scpp::string_t("' . $expected_value . '");')) {
 			throw new \LogicException('String literal did not use its canonical C++ representation');
 		}
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::string_t>);\n";
-		$probe .= "\tif (local_a.native_value() != std::string(\"x\", 1)) { return 91; }\n";
+		$probe .= "\tif (local_a.native_value() != std::string(\"" . $expected_value . '", '
+			. string_byte_len($expected_value) . ")) { return 91; }\n";
 		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", $text));
 	}
 
@@ -518,13 +522,15 @@ $h = "unknown\q";
 $i = "hex\x41";
 $j = "octal\101";
 $k = "controls\r\t\v\f\e";
+$l = '';
+$m = "";
 PHS;
 $string_source .= "\n" . '$e = \'' . string_byte_from_int(0) . '\';';
 $syntax = s2s_parse($string_source);
 $children = $syntax->root->body->statements;
 $expected_values = ['x', "can't", 'slash' . "\\" . 'path', "\\n", "line\nnext",
 	'quote"slash' . "\\" . 'dollar$', 'unknown' . "\\" . 'q', 'hexA', 'octalA',
-	"controls\r\t\v\f" . string_byte_from_int(27), string_byte_from_int(0)];
+	"controls\r\t\v\f" . string_byte_from_int(27), '', '', string_byte_from_int(0)];
 $string_nodes /** vector<string_literal_node> */ = [];
 foreach ($children as $index => $statement) {
 	$assignment = object_cast($statement->expression, assignment_expression_node::class);
@@ -552,7 +558,8 @@ foreach ($string_nodes as $index => $string_node)
 }
 $compiler->cpp();
 $string_output = Model::$cpp_files[0]->text;
-foreach (['scpp::string_t("x")', 'scpp::string_t("can\'t")', 'scpp::string_t("slash\\\\path")', 'scpp::string_t("\\\\n")', 'scpp::string_t(std::string("\\x00" "", 1))'] as $expected_spelling) {
+foreach (['scpp::string_t("x")', 'scpp::string_t("can\'t")', 'scpp::string_t("slash\\\\path")',
+	'scpp::string_t("\\\\n")', 'scpp::string_t("")', 'scpp::string_t(std::string("\\x00" "", 1))'] as $expected_spelling) {
 	if (!str_contains($string_output, $expected_spelling)) {
 		throw new \LogicException('C++ string escaping lost exact bytes: ' . $expected_spelling);
 	}
