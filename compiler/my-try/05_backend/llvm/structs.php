@@ -33,9 +33,9 @@ final class LLVM_Struct_Preparation
 				$type->declaration = $entry;
 				$type->name = '%' . LLVM_Names::encode($entry->name);
 				$fields /** Keyed_Storage<llvm_field> */ = $type->fields;
-				foreach (object_cast($entry, collected_struct::class)->syntax()->fields as $field_node)
+				$syntax_fields /** Storage<field_node> */ = object_cast($entry, collected_struct::class)->syntax()->fields;
+				foreach ($syntax_fields as $syntax)
 				{
-					$syntax = object_cast($field_node, field_node::class);
 					$spelling = '$' . $syntax->name;
 					$name = string_byte_slice($spelling, 1, string_byte_len($spelling) - 1);
 					$source_type = $tokens[$syntax->type_syntax->start_token()]->text();
