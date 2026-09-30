@@ -64,9 +64,10 @@ inline bool_t isset(const hash_t<T, K> &value, const int key) {
 	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
+// Deduce the key type from the hash; allow its existing implicit key conversions.
 template <typename T, typename K>
 	requires (!std::same_as<K, int_t<>> && !std::same_as<K, string_t> && !std::same_as<K, mixed_t>)
-inline bool_t isset(const hash_t<T, K> &value, const K &key) {
+inline bool_t isset(const hash_t<T, K> &value, const std::type_identity_t<K> &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}

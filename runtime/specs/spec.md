@@ -436,6 +436,9 @@ is unchanged.
 - typed reads/writes/calls originating from dynamic table/value access must follow the compromise notes in `../../specs/dynamic_types.md` when current v1 behavior accepts non-explicit conversion at explicit typed boundary sites
 - `hash_t` remains the underlying ordered-table container family, while generator-facing PHP `array` lowering now targets `mixed_t` for the fat-variable path
 - `hash_t<mixed_t, mixed_t>` is the preserved dynamic PHP-array specialization; typed runtime maps use `hash_t<T_VALUE, T_KEY>` with `string_t` as the default key type
+- Generic typed-key `isset` deduces the key type from the hash alone, allowing
+  existing implicit key conversions, including shared derived-to-base handles.
+  This adds no downcast or unrelated-handle conversion; probing remains non-inserting.
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `hash_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
 - `at()` is checked non-inserting access and follows throw-style semantics on miss
