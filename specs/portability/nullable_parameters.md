@@ -94,6 +94,14 @@ classes/messages across PHP and native execution. This is evidence of the curren
 runtime bridge, not a blanket promise of nullable flow narrowing or arbitrary
 payload conversion.
 
+Shared-object upcasts now compose with nullable extraction at typed value
+boundaries. The centralized policy accepts accessible, unambiguous derived-to-base
+relations without per-class registration. Optional destinations preserve absence;
+required destinations throw on an absent nullable. This does not add downcasts,
+mutable-reference conversions or container covariance. Runtime proof:
+`tests/runtime/nullable/level_01/runtime_nullable_011_shared_upcasts.cpp`.
+STAN analysis and covariant method override lowering remain separate capabilities.
+
 Keep the three operations distinct:
 
 - `object_cast($value, Target::class)` checks/narrows the object's class. Keep it

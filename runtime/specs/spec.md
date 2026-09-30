@@ -356,6 +356,36 @@ Included initially:
 - wrapper-aware equality follows branch normalization rather than guarded unwrap: `nullable<T>` compares empty-to-empty as equal, `result_or_false<T>` keeps the false sentinel distinct from wrapped payload values, `result_or_bool<T>` keeps its true/false sentinel states distinct from wrapped payload values, and `result<T>` treats matching failure states as equal in the current matrix slice
 - the temporary typed-boundary bridge is not a general operator-resolution escape hatch and must not be relied on to define operator participation outside the centralized operator surface
 
+
+#### Shared-object typed value boundaries
+
+For object types D and B, one generic rule permits shared-object upcasts when
+D* is implicitly convertible to B*: identity or accessible, unambiguous base
+conversion. Class pairs require no registration. Downcasts remain explicit checked
+object casts; unrelated, inaccessible and ambiguous relations are rejected.
+
+| Source | Required shared_p<B> | Optional nullable<shared_p<B>> |
+|---|---|---|
+| shared_p<D> | Upcast | Upcast and wrap |
+| Present nullable<shared_p<D>> | Extract and upcast | Upcast, remain present |
+| Empty nullable<shared_p<D>> | Throw runtime_error | Remain empty |
+
+Construction, assignment, by-value arguments, returns, cast and required_cast use
+the same shared-object policy in shared_conversion.hpp. Implicit entry points
+bridge the current generator's typed boundaries without asking C++ to chain two
+user-defined conversions. Conversion preserves object identity, dynamic type and
+shared ownership; it never copies/slices the object. A failed conversion completes
+no assignment: the destination retains its previous value.
+
+An empty nullable differs from a present nullable containing an empty shared
+handle. Extracting the latter produces an empty handle; later dereference follows
+the existing shared-handle error contract. These conversions do not redefine it.
+
+No overload preference is added between required and optional destinations:
+ambiguous calls require an explicit destination type. Mutable-reference and
+container covariance are not authorized by this rule. Scalar conversion policy
+is unchanged.
+
 ### 6.11 Reset/cleanup semantics
 - `unset` is restricted to types that can represent an empty/null state
 - in practice, `unset` is for nullable / pointer-like families, not for plain non-nullable value types

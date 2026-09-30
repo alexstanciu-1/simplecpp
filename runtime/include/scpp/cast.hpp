@@ -38,7 +38,9 @@ namespace scpp {
 
 template <typename To, typename From>
 To cast(const From &value) {
-	if constexpr (std::is_same_v<To, From>) {
+	if constexpr (detail::shared_boundary_convertible<To, From>) {
+		return detail::convert_shared_boundary<To>(value);
+	} else if constexpr (std::is_same_v<To, From>) {
 		return value;
 	} else {
 		static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
@@ -552,7 +554,9 @@ inline bool cast<bool, bool_t>(const bool_t &value) {
 // string_t remains the configured PHP-style exception where an empty nullable stringifies to the empty string.
 template <typename To, typename From>
 inline To cast(const nullable<From> &value) {
-	if constexpr (std::is_same_v<To, string_t>) {
+	if constexpr (detail::shared_boundary_convertible<To, nullable<From>>) {
+		return detail::convert_shared_boundary<To>(value);
+	} else if constexpr (std::is_same_v<To, string_t>) {
 		if (!value.has_value().native_value()) {
 			return string_t("");
 		}

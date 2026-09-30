@@ -133,3 +133,13 @@ findings. Do not infer that old diagnostic counts still apply without rerunning.
 
 [Review debt](REVIEW.md) tracks open ownership/analysis questions. Do not update the
 verified target pin or claim full native success from a focused fixture.
+
+## Shared-object conversion checkpoint
+
+The generic shared-object boundary policy now handles required/nullable upcasts.
+The focused runtime proof passes clang and GCC; the no-STAN compiler retry in
+`/tmp/my-try-native-shared-upcasts.stdout` no longer reports the nullable/derived
+failures in scope lookup, iterators or maintenance edges. The compiler still fails
+on independent name hiding, generated finally scope, container/type assignments,
+ternary branch types and covariant method-return emission. No executable exists
+from this attempt; this does not claim whole-compiler native success.

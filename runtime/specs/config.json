@@ -943,6 +943,42 @@
 	},
 	"casts": [
 		{
+			"from": "shared_p<D>",
+			"to": "shared_p<B>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true,
+			"constraint": "D* is implicitly convertible to B*",
+			"policy": "shared_conversion.hpp; optional destinations preserve absence; required destinations throw on absent nullable; preserve shared identity"
+		},
+		{
+			"from": "shared_p<D>",
+			"to": "nullable<shared_p<B>>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true,
+			"constraint": "D* is implicitly convertible to B*",
+			"policy": "shared_conversion.hpp; optional destinations preserve absence; required destinations throw on absent nullable; preserve shared identity"
+		},
+		{
+			"from": "nullable<shared_p<D>>",
+			"to": "shared_p<B>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true,
+			"constraint": "D* is implicitly convertible to B*",
+			"policy": "shared_conversion.hpp; optional destinations preserve absence; required destinations throw on absent nullable; preserve shared identity"
+		},
+		{
+			"from": "nullable<shared_p<D>>",
+			"to": "nullable<shared_p<B>>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true,
+			"constraint": "D* is implicitly convertible to B*",
+			"policy": "shared_conversion.hpp; optional destinations preserve absence; required destinations throw on absent nullable; preserve shared identity"
+		},
+		{
 			"from": "null_t",
 			"to": "shared_p<T>",
 			"kind": "implicit",

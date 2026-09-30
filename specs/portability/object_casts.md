@@ -54,8 +54,10 @@ proves successful casts, shared identity and null/mismatch instanceof predicates
 with normal STAN enabled. `tests/portability/native_collections.py` reproduces it
 against an explicitly supplied candidate. The reserved cast call is registered in
 STAN; its literal target is still validated by lowering. Native failure/catch parity
-is not covered by that passing trace. Stabilize a derived object as an explicit
-interface local before passing it to a nullable-interface parameter.
+is not covered by that passing trace. The current shared-object boundary policy now supports derived-to-base/interface
+conversions directly, including nullable sources and destinations; the older
+intermediate-interface-local workaround is no longer required. See
+[runtime shared-object boundaries](../../runtime/specs/spec.md#shared-object-typed-value-boundaries).
 
 `php tests/portability/object_casts.php` checks PHP identity, field aliasing, null and
 mismatch rejection, converter output, and native C++ emission without compilation.

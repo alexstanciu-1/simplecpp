@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scpp/detail.hpp"
+#include "scpp/shared_conversion.hpp"
 #include "scpp/bool_t.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/nullopt_t.hpp"
@@ -41,11 +42,19 @@ public:
 		: value_(std::move(value)) {
 	}
 
-	// Preserve safe shared-object upcasts at nullable return boundaries without
-	// enabling broad scalar coercion or requiring two implicit user conversions.
-	template<class U> requires (detail::is_shared_p_v<T> && detail::is_shared_p_v<U>
-		&& std::is_convertible_v<const U &, T> && !std::is_same_v<U, T>)
-	nullable(const U &value) : value_(T(value)) {}
+	// Shared-object boundaries use the same policy as named casts.
+	template<class U> requires (detail::shared_boundary_convertible<nullable<T>, U>
+		&& !std::is_same_v<U, T> && !std::is_same_v<U, nullable<T>>)
+	nullable(const U &source)
+		: nullable(detail::convert_shared_boundary<nullable<T>>(source)) {}
+
+	template<class U> requires (detail::shared_boundary_convertible<nullable<T>, U>
+		&& !std::is_same_v<U, T> && !std::is_same_v<U, nullable<T>>)
+	nullable &operator=(const U &source) {
+		auto converted = detail::convert_shared_boundary<nullable<T>>(source);
+		value_ = std::move(converted.value_);
+		return *this;
+	}
 
 	nullable &operator=(null_t) noexcept {
 		value_.reset();

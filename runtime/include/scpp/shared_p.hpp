@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scpp/detail.hpp"
+#include "scpp/shared_conversion.hpp"
 #include "scpp/bool_t.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/nullptr_t.hpp"
@@ -26,22 +27,22 @@ public:
 
 	template <typename U>
 	explicit shared_p(std::shared_ptr<U> value) noexcept
-		requires std::is_convertible_v<U *, T *>
+		requires detail::shared_boundary_convertible<shared_p<T>, shared_p<U>>
 		: value_(std::static_pointer_cast<T>(std::move(value))) {}
 
 	template <typename U>
 	shared_p(const shared_p<U> &value) noexcept
-		requires std::is_convertible_v<U *, T *>
+		requires detail::shared_boundary_convertible<shared_p<T>, shared_p<U>>
 		: value_(std::static_pointer_cast<T>(value.value_)) {}
 
 	template <typename U>
 	shared_p(shared_p<U> &&value) noexcept
-		requires std::is_convertible_v<U *, T *>
+		requires detail::shared_boundary_convertible<shared_p<T>, shared_p<U>>
 		: value_(std::static_pointer_cast<T>(std::move(value.value_))) {}
 
 	template <typename U>
 	shared_p &operator=(const shared_p<U> &value) noexcept
-		requires std::is_convertible_v<U *, T *>
+		requires detail::shared_boundary_convertible<shared_p<T>, shared_p<U>>
 	{
 		value_ = std::static_pointer_cast<T>(value.value_);
 		return *this;
@@ -49,9 +50,22 @@ public:
 
 	template <typename U>
 	shared_p &operator=(shared_p<U> &&value) noexcept
-		requires std::is_convertible_v<U *, T *>
+		requires detail::shared_boundary_convertible<shared_p<T>, shared_p<U>>
 	{
 		value_ = std::static_pointer_cast<T>(std::move(value.value_));
+		return *this;
+	}
+
+	// Direct nullable upcast avoids chaining two implicit C++ conversions.
+	template<class U> requires (!std::is_same_v<U, T>
+		&& detail::shared_boundary_convertible<shared_p<T>, nullable<shared_p<U>>>)
+	shared_p(const nullable<shared_p<U>> &source)
+		: shared_p(detail::convert_shared_boundary<shared_p<T>>(source)) {}
+
+	template<class U> requires detail::shared_boundary_convertible<shared_p<T>, nullable<shared_p<U>>>
+	shared_p &operator=(const nullable<shared_p<U>> &source) {
+		auto converted = detail::convert_shared_boundary<shared_p<T>>(source);
+		value_ = std::move(converted.value_);
 		return *this;
 	}
 
