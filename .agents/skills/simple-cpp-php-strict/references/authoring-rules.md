@@ -164,6 +164,13 @@ Guidance:
 - Use `hash<T, T_KEY>` for typed non-string key families.
 - Use dynamic/mixed containers only when the shape is genuinely dynamic, such as decoded JSON before stabilization.
 
+Shared-object upcasts do not imply container covariance: do not assign a
+`vector<Derived>` to a `vector<Base>`. If a common-base collection is needed,
+construct an explicitly typed result and append the elements individually. If only
+a count or membership answer is needed, perform that operation in each branch
+instead of selecting differently typed containers with a ternary. The destination
+type does not determine the ternary's branch compatibility.
+
 ## Dynamic Values
 
 `json_decode(...)` first returns a checked `result<mixed>`. After successful extraction, the decoded value stays dynamic until a typed boundary or narrowing point.

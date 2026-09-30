@@ -45,6 +45,16 @@ type. Separate state-dependent key/index reads from mutations in the same expres
 (for example capture the key, assign the current position, then increment). PHP and
 C++ evaluation order must not determine the compiler's behavior differently.
 
+Narrow typed collections end to end: declaration, initialization, local aliases,
+lookup returns, and insertion/removal boundaries. Shared-handle upcasts do not make
+`vector<Derived>` interchangeable with `vector<Base>`. When a consumer genuinely
+needs a common-base vector, append each element to an explicitly typed result.
+If it only needs a count or membership answer, compute that in each typed branch
+instead of combining differently typed containers in a ternary. Keep checked casts
+at actual base-to-derived boundaries; `instanceof` does not change the native
+handle's static type, and a type annotation is not a checked downcast. Do not narrow
+heterogeneous storage merely because one consumer uses only a subset of its roles.
+
 Read the [authoring guide](../../../specs/portability/authoring_guide.md) before
 editing. Follow its feature links as needed. The [function policy](../../../tools/php_portability/function_map.php)
 owns bindings and arities; the [constraint summary](../../../specs/portability/debt.md#current-constraint-consolidation)
@@ -98,7 +108,7 @@ an old slice's limits or a feature-catalog proposal as the current support matri
   errors or side effects depend on `&&`/`||` skipping evaluation, even for boolean
   operands. Independent safe comparisons may stay compound. This is source
   adaptation, not a converter rejection; preserve the algorithm's evaluation order.
-- For compiler rewrites, read the prototype stage and load the
+- For the `compiler/src` rewrite, read the prototype stage and load the
   [Simple C++ strict skill](../simple-cpp-php-strict/SKILL.md). Follow the
   [stage methodology](../../../specs/planning/compiler_migration/README.md#current-methodology-stage-by-stage-rewrite):
   manifest, paths/discovery, verified reads, tokenizer, parser, then semantic stages.
@@ -119,7 +129,14 @@ an old slice's limits or a feature-catalog proposal as the current support matri
   and extend conversion only for demonstrated needs. Report cross-owner decisions
   and target defects without silently redesigning contracts or fixing generated C++.
 
-Use the [validation workflow](../../../specs/portability/validation_workflow.md).
+For `compiler/my-try`, follow its [local operating rules](../../../compiler/my-try/docs/AGENTS.md)
+and [native validation guide](../../../compiler/my-try/docs/portability/conversion_review.md).
+Native compiler runs are on explicit request; that project's legacy STAN bypass is
+local policy, not a recommendation to disable STAN for strict applications. Its
+harness and retained tests are distinct from the `compiler/src` rewrite ready set.
+Do not apply the rewrite's registration or stage-evidence requirements to my-try.
+
+For the `compiler/src` rewrite, use the [validation workflow](../../../specs/portability/validation_workflow.md).
 `python3 tools/php_portability/validate.py --results FRESH` runs the ready-set fast
 loop. Add `--native compiler --target-checkout TARGET` for the cumulative native
 proof; a PHP-only pass is not native evidence. After the
