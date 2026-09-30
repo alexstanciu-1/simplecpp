@@ -9,35 +9,49 @@ Requires values, expressions and basic calls. Establish reads versus writes befo
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Implementation prerequisites
+
+Follow the [catalog gates](README.md#prerequisite-gates). Begin with explicit typed
+vector/hash construction and reads, then writes/appends and value-call boundaries,
+then value iteration. Split `ARR-INIT-004` source variants before choosing its strict
+example. Key rules apply before keyed operations; row placement does not defer them.
+
+Reference iteration (`CTRL-FOREACH-003/004`) and reference-taking variants of
+`FUNC-ARG-001` require the relevant [reference contracts](07_references_lifetime.md):
+storage stability, aliasing and invalidation on mutation. They are gated, not implied
+by successful value iteration. Dynamic/nested forms, casts and nullable forms require
+their corresponding type/conversion prerequisites; they do not block a typed scalar
+container slice. Imported cards below retain their original order and provenance.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CAST-ARRAY-001](#cast-array-001) | pending-discussion | `$a = (array)$b;` | unverified | unverified | deferred | — |
+| [ARR-INIT-001](#arr-init-001) | pending-discussion | `$v vector<int> = [];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [ARR-INIT-003](#arr-init-003) | pending-discussion | `$v vector<int> = [1, 2, 3];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [ARR-INIT-004](#arr-init-004) | pending-discussion | `$m hash<int> = ["a" => 1, "b" => 2];`<br>`$a = [1, 2, 3];` | unverified | unverified | deferred | Source variants need reconciliation |
+| [ARR-READ-001](#arr-read-001) | pending-discussion | `$a = $b[0];` | unverified | unverified | deferred | — |
+| [ARR-READ-002](#arr-read-002) | pending-discussion | `$a = $b["name"];` | unverified | unverified | deferred | — |
+| [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |
+| [ARR-WRITE-001](#arr-write-001) | pending-discussion | `$b[0] = 1;` | unverified | unverified | deferred | — |
+| [ARR-APPEND-001](#arr-append-001) | pending-discussion | `$a[] = 1;` | unverified | unverified | deferred | — |
+| [FUNC-DECL-003B](#func-decl-003b) | pending-discussion | `function f(vector<int> $a): void {}` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [FUNC-ARG-001](#func-arg-001) | pending-discussion | `f($x[0]);` | unverified | unverified | deferred | — |
 | [CTRL-FOREACH-001](#ctrl-foreach-001) | pending-discussion | `foreach ($items as $item) { }` | unverified | unverified | deferred | — |
 | [CTRL-FOREACH-002](#ctrl-foreach-002) | pending-discussion | `foreach ($items as $k => $v) { }` | unverified | unverified | deferred | — |
 | [CTRL-FOREACH-003](#ctrl-foreach-003) | pending-discussion | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | — |
 | [CTRL-FOREACH-004](#ctrl-foreach-004) | pending-discussion | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | — |
-| [FUNC-DECL-003B](#func-decl-003b) | pending-discussion | `function f(vector<int> $a): void {}` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [FUNC-ARG-001](#func-arg-001) | pending-discussion | `f($x[0]);` | unverified | unverified | deferred | — |
-| [ARR-INIT-001](#arr-init-001) | pending-discussion | `$v vector<int> = [];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [CAST-ARRAY-001](#cast-array-001) | pending-discussion | `$a = (array)$b;` | unverified | unverified | deferred | — |
 | [ARR-INIT-002](#arr-init-002) | pending-discussion | `$a = [];` | unverified | unverified | deferred | — |
 | [ARR-INIT-002A](#arr-init-002a) | pending-discussion | `$a = null;` | unverified | unverified | deferred | — |
-| [ARR-INIT-003](#arr-init-003) | pending-discussion | `$v vector<int> = [1, 2, 3];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [ARR-INIT-004](#arr-init-004) | pending-discussion | `$m hash<int> = ["a" => 1, "b" => 2];`<br>`$a = [1, 2, 3];` | unverified | unverified | deferred | Source variants need reconciliation |
 | [ARR-INIT-005](#arr-init-005) | pending-discussion | `$a = ["name" => "Alex", "age" => 12];` | unverified | unverified | deferred | — |
 | [ARR-INIT-006](#arr-init-006) | pending-discussion | `$d = ["data" => [["id" => 1], ["id" => 2]]];` | unverified | unverified | deferred | — |
-| [ARR-READ-001](#arr-read-001) | pending-discussion | `$a = $b[0];` | unverified | unverified | deferred | — |
-| [ARR-READ-002](#arr-read-002) | pending-discussion | `$a = $b["name"];` | unverified | unverified | deferred | — |
-| [ARR-WRITE-001](#arr-write-001) | pending-discussion | `$b[0] = 1;` | unverified | unverified | deferred | — |
-| [ARR-APPEND-001](#arr-append-001) | pending-discussion | `$a[] = 1;` | unverified | unverified | deferred | — |
 | [ARR-EXIST-001](#arr-exist-001) | pending-discussion | `isset($a["name"])` | unverified | unverified | deferred | — |
 | [ARR-UNSET-001](#arr-unset-001) | pending-discussion | `unset($a["name"]);` | unverified | unverified | deferred | — |
 | [ARR-EMPTY-001](#arr-empty-001) | pending-discussion | `empty($a["name"])` | unverified | unverified | deferred | — |
 | [ARR-TYPE-001](#arr-type-001) | pending-discussion | `function f(array &$a): void { $a["x"] = 1; }` | unverified | unverified | deferred | — |
-| [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |
 | [ARR-VALUE-001](#arr-value-001) | pending-discussion | `$v vector<int> = [1, 2, 3]; $d = ["data" => $v];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-PARAM-002](#type-param-002) | pending-discussion | `function f(string $s, vector_t $v): string { return $s; }` | unverified | unverified | deferred | — |
 | [TYPE-PARAM-003A](#type-param-003a) | pending-discussion | `function f(array $a): void { var_dump($a); }` | unverified | unverified | deferred | — |

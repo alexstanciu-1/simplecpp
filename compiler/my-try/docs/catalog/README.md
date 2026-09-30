@@ -74,6 +74,32 @@ Discuss and split those rows rather than expanding a small slice silently.
 | 13 | [Exceptions and cleanup](13_errors.md) | 3 | 1 |
 | 14 | [C++ artifacts, runtime integration and diagnostics](14_output_runtime.md) | 8 | 24 |
 
+## Prerequisite gates
+
+Chapter numbers organize the catalog; they are not a strict implementation queue.
+Before the next feature expansion, audit the currently supported C++ generation paths
+for semantic decisions still made during emission. Record the findings and resolve
+missing preparation facts for the affected paths before extending them. This bounded
+audit is pending; this plan does not claim it has been completed.
+
+| Before enabling | Required semantic basis |
+| --- | --- |
+| Assignments and composed expressions (01–02) | Resolve operand/result types, conversions and assignable targets. Establish single evaluation and ordering for chained writes, increments and compound assignments. |
+| Logical operators, branches and conditional expressions (02–03, 05) | Establish lazy evaluation, condition conversion, branch result typing and applicable scope rules. Coalescing also needs the selected nullable/wrapper contract. |
+| Calls and reference arguments (04, 07) | Resolve the callable, argument conversions, value/reference passing and evaluation order. Reference eligibility requires stable storage and the applicable aliasing/lifetime rules. Reconcile the existing bounded function/reference implementation with chapter 07 rows before treating them as new work. |
+| Container iteration and mutation (06–07) | Establish typed construction, key/element semantics, reads, writes and value-copy behavior first. Reference iteration and indexed reference arguments additionally need storage stability and mutation/invalidation rules. |
+| Reference returns and retained aliases (07) | Establish provenance and lifetime constraints for the supported path before allowing an alias to outlive the immediate operation. Addressability alone is insufficient. |
+| Cross-file names, value types and objects (08–11) | Resolve identities and representation/copy semantics as their first consumers arrive. Object-dependent namespace cases wait for objects; interface-bearing enums wait for interface/method contracts. |
+| Closures and captures (12) | Establish callable signatures and capture-free invocation first; then value-capture copy/identity semantics, followed by reference-capture lifetime and escape constraints. |
+| Exceptions and cleanup (13) | Establish applicable ownership and cleanup behavior on normal and exceptional exits; add finally only with its interaction with returns and other exits defined. |
+| Every slice (14) | Consult runtime/output contracts throughout. Semantic dependencies belong in prepared facts; C++ spelling, temporary allocation and artifact organization belong in lowering. |
+
+Draw the needed prerequisites from later chapters without implementing those chapters
+in full. General validation/STAN and comprehensive lifetime/effect analysis remain
+separate work; decisions necessary for correct generation of the selected feature
+cannot be deferred. Record concrete facts or existing contracts rather than inventing
+a general-purpose analysis framework in advance.
+
 ## Per-example workflow
 
 1. Choose an entry and read its source example, old C++ result, preconditions and notes.
@@ -89,10 +115,15 @@ Discuss and split those rows rather than expanding a small slice silently.
 5. Record the agreed source example, expected result/diagnostic, semantic owner,
    facts needed by the emitter, and target C++ before implementation. Include the
    compilation-cost review below when agreeing the target form.
-6. Implement the reusable concept in `my-try`; track frontend, C++ S2S and LLVM
+6. Before emission is implemented, identify which semantic decisions preparation
+   must supply, which facts already exist, and which new facts this feature requires.
+   Record these in the entry's decision, check the prerequisite gates above, and
+   distinguish semantic facts from C++ lowering choices. Add focused proofs for
+   relevant ordering, copy/reference and failure behavior.
+7. Implement the reusable concept in `my-try`; track frontend, C++ S2S and LLVM
    independently. LLVM delivery stays deferred unless the user explicitly requests it;
    record PHP/native compiler execution and generated-program evidence separately.
-7. Update the chapter's progress row with a durable test/result link and any blocker.
+8. Update the chapter's progress row with a durable test/result link and any blocker.
    A rejected construct is complete only when its agreed diagnostic is proved.
 
 Each card has a **v0.2 decision / target C++** area to expand during discussion.

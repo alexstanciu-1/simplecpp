@@ -9,25 +9,41 @@ Requires functions, scope resolution and lifetime. Begin with no captures, then 
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Implementation prerequisites
+
+Follow the [catalog gates](README.md#prerequisite-gates). Start with a capture-free
+slice of `CLOSURE-001` and invocation (`CLOSURE-CALL-001`); split the control-flow and
+argument-count combinations before implementation. Establish the callable signature
+and relevant scope/type boundaries before adding captures. A STAN-labelled imported
+case does not authorize work on the parked legacy analyzer.
+
+Value captures require resolved captured identities and copy/sharing semantics.
+Reference captures (`CLOSURE-USE-002`) additionally require the applicable lifetime
+and escape rules from [chapter 07](07_references_lifetime.md). Arrow captures use the
+same semantic basis; container returns/storage wait for chapter 06's relevant facts.
+General escape analysis is not a prerequisite for a bounded nonescaping slice, but
+unsupported escaping forms must not silently inherit unsafe C++ behavior. Imported
+cards below retain their original order and provenance.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| [CLOSURE-001](#closure-001) | pending-discussion | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | unverified | unverified | deferred | — |
+| [CLOSURE-CALL-001](#closure-call-001) | pending-discussion | `$f(); $g(3); $h(3); $h(3, 9);` | unverified | unverified | deferred | — |
+| [SCOPE-VAR-003](#scope-var-003) | pending-discussion | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
+| [CLOSURE-STAN-001](#closure-stan-001) | pending-discussion | `$f function<string()> = function (): int { return 1; };` | unverified | unverified | deferred | — |
 | [CLOSURE-USE-001](#closure-use-001) | pending-discussion | `$f function<int()> = function () use ($a): int { return $a; };`<br>`$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLOSURE-USE-002](#closure-use-002) | pending-discussion | `$f function<int()> = function () use (&$a): int { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-CALLABLE-001](#closure-callable-001) | pending-discussion | `$f function<int()> = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-CALLABLE-002](#closure-callable-002) | pending-discussion | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | unverified | unverified | deferred | — |
+| [ARROW-001](#arrow-001) | pending-discussion | `$a = 10; $f = fn(int $x): int => $x + $a;` | unverified | unverified | deferred | — |
+| [CLOSURE-USE-002](#closure-use-002) | pending-discussion | `$f function<int()> = function () use (&$a): int { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-RETURN-001](#closure-return-001) | pending-discussion | `$f = function () use ($a): vector<int> { return [$a, 2]; };` | unverified | unverified | deferred | — |
 | [CLOSURE-REJECT-001](#closure-reject-001) | pending-discussion | `$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-REJECT-002](#closure-reject-002) | pending-discussion | `$items[] = function (): int { return 1; };` | unverified | unverified | deferred | — |
-| [CLOSURE-STAN-001](#closure-stan-001) | pending-discussion | `$f function<string()> = function (): int { return 1; };` | unverified | unverified | deferred | — |
-| [CLOSURE-001](#closure-001) | pending-discussion | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | unverified | unverified | deferred | — |
-| [CLOSURE-CALL-001](#closure-call-001) | pending-discussion | `$f(); $g(3); $h(3); $h(3, 9);` | unverified | unverified | deferred | — |
-| [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
-| [SCOPE-VAR-003](#scope-var-003) | pending-discussion | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [ARROW-001](#arrow-001) | pending-discussion | `$a = 10; $f = fn(int $x): int => $x + $a;` | unverified | unverified | deferred | — |
 ## CLOSURE-USE-001
 
 **v0.2 decision / target C++:** Pending discussion.
