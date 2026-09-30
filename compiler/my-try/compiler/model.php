@@ -42,7 +42,7 @@ final class Model
 	/** Final C++ artifacts. @storage.owner */
 	public static Storage $cpp_files /** Storage<cpp_module> */;
 	/** Retained C++ fragments survive output invalidation, but not a full compilation reset. */
-	public static cpp_program $cpp_program;
+	public static cpp_program $cpp_output_program;
 
 	/** Ordered snapshot of stable source membership, never a second retained store. */
 	public static function sources(): Storage /** Storage<source_record> */

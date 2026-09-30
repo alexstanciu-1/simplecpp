@@ -284,7 +284,7 @@ final class Compiler
 		}
 		$output /** cpp_module */;
 		try {
-			$output = (new CPP_Generator(Model::$cpp_program))->generate($prepared[0]);
+			$output = (new CPP_Generator(Model::$cpp_output_program))->generate($prepared[0]);
 		}
 		catch (\RuntimeException $error) {
 			throw $error;

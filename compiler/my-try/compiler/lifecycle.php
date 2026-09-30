@@ -67,7 +67,7 @@ final class Compiler_Lifecycle
 			}
 		}
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
-		Model::$cpp_program = new cpp_program();
+		Model::$cpp_output_program = new cpp_program();
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Model::$global_scope = new scope();
@@ -92,7 +92,7 @@ final class Compiler_Lifecycle
 	public static function reset_syntax(): void
 	{
 		self::discard_preparation_links();
-		Model::$cpp_program = new cpp_program();
+		Model::$cpp_output_program = new cpp_program();
 		self::reset_preparation();
 		foreach (Model::sources() as $source) {
 			$source->parsed = null;
@@ -163,7 +163,7 @@ final class Compiler_Lifecycle
 	public static function reset_cpp(): void
 	{
 		if (self::$syntax_initialized) {
-			CPP_Generator::discard_deleted(Model::$cpp_program);
+			CPP_Generator::discard_deleted(Model::$cpp_output_program);
 		}
 		Model::$cpp_files = new Storage /** Storage<cpp_module> */();
 	}

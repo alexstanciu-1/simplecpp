@@ -14,7 +14,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `language_scope`, `global_scope` | Built-in/runtime definitions and shared source indexes; global parents to language |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
 | `prepared_files` | Successfully completed file records referencing the retained syntax |
-| `cpp_program` | Retained declaration/body fragments and cached text/includes |
+| `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
 | `cpp_files`, `llvm_files` | Published backend artifacts |
 
 `Model::tokens()`, `syntax_files()` and `collected_files()` are snapshots derived

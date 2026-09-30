@@ -342,7 +342,7 @@ if (($first_data->require_preparation() !== $binding_facts) || (Model::$prepared
 $compiler->cpp();
 Language_Types::integer(Model::$language_scope)->value_bits = 32;
 // Fault injection must invalidate the fragment whose prepared representation was altered.
-Model::$cpp_program->fragments[$syntax->collection->root->body->work()]->change_status = change_state::changed;
+Model::$cpp_output_program->fragments[$syntax->collection->root->body->work()]->change_status = change_state::changed;
 $failed = false;
 try {
 	$compiler->cpp();
