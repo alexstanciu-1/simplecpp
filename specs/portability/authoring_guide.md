@@ -291,6 +291,13 @@ proof in `specs/planning/compiler_migration/results/signature-requests-01`.
 Explicit fully qualified uppercase constant references pass through without resolution.
 Initialize a local in its enclosing block before using it after branches; native
 block scope does not inherit PHP's function-wide local-variable behavior.
+Declare branch results in the common enclosing scope with one explicit type, then
+assign them within branches. Do not rely on converter hoisting. Keep a local name
+bound to one concept and type throughout the function; avoid name reuse for
+unrelated values or different typed views. Prefer the known concrete node type
+over widening to ast_node and casting back; name genuinely distinct views
+separately. Do not introduce dummy allocations merely to establish a local's type.
+
 
 For empty-container assignment through an object field, declare an explicitly typed
 empty local first and assign it. Bare `[]` at that target loses container type in

@@ -12,7 +12,19 @@ types. Direct same-namespace trait indexing is the agreed narrow exception.
 
 Design authored PHP for its Simple C++ shape from the outset: record handles versus
 value containers, explicit nullable boundaries, block-local variables, and complete
-worker initialization. PHP execution checks behavior; successful PHP or conversion
+worker initialization.
+
+Declare a local in the block that owns all its uses: a variable first declared in
+an if/else, loop or catch body is not available after that block. Branches that
+produce one result must assign a single explicitly typed local declared in their
+common enclosing scope; do not ask the converter to recover PHP function scope.
+Keep each local name associated with one concept and one type throughout a
+function. Avoid reusing names for unrelated values, especially with a different
+type. If distinct typed views are needed, use distinct descriptive names (for
+example node_ast and node_span); retain the concrete node type when it is known.
+These are source-authoring rules, not requests for implicit declaration hoisting.
+
+PHP execution checks behavior; successful PHP or conversion
 alone does not establish native support. The v0.1 S2S generator is deliberately
 type-blind and STAN provides limited assistance; do not rely on either to infer
 remote property chains or implicit multi-step conversions.
