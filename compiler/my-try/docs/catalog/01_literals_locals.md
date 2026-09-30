@@ -38,7 +38,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-021](#note-021) | agreed | `function _f(int $_x, int $U_x): int { return $_x; }` | proved | in-progress | deferred | [Raw-name preservation and reversible local/function/record/field escaping proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-033](#note-033) | split | `NOTE-033.a`: entry/function local isolation | in-progress | in-progress | deferred | `.a` proved by [prepared identity, emitted C++ and exact rejection](../../tests/s2s.php); `.b` nested-block visibility waits for control flow; namespace execution belongs to chapter 08 |
 | [NOTE-034](#note-034) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | Consolidated by [VAR-REASSIGN-001](#var-reassign-001) and its [prepared-identity/emission proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [NOTE-035](#note-035) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-035](#note-035) | split | `.a` scalar leaves; `.c` `PHP_INT_MAX` | in-progress | in-progress | deferred | `.a` covered by [NOTE-011](#note-011); bounded `.c` covered by [LIT-CONST-001](#lit-const-001); `.b` conditions and broader constants remain with their owning chapters |
 
 ### Deferred legacy syntax
 
@@ -1644,7 +1644,81 @@ Imported prose follows for provenance; its raw-name spelling is not the v0.2 tar
 
 **Source:** [generators/php/specs/rules.md:651](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** The imported global rule combines literal-leaf
+representation, condition conversion and constant resolution. These have different
+semantic owners in v0.2 and are split accordingly. The slogan “all literals” is an
+invariant for a supported containing construct, not proof that every listed construct
+has been implemented.
+
+### NOTE-035.a — scalar literal leaves
+
+Covered by `NOTE-011` and the focused scalar rows. Concrete literal nodes retain
+their source values; preparation supplies canonical types and normalized values; C++
+lowering selects the representation from those facts. Supported containing
+expressions recursively consume the same prepared leaves rather than reinterpreting
+raw tokens.
+
+Primitive values use their canonical runtime wrappers. Strings use construction,
+never `static_cast<scpp::string_t>(...)`:
+
+```cpp
+static_cast<scpp::int_t<>>(10LL)
+static_cast<scpp::float_t>(10.5)
+static_cast<scpp::bool_t>(true)
+scpp::string_t("x")
+```
+
+Assignments, reassignments and the currently supported integer-addition path have
+focused proofs in this chapter. Returns, arguments, defaults and other expression
+families retain their own catalog proof obligations even where current compiler tests
+exercise a bounded form. This note does not mark those later entries complete.
+
+### NOTE-035.b — condition conversion
+
+Deferred to the control-flow and dynamic-boundary chapters. Condition conversion is
+not literal normalization: first the contained expression receives its ordinary
+prepared type and lowering, then the condition boundary applies the conversion
+allowed for that type. The legacy S2S selected between direct boolean conversion and
+`condition_truthy(...)` through an emitter-local `exprProducesBool()` check. v0.2
+must instead consume prepared type/conversion facts and diagnose disallowed condition
+types before emission. Branch and loop bodies also retain their own scope and flow
+requirements. No condition behavior is claimed or added by this chapter.
+
+### NOTE-035.c — constants
+
+The bounded predefined constant case is covered by `LIT-CONST-001`, but a constant
+reference is not a literal node. `PHP_INT_MAX` resolves to a fixed language definition
+with canonical integer type and an exact target-independent decimal value:
+
+```php
+$a = PHP_INT_MAX;
+```
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(9223372036854775807LL);
+```
+
+This deliberately rejects the imported host-dependent approach: v0.2 does not
+snapshot `get_defined_constants()` from the PHP process running the compiler and does
+not leave `PHP_INT_MAX` as an unresolved C++ runtime name. User-defined constants,
+qualified constants and their generated namespace spelling belong to chapter 08.
+Runtime/helper qualification policy belongs to chapter 14.
+
+**Legacy edge-case review:** recursive literal-leaf normalization remains applicable,
+as do binary-safe string construction and the distinction between boolean conditions
+and broader truthiness. The old generator's host-float conversion, host-constant
+snapshot and emitter-local condition classification do not carry into the prepared
+v0.2 model.
+
+**Verification (2026-09-30):** `NOTE-011` links the scalar preparation and emitted
+C++ proofs, including recursive integer-addition use. `LIT-CONST-001` proves exact
+constant identity, type, immutability, value lowering, diagnostic boundaries and
+source purity. This consolidation requires no compiler or test changes. The parent
+entry remains `split/in-progress` because condition conversion and broader constant
+families are intentionally owned elsewhere; LLVM remains deferred.
+
+Imported prose follows for provenance; its combined list is not a v0.2 completion
+claim and its host-runtime constant strategy is not the v0.2 target.
 
 > ## 6. Global literal normalization rule
 >
