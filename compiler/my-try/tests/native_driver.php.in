@@ -84,6 +84,52 @@ if (q_count($survivors) !== 0) {
 	throw new \LogicException('Native sync resolved a deleted file');
 }
 
+// Scope owners survive a failed incremental parse after an earlier body was replaced.
+$scope_source = new file();
+$scope_source->path = 'scope-ownership.phs';
+$scope_source->content = 'function first(): int { return 1; } function second(): int { return 2; }';
+$scope_parsed = (new Parser((new Tokenizer($scope_source))->tokenize()))->parse();
+$scope_source->content = 'function first(): int { return 3; } function second(): int { return 4 }';
+$scope_parser = new Parser((new Tokenizer($scope_source))->tokenize(), null, $scope_parsed);
+$scope_failed = false;
+try {
+	$scope_parser->parse();
+}
+catch (\RuntimeException $scope_error) {
+	$scope_failed = true;
+}
+if ((!$scope_failed) || $scope_parsed->complete) {
+	throw new \LogicException('Scope ownership proof did not retain an incomplete parse');
+}
+// Inspect membership as well as references: PHP ordinary references mask native expiration.
+$scope_declarations /** Storage<declaration_node> */ = $scope_parsed->root->declarations;
+$scope_first = object_cast($scope_declarations[0], function_node::class);
+$scope_second = object_cast($scope_declarations[1], function_node::class);
+$scope_owned /** Storage<scope> */ = $scope_parsed->scopes;
+$scope_first_owned = false;
+$scope_second_owned = false;
+$scope_file_owned = false;
+foreach ($scope_owned as $scope_item)
+{
+	if ($scope_item === $scope_first->body->local_scope()) {
+		$scope_first_owned = true;
+	}
+	if ($scope_item === $scope_second->body->local_scope()) {
+		$scope_second_owned = true;
+	}
+	if ($scope_item === $scope_parsed->root->body->local_scope()) {
+		$scope_file_owned = true;
+	}
+}
+if ((!$scope_first_owned) || (!$scope_second_owned) || (!$scope_file_owned)) {
+	throw new \LogicException('Failed parse released scopes referenced by retained syntax');
+}
+$scope_source->content = 'function first(): int { return 3; } function second(): int { return 4; }';
+$scope_recovered = (new Parser((new Tokenizer($scope_source))->tokenize(), null, $scope_parsed))->parse();
+if ((!$scope_recovered->complete) || (q_count($scope_recovered->scopes) !== 4)) {
+	throw new \LogicException('Successful retry did not replace the accumulated scope inventory');
+}
+
 // The same portable S2S proof runs in PHP and in this native executable.
 $cpp_proof = S2S_Proof::run();
 

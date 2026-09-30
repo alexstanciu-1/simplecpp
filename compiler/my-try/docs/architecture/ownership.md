@@ -42,7 +42,10 @@ make a required relationship nullable.
 
 Parsing may register a declaration before completing its fields. Its file remains
 incomplete and later phases wait for a successful join. Mutation is not transactional;
-failed parses retain partial identities for retry. Retired nodes must not re-enter
+failed parses retain partial identities for retry. The parsed file keeps its previous
+scope owners and newly selected scopes throughout parsing, including after failure.
+Only successful parsing replaces that inventory with the selected scopes; weak
+body observers must never outlive their scope owners during this handoff. Retired nodes must not re-enter
 the active graph. Stage entry checks reject incomplete/deleted owners; cleanup may
 visit them. See [lifecycle](../lifecycle/incremental.md).
 

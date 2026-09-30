@@ -79,7 +79,7 @@ final class Parser_Run
 			$root->body->set_span(0, 0);
 			$new_collection = new collected_file($tokens);
 			$new_collection->root = $root;
-			$this->parsed = new parsed_file($tokens, $root, $new_collection, $this->scopes);
+			$this->parsed = new parsed_file($tokens, $root, $new_collection, new Storage /** Storage<scope> */());
 		}
 		else
 		{
@@ -95,14 +95,12 @@ final class Parser_Run
 		}
 		$this->current_scope = new scope();
 		$this->current_scope->set_parent($file_scope);
-		$scopes /** Storage<scope> */ = $this->scopes;
-		$scopes->append($file_scope);
-		$scopes->append($this->current_scope);
+		$this->retain_scope($file_scope);
+		$this->retain_scope($this->current_scope);
 		$this->parsed->complete = false;
 		$this->parsed->collection->parse_complete = false;
 
 		$this->parsed->tokens = $tokens;
-		$this->parsed->scopes = $this->scopes;
 		$collection = $this->parsed->collection;
 		$revision = (int)$collection->revision + 1;
 		if ($revision > 4294967295) {
@@ -113,6 +111,15 @@ final class Parser_Run
 			$revision = 1;
 		}
 		$this->collector = new Symbol_Collector($collection, $tokens, $file_scope, $global, $revision);
+	}
+
+	/** Keep old and new scopes owned on failure; select the next successful file inventory separately. */
+	private function retain_scope(scope $retained_scope): void
+	{
+		$selected /** Storage<scope> */ = $this->scopes;
+		$selected->append($retained_scope);
+		$owned /** Storage<scope> */ = $this->parsed->scopes;
+		$owned->append($retained_scope);
 	}
 
 	public function result(): parsed_file
@@ -161,8 +168,7 @@ final class Parser_Run
 				$this->retain_range($old, $temporary->start_token());
 			}
 			$body = $old_body;
-			$scopes /** Storage<scope> */ = $this->scopes;
-			$scopes->append($body->local_scope());
+			$this->retain_scope($body->local_scope());
 		}
 		else {
 			$this->transfer_body_work($old_body, $body);
@@ -173,6 +179,8 @@ final class Parser_Run
 		$root->declarations = $declarations;
 		$root->set_span($this->tokens->first_token, $this->position);
 		$this->collector->finish($root);
+		// Release obsolete scopes only after all selected syntax and collection links are published.
+		$this->parsed->scopes = $this->scopes;
 		$this->parsed->complete = true;
 		$this->parsed->collection->parse_complete = true;
 		return $this->parsed;
@@ -485,13 +493,12 @@ final class Parser_Run
 		$body_start = $this->position;
 		$body_end = $this->body_end();
 		$body_changed = !$this->same_body_text($old_body_start, $old_body_end, $body_start, $body_end);
-		$scopes /** Storage<scope> */ = $this->scopes;
 		$selected_scope /** scope */ = !$body_changed ? $function->body->local_scope() : new scope();
 		if ($body_changed) {
 			$selected_scope->set_parent($local_scope);
 			$selected_scope->mark_function();
 		}
-		$scopes->append($selected_scope);
+		$this->retain_scope($selected_scope);
 		$body /** function_body_node */ = !$body_changed ? $function->body : $this->block($selected_scope);
 		if (!$body_changed) {
 			$this->retain_range($body, $body_start);
