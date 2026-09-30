@@ -997,6 +997,12 @@ final class Converter {
 			if ($text === $closing) {
 				return $nodes;
 			}
+			if ($id === T_DOC_COMMENT && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === '[') {
+				$type = $this->containerAnnotation([$id, $text, $line]);
+				$this->expect('['); $this->expect(']');
+				$nodes[] = new Node('call', 'new ' . $type, $line);
+				continue;
+			}
 			if ($id === T_DOC_COMMENT && str_contains($text, '@scpp-struct')) {
 				if ($closing !== null || !preg_match('~^/\*\*\s*@scpp-struct\s*\*/$~D', $text)) {
 					$this->fail($line, '@scpp-struct must immediately mark a top-level final class');

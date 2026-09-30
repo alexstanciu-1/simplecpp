@@ -444,3 +444,24 @@ for those supported cases. An explicitly declared constructor suppresses inherit
 Non-public constructors, abstract constructor contracts and ancestors declared in
 other source units remain outside this slice. C++ field-initialization order still
 applies. See the [lowering boundary and focused proof](../../generators/php/specs/rules_catalog.md#public-inherited-constructor-boundary).
+
+## Explicit empty-container expressions
+
+Use a prefix annotation to type an empty array expression without destination
+inference or an intermediate local:
+
+```php
+$collection->defined_elements = /** vector<int> */ [];
+$collection->labels = /** hash<string> */ [];
+```
+
+The converter emits `new vector<int>()` / `new hash<string>()`; lowering constructs
+empty container values directly. This slice accepts only empty literals and the
+existing vector/hash annotation grammar. Nonempty literals, unsupported/malformed
+annotations and object-keyed hashes on PHP arrays are rejected. Object-keyed maps
+still use the explicitly annotated SplObjectStorage carrier. Local declaration
+annotations retain their existing meaning. This expression form adds no property
+lookup or symbol resolution.
+
+Proofs: `tests/portability/empty_container_annotations.php` and
+`tests/portability/typed_hash_construction.py --results FRESH`.

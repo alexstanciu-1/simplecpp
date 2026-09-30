@@ -268,12 +268,12 @@ final class Symbol_Collector
 	private function refresh_occurrences(): void
 	{
 		$collection = $this->collection;
-		$collection->defined_elements = [];
-		$collection->variable_references = [];
-		$collection->function_references = [];
-		$collection->type_references = [];
-		$collection->field_references = [];
-		$collection->pending_bindings = [];
+		$collection->defined_elements = /** vector<int> */ [];
+		$collection->variable_references = /** vector<int> */ [];
+		$collection->function_references = /** vector<int> */ [];
+		$collection->type_references = /** vector<int> */ [];
+		$collection->field_references = /** vector<int> */ [];
+		$collection->pending_bindings = /** vector<int> */ [];
 		$entries /** Storage<collected_name> */ = $collection->entries;
 		$retired /** vector<int> */ = [];
 		$ranges /** Storage<retained_token_range> */ = $collection->token_snapshot()->retained_ranges;

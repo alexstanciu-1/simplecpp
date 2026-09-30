@@ -35,11 +35,13 @@ assert 'new hash<int, shared<key_record>>()' in (project / 'main.phs').read_text
 cli = ROOT / 'bin/scpp.php'
 # Isolate this local conversion/lowering proof from independent STAN gaps.
 run('build', ['php', cli, 'build', '--no-stan', '--build-runtime'], project)
-assert run('native', [project / '.prism/build/main'], project) == host == '7:empty:9\n'
+assert run('native', [project / '.prism/build/main'], project) == host == '7:empty:9\n5:ok\n8:empty\n'
 cpp = (project / '.prism/generated/main.cpp').read_text()
 assert 'this->items = hash_t<int_t<>, shared_p<hash_construction::key_record>>{};' in cpp
+assert 'this->indices = vector_t<int_t<>>{};' in cpp
+assert 'this->labels = hash_t<string_t>{};' in cpp
 assert 'shared_table_' not in cpp
 (project / 'main.phs').write_text('''$invalid = new hash<int>(1);''')
 run('arguments_rejected', ['php', cli, 'build', '--no-stan'], project, success=False)
-assert 'Explicit hash construction accepts no arguments' in (output / 'arguments_rejected.stderr').read_text() + (output / 'arguments_rejected.stdout').read_text()
-print('PASS: typed hash property construction/reset, return, identity-key access, native parity and argument rejection')
+assert 'Explicit container construction accepts no arguments' in (output / 'arguments_rejected.stderr').read_text() + (output / 'arguments_rejected.stdout').read_text()
+print('PASS: annotated empty vectors/scalar-key hashes, typed hash property construction/reset, return, identity-key access, native parity and argument rejection')

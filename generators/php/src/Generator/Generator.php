@@ -7704,9 +7704,9 @@ final class Generator
 		}
 		if ($kind === AstKind::NEW) {
 			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
-			if ($this->typeMapper->isHashType($authoredType)) {
+			if ($this->typeMapper->isHashType($authoredType) || $this->typeMapper->isVectorType($authoredType)) {
 				if (($expr->children['args']->children ?? []) !== []) {
-					$this->fail('Explicit hash construction accepts no arguments at line ' . (int) ($expr->lineno ?? 0) . '.');
+					$this->fail('Explicit container construction accepts no arguments at line ' . (int) ($expr->lineno ?? 0) . '.');
 				}
 				return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $namespacePhp)) . '{}';
 			}
@@ -9273,7 +9273,7 @@ final class Generator
 		}
 		if ($kind === AstKind::NEW) {
 			$authoredType = is_object($expr->children['class'] ?? null) ? ($expr->children['class']->children['name'] ?? '') : '';
-			if ($this->typeMapper->isHashType($authoredType) || $this->typeMapper->isStorageType($authoredType) || $this->typeMapper->isKeyStorageListType($authoredType) || $this->typeMapper->isStorageCursorType($authoredType)) return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $this->currentNamespacePhp));
+			if ($this->typeMapper->isHashType($authoredType) || $this->typeMapper->isVectorType($authoredType) || $this->typeMapper->isStorageType($authoredType) || $this->typeMapper->isKeyStorageListType($authoredType) || $this->typeMapper->isStorageCursorType($authoredType)) return $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($authoredType, $this->currentNamespacePhp));
 			if ($this->isStdClassNewExpr($expr)) {
 				return 'dynamic_t<>';
 			}
