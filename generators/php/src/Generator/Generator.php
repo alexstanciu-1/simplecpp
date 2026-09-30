@@ -4892,27 +4892,61 @@ final class Generator
 		]);
 	}
 
+	/** A captured return guards the remaining suffix, never each local separately. */
 	private function renderFinallyAwareStatementSequence(array $statements, ?string $namespacePhp, array $returnContext): array
 	{
 		$previousContext = $this->currentFinallyReturnContext;
 		$this->currentFinallyReturnContext = $returnContext;
 		try {
-			$lines = [];
-			foreach ($statements as $statement) {
+			if ($statements === []) {
+				return [];
+			}
+			$lines = [$this->code('if (!' . $returnContext['flag'] . ') {', $statements[0]->line)];
+			$depth = 1;
+			$last = count($statements) - 1;
+			foreach ($statements as $index => $statement) {
 				$previousLine = $this->currentSourceLine;
 				$previousColumn = $this->currentSourceColumn;
 				$this->currentSourceLine = $statement->line;
 				$this->currentSourceColumn = 0;
-				foreach ($this->wrapWithReturnGuard($this->renderFinallyAwareStatement($statement, $namespacePhp, $returnContext), $returnContext['flag']) as $line) {
-					$lines[] = $line;
+				foreach ($this->renderFinallyAwareStatement($statement, $namespacePhp, $returnContext) as $line) {
+					$lines[] = $this->code($this->indent($depth) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
+				}
+				if ($index !== $last && $this->statementMayReturn($statement)) {
+					$lines[] = $this->code($this->indent($depth) . 'if (!' . $returnContext['flag'] . ') {', $statement->line);
+					$depth++;
 				}
 				$this->currentSourceLine = $previousLine;
 				$this->currentSourceColumn = $previousColumn;
+			}
+			while ($depth > 0) {
+				$depth--;
+				$lines[] = $this->code($this->indent($depth) . '}', $statements[$last]->line);
 			}
 			return $lines;
 		} finally {
 			$this->currentFinallyReturnContext = $previousContext;
 		}
+	}
+
+	/** Inspect nested statement lists, not expression ASTs or closure bodies. */
+	private function statementMayReturn(Statement $statement): bool
+	{
+		return $statement->kind === 'return'
+			|| (is_array($statement->payload) && $this->statementPayloadMayReturn($statement->payload));
+	}
+
+	private function statementPayloadMayReturn(array $payload): bool
+	{
+		foreach ($payload as $item) {
+			if ($item instanceof Statement && $this->statementMayReturn($item)) {
+				return true;
+			}
+			if (is_array($item) && $this->statementPayloadMayReturn($item)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** @param list<Statement> $statements @param array<string, array{line:int}> $hints */
@@ -5027,21 +5061,6 @@ final class Generator
 		return $this->renderStatement($statement, $namespacePhp);
 	}
 
-	/** @param list<CodeBlock> $lines @return list<CodeBlock> */
-	private function wrapWithReturnGuard(array $lines, string $returnFlag): array
-	{
-		if ($lines === []) {
-			return [];
-		}
-		$originLine = $lines[0]->srcLine;
-		$originColumn = $lines[0]->srcColumn;
-		$out = [$this->code('if (!' . $returnFlag . ') {', $originLine, $originColumn)];
-		foreach ($lines as $line) {
-			$out[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
-		}
-		$out[] = $this->code('}', $originLine, $originColumn);
-		return $out;
-	}
 
 	private function isSimpleUnitLoopDepth(mixed $depth): bool
 	{

@@ -1,0 +1,73 @@
+class ScopeEx extends Exception {
+	public function __construct(string $message) {
+		parent::__construct($message);
+	}
+}
+
+function scoped(bool $early): int {
+    try {
+        $before = 4;
+        $index = 0;
+        while ($index < 2) {
+            $item = $before + $index;
+            if ($early) {
+                return $item;
+            }
+            $after = $item + 1;
+            echo $before, ":", $after, ";";
+            $index++;
+        }
+        return $before;
+    } finally {
+        echo "S;";
+    }
+}
+
+function thrown(): void {
+    try {
+        $message = "boom";
+        throw new ScopeEx($message);
+    } finally {
+        echo "E;";
+    }
+}
+
+function caught(): int {
+    try {
+        throw new ScopeEx("caught");
+    } catch (ScopeEx $error) {
+        $value = 8;
+        $result = $value + 1;
+        return $result;
+    } finally {
+        echo "C;";
+    }
+}
+
+function loop_control(): void {
+    try {
+        $i = 0;
+        do {
+            $value = $i;
+            $i++;
+            if ($value === 0) {
+                continue;
+            }
+            echo $value;
+            break;
+        } while ($i < 3);
+        echo "D;";
+    } finally {
+        echo "L;";
+    }
+}
+
+echo scoped(false), ";";
+echo scoped(true), ";";
+try {
+    thrown();
+} catch (ScopeEx $error) {
+    echo "X;";
+}
+echo caught(), ";";
+loop_control();

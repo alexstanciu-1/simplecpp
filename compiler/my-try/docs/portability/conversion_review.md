@@ -147,3 +147,11 @@ from this attempt; this does not claim whole-compiler native success.
 The remaining source_record module/type collision is fixed by renaming the field
 to module_reference. Module-discovery and file-scan tests pass; the retry in
 `/tmp/my-try-native-module-reference.stdout` confirms its cast error is gone.
+
+The finally local-scope defect is fixed in legacy generation: delayed-return
+guards now enclose continuation suffixes, keeping earlier locals visible.
+`/tmp/my-try-native-finally-scopes.stdout` confirms the Parser_Run::block error
+is gone. Native/PHP finally behavior matches in `/tmp/finally-scopes-proof-03`;
+existing return/loop cases and new local/catch/exception cases pass with STAN
+disabled. The compiler still fails on independent assignment, ternary and
+covariant-return issues.
