@@ -79,8 +79,8 @@ if ((q_count($survivors) !== 1) || ($survivors[0]->change_status !== change_stat
 }
 $current_inputs['a.phs']->file->disk_source = true; // Absent path represents deletion of the published source.
 $sync_compiler->sync($changed_paths);
-$survivors = Model::$global_scope->functions_named('answer');
-if (q_count($survivors) !== 0) {
+$deleted_survivors /** vector<collected_name> */ = Model::$global_scope->functions_named('answer');
+if (q_count($deleted_survivors) !== 0) {
 	throw new \LogicException('Native sync resolved a deleted file');
 }
 
