@@ -322,6 +322,25 @@ private:
 	hash_t<T, K> *owner_;
 };
 
+// Borrow const membership using the hash's existing const entry iterator.
+template <typename T, typename K = typename default_hash_key<T>::type>
+class foreach_const_hash_range final {
+public:
+	foreach_const_hash_range(const hash_t<T, K> &owner) noexcept
+		: owner_(&owner) {}
+
+	[[nodiscard]] auto begin() const noexcept {
+		return owner_->begin_entries();
+	}
+
+	[[nodiscard]] auto end() const noexcept {
+		return owner_->end_entries();
+	}
+
+private:
+	const hash_t<T, K> *owner_;
+};
+
 template <typename T>
 [[nodiscard]] inline foreach_vector_range<T> foreach_range(vector_t<T> &value) noexcept {
 	return foreach_vector_range<T>(value);
@@ -345,6 +364,11 @@ template <typename T, std::size_t N>
 template <typename T, typename K>
 [[nodiscard]] inline foreach_hash_range<T, K> foreach_range(hash_t<T, K> &value) noexcept {
 	return foreach_hash_range<T, K>(value);
+}
+
+template <typename T, typename K>
+[[nodiscard]] inline foreach_const_hash_range<T, K> foreach_range(const hash_t<T, K> &value) noexcept {
+	return foreach_const_hash_range<T, K>(value);
 }
 
 [[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(mixed_t &value) noexcept {

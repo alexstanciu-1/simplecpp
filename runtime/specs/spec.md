@@ -439,6 +439,12 @@ is unchanged.
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `hash_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
 - `at()` is checked non-inserting access and follows throw-style semantics on miss
+- `foreach_range(const hash_t<T, K>&)` borrows the original hash and uses its const
+  entry iterators, preserving order and skipping removed slots without copying
+  membership. Entries expose copied values or const value references, never mutable
+  slot references. Shared keys/values retain object identity; const membership does
+  not make their pointees const. The owner must outlive traversal, and this adapter
+  does not add mutation-during-iteration or temporary-lifetime guarantees.
 - generator-facing non-assignment dim access is direct (`hash_t::operator[]` / `mixed_t::operator[]`) with mutable autovivification and const null-on-miss behavior
 - echo/text coercion for slot-based dim reads must dispatch through a non-materializing `mixed_t` read before normal `to_string(...)` handling
 - keys are strict: `123` and `"123"` are different
