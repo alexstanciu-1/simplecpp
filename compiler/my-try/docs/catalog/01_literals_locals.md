@@ -34,7 +34,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-REASSIGN-002](#var-reassign-002) | agreed | `$a = 1; $a = $a + 1;` | proved | in-progress | deferred | [Exact reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-REASSIGN-003](#var-reassign-003) | agreed | `$a = 1; $a = $a + $a;` | proved | in-progress | deferred | [Two-read reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [IDENT-VAR-001](#ident-var-001) | agreed | `function f(int $int): void { $while = $int; }` | proved | in-progress | deferred | [Prepared identity and role-prefixed C++ naming proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [NOTE-011](#note-011) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-011](#note-011) | agreed | `$i = 1; $f = 1.5; $b = true; $s = "x";` | proved | in-progress | deferred | Consolidated by the scalar-literal rows and their [PHP preparation/emission proofs](../../tests/s2s.php); later expression contexts retain their own proof obligations |
 | [NOTE-021](#note-021) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-033](#note-033) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-034](#note-034) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | Consolidated by [VAR-REASSIGN-001](#var-reassign-001) and its [prepared-identity/emission proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
@@ -1322,7 +1322,60 @@ ERROR
 
 **Source:** [generators/php/specs/rules.md:153](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** This note consolidates the four scalar-literal rows;
+it does not introduce another literal syntax or lowering path:
+
+```php
+$i = 1;
+$f = 1.5;
+$b = true;
+$s = "x";
+```
+
+The frontend retains each literal's source value in its concrete AST node.
+Preparation attaches the canonical language type and the normalized value needed by
+later consumers. C++ lowering reads those prepared facts and owns only the target
+spelling:
+
+```cpp
+auto local_i = static_cast<scpp::int_t<>>(1LL);
+auto local_f = static_cast<scpp::float_t>(1.5);
+auto local_b = static_cast<scpp::bool_t>(true);
+auto local_s = scpp::string_t("x");
+```
+
+Supported composed expressions recursively use the same prepared literal facts; for
+example, `VAR-CHAIN-004` proves the integer leaf in `$b = $a + 1;`. Literal lowering
+does not itself decide assignment conversion, operator compatibility or a containing
+expression's result type. Those remain preparation decisions owned by the containing
+construct.
+
+The imported claim that the forms apply to assignments, expressions, returns,
+arguments and defaults is an invariant for each supported context, not evidence that
+all such contexts are already implemented. This chapter currently proves direct
+declaration/reassignment and the supported integer-addition path. Returns, calls,
+defaults and other expression families keep their own catalog entries and must prove
+that they consume the same prepared literal facts when implemented. `null`, arrays,
+named constants and other non-scalar forms are outside this note. LLVM remains
+deferred.
+
+**Legacy edge-case review:** The old S2S normalized literal leaves recursively. Its
+string path also used a length-aware `std::string` construction for embedded NUL so a
+C-string constructor could not truncate the value. The current string-literal rows
+retain that applicable binary-safety requirement and prove the emitted spelling;
+they additionally decode source bytes without first converting through a host-PHP
+value. Float preparation deliberately retains source text, avoiding the legacy
+host-float precision loss recorded by `LIT-FLOAT-001`.
+
+**Verification (2026-09-30):** `LIT-INT-001`, `LIT-FLOAT-001`, `LIT-BOOL-001`,
+`LIT-BOOL-002`, `LIT-STR-001`, `LIT-STR-002` and `LIT-STR-003` provide the focused
+frontend and lowering proofs; `VAR-CHAIN-004` proves recursive integer-literal use in
+the currently supported addition expression. This consolidation needs no new
+compiler or test code. The string rows have not received explicit-request native C++
+execution, so the combined C++ S2S status remains `in-progress`.
+
+Imported prose follows for provenance; its list of contexts is not a completion
+claim for v0.2.
 
 > ## 3. Literal Normalization
 >
