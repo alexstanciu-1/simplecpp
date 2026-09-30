@@ -19,26 +19,33 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-BOOL-001](#lit-bool-001) | agreed | `$a = true;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-BOOL-002](#lit-bool-002) | agreed | `$a = false;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-FLOAT-001](#lit-float-001) | agreed | `$a = 10.5;` | proved | proved | deferred | [Scalar proof](../../tests/s2s.php), [float decision](#lit-float-001) |
-| [LIT-STR-001](#lit-str-001) | agreed | `$a = 'x';` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [LIT-STR-002](#lit-str-002) | agreed | `$a = "x";` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [TYPE-VAR-001](#type-var-001) | agreed | `$x string = "test";` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-ASSIGN-001](#var-assign-001) | agreed | `$a = $b;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-REASSIGN-001](#var-reassign-001) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [LIT-STR-003](#lit-str-003) | agreed | `$a = "";` | proved | in-progress | deferred | [Generalized string preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [LIT-CONST-001](#lit-const-001) | agreed | `$a = PHP_INT_MAX;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-001](#var-chain-001) | agreed | `$a = $b = 1;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-002](#var-chain-002) | agreed | `$a = 1; $b = $a;` | proved | in-progress | deferred | [Exact emitted-C++ and variable-copy proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-003](#var-chain-003) | agreed | `$a = 1; $b = $a; $c = $b;` | proved | in-progress | deferred | [Exact prepared-identity and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-004](#var-chain-004) | agreed | `$a = 1; $b = $a + 1;` | proved | in-progress | deferred | [Canonical integer-addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
+| [LIT-STR-001](#lit-str-001) | agreed | `$a = 'x';` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [LIT-STR-002](#lit-str-002) | agreed | `$a = "x";` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [TYPE-VAR-001](#type-var-001) | agreed | `$x string = "test";` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [VAR-ASSIGN-001](#var-assign-001) | agreed | `$a = $b;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [VAR-REASSIGN-001](#var-reassign-001) | agreed | `$a = 1; $a = 2;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [LIT-STR-003](#lit-str-003) | agreed | `$a = "";` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [LIT-CONST-001](#lit-const-001) | agreed | `$a = PHP_INT_MAX;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [VAR-CHAIN-001](#var-chain-001) | agreed | `$a = $b = 1;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [VAR-CHAIN-002](#var-chain-002) | agreed | `$a = 1; $b = $a;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [VAR-CHAIN-003](#var-chain-003) | agreed | `$a = 1; $b = $a; $c = $b;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [VAR-CHAIN-004](#var-chain-004) | agreed | `$a = 1; $b = $a + 1;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
 | [VAR-ORDER-001](#var-order-001) | agreed | `$a = $b; $b = 1;` | proved | not-applicable | deferred | [Exact source-order diagnostic and no-publication proof](../../tests/s2s.php); invalid standalone input has no C++ lowering |
-| [VAR-REASSIGN-002](#var-reassign-002) | agreed | `$a = 1; $a = $a + 1;` | proved | in-progress | deferred | [Exact reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-REASSIGN-003](#var-reassign-003) | agreed | `$a = 1; $a = $a + $a;` | proved | in-progress | deferred | [Two-read reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [IDENT-VAR-001](#ident-var-001) | agreed | `function f(int $int): void { $while = $int; }` | proved | in-progress | deferred | [Prepared identity and role-prefixed C++ naming proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [NOTE-011](#note-011) | agreed | `$i = 1; $f = 1.5; $b = true; $s = "x";` | proved | in-progress | deferred | Consolidated by the scalar-literal rows and their [PHP preparation/emission proofs](../../tests/s2s.php); later expression contexts retain their own proof obligations |
-| [NOTE-021](#note-021) | agreed | `function _f(int $_x, int $U_x): int { return $_x; }` | proved | in-progress | deferred | [Raw-name preservation and reversible local/function/record/field escaping proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
+| [VAR-REASSIGN-002](#var-reassign-002) | agreed | `$a = 1; $a = $a + 1;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [VAR-REASSIGN-003](#var-reassign-003) | agreed | `$a = 1; $a = $a + $a;` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [IDENT-VAR-001](#ident-var-001) | agreed | `function f(int $int): void { $while = $int; }` | proved | proved | deferred | [PHP/native emission and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
+| [NOTE-011](#note-011) | agreed | `$i = 1; $f = 1.5; $b = true; $s = "x";` | proved | proved | deferred | Consolidated by scalar rows with [PHP/native emission and Clang execution](../../tests/s2s.php); later contexts retain their own proof obligations |
+| [NOTE-021](#note-021) | agreed | `function _f(int $_x, int $U_x): int { return $_x; }` | proved | proved | deferred | [PHP/native escaping and Clang execution](../../tests/s2s.php); [native checkpoint](../portability/conversion_review.md) |
 | [NOTE-033](#note-033) | split | `NOTE-033.a`: entry/function local isolation | in-progress | in-progress | deferred | `.a` proved by [prepared identity, emitted C++ and exact rejection](../../tests/s2s.php); `.b` nested-block visibility waits for control flow; namespace execution belongs to chapter 08 |
-| [NOTE-034](#note-034) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | Consolidated by [VAR-REASSIGN-001](#var-reassign-001) and its [prepared-identity/emission proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
+| [NOTE-034](#note-034) | agreed | `$a = 1; $a = 2;` | proved | proved | deferred | Consolidated by [VAR-REASSIGN-001](#var-reassign-001) with [PHP/native emission and Clang execution](../../tests/s2s.php) |
 | [NOTE-035](#note-035) | split | `.a` scalar leaves; `.c` `PHP_INT_MAX` | in-progress | in-progress | deferred | `.a` covered by [NOTE-011](#note-011); bounded `.c` covered by [LIT-CONST-001](#lit-const-001); `.b` conditions and broader constants remain with their owning chapters |
+
+The [native checkpoint](../portability/conversion_review.md) converts and builds the
+compiler, compares PHP-host and native-compiler C++ bytes for every valid authored
+S2S fixture, and compiles and executes all 95 resulting programs with Clang. The
+15 float-form cases retain independent spelling, type and native-value assertions.
+Rows remain split where the unimplemented part belongs to another chapter; broad
+native execution does not complete those deferred semantics.
 
 ### Deferred legacy syntax
 
@@ -298,9 +305,8 @@ empty bytes. LLVM remains deferred.
 **Verification (2026-09-30):** focused PHP tokenizer, AST, specialization-dispatch
 and S2S suites prove exact spans, unterminated rejection, canonical type identity,
 single-quote decoding, binary-safe emitted spelling, cleanup/source purity and the
-entry-return rejection. Generated C++ was inspected but not compiled or executed;
-native compiler validation remains pending explicit request, so C++ S2S stays
-`in-progress`.
+entry-return rejection. The native checkpoint proves byte-identical PHP/native
+emission plus Clang compilation and execution of `string_single`.
 
 ### Imported version 1
 
@@ -363,8 +369,8 @@ typed string fields and `LIT-STR-003` remain non-goals. LLVM remains deferred.
 **Verification (2026-09-30):** focused PHP tokenizer and S2S proofs cover exact
 double-quoted spans, unterminated rejection, canonical AST/type identity, byte escape
 decoding, interpolation and Unicode-escape rejection, output spelling, cleanup and
-source purity. Generated C++ is inspected but not compiled or executed; native
-compiler validation remains pending explicit request, so C++ S2S stays `in-progress`.
+source purity. The native checkpoint proves byte-identical PHP/native emission plus
+Clang compilation and execution of `string_double`.
 
 ### Imported version 1
 
@@ -431,9 +437,8 @@ LLVM remains deferred.
 **Verification (2026-09-30):** focused PHP S2S proofs cover prepared canonical type
 and declaration identity, explicit string output, compatible reassignment, mismatch
 rejection before publication, inferred-`auto` preservation, explicit scalar
-regressions, cleanup and source purity. Generated C++ is inspected but not compiled
-or executed; native compiler validation remains pending explicit request, so C++ S2S
-stays `in-progress`.
+regressions, cleanup and source purity. The native checkpoint compiles and executes
+`string_explicit` after verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -516,9 +521,8 @@ deferred.
 identity, shared canonical type, declaration classification, source mutation versus
 copy reads, exact direct-copy output, source-before-use and self-initialization
 diagnostics, cleanup and source purity. Existing scalar and value-struct copy cases
-remain regression evidence. Generated C++ is inspected but not compiled or executed;
-native compiler validation remains pending explicit request, so C++ S2S stays
-`in-progress`.
+remain regression evidence. The native checkpoint compiles and executes `copy` after
+verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -599,9 +603,8 @@ non-goals. LLVM remains deferred.
 identity and type, assignment classification and result type, exact direct C++
 reassignment without redeclaration, retained conversion between distinct compatible
 integer types, a self-read from established storage, incompatible-type and duplicate-
-declaration diagnostics, cleanup and source purity. Generated C++ is inspected but
-not compiled or executed; native compiler validation remains pending explicit
-request, so C++ S2S stays `in-progress`.
+declaration diagnostics, cleanup and source purity. The native checkpoint compiles
+and executes reassignment cases after verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -664,9 +667,9 @@ quote form, preparation owns exact byte decoding and canonical type, and C++ low
 owns target escaping and construction. Focused proofs cover both quote forms, exact
 zero length/value, canonical type and emitted `scpp::string_t("")`; the existing
 embedded-NUL proof guards the distinct length-aware path. Cleanup and source purity
-remain covered. LLVM stays deferred. Generated C++ is inspected but not compiled or
-executed; native compiler validation remains pending explicit request, so C++ S2S
-stays `in-progress`.
+remain covered. LLVM stays deferred. The native checkpoint compiles and executes
+`string_empty_single` and `string_empty_double` after verifying byte-identical
+PHP/native emission.
 
 ### Imported version 1
 
@@ -718,6 +721,11 @@ include `core/string_support.hpp`. `PHP_INT_MAX()` remains a call, `$PHP_INT_MAX
 remains a variable, wrong-case and unknown names fail during preparation, and
 constants cannot be assignment targets. User constants, namespace qualification,
 class/magic constants and general constant folding remain outside this slice.
+
+**Verification (2026-09-30):** focused PHP proofs cover constant identity, type,
+immutability, exact value lowering and diagnostic boundaries. The native checkpoint
+compiles and executes `constant_int_max`, `constant_name_call` and
+`constant_namespaces` after verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -775,6 +783,11 @@ assignment expressions embedded in calls, returns or other expressions remain
 outside this slice. Sequential-assignment catalog rows are not completed by this
 recursive chain implementation.
 
+**Verification (2026-09-30):** focused PHP proofs cover right-associative preparation,
+declaration/reassignment identity, conversions and single RHS evaluation. The native
+checkpoint compiles and executes all seven `chain*` fixtures after verifying
+byte-identical PHP/native emission.
+
 ### Imported version 1
 
 **Source:** [generators/php/specs/rules_catalog.md:42](../../../../generators/php/specs/rules_catalog.md)
@@ -824,6 +837,10 @@ normalization or insert a conversion when both identities have the same type.
 The broader copy proof mutates `$a` afterward and verifies that `$b` retains its
 copied value. Longer sequential copy series remain independently tracked by
 `VAR-CHAIN-003`.
+
+**Verification (2026-09-30):** the native checkpoint compiles and executes
+`var_chain_002` and the value-observing `copy` case after verifying byte-identical
+PHP/native emission.
 
 ### Imported version 1
 
@@ -883,9 +900,8 @@ does not make an earlier read valid, and sequential copies are not reordered.
 
 **Verification (2026-09-30):** the focused PHP S2S proof checks the exact three
 declarations, distinct identities, immediate-source resolution, shared canonical
-type, direct copy spelling, cleanup and source purity. Generated C++ is inspected
-but not compiled or executed; native compiler validation remains pending explicit
-request, so C++ S2S stays `in-progress`.
+type, direct copy spelling, cleanup and source purity. The native checkpoint compiles
+and executes `var_chain_003` after verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -958,8 +974,8 @@ prepared operation, operand and result types, source declaration identity,
 non-addressability, normalized C++ spelling, runtime operator include, cleanup and
 source purity. Focused rejection proofs cover an undeclared operand, a boolean
 operand, an unresolved narrow-integer promotion and an effectful call operand.
-Generated C++ is inspected but not compiled or executed; native compiler validation
-remains pending explicit request, so C++ S2S stays `in-progress`.
+The native checkpoint compiles and executes `var_chain_004` after verifying
+byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -1086,9 +1102,8 @@ separate exact proof. LLVM remains deferred.
 declaration-versus-assignment classification, shared target/self-read identity,
 prepared addition and result types, one `auto`, normalized C++ spelling, cleanup and
 source purity. A value-bearing companion case records the expected result `2` for
-the on-demand native harness. Generated C++ is inspected but not compiled or
-executed in this slice; native compiler validation remains pending explicit request,
-so C++ S2S stays `in-progress`.
+the native harness. The native checkpoint compiles and executes both
+`var_reassign_002` cases after verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -1155,9 +1170,8 @@ remains deferred.
 and fact objects, their shared declaration and canonical type, prepared addition,
 assignment classification, one `auto`, exact C++ spelling, cleanup and source purity.
 A value-bearing companion case records the expected result `2` for the on-demand
-native harness. Generated C++ is inspected but not compiled or executed in this
-slice; native compiler validation remains pending explicit request, so C++ S2S
-stays `in-progress`.
+native harness. The native checkpoint compiles and executes both
+`var_reassign_003` cases after verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -1242,8 +1256,8 @@ distinct parameter/local declaration identities, source-reference resolution,
 canonical type identity, identical prototype/definition parameter spelling, exact
 role-prefixed body lowering, absence of the legacy `__` spellings, and source names
 that already contain `local_`. General cleanup and source-purity checks include both
-cases. Generated C++ is inspected but not compiled or executed; native compiler
-validation remains pending explicit request, so C++ S2S stays `in-progress`.
+cases. The native checkpoint compiles and executes `ident_var_001` and its prefix-
+collision case after verifying byte-identical PHP/native emission.
 
 ### Imported version 1
 
@@ -1370,8 +1384,9 @@ host-float precision loss recorded by `LIT-FLOAT-001`.
 `LIT-BOOL-002`, `LIT-STR-001`, `LIT-STR-002` and `LIT-STR-003` provide the focused
 frontend and lowering proofs; `VAR-CHAIN-004` proves recursive integer-literal use in
 the currently supported addition expression. This consolidation needs no new
-compiler or test code. The string rows have not received explicit-request native C++
-execution, so the combined C++ S2S status remains `in-progress`.
+compiler or test code. The native checkpoint compiles and executes the scalar and
+string fixtures, including all 15 independently checked float spellings, after
+verifying byte-identical PHP/native emission.
 
 Imported prose follows for provenance; its list of contexts is not a completion
 claim for v0.2.
@@ -1467,8 +1482,9 @@ deferred.
 checking exact, distinct prototype/definition/call/local spellings and the absence of
 `__` in generated output. A record/field case proves the same helper is shared by all
 four current source-derived role families. General source-purity and cleanup checks
-cover both cases. Generated C++ is inspected but is not compiled or executed in this
-slice, so C++ S2S remains `in-progress` pending explicit native validation.
+cover both cases. The native checkpoint compiles and executes
+`ident_var_escaping` and `ident_record_escaping` after verifying byte-identical
+PHP/native emission.
 
 Imported prose follows for provenance; its keyword table and collision suffix are
 not the v0.2 target.
@@ -1553,9 +1569,9 @@ Generated C++ spelling is not used for lookup.
 parameter declaration identities, parameter-seeded reassignment, exact role-prefixed
 C++ output, the precise implicit-read diagnostic, no failed output publication and
 source purity. Existing collection coverage also proves that a file local is not
-published into the global variable index. Generated C++ is inspected but is not
-compiled or executed in this slice, so C++ S2S remains `in-progress` pending explicit
-native validation.
+published into the global variable index. The native checkpoint compiles and executes
+`function_locals` after verifying byte-identical PHP/native emission. The parent row
+remains in progress because `NOTE-033.b` still waits for control-flow block scopes.
 
 ### NOTE-033.b — nested statement blocks
 
@@ -1621,9 +1637,9 @@ with their owning catalog entries. LLVM remains deferred.
 identity, declaration-versus-assignment classification, canonical type continuity,
 one `auto`, normalized literal lowering, cleanup and source purity. `VAR-ASSIGN-001`
 and the sequential-copy rows provide supporting first-write and reference-resolution
-evidence. No new compiler or test code is required for this consolidation. Generated
-C++ has not been compiled or executed in this documentation slice, so C++ S2S stays
-`in-progress` pending explicit-request native validation.
+evidence. No new compiler or test code is required for this consolidation. The native
+checkpoint compiles and executes the corresponding declaration/reassignment forms
+after verifying byte-identical PHP/native emission.
 
 Imported prose follows for provenance; its raw-name spelling is not the v0.2 target.
 

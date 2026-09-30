@@ -138,58 +138,44 @@ def main():
     (results / 's2s.cpp').write_bytes(native_cpp)
     run('s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include', results / 's2s.cpp', '-o', results / 's2s-program'])
     run('s2s-execute', [results / 's2s-program'], expected=10)
-    # Exercise current scalar dispatch through the native compiler, not only the old integer proof.
-    scalar_cases = [
-        ('bool-copy', '$a = true; $b bool = $a; $a = false; return $b;', 1, None),
-        ('float-copy', '$a = 10.5; $b float = $a; $a = .5; return $b;', 10, None),
-    ]
-    for index, spelling in enumerate(['10.5', '.5', '10.', '1e3', '1E+3', '1.25e-3',
-                                      '.5e2', '10.e-1', '1.2345678901234567', '08e0',
-                                      '1.7976931348623157e308', '2.2250738585072014e-308',
-                                      '4.9406564584124654e-324']):
-        scalar_cases.append((f'float-{index}', '$a = ' + spelling + ';', 0, spelling))
-    for name, text, expected_exit, spelling in scalar_cases:
-        folder = results / 'scalar-programs' / name
-        folder.mkdir(parents=True, exist_ok=args.resume)
-        (folder / 'main.phs').write_text(text)
-        request.write_text('s2s:' + str(folder))
-        host_output = run(name + '-s2s-host', ['php', '-r', php_code])
-        native_output = run(name + '-s2s-native', [executable])
-        if native_output != host_output:
-            raise RuntimeError(name + ': native scalar output differs from PHP')
-        generated = native_output.decode()
-        if spelling is not None:
-            if 'static_cast<scpp::float_t>(' + spelling + ')' not in generated:
-                raise RuntimeError(name + ': native compiler changed float precision/spelling')
-            probe = ('\tstatic_assert(std::is_same_v<decltype(local_a), scpp::float_t>);\n'
-                     '\tif (local_a.native_value() != ' + spelling + ') { return 91; }\n')
-            generated = generated.replace('\treturn 0;', probe + '\treturn 0;')
-        (folder / 'main.cpp').write_text(generated)
-        run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
-                                 folder / 'main.cpp', '-o', folder / 'program'])
-        run(name + '-s2s-execute', [folder / 'program'], expected=expected_exit)
-    # Reuse the host suite's authored function/struct cases instead of duplicating fixtures.
+    # Reuse every valid authored S2S case instead of maintaining native-only fixture subsets.
     s2s_fixtures = results / 's2s-fixtures'
     s2s_fixtures.mkdir(exist_ok=args.resume)
     run('php-s2s-suite', ['php', APP / 'tests/s2s.php', s2s_fixtures])
     programs = json.loads((s2s_fixtures / 'programs.json').read_text())
-    declaration_cases = [(name, text, code) for name, (text, code) in programs['valid'].items()
-                         if name.startswith(('function_', 'struct_', 'integer_', 'field_'))]
-    for name, text, code in declaration_cases:
-        folder = results / 'declaration-programs' / name
+    valid_cases = [(name, text, code) for name, (text, code) in programs['valid'].items()]
+    declaration_case_count = sum(name.startswith(('function_', 'struct_', 'integer_', 'field_'))
+                                 for name, _, _ in valid_cases)
+    float_spelling_assertions = 0
+    for name, text, code in valid_cases:
+        folder = results / 's2s-programs' / name
         folder.mkdir(parents=True, exist_ok=args.resume)
         (folder / 'main.phs').write_text(text)
         request.write_text('s2s:' + str(folder))
         host_output = run(name + '-s2s-host', ['php', '-r', php_code])
         native_output = run(name + '-s2s-native', [executable])
         if native_output != host_output or native_output.startswith(b'ERROR\n'):
-            raise RuntimeError(name + ': native declaration output differs from PHP or was rejected')
+            raise RuntimeError(name + ': native S2S output differs from PHP or was rejected')
         generated = native_output.decode()
         if name.startswith('field_'):
             alias = name[len('field_'):]
             native_type = 'uint8' if alias == 'byte' else alias
             generated += ('\nstatic_assert(std::is_same_v<decltype(record_Item{}.field_value), '
                           'scpp::int_t<std::' + native_type + '_t>>);\n')
+        if name.startswith('float_form_'):
+            prefix = '$a = '
+            if not text.startswith(prefix) or not text.endswith(';'):
+                raise RuntimeError(name + ': float spelling fixture has an unexpected source shape')
+            spelling = text[len(prefix):-1]
+            if 'static_cast<scpp::float_t>(' + spelling + ')' not in generated:
+                raise RuntimeError(name + ': native compiler changed float precision/spelling')
+            probe = ('\tstatic_assert(std::is_same_v<decltype(local_a), scpp::float_t>);\n'
+                     '\tif (local_a.native_value() != ' + spelling + ') { return 91; }\n')
+            generated_with_probe = generated.replace('\treturn 0;', probe + '\treturn 0;')
+            if generated_with_probe == generated:
+                raise RuntimeError(name + ': float spelling probe could not find the entry return')
+            generated = generated_with_probe
+            float_spelling_assertions += 1
         (folder / 'main.cpp').write_text(generated)
         run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
                                  folder / 'main.cpp', '-o', folder / 'program'])
@@ -206,7 +192,8 @@ def main():
         native_output = run(name + '-native', [executable])
         if native_output != host_output or not native_output.startswith(b'ERROR\n'):
             raise RuntimeError(name + ': native rejection/recovery differs from PHP')
-    print(f'{len(declaration_cases)} function/struct executions and {len(rejection_cases)} S2S rejections passed', flush=True)
+    print(f'{len(valid_cases)} valid S2S executions, including {float_spelling_assertions} float spelling assertions, '
+          f'and {len(rejection_cases)} S2S rejections passed', flush=True)
     outcomes = []
     for name, path in cases:
         request.write_text(str(path))
@@ -239,7 +226,8 @@ def main():
         stan = json.loads((project / '.prism/cache/stan_status.json').read_text())
         analysis = {key: stan[key] for key in ['compile_error_count', 'stan_error_count', 'stan_warning_count', 'stan_notice_count']}
     summary = dict(analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
-                   s2s_scalar_executions=len(scalar_cases), s2s_declaration_executions=len(declaration_cases),
+                   s2s_valid_executions=len(valid_cases), s2s_float_spelling_assertions=float_spelling_assertions,
+                   s2s_declaration_executions=declaration_case_count,
                    s2s_rejections=len(rejection_cases), cases=len(outcomes), valid=sum(x['valid'] for x in outcomes),
                    rejected=sum(not x['valid'] for x in outcomes),
                    repeated_compile_and_recovery=True, outcomes=outcomes)
