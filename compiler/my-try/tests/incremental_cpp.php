@@ -98,6 +98,20 @@ try
 	cpp_check(Model::$cpp_output_program->fragments[$caller_owner] !== $caller_before, 'Signature change left stale consumer fragment');
 	cpp_check(Model::$cpp_output_program->fragments[$box_owner] === $box_before, 'Signature change rerendered unrelated record');
 
+	// Record dependency snapshots retain typed identities and duplicate field dependencies.
+	file_put_contents($path, 'struct Outer { Inner $first; Inner $second; } struct Inner { int32 $value; } return 0;');
+	$compiler->update_cpp([$path]);
+	$outer_definition = Model::$global_scope->source_types_named('Outer')[0];
+	$inner_definition = Model::$global_scope->source_types_named('Inner')[0];
+	$outer_fragment = Model::$cpp_output_program->fragments[$outer_definition->preparation];
+	cpp_check(count($outer_fragment->records) === 2 && $outer_fragment->records[0] === $inner_definition && $outer_fragment->records[1] === $inner_definition, 'Record snapshot lost identity or duplicate dependencies');
+	$inner_position = strpos(Model::$cpp_files[0]->text, 'struct record_Inner');
+	$outer_position = strpos(Model::$cpp_files[0]->text, 'struct record_Outer');
+	cpp_check($inner_position !== false && $outer_position !== false && $inner_position < $outer_position, 'Record dependencies were assembled after their consumer');
+	file_put_contents($path, 'struct Outer { int32 $first; int32 $second; } return 0;');
+	$compiler->update_cpp([$path]);
+	cpp_check(count(Model::$cpp_output_program->fragments[$outer_definition->preparation]->records) === 0 && !str_contains(Model::$cpp_files[0]->text, 'record_Inner'), 'Changed record retained a deleted dependency');
+
 	// An included runtime header disappears once its last emitting fragment is removed.
 	file_put_contents($path, 'function floating(): float { return 1.5; } return 0;');
 	$compiler->update_cpp([$path]);

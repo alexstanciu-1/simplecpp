@@ -88,7 +88,7 @@ final class CPP_Generator
 			{
 				$entry = object_cast($owner->declaration(), collected_name::class);
 				if ($entry instanceof collected_struct) {
-					$this->assemble_record($entry, $context);
+					$this->assemble_record(object_cast($entry, collected_struct::class), $context);
 				}
 				else {
 					$context->prototypes .= $fragment->text . ";\n";
@@ -152,10 +152,11 @@ final class CPP_Generator
 				CPP_Declarations::generate_struct($syntax, $context);
 				$next->text = $context->records;
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
-				$records /** Storage<collected_name> */ = $next->records;
+				$records /** Storage<collected_struct> */ = $next->records;
 				foreach ($fields->items() as $field) {
 					if ($field->type->kind === type_kind::record) {
-						$records->append(object_cast($field->type->declaration, collected_name::class));
+						$record /** collected_struct */ = $field->type->declaration;
+						$records->append($record);
 					}
 				}
 			}
@@ -167,7 +168,7 @@ final class CPP_Generator
 	}
 
 	/** Dependency ordering is file assembly policy; cached record text never embeds another record. */
-	private function assemble_record(collected_name $entry, cpp_generation_context $context): void
+	private function assemble_record(collected_struct $entry, cpp_generation_context $context): void
 	{
 		$key = $entry->name;
 		if (isset($context->record_states[$key])) {
@@ -179,7 +180,7 @@ final class CPP_Generator
 		$context->record_states[$key] = cpp_record_state::visiting;
 		$owner = object_cast($entry->preparation_work_owner(), preparation_owner::class);
 		$fragment = $this->program->fragments[$owner];
-		$records /** Storage<collected_name> */ = $fragment->records;
+		$records /** Storage<collected_struct> */ = $fragment->records;
 		foreach ($records as $dependency) {
 			$this->assemble_record($dependency, $context);
 		}

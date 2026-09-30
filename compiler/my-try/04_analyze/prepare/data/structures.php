@@ -119,7 +119,7 @@ final class preparation_lookup
 	public scope $lookup_scope;
 	public string $name;
 	public preparation_lookup_kind $kind;
-	public array $candidates /** vector<collected_name> */ = [];
+	public array $candidates /** vector<collected_definition> */ = [];
 	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
 
 	public function __construct(scope $lookup_scope, string $name, preparation_lookup_kind $kind)

@@ -23,10 +23,8 @@ final class Symbol_Collector
 	public function previous_function(scope $scope, string $name): ?function_node
 	{
 		foreach ($scope->functions_named($name) as $entry) {
-			if ($entry instanceof collected_function) {
-				if ($this->unseen($entry)) {
-					return object_cast($entry, collected_function::class)->syntax();
-				}
+			if ($this->unseen($entry)) {
+				return $entry->syntax();
 			}
 		}
 		return null;
@@ -36,10 +34,8 @@ final class Symbol_Collector
 	public function previous_struct(scope $scope, string $name): ?struct_node
 	{
 		foreach ($scope->source_types_named($name) as $entry) {
-			if ($entry instanceof collected_struct) {
-				if ($this->unseen($entry)) {
-					return object_cast($entry, collected_struct::class)->syntax();
-				}
+			if ($this->unseen($entry)) {
+				return $entry->syntax();
 			}
 		}
 		return null;

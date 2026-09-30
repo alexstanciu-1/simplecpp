@@ -579,12 +579,21 @@ final class Preparation_Worker
 		$lookup->dependents[$owner] = true;
 	}
 
-	private function candidates(preparation_lookup $lookup): array /** vector<collected_name> */
+	/** Project typed pools into one identity snapshot; value vectors are not covariant. */
+	private function candidates(preparation_lookup $lookup): array /** vector<collected_definition> */
 	{
+		$result /** vector<collected_definition> */ = [];
 		if ($lookup->kind === preparation_lookup_kind::type) {
-			return $lookup->lookup_scope->source_types_named($lookup->name);
+			foreach ($lookup->lookup_scope->source_types_named($lookup->name) as $record) {
+				$result[] = $record;
+			}
 		}
-		return $lookup->lookup_scope->functions_named($lookup->name);
+		else {
+			foreach ($lookup->lookup_scope->functions_named($lookup->name) as $function) {
+				$result[] = $function;
+			}
+		}
+		return $result;
 	}
 
 	/** Membership changes can invalidate successful, ambiguous or previously missing lookups. */

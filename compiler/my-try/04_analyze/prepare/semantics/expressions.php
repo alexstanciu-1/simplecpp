@@ -107,7 +107,7 @@ final class Expression_Preparation
 			throw new \RuntimeException('S2S needs one resolved function for ' . $entry->name);
 		}
 
-		$target = object_cast($targets[0], collected_function::class);
+		$target = $targets[0];
 		$context->worker->require_declaration($context->owner, $target);
 		$facts = new prepared_call();
 		$facts->declaration = $target;

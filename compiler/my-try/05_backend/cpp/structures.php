@@ -57,11 +57,11 @@ final class cpp_fragment
 	public string $text = '';
 	public array $headers /** hash<bool> */ = [];
 	/** Declaration dependencies needed before a value-record definition. */
-	public Storage $records /** Storage<collected_name> */;
+	public Storage $records /** Storage<collected_struct> */;
 
 	public function __construct()
 	{
-		$this->records = new Storage /** Storage<collected_name> */();
+		$this->records = new Storage /** Storage<collected_struct> */();
 	}
 }
 

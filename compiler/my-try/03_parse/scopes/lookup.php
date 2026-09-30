@@ -32,10 +32,10 @@ final class Scope_Lookup
 	}
 
 	/** Callable lookup follows the same nearest-pool rule as type lookup. */
-	public static function functions(scope $start, string $name, ?preparation_context $context = null): array /** vector<collected_name> */
+	public static function functions(scope $start, string $name, ?preparation_context $context = null): array /** vector<collected_function> */
 	{
 		$current_scope = $start;
-		$result /** vector<collected_name> */ = [];
+		$result /** vector<collected_function> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);

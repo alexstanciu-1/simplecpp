@@ -14,7 +14,7 @@ final class scope
 	/** @storage.reference collected_file.entries @reference.weak */
 	private Key_Storage_List $variables /** Key_Storage_List<collected_name> */;
 	/** @storage.reference collected_file.entries @reference.weak */
-	private Key_Storage_List $functions /** Key_Storage_List<collected_name> */;
+	private Key_Storage_List $functions /** Key_Storage_List<collected_function> */;
 	/** Definitions owned here; published scopes retain the same definition objects. */
 	private Key_Storage_List $types /** Key_Storage_List<type_definition> */;
 
@@ -22,7 +22,7 @@ final class scope
 	{
 		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
 		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
-		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_name> */();
+		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition> */();
 	}
 
@@ -70,8 +70,9 @@ final class scope
 	public function register(collected_name $entry): void
 	{
 		if ($entry instanceof collected_function) {
-			$functions /** Key_Storage_List<collected_name> */ = $this->functions;
-			$functions->add($entry->name, $entry);
+			$functions /** Key_Storage_List<collected_function> */ = $this->functions;
+			$function = object_cast($entry, collected_function::class);
+			$functions->add($function->name, $function);
 		}
 		else {
 			$variables /** Key_Storage_List<collected_name> */ = $this->variables;
@@ -88,10 +89,12 @@ final class scope
 	/** Remove index membership by identity; same-name declarations from other owners survive. */
 	public function unregister(collected_name $entry): void
 	{
-		$functions /** Key_Storage_List<collected_name> */ = $this->functions;
+		$functions /** Key_Storage_List<collected_function> */ = $this->functions;
 		$variables /** Key_Storage_List<collected_name> */ = $this->variables;
 		$types /** Key_Storage_List<type_definition> */ = $this->types;
-		$functions->remove($entry->name, $entry);
+		if ($entry instanceof collected_function) {
+			$functions->remove($entry->name, object_cast($entry, collected_function::class));
+		}
 		$variables->remove($entry->name, $entry);
 		foreach ($types->named($entry->name) as $definition) {
 			if ($definition->declaration === $entry) {
@@ -127,9 +130,9 @@ final class scope
 	}
 
 	/** Return a typed snapshot; an absent name has no candidates. */
-	public function functions_named(string $name): array /** vector<collected_name> */
+	public function functions_named(string $name): array /** vector<collected_function> */
 	{
-		$items /** Key_Storage_List<collected_name> */ = $this->functions;
+		$items /** Key_Storage_List<collected_function> */ = $this->functions;
 		return $items->named($name);
 	}
 
@@ -140,13 +143,13 @@ final class scope
 		return $items->named($name);
 	}
 
-	/** Source-only projection keeps the experimental consumer independent of built-in metadata. */
-	public function source_types_named(string $name): array /** vector<collected_name> */
+	/** Source-only identity snapshot for preparation observations and legacy consumers. */
+	public function source_types_named(string $name): array /** vector<collected_struct> */
 	{
-		$result /** vector<collected_name> */ = [];
+		$result /** vector<collected_struct> */ = [];
 		foreach ($this->types_named($name) as $definition) {
 			if ($definition->declaration !== null) {
-				$entry /** collected_name */ = $definition->declaration;
+				$entry /** collected_struct */ = $definition->declaration;
 				$result[] = $entry;
 			}
 		}
@@ -172,13 +175,13 @@ final class scope
 	public function declarations(): array /** vector<collected_name> */
 	{
 		$result /** vector<collected_name> */ = [];
-		$functions /** Key_Storage_List<collected_name> */ = $this->functions;
+		$functions /** Key_Storage_List<collected_function> */ = $this->functions;
 		$variables /** Key_Storage_List<collected_name> */ = $this->variables;
-		foreach ($functions->items() as $entry) {
-			$result[] = $entry;
+		foreach ($functions->items() as $function) {
+			$result[] = $function;
 		}
-		foreach ($variables->items() as $entry) {
-			$result[] = $entry;
+		foreach ($variables->items() as $variable) {
+			$result[] = $variable;
 		}
 		return $result;
 	}

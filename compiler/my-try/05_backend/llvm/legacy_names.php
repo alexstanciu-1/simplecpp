@@ -78,13 +78,13 @@ final class LLVM_Legacy_Name_Preparation
 			}
 			$entry_scope /** scope */ = object_cast(weakref_get($entry->scope), scope::class);
 			$current_scope = $entry_scope;
-			$candidates /** vector<collected_name> */ = [];
+			$function_candidates /** vector<collected_function> */ = [];
 			while (true)
 			{
 				$current_scope = Scope_Lookup::visible($current_scope);
-				$candidates = [];
-				$candidates = $current_scope->functions_named($entry->name);
-				if (q_count($candidates) !== 0) {
+				$function_candidates = [];
+				$function_candidates = $current_scope->functions_named($entry->name);
+				if (q_count($function_candidates) !== 0) {
 					break;
 				}
 				$parent = $current_scope->parent_scope();
@@ -94,10 +94,10 @@ final class LLVM_Legacy_Name_Preparation
 				$parent_scope /** scope */ = $parent;
 				$current_scope = $parent_scope;
 			}
-			if (q_count($candidates) !== 1) {
+			if (q_count($function_candidates) !== 1) {
 				throw new \RuntimeException(("Expected one function target for " . $entry->name . " at " . $file->source_file()->path . ": token " . $entry->token_index));
 			}
-			$result->function_references[$entry->token_index] = $candidates[0];
+			$result->function_references[$entry->token_index] = $function_candidates[0];
 		}
 		foreach ($file->type_references as $index)
 		{
@@ -114,7 +114,7 @@ final class LLVM_Legacy_Name_Preparation
 					$result->template_slots[$entry->token_index] = $current_scope->template_slot($entry->name);
 					break;
 				}
-				$type_candidates /** vector<collected_name> */ = [];
+				$type_candidates /** vector<collected_struct> */ = [];
 				$type_candidates = $current_scope->source_types_named($entry->name);
 				if (q_count($type_candidates) !== 0) {
 					if (q_count($type_candidates) !== 1) {

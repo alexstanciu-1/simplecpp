@@ -28,21 +28,23 @@ or approve a property redesign. Nullable concrete facts remain absence, not poly
 | Definition/body work | Definitions hold optional function-signature/record work; body nodes hold optional function-body/file-body work. Dependencies hold declaration work; dependents, change handoffs and backend keys admit all work roles. | Keep `declaration_work`, `body_work`, `preparation_owner`; shared bookkeeping is intentional. Strong graph links use explicit unlinking. |
 | Concrete roots/metadata | Source, parsed-file root/scopes, canonical type definitions and specialized facts already use concrete records. | No additional abstract-field specialization needed. |
 
-Three nonblocking narrowing candidates remain:
+The three local narrowing follow-ups are now implemented:
 
-1. `scope.functions`: only `collected_function` is inserted. Narrow the keyed list
-   and function lookup projections together; retain duplicate-name behavior and
-   base-identity removal APIs. No new type hierarchy is needed.
-2. `preparation_lookup.candidates`: currently only collected functions and structs,
-   both `collected_definition`. Narrow the snapshot and producer return boundaries
-   together. Empty snapshots still represent missing names; duplicate candidates
-   still represent ambiguity. Built-in types are not fabricated source declarations.
-3. `cpp_fragment.records`: only `collected_struct` dependencies from field type
-   definitions. Narrow its collection and `assemble_record()` together; preserve
-   dependency order and fragment ownership. This is independent of output partitioning.
+1. `scope.functions` and function lookup snapshots use `collected_function`.
+   Registration/removal narrow at the existing base-identity boundary. Duplicate
+   names remain separate; combined declaration inventories still use `collected_name`.
+2. `preparation_lookup.candidates` uses `collected_definition`. Typed function and
+   source-struct snapshots project individual handles into that common vector,
+   preserving order, identity and duplicates without assuming container covariance.
+   Empty pools still represent missing names; built-ins remain separate type metadata.
+3. `cpp_fragment.records` and `assemble_record()` use `collected_struct`.
+   Dependency order and cached fragment ownership are unchanged. Focused incremental
+   C++ coverage checks duplicate dependencies, exact identities and removal after edits.
 
-These are reviewed local follow-ups, not prerequisites for literal feature growth.
-Revisit the permitted roles when adding declarations, call targets or type forms.
+Parked LLVM consumers only adapt typed locals and compare scalar pool counts rather
+than combining different vector types in a ternary. No LLVM semantics or runtime
+collection capabilities changed. Revisit permitted roles when adding declarations,
+call targets or type forms; these follow-ups no longer block or precede feature work.
 The broader [inheritance-contract review](../catalog/11_inheritance.md#v02-contract-review-debt)
 remains attached to that language chapter.
 
