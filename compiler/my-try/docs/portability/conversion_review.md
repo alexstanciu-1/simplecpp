@@ -160,5 +160,7 @@ The local-type audit fixes call_node's reused Storage local, three CPP/LLVM
 output-local name pairs in the native driver, and a test's unrelated work-record
 local. AST, structure-access and preparation-work tests pass. Conversion passes;
 `/tmp/my-try-native-local-types.stdout` confirms the Storage assignment failure
-is gone. Remaining emitted failures are the parser's array-count assignment,
-ternary branch types and covariant return declarations.
+is gone. The parser's array-count assignment is now validated before narrowing into the
+integer-literal field. Four invalid-extent regressions and focused AST/collection
+tests pass. `/tmp/my-try-native-array-count.stdout` confirms that error is gone;
+remaining emitted failures are ternary branch types and covariant returns.

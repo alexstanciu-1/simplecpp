@@ -688,10 +688,11 @@ final class Parser_Run
 		$this->expect('[');
 		$type = new array_type_node();
 		$type->element_type = $element;
-		$type->count = $this->expression();
-		if ($type->count->kind() !== node_kind::integer_literal) {
+		$count_expression = $this->expression();
+		if (!($count_expression instanceof integer_literal_node)) {
 			throw new \RuntimeException($this->error_message('Fixed array size must be a nonnegative integer literal'));
 		}
+		$type->count = object_cast($count_expression, integer_literal_node::class);
 		$this->expect(']');
 		$this->finish_node($type, $element->start_token());
 		return $type;

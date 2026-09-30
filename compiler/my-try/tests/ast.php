@@ -247,4 +247,20 @@ $second = $parser->parse();
 if (count($first->scopes) !== 3 || count($second->scopes) !== 3 || $first->scopes[0] === $second->scopes[0]) {
 	throw new \LogicException('Standalone parser scope ownership failed');
 }
+// Invalid extents must produce the parser diagnostic before typed-field assignment.
+foreach (['true', '1.5', '$size', '[]'] as $invalid_count) {
+	$invalid_source = new file();
+	$invalid_source->path = 'invalid_count.phs';
+	$invalid_source->content = '$items int[' . $invalid_count . '] = [];';
+	$rejected_count = false;
+	try {
+		(new Parser((new Tokenizer($invalid_source))->tokenize()))->parse();
+	}
+	catch (\RuntimeException $error) {
+		$rejected_count = str_contains($error->getMessage(), 'Fixed array size must be a nonnegative integer literal');
+	}
+	if (!$rejected_count) {
+		throw new \LogicException('Invalid array extent lost the parser diagnostic: ' . $invalid_count);
+	}
+}
 AST_Test::run();
