@@ -52,13 +52,13 @@ emitting shared C++ aliases. The separate-file native proof is
 
 ## Native and STAN checkpoint (2026-09-30)
 
-The earlier candidate `11d70185` plus declaration-identity normalization passed
-193/236 broad comparisons; its 43 failures involved struct lookup or related rejection
-diagnostics. After the shared-identity repair on `cf14bc1a`, native validation passes:
-15 scalar and 36 function/struct S2S executions, 27 S2S rejections, all 142 parked
-LLVM/sample comparisons (48 executions, 94 rejections), the initial S2S smoke proof,
-repeated-compilation/recovery checks and incremental rebuild. STAN was explicitly
-skipped. Evidence: `/tmp/my-try-native-20260929-bfd12958/summary.json` and `logs-11/`.
+At `8ec5f924`, native validation passes all 95 valid authored S2S executions, 15
+specialized float spelling/type/value assertions, 31 S2S rejections and all 142
+parked LLVM/sample comparisons (48 executions, 94 rejections), plus the initial S2S
+smoke proof, repeated-compilation/recovery checks and incremental rebuild. Every
+valid S2S case compares PHP-host and native-compiler output byte-for-byte before
+Clang compilation and execution. STAN was explicitly skipped. Evidence:
+`/tmp/my-try-catalog-native-20260930-eZs6tj/native-8ec5f924-all-valid/summary.json`.
 
 The native identity blocker is repaired in the shared runtime: compatible base/derived
 shared handles compare adjusted object pointers, including nullable normalization.
