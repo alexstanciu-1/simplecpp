@@ -88,6 +88,12 @@ an old slice's limits or a feature-catalog proposal as the current support matri
   limitation as a language prohibition, claim native proof from runtime inspection,
   or silently add casts/dummy facts to bypass it. Prepared facts may stay nullable
   before preparation/after cleanup; this does not decide required-field construction.
+- For ternary branches with different object types, explicitly upcast each branch
+  to the intended common base with `object_cast(value, Base::class)`. A typed
+  destination or a cast around the whole ternary does not establish its result
+  type. Keep the casts inside the branches to preserve lazy evaluation. This is
+  intentional common-base normalization, not nullable extraction; ordinary typed
+  assignments still accept upcasts directly. See [the ternary solution](../../../specs/portability/object_casts.md#common-base-ternary-branches).
 - On the current target, use nested conditions or early returns when RHS safety,
   errors or side effects depend on `&&`/`||` skipping evaluation, even for boolean
   operands. Independent safe comparisons may stay compound. This is source

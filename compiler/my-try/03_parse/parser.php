@@ -608,7 +608,9 @@ final class Parser_Run
 			$type_start = $this->position++;
 			$type = $this->named_type($type_start);
 			$type->collect($this->collector, $this->current_scope, $type_start);
-			$declaration->type_syntax = $this->text() === '[' ? $this->array_type($type) : $type;
+			$declaration->type_syntax = $this->text() === '['
+				? object_cast($this->array_type($type), type_node::class)
+				: object_cast($type, type_node::class);
 			if ($this->text() === '=') {
 				$this->position++;
 				$declaration->initializer = $this->expression();

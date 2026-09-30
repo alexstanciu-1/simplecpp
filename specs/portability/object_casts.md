@@ -1,13 +1,12 @@
 # Checked shared-object access
 Doc Status: supporting
 
-The compiler retains `ast_node.specialization` as an optional `node_specialization`
-handle. Syntax_Nodes owns concrete payload accessors. Each returns the same object
-through an explicit checked cast; it does not copy data or alter the AST graph.
+The compiler uses specialized AST nodes. An explicit checked cast selects a typed
+view of the same shared object; it does not copy data or alter the AST graph.
 
 ```php
-public static function binding_data(ast_node $node): binding_specialization {
-    return object_cast($node->specialization, binding_specialization::class);
+public static function variable_declaration(ast_node $node): variable_declaration_node {
+    return object_cast($node, variable_declaration_node::class);
 }
 ```
 
@@ -33,6 +32,33 @@ Unsupported nonpolymorphic narrowing fails at C++ instantiation rather than gues
 object layout. Generated interfaces now have a virtual destructor, including empty
 interfaces such as node_specialization. This adds normal polymorphic-object overhead to
 implementations; no compact AST layout claim is made.
+
+## Common-base ternary branches
+
+The [conditional-expression contract](../conditional_expression_matrix.md) determines
+the result from the branch types, independently of the destination. An explicitly
+typed local or property does not make sibling object branches compatible.
+
+When branches need a common base view, convert both branches to that base inside
+the ternary. In portable PHP, use the registered `object_cast` helper:
+
+```php
+$declaration->type_syntax = $this->text() === '['
+    ? object_cast($this->array_type($type), type_node::class)
+    : object_cast($type, type_node::class);
+```
+
+Both branches now lower to the same shared base-handle type, satisfying `T / T -> T`.
+Only the selected branch is evaluated; object identity and dynamic type remain
+unchanged. These casts are intentional upcasts, not nullable extraction or a request
+for automatic common-base inference. Casting the whole ternary is too late: its
+result type must already be valid. Separate assignments to a typed destination are
+also valid. Ordinary single-value upcasts still need no extra cast at typed boundaries.
+
+The parser's named/array-type selection uses this pattern. Focused AST,
+parse/collection and object-cast checks pass; conversion and a native compiler
+build retry remove the ternary diagnostic. The full native build remains blocked
+by the separate covariant `declaration()` return signatures in preparation work records.
 
 ## instanceof
 
