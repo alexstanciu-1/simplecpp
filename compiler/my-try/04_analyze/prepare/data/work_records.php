@@ -48,7 +48,7 @@ abstract class preparation_owner
 	/** Computed compatibility category for backend fragment assembly. */
 	abstract public function kind(): preparation_kind;
 
-	/** File-body work has no named declaration; other roles return their required typed link. */
+	/** Common optional declaration query; specialized accessors have distinct names. */
 	abstract public function declaration(): ?collected_definition;
 
 	/** Dispatch selects the work list; scheduling policy stays in the worker. */
@@ -58,7 +58,12 @@ abstract class preparation_owner
 /** Declaration work is independently settled before any body consumes its facts. */
 abstract class declaration_work extends preparation_owner
 {
-	abstract public function declaration(): collected_definition;
+	abstract public function required_declaration(): collected_definition;
+
+	public function declaration(): ?collected_definition
+	{
+		return $this->required_declaration();
+	}
 
 	public function kind(): preparation_kind
 	{
@@ -85,7 +90,12 @@ final class function_signature_work extends declaration_work
 		$this->definition = $definition;
 	}
 
-	public function declaration(): collected_function
+	public function required_declaration(): collected_definition
+	{
+		return $this->definition;
+	}
+
+	public function function_definition(): collected_function
 	{
 		return $this->definition;
 	}
@@ -111,7 +121,12 @@ final class record_definition_work extends declaration_work
 		$this->definition = $definition;
 	}
 
-	public function declaration(): collected_struct
+	public function required_declaration(): collected_definition
+	{
+		return $this->definition;
+	}
+
+	public function record_definition(): collected_struct
 	{
 		return $this->definition;
 	}
@@ -143,7 +158,12 @@ final class function_body_work extends body_work
 		$this->definition = $definition;
 	}
 
-	public function declaration(): collected_function
+	public function declaration(): ?collected_definition
+	{
+		return $this->definition;
+	}
+
+	public function function_definition(): collected_function
 	{
 		return $this->definition;
 	}

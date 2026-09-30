@@ -232,7 +232,7 @@ final class Preparation_Worker
 	/** Declaration change state follows its work state even during recursive processing. */
 	public function enqueue_declaration(declaration_work $owner): void
 	{
-		$entry = $owner->declaration();
+		$entry = $owner->required_declaration();
 		if ($entry->change_status !== change_state::added) {
 			$entry->change_status = change_state::changed;
 		}
@@ -421,7 +421,7 @@ final class Preparation_Worker
 	/** Preserve parameter fact identities when the effective signature is unchanged. */
 	public function prepare_function_signature(function_signature_work $owner, preparation_context $context): bool
 	{
-		$syntax = $owner->declaration()->syntax();
+		$syntax = $owner->function_definition()->syntax();
 		$old = $syntax->preparation();
 		Declaration_Preparation::prepare_function($syntax, $context);
 		$changed = !Preparation_Changes::same_signature($old, $syntax->require_preparation());
@@ -436,7 +436,7 @@ final class Preparation_Worker
 	/** Nested layout versions matter even if this record retains the same field type identities. */
 	public function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
 	{
-		$syntax = $owner->declaration()->syntax();
+		$syntax = $owner->record_definition()->syntax();
 		$old = $syntax->preparation();
 		Declaration_Preparation::prepare_struct($syntax, $context);
 		$changed = !Preparation_Changes::same_record($old, $syntax->require_preparation());
@@ -456,7 +456,7 @@ final class Preparation_Worker
 	/** Demand the signature before replacing selected body facts. */
 	public function prepare_function_body(function_body_work $owner, preparation_context $context): void
 	{
-		$entry = $owner->declaration();
+		$entry = $owner->function_definition();
 		$syntax = $entry->syntax();
 		$this->require_declaration($owner, $entry);
 		Preparation_Cleanup::tree($syntax->body);

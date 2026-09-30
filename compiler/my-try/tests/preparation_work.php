@@ -32,6 +32,10 @@ work_check($body instanceof function_body_work, 'Function body was not assigned 
 work_check($entry instanceof file_body_work, 'File body was not assigned file-body work');
 work_check($entry->declaration() === null, 'File body acquired a named declaration');
 work_check($body->declaration() === $signature->declaration(), 'Body and signature lost the shared function identity');
+work_check($signature->required_declaration() === $signature->function_definition(), 'Required and specialized signature access lost identity');
+work_check($body->function_definition() === $signature->function_definition(), 'Specialized body access lost function identity');
+work_check($layout->declaration() === $layout->required_declaration(), 'Optional and required record access lost identity');
+work_check($layout->required_declaration() === $layout->record_definition(), 'Specialized record access lost identity');
 work_check($signature !== $body, 'Signature and body work collapsed');
 work_check(count($collection->entries) === $count, 'Preparation manufactured body symbols');
 foreach ([$layout, $signature, $body, $entry] as $work) {

@@ -12,6 +12,10 @@ excluded. They do not import compiler 3's lifecycle or join architecture.
 - Mark concrete compiler classes `final`; use abstract classes or interfaces for
   extension points. This is compiler implementation discipline, not a restriction
   on inheritance in the Simple C++ language.
+- Keep overridden return types identical, including nullability. Use a differently
+  named accessor for a required or more specialized view (for example `declaration()`,
+  `required_declaration()` and `function_definition()`). This compiler convention
+  does not change the language's covariance contract.
 - Explain non-obvious purpose, invariants, ownership or control flow immediately
   above the relevant declaration or group. Avoid comments that merely repeat code.
 - For multiline block comments and docblocks, put the opening `/*` or `/**` on

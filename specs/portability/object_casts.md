@@ -57,8 +57,10 @@ also valid. Ordinary single-value upcasts still need no extra cast at typed boun
 
 The parser's named/array-type selection uses this pattern. Focused AST,
 parse/collection and object-cast checks pass; conversion and a native compiler
-build retry remove the ternary diagnostic. The full native build remains blocked
-by the separate covariant `declaration()` return signatures in preparation work records.
+build retry remove the ternary diagnostic. This checkpoint does not establish a
+complete native compiler build. Preparation work now uses distinct optional,
+required and specialized accessor names under the compiler's
+[exact override-return convention](../../compiler/my-try/docs/code_style.md).
 
 ## instanceof
 
