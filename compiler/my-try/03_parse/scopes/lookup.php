@@ -6,6 +6,31 @@ namespace scpp\compiler;
 /** Deletion cleanup precedes resolution; lookups see only active index membership. */
 final class Scope_Lookup
 {
+	/** Resolve the nearest exact constant pool in its independent namespace. */
+	public static function constants(scope $start, string $name, ?preparation_context $context = null): array /** vector<constant_definition> */
+	{
+		$current_scope = $start;
+		$result /** vector<constant_definition> */ = [];
+		while (true)
+		{
+			$current_scope = self::visible($current_scope);
+			if ($context !== null) {
+				$context->worker->observe($current_scope, $name, preparation_lookup_kind::constant, $context->owner);
+			}
+			$result = $current_scope->constants_named($name);
+			if (q_count($result) !== 0) {
+				break;
+			}
+			$parent = $current_scope->parent_scope();
+			if ($parent === null) {
+				break;
+			}
+			$parent_scope /** scope */ = $parent;
+			$current_scope = $parent_scope;
+		}
+		return $result;
+	}
+
 	/** Resolve the nearest live type pool, including the language/runtime parent. */
 	public static function types(scope $start, string $name, ?preparation_context $context = null): array /** vector<type_definition> */
 	{

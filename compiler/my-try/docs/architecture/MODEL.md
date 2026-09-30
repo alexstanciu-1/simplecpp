@@ -49,10 +49,12 @@ own member scopes. Occurrences observe their enclosing scope. Global pools index
 the same declarations; built-ins live in the language/runtime scope. Scope methods
 encapsulate membership; `Scope_Lookup` performs lexical/publication lookup.
 
-Type definitions live under `compiler/types/`. Built-ins are initialized at startup;
-source records retain their canonical definition identity. New runtime-library JSON
-intake and broader constructed types remain future work. Reserved-name validation
-is deferred; ordinary parent lookup currently applies.
+Type definitions live under `compiler/types/`; constant definitions live under
+`compiler/constants/`. Built-ins are initialized into independent type and constant
+scope indexes at startup. Source records and prepared references retain canonical
+definition identity rather than copying semantic values. New runtime-library JSON
+intake, source constant declarations and broader constructed types remain future
+work. Reserved-name validation is deferred; ordinary parent lookup currently applies.
 
 ## Structure and processing boundary
 

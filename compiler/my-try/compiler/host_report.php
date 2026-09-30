@@ -43,7 +43,7 @@ final class Host_Report
 				continue;
 			}
 			echo '  ' . htmlspecialchars($file->source_file()->path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
-			foreach (['defined_elements', 'type_references', 'variable_references', 'function_references', 'field_references', 'pending_bindings'] as $group)
+			foreach (['defined_elements', 'type_references', 'variable_references', 'constant_references', 'function_references', 'field_references', 'pending_bindings'] as $group)
 			{
 				echo "    $group\n";
 				foreach ($file->$group as $index)

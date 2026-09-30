@@ -101,6 +101,22 @@ final class Expression_Preparation
 		return $reference;
 	}
 
+	/** Resolve constants lexically through their independent, exact-name namespace. */
+	public static function prepare_constant_reference(constant_reference_node $node, preparation_context $context): prepared_constant_reference
+	{
+		$entry = $node->occurrence();
+		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
+		$targets = Scope_Lookup::constants($lexical_scope, $entry->name, $context);
+		if (q_count($targets) !== 1) {
+			throw new \RuntimeException('S2S needs one resolved constant for ' . $entry->name);
+		}
+
+		$facts = new prepared_constant_reference();
+		$facts->definition = $targets[0];
+		$facts->type = $targets[0]->type;
+		return $facts;
+	}
+
 	/** Resolve one named callable and establish reference/value argument boundaries. */
 	public static function prepare_call(call_node $syntax, preparation_context $context): prepared_call
 	{

@@ -26,6 +26,9 @@ Name-bearing nodes save their spelling. Half-open uint32 source spans
 `[first_token_index, end_token_index)` are provenance, not symbol keys. Common
 span methods preserve typed access through a property-free base. Exact name token
 positions remain on collected occurrences for diagnostics and parked LLVM indexes.
+`constant_reference_node` is a direct expression specialization, distinct from the
+assignable `variable_reference_node`; preparation resolves its occurrence to a
+scope-owned immutable definition without changing that syntax distinction.
 
 Only name-bearing nodes use `Collected_Occurrence`. Its nullable weak observer
 rejects replacing a live occurrence; there is no second attachment boolean. Retired

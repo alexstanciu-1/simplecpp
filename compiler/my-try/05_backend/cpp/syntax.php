@@ -57,6 +57,11 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_reference($node->require_variable_reference_preparation(), $this->context);
 	}
 
+	public function generate_constant_reference(constant_reference_node $node): string
+	{
+		return CPP_Generator::generate_constant($node->require_constant_reference_preparation(), $this->context);
+	}
+
 	public function generate_call(call_node $node): string
 	{
 		return CPP_Declarations::generate_call($node, $this->context);

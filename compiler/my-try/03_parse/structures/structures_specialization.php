@@ -521,6 +521,53 @@ final class variable_reference_node extends assignable_expression_node
 	}
 }
 
+/** A named immutable value is an expression, never an assignment target. */
+final class constant_reference_node extends expression_node
+{
+	use Node_Source_Span;
+	use Collected_Occurrence;
+	use Preparation_Facts;
+
+	private ?prepared_constant_reference $prepared_facts = null;
+	public string $name;
+
+	/** Parsing records the occurrence; semantic lookup remains preparation-owned. */
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_constant_reference($this, $scope, $index);
+	}
+
+	public function kind(): node_kind
+	{
+		return node_kind::constant_reference;
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_constant_reference_preparation();
+	}
+
+	public function require_constant_reference_preparation(): prepared_constant_reference
+	{
+		return $this->prepared_facts;
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_constant_reference($this, $context));
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+	}
+
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_constant_reference($this);
+	}
+}
+
 final class call_node extends expression_node
 {
 	use Node_Source_Span;

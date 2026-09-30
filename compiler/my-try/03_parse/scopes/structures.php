@@ -17,6 +17,8 @@ final class scope
 	private Key_Storage_List $functions /** Key_Storage_List<collected_function> */;
 	/** Definitions owned here; published scopes retain the same definition objects. */
 	private Key_Storage_List $types /** Key_Storage_List<type_definition> */;
+	/** Constant namespace is independent of variables, functions and types. */
+	private Key_Storage_List $constants /** Key_Storage_List<constant_definition> */;
 
 	public function __construct()
 	{
@@ -24,6 +26,7 @@ final class scope
 		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition> */();
+		$this->constants = new Key_Storage_List /** Key_Storage_List<constant_definition> */();
 	}
 
 	public function set_parent(scope $parent): void
@@ -86,6 +89,12 @@ final class scope
 		$types->add($definition->name, $definition);
 	}
 
+	public function register_constant(constant_definition $definition): void
+	{
+		$constants /** Key_Storage_List<constant_definition> */ = $this->constants;
+		$constants->add($definition->name, $definition);
+	}
+
 	/** Remove index membership by identity; same-name declarations from other owners survive. */
 	public function unregister(collected_name $entry): void
 	{
@@ -140,6 +149,13 @@ final class scope
 	public function types_named(string $name): array /** vector<type_definition> */
 	{
 		$items /** Key_Storage_List<type_definition> */ = $this->types;
+		return $items->named($name);
+	}
+
+	/** Constant lookup is exact and case-sensitive; callers select lexical precedence. */
+	public function constants_named(string $name): array /** vector<constant_definition> */
+	{
+		$items /** Key_Storage_List<constant_definition> */ = $this->constants;
 		return $items->named($name);
 	}
 

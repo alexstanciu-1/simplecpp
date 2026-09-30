@@ -67,6 +67,9 @@ $cases = [
 	'string_empty_single' => ['$a = \'\';', 0],
 	'string_empty_double' => ['$a = "";', 0],
 	'string_explicit' => ['$x string = "test"; $x = "next";', 0],
+	'constant_int_max' => ['$a = PHP_INT_MAX;', 0],
+	'constant_name_call' => ['function PHP_INT_MAX(): int { return 3; } return PHP_INT_MAX();', 3],
+	'constant_namespaces' => ['$PHP_INT_MAX = 1; $a = PHP_INT_MAX; return $PHP_INT_MAX;', 1],
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
@@ -130,10 +133,6 @@ foreach ($cases as $name => [$source, $exit])
 	$compiler = new Compiler();
 	$compiler->prepare();
 	$compiler->cpp();
-	Preparation_Cleanup::tree($syntax->root);
-	if (s2s_snapshot($syntax) !== $before) {
-		throw new \LogicException('Preparation/emission changed source syntax or its scopes');
-	}
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
@@ -163,6 +162,22 @@ foreach ($cases as $name => [$source, $exit])
 		$probe .= "\tif (local_a.native_value() != std::string(\"" . $expected_value . '", '
 			. string_byte_len($expected_value) . ")) { return 91; }\n";
 		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", $text));
+	}
+
+	if ($name === 'constant_int_max')
+	{
+		$text = Model::$cpp_files[0]->text;
+		$assignment = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$constant = object_cast($assignment->value, constant_reference_node::class);
+		$facts = $constant->require_constant_reference_preparation();
+		$definition = object_cast($facts->definition, integer_constant_definition::class);
+		if (($definition !== Model::$language_scope->constants_named('PHP_INT_MAX')[0]) ||
+			($facts->type !== Language_Types::integer(Model::$language_scope)) ||
+			($definition->decimal !== '9223372036854775807') || $facts->addressable ||
+			!str_contains($text, 'auto local_a = static_cast<scpp::int_t<>>(9223372036854775807LL);') ||
+			!str_contains($text, '#include "scpp/int_t.hpp"') || str_contains($text, 'string_support.hpp')) {
+			throw new \LogicException('Constant reference lost its definition, type, immutability or canonical lowering');
+		}
 	}
 
 	if (isset($explicit_declarations[$name]))
@@ -197,6 +212,11 @@ foreach ($cases as $name => [$source, $exit])
 		file_put_contents($probe_path, $probe_text);
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
+
+	Preparation_Cleanup::tree($syntax->root);
+	if (s2s_snapshot($syntax) !== $before) {
+		throw new \LogicException('Preparation/emission changed source syntax or its scopes');
+	}
 }
 $rejections = ['function f(int &$x): void {} f(1);',
 	'function f(int $x): int { return $x; } f();',
@@ -209,7 +229,7 @@ $rejections = ['function f(int &$x): void {} f(1);',
 	'struct A {} struct B {} $a A; $b B = $a;',
 	'struct S { uint8 $x; } $s S = [1];',
 	'function f(int &$x): void {} $x uint8 = 1; f($x);',
-	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a void;', "return 'x';", 'template<T> function f(): int { return 1; }'];
+	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a = UNKNOWN_CONSTANT;', '$a = php_int_max;', '$a void;', "return 'x';", 'template<T> function f(): int { return 1; }'];
 foreach ($rejections as $source)
 {
 	Compiler_Lifecycle::reset();

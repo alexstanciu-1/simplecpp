@@ -263,13 +263,30 @@ final class CPP_Generator
 	/** Emit exact signed integer magnitude using its canonical representation. */
 	public static function generate_integer(prepared_integer_literal $literal, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($literal->type);
+		return self::generate_integer_value($literal->type, $literal->decimal, $context);
+	}
+
+	/** Constants and source literals share exact integer representation and header selection. */
+	private static function generate_integer_value(type_definition $type, string $decimal, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($type);
 		$context->headers[$mapping->header] = true;
 		if ($mapping->literal !== cpp_literal_kind::signed_integer) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
 
-		return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . 'LL)';
+		return 'static_cast<' . $mapping->spelling . '>(' . $decimal . 'LL)';
+	}
+
+	/** Lower semantic constant values without preserving runtime- or host-specific names. */
+	public static function generate_constant(prepared_constant_reference $reference, cpp_generation_context $context): string
+	{
+		$definition = $reference->definition;
+		if (!($definition instanceof integer_constant_definition)) {
+			throw new \RuntimeException('C++ constant emission is not implemented for this definition');
+		}
+		$integer = object_cast($definition, integer_constant_definition::class);
+		return self::generate_integer_value($integer->type, $integer->decimal, $context);
 	}
 
 	/** Preserve decimal spelling until the target toolchain performs floating conversion. */

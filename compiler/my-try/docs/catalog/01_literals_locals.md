@@ -25,7 +25,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-ASSIGN-001](#var-assign-001) | agreed | `$a = $b;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-REASSIGN-001](#var-reassign-001) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-STR-003](#lit-str-003) | agreed | `$a = "";` | proved | in-progress | deferred | [Generalized string preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [LIT-CONST-001](#lit-const-001) | pending-discussion | `$a = PHP_INT_MAX;` | unverified | unverified | deferred | — |
+| [LIT-CONST-001](#lit-const-001) | agreed | `$a = PHP_INT_MAX;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-001](#var-chain-001) | pending-discussion | `$a = $b = 1;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-002](#var-chain-002) | pending-discussion | `$a = 1; $b = $a;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-003](#var-chain-003) | pending-discussion | `$a = 1; $b = $a; $c = $b;` | unverified | unverified | deferred | — |
@@ -701,7 +701,23 @@ auto a = string_t("");
 
 ## LIT-CONST-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** A bare identifier in expression position is a
+constant reference unless call punctuation follows it. Constants have their own
+non-assignable AST specialization, collection role, exact case-sensitive scope
+namespace, immutable language definition and prepared reference facts. The fixed
+language definition of `PHP_INT_MAX` has canonical `int` type and retains its exact
+decimal value independently of the host PHP runtime. It emits:
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(9223372036854775807LL);
+```
+
+The backend lowers the semantic value through the same integer representation path
+as literals, so it adds only `scpp/int_t.hpp`; it does not emit a runtime symbol or
+include `core/string_support.hpp`. `PHP_INT_MAX()` remains a call, `$PHP_INT_MAX`
+remains a variable, wrong-case and unknown names fail during preparation, and
+constants cannot be assignment targets. User constants, namespace qualification,
+class/magic constants and general constant folding remain outside this slice.
 
 ### Imported version 1
 

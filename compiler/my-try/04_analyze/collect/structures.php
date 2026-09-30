@@ -15,6 +15,7 @@ enum collected_name_kind
 	case function_declaration;
 	case function_reference;
 	case variable_reference;
+	case constant_reference;
 	case type_reference;
 	case binding;
 }
@@ -110,7 +111,7 @@ abstract class collected_declaration extends collected_name
 }
 
 /** Functions and records are independently scheduled; members settle with their owner. */
-abstract class collected_definition extends collected_declaration
+abstract class collected_definition extends collected_declaration implements preparation_lookup_candidate_i
 {
 	public ?declaration_work $preparation = null;
 
@@ -327,6 +328,33 @@ final class collected_variable_reference extends collected_reference
 	}
 }
 
+final class collected_constant_reference extends collected_reference
+{
+	public function index_collection(Symbol_Collector $collector): void
+	{
+		$collector->index_constant_reference($this);
+	}
+
+	/** @reference.source parsed_file.root (syntax graph) */
+	private constant_reference_node $syntax_node;
+
+	public function __construct(collected_file $collection, constant_reference_node $node)
+	{
+		parent::__construct($collection);
+		$this->syntax_node = $node;
+	}
+
+	public function syntax(): constant_reference_node
+	{
+		return $this->syntax_node;
+	}
+
+	public function kind(): collected_name_kind
+	{
+		return collected_name_kind::constant_reference;
+	}
+}
+
 final class collected_type_reference extends collected_reference
 {
 	public function index_collection(Symbol_Collector $collector): void
@@ -418,6 +446,11 @@ final class collected_file
 	 * @storage.index collected_file.entries
 	 */
 	public array $variable_references /** vector<int> */ = [];
+	/**
+	 * Local indexes awaiting immutable constant lookup.
+	 * @storage.index collected_file.entries
+	 */
+	public array $constant_references /** vector<int> */ = [];
 	/**
 	 * Local indexes of direct named calls awaiting function lookup.
 	 * @storage.index collected_file.entries

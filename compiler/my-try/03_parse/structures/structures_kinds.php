@@ -30,6 +30,7 @@ enum node_kind
 	case float_literal;
 	case string_literal;
 	case variable_reference;
+	case constant_reference;
 	case binary_expression;
 	case assignment_expression;
 	case call_expression;

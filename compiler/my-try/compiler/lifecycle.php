@@ -70,6 +70,7 @@ final class Compiler_Lifecycle
 		Model::$cpp_output_program = new cpp_program();
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
+		Language_Constants::install(Model::$language_scope);
 		Model::$global_scope = new scope();
 		Model::$global_scope->set_parent(Model::$language_scope);
 		self::reset_cpp();
@@ -104,6 +105,7 @@ final class Compiler_Lifecycle
 
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
+		Language_Constants::install(Model::$language_scope);
 		Model::$global_scope = new scope();
 		Model::$global_scope->set_parent(Model::$language_scope);
 

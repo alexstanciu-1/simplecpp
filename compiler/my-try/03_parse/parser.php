@@ -666,7 +666,15 @@ final class Parser_Run
 			return $this->array_literal();
 		}
 		if ($this->identifier()) {
-			return $this->call_expression();
+			if (($this->text_at_offset(1) === '(') || ($this->text_at_offset(1) === '<')) {
+				return $this->call_expression();
+			}
+			$start = $this->position++;
+			$constant = new constant_reference_node();
+			$constant->name = $this->name_at($start);
+			$this->finish_node($constant, $start);
+			$constant->collect($this->collector, $this->current_scope, $start);
+			return $this->access_suffix($constant);
 		}
 		$start = $this->position;
 		$text = $this->text();
@@ -847,6 +855,16 @@ final class Parser_Run
 			return '';
 		}
 		return $token_rows[$this->position]->text();
+	}
+
+	private function text_at_offset(int $offset): string
+	{
+		$token_rows /** Storage<token> */ = $this->tokens->tokens;
+		$index = $this->position + $offset;
+		if ($index >= $this->tokens->end_token) {
+			return '';
+		}
+		return $token_rows[$index]->text();
 	}
 
 	private function expect(string $text): int

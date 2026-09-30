@@ -14,7 +14,7 @@ function role_check(bool $condition, string $message): void
 Compiler_Lifecycle::reset();
 $source = new file();
 $source->path = 'collected_roles.phs';
-$source->content = 'struct Box { int32 $value; } function put(Box &$box, int $n): int { $box->value = $n; $x = $n; $x = 7; return $x; } $box Box; return put($box, 9);';
+$source->content = 'struct Box { int32 $value; } function put(Box &$box, int $n): int { $box->value = $n; $x = $n; $x = 7; return $x; } $box Box; $limit = PHP_INT_MAX; return put($box, 9);';
 $parsed = (new Parser((new Tokenizer($source))->tokenize()))->parse();
 $parsed->root_scope()->set_parent(Model::$language_scope);
 $expected = [
@@ -26,6 +26,7 @@ $expected = [
 	collected_function_reference::class => call_node::class,
 	collected_field_reference::class => field_access_node::class,
 	collected_variable_reference::class => variable_reference_node::class,
+	collected_constant_reference::class => constant_reference_node::class,
 	collected_type_reference::class => named_type_node::class,
 	collected_variable_write::class => variable_reference_node::class,
 ];
@@ -48,12 +49,13 @@ foreach ($parsed->collection->entries as $entry)
 	}
 }
 role_check(count($seen) === count($expected), 'Fixture did not exercise every collected role');
-role_check(count($writes) === 2, 'Fixture must contain first and repeated writes');
+role_check(count($writes) === 3, 'Fixture must contain first, repeated and constant-initialized writes');
 
 // Refresh must publish every live occurrence exactly once in its role's existing list.
 $lists = [
 	'defined_elements' => collected_declaration::class,
 	'variable_references' => collected_variable_reference::class,
+	'constant_references' => collected_constant_reference::class,
 	'function_references' => collected_function_reference::class,
 	'type_references' => collected_type_reference::class,
 	'field_references' => collected_field_reference::class,

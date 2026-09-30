@@ -138,6 +138,13 @@ final class Symbol_Collector
 		$this->append($entry, $scope, $node->name, $index);
 	}
 
+	/** Record a constant occurrence without resolving it against the host PHP runtime. */
+	public function collect_constant_reference(constant_reference_node $node, scope $scope, int $index): void
+	{
+		$entry = new collected_constant_reference($this->collection, $node);
+		$this->append($entry, $scope, $node->name, $index);
+	}
+
 	/** Record this occurrence without resolving names or allocating preparation facts. */
 	public function collect_variable_write(variable_reference_node $node, scope $scope, int $index): void
 	{
@@ -227,6 +234,12 @@ final class Symbol_Collector
 		$this->collection->variable_references[] = $entry->local_index;
 	}
 
+	/** Maintain the constant-reference work list during insertion and retained refresh. */
+	public function index_constant_reference(collected_constant_reference $entry): void
+	{
+		$this->collection->constant_references[] = $entry->local_index;
+	}
+
 	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
 	public function index_function_reference(collected_function_reference $entry): void
 	{
@@ -266,6 +279,7 @@ final class Symbol_Collector
 		$collection = $this->collection;
 		$collection->defined_elements = /** vector<int> */ [];
 		$collection->variable_references = /** vector<int> */ [];
+		$collection->constant_references = /** vector<int> */ [];
 		$collection->function_references = /** vector<int> */ [];
 		$collection->type_references = /** vector<int> */ [];
 		$collection->field_references = /** vector<int> */ [];

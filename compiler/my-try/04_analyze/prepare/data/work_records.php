@@ -19,6 +19,7 @@ enum preparation_state {
 enum preparation_lookup_kind {
 	case type;
 	case function_name;
+	case constant;
 }
 
 /** Stable work/dependency identity attached to an existing declaration or file/body owner. */

@@ -39,6 +39,12 @@ final class prepared_variable_reference extends prepared_expression {
 	public collected_name $declaration /** weak<collected_name> */;
 }
 
+/** Resolved immutable definition; its concrete value remains owned by the language scope. */
+final class prepared_constant_reference extends prepared_expression {
+	/** @reference.source model.language_scope */
+	public constant_definition $definition;
+}
+
 /** Typed storage identity shared by bindings, parameters and fields; never an owning AST link. */
 abstract class prepared_storage {
 	/** @storage.reference collected_file.entries @reference.weak */
@@ -125,7 +131,7 @@ final class preparation_lookup
 	public scope $lookup_scope;
 	public string $name;
 	public preparation_lookup_kind $kind;
-	public array $candidates /** vector<collected_definition> */ = [];
+	public array $candidates /** vector<preparation_lookup_candidate_i> */ = [];
 	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
 
 	public function __construct(scope $lookup_scope, string $name, preparation_lookup_kind $kind)

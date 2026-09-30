@@ -581,17 +581,22 @@ final class Preparation_Worker
 	}
 
 	/** Project typed pools into one identity snapshot; value vectors are not covariant. */
-	private function candidates(preparation_lookup $lookup): array /** vector<collected_definition> */
+	private function candidates(preparation_lookup $lookup): array /** vector<preparation_lookup_candidate_i> */
 	{
-		$result /** vector<collected_definition> */ = [];
+		$result /** vector<preparation_lookup_candidate_i> */ = [];
 		if ($lookup->kind === preparation_lookup_kind::type) {
 			foreach ($lookup->lookup_scope->source_types_named($lookup->name) as $record) {
 				$result[] = $record;
 			}
 		}
-		else {
+		elseif ($lookup->kind === preparation_lookup_kind::function_name) {
 			foreach ($lookup->lookup_scope->functions_named($lookup->name) as $function) {
 				$result[] = $function;
+			}
+		}
+		else {
+			foreach ($lookup->lookup_scope->constants_named($lookup->name) as $constant) {
+				$result[] = $constant;
 			}
 		}
 		return $result;
@@ -661,6 +666,7 @@ final class Preparation_Worker
 		}
 		$source->defined_elements = $this->present($entries, $source->defined_elements);
 		$source->variable_references = $this->present($entries, $source->variable_references);
+		$source->constant_references = $this->present($entries, $source->constant_references);
 		$source->function_references = $this->present($entries, $source->function_references);
 		$source->type_references = $this->present($entries, $source->type_references);
 		$source->field_references = $this->present($entries, $source->field_references);
