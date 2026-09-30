@@ -403,6 +403,32 @@ foreach ($cases as $name => [$source, $exit])
 		}
 	}
 
+	if ($name === 'function_locals')
+	{
+		$function = object_cast($syntax->root->declarations[0], function_node::class);
+		$parameter = $function->parameters[0]->require_preparation();
+		$function_assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
+		$function_binding = $function_assignment->require_assignment_preparation()->binding;
+		$entry_assignment = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$entry_binding = $entry_assignment->require_assignment_preparation()->binding;
+		$parameter_identity = weakref_get($parameter->declaration);
+		$entry_identity = weakref_get($entry_binding->declaration);
+		$text = Model::$cpp_files[0]->text;
+		$signature = 'scpp::int_t<> function_own(scpp::int_t<> local_x)';
+		if (($entry_binding->resolved_kind !== binding_kind::declaration) ||
+			($function_binding->resolved_kind !== binding_kind::assignment) ||
+			(weakref_get($function_binding->declaration) !== $parameter_identity) ||
+			($entry_identity === $parameter_identity) ||
+			(substr_count($text, $signature) !== 2) ||
+			(substr_count($text, 'auto local_x = static_cast<scpp::int_t<>>(7LL);') !== 1) ||
+			(substr_count($text, 'local_x = static_cast<scpp::int_t<>>(12LL);') !== 1) ||
+			!str_contains($text, 'scpp::int_t<> argument_0 = static_cast<scpp::int_t<>>((local_x).native_value());') ||
+			!str_contains($text, 'return function_own(argument_0);') ||
+			!str_contains($text, 'return static_cast<int>((local_x).native_value());')) {
+			throw new \LogicException('NOTE-033.a lost executable-unit isolation or parameter-seeded reassignment');
+		}
+	}
+
 	if (isset($explicit_declarations[$name]))
 	{
 		[$cpp_type, $cpp_name] = $explicit_declarations[$name];
@@ -441,12 +467,31 @@ foreach ($cases as $name => [$source, $exit])
 		throw new \LogicException('Preparation/emission changed source syntax or its scopes');
 	}
 }
+$scope_isolation_rejections = [
+	'$x = 1; function f(): int { return $x; }' => 'established local declaration for x',
+];
+foreach ($scope_isolation_rejections as $source => $diagnostic)
+{
+	Compiler_Lifecycle::reset();
+	$syntax = s2s_parse($source);
+	$before = s2s_snapshot($syntax);
+	$failed = false;
+	try {
+		(new Compiler())->prepare();
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), $diagnostic);
+	}
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
+		throw new \LogicException('NOTE-033.a allowed a function to capture an entry-body local implicitly');
+	}
+}
+
 $rejections = ['function f(int &$x): void {} f(1);',
 	'function f(int $x): int { return $x; } f();',
 	'function f(): int { return; }',
 	'function f(): void { return 1; }',
 	'function f(): void {} $x = f();',
-	'$x = 1; function f(): int { return $x; }',
 	'struct S { int $x; }', 'struct S { float $x; }',
 	'struct S { uint8 $x; } $s S; $s->missing = 1;',
 	'struct A {} struct B {} $a A; $b B = $a;',

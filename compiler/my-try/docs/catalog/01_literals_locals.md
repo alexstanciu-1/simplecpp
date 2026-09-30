@@ -36,7 +36,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [IDENT-VAR-001](#ident-var-001) | agreed | `function f(int $int): void { $while = $int; }` | proved | in-progress | deferred | [Prepared identity and role-prefixed C++ naming proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-011](#note-011) | agreed | `$i = 1; $f = 1.5; $b = true; $s = "x";` | proved | in-progress | deferred | Consolidated by the scalar-literal rows and their [PHP preparation/emission proofs](../../tests/s2s.php); later expression contexts retain their own proof obligations |
 | [NOTE-021](#note-021) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-033](#note-033) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-033](#note-033) | split | `NOTE-033.a`: entry/function local isolation | in-progress | in-progress | deferred | `.a` proved by [prepared identity, emitted C++ and exact rejection](../../tests/s2s.php); `.b` nested-block visibility waits for control flow; namespace execution belongs to chapter 08 |
 | [NOTE-034](#note-034) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | Consolidated by [VAR-REASSIGN-001](#var-reassign-001) and its [prepared-identity/emission proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-035](#note-035) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 
@@ -1415,7 +1415,91 @@ claim for v0.2.
 
 **Source:** [generators/php/specs/rules.md:629](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** The imported scope list combines executable-local,
+namespace and global concerns that have different owners in v0.2. Split it rather
+than treating every named scope as one first-assignment mechanism.
+
+### NOTE-033.a — executable-unit local isolation
+
+For the current strict working example:
+
+```php
+$x = 7;
+
+function own(int $x): int
+{
+	$x = 12;
+	return $x;
+}
+
+own($x);
+return $x;
+```
+
+the file's executable body and each function body own separate source-ordered local
+environments. Function parameters seed their function's environment before its body
+is prepared. The write inside `own` therefore reassigns the parameter; it cannot bind
+to the distinct file-entry local with the same source name. The result is `7`.
+
+The C++ backend uses prepared declaration identities and may reuse the same readable
+role-prefixed spelling because the declarations occupy separate C++ functions:
+
+```cpp
+scpp::int_t<> function_own(scpp::int_t<> local_x)
+{
+	local_x = static_cast<scpp::int_t<>>(12LL);
+	return static_cast<scpp::int_t<>>((local_x).native_value());
+}
+
+int main()
+{
+	auto local_x = static_cast<scpp::int_t<>>(7LL);
+	([&]() -> scpp::int_t<> {
+		scpp::int_t<> argument_0 =
+			static_cast<scpp::int_t<>>((local_x).native_value());
+		return function_own(argument_0);
+	}());
+	return static_cast<int>((local_x).native_value());
+	return 0;
+}
+```
+
+A file-entry local is executable storage, not a published global variable. A function
+cannot read it implicitly:
+
+```php
+$x = 1;
+function f(): int { return $x; } // error: no established local declaration for x
+```
+
+File declarations such as functions and structures remain in the file declaration
+scope and publish through the project/global symbol model independently of executable
+locals. Parsing retains those lexical scopes and raw source occurrences; preparation's
+per-body local environment owns source-order declaration/reassignment decisions.
+Generated C++ spelling is not used for lookup.
+
+**Verification (2026-09-30):** the focused PHP S2S proof checks distinct entry and
+parameter declaration identities, parameter-seeded reassignment, exact role-prefixed
+C++ output, the precise implicit-read diagnostic, no failed output publication and
+source purity. Existing collection coverage also proves that a file local is not
+published into the global variable index. Generated C++ is inspected but is not
+compiled or executed in this slice, so C++ S2S remains `in-progress` pending explicit
+native validation.
+
+### NOTE-033.b — nested statement blocks
+
+The legacy S2S edge cases remain applicable design input: a child block may assign an
+already-visible outer local; a local first introduced inside a child block does not
+escape it; and an explicit outer declaration can establish storage for assignments
+from multiple child blocks. These rules require real child-block local environments,
+not case branches in assignment preparation. They remain pending discussion and proof
+until the control-flow catalog introduces `if` and loop bodies.
+
+Namespace executable scopes belong to chapter 08. They are not local-variable
+environments implicitly completed by this note. LLVM remains deferred.
+
+Imported prose follows for provenance; its three-item scope list is not the v0.2
+ownership model or a completion claim.
 
 > ## 4. Scope model
 >
