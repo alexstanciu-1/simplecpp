@@ -651,8 +651,25 @@ final class Parser_Run
 		return $statement;
 	}
 
-	/** Parse literals, calls and variable/index expressions; arithmetic is not supported yet. */
+	/** Parse the currently supported left-associative binary precedence level. */
 	private function expression(bool $allow_assignment = false): expression_node
+	{
+		$left = $this->primary_expression($allow_assignment);
+		while ($this->text() === '+')
+		{
+			$operator = $this->position++;
+			$binary = new binary_expression_node();
+			$binary->left = $left;
+			$binary->operator_token_index = $operator;
+			$binary->right = $this->primary_expression(false);
+			$this->finish_node($binary, $left->start_token());
+			$left = $binary;
+		}
+		return $left;
+	}
+
+	/** Parse literals, calls, variables and right-associative assignment expressions. */
+	private function primary_expression(bool $allow_assignment): expression_node
 	{
 		if (($this->text() === 'true') || ($this->text() === 'false')) {
 			$start = $this->position;

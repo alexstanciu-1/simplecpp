@@ -29,7 +29,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-CHAIN-001](#var-chain-001) | agreed | `$a = $b = 1;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-002](#var-chain-002) | agreed | `$a = 1; $b = $a;` | proved | in-progress | deferred | [Exact emitted-C++ and variable-copy proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-003](#var-chain-003) | agreed | `$a = 1; $b = $a; $c = $b;` | proved | in-progress | deferred | [Exact prepared-identity and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-004](#var-chain-004) | pending-discussion | `$a = 1; $b = $a + 1;` | unverified | unverified | deferred | — |
+| [VAR-CHAIN-004](#var-chain-004) | agreed | `$a = 1; $b = $a + 1;` | proved | in-progress | deferred | [Canonical integer-addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-ORDER-001](#var-order-001) | agreed | `$a = $b; $b = 1;` | proved | not-applicable | deferred | [Exact source-order diagnostic and no-publication proof](../../tests/s2s.php); invalid standalone input has no C++ lowering |
 | [VAR-REASSIGN-002](#var-reassign-002) | pending-discussion | `$a = 1; $a = $a + 1;` | unverified | unverified | deferred | — |
 | [VAR-REASSIGN-003](#var-reassign-003) | pending-discussion | `$a = 1; $a = $a + $a;` | unverified | unverified | deferred | — |
@@ -920,7 +920,46 @@ auto a = static_cast<int_t>(1); auto b = a; auto c = b;
 
 ## VAR-CHAIN-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** The initial arithmetic slice accepts binary `+`
+when both operands have the canonical Simple C++ `int` identity. The exact input
+emits:
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(1LL);
+auto local_b = (local_a + static_cast<scpp::int_t<>>(1LL));
+```
+
+The existing `binary_expression_node` owns its left operand, operator token site and
+right operand. Preparation visits operands in source order, resolves `$a` to its
+established declaration, requires both operand types to be the canonical integer,
+requires order-independent literal/reference/constant/addition operand shapes, and
+attaches a backend-neutral `addition` operation plus the canonical result type. The
+result is not addressable. C++ emission reads that prepared operation, renders both
+already-prepared operands recursively, parenthesizes the operation and requests the
+runtime generated-operator header. It does not inspect the operator token or infer
+operand/result types.
+
+**Legacy edge-case review:** The old S2S recursively normalized literal operands and
+parenthesized binary arithmetic, but its type-blind lowering could leave invalid
+operand combinations to C++. The recursive normalization and grouping still apply.
+v0.2 instead rejects undeclared operands, booleans and noncanonical narrow integers
+during preparation because promotion/result rules for those cases have not been
+agreed.
+
+Float/mixed arithmetic, strings, integer promotion across fixed-width aliases,
+operators other than `+`, unary operators, explicit source parentheses and compound
+assignment remain outside this slice. Calls and other potentially effectful operands
+also wait for prepared evaluation/effect ordering rather than relying on C++ operand
+order. The reusable binary path may host those later, but this row does not mark
+their catalog entries complete. LLVM remains deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs cover the exact AST shape,
+prepared operation, operand and result types, source declaration identity,
+non-addressability, normalized C++ spelling, runtime operator include, cleanup and
+source purity. Focused rejection proofs cover an undeclared operand, a boolean
+operand, an unresolved narrow-integer promotion and an effectful call operand.
+Generated C++ is inspected but not compiled or executed; native compiler validation
+remains pending explicit request, so C++ S2S stays `in-progress`.
 
 ### Imported version 1
 

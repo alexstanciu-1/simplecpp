@@ -15,10 +15,9 @@ function dispatch_parse(string $text): parsed_file
 
 Compiler_Lifecycle::reset();
 $parsed = dispatch_parse('function unsupported(): int { return 17; }');
-$unsupported = new binary_expression_node();
+$unsupported = new array_literal_node();
 $literal = new integer_literal_node();
-$unsupported->left = $literal;
-$unsupported->right = $literal;
+$unsupported->elements->append($literal);
 $context = new preparation_context();
 $failures = 0;
 try {
@@ -45,6 +44,7 @@ $fact_pairs = [
 	[new string_literal_node(), new prepared_string_literal()],
 	[new variable_reference_node(), new prepared_variable_reference()],
 	[new constant_reference_node(), new prepared_constant_reference()],
+	[new binary_expression_node(), new prepared_binary_expression()],
 	[new variable_declaration_node(), new prepared_binding()],
 	[new call_node(), new prepared_call()],
 	[new assignment_expression_node(), new prepared_assignment()],

@@ -229,6 +229,7 @@ interface cpp_generation_worker_i
 	public function generate_string_literal(string_literal_node $node): string;
 	public function generate_variable_reference(variable_reference_node $node): string;
 	public function generate_constant_reference(constant_reference_node $node): string;
+	public function generate_binary_expression(binary_expression_node $node): string;
 	public function generate_call(call_node $node): string;
 	public function generate_function_signature(function_node $node): string;
 	public function generate_parameter(parameter_node $node): string;

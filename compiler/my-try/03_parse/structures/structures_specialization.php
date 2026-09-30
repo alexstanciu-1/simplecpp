@@ -815,6 +815,9 @@ final class parameter_node extends ast_node
 final class binary_expression_node extends expression_node
 {
 	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_binary_expression $prepared_facts = null;
 
 	public expression_node $left;
 	public int $operator_token_index;
@@ -833,6 +836,22 @@ final class binary_expression_node extends expression_node
 		return new binary_expression_children_iterator($this);
 	}
 
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_binary_preparation();
+	}
+
+	public function require_binary_preparation(): prepared_binary_expression
+	{
+		return $this->prepared_facts;
+	}
+
+	/** Forward operand typing and operation selection to semantic preparation. */
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_binary($this, $context));
+	}
+
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -840,6 +859,12 @@ final class binary_expression_node extends expression_node
 		$worker->enter($this);
 		$worker->edge($this, $this->left);
 		$worker->edge($this, $this->right);
+	}
+
+	/** The generation worker consumes the prepared operation, never token spelling. */
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_binary_expression($this);
 	}
 }
 

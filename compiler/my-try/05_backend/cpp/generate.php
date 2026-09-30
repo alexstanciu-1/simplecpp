@@ -336,6 +336,21 @@ final class CPP_Generator
 		return self::generate_integer_value($integer->type, $integer->decimal, $context);
 	}
 
+	/** Render the prepared operation recursively; token spelling has no backend authority. */
+	public static function generate_binary(binary_expression_node $syntax, cpp_generation_context $context): string
+	{
+		$facts = $syntax->require_binary_preparation();
+		if ($facts->operation !== binary_operation::addition) {
+			throw new \RuntimeException('C++ binary operation is not supported yet');
+		}
+
+		$worker = new CPP_Syntax($context);
+		$left = $syntax->left->generate_cpp($worker);
+		$right = $syntax->right->generate_cpp($worker);
+		$context->headers['scpp/generated/operators.hpp'] = true;
+		return '(' . $left . ' + ' . $right . ')';
+	}
+
 	/** Preserve decimal spelling until the target toolchain performs floating conversion. */
 	public static function generate_float(prepared_float_literal $literal, cpp_generation_context $context): string
 	{

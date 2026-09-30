@@ -82,6 +82,7 @@ $cases = [
 	'explicit' => ['$a int = 10; return $a;', 10],
 	'var_chain_002' => ['$a = 1; $b = $a;', 0],
 	'var_chain_003' => ['$a = 1; $b = $a; $c = $b;', 0],
+	'var_chain_004' => ['$a = 1; $b = $a + 1;', 0],
 	'copy' => ['$a = 10; $b = $a; $a = 12; return $b;', 10],
 	'wide' => ['$a = 4294967296; return 7;', 7],
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
@@ -281,6 +282,29 @@ foreach ($cases as $name => [$source, $exit])
 		}
 	}
 
+	if ($name === 'var_chain_004')
+	{
+		$first = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$second = object_cast($syntax->root->body->statements[1]->expression, assignment_expression_node::class);
+		$binary = object_cast($second->value, binary_expression_node::class);
+		$left = object_cast($binary->left, variable_reference_node::class);
+		$right = object_cast($binary->right, integer_literal_node::class);
+		$first_facts = $first->require_assignment_preparation();
+		$second_facts = $second->require_assignment_preparation();
+		$binary_facts = $binary->require_binary_preparation();
+		$integer_type = Language_Types::integer(Model::$language_scope);
+		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
+			. "\tauto local_b = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
+		$text = Model::$cpp_files[0]->text;
+		if (($binary_facts->operation !== binary_operation::addition) || ($binary_facts->type !== $integer_type) ||
+			$binary_facts->addressable || ($left->require_preparation()->type !== $integer_type) ||
+			($right->require_preparation()->type !== $integer_type) || ($second_facts->type !== $integer_type) ||
+			(weakref_get($left->require_variable_reference_preparation()->declaration) !== weakref_get($first_facts->binding->declaration)) ||
+			!str_contains($text, $expected) || !str_contains($text, '#include "scpp/generated/operators.hpp"')) {
+			throw new \LogicException('VAR-CHAIN-004 lost integer addition facts, source identity or normalized lowering');
+		}
+	}
+
 	if (isset($explicit_declarations[$name]))
 	{
 		[$cpp_type, $cpp_name] = $explicit_declarations[$name];
@@ -412,6 +436,29 @@ foreach ($variable_copy_rejections as $name => [$source, $diagnostic])
 	}
 	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
 		throw new \LogicException($name . ' missed its source-order diagnostic or published partial results');
+	}
+}
+
+$integer_addition_rejections = [
+	'undeclared operand' => ['$b = $missing + 1;', 'established local declaration for missing'],
+	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer addition requires canonical int operands'],
+	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer addition requires canonical int operands'],
+	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'integer addition requires order-independent operands'],
+];
+foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
+{
+	Compiler_Lifecycle::reset();
+	$syntax = s2s_parse($source);
+	$before = s2s_snapshot($syntax);
+	$failed = false;
+	try {
+		(new Compiler())->prepare();
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), $diagnostic);
+	}
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
+		throw new \LogicException('Invalid integer addition ' . $name . ' missed its diagnostic or published partial results');
 	}
 }
 

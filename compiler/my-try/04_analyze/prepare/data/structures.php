@@ -6,6 +6,11 @@
  */
 namespace scpp\compiler;
 
+/** Backend-neutral operation selected during semantic preparation. */
+enum binary_operation {
+	case addition;
+}
+
 /** Common backend-neutral result of preparing an expression. */
 abstract class prepared_expression {
 	public type_definition $type;
@@ -43,6 +48,11 @@ final class prepared_variable_reference extends prepared_expression {
 final class prepared_constant_reference extends prepared_expression {
 	/** @reference.source model.language_scope */
 	public constant_definition $definition;
+}
+
+/** Binary result type and selected language operation; operands retain their own facts. */
+final class prepared_binary_expression extends prepared_expression {
+	public binary_operation $operation;
 }
 
 /** Typed storage identity shared by bindings, parameters and fields; never an owning AST link. */
