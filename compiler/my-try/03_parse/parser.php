@@ -16,7 +16,10 @@ final class Parser
 
 	public function __construct(token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
 	{
-		$this->init($tokens, $target_scope, $previous, $global);
+		$this->tokens = $tokens;
+		$this->target_scope = $target_scope;
+		$this->previous = $previous;
+		$this->global = $global;
 	}
 
 	/** Select one file update; prior declarations are mutable identities, not a snapshot. */
