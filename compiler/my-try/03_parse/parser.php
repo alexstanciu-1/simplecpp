@@ -681,7 +681,7 @@ final class Parser_Run
 			$node = new integer_literal_node();
 			$this->finish_node($node, $start);
 		}
-		elseif (($text !== '') && (string_byte_at($text, 0) === 39)) {
+		elseif (($text !== '') && ((string_byte_at($text, 0) === 39) || (string_byte_at($text, 0) === 34))) {
 			$node = new string_literal_node();
 			$this->finish_node($node, $start);
 		}

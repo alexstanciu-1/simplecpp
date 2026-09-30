@@ -20,7 +20,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-BOOL-002](#lit-bool-002) | agreed | `$a = false;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-FLOAT-001](#lit-float-001) | agreed | `$a = 10.5;` | proved | proved | deferred | [Scalar proof](../../tests/s2s.php), [float decision](#lit-float-001) |
 | [LIT-STR-001](#lit-str-001) | agreed | `$a = 'x';` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [LIT-STR-002](#lit-str-002) | pending-discussion | `$a = "x";` | unverified | unverified | deferred | — |
+| [LIT-STR-002](#lit-str-002) | agreed | `$a = "x";` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [TYPE-VAR-001](#type-var-001) | pending-discussion | `$x string = "test";` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [VAR-ASSIGN-001](#var-assign-001) | pending-discussion | `$a = $b;` | unverified | unverified | deferred | — |
 | [VAR-REASSIGN-001](#var-reassign-001) | pending-discussion | `$a = 1; $a = 2;` | unverified | unverified | deferred | — |
@@ -290,7 +290,7 @@ Only `scpp/string_t.hpp` is requested for the ordinary example. Program-entry re
 validation remains an explicit numeric/bool ABI boundary, so `return 'x';` is
 rejected before generation.
 
-`LIT-STR-002` double quotes/interpolation, concatenation, comparison, indexing,
+`LIT-STR-002` double quotes, interpolation, concatenation, comparison, indexing,
 string fields and broader typed-string behavior remain outside this slice.
 `LIT-STR-003` is not marked complete merely because the shared decoder can represent
 empty bytes. LLVM remains deferred.
@@ -337,7 +337,34 @@ auto a = string_t("x");
 
 ## LIT-STR-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** A non-interpolated double-quoted literal maps to
+the same canonical binary-safe `string` value and C++ representation as
+`LIT-STR-001`:
+
+```cpp
+auto local_a = scpp::string_t("x");
+```
+
+The tokenizer's quote-neutral scanner retains the complete source token. Preparation
+owns quote semantics and supplies the emitter with the canonical string type plus
+fully decoded bytes. It decodes `\\`, `\"`, `\$`, `\n`, `\r`, `\t`, `\v`, `\f`,
+`\e`, one-to-three-digit octal escapes and one-to-two-digit `\x` escapes. Unknown
+escape pairs retain their backslash. Interpolation is rejected rather than partially
+lowered, and `\u{...}` is rejected with guidance to use literal UTF-8 bytes.
+
+The prerequisite gate adds no new emitter fact for this spelling: preparation
+already resolves the literal's value and type, while the existing backend only
+chooses binary-safe C++ spelling. The legacy generator was reviewed: it receives
+host-PHP-decoded values and applies JSON/C++ escaping, including a length-aware NUL
+path. This slice deliberately decodes source bytes itself so host PHP cannot change
+their meaning. Interpolation, Unicode escape syntax, concatenation, string operations,
+typed string fields and `LIT-STR-003` remain non-goals. LLVM remains deferred.
+
+**Verification (2026-09-30):** focused PHP tokenizer and S2S proofs cover exact
+double-quoted spans, unterminated rejection, canonical AST/type identity, byte escape
+decoding, interpolation and Unicode-escape rejection, output spelling, cleanup and
+source purity. Generated C++ is inspected but not compiled or executed; native
+compiler validation remains pending explicit request, so C++ S2S stays `in-progress`.
 
 ### Imported version 1
 

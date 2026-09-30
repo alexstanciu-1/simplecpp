@@ -63,6 +63,7 @@ $cases = [
 	'bool_direct' => ['return false;', 0],
 	'bool_and_int' => ['$a = true; $b = 7; return $b;', 7],
 	'string_single' => ['$a = \'x\';', 0],
+	'string_double' => ['$a = "x";', 0],
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
@@ -143,10 +144,10 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 
-	if ($name === 'string_single') {
+	if (($name === 'string_single') || ($name === 'string_double')) {
 		$text = Model::$cpp_files[0]->text;
 		if (!str_contains($text, 'auto local_a = scpp::string_t("x");')) {
-			throw new \LogicException('Single-quoted string did not use its canonical C++ representation');
+			throw new \LogicException('String literal did not use its canonical C++ representation');
 		}
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::string_t>);\n";
 		$probe .= "\tif (local_a.native_value() != std::string(\"x\", 1)) { return 91; }\n";
@@ -204,6 +205,29 @@ foreach ($rejections as $source)
 	}
 	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
 		throw new \LogicException('Unsupported generation published output');
+	}
+}
+
+// Unsupported double-quoted forms fail during semantic preparation with their agreed diagnostic.
+$string_rejections = [
+	'$a = "hello $name";' => 'string interpolation is not supported',
+	'$a = "${name}";' => 'string interpolation is not supported',
+	'$a = "\u{41}";' => 'Unicode escape syntax is not supported',
+];
+foreach ($string_rejections as $source => $diagnostic)
+{
+	Compiler_Lifecycle::reset();
+	$syntax = s2s_parse($source);
+	$before = s2s_snapshot($syntax);
+	$failed = false;
+	try {
+		(new Compiler())->prepare();
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), $diagnostic);
+	}
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
+		throw new \LogicException('Unsupported string form missed its semantic diagnostic');
 	}
 }
 
@@ -267,18 +291,26 @@ if (($float_data->preparation() !== null) || (s2s_snapshot($syntax) !== $before)
 	throw new \LogicException('Floating cleanup changed syntax or retained facts');
 }
 
-// Single-quoted literals retain decoded bytes and canonical string identity.
+// Both quote spellings retain decoded bytes and one canonical string identity.
 Compiler_Lifecycle::reset();
 $string_source = <<<'PHS'
 $a = 'x';
 $b = 'can\'t';
 $c = 'slash\\path';
 $d = '\n';
+$f = "line\nnext";
+$g = "quote\"slash\\dollar\$";
+$h = "unknown\q";
+$i = "hex\x41";
+$j = "octal\101";
+$k = "controls\r\t\v\f\e";
 PHS;
 $string_source .= "\n" . '$e = \'' . string_byte_from_int(0) . '\';';
 $syntax = s2s_parse($string_source);
 $children = $syntax->root->body->statements;
-$expected_values = ['x', "can't", 'slash' . "\\" . 'path', "\\n", string_byte_from_int(0)];
+$expected_values = ['x', "can't", 'slash' . "\\" . 'path', "\\n", "line\nnext",
+	'quote"slash' . "\\" . 'dollar$', 'unknown' . "\\" . 'q', 'hexA', 'octalA',
+	"controls\r\t\v\f" . string_byte_from_int(27), string_byte_from_int(0)];
 $string_nodes /** vector<string_literal_node> */ = [];
 foreach ($children as $index => $statement) {
 	$assignment = object_cast($statement->expression, assignment_expression_node::class);
@@ -296,7 +328,7 @@ foreach ($string_nodes as $index => $string_node)
 {
 	$facts = $string_node->require_string_literal_preparation();
 	if (($facts->value !== $expected_values[$index]) || ($facts->type !== $string_type)) {
-		throw new \LogicException('Single-quoted literal lost decoded bytes or canonical type');
+		throw new \LogicException('String literal lost decoded bytes or canonical type');
 	}
 	foreach ($syntax->collection->entries as $entry) {
 		if ($entry->syntax() === $string_node) {

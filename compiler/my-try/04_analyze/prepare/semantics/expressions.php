@@ -79,7 +79,7 @@ final class Expression_Preparation
 	{
 		$facts = new prepared_string_literal();
 		$text = $context->collection->token_snapshot()->text_at($node->start_token());
-		$facts->value = String_Literals::single_quoted($text);
+		$facts->value = String_Literals::decode($text);
 		$facts->type = $context->string_type;
 		return $facts;
 	}

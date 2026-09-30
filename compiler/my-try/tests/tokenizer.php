@@ -68,15 +68,16 @@ foreach (['10.5', '.5', '10.', '1e3', '1E+3', '1.25e-3', '.5e2', '10.e-1'] as $s
 }
 $quoted_source = <<<'PHS'
   'x' 'a\'b' 'c\\d' 'line
-next';
+next' "x" "a\"b" "c\\d" "line
+next";
 PHS;
 $quoted = token_scan($quoted_source)->tokens;
-$quoted_expected = ["'x'", "'a\\'b'", "'c\\\\d'", "'line\nnext'", ';'];
+$quoted_expected = ["'x'", "'a\\'b'", "'c\\\\d'", "'line\nnext'", '"x"', '"a\\"b"', '"c\\\\d"', "\"line\nnext\"", ';'];
 token_check(q_count($quoted) === q_count($quoted_expected));
 foreach ($quoted_expected as $index => $text) {
 	token_check($quoted[$index]->text() === $text);
 }
-foreach (["'", "'abc", "'abc" . "\\"] as $unterminated)
+foreach (["'", "'abc", "'abc" . "\\", '"', '"abc', '"abc' . "\\"] as $unterminated)
 {
 	$failed = false;
 	try {

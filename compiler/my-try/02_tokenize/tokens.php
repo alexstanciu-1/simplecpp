@@ -83,8 +83,8 @@ final class Tokenizer
 			}
 			return $offset;
 		}
-		if ($byte === 39) {
-			return $this->single_quoted_end($start);
+		if (($byte === 39) || ($byte === 34)) {
+			return $this->quoted_end($start, $byte);
 		}
 		if (Source_Text::digit($byte) || ($byte === 46)) {
 			return $this->numeric_end($start);
@@ -107,15 +107,15 @@ final class Tokenizer
 		throw new \RuntimeException('Unsupported token at ' . $this->source->path . ': byte ' . $start);
 	}
 
-	/** Scan one complete single-quoted token; semantic escape decoding belongs to preparation. */
-	private function single_quoted_end(int $start): int
+	/** Scan one complete quoted token; semantic escape decoding belongs to preparation. */
+	private function quoted_end(int $start, int $quote): int
 	{
 		$length = string_byte_len($this->content);
 		$offset = $start + 1;
 		while ($offset < $length)
 		{
 			$byte = string_byte_at($this->content, $offset);
-			if ($byte === 39) {
+			if ($byte === $quote) {
 				return $offset + 1;
 			}
 			if ($byte === 92) {
@@ -126,7 +126,7 @@ final class Tokenizer
 			}
 			$offset++;
 		}
-		throw new \RuntimeException('Unterminated single-quoted string at ' . $this->source->path . ': byte ' . $start);
+		throw new \RuntimeException('Unterminated quoted string at ' . $this->source->path . ': byte ' . $start);
 	}
 
 	/** Scan decimal mantissa and exponent as one token, preserving every source byte. */
