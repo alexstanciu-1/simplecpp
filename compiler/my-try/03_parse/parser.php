@@ -12,7 +12,7 @@ final class Parser
 	private ?scope $target_scope = null;
 	private ?parsed_file $previous = null;
 	private ?scope $global = null;
-	private ?parsed_file $result = null;
+	private ?parsed_file $parsed_result = null;
 
 	public function __construct(token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
 	{
@@ -29,20 +29,20 @@ final class Parser
 		$this->target_scope = $target_scope;
 		$this->previous = $previous;
 		$this->global = $global;
-		$this->result = null;
+		$this->parsed_result = null;
 	}
 
 	public function parse(): parsed_file
 	{
 		$run = new Parser_Run($this->tokens, $this->target_scope, $this->previous, $this->global);
-		$this->result = $run->result();
+		$this->parsed_result = $run->result();
 		return $run->parse();
 	}
 
 	/** Failed files keep partial declaration identities for the next update, but remain incomplete. */
 	public function result(): ?parsed_file
 	{
-		return $this->result;
+		return $this->parsed_result;
 	}
 }
 

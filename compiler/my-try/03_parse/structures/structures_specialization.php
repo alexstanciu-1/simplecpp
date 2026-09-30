@@ -15,18 +15,18 @@ final class file_node extends ast_node
 	 * @storage.reference parsed_file.scopes
 	 * @reference.weak
 	 */
-	private scope $file_scope /** weak<scope> */;
+	private scope $file_scope_reference /** weak<scope> */;
 
 	public function __construct(scope $file_scope)
 	{
-		$this->file_scope = $file_scope;
+		$this->file_scope_reference = $file_scope;
 		$this->declarations = new Storage /** Storage<declaration_node> */();
 	}
 
 	/** Required lexical context, independent of syntax ownership. */
 	public function file_scope(): scope
 	{
-		return \weakref_get($this->file_scope);
+		return \weakref_get($this->file_scope_reference);
 	}
 
 	public function kind(): node_kind
@@ -84,7 +84,7 @@ final class function_body_node extends ast_node
 	 * @storage.reference parsed_file.scopes
 	 * @reference.weak
 	 */
-	private scope $local_scope /** weak<scope> */;
+	private scope $local_scope_reference /** weak<scope> */;
 	/**
 	 * Parser comparison result for this executable unit, not an expression fact.
 	 * Parsing marks text/structure changes; successful body preparation settles this
@@ -102,14 +102,14 @@ final class function_body_node extends ast_node
 
 	public function __construct(scope $local_scope)
 	{
-		$this->local_scope = $local_scope;
+		$this->local_scope_reference = $local_scope;
 		$this->statements = new Storage /** Storage<statement_node> */();
 	}
 
 	/** Required lexical context, independent of syntax ownership. */
 	public function local_scope(): scope
 	{
-		return \weakref_get($this->local_scope);
+		return \weakref_get($this->local_scope_reference);
 	}
 
 	/** One canonical body schedule/dependency identity, shared with existing work lists. */
@@ -551,15 +551,15 @@ final class function_node extends declaration_node
 	 * Scope introduced and owned by this declaration; parent wiring belongs to parsing.
 	 * @ownership owner
 	 */
-	private scope $signature_scope;
+	private scope $owned_signature_scope;
 	/** Already indexed by saved formal names; values retain token locations only. */
 	public array $template_parameters /** hash<int> */ = [];
 
 	/** Allocate only the concrete node's ordered syntax collections. */
 	public function __construct()
 	{
-		$this->signature_scope = new scope();
-		$this->signature_scope->mark_function();
+		$this->owned_signature_scope = new scope();
+		$this->owned_signature_scope->mark_function();
 		$this->parameters = new Storage /** Storage<parameter_node> */();
 	}
 
@@ -578,7 +578,7 @@ final class function_node extends declaration_node
 
 	public function signature_scope(): scope
 	{
-		return $this->signature_scope;
+		return $this->owned_signature_scope;
 	}
 
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
@@ -1055,18 +1055,18 @@ final class struct_node extends declaration_node
 	 * Scope introduced and owned by this declaration; parent wiring belongs to parsing.
 	 * @ownership owner
 	 */
-	private scope $member_scope;
+	private scope $owned_member_scope;
 
 	/** Allocate only the concrete node's ordered syntax collections. */
 	public function __construct()
 	{
-		$this->member_scope = new scope();
+		$this->owned_member_scope = new scope();
 		$this->fields = new Storage /** Storage<field_node> */();
 	}
 
 	public function member_scope(): scope
 	{
-		return $this->member_scope;
+		return $this->owned_member_scope;
 	}
 
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */

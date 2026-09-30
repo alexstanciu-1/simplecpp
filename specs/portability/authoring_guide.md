@@ -297,6 +297,11 @@ bound to one concept and type throughout the function; avoid name reuse for
 unrelated values or different typed views. Prefer the known concrete node type
 over widening to ast_node and casting back; name genuinely distinct views
 separately. Do not introduce dummy allocations merely to establish a local's type.
+Fields and methods must also have distinct names, including inherited members.
+Use descriptive backing-field names such as parsed_result beside result().
+PHP's separate property/method namespaces do not carry into generated C++;
+automatic renaming is not the current solution.
+
 
 
 For empty-container assignment through an object field, declare an explicitly typed

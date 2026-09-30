@@ -93,10 +93,15 @@ conversion passes and the previous 27 parser visibility errors disappear.
 The next scope blocker in `Compiler::cpp()` is also resolved: declare
 `$output /** cpp_module */;` before `try`, then assign inside it. Focused
 incremental-C++ and recovery tests pass. Conversion and C++ generation now succeed;
-clang reports actual compilation errors, beginning with field/method naming
-collisions (`Parser::result`, `file_node::file_scope`). Evidence:
-`/tmp/my-try-native-20260930-output-local.stderr` and the matching stdout.
-No native compiler executable or execution results are available yet.
+clang reported actual compilation errors, beginning with five field/method naming
+collisions. All five backing fields now have distinct names; a reflection scan of
+loaded compiler classes finds no remaining field/method collisions, and AST,
+structure-access, parse/collection and incremental-preparation tests pass.
+The next no-STAN clang attempt is recorded in
+`/tmp/my-try-native-20260930-member-names.stderr` and matching stdout. Remaining
+diagnostics include type-name hiding, nullable/derived-type conversions, covariant
+return emission, and differing ternary branch types. No native compiler executable
+or execution results are available yet.
 
 ## Current authoring contracts
 

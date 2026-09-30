@@ -55,6 +55,7 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Do not add `<?php`.
 - Do not add `declare(strict_types=1);`.
 - Use explicit types when the type is known at compile time.
+- Do not give a field and a method the same name in a class, including inherited members. PHP permits this, but generated C++ uses a shared member-name space. Give backing fields descriptive names distinct from their accessors (for example parsed_result and result()); do not rely on converter/generator renaming.
 - Use `vector<T>` for typed sequential data.
 - Use `fixed_array<T, N>` for fixed-size sequential data when the size is part of the contract; do not append, unset, resize, or use keyed literals with this first slice.
 - Use `hash<T>` for typed string-keyed data.
