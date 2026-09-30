@@ -38,13 +38,16 @@ Do not remove narrowing casts solely because PHP accepts the assignment. Keep ac
 class narrowing separate from same-type nullable extraction and report unsupported
 native forms to their converter/runtime/STAN owner.
 
-## Legacy S2S cross-file covariance defect
+## Legacy S2S covariance and source convention
 
-The return-tagged accessor lowering discovers ancestor return types only in its
-local declaration index. When a base and covariant override are in separate files,
-the upcast bridge can be missing: a call through the base then executes its base
-implementation instead of the derived override. Preserve dispatch across files in
-a future generator fix, with a split-file base-handle proof and identity checks.
-The compiler expression accessors use invariant return types and distinct typed
-accessor names under the compiler coding convention; this does not fix the general
-language lowering defect or prohibit supported covariance.
+Project builds now supply ancestor/accessor signatures to the legacy emitter, with
+cache invalidation for signature changes. Split-file named-object accessor dispatch
+is covered by `tests/tools/test_scpp_cross_file_covariance.py`. The compiler still
+uses invariant expression accessor returns and distinct specialized accessor names.
+See the [generator boundary](../../../../generators/php/specs/rules_catalog.md#cross-file-covariant-object-accessors).
+
+Separate discovered debt: imported aliases in cross-file base/return declarations
+can be emitted as local forward declarations instead of their imported identities,
+causing conflicting typedefs or incomplete bases. This is not repaired by accessor
+signature cataloging. Native covariance proofs use fully qualified names and explicit
+prologue dependencies; structural catalog tests cover import qualification itself.

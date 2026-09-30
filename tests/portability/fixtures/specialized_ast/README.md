@@ -12,7 +12,10 @@ zero-argument object accessors through concrete/base/interface handles, trait-ow
 source spans, typed worker calls passing `$this`, and a cursor retaining its source
 after the creator returns. Output is `64:17:17:17:64`. The harness also checks native
 qualified parent access and rejects an unrelated accessor return through STAN.
-The proof uses separate declaration/consumer units and the normal STAN-enabled build.
+This proof keeps the inheritance declarations together, with a separate consumer
+unit, and uses the normal STAN-enabled build. The separate
+`tests/tools/test_scpp_cross_file_covariance.py` proof splits the ancestors and
+overrides across files and checks ancestor-signature cache invalidation.
 Advisory STAN diagnostics remain; a successful build is not a claim of zero diagnostics.
 
 This does not prove the production inspection iterator's PHP `Iterator` interface

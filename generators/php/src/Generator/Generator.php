@@ -63,6 +63,8 @@ final class Generator
 	private array $methodDecls = [];
 	/** @var array<string, ClassDecl> */
 	private array $classDecls = [];
+	/** Structural cross-file accessor signatures supplied by the project catalog. */
+	private array $accessorDeclarations = [];
 	/** @var array<string, string> */
 	private array $currentParamPassModes = [];
 	/** @var list<string> */
@@ -258,6 +260,11 @@ final class Generator
 	public function setDeclaredTypeKinds(array $declaredTypeKinds): void
 	{
 		$this->declaredTypeKinds = $declaredTypeKinds;
+	}
+
+	public function setAccessorDeclarations(array $declarations): void
+	{
+		$this->accessorDeclarations = $declarations;
 	}
 
 	private function code(string $text, int $srcLine = -1, int $srcColumn = -1, string $srcRelation = 'exact'): CodeBlock
@@ -2949,7 +2956,12 @@ final class Generator
 		}
 		foreach ($parents as $parent) {
 			$key = $this->resolveClassDeclKey($parent, $namespacePhp);
-			if ($key === null || isset($seen[$key])) {
+			if ($key === null) {
+				$qualified = $this->nameRegistry->qualifyClassName($parent, str_starts_with($parent, '\\') ? 0 : 1, $namespacePhp);
+				$result += $this->catalogAccessorTypes($qualified, $methodName, $seen);
+				continue;
+			}
+			if (isset($seen[$key])) {
 				continue;
 			}
 			$seen[$key] = true;
@@ -2964,6 +2976,27 @@ final class Generator
 				}
 			}
 			$result += $this->inheritedAccessorTypes($declaration, $methodName, $parentNamespace, $seen);
+		}
+		return $result;
+	}
+
+	/** Follow catalog edges without resolving expressions or validating inheritance. */
+	private function catalogAccessorTypes(string $name, string $methodName, array $seen): array
+	{
+		if (isset($seen[$name]) || !isset($this->accessorDeclarations[$name])) {
+			return [];
+		}
+		$seen[$name] = true;
+		$declaration = $this->accessorDeclarations[$name];
+		$result = [];
+		if (isset($declaration['methods'][$methodName])) {
+			$type = $this->typeMapper->mapReturnType($declaration['methods'][$methodName], false);
+			if (str_starts_with($type, 'shared_p<')) {
+				$result[$type] = true;
+			}
+		}
+		foreach ($declaration['parents'] as $parent) {
+			$result += $this->catalogAccessorTypes($parent, $methodName, $seen);
 		}
 		return $result;
 	}
@@ -7755,6 +7788,18 @@ final class Generator
 			// A qualified call bypasses virtual dispatch, including return-type bridge slots.
 			if ($methodDecl !== null) {
 				$accessorType = $this->sharedAccessorType($methodDecl, $namespacePhp);
+				if ($accessorType !== null) {
+					$callExpr = $class . '::__scpp_return_' . $this->cppIdentifier($method)
+						. '(std::type_identity<' . $accessorType . '>{})';
+				}
+			}
+			if ($methodDecl === null && $args === [] && is_object($classNode) && ($classNode->kind ?? null) === AstKind::NAME) {
+				$target = (string) ($classNode->children['name'] ?? '');
+				if (strtolower($target) === 'parent') {
+					$target = $this->currentParentClass ?? '';
+				}
+				$qualified = $this->nameRegistry->qualifyClassName($target, str_starts_with($target, '\\') ? 0 : 1, $namespacePhp);
+				$accessorType = array_key_first($this->catalogAccessorTypes($qualified, $method, []));
 				if ($accessorType !== null) {
 					$callExpr = $class . '::__scpp_return_' . $this->cppIdentifier($method)
 						. '(std::type_identity<' . $accessorType . '>{})';

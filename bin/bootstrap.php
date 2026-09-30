@@ -32,7 +32,7 @@ require_once __DIR__ . '/../generators/php/src/Jss/JssSemanticValidator.php';
 require_once __DIR__ . '/../generators/php/src/Jss/JssTranspiler.php';
 require_once __DIR__ . '/../generators/php/src/Analysis/StructFieldTypePolicy.php';
 require_once __DIR__ . '/../generators/php/src/Analysis/FrontEndSymbolExtractor.php';
-require_once __DIR__ . '/../generators/php/src/Analysis/DeclarationKindCatalogBuilder.php';
+require_once __DIR__ . '/../generators/php/src/Analysis/DeclarationCatalogBuilder.php';
 require_once __DIR__ . '/../generators/php/src/Analysis/RuntimeShallowSourceGenerator.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanStateStore.php';
 require_once __DIR__ . '/../generators/php/src/Stan/StanPathMapper.php';

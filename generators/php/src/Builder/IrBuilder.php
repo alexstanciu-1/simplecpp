@@ -353,7 +353,7 @@ final class IrBuilder
 
 		$interfaces = [];
 		foreach (($children['implements']->children ?? []) as $interfaceNode) {
-			$name = $this->readNameString($interfaceNode);
+			$name = $this->readNameString($interfaceNode, true);
 			if ($name !== '') {
 				$interfaces[] = $name;
 			}
@@ -365,7 +365,7 @@ final class IrBuilder
 			constants: $constants,
 			methods: $methods,
 			line: (int) ($node->lineno ?? 0),
-			parentClass: ($name = $this->readNameString($children['extends'] ?? null)) !== '' ? $name : null,
+			parentClass: ($name = $this->readNameString($children['extends'] ?? null, true)) !== '' ? $name : null,
 			interfaces: $interfaces,
 			isInterface: (((int) ($node->flags ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
 			isAbstract: (((int) ($node->flags ?? 0)) & AstKind::CLASS_ABSTRACT) !== 0,
@@ -738,7 +738,7 @@ final class IrBuilder
 
 	 */
 
-	private function readNameString(mixed $node): string
+	private function readNameString(mixed $node, bool $preserveRoot = false): string
 	{
 		if (is_string($node)) {
 			return ltrim($node, '\\');
@@ -747,7 +747,9 @@ final class IrBuilder
 			return '';
 		}
 		if (($node->kind ?? null) === AstKind::NAME) {
-			return ltrim((string) ($node->children['name'] ?? ''), '\\');
+			// Declaration catalogs need the root marker to qualify names across source files.
+			$name = ltrim((string) ($node->children['name'] ?? ''), '\\');
+			return $preserveRoot && (($node->flags ?? 0) === 0) ? '\\' . $name : $name;
 		}
 		if (($node->kind ?? null) === AstKind::NULLABLE_TYPE) {
 			return $this->readNameString($node->children['type'] ?? null);
@@ -1024,7 +1026,7 @@ final class IrBuilder
 
 		if ($kind === AstKind::NAME) {
 			$name = (string) ($typeNode->children['name'] ?? '');
-			return $name !== '' ? $name : null;
+			return $name !== '' ? ($flags === 0 ? '\\' . ltrim($name, '\\') : $name) : null;
 		}
 
 		if (isset($typeNode->children) && is_array($typeNode->children) && $typeNode->children !== []) {

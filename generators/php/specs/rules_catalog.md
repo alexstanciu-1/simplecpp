@@ -430,3 +430,25 @@ Focused proof: `python3 tests/tools/test_scpp_inherited_constructors.py --result
 It checks PHP/native output, abstract intermediates, construction from a separate source file,
 default arguments, child field defaults, explicit constructor suppression and
 non-public exclusion. It bypasses STAN to isolate lowering and native behavior.
+
+## Cross-file covariant object accessors
+
+Project builds supply a structural declaration catalog to the emitter. For required
+named-object, zero-argument instance accessors, it contains fully qualified ancestor
+edges and non-private return signatures. The emitter uses those declarations to
+bridge every inherited return-tagged virtual slot to the concrete accessor. Both
+views retain the same shared owner. Qualified parent calls use the ancestor slot
+explicitly, preserving nonvirtual parent dispatch.
+
+This does not infer expressions or validate overrides/inheritance. Native C++ (and
+STAN when enabled) rejects incompatible returns. Standalone per-file transpilation
+without a supplied catalog retains its local-declaration boundary. Nullable returns,
+parameterized methods, and explicit wrapper return spellings are not expanded by
+this slice; JSS declaration kinds remain supported without new accessor metadata.
+
+The existing per-source declaration cache stores the added signatures. Their
+normalized aggregate participates in the generator signature: an ancestor-signature
+edit invalidates generation even when a derived source did not change. This is a
+conservative project-wide invalidation, not per-descendant dependency optimization.
+Native proof: `tests/tools/test_scpp_cross_file_covariance.py`; structural import and
+eligibility proof: `tests/tools/test_scpp_accessor_catalog.php`.

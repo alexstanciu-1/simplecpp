@@ -9,7 +9,7 @@ use Scpp\S2S\Stan\StanSourceUnit;
 use Scpp\S2S\Stan\StanStateStore;
 use Scpp\S2S\Stan\StanSymbolIndexBuilder;
 use Scpp\S2S\Transpiler;
-use Scpp\S2S\Analysis\DeclarationKindCatalogBuilder;
+use Scpp\S2S\Analysis\DeclarationCatalogBuilder;
 use Scpp\S2S\Support\S2SException;
 
 require_once __DIR__ . '/debug/debug_plan.php';
@@ -2978,12 +2978,15 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$sourceOverrides = is_array($options['source_overrides'] ?? null) ? normalize_source_override_map($options['source_overrides']) : [];
 	$markTiming('declared_type_catalog_start');
-	$declaredTypeKinds = build_s2s_declared_type_kind_catalog_cached($projectRoot, $repoRoot, $cacheDir, $projectGraph, $sourceOverrides, $previousBuildPlannerState, $projectContexts);
+	$declarationCatalog = build_s2s_declaration_catalog_cached($projectRoot, $repoRoot, $cacheDir, $projectGraph, $sourceOverrides, $previousBuildPlannerState, $projectContexts);
+	$declaredTypeKinds = $declarationCatalog['declared_type_kinds'];
+	$accessorDeclarations = $declarationCatalog['accessor_declarations'];
 	$markTiming('declared_type_catalog_complete');
 	$transpiler = new Transpiler(phpProfile: $phpProfile);
 	$transpiler->setDeclaredTypeKinds($declaredTypeKinds);
+	$transpiler->setAccessorDeclarations($accessorDeclarations);
 	$stanFrontendClassifications = $useFreshStanState ? load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE) : [];
-	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides, $declaredTypeKinds);
+	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides, $declaredTypeKinds, $accessorDeclarations);
 	$projectUnitDependencySignature = compute_project_unit_dependency_summary_signature($repoRoot, $phpProfile);
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
 	$markTiming('pre_source_setup_complete');
@@ -16108,12 +16111,12 @@ function build_s2s_declared_type_kind_catalog(array $projectGraph, array $source
 			$sourcePaths[] = normalize_path($sourcePath);
 		}
 	}
-	$builder = new DeclarationKindCatalogBuilder();
+	$builder = new DeclarationCatalogBuilder();
 	return $builder->buildFromSources(array_values(array_unique($sourcePaths)), $sourceOverrides);
 }
 
-/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @param array<string,array<string,mixed>> $projectContexts @return array<string,string> */
-function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string $repoRoot, string $cacheDir, array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState, array $projectContexts = []): array
+/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @param array<string,array<string,mixed>> $projectContexts @return array{declared_type_kinds:array<string,string>,accessor_declarations:array} */
+function build_s2s_declaration_catalog_cached(string $projectRoot, string $repoRoot, string $cacheDir, array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState, array $projectContexts = []): array
 {
 	$cachePath = normalize_path($cacheDir . '/' . SCPP_DECLARED_TYPE_KIND_CATALOG_FILE);
 	$sourceInput = collect_declared_type_kind_catalog_source_input($projectGraph, $sourceOverrides, $previousBuildPlannerState, $projectContexts);
@@ -16135,6 +16138,7 @@ function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string
 	}
 
 	$catalog = [];
+	$accessors = [];
 	$cacheRows = [];
 	$changed = !is_array($cached) || (string) ($cached['catalog_signature'] ?? '') !== $catalogSignature;
 	foreach ($sourceRows as $sourceRow) {
@@ -16154,36 +16158,36 @@ function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string
 			&& (int) ($cachedSource['size'] ?? -1) === (int) ($sourceRow['size'] ?? 0)
 			&& (bool) ($cachedSource['source_override'] ?? false) === (bool) ($sourceRow['source_override'] ?? false)
 			&& is_array($cachedSource['declared_type_kinds'] ?? null)
+			&& is_array($cachedSource['accessor_declarations'] ?? null)
 		) {
-			$sourceCatalog = normalize_declared_type_kind_catalog($cachedSource['declared_type_kinds']);
+			$sourceCatalog = ['declared_type_kinds' => normalize_declared_type_kind_catalog($cachedSource['declared_type_kinds']), 'accessor_declarations' => $cachedSource['accessor_declarations']];
 		} else {
-			$sourceCatalog = build_s2s_declared_type_kind_catalog_for_source($sourcePath, $sourceOverrides);
+			$sourceCatalog = (new DeclarationCatalogBuilder())->buildCatalogFromSources([$sourcePath], $sourceOverrides);
 			$changed = true;
 		}
-		foreach ($sourceCatalog as $name => $kind) {
+		foreach ($sourceCatalog['declared_type_kinds'] as $name => $kind) {
 			$catalog[$name] = $kind;
 		}
+		$accessors = array_replace($accessors, $sourceCatalog['accessor_declarations']);
 		$cacheRows[] = [
 			'source_key' => $sourceKey,
 			'source_path' => $sourcePath,
 			'content_hash' => (string) ($sourceRow['content_hash'] ?? ''),
 			'size' => (int) ($sourceRow['size'] ?? 0),
 			'source_override' => (bool) ($sourceRow['source_override'] ?? false),
-			'declared_type_kinds' => $sourceCatalog,
+			'declared_type_kinds' => $sourceCatalog['declared_type_kinds'],
+			'accessor_declarations' => $sourceCatalog['accessor_declarations'],
 		];
 	}
 	ksort($catalog, SORT_STRING);
-	if (
-		!$changed
-		&& is_array($cached)
-		&& (string) ($cached['source_fingerprint'] ?? '') === (string) ($sourceInput['source_fingerprint'] ?? '')
-		&& (int) ($cached['source_count'] ?? -1) === (int) ($sourceInput['source_count'] ?? 0)
-		&& is_array($cached['declared_type_kinds'] ?? null)
-	) {
-		return normalize_declared_type_kind_catalog($cached['declared_type_kinds']);
+	ksort($accessors, SORT_STRING);
+	$result = ['declared_type_kinds' => $catalog, 'accessor_declarations' => $accessors];
+	if (!$changed && is_array($cached) && ($cached['source_fingerprint'] ?? '') === ($sourceInput['source_fingerprint'] ?? '')) {
+		return $result;
 	}
+
 	write_json_file_atomic($cachePath, [
-		'schema_version' => 1,
+		'schema_version' => 2,
 		'project_root' => normalize_path($projectRoot),
 		'catalog_signature' => $catalogSignature,
 		'source_fingerprint' => (string) ($sourceInput['source_fingerprint'] ?? ''),
@@ -16191,8 +16195,9 @@ function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string
 		'updated_at' => time(),
 		'sources' => $cacheRows,
 		'declared_type_kinds' => $catalog,
+		'accessor_declarations' => $accessors,
 	]);
-	return $catalog;
+	return $result;
 }
 
 /** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @param array<string,array<string,mixed>> $projectContexts @return array{source_fingerprint:string,source_count:int,source_rows:list<array<string,mixed>>} */
@@ -16250,13 +16255,6 @@ function collect_declared_type_kind_catalog_source_input(array $projectGraph, ar
 		'source_count' => count($sourceRows),
 		'source_rows' => $sourceRows,
 	];
-}
-
-/** @param array<string,string> $sourceOverrides @return array<string,string> */
-function build_s2s_declared_type_kind_catalog_for_source(string $sourcePath, array $sourceOverrides): array
-{
-	$builder = new DeclarationKindCatalogBuilder();
-	return normalize_declared_type_kind_catalog($builder->buildFromSources([$sourcePath], $sourceOverrides));
 }
 
 /** @return array{size:int,mtime:int,ctime:int,content_hash:string,source_override:bool} */
@@ -16324,7 +16322,10 @@ function declared_type_kind_catalog_signature_files(string $repoRoot): array
 		$repoRoot . '/generators/php/src/Jss/JssFileSummaryBuilder.php',
 		$repoRoot . '/generators/php/src/Jss/JssFrontendRequestFactory.php',
 		$repoRoot . '/generators/php/src/Jss/JssCallSurface.php',
-		$repoRoot . '/generators/php/src/Analysis/DeclarationKindCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Analysis/DeclarationCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Builder/IrBuilder.php',
+		$repoRoot . '/generators/php/src/Generator/NameRegistry.php',
+		$repoRoot . '/generators/php/src/Lowering/TypeMapper.php',
 		$repoRoot . '/generators/php/src/Analysis/FrontEndSymbolExtractor.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/PreTokenizer.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/StructSyntaxRewriter.php',
@@ -16352,12 +16353,13 @@ function normalize_declared_type_kind_catalog(array $catalog): array
 }
 
 /** @param array<string,string> $sourceOverrides @param array<string,string> $declaredTypeKinds @return string */
-function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 'legacy', array $sourceOverrides = [], array $declaredTypeKinds = []): string
+function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 'legacy', array $sourceOverrides = [], array $declaredTypeKinds = [], array $accessorDeclarations = []): string
 {
 	$parts = [
 		'version:' . SCPP_S2S_SIGNATURE_VERSION,
 		'php_profile:' . strtolower(trim($phpProfile)),
 		'source_overrides:' . ($sourceOverrides === [] ? 'none' : hash('sha256', json_encode($sourceOverrides, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))),
+		'accessor_declarations:' . hash('sha256', json_encode($accessorDeclarations, JSON_THROW_ON_ERROR)),
 		'declared_type_kinds:' . ($declaredTypeKinds === [] ? 'none' : hash('sha256', json_encode($declaredTypeKinds, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))),
 	];
 
@@ -16365,7 +16367,9 @@ function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 
 		$repoRoot . '/bin/scpp.php',
 		$repoRoot . '/generators/php/src/Transpiler.php',
 		$repoRoot . '/generators/php/src/Analysis/FrontEndSymbolExtractor.php',
-		$repoRoot . '/generators/php/src/Analysis/DeclarationKindCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Analysis/DeclarationCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Builder/IrBuilder.php',
+		$repoRoot . '/generators/php/src/Generator/NameRegistry.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/PreTokenizer.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/StructSyntaxRewriter.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/UnionSyntaxRewriter.php',

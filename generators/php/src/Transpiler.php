@@ -71,6 +71,11 @@ final class Transpiler
 		$this->generator->setDeclaredTypeKinds($declaredTypeKinds);
 	}
 
+	public function setAccessorDeclarations(array $declarations): void
+	{
+		$this->generator->setAccessorDeclarations($declarations);
+	}
+
 	/** @param array<string,array<string,mixed>> $frontendClassifications */
 	public function transpileJssToPhsWithClassifications(string $source, string $path, array $frontendClassifications): string
 	{
