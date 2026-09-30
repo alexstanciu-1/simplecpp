@@ -50,7 +50,7 @@ final class S2S_Proof
 		}
 		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
 		$old_output = $outputs[0];
-		$expected = "#include \"scpp/int_t.hpp\"\n\nint main()\n{\n\tauto local_a = static_cast<scpp::int_t<>>(10LL);\n\tscpp::int_t<> local_b = static_cast<scpp::int_t<>>((local_a).native_value());\n\tlocal_a = static_cast<scpp::int_t<>>((static_cast<scpp::int_t<>>(12LL)).native_value());\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
+		$expected = "#include \"scpp/int_t.hpp\"\n\nint main()\n{\n\tauto local_a = static_cast<scpp::int_t<>>(10LL);\n\tscpp::int_t<> local_b = local_a;\n\tlocal_a = static_cast<scpp::int_t<>>(12LL);\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
 		if ($old_output->text !== $expected) {
 			throw new \LogicException('Unexpected C++ integer lowering');
 		}

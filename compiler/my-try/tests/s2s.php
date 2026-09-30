@@ -290,6 +290,89 @@ foreach ($variable_copy_rejections as $source => $diagnostic)
 	}
 }
 
+// Reassignment preserves one local identity and type; explicit syntax cannot redeclare it.
+Compiler_Lifecycle::reset();
+$syntax = s2s_parse('$a = 1; $a = 2; return $a;');
+$children = $syntax->root->body->statements;
+$declaration_assignment = object_cast($children[0]->expression, assignment_expression_node::class);
+$reassignment = object_cast($children[1]->expression, assignment_expression_node::class);
+$result_reference = object_cast($children[2]->expression, variable_reference_node::class);
+$before = s2s_snapshot($syntax);
+$compiler = new Compiler();
+$compiler->prepare();
+$declaration_facts = $declaration_assignment->require_assignment_preparation();
+$reassignment_facts = $reassignment->require_assignment_preparation();
+$result_facts = $result_reference->require_variable_reference_preparation();
+$integer_type = Language_Types::integer(Model::$language_scope);
+$declaration_identity = weakref_get($declaration_facts->binding->declaration);
+if (($declaration_facts->binding->resolved_kind !== binding_kind::declaration) ||
+	($reassignment_facts->binding->resolved_kind !== binding_kind::assignment) ||
+	(weakref_get($reassignment_facts->binding->declaration) !== $declaration_identity) ||
+	(weakref_get($result_facts->declaration) !== $declaration_identity) ||
+	($declaration_facts->type !== $integer_type) || ($declaration_facts->binding->type !== $integer_type) ||
+	($reassignment_facts->type !== $integer_type) || ($reassignment_facts->binding->type !== $integer_type) ||
+	($result_facts->type !== $integer_type)) {
+	throw new \LogicException('Reassignment lost declaration identity, outcome or canonical type');
+}
+$compiler->cpp();
+$reassignment_output = Model::$cpp_files[0]->text;
+$reassignment_spelling = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
+	. "\tlocal_a = static_cast<scpp::int_t<>>(2LL);\n";
+if (!str_contains($reassignment_output, $reassignment_spelling) ||
+	(substr_count($reassignment_output, 'auto local_a =') !== 1)) {
+	throw new \LogicException('Reassignment redeclared its target or lost canonical literal lowering');
+}
+Compiler_Lifecycle::reset_preparation();
+if (($declaration_assignment->preparation() !== null) || ($reassignment->preparation() !== null) ||
+	($result_reference->preparation() !== null) || (s2s_snapshot($syntax) !== $before)) {
+	throw new \LogicException('Reassignment cleanup changed syntax or retained prepared facts');
+}
+
+Compiler_Lifecycle::reset();
+$syntax = s2s_parse('$a uint8 = 1; $b = 2; $a = $b; return $a;');
+$compiler = new Compiler();
+$compiler->prepare();
+$compiler->cpp();
+if (!str_contains(Model::$cpp_files[0]->text,
+	'local_a = static_cast<scpp::int_t<std::uint8_t>>((local_b).native_value());')) {
+	throw new \LogicException('Reassignment omitted a required compatible-integer conversion');
+}
+
+Compiler_Lifecycle::reset();
+$syntax = s2s_parse('$a = 1; $a = $a; return $a;');
+$children = $syntax->root->body->statements;
+$self_reassignment = object_cast($children[1]->expression, assignment_expression_node::class);
+$self_reference = object_cast($self_reassignment->value, variable_reference_node::class);
+$compiler = new Compiler();
+$compiler->prepare();
+$self_binding = $self_reassignment->require_assignment_preparation()->binding;
+$self_reference_facts = $self_reference->require_variable_reference_preparation();
+if (($self_binding->resolved_kind !== binding_kind::assignment) ||
+	(weakref_get($self_binding->declaration) !== weakref_get($self_reference_facts->declaration))) {
+	throw new \LogicException('Reassignment RHS could not read the established target binding');
+}
+
+$reassignment_rejections = [
+	'$a = 1; $a = false;' => 'value boundary requires matching types or an integer conversion',
+	'$a int = 1; $a int = 2;' => 'local a is already declared in this scope',
+];
+foreach ($reassignment_rejections as $source => $diagnostic)
+{
+	Compiler_Lifecycle::reset();
+	$syntax = s2s_parse($source);
+	$before = s2s_snapshot($syntax);
+	$failed = false;
+	try {
+		(new Compiler())->prepare();
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), $diagnostic);
+	}
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
+		throw new \LogicException('Invalid reassignment or duplicate declaration missed its semantic diagnostic');
+	}
+}
+
 // Explicit local types are authoritative semantic boundaries, not deferred C++ failures.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$x string = "test"; $x = "next";');

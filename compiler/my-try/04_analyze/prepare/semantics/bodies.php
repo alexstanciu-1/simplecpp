@@ -19,6 +19,9 @@ final class Body_Preparation
 		$binding = new prepared_binding();
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
 		$previous /** vector<prepared_storage> */ = $locals->named($entry->name);
+		if (($type_syntax !== null) && (q_count($previous) !== 0)) {
+			throw new \RuntimeException('S2S local ' . $entry->name . ' is already declared in this scope');
+		}
 		if (($type_syntax !== null) || (q_count($previous) === 0))
 		{
 			$binding->resolved_kind = binding_kind::declaration;

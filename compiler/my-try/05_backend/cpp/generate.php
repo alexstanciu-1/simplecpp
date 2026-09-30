@@ -228,9 +228,11 @@ final class CPP_Generator
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
 		}
-		$initializer /** ast_node */ = $initializer;
+		$initializer /** expression_node */ = $initializer;
 		$value = $initializer->generate_cpp(new CPP_Syntax($context));
-		if ($explicit_type || ($binding->resolved_kind === binding_kind::assignment)) {
+		$value_type = $initializer->require_preparation()->type;
+		if (($explicit_type || ($binding->resolved_kind === binding_kind::assignment)) &&
+			($binding->type !== $value_type)) {
 			$value = CPP_Declarations::value($value, $binding->type, $context);
 		}
 		return $prefix . $name . ' = ' . $value;

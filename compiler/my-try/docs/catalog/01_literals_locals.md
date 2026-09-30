@@ -23,7 +23,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-STR-002](#lit-str-002) | agreed | `$a = "x";` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [TYPE-VAR-001](#type-var-001) | agreed | `$x string = "test";` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-ASSIGN-001](#var-assign-001) | agreed | `$a = $b;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-REASSIGN-001](#var-reassign-001) | pending-discussion | `$a = 1; $a = 2;` | unverified | unverified | deferred | — |
+| [VAR-REASSIGN-001](#var-reassign-001) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-STR-003](#lit-str-003) | pending-discussion | `$a = "";` | unverified | unverified | deferred | — |
 | [LIT-CONST-001](#lit-const-001) | pending-discussion | `$a = PHP_INT_MAX;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-001](#var-chain-001) | pending-discussion | `$a = $b = 1;` | unverified | unverified | deferred | — |
@@ -553,7 +553,55 @@ auto a = b;
 
 ## VAR-REASSIGN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** The first untyped assignment establishes one local
+binding and its canonical value type. A later ordinary assignment in the same scope
+reuses that declaration and must remain assignable to its established type:
+
+```php
+$a = 1;
+$a = 2;
+return $a;
+```
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(1LL);
+local_a = static_cast<scpp::int_t<>>(2LL);
+```
+
+Preparation classifies the first write as a declaration and the second as an
+assignment. Both retain the exact same declaration identity and canonical `int`
+type; the assignment expression also retains that result type. The C++ emitter
+therefore omits `auto` on the second write and applies the destination's normal
+value boundary only when the prepared source and destination types differ. Exact
+types retain the already canonical RHS without a redundant wrapper conversion; a
+write between distinct compatible integer types still converts. An established
+target is visible while its reassignment RHS is prepared, so
+`$a = 1; $a = $a;` is valid even though the fresh self-initialization `$a = $a;`
+remains invalid.
+
+**Legacy edge-case review:** The old S2S tracked declarations and stored local types
+per active block, omitted a declaration prefix on later writes, and diagnosed local
+type morphing. It also distinguished an ordinary reassignment from `=&` rebinding
+and rejected a second explicit local declaration. Those constraints still apply.
+The new semantic preparation enforces incompatible writes rather than depending on
+the old generator/STAN split, and now rejects `$a int = 1; $a int = 2;` before C++
+emission. Explicit typed syntax declares storage; the later untyped `$a = 2;` form
+is the reassignment.
+
+The prerequisite gate is satisfied by `prepared_binding`: it supplies the stable
+target declaration, canonical destination type and declaration-versus-assignment
+outcome, while expression preparation supplies the RHS/result type. Composed RHS
+expressions (`VAR-REASSIGN-002`), compound operators, assignment chains, child-block
+scope merging, reference rebinding and dynamic/container type changes remain
+non-goals. LLVM remains deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs cover stable declaration
+identity and type, assignment classification and result type, exact direct C++
+reassignment without redeclaration, retained conversion between distinct compatible
+integer types, a self-read from established storage, incompatible-type and duplicate-
+declaration diagnostics, cleanup and source purity. Generated C++ is inspected but
+not compiled or executed; native compiler validation remains pending explicit
+request, so C++ S2S stays `in-progress`.
 
 ### Imported version 1
 
