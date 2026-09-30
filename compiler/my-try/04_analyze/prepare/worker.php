@@ -126,7 +126,7 @@ final class Preparation_Worker
 				}
 				if ($entry instanceof collected_function) {
 					$function = object_cast($entry, collected_function::class)->syntax();
-					if (isset($function->body)) {
+					if ($function->has_parsed_body()) {
 						if ($function->body->work() !== null) {
 							$result[$function->body->work()] = true;
 						}
@@ -633,7 +633,7 @@ final class Preparation_Worker
 			}
 			if ($entry instanceof collected_function) {
 				$function = object_cast($entry, collected_function::class)->syntax();
-				if (isset($function->body)) {
+				if ($function->has_parsed_body()) {
 					$function->body->detach_work();
 				}
 			}

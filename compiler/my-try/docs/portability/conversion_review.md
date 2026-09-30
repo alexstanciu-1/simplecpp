@@ -73,7 +73,11 @@ inheritance/method-signature conversion tests pass. Retry `logs-4` advances to
 `04_analyze/collect/structures.php:136`, `parent::__construct($collection)`:
 `expected literal type name`. The converter now preserves literal parent method/constructor calls. Retry
 `logs-5` reaches `04_analyze/prepare/worker.php:129`, another
-`isset($function->body)` requiring the existing parsed-body query.
+`isset($function->body)` requiring the existing parsed-body query. Both remaining
+preparation probes now use `has_parsed_body()`. On 2026-09-30, conversion of all 66
+compiler/driver files succeeds in `/tmp/my-try-conversion-20260930-body-state`
+against `d352b76e` plus this two-caller change. Focused preparation-recovery and
+parse/collection tests pass.
 The isolated parent-call proof in `/tmp/my-try-parent-proof-isolated-20260929`
 exposes a separate generator defect: constructor extraction rejects the IR object
 payload because its guard expects an array, leaving `Base::__construct(...)`
