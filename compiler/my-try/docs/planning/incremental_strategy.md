@@ -48,6 +48,52 @@ call targets or type forms; these follow-ups no longer block or precede feature 
 The broader [inheritance-contract review](../catalog/11_inheritance.md#v02-contract-review-debt)
 remains attached to that language chapter.
 
+## Scheduled review — type and conversion scaling (2026-10-01)
+
+Review the type model before adding another substantial type or explicit-cast family.
+The goal is to prevent two forms of combinatorial growth:
+
+1. one new AST/facts structure for every semantic type; and
+2. one bespoke preparation/backend branch for every source-type × destination-type
+   cast or implicit-conversion pair.
+
+The review must trace the current path through `type_node`, `named_type_node`,
+`array_type_node`, `type_definition`, prepared expression/binding facts,
+`Type_Preparation::require_assignable()` and `CPP_Declarations::convert()`. Separate
+these responsibilities explicitly:
+
+- **Source syntax:** nodes represent genuinely different grammar and owned operands,
+  not each canonical type identity. A future explicit cast should normally be one
+  cast-expression shape carrying target type syntax plus its operand, rather than a
+  node class per target type. This does not prejudge whether literal forms with
+  genuinely different lexical/value data should share a node.
+- **Canonical type meaning:** resolved types and constructed type applications need
+  one composable semantic representation. Review whether extending `type_kind` and
+  adding fields remains truthful, when a type constructor/application is needed, and
+  which distinctions are identity, representation or capability.
+- **Conversion policy:** preparation must be the single semantic owner for identity,
+  implicit conversion, explicit cast and rejection. Explore a small conversion
+  classification/plan derived from type families and properties instead of scattered
+  pairwise cases. It must preserve direction, narrowing/range behavior, explicitness,
+  runtime checks, value/reference behavior and diagnostics; a generic table must not
+  erase real exceptions.
+- **Lowering:** C++ generation consumes the prepared conversion decision and chooses
+  only its target spelling/helper. It must not rediscover compatibility from AST
+  subclasses, source tokens or an independent source/destination matrix.
+
+Required output is a bounded design note with the current model, pressure points,
+candidate ownership shape, migration boundary and representative proofs. Exercise at
+least identity, existing integer-family conversion, a rejected cross-family implicit
+conversion and representative explicit casts; include nullable/wrapper, record and
+container boundaries as future pressure tests without implementing them speculatively.
+State how calls, returns, assignments and operators reuse the same conversion owner.
+
+Non-goals for the review: no LLVM semantic work, no STAN resumption, no universal
+runtime variant, no flattening of genuinely different grammar nodes, and no broad
+type-system refactor before the ownership decision is agreed. If the truthful model
+requires changes across parser, canonical types, preparation and lowering, present
+the options and validation cost before implementation.
+
 ## Remaining incremental work
 
 | Area | Deferred work / boundary |
