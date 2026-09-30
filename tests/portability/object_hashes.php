@@ -37,7 +37,7 @@ $converter = new scpp\portability\Converter(require __DIR__ . '/../../tools/php_
 $out = $converter->convert($source, 'identity.php');
 ensure(!str_contains($out, 'SplObjectStorage'), 'PHP carrier leaked into native source');
 ensure(str_contains($out, 'public $rows hash<Row, shared<Key>>;'), 'Missing typed property');
-ensure(str_contains($out, '$rows hash<Row, shared<Key>> = [];'), 'Missing typed initialization');
+ensure(str_contains($out, '$rows hash<Row, shared<Key>> = new hash<Row, shared<Key>>();'), 'Missing typed initialization');
 ensure(str_contains($out, '): hash<Row, shared<Key>>'), 'Missing typed return');
 ob_start(); eval(substr($source, 5)); $trace = ob_get_clean();
 ensure($trace === "7:9\n7:11:removed\n", 'Object identity changed: ' . $trace);

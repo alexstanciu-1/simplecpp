@@ -13,8 +13,11 @@ $owners /** hash<llvm_prepared_file, shared<collected_name>> */ = new \SplObject
 $this->owners = $owners;
 ```
 
-The property becomes a native hash. The construction becomes `[]` at the explicitly
-typed local boundary. A SplObjectStorage return or concrete method parameter has an adjacent hash
+The property becomes a native hash. The constructor annotation is preserved as
+`new hash<Value, shared<Key>>()`, which lowers directly to a native hash value.
+Direct property initialization/reset and return expressions therefore need no
+intermediate typed local or destination-type inference. Only empty construction
+is supported; constructor arguments are rejected. A SplObjectStorage return or concrete method parameter has an adjacent hash
 annotation as well. Method parameters use the same explicit carrier grammar;
 interface object-hash parameters remain outside this slice. Bare or incorrectly annotated constructors/properties reject. The native
 source has no dependency on the PHP SplObjectStorage class. `shared<Key>` states the
@@ -57,3 +60,7 @@ renaming do not change retained storage.
 real converter boundaries, rejections, and the native TypeMapper result
 `hash_t<shared_p<Row>, shared_p<Key>>`. PHP compiler model and LLVM tests also pass.
 No native compilation or native runtime execution was performed in this slice.
+
+`python3 tests/portability/typed_hash_construction.py --results FRESH` proves PHP/native
+parity for direct property construction/reset, typed returns and identity-key
+access. The proof bypasses STAN; no broader semantic inference is introduced.

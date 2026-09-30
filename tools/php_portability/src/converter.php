@@ -1102,9 +1102,9 @@ final class Converter {
 					$this->fail($line, 'construction requires a literal class name');
 				}
 				if ($name[1] === '\\SplObjectStorage') {
-					$this->objectHashAnnotation($this->significant());
+					$hashType = $this->objectHashAnnotation($this->significant());
 					$this->expect('('); $this->expect(')');
-					$nodes[] = new Node('empty_hash', '[]', $line);
+					$nodes[] = new Node('call', 'new ' . $hashType, $line);
 					continue;
 				}
 				$storageName = null;
