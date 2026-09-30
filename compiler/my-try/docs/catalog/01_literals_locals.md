@@ -22,7 +22,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-STR-001](#lit-str-001) | agreed | `$a = 'x';` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-STR-002](#lit-str-002) | agreed | `$a = "x";` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [TYPE-VAR-001](#type-var-001) | agreed | `$x string = "test";` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-ASSIGN-001](#var-assign-001) | pending-discussion | `$a = $b;` | unverified | unverified | deferred | — |
+| [VAR-ASSIGN-001](#var-assign-001) | agreed | `$a = $b;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-REASSIGN-001](#var-reassign-001) | pending-discussion | `$a = 1; $a = 2;` | unverified | unverified | deferred | — |
 | [LIT-STR-003](#lit-str-003) | pending-discussion | `$a = "";` | unverified | unverified | deferred | — |
 | [LIT-CONST-001](#lit-const-001) | pending-discussion | `$a = PHP_INT_MAX;` | unverified | unverified | deferred | — |
@@ -470,7 +470,55 @@ string_t x("test");
 
 ## VAR-ASSIGN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Given an established value local, first assignment
+to a fresh local creates a distinct binding with the source's prepared canonical
+type. The focused complete example is:
+
+```php
+$b int = 11;
+$a = $b;
+$b = 19;
+return $a;
+```
+
+The relevant C++ copy is direct:
+
+```cpp
+auto local_a = local_b;
+```
+
+Preparation resolves the right-hand reference before publishing the new target.
+The source reference retains the exact source declaration and type; the assignment
+fact retains a different target declaration, classifies it as a declaration and
+uses the same canonical type as its expression result. Consequently there is no
+backend type inference or copy-versus-reference guess. A later source mutation
+continues to address the source declaration, while a read of `$a` addresses the
+copy. `$a = $b; $b = 1;` and `$a = $a;` both fail during preparation: statements
+are not reordered and an initializing local cannot see itself.
+
+**Legacy edge-case review:** The old S2S also tracked declared locals in source
+order, emitted a direct copy and rejected undeclared reads. Its repeated integer
+fixtures confirm the basic shape. Its broader tests expose constraints that still
+apply but do not belong to this scalar slice: ordinary assignment is distinct from
+`=&`; value structs copy, object handles share identity, and PHP arrays historically
+needed copy-on-write handling. Objects, containers, dynamic values and reference
+bindings must therefore use their own prepared representation contracts rather than
+being inferred from this row.
+
+The prerequisite gate is satisfied without a production change. Preparation already
+supplies source and target identity, source and result type, declaration-versus-
+reassignment outcome, source order and one prepared RHS. C++ lowering only emits
+the direct copy. Chained assignments, composed expressions, cross-type conversion,
+block/control-flow scope and `VAR-REASSIGN-001` remain non-goals. LLVM remains
+deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs cover distinct source/target
+identity, shared canonical type, declaration classification, source mutation versus
+copy reads, exact direct-copy output, source-before-use and self-initialization
+diagnostics, cleanup and source purity. Existing scalar and value-struct copy cases
+remain regression evidence. Generated C++ is inspected but not compiled or executed;
+native compiler validation remains pending explicit request, so C++ S2S stays
+`in-progress`.
 
 ### Imported version 1
 

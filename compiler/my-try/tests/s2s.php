@@ -224,6 +224,72 @@ foreach ($rejections as $source)
 	}
 }
 
+// A fresh local copies one established value; source and target keep distinct identities.
+Compiler_Lifecycle::reset();
+$syntax = s2s_parse('$b int = 11; $a = $b; $b = 19; return $a;');
+$children = $syntax->root->body->statements;
+$source_declaration = object_cast($children[0], variable_declaration_node::class);
+$copy_assignment = object_cast($children[1]->expression, assignment_expression_node::class);
+$source_reference = object_cast($copy_assignment->value, variable_reference_node::class);
+$source_mutation = object_cast($children[2]->expression, assignment_expression_node::class);
+$copy_reference = object_cast($children[3]->expression, variable_reference_node::class);
+$before = s2s_snapshot($syntax);
+$compiler = new Compiler();
+$compiler->prepare();
+$source_binding = $source_declaration->require_preparation();
+$copy_facts = $copy_assignment->require_assignment_preparation();
+$copy_binding = $copy_facts->binding;
+$source_reference_facts = $source_reference->require_variable_reference_preparation();
+$mutation_binding = $source_mutation->require_assignment_preparation()->binding;
+$copy_reference_facts = $copy_reference->require_variable_reference_preparation();
+$integer_type = Language_Types::integer(Model::$language_scope);
+$source_identity = weakref_get($source_binding->declaration);
+$copy_identity = weakref_get($copy_binding->declaration);
+if (($source_binding->resolved_kind !== binding_kind::declaration) ||
+	($copy_binding->resolved_kind !== binding_kind::declaration) ||
+	($mutation_binding->resolved_kind !== binding_kind::assignment) ||
+	($source_identity === $copy_identity) ||
+	(weakref_get($source_reference_facts->declaration) !== $source_identity) ||
+	(weakref_get($mutation_binding->declaration) !== $source_identity) ||
+	(weakref_get($copy_reference_facts->declaration) !== $copy_identity) ||
+	($source_binding->type !== $integer_type) || ($copy_facts->type !== $integer_type) ||
+	($copy_binding->type !== $integer_type) || ($source_reference_facts->type !== $integer_type) ||
+	($mutation_binding->type !== $integer_type) || ($copy_reference_facts->type !== $integer_type)) {
+	throw new \LogicException('Variable copy lost source order, declaration identity or canonical type');
+}
+$compiler->cpp();
+$copy_output = Model::$cpp_files[0]->text;
+if ((substr_count($copy_output, 'auto local_a = local_b;') !== 1) || str_contains($copy_output, 'auto local_a = static_cast')) {
+	throw new \LogicException('Variable copy added a conversion or lost direct inferred declaration lowering');
+}
+Compiler_Lifecycle::reset_preparation();
+if (($source_declaration->preparation() !== null) || ($copy_assignment->preparation() !== null) ||
+	($source_reference->preparation() !== null) || ($source_mutation->preparation() !== null) ||
+	($copy_reference->preparation() !== null) || (s2s_snapshot($syntax) !== $before)) {
+	throw new \LogicException('Variable copy cleanup changed syntax or retained prepared facts');
+}
+
+$variable_copy_rejections = [
+	'$a = $b; $b = 1;' => 'established local declaration for b',
+	'$a = $a;' => 'established local declaration for a',
+];
+foreach ($variable_copy_rejections as $source => $diagnostic)
+{
+	Compiler_Lifecycle::reset();
+	$syntax = s2s_parse($source);
+	$before = s2s_snapshot($syntax);
+	$failed = false;
+	try {
+		(new Compiler())->prepare();
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), $diagnostic);
+	}
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
+		throw new \LogicException('Variable copy visibility failure missed its semantic diagnostic');
+	}
+}
+
 // Explicit local types are authoritative semantic boundaries, not deferred C++ failures.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$x string = "test"; $x = "next";');
