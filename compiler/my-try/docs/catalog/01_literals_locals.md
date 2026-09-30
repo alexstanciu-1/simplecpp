@@ -33,7 +33,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-ORDER-001](#var-order-001) | agreed | `$a = $b; $b = 1;` | proved | not-applicable | deferred | [Exact source-order diagnostic and no-publication proof](../../tests/s2s.php); invalid standalone input has no C++ lowering |
 | [VAR-REASSIGN-002](#var-reassign-002) | agreed | `$a = 1; $a = $a + 1;` | proved | in-progress | deferred | [Exact reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-REASSIGN-003](#var-reassign-003) | agreed | `$a = 1; $a = $a + $a;` | proved | in-progress | deferred | [Two-read reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [IDENT-VAR-001](#ident-var-001) | pending-discussion | `function f(int $int) { $while = $int; }` | unverified | unverified | deferred | — |
+| [IDENT-VAR-001](#ident-var-001) | agreed | `function f(int $int): void { $while = $int; }` | proved | in-progress | deferred | [Prepared identity and role-prefixed C++ naming proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-011](#note-011) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-021](#note-021) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-033](#note-033) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
@@ -1192,7 +1192,59 @@ auto a = static_cast<int_t>(1); a = a + a;
 
 ## IDENT-VAR-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** The strict working example adds the required return
+type:
+
+```php
+function f(int $int): void
+{
+	$while = $int;
+}
+```
+
+v0.2 keeps the existing role-prefixed C++ naming model rather than recreating the
+legacy keyword-only `__` remapper. The example emits:
+
+```cpp
+void function_f(scpp::int_t<> local_int);
+void function_f(scpp::int_t<> local_int)
+{
+	auto local_while = local_int;
+}
+```
+
+Frontend preparation retains source names and declaration identities; it does not
+store C++ spellings. C++ lowering derives `function_<source>` for functions and
+`local_<source>` for parameters and locals from those identities. The same helper is
+used in prototypes, definitions, declarations and references, so a C++ keyword is
+never emitted as the complete identifier. The visible role also helps generated-code
+debugging.
+
+Prefixing is injective within the current ASCII source-name domain: `$int` and
+`$local_int` become `local_int` and `local_local_int`, while `$while` and
+`$local_while` similarly remain distinct. Source scope/preparation still owns whether
+two occurrences share a declaration; generated spelling is not used for semantic
+lookup.
+
+**Legacy edge-case review:** The old S2S preserved ordinary raw names, mapped C++
+keywords to `<name>__`, and added numeric suffixes when that candidate collided. The
+collision concern still applies, but the chosen role prefix avoids the exact legacy
+collision family without a keyword table or per-scope suffix search. This is a
+deliberate naming-policy departure, not an attempt to reproduce legacy output bytes.
+
+Comprehensive escaping of C++ implementation-reserved patterns remains separate.
+For example, a source name beginning with `_` can currently produce `local__...`;
+`NOTE-021` must reconcile that broader identifier-sanitization rule before claiming
+all possible source names are safe. Function/record/field collision policy and
+cross-file name mangling are also outside this row. LLVM remains deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs cover the strict example,
+distinct parameter/local declaration identities, source-reference resolution,
+canonical type identity, identical prototype/definition parameter spelling, exact
+role-prefixed body lowering, absence of the legacy `__` spellings, and source names
+that already contain `local_`. General cleanup and source-purity checks include both
+cases. Generated C++ is inspected but not compiled or executed; native compiler
+validation remains pending explicit request, so C++ S2S stays `in-progress`.
 
 ### Imported version 1
 

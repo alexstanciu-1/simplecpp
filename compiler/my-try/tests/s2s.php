@@ -91,6 +91,8 @@ $cases = [
 	'wide' => ['$a = 4294967296; return 7;', 7],
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
 	'keyword' => ['$int = 10; return $int;', 10],
+	'ident_var_001' => ['function f(int $int): void { $while = $int; }', 0],
+	'ident_var_001_prefix_collision' => ['function f(int $int, int $local_int): void { $while = $int; $local_while = $local_int; }', 0],
 ];
 // Ordinary functions and value structs exercise the existing frontend without adding syntax.
 $cases += [
@@ -360,6 +362,44 @@ foreach ($cases as $name => [$source, $exit])
 			($second_facts->type !== $binary_facts->type) || !str_contains($text, $expected) ||
 			(substr_count($text, 'auto local_a =') !== 1)) {
 			throw new \LogicException('VAR-REASSIGN-003 lost distinct reads, shared identity or reassignment lowering');
+		}
+	}
+
+	if ($name === 'ident_var_001')
+	{
+		$function = object_cast($syntax->root->declarations[0], function_node::class);
+		$parameter = $function->parameters[0];
+		$assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
+		$target = object_cast($assignment->target, variable_reference_node::class);
+		$source = object_cast($assignment->value, variable_reference_node::class);
+		$parameter_facts = $parameter->require_preparation();
+		$assignment_facts = $assignment->require_assignment_preparation();
+		$source_facts = $source->require_variable_reference_preparation();
+		$parameter_identity = weakref_get($parameter_facts->declaration);
+		$local_identity = weakref_get($assignment_facts->binding->declaration);
+		$signature = 'void function_f(scpp::int_t<> local_int)';
+		$definition = $signature . "\n{\n\tauto local_while = local_int;\n}";
+		$text = Model::$cpp_files[0]->text;
+		if (($function->name !== 'f') || ($function->occurrence()->name !== 'f') ||
+			($parameter->name !== 'int') || ($parameter->occurrence()->name !== 'int') ||
+			($target->name !== 'while') || ($target->occurrence()->name !== 'while') ||
+			($source->name !== 'int') || ($source->occurrence()->name !== 'int') ||
+			($parameter_identity === $local_identity) ||
+			(weakref_get($source_facts->declaration) !== $parameter_identity) ||
+			($parameter_facts->type !== $source_facts->type) || ($source_facts->type !== $assignment_facts->type) ||
+			(substr_count($text, $signature) !== 2) || !str_contains($text, $definition) ||
+			str_contains($text, 'int__') || str_contains($text, 'while__')) {
+			throw new \LogicException('IDENT-VAR-001 lost role-prefixed names, identity or signature consistency');
+		}
+	}
+
+	if ($name === 'ident_var_001_prefix_collision')
+	{
+		$text = Model::$cpp_files[0]->text;
+		$signature = 'void function_f(scpp::int_t<> local_int, scpp::int_t<> local_local_int)';
+		$body = "\tauto local_while = local_int;\n\tauto local_local_while = local_local_int;\n";
+		if ((substr_count($text, $signature) !== 2) || !str_contains($text, $body)) {
+			throw new \LogicException('Role prefixes collided with source names containing the same prefix');
 		}
 	}
 
