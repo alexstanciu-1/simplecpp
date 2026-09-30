@@ -81,6 +81,7 @@ $cases = [
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
 	'var_chain_002' => ['$a = 1; $b = $a;', 0],
+	'var_chain_003' => ['$a = 1; $b = $a; $c = $b;', 0],
 	'copy' => ['$a = 10; $b = $a; $a = 12; return $b;', 10],
 	'wide' => ['$a = 4294967296; return 7;', 7],
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
@@ -249,6 +250,37 @@ foreach ($cases as $name => [$source, $exit])
 		}
 	}
 
+	if ($name === 'var_chain_003')
+	{
+		$first = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$second = object_cast($syntax->root->body->statements[1]->expression, assignment_expression_node::class);
+		$third = object_cast($syntax->root->body->statements[2]->expression, assignment_expression_node::class);
+		$second_source = object_cast($second->value, variable_reference_node::class);
+		$third_source = object_cast($third->value, variable_reference_node::class);
+		$first_facts = $first->require_assignment_preparation();
+		$second_facts = $second->require_assignment_preparation();
+		$third_facts = $third->require_assignment_preparation();
+		$first_identity = weakref_get($first_facts->binding->declaration);
+		$second_identity = weakref_get($second_facts->binding->declaration);
+		$third_identity = weakref_get($third_facts->binding->declaration);
+		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
+			. "\tauto local_b = local_a;\n"
+			. "\tauto local_c = local_b;\n";
+		$text = Model::$cpp_files[0]->text;
+		if (($first_facts->binding->resolved_kind !== binding_kind::declaration) ||
+			($second_facts->binding->resolved_kind !== binding_kind::declaration) ||
+			($third_facts->binding->resolved_kind !== binding_kind::declaration) ||
+			($first_identity === $second_identity) || ($second_identity === $third_identity) ||
+			($first_identity === $third_identity) ||
+			(weakref_get($second_source->require_variable_reference_preparation()->declaration) !== $first_identity) ||
+			(weakref_get($third_source->require_variable_reference_preparation()->declaration) !== $second_identity) ||
+			($first_facts->type !== $second_facts->type) || ($second_facts->type !== $third_facts->type) ||
+			!str_contains($text, $expected) || str_contains($text, 'auto local_b = static_cast') ||
+			str_contains($text, 'auto local_c = static_cast')) {
+			throw new \LogicException('VAR-CHAIN-003 lost source-order identities, canonical type or direct copy lowering');
+		}
+	}
+
 	if (isset($explicit_declarations[$name]))
 	{
 		[$cpp_type, $cpp_name] = $explicit_declarations[$name];
@@ -363,10 +395,10 @@ if (($source_declaration->preparation() !== null) || ($copy_assignment->preparat
 }
 
 $variable_copy_rejections = [
-	'$a = $b; $b = 1;' => 'established local declaration for b',
-	'$a = $a;' => 'established local declaration for a',
+	'VAR-ORDER-001' => ['$a = $b; $b = 1;', 'established local declaration for b'],
+	'self-initialization' => ['$a = $a;', 'established local declaration for a'],
 ];
-foreach ($variable_copy_rejections as $source => $diagnostic)
+foreach ($variable_copy_rejections as $name => [$source, $diagnostic])
 {
 	Compiler_Lifecycle::reset();
 	$syntax = s2s_parse($source);
@@ -379,7 +411,7 @@ foreach ($variable_copy_rejections as $source => $diagnostic)
 		$failed = str_contains($error->getMessage(), $diagnostic);
 	}
 	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
-		throw new \LogicException('Variable copy visibility failure missed its semantic diagnostic');
+		throw new \LogicException($name . ' missed its source-order diagnostic or published partial results');
 	}
 }
 

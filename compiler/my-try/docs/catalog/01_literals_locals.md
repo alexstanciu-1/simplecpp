@@ -28,9 +28,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-CONST-001](#lit-const-001) | agreed | `$a = PHP_INT_MAX;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-001](#var-chain-001) | agreed | `$a = $b = 1;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-002](#var-chain-002) | agreed | `$a = 1; $b = $a;` | proved | in-progress | deferred | [Exact emitted-C++ and variable-copy proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-003](#var-chain-003) | pending-discussion | `$a = 1; $b = $a; $c = $b;` | unverified | unverified | deferred | — |
+| [VAR-CHAIN-003](#var-chain-003) | agreed | `$a = 1; $b = $a; $c = $b;` | proved | in-progress | deferred | [Exact prepared-identity and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-004](#var-chain-004) | pending-discussion | `$a = 1; $b = $a + 1;` | unverified | unverified | deferred | — |
-| [VAR-ORDER-001](#var-order-001) | pending-discussion | `$a = $b; $b = 1;` | unverified | unverified | deferred | — |
+| [VAR-ORDER-001](#var-order-001) | agreed | `$a = $b; $b = 1;` | proved | not-applicable | deferred | [Exact source-order diagnostic and no-publication proof](../../tests/s2s.php); invalid standalone input has no C++ lowering |
 | [VAR-REASSIGN-002](#var-reassign-002) | pending-discussion | `$a = 1; $a = $a + 1;` | unverified | unverified | deferred | — |
 | [VAR-REASSIGN-003](#var-reassign-003) | pending-discussion | `$a = 1; $a = $a + $a;` | unverified | unverified | deferred | — |
 | [IDENT-VAR-001](#ident-var-001) | pending-discussion | `function f(int $int) { $while = $int; }` | unverified | unverified | deferred | — |
@@ -858,7 +858,34 @@ auto a = static_cast<int_t>(1); auto b = a;
 
 ## VAR-CHAIN-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** This row is a longer use of the sequential-copy
+path established by `VAR-CHAIN-002`; it is not a nested assignment expression and
+requires no new syntax or semantic facts. The exact input emits in source order:
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(1LL);
+auto local_b = local_a;
+auto local_c = local_b;
+```
+
+Preparation creates three distinct declaration identities with one canonical
+integer type. The second initializer resolves exactly to `$a`, and the third
+initializer resolves exactly to `$b`; lowering therefore copies each immediately
+preceding stored value without repeating literal normalization or bypassing an
+intermediate binding. Existing declaration-versus-assignment facts and direct-copy
+emission own the behavior. Arbitrary composed expressions and reference/handle copy
+semantics remain outside this row. LLVM remains deferred.
+
+**Legacy edge-case review:** The old S2S tracked local declarations per active
+scope and treated each first write separately. Its catalog also required every
+source to precede its use. The applicable constraint is retained: a later write
+does not make an earlier read valid, and sequential copies are not reordered.
+
+**Verification (2026-09-30):** the focused PHP S2S proof checks the exact three
+declarations, distinct identities, immediate-source resolution, shared canonical
+type, direct copy spelling, cleanup and source purity. Generated C++ is inspected
+but not compiled or executed; native compiler validation remains pending explicit
+request, so C++ S2S stays `in-progress`.
 
 ### Imported version 1
 
@@ -928,7 +955,31 @@ auto a = static_cast<int_t>(1); auto b = a + static_cast<int_t>(1);
 
 ## VAR-ORDER-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** The exact standalone input is rejected. Its first
+statement reads `$b` before any accessible declaration exists; the later assignment
+cannot retroactively establish that declaration. Preparation reports:
+
+```text
+S2S needs an established local declaration for b
+```
+
+No C++ is emitted. The imported C++ result applies only when its stated precondition
+is supplied by an earlier declaration outside the shown two statements; ordinary
+copy and reassignment rules then already own the valid form. Preparation's
+source-order scope lookup is the semantic owner, and no hoisting, lookahead fact or
+backend recovery is introduced. Branch scope and cross-file/global lookup remain
+outside this row. LLVM remains deferred.
+
+**Legacy edge-case review:** The old catalog made prior declaration an explicit
+precondition and prohibited statement reordering. Its declaration tracking also
+distinguished first writes from already-declared locals. v0.2 makes the failure
+deterministic in semantic preparation rather than allowing invalid C++ to expose
+the missing precondition.
+
+**Verification (2026-09-30):** the exact PHP S2S rejection proof checks the named
+diagnostic, unchanged source syntax, and absence of prepared-file or C++ publication.
+Because rejection is the agreed result, C++ S2S is `not-applicable` for this exact
+input.
 
 ### Imported version 1
 
