@@ -492,7 +492,13 @@ Policy flexibility is allowed only through configuration/version changes, not th
 	- `result<T>` compares success payloads by wrapped-value identity and error states by structured `error_t` payload equality
 	- `mixed_t` compares by active runtime kind first, then by the exact payload of that kind
 - `null_t`, `nullopt_t`, and `nullptr_t` all normalize to PHP `null`
-- `shared_p<T> === shared_p<T>` compares managed object identity, not deep value equality
+- `shared_p<T> === shared_p<U>` compares managed object identity when either pointer type
+  implicitly converts to the other (same type or accessible, unambiguous base view).
+  Static handle spelling does not change identity. Comparison uses the adjusted base
+  pointer, including multiple/virtual inheritance; it never downcasts or compares fields.
+  Nullable normalization applies before this rule. Compatible empty handles compare equal.
+  Unrelated static interface views are outside this rule and retain the existing fallback.
+  Native proof: `tests/runtime/native/test_strict_identity_shared.cpp`.
 - `unique_p<T> === unique_p<T>` compares managed object identity
 - native C++ references are an emission strategy, not a distinct runtime wrapper family
 - after wrapper normalization, differing PHP-visible kinds remain non-identical

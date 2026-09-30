@@ -109,6 +109,11 @@ add_executable(test_strict_identity_null_dynamic test_strict_identity_null_dynam
 target_link_libraries(test_strict_identity_null_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_strict_identity_null_dynamic COMMAND test_strict_identity_null_dynamic)
 
+# Object identity is independent of a compatible base/derived shared-handle view.
+add_executable(test_strict_identity_shared test_strict_identity_shared.cpp)
+target_link_libraries(test_strict_identity_shared PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_strict_identity_shared COMMAND test_strict_identity_shared)
+
 # Array semantics conformance coverage for the reduced Prism++ subset.
 add_executable(test_array_semantics test_array_semantics.cpp)
 target_link_libraries(test_array_semantics PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)

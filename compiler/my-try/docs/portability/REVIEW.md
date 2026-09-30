@@ -52,20 +52,21 @@ emitting shared C++ aliases. The separate-file native proof is
 
 ## Native and STAN checkpoint (2026-09-30)
 
-Candidate `11d70185` plus declaration-identity normalization builds the native compiler
-with `--no-stan`. Broader PHP/native parity and generated-program execution:
-193/236 pass (S2S 71/94; parked LLVM/sample 122/142). The 43 failures involve struct
-lookup, including 16 rejection-diagnostic mismatches. This is not a full native pass.
-Evidence: `/tmp/my-try-native-20260929-bfd12958/{broad-sweep,llvm-sweep}/summary.json`.
+The earlier candidate `11d70185` plus declaration-identity normalization passed
+193/236 broad comparisons; its 43 failures involved struct lookup or related rejection
+diagnostics. After the shared-identity repair on `cf14bc1a`, native validation passes:
+15 scalar and 36 function/struct S2S executions, 27 S2S rejections, all 142 parked
+LLVM/sample comparisons (48 executions, 94 rejections), the initial S2S smoke proof,
+repeated-compilation/recovery checks and incremental rebuild. STAN was explicitly
+skipped. Evidence: `/tmp/my-try-native-20260929-bfd12958/summary.json` and `logs-11/`.
 
-Priority native blocker: `Scope_Publication::register()` compares
-`?collected_struct` with `collected_name`. Runtime strict identity compares same-type
-shared handles by pointer but returns false for different handle types, including a
-derived/base view of the same object. Struct definitions consequently fail publication.
-A standalone native probe confirms both direct and nullable-wrapped derived/base
-comparisons return false. Review the object-identity contract/runtime boundary before
-choosing a runtime correction or explicit source normalization; also inspect removal
-comparisons. No parked LLVM semantic changes are needed to investigate this shared path.
+The native identity blocker is repaired in the shared runtime: compatible base/derived
+shared handles compare adjusted object pointers, including nullable normalization.
+`Scope_Publication::register()` can now match `?collected_struct` with `collected_name`
+without a compiler-side cast or algorithm change. The focused runtime test covers
+both comparison directions, distinct objects, empty/present nullable values, and
+multiple/virtual inheritance; it passes with Clang and GCC. Unrelated static interface
+views retain the existing fallback and are not expanded by this slice.
 
 STAN analyzes 71 converted units in about 3.6 seconds and reports 1,049 diagnostics
 (70 compile-error bucket, 760 STAN-error bucket, 219 warnings). These are analyzer

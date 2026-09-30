@@ -425,6 +425,12 @@ Rows in this family should normally use:
 - `status=supported`
 - `behavior_class=helper_routed`
 
+Shared-object identity also accepts compatible base/derived handle views (either
+pointer type implicitly converts to the other), following runtime spec section 7a.
+This remains helper-routed and does not add ordinary comparison or scalar coercions.
+The native shared-identity test covers inheritance relationships beyond the matrix's
+representative same-type rows.
+
 The matrix must keep wrapper and mixed normalization explicit.
 A summary row may say the family is helper-routed, but concrete profile rows are still required.
 

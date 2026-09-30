@@ -3032,13 +3032,14 @@
 				"family_rule": "repeated source-TypeRef conversions use abi_bridge_rule_families with a stable family_id, member list, and deferred-member list",
 				"text_coercion_rule": "new printable source types add coercions.text.abi_bridge_rules or coercions.text.abi_bridge_rule_families plus any needed carrier adapter, not source-specific compiler casts"
 			},
-			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity using exact type matching except for null_t versus nullable<T>.",
+			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity normalizing wrappers and comparing compatible shared-object views by managed identity.",
 			"php_identity": {
-				"rule": "exact_type_required_except_null_nullable",
+				"rule": "visible_value_identity_after_wrapper_normalization",
 				"exceptions": [
 					"null_t == null_t",
 					"null_t == nullable<T> when empty",
-					"nullable<T> == null_t when empty"
+					"nullable<T> == null_t when empty",
+					"shared_p<T> === shared_p<U> compares adjusted pointers when either T* or U* implicitly converts to the other"
 				],
 				"same_type_behavior": {
 					"scalars": "value_compare",
