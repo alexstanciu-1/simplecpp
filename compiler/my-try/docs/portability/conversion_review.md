@@ -90,9 +90,13 @@ STAN attempt (`logs-6`) reports 68 initialization checks, six unresolved calls,
 one override mismatch and one LLVM enum diagnostic. The user authorized bypassing
 STAN for native investigation. After the parser constructor/scope/type cleanups,
 conversion passes and the previous 27 parser visibility errors disappear.
-The next generation blocker is `Compiler::cpp()`: `$output` is created inside
-`try` and published outside its block. Evidence:
-`/tmp/my-try-native-20260930-scopes.stderr`. C++ compilation has not started.
+The next scope blocker in `Compiler::cpp()` is also resolved: declare
+`$output /** cpp_module */;` before `try`, then assign inside it. Focused
+incremental-C++ and recovery tests pass. Conversion and C++ generation now succeed;
+clang reports actual compilation errors, beginning with field/method naming
+collisions (`Parser::result`, `file_node::file_scope`). Evidence:
+`/tmp/my-try-native-20260930-output-local.stderr` and the matching stdout.
+No native compiler executable or execution results are available yet.
 
 ## Current authoring contracts
 

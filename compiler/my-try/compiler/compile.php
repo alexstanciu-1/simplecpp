@@ -282,6 +282,7 @@ final class Compiler
 		if (q_count($prepared) !== 1) {
 			throw new \RuntimeException('C++ emission requires one prepared source file; run prepare first');
 		}
+		$output /** cpp_module */;
 		try {
 			$output = (new CPP_Generator(Model::$cpp_program))->generate($prepared[0]);
 		}
