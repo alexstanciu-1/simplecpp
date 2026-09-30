@@ -7,6 +7,22 @@ and [preparation](../../04_analyze/prepare/README.md). The
 [original discussion](../archive/incremental_strategy_history.md) is historical;
 its superseded proposals and completed tasks are not an implementation backlog.
 
+## Top-priority v0.2 review: abstract-typed properties
+
+Review properties declared as abstract classes or interfaces, including collection
+elements/keys and trait-provided fields. Identify which genuinely store several
+concrete roles and which erase a known specialization. Start with AST child/type
+fields, collected-occurrence links, scope indexes, preparation work/dependency
+records and C++ fragment records. Keep bodies as processing units, not symbols.
+
+For each boundary, document the permitted concrete roles, ownership and nullability;
+retain intentional polymorphism and narrow unnecessarily broad declarations. A
+nullable concrete property represents absence, not multiple concrete object types.
+Do not mechanically specialize every shared field or duplicate the symbol model.
+Coordinate language implications with the
+[inheritance-contract review](../catalog/11_inheritance.md#v02-contract-review-debt).
+This is review debt; no property redesign is approved by this entry.
+
 ## Remaining incremental work
 
 | Area | Deferred work / boundary |
