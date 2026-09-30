@@ -436,9 +436,28 @@ final class CPP_Generator
 		return self::local_name($target);
 	}
 
-	/** Source names are scope-local, stable under movement and prefixed against C++ keywords. */
+	/** Derive one reversible, C++-safe spelling without changing frontend identities. */
+	public static function source_name(string $role, string $name): string
+	{
+		$suffix = '';
+		for ($index = 0; $index < string_byte_len($name); $index++) {
+			$byte = string_byte_at($name, $index);
+			if ($byte === 85) {
+				$suffix .= 'UU';
+			}
+			elseif ($byte === 95) {
+				$suffix .= 'U_';
+			}
+			else {
+				$suffix .= string_byte_from_int($byte);
+			}
+		}
+		return $role . '_' . $suffix;
+	}
+
+	/** Local and parameter references share the declaration-derived backend spelling. */
 	public static function local_name(collected_name $declaration): string
 	{
-		return 'local_' . $declaration->name;
+		return self::source_name('local', $declaration->name);
 	}
 }

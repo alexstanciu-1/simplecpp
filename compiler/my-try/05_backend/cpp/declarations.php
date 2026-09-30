@@ -40,7 +40,7 @@ final class CPP_Declarations
 			$separator = ', ';
 		}
 
-		return self::type($facts->return_type, $context) . ' function_' . $syntax->occurrence()->name . '(' . $parts . ')';
+		return self::type($facts->return_type, $context) . ' ' . CPP_Generator::source_name('function', $syntax->occurrence()->name) . '(' . $parts . ')';
 	}
 
 	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */
@@ -71,7 +71,7 @@ final class CPP_Declarations
 
 		// Mark before descending so a by-value cycle fails before a partial layout is emitted.
 		$context->record_states[$key] = cpp_record_state::visiting;
-		$text = 'struct record_' . $key . "\n{\n";
+		$text = 'struct ' . CPP_Generator::source_name('record', $key) . "\n{\n";
 
 		$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 		foreach ($fields->items() as $field)
@@ -83,7 +83,7 @@ final class CPP_Declarations
 			}
 
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
-			$text .= "\t" . self::type($type, $context) . ' field_' . $entry->name . ";\n";
+			$text .= "\t" . self::type($type, $context) . ' ' . CPP_Generator::source_name('field', $entry->name) . ";\n";
 		}
 
 		$context->records .= $text . "};\n\n";
@@ -120,7 +120,7 @@ final class CPP_Declarations
 			$separator = ', ';
 		}
 
-		$text .= "\treturn function_" . $entry->name . '(' . $names . ");\n}())";
+		$text .= "\treturn " . CPP_Generator::source_name('function', $entry->name) . '(' . $names . ");\n}())";
 		return $text;
 	}
 
@@ -129,6 +129,6 @@ final class CPP_Declarations
 	{
 		$entry = object_cast(weakref_get($syntax->require_field_access_preparation()->field->declaration), collected_name::class);
 		$base = $syntax->base;
-		return '(' . $base->generate_cpp(new CPP_Syntax($context)) . ').field_' . $entry->name;
+		return '(' . $base->generate_cpp(new CPP_Syntax($context)) . ').' . CPP_Generator::source_name('field', $entry->name);
 	}
 }

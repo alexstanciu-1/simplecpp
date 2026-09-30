@@ -93,6 +93,8 @@ $cases = [
 	'keyword' => ['$int = 10; return $int;', 10],
 	'ident_var_001' => ['function f(int $int): void { $while = $int; }', 0],
 	'ident_var_001_prefix_collision' => ['function f(int $int, int $local_int): void { $while = $int; $local_while = $local_int; }', 0],
+	'ident_var_escaping' => ['function _f(int $_x, int $U_x, int $a__b, int $aU_U_b): int { $_copy = $_x; return $_copy; } return _f(1, 2, 3, 4);', 1],
+	'ident_record_escaping' => ['struct _Box__U { int32 $_field__U; } $value _Box__U; $value->_field__U = 5; return $value->_field__U;', 5],
 ];
 // Ordinary functions and value structs exercise the existing frontend without adding syntax.
 $cases += [
@@ -396,10 +398,43 @@ foreach ($cases as $name => [$source, $exit])
 	if ($name === 'ident_var_001_prefix_collision')
 	{
 		$text = Model::$cpp_files[0]->text;
-		$signature = 'void function_f(scpp::int_t<> local_int, scpp::int_t<> local_local_int)';
-		$body = "\tauto local_while = local_int;\n\tauto local_local_while = local_local_int;\n";
+		$signature = 'void function_f(scpp::int_t<> local_int, scpp::int_t<> local_localU_int)';
+		$body = "\tauto local_while = local_int;\n\tauto local_localU_while = local_localU_int;\n";
 		if ((substr_count($text, $signature) !== 2) || !str_contains($text, $body)) {
 			throw new \LogicException('Role prefixes collided with source names containing the same prefix');
+		}
+	}
+
+	if ($name === 'ident_var_escaping')
+	{
+		$function = object_cast($syntax->root->declarations[0], function_node::class);
+		$assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
+		$target = object_cast($assignment->target, variable_reference_node::class);
+		$source = object_cast($assignment->value, variable_reference_node::class);
+		$call = object_cast(object_cast($syntax->root->body->statements[0], return_node::class)->expression, call_node::class);
+		$text = Model::$cpp_files[0]->text;
+		$signature = 'scpp::int_t<> function_U_f(scpp::int_t<> local_U_x, scpp::int_t<> local_UUU_x, '
+			. 'scpp::int_t<> local_aU_U_b, scpp::int_t<> local_aUUU_UUU_b)';
+		if (($function->name !== '_f') || ($call->name !== '_f') ||
+			($function->parameters[0]->name !== '_x') || ($function->parameters[1]->name !== 'U_x') ||
+			($function->parameters[2]->name !== 'a__b') || ($function->parameters[3]->name !== 'aU_U_b') ||
+			($target->name !== '_copy') || ($source->name !== '_x') ||
+			(substr_count($text, $signature) !== 2) ||
+			!str_contains($text, 'auto local_U_copy = local_U_x;') ||
+			!str_contains($text, 'return function_U_f(argument_0, argument_1, argument_2, argument_3);') ||
+			str_contains($text, '__')) {
+			throw new \LogicException('NOTE-021 lost raw names, reversible escaping or consistent function spelling');
+		}
+	}
+
+	if ($name === 'ident_record_escaping')
+	{
+		$text = Model::$cpp_files[0]->text;
+		if (!str_contains($text, "struct record_U_BoxU_U_UU\n") ||
+			(substr_count($text, 'record_U_BoxU_U_UU local_value') !== 1) ||
+			!str_contains($text, 'scpp::int_t<std::int32_t> field_U_fieldU_U_UU;') ||
+			(substr_count($text, '.field_U_fieldU_U_UU') !== 2) || str_contains($text, '__')) {
+			throw new \LogicException('NOTE-021 did not share identifier escaping across record and field roles');
 		}
 	}
 

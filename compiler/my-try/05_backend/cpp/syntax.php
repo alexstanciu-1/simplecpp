@@ -96,7 +96,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 
 	public function generate_field(field_node $node): string
 	{
-		return CPP_Declarations::type($node->require_preparation()->type, $this->context) . ' field_' . $node->name;
+		return CPP_Declarations::type($node->require_preparation()->type, $this->context) . ' ' . CPP_Generator::source_name('field', $node->name);
 	}
 
 	public function generate_expression_statement(expression_statement_node $node): string

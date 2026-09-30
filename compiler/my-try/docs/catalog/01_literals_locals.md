@@ -35,7 +35,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-REASSIGN-003](#var-reassign-003) | agreed | `$a = 1; $a = $a + $a;` | proved | in-progress | deferred | [Two-read reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [IDENT-VAR-001](#ident-var-001) | agreed | `function f(int $int): void { $while = $int; }` | proved | in-progress | deferred | [Prepared identity and role-prefixed C++ naming proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-011](#note-011) | agreed | `$i = 1; $f = 1.5; $b = true; $s = "x";` | proved | in-progress | deferred | Consolidated by the scalar-literal rows and their [PHP preparation/emission proofs](../../tests/s2s.php); later expression contexts retain their own proof obligations |
-| [NOTE-021](#note-021) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-021](#note-021) | agreed | `function _f(int $_x, int $U_x): int { return $_x; }` | proved | in-progress | deferred | [Raw-name preservation and reversible local/function/record/field escaping proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-033](#note-033) | split | `NOTE-033.a`: entry/function local isolation | in-progress | in-progress | deferred | `.a` proved by [prepared identity, emitted C++ and exact rejection](../../tests/s2s.php); `.b` nested-block visibility waits for control flow; namespace execution belongs to chapter 08 |
 | [NOTE-034](#note-034) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | Consolidated by [VAR-REASSIGN-001](#var-reassign-001) and its [prepared-identity/emission proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [NOTE-035](#note-035) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
@@ -1220,11 +1220,11 @@ used in prototypes, definitions, declarations and references, so a C++ keyword i
 never emitted as the complete identifier. The visible role also helps generated-code
 debugging.
 
-Prefixing is injective within the current ASCII source-name domain: `$int` and
-`$local_int` become `local_int` and `local_local_int`, while `$while` and
-`$local_while` similarly remain distinct. Source scope/preparation still owns whether
-two occurrences share a declaration; generated spelling is not used for semantic
-lookup.
+Role prefixing plus the `NOTE-021` escape is injective within the current ASCII
+source-name domain: `$int` and `$local_int` become `local_int` and
+`local_localU_int`, while `$while` and `$local_while` similarly remain distinct.
+Source scope/preparation still owns whether two occurrences share a declaration;
+generated spelling is not used for semantic lookup.
 
 **Legacy edge-case review:** The old S2S preserved ordinary raw names, mapped C++
 keywords to `<name>__`, and added numeric suffixes when that candidate collided. The
@@ -1232,11 +1232,10 @@ collision concern still applies, but the chosen role prefix avoids the exact leg
 collision family without a keyword table or per-scope suffix search. This is a
 deliberate naming-policy departure, not an attempt to reproduce legacy output bytes.
 
-Comprehensive escaping of C++ implementation-reserved patterns remains separate.
-For example, a source name beginning with `_` can currently produce `local__...`;
-`NOTE-021` must reconcile that broader identifier-sanitization rule before claiming
-all possible source names are safe. Function/record/field collision policy and
-cross-file name mangling are also outside this row. LLVM remains deferred.
+`NOTE-021` now owns comprehensive escaping of C++ implementation-reserved underscore
+patterns for all current source-derived role families. Namespace components, future
+special-method lowering and cross-file name mangling remain outside this row. LLVM
+remains deferred.
 
 **Verification (2026-09-30):** focused PHP S2S proofs cover the strict example,
 distinct parameter/local declaration identities, source-reference resolution,
@@ -1400,7 +1399,79 @@ claim for v0.2.
 
 **Source:** [generators/php/specs/rules.md:308](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** v0.2 uses one reversible C++-backend escape for the
+current ASCII source-identifier domain. The frontend retains exact raw names and
+declaration identities. C++ lowering derives every current source-named role as:
+
+```text
+<role>_<encoded source name>
+```
+
+The suffix encoder maps `_` to `U_`, maps literal `U` to `UU`, and leaves every
+other ASCII letter or digit unchanged. Examples:
+
+| Source name | Local C++ name |
+| --- | --- |
+| `value` | `local_value` |
+| `my_value` | `local_myU_value` |
+| `_value` | `local_U_value` |
+| `a__b` | `local_aU_U_b` |
+| `U_value` | `local_UUU_value` |
+
+Every emitted `U` in the encoded suffix begins either `UU` or `U_`, so the mapping
+can be decoded without a scope table. The suffix never begins with `_` and never
+contains `__`. Combined with letter-starting role prefixes, this avoids C++ keywords,
+leading implementation-reserved forms and double-underscore forms while remaining
+stable under source movement. Distinct source names cannot collapse to one C++ name.
+
+The helper is owned entirely by C++ lowering and is shared by the current `local`,
+`function`, `record` and `field` families. Prototypes, definitions, calls,
+declarations and references therefore derive the same spelling from the same raw
+identity. Preparation does not retain an encoded name and semantic lookup never uses
+one.
+
+For the focused function case:
+
+```php
+function _f(int $_x, int $U_x, int $a__b, int $aU_U_b): int
+{
+	$_copy = $_x;
+	return $_copy;
+}
+```
+
+the signature becomes:
+
+```cpp
+scpp::int_t<> function_U_f(
+	scpp::int_t<> local_U_x,
+	scpp::int_t<> local_UUU_x,
+	scpp::int_t<> local_aU_U_b,
+	scpp::int_t<> local_aUUU_UUU_b);
+```
+
+**Legacy edge-case review:** the old S2S keyword table mapped a reserved word to a
+suffix containing `__`, then searched for a numeric collision suffix. In C++, `__`
+is itself implementation-reserved in every context. The v0.2 role prefix already
+prevents a source keyword from becoming the whole generated identifier, and the
+reversible escape removes underscore hazards without mutable per-scope allocation.
+This is a deliberate semantic-preserving departure from legacy output bytes.
+
+Synthesized temporaries retain their separately owned backend names. Unicode source
+identifiers, namespace-component mangling, constructor/destructor special semantics
+and future source roles remain with their owning catalog entries. LLVM remains
+deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs retain the raw spellings
+`_f`, `_x`, `U_x`, `a__b`, `aU_U_b` and `_copy` through frontend preparation while
+checking exact, distinct prototype/definition/call/local spellings and the absence of
+`__` in generated output. A record/field case proves the same helper is shared by all
+four current source-derived role families. General source-purity and cleanup checks
+cover both cases. Generated C++ is inspected but is not compiled or executed in this
+slice, so C++ S2S remains `in-progress` pending explicit native validation.
+
+Imported prose follows for provenance; its keyword table and collision suffix are
+not the v0.2 target.
 
 > ## 11A. Variable naming normalization
 >
