@@ -32,7 +32,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-CHAIN-004](#var-chain-004) | agreed | `$a = 1; $b = $a + 1;` | proved | in-progress | deferred | [Canonical integer-addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-ORDER-001](#var-order-001) | agreed | `$a = $b; $b = 1;` | proved | not-applicable | deferred | [Exact source-order diagnostic and no-publication proof](../../tests/s2s.php); invalid standalone input has no C++ lowering |
 | [VAR-REASSIGN-002](#var-reassign-002) | agreed | `$a = 1; $a = $a + 1;` | proved | in-progress | deferred | [Exact reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-REASSIGN-003](#var-reassign-003) | pending-discussion | `$a = 1; $a = $a + $a;` | unverified | unverified | deferred | — |
+| [VAR-REASSIGN-003](#var-reassign-003) | agreed | `$a = 1; $a = $a + $a;` | proved | in-progress | deferred | [Two-read reassignment/addition preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [IDENT-VAR-001](#ident-var-001) | pending-discussion | `function f(int $int) { $while = $int; }` | unverified | unverified | deferred | — |
 | [NOTE-011](#note-011) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-021](#note-021) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
@@ -1123,7 +1123,41 @@ auto a = static_cast<int_t>(1); a = a + static_cast<int_t>(1);
 
 ## VAR-REASSIGN-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** This row is the variable-only counterpart to
+`VAR-REASSIGN-002` and reuses the same reassignment and canonical integer-addition
+paths. The exact input emits:
+
+```cpp
+auto local_a = static_cast<scpp::int_t<>>(1LL);
+local_a = (local_a + local_a);
+```
+
+The two RHS `$a` spellings are distinct syntax nodes with distinct prepared
+reference facts. Both facts resolve to the declaration established by the first
+statement and retain its canonical integer type. The binary expression prepares
+both reads before the enclosing write is classified, produces the prepared
+`addition` result, and the outer assignment reuses that same declaration identity.
+Because both operands are pure reads of unchanged storage, their relative C++
+evaluation order cannot affect the result; the write occurs after the RHS value is
+formed.
+
+**Legacy edge-case review:** The old S2S correctly emitted two variable reads with
+no additional literal casts and omitted `auto` on the second write. That spelling
+alone could not prove whether both reads or the write referred to the intended
+storage. v0.2 retains the direct expression while proving the three uses share one
+prepared declaration identity.
+
+Aliasing/reference operands, effectful operands, noncanonical integer promotion,
+compound assignment and operators other than `+` remain outside this row. LLVM
+remains deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs cover two distinct RHS nodes
+and fact objects, their shared declaration and canonical type, prepared addition,
+assignment classification, one `auto`, exact C++ spelling, cleanup and source purity.
+A value-bearing companion case records the expected result `2` for the on-demand
+native harness. Generated C++ is inspected but not compiled or executed in this
+slice; native compiler validation remains pending explicit request, so C++ S2S
+stays `in-progress`.
 
 ### Imported version 1
 
