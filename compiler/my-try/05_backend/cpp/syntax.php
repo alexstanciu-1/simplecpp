@@ -109,13 +109,9 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return "\t" . CPP_Generator::generate_storage($node->require_preparation(), null, $node->initializer, true, $this->context) . ";\n";
 	}
 
-	/** Current grammar admits writes as standalone statements; first writes introduce locals. */
+	/** Statement generation owns declaration lifting for assignment expressions. */
 	public function generate_assignment_expression(assignment_expression_node $node): string
 	{
-		$target /** nullable<assignable_expression_node> */ = $node->target;
-		if ($target instanceof variable_reference_node) {
-			$target = null;
-		}
-		return CPP_Generator::generate_storage($node->require_assignment_preparation()->binding, $target, $node->value, false, $this->context);
+		throw new \RuntimeException('S2S assignment expressions require statement-owned lowering');
 	}
 }

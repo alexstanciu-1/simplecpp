@@ -17,6 +17,14 @@ final class cpp_type {
 	public cpp_literal_kind $literal;
 }
 
+/** Transient result of flattening one assignment step into surrounding statements. */
+final class cpp_assignment_sequence
+{
+	public string $statements = '';
+	public string $value;
+	public type_definition $type;
+}
+
 /** Final bytes own no references into preparation or source syntax. */
 final class cpp_module {
 	public string $file_name;

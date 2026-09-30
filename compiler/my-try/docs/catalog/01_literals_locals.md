@@ -26,7 +26,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-REASSIGN-001](#var-reassign-001) | agreed | `$a = 1; $a = 2;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-STR-003](#lit-str-003) | agreed | `$a = "";` | proved | in-progress | deferred | [Generalized string preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-CONST-001](#lit-const-001) | agreed | `$a = PHP_INT_MAX;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [VAR-CHAIN-001](#var-chain-001) | pending-discussion | `$a = $b = 1;` | unverified | unverified | deferred | — |
+| [VAR-CHAIN-001](#var-chain-001) | agreed | `$a = $b = 1;` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-CHAIN-002](#var-chain-002) | pending-discussion | `$a = 1; $b = $a;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-003](#var-chain-003) | pending-discussion | `$a = 1; $b = $a; $c = $b;` | unverified | unverified | deferred | — |
 | [VAR-CHAIN-004](#var-chain-004) | pending-discussion | `$a = 1; $b = $a + 1;` | unverified | unverified | deferred | — |
@@ -754,7 +754,26 @@ auto a = PHP_INT_MAX;
 
 ## VAR-CHAIN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Plain-variable assignment chains parse as
+right-associative nested `assignment_expression_node` objects. Each target keeps its
+own write occurrence and prepared binding. Preparation evaluates and publishes the
+inner write before classifying the outer inferred target, so declaration versus
+reassignment is decided independently at every depth. The first example emits:
+
+```cpp
+auto local_b = static_cast<scpp::int_t<>>(1LL);
+auto local_a = local_b;
+```
+
+Statement generation flattens arbitrary-depth plain-variable chains from the
+innermost write outward. Each outer step reads the preceding target's stored value,
+preserving conversions and evaluating the original RHS once. Existing inner or
+outer locals become assignments normally. For `$a = $a = 1;`, the inner write is
+the single declaration and the outer write is a reassignment to that identity.
+Member/index targets, typed-declaration initializers, reference/compound chains and
+assignment expressions embedded in calls, returns or other expressions remain
+outside this slice. Sequential-assignment catalog rows are not completed by this
+recursive chain implementation.
 
 ### Imported version 1
 

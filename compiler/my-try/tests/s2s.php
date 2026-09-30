@@ -70,6 +70,13 @@ $cases = [
 	'constant_int_max' => ['$a = PHP_INT_MAX;', 0],
 	'constant_name_call' => ['function PHP_INT_MAX(): int { return 3; } return PHP_INT_MAX();', 3],
 	'constant_namespaces' => ['$PHP_INT_MAX = 1; $a = PHP_INT_MAX; return $PHP_INT_MAX;', 1],
+	'chain' => ['$a = $b = 1; return $a;', 1],
+	'chain_deep' => ['$a = $b = $c = 4; return $a;', 4],
+	'chain_existing_outer' => ['$a = 2; $a = $b = 1; return $a;', 1],
+	'chain_existing_inner' => ['$b = 2; $a = $b = 1; return $b;', 1],
+	'chain_same_target' => ['$a = $a = 1; return $a;', 1],
+	'chain_conversion' => ['$b uint8 = 0; $a = $b = 257; return $a;', 1],
+	'chain_call_once' => ['function value(): int { return 5; } $a = $b = value(); return $a;', 5],
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
@@ -180,6 +187,57 @@ foreach ($cases as $name => [$source, $exit])
 		}
 	}
 
+	if ($name === 'chain')
+	{
+		$text = Model::$cpp_files[0]->text;
+		$outer = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$inner = object_cast($outer->value, assignment_expression_node::class);
+		$outer_binding = $outer->require_assignment_preparation()->binding;
+		$inner_binding = $inner->require_assignment_preparation()->binding;
+		$expected = "\tauto local_b = static_cast<scpp::int_t<>>(1LL);\n"
+			. "\tauto local_a = local_b;\n";
+		if (($inner_binding->resolved_kind !== binding_kind::declaration) ||
+			($outer_binding->resolved_kind !== binding_kind::declaration) ||
+			($inner_binding->type !== $outer_binding->type) || !str_contains($text, $expected)) {
+			throw new \LogicException('Assignment chain lost right-associative facts or inner-first lowering');
+		}
+	}
+
+	if ($name === 'chain_deep') {
+		$expected = "\tauto local_c = static_cast<scpp::int_t<>>(4LL);\n"
+			. "\tauto local_b = local_c;\n"
+			. "\tauto local_a = local_b;\n";
+		if (!str_contains(Model::$cpp_files[0]->text, $expected)) {
+			throw new \LogicException('Deep assignment chain was not flattened from the innermost write');
+		}
+	}
+
+	if ($name === 'chain_same_target')
+	{
+		$outer = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$inner = object_cast($outer->value, assignment_expression_node::class);
+		$outer_binding = $outer->require_assignment_preparation()->binding;
+		$inner_binding = $inner->require_assignment_preparation()->binding;
+		$text = Model::$cpp_files[0]->text;
+		if (($inner_binding->resolved_kind !== binding_kind::declaration) ||
+			($outer_binding->resolved_kind !== binding_kind::assignment) ||
+			(weakref_get($outer_binding->declaration) !== weakref_get($inner_binding->declaration)) ||
+			(substr_count($text, 'auto local_a =') !== 1) ||
+			!str_contains($text, "\tlocal_a = local_a;\n")) {
+			throw new \LogicException('Repeated-name chain created two declarations or lost storage identity');
+		}
+	}
+
+	if (($name === 'chain_conversion') &&
+		(!str_contains(Model::$cpp_files[0]->text, 'local_b = static_cast<scpp::int_t<std::uint8_t>>((static_cast<scpp::int_t<>>(257LL)).native_value());') ||
+		 !str_contains(Model::$cpp_files[0]->text, 'auto local_a = local_b;'))) {
+		throw new \LogicException('Assignment chain copied the unconverted RHS instead of the stored inner value');
+	}
+
+	if (($name === 'chain_call_once') && (substr_count(Model::$cpp_files[0]->text, 'return function_value();') !== 1)) {
+		throw new \LogicException('Assignment chain evaluated its call RHS more than once');
+	}
+
 	if (isset($explicit_declarations[$name]))
 	{
 		[$cpp_type, $cpp_name] = $explicit_declarations[$name];
@@ -229,7 +287,7 @@ $rejections = ['function f(int &$x): void {} f(1);',
 	'struct A {} struct B {} $a A; $b B = $a;',
 	'struct S { uint8 $x; } $s S = [1];',
 	'function f(int &$x): void {} $x uint8 = 1; f($x);',
-	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a = UNKNOWN_CONSTANT;', '$a = php_int_max;', '$a void;', "return 'x';", 'template<T> function f(): int { return 1; }'];
+	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = $b = $a;', '$b = true; $a = $b = 1;', '$a = unknown();', '$a = UNKNOWN_CONSTANT;', '$a = php_int_max;', '$a void;', "return 'x';", 'template<T> function f(): int { return 1; }'];
 foreach ($rejections as $source)
 {
 	Compiler_Lifecycle::reset();

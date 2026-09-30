@@ -642,7 +642,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected type name or = after variable name'));
 		}
 		$this->position++;
-		$assignment->value = $this->expression();
+		$assignment->value = $this->expression(true);
 		$this->finish_node($assignment, $start);
 		$this->expect(';');
 		$statement = new expression_statement_node();
@@ -652,7 +652,7 @@ final class Parser_Run
 	}
 
 	/** Parse literals, calls and variable/index expressions; arithmetic is not supported yet. */
-	private function expression(): expression_node
+	private function expression(bool $allow_assignment = false): expression_node
 	{
 		if (($this->text() === 'true') || ($this->text() === 'false')) {
 			$start = $this->position;
@@ -682,6 +682,16 @@ final class Parser_Run
 		$node /** expression_node */;
 		if (string_byte_starts_with($text, '$')) {
 			$variable = $this->variable_reference($start);
+			if ($allow_assignment && ($this->text() === '='))
+			{
+				$variable->collect_write($this->collector, $this->current_scope, $start);
+				$this->position++;
+				$assignment = new assignment_expression_node();
+				$assignment->target = $variable;
+				$assignment->value = $this->expression(true);
+				$this->finish_node($assignment, $start);
+				return $assignment;
+			}
 			$variable->collect($this->collector, $this->current_scope, $start);
 			$node = $variable;
 		}

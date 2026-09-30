@@ -18,17 +18,31 @@ final class Body_Preparation
 	{
 		$binding = new prepared_binding();
 		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
-		$previous /** vector<prepared_storage> */ = $locals->named($entry->name);
-		if (($type_syntax !== null) && (q_count($previous) !== 0)) {
+		$before_initializer /** vector<prepared_storage> */ = $locals->named($entry->name);
+		if (($type_syntax !== null) && (q_count($before_initializer) !== 0)) {
 			throw new \RuntimeException('S2S local ' . $entry->name . ' is already declared in this scope');
 		}
+		if ($type_syntax !== null) {
+			$type /** type_node */ = $type_syntax;
+			$binding->type = Type_Preparation::type($type, $context);
+		}
+
+		// Inferred assignment expressions evaluate inner writes before classifying the outer target.
+		$value /** nullable<prepared_expression> */ = null;
+		if ($initializer !== null) {
+			$value_node /** expression_node */ = $initializer;
+			$value = Expression_Preparation::prepare($value_node, $context);
+		}
+
+		$previous /** vector<prepared_storage> */ = $type_syntax === null
+			? $locals->named($entry->name)
+			: $before_initializer;
 		if (($type_syntax !== null) || (q_count($previous) === 0))
 		{
 			$binding->resolved_kind = binding_kind::declaration;
 			$binding->declaration = $entry;
-			if ($type_syntax !== null) {
-				$type /** type_node */ = $type_syntax;
-				$binding->type = Type_Preparation::type($type, $context);
+			if (($type_syntax === null) && ($value !== null)) {
+				$binding->type = $value->type;
 			}
 		}
 		else
@@ -41,14 +55,9 @@ final class Body_Preparation
 			$binding->type = $previous[0]->type;
 		}
 
-		// An initializer cannot see the declaration currently being introduced.
-		if ($initializer !== null)
+		// The declaration is still unpublished while its initializer is prepared.
+		if ($value !== null)
 		{
-			$value_node /** expression_node */ = $initializer;
-			$value = Expression_Preparation::prepare($value_node, $context);
-			if (($binding->resolved_kind === binding_kind::declaration) && ($type_syntax === null)) {
-				$binding->type = $value->type;
-			}
 			Type_Preparation::require_assignable($binding->type, $value->type);
 		}
 		Type_Preparation::require_value_type($binding->type);

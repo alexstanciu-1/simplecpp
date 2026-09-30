@@ -209,28 +209,37 @@ final class CPP_Generator
 	/** Prepared declarations and member targets share the same typed assignment boundary. */
 	public static function generate_storage(prepared_binding $binding, ?assignable_expression_node $target, ?expression_node $initializer, bool $explicit_type, cpp_generation_context $context): string
 	{
-		$name = '';
-		if ($target !== null) {
-			$target /** ast_node */ = $target;
-			$name = $target->generate_cpp(new CPP_Syntax($context));
-		}
-		else {
-			$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
-			$name = self::local_name($declaration);
-		}
+		$name = self::storage_name($binding, $target, $context);
 
 		// Typed declarations without initializers retain their normal C++ default construction.
 		if ($initializer === null) {
 			return CPP_Declarations::type($binding->type, $context) . ' ' . $name;
 		}
 
+		$initializer /** expression_node */ = $initializer;
+		$value = $initializer->generate_cpp(new CPP_Syntax($context));
+		$value_type = $initializer->require_preparation()->type;
+		return self::generate_storage_value($binding, $name, $value, $value_type, $explicit_type, $context);
+	}
+
+	/** Select the declared local or concrete assignable target without rendering its value. */
+	private static function storage_name(prepared_binding $binding, ?assignable_expression_node $target, cpp_generation_context $context): string
+	{
+		if ($target !== null) {
+			$target_node /** ast_node */ = $target;
+			return $target_node->generate_cpp(new CPP_Syntax($context));
+		}
+		$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
+		return self::local_name($declaration);
+	}
+
+	/** Render one declaration or assignment from an already evaluated value expression. */
+	private static function generate_storage_value(prepared_binding $binding, string $name, string $value, type_definition $value_type, bool $explicit_type, cpp_generation_context $context): string
+	{
 		$prefix = '';
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
 		}
-		$initializer /** expression_node */ = $initializer;
-		$value = $initializer->generate_cpp(new CPP_Syntax($context));
-		$value_type = $initializer->require_preparation()->type;
 		if (($explicit_type || ($binding->resolved_kind === binding_kind::assignment)) &&
 			($binding->type !== $value_type)) {
 			$value = CPP_Declarations::value($value, $binding->type, $context);
@@ -257,7 +266,45 @@ final class CPP_Generator
 	public static function generate_expression_statement(expression_statement_node $syntax, cpp_generation_context $context): string
 	{
 		$expression = $syntax->expression;
+		if ($expression instanceof assignment_expression_node) {
+			return self::generate_assignment_statement(object_cast($expression, assignment_expression_node::class), $context);
+		}
 		return "\t" . $expression->generate_cpp(new CPP_Syntax($context)) . ";\n";
+	}
+
+	/** Flatten right-associative writes so introduced locals remain in the surrounding body. */
+	private static function generate_assignment_statement(assignment_expression_node $syntax, cpp_generation_context $context): string
+	{
+		return self::generate_assignment_sequence($syntax, $context)->statements;
+	}
+
+	/** Emit inner writes first and return their stored value to the enclosing assignment. */
+	private static function generate_assignment_sequence(assignment_expression_node $syntax, cpp_generation_context $context): cpp_assignment_sequence
+	{
+		$value_node = $syntax->value;
+		$source = new cpp_assignment_sequence();
+		if ($value_node instanceof assignment_expression_node) {
+			$source = self::generate_assignment_sequence(object_cast($value_node, assignment_expression_node::class), $context);
+		}
+		else {
+			$source->value = $value_node->generate_cpp(new CPP_Syntax($context));
+			$source->type = $value_node->require_preparation()->type;
+		}
+
+		$binding = $syntax->require_assignment_preparation()->binding;
+		$target /** nullable<assignable_expression_node> */ = $syntax->target;
+		if ($target instanceof variable_reference_node) {
+			$target = null;
+		}
+		$name = self::storage_name($binding, $target, $context);
+		$statements = $source->statements;
+		$statements .= "\t" . self::generate_storage_value($binding, $name, $source->value, $source->type, false, $context) . ";\n";
+
+		$result = new cpp_assignment_sequence();
+		$result->statements = $statements;
+		$result->value = $name;
+		$result->type = $binding->type;
+		return $result;
 	}
 
 	/** Emit exact signed integer magnitude using its canonical representation. */

@@ -19,8 +19,11 @@ expression statements, returns and blocks extend `statement_node`.
 Untyped writes use `assignment_expression_node` inside an expression statement.
 Explicit typed declarations use `variable_declaration_node`. Both preparation paths
 share storage/binding algorithms; assignment facts own the resolved binding and
-result type. This structural change does not expand the accepted source grammar.
-Chained/compound assignments and nested declarations remain separate language work.
+result type. Plain-variable chains retain nested right-associative assignment nodes;
+preparation classifies each write from inner to outer and C++ statement generation
+lifts declarations into the surrounding body without duplicating the RHS. Assignment
+expressions in other expression contexts, compound assignments and nested declarations
+remain separate language work.
 
 Name-bearing nodes save their spelling. Half-open uint32 source spans
 `[first_token_index, end_token_index)` are provenance, not symbol keys. Common
