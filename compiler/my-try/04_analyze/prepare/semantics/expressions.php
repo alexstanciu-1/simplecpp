@@ -87,8 +87,8 @@ final class Expression_Preparation
 	/** Prepare operands in source order and admit only the agreed canonical integer addition. */
 	public static function prepare_binary(binary_expression_node $node, preparation_context $context): prepared_binary_expression
 	{
-		$operator = $context->collection->token_snapshot()->text_at($node->operator_token_index);
-		if ($operator !== '+') {
+		$operator_text = $context->collection->token_snapshot()->text_at($node->operator_token_index);
+		if ($operator_text !== '+') {
 			throw new \RuntimeException('S2S binary operator is not supported yet');
 		}
 		self::require_order_independent_addition_operand($node->left);

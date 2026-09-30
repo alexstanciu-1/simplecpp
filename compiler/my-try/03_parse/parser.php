@@ -657,10 +657,10 @@ final class Parser_Run
 		$left = $this->primary_expression($allow_assignment);
 		while ($this->text() === '+')
 		{
-			$operator = $this->position++;
+			$operator_token_index = $this->position++;
 			$binary = new binary_expression_node();
 			$binary->left = $left;
-			$binary->operator_token_index = $operator;
+			$binary->operator_token_index = $operator_token_index;
 			$binary->right = $this->primary_expression(false);
 			$this->finish_node($binary, $left->start_token());
 			$left = $binary;
