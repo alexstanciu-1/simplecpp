@@ -64,6 +64,7 @@ $cases = [
 	'bool_and_int' => ['$a = true; $b = 7; return $b;', 7],
 	'string_single' => ['$a = \'x\';', 0],
 	'string_double' => ['$a = "x";', 0],
+	'string_explicit' => ['$x string = "test"; $x = "next";', 0],
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
@@ -112,6 +113,12 @@ $float_forms = ['10.5', '.5', '10.', '1e3', '1E+3', '1.25e-3', '.5e2', '10.e-1',
 foreach ($float_forms as $index => $spelling) {
 	$cases['float_form_' . $index] = ['$a = ' . $spelling . ';', 0];
 }
+$explicit_declarations = [
+	'explicit' => ['scpp::int_t<>', 'local_a'],
+	'float_explicit' => ['scpp::float_t', 'local_a'],
+	'bool_explicit' => ['scpp::bool_t', 'local_a'],
+	'string_explicit' => ['scpp::string_t', 'local_x'],
+];
 $executions = [];
 foreach ($cases as $name => [$source, $exit])
 {
@@ -152,6 +159,15 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::string_t>);\n";
 		$probe .= "\tif (local_a.native_value() != std::string(\"x\", 1)) { return 91; }\n";
 		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", $text));
+	}
+
+	if (isset($explicit_declarations[$name]))
+	{
+		[$cpp_type, $cpp_name] = $explicit_declarations[$name];
+		$text = Model::$cpp_files[0]->text;
+		if (!str_contains($text, $cpp_type . ' ' . $cpp_name . ' = ') || str_contains($text, 'auto ' . $cpp_name . ' = ')) {
+			throw new \LogicException('Explicit local declaration lost its canonical C++ type');
+		}
 	}
 
 	if (str_starts_with($name, 'float_form_'))
@@ -205,6 +221,55 @@ foreach ($rejections as $source)
 	}
 	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
 		throw new \LogicException('Unsupported generation published output');
+	}
+}
+
+// Explicit local types are authoritative semantic boundaries, not deferred C++ failures.
+Compiler_Lifecycle::reset();
+$syntax = s2s_parse('$x string = "test"; $x = "next";');
+$children = $syntax->root->body->statements;
+$declaration = object_cast($children[0], variable_declaration_node::class);
+$assignment = object_cast($children[1]->expression, assignment_expression_node::class);
+$before = s2s_snapshot($syntax);
+$compiler = new Compiler();
+$compiler->prepare();
+$declaration_facts = $declaration->require_preparation();
+$assignment_facts = $assignment->require_assignment_preparation()->binding;
+$string_type = Language_Types::string_type(Model::$language_scope);
+if (($declaration_facts->resolved_kind !== binding_kind::declaration) ||
+	($assignment_facts->resolved_kind !== binding_kind::assignment) ||
+	($declaration_facts->type !== $string_type) || ($assignment_facts->type !== $string_type) ||
+	(weakref_get($declaration_facts->declaration) !== weakref_get($assignment_facts->declaration))) {
+	throw new \LogicException('Explicit string local lost its prepared type or declaration identity');
+}
+$compiler->cpp();
+$typed_output = Model::$cpp_files[0]->text;
+$typed_spelling = "\tscpp::string_t local_x = scpp::string_t(\"test\");\n\tlocal_x = scpp::string_t(\"next\");\n";
+if (!str_contains($typed_output, $typed_spelling)) {
+	throw new \LogicException('Explicit string local did not retain typed declaration and ordinary reassignment lowering');
+}
+Compiler_Lifecycle::reset_preparation();
+if (($declaration->preparation() !== null) || ($assignment->preparation() !== null) || (s2s_snapshot($syntax) !== $before)) {
+	throw new \LogicException('Explicit local cleanup changed syntax or retained prepared facts');
+}
+
+$typed_local_rejections = [
+	'$x string = 1;' => 'value boundary requires matching types or an integer conversion',
+];
+foreach ($typed_local_rejections as $source => $diagnostic)
+{
+	Compiler_Lifecycle::reset();
+	$syntax = s2s_parse($source);
+	$before = s2s_snapshot($syntax);
+	$failed = false;
+	try {
+		(new Compiler())->prepare();
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), $diagnostic);
+	}
+	if (!$failed || !Model::$cpp_files->is_empty() || !Model::$prepared_files->is_empty() || (s2s_snapshot($syntax) !== $before)) {
+		throw new \LogicException('Explicit local mismatch missed its semantic diagnostic');
 	}
 }
 

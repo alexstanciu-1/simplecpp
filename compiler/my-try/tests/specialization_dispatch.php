@@ -97,7 +97,7 @@ $integer_output = $generator->generate($integer_prepared);
 $boolean_source = dispatch_parse('$a bool = false; return $a;');
 $boolean_prepared = (new File_Preparation($boolean_source->collection, Model::$language_scope))->prepare();
 $boolean_output = $generator->generate($boolean_prepared);
-if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($boolean_output->text, 'scpp/bool_t.hpp') || (substr_count($integer_output->text, 'auto local_a') !== 1)) {
+if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($boolean_output->text, 'scpp/bool_t.hpp') || (substr_count($integer_output->text, 'scpp::int_t<> local_a') !== 1)) {
 	throw new \LogicException('Generation leaked context or visited a binding twice');
 }
 

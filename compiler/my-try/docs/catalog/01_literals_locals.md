@@ -21,7 +21,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-FLOAT-001](#lit-float-001) | agreed | `$a = 10.5;` | proved | proved | deferred | [Scalar proof](../../tests/s2s.php), [float decision](#lit-float-001) |
 | [LIT-STR-001](#lit-str-001) | agreed | `$a = 'x';` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-STR-002](#lit-str-002) | agreed | `$a = "x";` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
-| [TYPE-VAR-001](#type-var-001) | pending-discussion | `$x string = "test";` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [TYPE-VAR-001](#type-var-001) | agreed | `$x string = "test";` | proved | in-progress | deferred | [PHP preparation and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [VAR-ASSIGN-001](#var-assign-001) | pending-discussion | `$a = $b;` | unverified | unverified | deferred | — |
 | [VAR-REASSIGN-001](#var-reassign-001) | pending-discussion | `$a = 1; $a = 2;` | unverified | unverified | deferred | — |
 | [LIT-STR-003](#lit-str-003) | pending-discussion | `$a = "";` | unverified | unverified | deferred | — |
@@ -401,9 +401,39 @@ auto a = string_t("x");
 
 **Strict-mode PHP input example:** `$x string = "test";`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This is the working source spelling. Imported examples remain reference material.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** An explicit strict local type is authoritative.
+Preparation resolves `string` to the canonical language type, records declaration
+identity and checks the initializer before output is permitted. The first example
+emits:
+
+```cpp
+scpp::string_t local_x = scpp::string_t("test");
+```
+
+Explicit declarations spell their prepared canonical C++ type; inferred first
+assignments continue to use `auto`. Later assignments use the established storage
+type and declaration identity. `$x string = 1;` is rejected during preparation
+rather than being deferred to the C++ compiler. This deliberately strengthens the
+legacy type-blind behavior, whose inline annotation selected output spelling but
+left general compatibility to native compilation.
+
+The prerequisite gate is satisfied locally: preparation already owns type
+resolution, initializer compatibility, declaration identity and source-order
+single evaluation. C++ lowering only chooses explicit-type versus inferred-`auto`
+spelling and applies the prepared destination conversion. The shared spelling rule
+also applies to existing explicit integer, float and boolean declarations; focused
+regressions cover those paths. Conversions beyond the existing integer family,
+string operations, nullable/dynamic types and other `TYPE-VAR` rows remain non-goals.
+LLVM remains deferred.
+
+**Verification (2026-09-30):** focused PHP S2S proofs cover prepared canonical type
+and declaration identity, explicit string output, compatible reassignment, mismatch
+rejection before publication, inferred-`auto` preservation, explicit scalar
+regressions, cleanup and source purity. Generated C++ is inspected but not compiled
+or executed; native compiler validation remains pending explicit request, so C++ S2S
+stays `in-progress`.
 
 ### Imported version 1
 

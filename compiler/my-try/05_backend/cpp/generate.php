@@ -209,7 +209,6 @@ final class CPP_Generator
 	/** Prepared declarations and member targets share the same typed assignment boundary. */
 	public static function generate_storage(prepared_binding $binding, ?assignable_expression_node $target, ?expression_node $initializer, bool $explicit_type, cpp_generation_context $context): string
 	{
-		$prefix = $binding->resolved_kind === binding_kind::declaration ? 'auto ' : '';
 		$name = '';
 		if ($target !== null) {
 			$target /** ast_node */ = $target;
@@ -225,6 +224,10 @@ final class CPP_Generator
 			return CPP_Declarations::type($binding->type, $context) . ' ' . $name;
 		}
 
+		$prefix = '';
+		if ($binding->resolved_kind === binding_kind::declaration) {
+			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
+		}
 		$initializer /** ast_node */ = $initializer;
 		$value = $initializer->generate_cpp(new CPP_Syntax($context));
 		if ($explicit_type || ($binding->resolved_kind === binding_kind::assignment)) {
