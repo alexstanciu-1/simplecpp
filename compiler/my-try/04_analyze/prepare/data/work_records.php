@@ -53,6 +53,9 @@ abstract class preparation_owner
 
 	/** Dispatch selects the work list; scheduling policy stays in the worker. */
 	abstract public function enqueue(Preparation_Worker $worker): void;
+
+	/** Select typed retirement; the worker owns unlinking and queue maintenance. */
+	abstract public function retire_from(Preparation_Worker $worker): void;
 }
 
 /** Declaration work is independently settled before any body consumes its facts. */
@@ -73,6 +76,11 @@ abstract class declaration_work extends preparation_owner
 	public function enqueue(Preparation_Worker $worker): void
 	{
 		$worker->enqueue_declaration($this);
+	}
+
+	public function retire_from(Preparation_Worker $worker): void
+	{
+		$worker->retire_declaration($this);
 	}
 
 	abstract public function rebuild(Preparation_Worker $worker, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool;
@@ -178,6 +186,11 @@ final class function_body_work extends body_work
 		$worker->enqueue_function_body($this);
 	}
 
+	public function retire_from(Preparation_Worker $worker): void
+	{
+		$worker->retire_function_body($this);
+	}
+
 	public function rebuild(Preparation_Worker $worker, preparation_context $context): void
 	{
 		$worker->prepare_function_body($this, $context);
@@ -199,6 +212,11 @@ final class file_body_work extends body_work
 	public function enqueue(Preparation_Worker $worker): void
 	{
 		$worker->enqueue_file_body($this);
+	}
+
+	public function retire_from(Preparation_Worker $worker): void
+	{
+		$worker->retire_file_body($this);
 	}
 
 	public function rebuild(Preparation_Worker $worker, preparation_context $context): void

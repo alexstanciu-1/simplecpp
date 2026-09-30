@@ -29,7 +29,10 @@ Declaration nodes select typed work: `function_signature_work` and
 bodies are processing units, never symbols. Fields/parameters settle with their
 definition. Replacing a body transfers its existing work identity.
 
-Work hooks delegate queueing, rebuilding and member settlement to the worker.
+Work hooks delegate queueing, rebuilding, member settlement and typed retirement
+to the worker. Retirement removes each role from its own queue; only declaration
+work unlinks incoming declaration dependencies. Common retirement clears outgoing
+links and shared indexes after dependent notification.
 Declaration work settles before separate function/file body lists. Identity sets
 deduplicate scheduling. Unchanged ready owners retain their facts. The worker creates
 one context per rebuild; function-body setup seeds its locals and return type.

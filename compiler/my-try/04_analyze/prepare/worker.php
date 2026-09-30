@@ -679,19 +679,33 @@ final class Preparation_Worker
 		return $result;
 	}
 
+	/** Only declarations can be dependency targets; remove incoming edges before common cleanup. */
+	public function retire_declaration(declaration_work $owner): void
+	{
+		foreach ($owner->dependents as $dependent /** @object-key */) {
+			unset($dependent->dependencies[$owner]);
+		}
+		unset($this->declarations[$owner]);
+	}
+
+	public function retire_function_body(function_body_work $owner): void
+	{
+		unset($this->function_bodies[$owner]);
+	}
+
+	public function retire_file_body(file_body_work $owner): void
+	{
+		unset($this->file_bodies[$owner]);
+	}
+
 	/** Explicitly sever both directions; strong-reference storage must not keep retired owners alive. */
 	private function retire(preparation_owner $owner): void
 	{
 		$owner->change_status = change_state::deleted;
 		$owner->source->preparation_changes[$owner] = true;
-		foreach ($owner->dependents as $dependent /** @object-key */) {
-			unset($dependent->dependencies[$owner]);
-		}
+		$owner->retire_from($this);
 		$this->detach_dependencies($owner);
 		$owner->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		unset($this->declarations[$owner]);
-		unset($this->function_bodies[$owner]);
-		unset($this->file_bodies[$owner]);
 		unset($this->owners[$owner]);
 		unset($this->attempt_failed[$owner]);
 	}
