@@ -432,3 +432,15 @@ lowering or allocate temporary child lists for this pattern. See the
 The bounded toolchain now also distinguishes concrete empty methods from abstract
 ones and supports exact nullable interface returns. Full compiler native parity
 remains a separate validation task.
+
+## Public inherited constructors
+
+A compiler class without its own constructor can reuse a public concrete ancestor
+constructor through intermediate abstract classes. The legacy S2S emits native
+constructor inheritance when that ancestry is available in its source-unit class
+catalog; callers may live in other files. Do not add forwarding constructors solely
+for those supported cases. An explicitly declared constructor suppresses inheritance.
+
+Non-public constructors, abstract constructor contracts and ancestors declared in
+other source units remain outside this slice. C++ field-initialization order still
+applies. See the [lowering boundary and focused proof](../../generators/php/specs/rules_catalog.md#public-inherited-constructor-boundary).

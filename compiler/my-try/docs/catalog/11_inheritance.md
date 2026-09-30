@@ -14,6 +14,11 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 Review the Simple C++ inheritance contracts before implementing this chapter:
 
 - Concrete versus abstract bases, `final`, interfaces and supported inheritance relationships.
+- Non-public inherited constructors: settle protected/private access, especially
+  implicit child default constructors. The legacy S2S public-constructor slice
+  does not resolve these cases; unknown/external constructor metadata and abstract
+  constructor contracts remain outside that slice. See
+  [the lowering boundary](../../../../generators/php/specs/rules_catalog.md#public-inherited-constructor-boundary).
 - Derived-to-base conversions at assignment, argument and return boundaries,
   including shared handles and nullable wrappers; distinguish these from downcasts.
 - Override compatibility and covariant returns, including the distinction between

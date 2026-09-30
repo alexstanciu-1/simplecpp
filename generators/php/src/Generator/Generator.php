@@ -2504,6 +2504,30 @@ final class Generator
 		$this->appendHeaderLines($header, $this->code('', 0));
 	}
 
+	/** Reuse known public constructor declarations; never invent an inherited signature. */
+	private function inheritsPublicConstructor(ClassDecl $class, ?string $namespacePhp): bool
+	{
+		$current = $class;
+		$seen = [];
+		while (true) {
+			foreach ($current->methods as $method) {
+				if (strtolower($method->name) === '__construct') {
+					return $current !== $class && $method->visibility === 'public' && !$method->isAbstract;
+				}
+			}
+			if ($current->parentClass === null) {
+				return false;
+			}
+			$key = $this->resolveClassDeclKey($current->parentClass, $namespacePhp);
+			if ($key === null || isset($seen[$key])) {
+				return false;
+			}
+			$seen[$key] = true;
+			$current = $this->classDecls[$key];
+			$namespacePhp = $this->namespaceFromQualifiedClassKey($key) ?? $namespacePhp;
+		}
+	}
+
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
 	{
 		if ($class->isEnum) {
@@ -2528,6 +2552,12 @@ final class Generator
 		$extends[] = 'public virtual ::scpp::shared_self';
 		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
 		$this->appendHeaderLines($header, $this->code('public:', $class->line));
+		if (!$class->isInterface && $this->inheritsPublicConstructor($class, $namespacePhp)) {
+			$parent = $this->typeMapper->mapClassName($class->parentClass);
+			$separator = strrpos($parent, '::');
+			$constructor = $separator === false ? $parent : substr($parent, $separator + 2);
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'using ' . $parent . '::' . $constructor . ';', $class->line));
+		}
 		if ($class->isInterface && array_filter($class->methods, static fn(MethodDecl $method): bool => $method->name === '__destruct') === []) {
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'virtual ~' . $class->name . '() = default;', $class->line));
 		}

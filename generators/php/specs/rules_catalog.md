@@ -210,6 +210,7 @@ Columns that remain intentionally incomplete for future collaborative work:
 | CLASS-INH-008 | Class | generation-with-precondition | `$this->f();` | `this->f();` | supported-with-precondition | current context is an instance method, constructor, or destructor | `$this-><member>` | `$this` is valid only in instance methods, constructors, and destructors. | Error if `$this` appears in static methods or outside instance context. | Applies to properties and methods. |
 | CLASS-INH-009 | Class | generation-with-precondition | `parent::f(1);` | `base::f(static_cast<int_t>(1));` | supported-with-precondition | current class has a parent and therefore a `using base = Parent;` alias | `parent::<method>(<args>)` | Parent method calls lower to `base::method(...)`. | Error if `parent::...` is used in a class without a parent. | The alias is emitted in the class body. |
 | CLASS-INH-010 | Class | generation-with-precondition | `parent::__construct($x);` | `A::A(int_t x) : base(x) {}` | supported-with-precondition | current class has parent constructor call in its constructor | `parent::__construct(<args>)` | Parent constructor calls lower to a base initializer call. | Error if base initializer cannot be placed because the construct is outside a constructor. | Uses the approved `base` alias convention. |
+| CLASS-INH-013 | Class | generation-with-precondition | `class Child extends ParentClass {}` | `using ParentClass::ParentClass;` | supported-with-precondition | child declares no constructor; nearest constructor in the source-unit class ancestry is public and concrete | class without its own constructor | Inherit constructors from the immediate base, preserving native defaults and field initialization through intermediate classes. | C++ rejects invalid argument lists or uninitializable child subobjects. | Narrow declaration lookup only; unknown/external and non-public constructors are not enabled by this rule. A child constructor suppresses inheritance. See the public-constructor boundary below. |
 | CLASS-INH-011 | Class | generation | `#[\Override] function f(): int { return 1; }` | `int_t f() override;` | supported | method declaration carries `#[\Override]` attribute | `#[\Override] <method>` | `override` is emitted only from explicit `#[\Override]`; the generator does not infer override relationships. | No semantic override validation is performed by S2S. | Explicit user annotation is trusted as-is. |
 | CLASS-INH-012 | Class | generation | `class B extends A {}` | `class B : public A { public: using base = A; };` | supported | class has a parent class | `class <name> extends <parent>` | If a class has a parent, emit `using base = Parent;` in the class body. | Error if `parent::...` lowering is requested without the alias being present. | Provides a deterministic local base name. |
 | CLASS-ABS-001 | Class | generation | `function __destruct() { $this->cleanup(); }` | `~A();` in header and `A::~A() { this->cleanup(); }` in source | supported | declaration occurs inside class body | `__destruct` | `__destruct` lowers to a C++ destructor with out-of-line body emission. | Error if parameters or return type are present on destructor. | `$this` is valid in the destructor body. |
@@ -403,3 +404,27 @@ Columns that remain intentionally incomplete for future collaborative work:
 ## Historical note â€” typed scalar by-reference proxy lowering
 
 Legacy helper/proxy infrastructure may still exist in the runtime, but it is not part of the supported safe subset. The current design direction is the native-reference safety rule documented in `specs/native_reference_safety.md`.
+
+## Public inherited-constructor boundary
+
+`CLASS-INH-013` uses the existing source-unit class declarations; it does not infer
+constructor signatures or validate inheritance in the generator. Only the class
+parent contributes constructors, not implemented interfaces. Trait-composed
+constructors count as declared constructors after composition.
+
+Non-public inherited constructors remain deferred. In particular, blindly emitting
+`using Parent::Parent` can leave an implicitly generated public default constructor
+on a child of a protected zero-argument constructor. This slice does not fix existing
+non-public construction behavior or promise PHP parity there. Ancestors declared
+in another source unit or external library have no constructor metadata in this
+emitter and are not handled. Abstract constructor contracts are also outside this slice.
+
+C++ construction order remains in effect: base construction precedes child member
+initialization. No change to virtual dispatch during construction, shared-self
+availability, or required-field initialization is implied. This is not general PHP
+constructor emulation.
+
+Focused proof: `python3 tests/tools/test_scpp_inherited_constructors.py --results FRESH`.
+It checks PHP/native output, abstract intermediates, construction from a separate source file,
+default arguments, child field defaults, explicit constructor suppression and
+non-public exclusion. It bypasses STAN to isolate lowering and native behavior.
