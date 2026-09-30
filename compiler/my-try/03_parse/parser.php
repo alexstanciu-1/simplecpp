@@ -681,6 +681,10 @@ final class Parser_Run
 			$node = new integer_literal_node();
 			$this->finish_node($node, $start);
 		}
+		elseif (($text !== '') && (string_byte_at($text, 0) === 39)) {
+			$node = new string_literal_node();
+			$this->finish_node($node, $start);
+		}
 		elseif (Source_Text::floating($text)) {
 			$node = new float_literal_node();
 			$this->finish_node($node, $start);

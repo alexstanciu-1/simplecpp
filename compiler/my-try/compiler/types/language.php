@@ -42,6 +42,12 @@ final class Language_Types
 		$boolean->origin = type_origin::language;
 		$boolean->value_bits = 1;
 		$language_scope->register_type($boolean);
+
+		$string_type = new type_definition();
+		$string_type->name = 'string';
+		$string_type->kind = type_kind::string_type;
+		$string_type->origin = type_origin::language;
+		$language_scope->register_type($string_type);
 	}
 
 	/** Install each source alias once; literal defaults remain the ordinary int definition. */
@@ -82,6 +88,16 @@ final class Language_Types
 		$types /** vector<type_definition> */ = $language_scope->types_named('float');
 		if (q_count($types) !== 1) {
 			throw new \LogicException('Missing canonical floating definition');
+		}
+		return $types[0];
+	}
+
+	/** String literals and declarations share one binary-safe language identity. */
+	public static function string_type(scope $language_scope): type_definition
+	{
+		$types /** vector<type_definition> */ = $language_scope->types_named('string');
+		if (q_count($types) !== 1) {
+			throw new \LogicException('Missing canonical string definition');
 		}
 		return $types[0];
 	}

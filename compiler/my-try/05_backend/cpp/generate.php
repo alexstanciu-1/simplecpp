@@ -293,6 +293,59 @@ final class CPP_Generator
 		return 'static_cast<' . $mapping->spelling . '>(' . $spelling . ')';
 	}
 
+	/** Render decoded bytes as a C++ literal, retaining length when a C string would truncate. */
+	public static function generate_string(prepared_string_literal $literal, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($literal->type);
+		$context->headers[$mapping->header] = true;
+		if ($mapping->literal !== cpp_literal_kind::string_value) {
+			throw new \RuntimeException('C++ string literal emission requires the canonical string type');
+		}
+
+		$spelling = self::cpp_string_literal($literal->value);
+		if (!self::contains_zero_byte($literal->value)) {
+			return $mapping->spelling . '(' . $spelling . ')';
+		}
+		return $mapping->spelling . '(std::string(' . $spelling . ', ' . string_byte_len($literal->value) . '))';
+	}
+
+	/** Escape every byte without allowing a hexadecimal escape to consume its neighbor. */
+	private static function cpp_string_literal(string $value): string
+	{
+		$result = '"';
+		$hex = '0123456789ABCDEF';
+		$length = string_byte_len($value);
+		for ($index = 0; $index < $length; $index++)
+		{
+			$byte = string_byte_at($value, $index);
+			if ($byte === 34) {
+				$result .= '\\"';
+			}
+			elseif ($byte === 92) {
+				$result .= '\\\\';
+			}
+			elseif (($byte >= 32) && ($byte < 127)) {
+				$result .= string_byte_from_int($byte);
+			}
+			else {
+				$result .= '\\x' . string_byte_slice($hex, (int) ($byte / 16), 1)
+					. string_byte_slice($hex, $byte % 16, 1) . '" "';
+			}
+		}
+		return $result . '"';
+	}
+
+	/** Select the length-aware constructor only when ordinary C-string construction would truncate. */
+	private static function contains_zero_byte(string $value): bool
+	{
+		for ($index = 0; $index < string_byte_len($value); $index++) {
+			if (string_byte_at($value, $index) === 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static function generate_reference(prepared_variable_reference $reference, cpp_generation_context $context): string
 	{
 		$target = object_cast(weakref_get($reference->declaration), collected_name::class);

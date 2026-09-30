@@ -66,13 +66,16 @@ escaping exceptions request a full rebuild. The full policy is in
 
 ## Current language boundary
 
-The S2S path currently supports one source file, scalar integer/bool/float literals
-and locals, ordinary functions and value structs. Forward declarations/calls are
-prepared before bodies. Function signatures use named scalar/record types, explicit
+The S2S path currently supports one source file, scalar integer/bool/float literals,
+single-quoted string literals and locals, ordinary functions and value structs.
+Forward declarations/calls are prepared before bodies. Function signatures use
+named scalar/record types, explicit
 returns (including void), positional value parameters and explicit reference parameters.
 Only a uniquely resolved function is supported; templates/overloads await review.
 Entry variables do not become implicit captures. Integer value conversions use the
-runtime contract; reference storage must have compatible representation.
+runtime contract; reference storage must have compatible representation. Program
+entry returns remain restricted to numeric/bool wrapper values with defined exit-code
+conversion; adding string values does not widen that ABI boundary.
 
 Struct fields support bool, fixed-width integer aliases and nested structs under the
 compact-layout contract. Ordinary int/float fields, keyed construction, field

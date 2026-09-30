@@ -7,6 +7,7 @@ enum type_kind {
 	case integer;
 	case boolean;
 	case floating;
+	case string_type;
 	case record;
 	case void_type;
 }

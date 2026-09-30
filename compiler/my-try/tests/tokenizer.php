@@ -66,6 +66,27 @@ foreach (['10.5', '.5', '10.', '1e3', '1E+3', '1.25e-3', '.5e2', '10.e-1'] as $s
 	token_check([$tokens[0]->offset, $tokens[0]->length, $tokens[0]->text()] === [2, strlen($spelling), $spelling]);
 	token_check(Source_Text::floating($tokens[0]->text()));
 }
+$quoted_source = <<<'PHS'
+  'x' 'a\'b' 'c\\d' 'line
+next';
+PHS;
+$quoted = token_scan($quoted_source)->tokens;
+$quoted_expected = ["'x'", "'a\\'b'", "'c\\\\d'", "'line\nnext'", ';'];
+token_check(q_count($quoted) === q_count($quoted_expected));
+foreach ($quoted_expected as $index => $text) {
+	token_check($quoted[$index]->text() === $text);
+}
+foreach (["'", "'abc", "'abc" . "\\"] as $unterminated)
+{
+	$failed = false;
+	try {
+		token_scan('  ' . $unterminated);
+	}
+	catch (\RuntimeException $error) {
+		$failed = str_contains($error->getMessage(), 'bytes.phs: byte 2');
+	}
+	token_check($failed);
+}
 token_check(token_scan('')->tokens->is_empty());
 for ($byte = 0; $byte < 256; $byte++) {
 	$text = chr($byte);

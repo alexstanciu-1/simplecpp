@@ -28,6 +28,11 @@ final class prepared_boolean_literal extends prepared_expression {
 	public bool $value;
 }
 
+/** Decoded binary-safe bytes; source quoting and C++ escaping are not semantic facts. */
+final class prepared_string_literal extends prepared_expression {
+	public string $value;
+}
+
 /** A resolved reference always has a declaration; no literal fields belong here. */
 final class prepared_variable_reference extends prepared_expression {
 	/** @storage.reference collected_file.entries @reference.weak */
@@ -111,6 +116,7 @@ final class preparation_context
 	public type_definition $integer;
 	public type_definition $boolean;
 	public type_definition $floating;
+	public type_definition $string_type;
 }
 
 /** Name-pool observation also represents absent or ambiguous lookup results. */

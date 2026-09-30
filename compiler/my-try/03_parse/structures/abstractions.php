@@ -226,6 +226,7 @@ interface cpp_generation_worker_i
 	public function generate_integer_literal(integer_literal_node $node): string;
 	public function generate_float_literal(float_literal_node $node): string;
 	public function generate_boolean_literal(boolean_literal_node $node): string;
+	public function generate_string_literal(string_literal_node $node): string;
 	public function generate_variable_reference(variable_reference_node $node): string;
 	public function generate_call(call_node $node): string;
 	public function generate_function_signature(function_node $node): string;

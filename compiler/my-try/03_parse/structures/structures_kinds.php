@@ -28,6 +28,7 @@ enum node_kind
 	case integer_literal;
 	case boolean_literal;
 	case float_literal;
+	case string_literal;
 	case variable_reference;
 	case binary_expression;
 	case assignment_expression;
@@ -55,4 +56,3 @@ enum passing_mode {
 	case value;
 	case reference;
 }
-

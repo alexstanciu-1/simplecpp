@@ -47,6 +47,11 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_boolean($node->require_boolean_literal_preparation(), $this->context);
 	}
 
+	public function generate_string_literal(string_literal_node $node): string
+	{
+		return CPP_Generator::generate_string($node->require_string_literal_preparation(), $this->context);
+	}
+
 	public function generate_variable_reference(variable_reference_node $node): string
 	{
 		return CPP_Generator::generate_reference($node->require_variable_reference_preparation(), $this->context);

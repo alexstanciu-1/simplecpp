@@ -45,6 +45,11 @@ final class CPP_Types
 			$result->header = 'scpp/bool_t.hpp';
 			$result->literal = cpp_literal_kind::boolean;
 		}
+		elseif ($definition->kind === type_kind::string_type) {
+			$result->spelling = 'scpp::string_t';
+			$result->header = 'scpp/string_t.hpp';
+			$result->literal = cpp_literal_kind::string_value;
+		}
 		else {
 			throw new \RuntimeException('No C++ representation for this type');
 		}

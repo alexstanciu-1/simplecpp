@@ -75,6 +75,15 @@ final class Expression_Preparation
 		return $facts;
 	}
 
+	public static function prepare_string(string_literal_node $node, preparation_context $context): prepared_string_literal
+	{
+		$facts = new prepared_string_literal();
+		$text = $context->collection->token_snapshot()->text_at($node->start_token());
+		$facts->value = String_Literals::single_quoted($text);
+		$facts->type = $context->string_type;
+		return $facts;
+	}
+
 	/** Resolve source-order locals without modifying the retained declaration inventory. */
 	public static function prepare_reference(variable_reference_node $node, preparation_context $context): prepared_variable_reference
 	{

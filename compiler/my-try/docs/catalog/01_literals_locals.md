@@ -19,7 +19,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-BOOL-001](#lit-bool-001) | agreed | `$a = true;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-BOOL-002](#lit-bool-002) | agreed | `$a = false;` | proved | proved | deferred | [Boolean slice](../s2s_integer_slice.md#boolean-literal-extension); [PHP + emitted-C++ cases](../../tests/s2s.php) |
 | [LIT-FLOAT-001](#lit-float-001) | agreed | `$a = 10.5;` | proved | proved | deferred | [Scalar proof](../../tests/s2s.php), [float decision](#lit-float-001) |
-| [LIT-STR-001](#lit-str-001) | pending-discussion | `$a = 'x';` | unverified | unverified | deferred | — |
+| [LIT-STR-001](#lit-str-001) | agreed | `$a = 'x';` | proved | in-progress | deferred | [PHP frontend and emitted-C++ proof](../../tests/s2s.php); native C++ execution remains explicit-request validation |
 | [LIT-STR-002](#lit-str-002) | pending-discussion | `$a = "x";` | unverified | unverified | deferred | — |
 | [TYPE-VAR-001](#type-var-001) | pending-discussion | `$x string = "test";` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [VAR-ASSIGN-001](#var-assign-001) | pending-discussion | `$a = $b;` | unverified | unverified | deferred | — |
@@ -271,7 +271,36 @@ auto a = static_cast<float_t>(10.5);
 
 ## LIT-STR-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** A single-quoted literal is one canonical binary-safe
+`string` value. The tokenizer retains the whole quoted token and rejects an
+unterminated token. Preparation decodes source bytes without host-PHP evaluation:
+only `\\` and `\'` collapse to one byte, while other backslash pairs remain literal.
+The prepared fact owns decoded bytes and the canonical language string identity;
+source quote spelling and C++ escaping are not semantic facts.
+
+The first assignment infers that type and emits:
+
+```cpp
+auto local_a = scpp::string_t("x");
+```
+
+The C++ backend owns byte escaping. Nonzero bytes use a valid C++ literal; embedded
+NUL uses a length-aware `std::string` construction so `string_t` does not truncate.
+Only `scpp/string_t.hpp` is requested for the ordinary example. Program-entry return
+validation remains an explicit numeric/bool ABI boundary, so `return 'x';` is
+rejected before generation.
+
+`LIT-STR-002` double quotes/interpolation, concatenation, comparison, indexing,
+string fields and broader typed-string behavior remain outside this slice.
+`LIT-STR-003` is not marked complete merely because the shared decoder can represent
+empty bytes. LLVM remains deferred.
+
+**Verification (2026-09-30):** focused PHP tokenizer, AST, specialization-dispatch
+and S2S suites prove exact spans, unterminated rejection, canonical type identity,
+single-quote decoding, binary-safe emitted spelling, cleanup/source purity and the
+entry-return rejection. Generated C++ was inspected but not compiled or executed;
+native compiler validation remains pending explicit request, so C++ S2S stays
+`in-progress`.
 
 ### Imported version 1
 

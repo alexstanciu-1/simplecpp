@@ -7,6 +7,7 @@ enum cpp_literal_kind {
 	case signed_integer;
 	case boolean;
 	case floating;
+	case string_value;
 	case none;
 }
 

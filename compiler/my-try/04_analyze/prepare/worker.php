@@ -556,6 +556,7 @@ final class Preparation_Worker
 		$context->integer = Language_Types::integer($this->language);
 		$context->boolean = Language_Types::boolean($this->language);
 		$context->floating = Language_Types::floating($this->language);
+		$context->string_type = Language_Types::string_type($this->language);
 		return $context;
 	}
 

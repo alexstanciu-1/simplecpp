@@ -81,8 +81,8 @@ final class Body_Preparation
 			$type /** type_definition */ = $context->return_type;
 			Type_Preparation::require_assignable($type, $value->type);
 		}
-		elseif (($value->type->kind === type_kind::record) || ($value->type->kind === type_kind::void_type)) {
-			throw new \RuntimeException('S2S entry return requires a scalar value');
+		elseif (!Type_Preparation::entry_return_type($value->type)) {
+			throw new \RuntimeException('S2S entry return requires an integer, float or bool value');
 		}
 	}
 

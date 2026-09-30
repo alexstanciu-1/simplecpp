@@ -423,6 +423,47 @@ final class boolean_literal_node extends expression_node
 	}
 }
 
+final class string_literal_node extends expression_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_string_literal $prepared_facts = null;
+
+	public function kind(): node_kind
+	{
+		return node_kind::string_literal;
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_string_literal_preparation();
+	}
+
+	public function require_string_literal_preparation(): prepared_string_literal
+	{
+		return $this->prepared_facts;
+	}
+
+	/** Forward this specialized node and its active context to the owning preparation algorithm. */
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_string($this, $context));
+	}
+
+	/** Offer this leaf node to maintenance without inventing spelling-specific children. */
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+	}
+
+	/** The generation worker reads decoded bytes and owns target escaping. */
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_string_literal($this);
+	}
+}
+
 final class variable_reference_node extends assignable_expression_node
 {
 	use Node_Source_Span;

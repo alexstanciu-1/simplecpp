@@ -53,6 +53,13 @@ final class Type_Preparation
 		}
 	}
 
+	/** Native main currently accepts only wrapper values with a defined integer exit conversion. */
+	public static function entry_return_type(type_definition $type): bool
+	{
+		return ($type->kind === type_kind::integer) || ($type->kind === type_kind::boolean)
+			|| ($type->kind === type_kind::floating);
+	}
+
 	/** Integer destinations use the existing runtime conversion; other values keep exact identity. */
 	public static function require_assignable(type_definition $destination, type_definition $source): void
 	{

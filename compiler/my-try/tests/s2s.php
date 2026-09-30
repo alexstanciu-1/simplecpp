@@ -62,6 +62,7 @@ $cases = [
 	'bool_reassign' => ['$a = true; $a = false; return $a;', 0],
 	'bool_direct' => ['return false;', 0],
 	'bool_and_int' => ['$a = true; $b = 7; return $b;', 7],
+	'string_single' => ['$a = \'x\';', 0],
 	'literal' => ['$a = 10;', 0],
 	'value' => ['$a = 10; return $a;', 10],
 	'explicit' => ['$a int = 10; return $a;', 10],
@@ -142,6 +143,16 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 
+	if ($name === 'string_single') {
+		$text = Model::$cpp_files[0]->text;
+		if (!str_contains($text, 'auto local_a = scpp::string_t("x");')) {
+			throw new \LogicException('Single-quoted string did not use its canonical C++ representation');
+		}
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::string_t>);\n";
+		$probe .= "\tif (local_a.native_value() != std::string(\"x\", 1)) { return 91; }\n";
+		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", $text));
+	}
+
 	if (str_starts_with($name, 'float_form_'))
 	{
 		$spelling = $float_forms[(int) substr($name, strlen('float_form_'))];
@@ -177,7 +188,7 @@ $rejections = ['function f(int &$x): void {} f(1);',
 	'struct A {} struct B {} $a A; $b B = $a;',
 	'struct S { uint8 $x; } $s S = [1];',
 	'function f(int &$x): void {} $x uint8 = 1; f($x);',
-	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a void;', 'template<T> function f(): int { return 1; }'];
+	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = unknown();', '$a void;', "return 'x';", 'template<T> function f(): int { return 1; }'];
 foreach ($rejections as $source)
 {
 	Compiler_Lifecycle::reset();
@@ -254,6 +265,60 @@ if ($float_data->require_float_literal_preparation() !== $float_facts) {
 Compiler_Lifecycle::reset_preparation();
 if (($float_data->preparation() !== null) || (s2s_snapshot($syntax) !== $before)) {
 	throw new \LogicException('Floating cleanup changed syntax or retained facts');
+}
+
+// Single-quoted literals retain decoded bytes and canonical string identity.
+Compiler_Lifecycle::reset();
+$string_source = <<<'PHS'
+$a = 'x';
+$b = 'can\'t';
+$c = 'slash\\path';
+$d = '\n';
+PHS;
+$string_source .= "\n" . '$e = \'' . string_byte_from_int(0) . '\';';
+$syntax = s2s_parse($string_source);
+$children = $syntax->root->body->statements;
+$expected_values = ['x', "can't", 'slash' . "\\" . 'path', "\\n", string_byte_from_int(0)];
+$string_nodes /** vector<string_literal_node> */ = [];
+foreach ($children as $index => $statement) {
+	$assignment = object_cast($statement->expression, assignment_expression_node::class);
+	$string_nodes[] = object_cast($assignment->value, string_literal_node::class);
+}
+$before = s2s_snapshot($syntax);
+$compiler = new Compiler();
+$compiler->prepare();
+$string_type = Language_Types::string_type(Model::$language_scope);
+$resolved = Scope_Lookup::types(Model::$global_scope, 'string');
+if (($resolved[0] !== $string_type) || ($string_type->kind !== type_kind::string_type)) {
+	throw new \LogicException('Canonical string identity changed');
+}
+foreach ($string_nodes as $index => $string_node)
+{
+	$facts = $string_node->require_string_literal_preparation();
+	if (($facts->value !== $expected_values[$index]) || ($facts->type !== $string_type)) {
+		throw new \LogicException('Single-quoted literal lost decoded bytes or canonical type');
+	}
+	foreach ($syntax->collection->entries as $entry) {
+		if ($entry->syntax() === $string_node) {
+			throw new \LogicException('String literal was collected as a name');
+		}
+	}
+}
+$compiler->cpp();
+$string_output = Model::$cpp_files[0]->text;
+foreach (['scpp::string_t("x")', 'scpp::string_t("can\'t")', 'scpp::string_t("slash\\\\path")', 'scpp::string_t("\\\\n")', 'scpp::string_t(std::string("\\x00" "", 1))'] as $expected_spelling) {
+	if (!str_contains($string_output, $expected_spelling)) {
+		throw new \LogicException('C++ string escaping lost exact bytes: ' . $expected_spelling);
+	}
+}
+Compiler_Lifecycle::reset_preparation();
+foreach ($string_nodes as $string_node) {
+	if ($string_node->preparation() !== null) {
+		throw new \LogicException('String cleanup retained prepared facts');
+	}
+}
+if (s2s_snapshot($syntax) !== $before) {
+	throw new \LogicException('String preparation changed source syntax');
 }
 
 // Boolean literals keep canonical identity without entering reference/name collection.

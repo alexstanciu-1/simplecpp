@@ -42,6 +42,7 @@ $fact_pairs = [
 	[new integer_literal_node(), new prepared_integer_literal()],
 	[new float_literal_node(), new prepared_float_literal()],
 	[new boolean_literal_node(), new prepared_boolean_literal()],
+	[new string_literal_node(), new prepared_string_literal()],
 	[new variable_reference_node(), new prepared_variable_reference()],
 	[new variable_declaration_node(), new prepared_binding()],
 	[new call_node(), new prepared_call()],
