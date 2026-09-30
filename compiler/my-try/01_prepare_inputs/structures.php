@@ -64,7 +64,7 @@ final class source_record
 	public change_state $changes = change_state::added;
 	public int $revision /** uint32 */ = 0;
 	/** @reference.weak Model.modules */
-	public module $module /** weak<module> */;
+	public module $module_reference /** weak<module> */;
 	/** Current published input and its optional completed stages. @ownership owner */
 	public file $file;
 	/** Current input range and retained token/source storage. */
@@ -73,7 +73,7 @@ final class source_record
 
 	public function __construct(module $owner, file $snapshot)
 	{
-		$this->module = $owner;
+		$this->module_reference = $owner;
 		$this->path = $snapshot->path;
 		$this->file = $snapshot;
 	}
@@ -81,7 +81,7 @@ final class source_record
 	/** Acquire the module while constructing an IO path from this relative identity. */
 	public function owning_module(): module
 	{
-		return object_cast(weakref_get($this->module), module::class);
+		return object_cast(weakref_get($this->module_reference), module::class);
 	}
 }
 

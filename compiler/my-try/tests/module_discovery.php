@@ -79,7 +79,7 @@ try
 	$compiler->sync([$other_path, $deep_path]);
 	$parsed /** Storage<parsed_file> */ = Model::syntax_files();
 	discovery_check((count($parsed) === 2) && ($parsed[0]->source_file()->path === 'b.phs') && ($parsed[1]->source_file()->path === 'c.phs'), 'Completion order replaced module/source order');
-	discovery_check((Source_Registry::find($deep_path)->module === Model::$modules[$directory . '/nested/deep']) && (Source_Registry::find($other_path)->module === Model::$modules[$directory . '/other']), 'Disjoint sources lost exact module ownership');
+	discovery_check((Source_Registry::find($deep_path)->module_reference === Model::$modules[$directory . '/nested/deep']) && (Source_Registry::find($other_path)->module_reference === Model::$modules[$directory . '/other']), 'Disjoint sources lost exact module ownership');
 }
 finally
 {

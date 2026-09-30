@@ -140,6 +140,10 @@ The generic shared-object boundary policy now handles required/nullable upcasts.
 The focused runtime proof passes clang and GCC; the no-STAN compiler retry in
 `/tmp/my-try-native-shared-upcasts.stdout` no longer reports the nullable/derived
 failures in scope lookup, iterators or maintenance edges. The compiler still fails
-on independent name hiding, generated finally scope, container/type assignments,
+on generated finally scope, container/type assignments,
 ternary branch types and covariant method-return emission. No executable exists
 from this attempt; this does not claim whole-compiler native success.
+
+The remaining source_record module/type collision is fixed by renaming the field
+to module_reference. Module-discovery and file-scan tests pass; the retry in
+`/tmp/my-try-native-module-reference.stdout` confirms its cast error is gone.
