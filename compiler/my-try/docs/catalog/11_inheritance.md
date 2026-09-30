@@ -9,6 +9,25 @@ Requires classes and methods. Resolve relationships before advanced dispatch cas
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## v0.2 contract review debt
+
+Review the Simple C++ inheritance contracts before implementing this chapter:
+
+- Concrete versus abstract bases, `final`, interfaces and supported inheritance relationships.
+- Derived-to-base conversions at assignment, argument and return boundaries,
+  including shared handles and nullable wrappers; distinguish these from downcasts.
+- Override compatibility and covariant returns, including the distinction between
+  object inheritance and C++ handle return types.
+- Conditional-expression result types: derived/base and sibling branches, and
+  whether an explicit destination type should influence their common type.
+  The current [ternary contract](../../../../specs/conditional_expression_matrix.md)
+  does not use the destination type or define inheritance joins.
+
+Reconcile normative specs, runtime, lowering and focused proofs when each decision
+is agreed. This records review work, not approval to expand the language contract.
+The compiler implementation's abstract-base/final-concrete convention is separate
+from the inheritance forms the language may allow.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

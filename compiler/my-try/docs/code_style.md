@@ -9,6 +9,9 @@ excluded. They do not import compiler 3's lifecycle or join architecture.
 
 - Separate distinct logical steps with one blank line. Group by purpose rather
   than inserting a blank line at a fixed interval.
+- Mark concrete compiler classes `final`; use abstract classes or interfaces for
+  extension points. This is compiler implementation discipline, not a restriction
+  on inheritance in the Simple C++ language.
 - Explain non-obvious purpose, invariants, ownership or control flow immediately
   above the relevant declaration or group. Avoid comments that merely repeat code.
 - For multiline block comments and docblocks, put the opening `/*` or `/**` on

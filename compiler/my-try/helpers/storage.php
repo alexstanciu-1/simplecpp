@@ -3,7 +3,7 @@
 /* Numeric shared object list; deletion leaves holes without reusing positions. */
 namespace scpp\compiler;
 
-class Storage extends Storage_Abstract
+final class Storage extends Storage_Abstract
 {
 	private int $next_position = 0;
 

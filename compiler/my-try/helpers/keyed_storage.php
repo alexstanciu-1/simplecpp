@@ -3,7 +3,7 @@
 /* Unique string keys select shared objects directly; there is no position map. */
 namespace scpp\compiler;
 
-class Keyed_Storage extends Storage_Abstract
+final class Keyed_Storage extends Storage_Abstract
 {
 	/** Insert a new key; use [] assignment to deliberately insert or replace. */
 	public function add(string $key, object $record): void
