@@ -204,9 +204,9 @@ final class Symbol_Collector
 	}
 
 	/** Only file-level functions and records enter shared indexes, under the existing task lock. */
-	private function publish(collected_definition $entry, scope $scope): void
+	private function publish(collected_definition $entry, scope $declaration_scope): void
 	{
-		if ($scope !== $this->file_scope) {
+		if ($declaration_scope !== $this->file_scope) {
 			return;
 		}
 		if ($this->global === null) {
@@ -214,8 +214,8 @@ final class Symbol_Collector
 		}
 		$global /** scope */ = $this->global;
 		$entry->exported = true;
-		task_synchronize(function () use ($entry, $scope, $global): void {
-			Scope_Publication::register($scope, $global, $entry);
+		task_synchronize(function () use ($entry, $declaration_scope, $global): void {
+			Scope_Publication::register($declaration_scope, $global, $entry);
 		});
 	}
 

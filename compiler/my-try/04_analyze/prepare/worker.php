@@ -637,9 +637,9 @@ final class Preparation_Worker
 					$function->body->detach_work();
 				}
 			}
-			$scope = object_cast(weakref_get($entry->scope), scope::class);
-			$scope->unregister($entry);
-			$global = $scope->published_scope();
+			$entry_scope = object_cast(weakref_get($entry->scope), scope::class);
+			$entry_scope->unregister($entry);
+			$global = $entry_scope->published_scope();
 			if ($entry->is_exported() && ($global !== null)) {
 				$published /** scope */ = $global;
 				$published->unregister($entry);
