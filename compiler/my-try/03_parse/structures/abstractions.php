@@ -80,7 +80,7 @@ abstract class type_node extends ast_node
 /** An expression produces a value; concrete forms define their own operands. */
 abstract class expression_node extends ast_node
 {
-	/** Concrete supported expressions narrow this return to their specialized facts. */
+	/** Shared expression view; specialized facts use distinctly named concrete accessors. */
 	public function require_preparation(): prepared_expression
 	{
 		throw new \RuntimeException('Prepared expression facts are not supported for this node');

@@ -240,7 +240,7 @@ $float_data = object_cast($float_node, float_literal_node::class);
 $before = s2s_snapshot($syntax);
 $compiler = new Compiler();
 $compiler->prepare();
-$float_facts = $float_data->require_preparation();
+$float_facts = $float_data->require_float_literal_preparation();
 $floating = Language_Types::floating(Model::$language_scope);
 $resolved = Scope_Lookup::types(Model::$global_scope, 'float');
 if (($resolved[0] !== $floating) || ($floating->value_bits !== 64) || !$floating->signed || ($float_facts->decimal !== '1.2345678901234567') || ($float_facts->type !== $floating) || ($children[1]->expression->require_preparation()->type !== $floating)) {
@@ -248,7 +248,7 @@ if (($resolved[0] !== $floating) || ($floating->value_bits !== 64) || !$floating
 }
 $compiler->cpp();
 Compiler_Lifecycle::reset_cpp();
-if ($float_data->require_preparation() !== $float_facts) {
+if ($float_data->require_float_literal_preparation() !== $float_facts) {
 	throw new \LogicException('Output reset changed floating facts');
 }
 Compiler_Lifecycle::reset_preparation();
@@ -268,7 +268,7 @@ $before = s2s_snapshot($syntax);
 $compiler = new Compiler();
 $compiler->prepare();
 $boolean_type = Language_Types::boolean(Model::$language_scope);
-$literal_facts = $literal_data->require_preparation();
+$literal_facts = $literal_data->require_boolean_literal_preparation();
 if (($literal_node->kind() !== node_kind::boolean_literal) || (Syntax_Nodes::category($literal_node) !== node_category::expression) || $literal_data->value || $literal_facts->value || ($literal_facts->type !== $boolean_type) || ($reference_data->require_preparation()->type !== $boolean_type)) {
 	throw new \LogicException('Boolean syntax, false value or inferred type changed');
 }
@@ -283,7 +283,7 @@ if (Model::$cpp_files[0]->text !== $expected) {
 	throw new \LogicException('Unexpected boolean C++ representation or includes');
 }
 Compiler_Lifecycle::reset_cpp();
-if ($literal_data->require_preparation() !== $literal_facts) {
+if ($literal_data->require_boolean_literal_preparation() !== $literal_facts) {
 	throw new \LogicException('Boolean facts lost across output reset');
 }
 Compiler_Lifecycle::reset_preparation();
@@ -327,8 +327,8 @@ $compiler->prepare();
 $children = $syntax->root->body->statements;
 $first_data = $children[0]->expression;
 $first_literal_data = object_cast($first_data->value, integer_literal_node::class);
-$binding_facts = $first_data->require_preparation();
-$literal_facts = $first_literal_data->require_preparation();
+$binding_facts = $first_data->require_assignment_preparation();
+$literal_facts = $first_literal_data->require_integer_literal_preparation();
 $completion = Model::$prepared_files[0];
 if (!Model::$cpp_files->is_empty()) {
 	throw new \LogicException('Preparation emitted C++ output');
@@ -336,7 +336,7 @@ if (!Model::$cpp_files->is_empty()) {
 $compiler->cpp();
 $output = Model::$cpp_files[0];
 Compiler_Lifecycle::reset_cpp();
-if (($first_data->require_preparation() !== $binding_facts) || (Model::$prepared_files[0] !== $completion) || !Model::$cpp_files->is_empty()) {
+if (($first_data->require_assignment_preparation() !== $binding_facts) || (Model::$prepared_files[0] !== $completion) || !Model::$cpp_files->is_empty()) {
 	throw new \LogicException('Output reset changed shared preparation');
 }
 $compiler->cpp();
@@ -359,7 +359,7 @@ if (Model::$cpp_files[0]->text !== $output->text) {
 	throw new \LogicException('Emission retry changed output');
 }
 $compiler->prepare();
-if (($first_data->require_preparation() !== $binding_facts) || !Model::$cpp_files->is_empty()) {
+if (($first_data->require_assignment_preparation() !== $binding_facts) || !Model::$cpp_files->is_empty()) {
 	throw new \LogicException('No-op preparation replaced facts or left stale output');
 }
 $compiler->cpp();

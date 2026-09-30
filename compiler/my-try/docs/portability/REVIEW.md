@@ -37,3 +37,14 @@ serialization or collection compaction as incidental portability fixes.
 Do not remove narrowing casts solely because PHP accepts the assignment. Keep actual
 class narrowing separate from same-type nullable extraction and report unsupported
 native forms to their converter/runtime/STAN owner.
+
+## Legacy S2S cross-file covariance defect
+
+The return-tagged accessor lowering discovers ancestor return types only in its
+local declaration index. When a base and covariant override are in separate files,
+the upcast bridge can be missing: a call through the base then executes its base
+implementation instead of the derived override. Preserve dispatch across files in
+a future generator fix, with a split-file base-handle proof and identity checks.
+The compiler expression accessors use invariant return types and distinct typed
+accessor names under the compiler coding convention; this does not fix the general
+language lowering defect or prohibit supported covariance.

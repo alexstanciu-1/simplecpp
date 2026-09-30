@@ -310,7 +310,12 @@ final class integer_literal_node extends expression_node
 		return node_kind::integer_literal;
 	}
 
-	public function require_preparation(): prepared_integer_literal
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_integer_literal_preparation();
+	}
+
+	public function require_integer_literal_preparation(): prepared_integer_literal
 	{
 		return $this->prepared_facts;
 	}
@@ -346,7 +351,12 @@ final class float_literal_node extends expression_node
 		return node_kind::float_literal;
 	}
 
-	public function require_preparation(): prepared_float_literal
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_float_literal_preparation();
+	}
+
+	public function require_float_literal_preparation(): prepared_float_literal
 	{
 		return $this->prepared_facts;
 	}
@@ -384,7 +394,12 @@ final class boolean_literal_node extends expression_node
 		return node_kind::boolean_literal;
 	}
 
-	public function require_preparation(): prepared_boolean_literal
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_boolean_literal_preparation();
+	}
+
+	public function require_boolean_literal_preparation(): prepared_boolean_literal
 	{
 		return $this->prepared_facts;
 	}
@@ -436,7 +451,12 @@ final class variable_reference_node extends assignable_expression_node
 		return node_kind::variable_reference;
 	}
 
-	public function require_preparation(): prepared_variable_reference
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_variable_reference_preparation();
+	}
+
+	public function require_variable_reference_preparation(): prepared_variable_reference
 	{
 		return $this->prepared_facts;
 	}
@@ -500,7 +520,12 @@ final class call_node extends expression_node
 		return new call_children_iterator($this);
 	}
 
-	public function require_preparation(): prepared_call
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_call_preparation();
+	}
+
+	public function require_call_preparation(): prepared_call
 	{
 		return $this->prepared_facts;
 	}
@@ -758,7 +783,12 @@ final class assignment_expression_node extends expression_node
 		return new assignment_expression_children_iterator($this);
 	}
 
-	public function require_preparation(): prepared_assignment
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_assignment_preparation();
+	}
+
+	public function require_assignment_preparation(): prepared_assignment
 	{
 		return $this->prepared_facts;
 	}
@@ -1209,7 +1239,12 @@ final class field_access_node extends assignable_expression_node
 		return new field_access_children_iterator($this);
 	}
 
-	public function require_preparation(): prepared_field_access
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_field_access_preparation();
+	}
+
+	public function require_field_access_preparation(): prepared_field_access
 	{
 		return $this->prepared_facts;
 	}

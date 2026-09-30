@@ -27,10 +27,10 @@ final class S2S_Proof
 		$assignment_data = object_cast(object_cast($children[2], expression_statement_node::class)->expression, assignment_expression_node::class);
 		$literal_data = object_cast($first_data->value, integer_literal_node::class);
 		$reference_data = object_cast(object_cast($children[1], variable_declaration_node::class)->initializer, variable_reference_node::class);
-		$first = $first_data->require_preparation()->binding;
-		$assignment = $assignment_data->require_preparation()->binding;
-		$literal = $literal_data->require_preparation();
-		$reference = $reference_data->require_preparation();
+		$first = $first_data->require_assignment_preparation()->binding;
+		$assignment = $assignment_data->require_assignment_preparation()->binding;
+		$literal = $literal_data->require_integer_literal_preparation();
+		$reference = $reference_data->require_variable_reference_preparation();
 		if (($literal->decimal !== '10') || (weakref_get($reference->declaration) !== weakref_get($first->declaration)) || ($reference->type !== $first->type)) {
 			throw new \LogicException('Specialized expression facts lost literal value or reference identity');
 		}
@@ -59,11 +59,11 @@ final class S2S_Proof
 		if (($outputs[0]->text !== $expected) || ($outputs[0] === $old_output)) {
 			throw new \LogicException('Repeated generation changed bytes or reused output records');
 		}
-		if ($first_data->require_preparation()->binding !== $first) {
+		if ($first_data->require_assignment_preparation()->binding !== $first) {
 			throw new \LogicException('Emission replaced shared prepared facts');
 		}
 		Compiler_Lifecycle::reset_cpp();
-		if (($literal_data->require_preparation() !== $literal) || ($reference_data->require_preparation() !== $reference)) {
+		if (($literal_data->require_integer_literal_preparation() !== $literal) || ($reference_data->require_variable_reference_preparation() !== $reference)) {
 			throw new \LogicException('C++ output reset discarded shared facts');
 		}
 		Compiler_Lifecycle::reset_preparation();

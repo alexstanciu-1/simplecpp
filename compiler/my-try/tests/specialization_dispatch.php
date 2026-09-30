@@ -44,6 +44,9 @@ $fact_pairs = [
 	[new boolean_literal_node(), new prepared_boolean_literal()],
 	[new variable_reference_node(), new prepared_variable_reference()],
 	[new variable_declaration_node(), new prepared_binding()],
+	[new call_node(), new prepared_call()],
+	[new assignment_expression_node(), new prepared_assignment()],
+	[new field_access_node(), new prepared_field_access()],
 ];
 foreach ($fact_pairs as $pair)
 {
@@ -51,6 +54,12 @@ foreach ($fact_pairs as $pair)
 	$facts = $pair[1];
 	if ($owner->preparation() !== null) {
 		throw new \LogicException('New specialization has prepared facts');
+	}
+	if ($owner instanceof expression_node) {
+		$return_type = (new \ReflectionMethod($owner, 'require_preparation'))->getReturnType();
+		if ((string)$return_type !== prepared_expression::class) {
+			throw new \LogicException('Expression accessor changed the shared return contract');
+		}
 	}
 	$owner->set_preparation($facts);
 	if (($owner->preparation() !== $facts) || ($owner->require_preparation() !== $facts)) {

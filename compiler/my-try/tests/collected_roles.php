@@ -73,10 +73,10 @@ $function = object_cast($parsed->root->declarations[1], function_node::class);
 $first = object_cast($function->body->statements[1], expression_statement_node::class)->expression;
 $second = object_cast($function->body->statements[2], expression_statement_node::class)->expression;
 (new File_Preparation($parsed->collection, Model::$language_scope))->prepare();
-role_check($first->require_preparation()->binding->resolved_kind === binding_kind::declaration, 'First write did not declare');
-role_check($second->require_preparation()->binding->resolved_kind === binding_kind::assignment, 'Repeated write did not assign');
-role_check($first->require_preparation()->binding->declaration === $writes[0], 'Inferred storage allocated another collected identity');
-role_check($second->require_preparation()->binding->declaration === $writes[0], 'Assignment lost the first-write identity');
+role_check($first->require_assignment_preparation()->binding->resolved_kind === binding_kind::declaration, 'First write did not declare');
+role_check($second->require_assignment_preparation()->binding->resolved_kind === binding_kind::assignment, 'Repeated write did not assign');
+role_check($first->require_assignment_preparation()->binding->declaration === $writes[0], 'Inferred storage allocated another collected identity');
+role_check($second->require_assignment_preparation()->binding->declaration === $writes[0], 'Assignment lost the first-write identity');
 foreach ($writes as $entry) {
 	role_check($entry->syntax()->occurrence() === $entry, 'Resolution replaced the write occurrence');
 	role_check($entry->kind() === collected_name_kind::binding && $entry->preparation_work_owner() === null, 'Resolution changed the collection role or added declaration work');

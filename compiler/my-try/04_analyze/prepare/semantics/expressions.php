@@ -36,7 +36,7 @@ final class Expression_Preparation
 	private static function prepare_field_write(field_access_node $target, expression_node $initializer, preparation_context $context): prepared_binding
 	{
 		$target->prepare($context);
-		$place = $target->require_preparation();
+		$place = $target->require_field_access_preparation();
 		if (!$place->addressable) {
 			throw new \RuntimeException('S2S assignment requires stable storage');
 		}

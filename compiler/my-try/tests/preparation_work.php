@@ -44,7 +44,7 @@ foreach ([$layout, $signature, $body, $entry] as $work) {
 	work_check($work->state === preparation_state::ready, 'Work did not settle');
 }
 $return = object_cast($parsed->root->body->statements[1], return_node::class);
-$call = object_cast($return->expression, call_node::class)->require_preparation();
+$call = object_cast($return->expression, call_node::class)->require_call_preparation();
 work_check($call->declaration === $function->occurrence(), 'Call lost its typed function identity');
 $version = $body->version;
 (new File_Preparation($collection, Model::$language_scope))->prepare();

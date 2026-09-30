@@ -94,7 +94,7 @@ final class CPP_Declarations
 	/** Locals snapshot value arguments left-to-right; reference arguments keep the original place. */
 	public static function generate_call(call_node $syntax, cpp_generation_context $context): string
 	{
-		$facts = $syntax->require_preparation();
+		$facts = $syntax->require_call_preparation();
 		$entry = object_cast(weakref_get($facts->declaration), collected_name::class);
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
 		$arguments /** Storage<expression_node> */ = $syntax->arguments;
@@ -127,7 +127,7 @@ final class CPP_Declarations
 	/** Field identity comes from shared preparation, never a backend name lookup. */
 	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context): string
 	{
-		$entry = object_cast(weakref_get($syntax->require_preparation()->field->declaration), collected_name::class);
+		$entry = object_cast(weakref_get($syntax->require_field_access_preparation()->field->declaration), collected_name::class);
 		$base = $syntax->base;
 		return '(' . $base->generate_cpp(new CPP_Syntax($context)) . ').field_' . $entry->name;
 	}

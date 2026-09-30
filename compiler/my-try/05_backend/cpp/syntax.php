@@ -34,22 +34,22 @@ final class CPP_Syntax implements cpp_generation_worker_i
 
 	public function generate_integer_literal(integer_literal_node $node): string
 	{
-		return CPP_Generator::generate_integer($node->require_preparation(), $this->context);
+		return CPP_Generator::generate_integer($node->require_integer_literal_preparation(), $this->context);
 	}
 
 	public function generate_float_literal(float_literal_node $node): string
 	{
-		return CPP_Generator::generate_float($node->require_preparation(), $this->context);
+		return CPP_Generator::generate_float($node->require_float_literal_preparation(), $this->context);
 	}
 
 	public function generate_boolean_literal(boolean_literal_node $node): string
 	{
-		return CPP_Generator::generate_boolean($node->require_preparation(), $this->context);
+		return CPP_Generator::generate_boolean($node->require_boolean_literal_preparation(), $this->context);
 	}
 
 	public function generate_variable_reference(variable_reference_node $node): string
 	{
-		return CPP_Generator::generate_reference($node->require_preparation(), $this->context);
+		return CPP_Generator::generate_reference($node->require_variable_reference_preparation(), $this->context);
 	}
 
 	public function generate_call(call_node $node): string
@@ -106,6 +106,6 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		if ($target instanceof variable_reference_node) {
 			$target = null;
 		}
-		return CPP_Generator::generate_storage($node->require_preparation()->binding, $target, $node->value, false, $this->context);
+		return CPP_Generator::generate_storage($node->require_assignment_preparation()->binding, $target, $node->value, false, $this->context);
 	}
 }

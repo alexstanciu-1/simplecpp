@@ -39,16 +39,16 @@ foreach ([false, true] as $nested)
 	$member = object_cast(object_cast($statements[0], expression_statement_node::class)->expression, assignment_expression_node::class);
 	$local = object_cast(object_cast($statements[1], expression_statement_node::class)->expression, assignment_expression_node::class);
 	$repeat = object_cast(object_cast($statements[2], expression_statement_node::class)->expression, assignment_expression_node::class);
-	$field = object_cast($member->target, field_access_node::class)->require_preparation();
-	dispatch_check($member->require_preparation()->binding->resolved_kind === binding_kind::assignment, 'Field write introduced storage');
-	dispatch_check($member->require_preparation()->binding->declaration === $field->field->declaration, 'Field write lost its declaration');
-	dispatch_check($local->require_preparation()->binding->resolved_kind === binding_kind::declaration, 'First variable assignment did not declare storage');
-	dispatch_check($repeat->require_preparation()->binding->resolved_kind === binding_kind::assignment, 'Repeated assignment redeclared storage');
-	dispatch_check($repeat->require_preparation()->binding->declaration === $local->require_preparation()->binding->declaration, 'Local assignment lost storage identity');
-	$initializer = object_cast($local->value, variable_reference_node::class)->require_preparation();
+	$field = object_cast($member->target, field_access_node::class)->require_field_access_preparation();
+	dispatch_check($member->require_assignment_preparation()->binding->resolved_kind === binding_kind::assignment, 'Field write introduced storage');
+	dispatch_check($member->require_assignment_preparation()->binding->declaration === $field->field->declaration, 'Field write lost its declaration');
+	dispatch_check($local->require_assignment_preparation()->binding->resolved_kind === binding_kind::declaration, 'First variable assignment did not declare storage');
+	dispatch_check($repeat->require_assignment_preparation()->binding->resolved_kind === binding_kind::assignment, 'Repeated assignment redeclared storage');
+	dispatch_check($repeat->require_assignment_preparation()->binding->declaration === $local->require_assignment_preparation()->binding->declaration, 'Local assignment lost storage identity');
+	$initializer = object_cast($local->value, variable_reference_node::class)->require_variable_reference_preparation();
 	dispatch_check($initializer->declaration === $signature->parameters[1]->declaration, 'Initializer lost the parameter binding');
 	$return = object_cast($statements[3], return_node::class);
-	$reference = object_cast($return->expression, variable_reference_node::class)->require_preparation();
-	dispatch_check($reference->declaration === $local->require_preparation()->binding->declaration, 'Body/block traversal lost source-order locals');
+	$reference = object_cast($return->expression, variable_reference_node::class)->require_variable_reference_preparation();
+	dispatch_check($reference->declaration === $local->require_assignment_preparation()->binding->declaration, 'Body/block traversal lost source-order locals');
 }
 echo "Preparation dispatch: parameter facts, local/member writes and body/block source order passed\n";

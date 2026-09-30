@@ -40,6 +40,9 @@ one context per rebuild; function-body setup seeds its locals and return type.
 `node->prepare(context)` calls the concrete semantic algorithm and attaches its
 result. There is no intermediate syntax adapter. Typed fields drive traversal;
 unsupported operations fail explicitly. Contexts are never retained on syntax.
+Expression `require_preparation()` overrides all return `prepared_expression`.
+Concrete callers use named accessors such as `require_call_preparation()` for
+specialized facts; both views return the same attached object.
 
 Facts identify exact collected roles where known: calls reference functions, source
 record types reference structs. Prepared storage deliberately shares the broader
