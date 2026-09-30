@@ -71,7 +71,7 @@ abstract class collected_name
 	}
 
 	/** Only independently prepared declarations own this slot. */
-	public function preparation_owner(): ?preparation_owner
+	public function preparation_work_owner(): ?preparation_owner
 	{
 		return null;
 	}
@@ -114,7 +114,7 @@ abstract class collected_definition extends collected_declaration
 {
 	public ?declaration_work $preparation = null;
 
-	public function preparation_owner(): ?preparation_owner
+	public function preparation_work_owner(): ?preparation_owner
 	{
 		return $this->preparation;
 	}

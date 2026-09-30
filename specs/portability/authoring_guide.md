@@ -300,7 +300,10 @@ separately. Do not introduce dummy allocations merely to establish a local's typ
 Fields and methods must also have distinct names, including inherited members.
 Use descriptive backing-field names such as parsed_result beside result().
 PHP's separate property/method namespaces do not carry into generated C++;
-automatic renaming is not the current solution.
+automatic renaming is not the current solution. Likewise, avoid local, parameter,
+field or method names that hide a type required in the same C++ lookup scope.
+Use return_statement for a return_node local, lookup_scope for a scope field,
+and preparation_work_owner() for an accessor returning preparation_owner.
 
 
 

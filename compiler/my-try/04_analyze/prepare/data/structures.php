@@ -116,15 +116,15 @@ final class preparation_context
 /** Name-pool observation also represents absent or ambiguous lookup results. */
 final class preparation_lookup
 {
-	public scope $scope;
+	public scope $lookup_scope;
 	public string $name;
 	public preparation_lookup_kind $kind;
 	public array $candidates /** vector<collected_name> */ = [];
 	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
 
-	public function __construct(scope $scope, string $name, preparation_lookup_kind $kind)
+	public function __construct(scope $lookup_scope, string $name, preparation_lookup_kind $kind)
 	{
-		$this->scope = $scope;
+		$this->lookup_scope = $lookup_scope;
 		$this->name = $name;
 		$this->kind = $kind;
 		$this->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();

@@ -270,7 +270,7 @@ final class Parser_Run
 		}
 		$node->set_span($start, $this->position);
 		if (!$same) {
-			$work = $entry->preparation_owner();
+			$work = $entry->preparation_work_owner();
 			if ($work !== null) {
 				$work->state = preparation_state::pending;
 				$work->change_status = change_state::changed;
@@ -586,14 +586,14 @@ final class Parser_Run
 	private function return_statement(): return_node
 	{
 		$start = $this->position;
-		$return_node = new return_node();
+		$return_statement = new return_node();
 		$this->position++;
 		if ($this->text() !== ';') {
-			$return_node->expression = $this->expression();
+			$return_statement->expression = $this->expression();
 		}
 		$this->expect(';');
-		$this->finish_node($return_node, $start);
-		return $return_node;
+		$this->finish_node($return_statement, $start);
+		return $return_statement;
 	}
 
 	/** Explicit type syntax declares a variable; plain writes always use assignment expressions. */

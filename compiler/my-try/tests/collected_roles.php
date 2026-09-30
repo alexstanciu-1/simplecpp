@@ -79,6 +79,6 @@ role_check($first->require_preparation()->binding->declaration === $writes[0], '
 role_check($second->require_preparation()->binding->declaration === $writes[0], 'Assignment lost the first-write identity');
 foreach ($writes as $entry) {
 	role_check($entry->syntax()->occurrence() === $entry, 'Resolution replaced the write occurrence');
-	role_check($entry->kind() === collected_name_kind::binding && $entry->preparation_owner() === null, 'Resolution changed the collection role or added declaration work');
+	role_check($entry->kind() === collected_name_kind::binding && $entry->preparation_work_owner() === null, 'Resolution changed the collection role or added declaration work');
 }
 echo "Collected roles: typed syntax, role-specific storage and stable first/repeated-write identity passed\n";

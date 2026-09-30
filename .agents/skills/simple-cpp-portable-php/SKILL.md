@@ -23,7 +23,7 @@ function. Avoid reusing names for unrelated values, especially with a different
 type. If distinct typed views are needed, use distinct descriptive names (for
 example node_ast and node_span); retain the concrete node type when it is known.
 These are source-authoring rules, not requests for implicit declaration hoisting.
-Do not give a field and a method the same name in a class, including inherited members. PHP permits this, but generated C++ uses a shared member-name space. Give backing fields descriptive names distinct from their accessors (for example parsed_result and result()); do not rely on converter/generator renaming.
+Do not give a field and a method the same name in a class, including inherited members. PHP permits this, but generated C++ uses a shared member-name space. Give backing fields descriptive names distinct from their accessors (for example parsed_result and result()); do not rely on converter/generator renaming. Also avoid local, parameter, field or method names that hide a type needed in the same C++ lookup scope. Use distinct descriptive names (for example return_statement for a return_node local, lookup_scope for a scope field, and preparation_work_owner() for an accessor returning preparation_owner).
 
 PHP execution checks behavior; successful PHP or conversion
 alone does not establish native support. The v0.1 S2S generator is deliberately

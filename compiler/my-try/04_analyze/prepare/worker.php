@@ -121,8 +121,8 @@ final class Preparation_Worker
 				if ((!$all) && (!$source->deleted) && ($entry->change_status !== change_state::deleted)) {
 					continue;
 				}
-				if ($entry->preparation_owner() !== null) {
-					$result[$entry->preparation_owner()] = true;
+				if ($entry->preparation_work_owner() !== null) {
+					$result[$entry->preparation_work_owner()] = true;
 				}
 				if ($entry instanceof collected_function) {
 					$function = object_cast($entry, collected_function::class)->syntax();
@@ -313,7 +313,7 @@ final class Preparation_Worker
 		foreach ($owner->lookups as $lookup /** @object-key */) {
 			unset($lookup->dependents[$owner]);
 			if (q_count($lookup->dependents) === 0) {
-				$lookup->scope->remove_preparation_lookup($lookup);
+				$lookup->lookup_scope->remove_preparation_lookup($lookup);
 			}
 		}
 		$owner->dependencies = new \SplObjectStorage /** hash<int, shared<declaration_work>> */();
@@ -582,9 +582,9 @@ final class Preparation_Worker
 	private function candidates(preparation_lookup $lookup): array /** vector<collected_name> */
 	{
 		if ($lookup->kind === preparation_lookup_kind::type) {
-			return $lookup->scope->source_types_named($lookup->name);
+			return $lookup->lookup_scope->source_types_named($lookup->name);
 		}
-		return $lookup->scope->functions_named($lookup->name);
+		return $lookup->lookup_scope->functions_named($lookup->name);
 	}
 
 	/** Membership changes can invalidate successful, ambiguous or previously missing lookups. */
@@ -628,7 +628,7 @@ final class Preparation_Worker
 			if (!$source->deleted && ($entry->change_status !== change_state::deleted)) {
 				continue;
 			}
-			if ($entry->preparation_owner() !== null) {
+			if ($entry->preparation_work_owner() !== null) {
 				object_cast($entry, collected_definition::class)->preparation = null;
 			}
 			if ($entry instanceof collected_function) {

@@ -99,8 +99,13 @@ loaded compiler classes finds no remaining field/method collisions, and AST,
 structure-access, parse/collection and incremental-preparation tests pass.
 The next no-STAN clang attempt is recorded in
 `/tmp/my-try-native-20260930-member-names.stderr` and matching stdout. Remaining
-diagnostics include type-name hiding, nullable/derived-type conversions, covariant
-return emission, and differing ternary branch types. No native compiler executable
+diagnostics included type-name hiding; the three reported collisions are now
+renamed (preparation_work_owner, lookup_scope and return_statement). Four focused
+tests and conversion pass. The retry in
+`/tmp/my-try-native-20260930-type-names.stdout` confirms these errors are gone.
+Remaining diagnostics concern nullable/derived-type conversions, covariant return
+emission, differing ternary branch types and a local split across generated
+finally-control-flow blocks. No native compiler executable
 or execution results are available yet.
 
 ## Current authoring contracts

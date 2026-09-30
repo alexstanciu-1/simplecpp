@@ -126,7 +126,7 @@ final class Compiler_Lifecycle
 				$entries /** Storage<collected_name> */ = $source->entries;
 				foreach ($entries as $entry)
 				{
-					$work = $entry->preparation_owner();
+					$work = $entry->preparation_work_owner();
 					if ($work !== null) {
 						$work->state = preparation_state::pending;
 						$work->change_status = change_state::changed;

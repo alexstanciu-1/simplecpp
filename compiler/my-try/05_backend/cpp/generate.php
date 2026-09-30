@@ -23,7 +23,7 @@ final class CPP_Generator
 		{
 			if (($node->kind() === node_kind::function_declaration) || ($node->kind() === node_kind::struct_declaration)) {
 				$entry = $node->occurrence();
-				$ordered->append(object_cast($entry->preparation_owner(), preparation_owner::class));
+				$ordered->append(object_cast($entry->preparation_work_owner(), preparation_owner::class));
 				if ($node->kind() === node_kind::function_declaration) {
 					$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
 				}
@@ -81,7 +81,7 @@ final class CPP_Generator
 			}
 			elseif ($owner->kind() === preparation_kind::function_body) {
 				$entry = object_cast($owner->declaration(), collected_name::class);
-				$signature_owner = object_cast($entry->preparation_owner(), preparation_owner::class);
+				$signature_owner = object_cast($entry->preparation_work_owner(), preparation_owner::class);
 				$context->functions .= $this->program->fragments[$signature_owner]->text . "\n{\n" . $fragment->text . "}\n\n";
 			}
 			else
@@ -177,7 +177,7 @@ final class CPP_Generator
 			return;
 		}
 		$context->record_states[$key] = cpp_record_state::visiting;
-		$owner = object_cast($entry->preparation_owner(), preparation_owner::class);
+		$owner = object_cast($entry->preparation_work_owner(), preparation_owner::class);
 		$fragment = $this->program->fragments[$owner];
 		$records /** Storage<collected_name> */ = $fragment->records;
 		foreach ($records as $dependency) {
