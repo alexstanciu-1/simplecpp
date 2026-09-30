@@ -774,6 +774,10 @@ final class Generator
 
 	private function resolveClassDeclKey(string $phpClass, ?string $namespacePhp): ?string
 	{
+		$qualified = $this->nameRegistry->qualifyClassName($phpClass, str_starts_with($phpClass, '\\') ? 0 : 1, $namespacePhp);
+		if (isset($this->classDecls[$qualified])) {
+			return $qualified;
+		}
 		$resolved = $this->nameRegistry->resolveClass($phpClass, 0, $namespacePhp);
 		if ($resolved !== null && isset($this->classDecls[$resolved])) {
 			return $resolved;
@@ -1839,6 +1843,10 @@ final class Generator
 		$this->appendSourceLines($source, $this->code('', 0));
 
 		foreach ($uses as $use) {
+			// PHP class imports are file-local spelling, not shared C++ namespace aliases.
+			if (!in_array($use->kind, ['function', 'const'], true)) {
+				continue;
+			}
 			$useLine = $this->renderUseDeclaration($use);
 
 			if ($useLine === null) {
@@ -1957,6 +1965,11 @@ final class Generator
 		if (str_starts_with($normalized, 'ref ')) {
 			$this->collectForwardClassNamesFromType(trim(substr($normalized, strlen('ref '))), $out, $namespacePhp);
 			return;
+		}
+		// Fully qualified references in this namespace still need local forward declarations.
+		$prefix = $namespacePhp !== null && $namespacePhp !== '' ? $namespacePhp . '\\' : '';
+		if ($prefix !== '' && str_starts_with(ltrim($normalized, '\\'), $prefix)) {
+			$normalized = substr(ltrim($normalized, '\\'), strlen($prefix));
 		}
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
@@ -2471,7 +2484,7 @@ final class Generator
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
 				: null;
 			if ($property->type !== null) {
-				$type = $this->typeMapper->mapDeclaredType($property->type);
+				$type = $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($property->type, $namespacePhp));
 			} elseif ($initializer !== null) {
 				$type = 'decltype(' . $initializer . ')';
 			} else {
@@ -2503,7 +2516,7 @@ final class Generator
 				throw new \RuntimeException('Only public instance payload fields without defaults are supported in the current union lowering');
 			}
 			$type = $property->type !== null
-				? $this->typeMapper->mapDeclaredType($property->type)
+				? $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($property->type, $namespacePhp))
 				: '/* ERROR missing-union-field-type */';
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . $type . ' ' . $this->cppIdentifier($property->name) . ';', $property->line));
 		}
@@ -2551,16 +2564,16 @@ final class Generator
 		}
 		$extends = [];
 		if ($class->parentClass !== null) {
-			$extends[] = 'public ' . $this->typeMapper->mapClassName($class->parentClass);
+			$extends[] = 'public ' . $this->typeMapper->mapClassName($this->resolveDeclaredClassLikeType($class->parentClass, $namespacePhp));
 		}
 		foreach ($class->interfaces as $interface) {
-			$extends[] = 'public ' . $this->typeMapper->mapClassName($interface);
+			$extends[] = 'public ' . $this->typeMapper->mapClassName($this->resolveDeclaredClassLikeType($interface, $namespacePhp));
 		}
 		$extends[] = 'public virtual ::scpp::shared_self';
 		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
 		$this->appendHeaderLines($header, $this->code('public:', $class->line));
 		if (!$class->isInterface && $this->inheritsPublicConstructor($class, $namespacePhp)) {
-			$parent = $this->typeMapper->mapClassName($class->parentClass);
+			$parent = $this->typeMapper->mapClassName($this->resolveDeclaredClassLikeType($class->parentClass, $namespacePhp));
 			$separator = strrpos($parent, '::');
 			$constructor = $separator === false ? $parent : substr($parent, $separator + 2);
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'using ' . $parent . '::' . $constructor . ';', $class->line));
@@ -2584,7 +2597,7 @@ final class Generator
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
 				: null;
 			if ($property->type !== null) {
-				$type = $this->typeMapper->mapDeclaredType($property->type);
+				$type = $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($property->type, $namespacePhp));
 			} elseif ($initializer !== null) {
 				$type = 'decltype(' . $initializer . ')';
 			} else {
@@ -2642,7 +2655,7 @@ final class Generator
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
 				: null;
 			if ($property->type !== null) {
-				$type = $this->typeMapper->mapDeclaredType($property->type);
+				$type = $this->typeMapper->mapDeclaredType($this->qualifyDeclaredPhpType($property->type, $namespacePhp));
 			} elseif ($default !== null) {
 				$type = 'decltype(' . $default . ')';
 			} else {
@@ -3423,7 +3436,7 @@ final class Generator
 			if ($class->parentClass !== null) {
 				$parentArgs = $this->extractParentConstructorArgs($statements);
 				if ($parentArgs !== null) {
-					$initializer = ' : ' . $this->typeMapper->mapClassName($class->parentClass) . '(' . $this->renderArgs($parentArgs, $namespacePhp) . ')';
+					$initializer = ' : ' . $this->typeMapper->mapClassName($this->resolveDeclaredClassLikeType($class->parentClass, $namespacePhp)) . '(' . $this->renderArgs($parentArgs, $namespacePhp) . ')';
 					array_shift($statements);
 				}
 			}
@@ -7520,8 +7533,12 @@ final class Generator
 		}
 
 		$flags = str_starts_with($normalized, '\\') ? 0 : 1;
+		$import = $this->nameRegistry->importedClassName($normalized, $flags, $namespacePhp);
+		if ($import !== null) {
+			return $import;
+		}
 		$qualified = $this->nameRegistry->qualifyClassName($normalized, $flags, $namespacePhp);
-		if ($this->typeMapper->exactDeclaredTypeKind($qualified) === 'struct') {
+		if ($this->typeMapper->exactDeclaredTypeKind($qualified) !== null) {
 			return $qualified;
 		}
 		$resolved = $this->nameRegistry->resolveClass($normalized, $flags, $namespacePhp);
@@ -8827,13 +8844,17 @@ final class Generator
 				$this->errors[] = 'parent:: is not available without a parent class.';
 				return '/* unsupported-parent */';
 			}
-			return $this->typeMapper->mapClassName($this->currentParentClass);
+			return $this->typeMapper->mapClassName($this->resolveDeclaredClassLikeType($this->currentParentClass, $namespacePhp));
 		}
 		if ($lowerName === 'static') {
 			$this->errors[] = 'static:: is not supported in the current pass.';
 			return '/* unsupported-static */';
 		}
 		$flags = (int) ($node->flags ?? 0);
+		$import = $this->nameRegistry->importedClassName($name, $flags, $namespacePhp);
+		if ($import !== null) {
+			return '::scpp::' . str_replace('\\', '::', $import);
+		}
 		return $this->renderSymbolPath($name, $flags, false);
 	}
 

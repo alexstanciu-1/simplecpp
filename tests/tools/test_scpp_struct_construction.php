@@ -72,7 +72,7 @@ PHS;
 			$output = $transpiler->transpile($path, sourceOverride: $source);
 			$this->assertSame([], $output->errors, $profile . ' imported diagnostics');
 			$cpp = implode("\n", $output->sourceLines);
-			foreach (['Models::Row typed = Models::Row{};', 'auto inferred = Models::Row{};', 'auto plain = Models::Row{};', 'auto qualified = Models::Row{};', 'auto object = create<ObjectRow>();'] as $expected) {
+			foreach (['Models::Row typed = Models::Row{};', 'auto inferred = Models::Row{};', 'auto plain = Models::Row{};', 'auto qualified = Models::Row{};', 'auto object = create<::scpp::Objects::Row>();'] as $expected) {
 				$this->assertContains($expected, $cpp, $profile . ' imported construction');
 			}
 			$this->expectRejection($transpiler, $path, 'use Models\\Row as Record; $row = new Record(1);', 'Struct construction for Models\\Row accepts no arguments');

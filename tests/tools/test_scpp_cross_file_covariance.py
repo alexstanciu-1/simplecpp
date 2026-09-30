@@ -17,6 +17,8 @@ sources = {
 class facts { public int $value = 1; }
 class middle_facts extends facts {}
 class leaf_facts extends middle_facts {}
+interface same_contract { public function same(): facts; }
+class same_base implements same_contract { public function same(): facts { return new facts(); } }
 ''',
     'base': '''namespace covariance_base;
 interface provider { public function item(): \\covariance_data\\facts; }
@@ -35,6 +37,9 @@ final class leaf_node extends \\covariance_middle\\middle_node {
     public function parent_value(): int { return parent::item()->value; }
 }
 ''',
+    'same': '''namespace covariance_data;
+final class same_leaf extends same_base { public function same(): facts { return new facts(); } }
+''',
     'main': '''namespace covariance_entry;
 function through_base(\\covariance_base\\base_node $source): \\covariance_data\\facts { return $source->item(); }
 function through_interface(\\covariance_base\\provider $source): \\covariance_data\\facts { return $source->item(); }
@@ -47,7 +52,7 @@ if (($first !== $direct) || ($second !== $direct)) { echo "Lost shared identity\
 echo $first->value, ":", $second->value, ":", $source->parent_value(), "\\n";
 ''',
 }
-includes = {'base': 'facts', 'middle': 'base', 'leaf': 'middle', 'main': 'leaf'}
+includes = {'base': 'facts', 'middle': 'base', 'leaf': 'middle', 'same': 'facts', 'main': 'leaf'}
 for name, source in sources.items():
     prologue = f'require_once "{includes[name]}.php";\n' if name in includes else ''
     (project / (name + '.phs')).write_text(prologue + source)
@@ -75,6 +80,9 @@ assert run('native', [project / '.prism/build/main']) == host
 leaf_header = project / '.prism/generated/leaf.hpp'
 first_header = leaf_header.read_text()
 assert 'std::type_identity<shared_p<covariance_data::facts>>' in first_header
+# Same-return overrides must share a slot even when their source spellings differ.
+same_header = (project / '.prism/generated/same.hpp').read_text()
+assert same_header.count('__scpp_return_same(std::type_identity<shared_p<covariance_data::facts>>);') == 1
 run('noop', ['php', cli, 'build', '--no-stan'])
 assert 'Transpiled PHP files: 0' in (output / 'noop.stdout').read_text()
 # Only the ancestor file changes: the unchanged leaf needs a new middle-return bridge.

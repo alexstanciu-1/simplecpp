@@ -46,8 +46,41 @@ is covered by `tests/tools/test_scpp_cross_file_covariance.py`. The compiler sti
 uses invariant expression accessor returns and distinct specialized accessor names.
 See the [generator boundary](../../../../generators/php/specs/rules_catalog.md#cross-file-covariant-object-accessors).
 
-Separate discovered debt: imported aliases in cross-file base/return declarations
-can be emitted as local forward declarations instead of their imported identities,
-causing conflicting typedefs or incomplete bases. This is not repaired by accessor
-signature cataloging. Native covariance proofs use fully qualified names and explicit
-prologue dependencies; structural catalog tests cover import qualification itself.
+File-local class imports now expand at declaration/expression use sites rather than
+emitting shared C++ aliases. The separate-file native proof is
+`tests/tools/test_scpp_cross_file_import_aliases.py`; header dependencies remain explicit.
+
+## Native and STAN checkpoint (2026-09-30)
+
+Candidate `11d70185` plus declaration-identity normalization builds the native compiler
+with `--no-stan`. Broader PHP/native parity and generated-program execution:
+193/236 pass (S2S 71/94; parked LLVM/sample 122/142). The 43 failures involve struct
+lookup, including 16 rejection-diagnostic mismatches. This is not a full native pass.
+Evidence: `/tmp/my-try-native-20260929-bfd12958/{broad-sweep,llvm-sweep}/summary.json`.
+
+Priority native blocker: `Scope_Publication::register()` compares
+`?collected_struct` with `collected_name`. Runtime strict identity compares same-type
+shared handles by pointer but returns false for different handle types, including a
+derived/base view of the same object. Struct definitions consequently fail publication.
+A standalone native probe confirms both direct and nullable-wrapped derived/base
+comparisons return false. Review the object-identity contract/runtime boundary before
+choosing a runtime correction or explicit source normalization; also inspect removal
+comparisons. No parked LLVM semantic changes are needed to investigate this shared path.
+
+STAN analyzes 71 converted units in about 3.6 seconds and reports 1,049 diagnostics
+(70 compile-error bucket, 760 STAN-error bucket, 219 warnings). These are analyzer
+classifications, not 70 observed C++ compilation failures. Triage order:
+
+1. Runtime/container type recognition: 421 unresolved dependencies, mainly `Storage`,
+   `nullable`, `shared`, `Key_Storage_List`, `Keyed_Storage` and `weak`.
+2. Namespace-aware resolution: two `Token_Buffer` ambiguities conflate the compiler's
+   declaration with a runtime declaration in another namespace.
+3. Ordinary override compatibility: 91 override diagnostics; the current exemption
+   only recognizes eligible zero-argument object accessors, so identical parameterized
+   hooks are flagged too.
+4. Reassess type flow after those repairs: casts/weak acquisition, derived/base returns,
+   wrapper boundaries and initialization. Do not suppress all diagnostics or add dummy
+   initialization; some may still indicate real source issues.
+
+Detailed report: `/tmp/my-try-native-20260929-bfd12958/phpp/.prism/cache/stan_report.json`.
+STAN repair remains a separate follow-up; no analysis behavior changed in this slice.

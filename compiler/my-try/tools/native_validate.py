@@ -43,6 +43,7 @@ def main():
     parser.add_argument('--target-checkout', required=True, type=Path)
     parser.add_argument('--candidate-revision', required=True)
     parser.add_argument('--results', required=True, type=Path)
+    parser.add_argument('--no-stan', action='store_true', help='Explicitly isolate native validation from STAN; record analysis as skipped')
     parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
     args = parser.parse_args()
     target, results = args.target_checkout.resolve(), args.results.resolve()
@@ -104,8 +105,9 @@ def main():
     config['build']['cxx'] = 'clang++-18'
     config['runtime']['modules'] = ['compiler', 'filesystem', 'tasks']
     config_path.write_text(json.dumps(config, indent=2) + '\n')
-    print('Building native compiler with normal STAN...', flush=True)
-    run('native-build', ['php', cli, 'build', '--build-runtime'], project, timeout=600)
+    analysis_options = ['--no-stan'] if args.no_stan else []
+    print('Building native compiler ' + ('without STAN...' if args.no_stan else 'with normal STAN...'), flush=True)
+    run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=600)
     executable = project / '.prism/build/main'
     # Ordinary host tests independently assert the algorithms and expected sample exits.
     for suite in ['storage', 'tokenizer', 'ast', 'model', 'llvm_text']:
@@ -231,9 +233,11 @@ def main():
         outcomes.append(dict(name=name, valid=valid, passed=True))
         if len(outcomes) % 20 == 0:
             print(f'{len(outcomes)}/{len(cases)} native comparisons passed', flush=True)
-    run('incremental-build', ['php', cli, 'build'], project)
-    stan = json.loads((project / '.prism/cache/stan_status.json').read_text())
-    analysis = {key: stan[key] for key in ['compile_error_count', 'stan_error_count', 'stan_warning_count', 'stan_notice_count']}
+    run('incremental-build', ['php', cli, 'build', *analysis_options], project)
+    analysis = {'skipped': True}
+    if not args.no_stan:
+        stan = json.loads((project / '.prism/cache/stan_status.json').read_text())
+        analysis = {key: stan[key] for key in ['compile_error_count', 'stan_error_count', 'stan_warning_count', 'stan_notice_count']}
     summary = dict(analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
                    s2s_scalar_executions=len(scalar_cases), s2s_declaration_executions=len(declaration_cases),
                    s2s_rejections=len(rejection_cases), cases=len(outcomes), valid=sum(x['valid'] for x in outcomes),

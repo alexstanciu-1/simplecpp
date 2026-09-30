@@ -66,6 +66,17 @@ final class NameRegistry
 		}
 	}
 
+	/** Expand a file-local class import without requiring the target declaration in this file. */
+	public function importedClassName(string $name, int $flags, ?string $namespace): ?string
+	{
+		if ($flags === 0 || $flags === 2 || str_starts_with($name, '\\')) {
+			return null;
+		}
+		$parts = explode('\\', $name, 2);
+		$import = $this->classImports[$namespace ?? ''][$parts[0]] ?? null;
+		return $import === null ? null : $import . (isset($parts[1]) ? '\\' . $parts[1] : '');
+	}
+
 	/** Expand source namespace/import syntax without resolving or validating a symbol. */
 	public function qualifyClassName(string $name, int $flags, ?string $namespace): string
 	{
@@ -73,10 +84,9 @@ final class NameRegistry
 		if ($flags === 0 || str_starts_with($name, '\\')) {
 			return $trimmed;
 		}
-		$parts = explode('\\', $trimmed, 2);
-		$import = $this->classImports[$namespace ?? ''][$parts[0]] ?? null;
-		if ($flags !== 2 && $import !== null) {
-			return $import . (isset($parts[1]) ? '\\' . $parts[1] : '');
+		$import = $this->importedClassName($name, $flags, $namespace);
+		if ($import !== null) {
+			return $import;
 		}
 		return $namespace !== null && $namespace !== '' ? $namespace . '\\' . $trimmed : $trimmed;
 	}
