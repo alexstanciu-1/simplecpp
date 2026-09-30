@@ -68,20 +68,72 @@ both comparison directions, distinct objects, empty/present nullable values, and
 multiple/virtual inheritance; it passes with Clang and GCC. Unrelated static interface
 views retain the existing fallback and are not expanded by this slice.
 
-STAN analyzes 71 converted units in about 3.6 seconds and reports 1,049 diagnostics
-(70 compile-error bucket, 760 STAN-error bucket, 219 warnings). These are analyzer
-classifications, not 70 observed C++ compilation failures. Triage order:
+## STAN diagnostic catalog (2026-09-30)
 
-1. Runtime/container type recognition: 421 unresolved dependencies, mainly `Storage`,
-   `nullable`, `shared`, `Key_Storage_List`, `Keyed_Storage` and `weak`.
-2. Namespace-aware resolution: two `Token_Buffer` ambiguities conflate the compiler's
-   declaration with a runtime declaration in another namespace.
-3. Ordinary override compatibility: 91 override diagnostics; the current exemption
-   only recognizes eligible zero-argument object accessors, so identical parameterized
-   hooks are flagged too.
-4. Reassess type flow after those repairs: casts/weak acquisition, derived/base returns,
-   wrapper boundaries and initialization. Do not suppress all diagnostics or add dummy
-   initialization; some may still indicate real source issues.
+Fresh analysis after `420cb2a3`: 71 converted units, 1,049 diagnostics (70 in the
+compile-error bucket, 760 STAN-error bucket, 219 warnings). These are analyzer
+classifications, not native compilation failures. The exact original native sweep
+now passes 236/236. Native success alone does not establish every diagnostic is false.
 
-Detailed report: `/tmp/my-try-native-20260929-bfd12958/phpp/.prism/cache/stan_report.json`.
-STAN repair remains a separate follow-up; no analysis behavior changed in this slice.
+| Group | Count | Included diagnostics | Assessment |
+| --- | ---: | --- | --- |
+| Name/type dependencies | 423 | 421 unresolved, 2 ambiguous | Mostly missing built-in family recognition; two namespace collisions. |
+| Overrides | 91 | override_declaration | Ordinary matching hooks are flagged by an accessor-only compatibility exception. |
+| Call classification/arity | 15 | 13 static_instance_misuse, 2 argument_count_mismatch | All 13 concern parent constructors; both arity reports concern supported string offsets. |
+| Unknown receiver/result chains | 292 | 112 expression chains, 26 return chains, 76 method calls, 60 property reads, 16 property writes, 2 static calls | Recount after resolving root types and typed helper results. |
+| Type compatibility | 74 | 24 argument, 21 return, 19 property, 9 local, 1 enum | Includes derived/base and wrapper/numeric-boundary gaps; review individually. |
+| Wrapper boundaries | 55 | 23 local assignments, 18 returns, 13 arguments, 1 property assignment | Separate supported checked extraction from missing flow reasoning and actual unsafe use. |
+| Initialization | 99 | 67 property, 31 local, 1 partial-branch local | Needs control-flow/publication review; do not insert dummy initialization. |
+
+### Small repair candidates
+
+1. **Parent constructor classification (13 direct reports).**
+   `StanExpressionTypeResolver::collectCallSiteDiagnosticForCallSite()` treats all
+   syntactic `::` calls as static dispatch. Recognize parent constructor invocation
+   on the current instance while retaining visibility, arity and argument checks.
+   Prove valid parent construction and rejection of an actual static call to an
+   instance method; do not blanket-exempt methods named `__construct`.
+2. **String offset metadata (2 direct reports).**
+   `RuntimeShallowSourceGenerator` publishes only two parameters for `strpos` and
+   `strrpos`; `php_string.hpp` implements both two- and three-argument forms.
+   Fix the owning signature metadata and regenerate the STAN surface. Prove two
+   and three arguments accepted, one/four and wrong offset types rejected.
+3. **Built-in generic families (419 candidate reports, not yet a measured reduction).**
+   Breakdown: Storage 171, nullable 131, shared 34, Key_Storage_List 33,
+   Keyed_Storage 24, weak 18, result_or_false 5, Storage_Cursor 3. The remaining
+   unresolved names are Iterator and Exception, one each, which need separate review.
+   `FrontEndSymbolExtractor::collectTypeDependencyTargets()` splits type spelling
+   into names; its built-in filter recognizes `shared_p` but misses source `shared`
+   and several other supported families. Use supported-family recognition at that
+   boundary while preserving dependencies on element/key types. Existing collection
+   and wrapper analysis already models many of these families; do not invent fake
+   project classes or suppress unknown payload types. Include `Storage<Missing>`
+   and nested generic payload rejection proofs. Check body dependencies too.
+4. **Matching override signatures (up to 91 candidate reports).**
+   `StanDiagnosticCollector::collectOverrideDiagnostics()` currently exempts only
+   eligible zero-argument object accessors. An ordinary identical signature should
+   pass after type qualification, checking staticness, visibility and parameter
+   modes. Start with exact compatibility; general variance is a separate feature.
+   Prove identical parameterized/scalar-return hooks and genuinely incompatible
+   overrides. Do not compare parameter names or entire declaration records as types.
+
+### Follow-up after the small repairs
+
+`StanDependencyResolver::resolveDependencyTarget()` merges qualified and short-name
+matches without lexical namespace precedence. The two `Token_Buffer` ambiguities
+combine `scpp\compiler\Token_Buffer` with a runtime declaration in another namespace;
+related expression/static-call reports follow. Correct lookup using the declaration
+context and imports; avoid a name-specific exception. This is a larger resolution
+slice than correcting one metadata signature.
+
+Then reassess cast/weak-acquisition result typing, compatible derived/base boundaries,
+nullable flow and initialization using the reduced report. Known required nullable
+extraction is an agreed runtime boundary; it should not acquire source casts merely
+to silence STAN. Keep real incompatible assignments and uninitialized reads rejected.
+Existing focused homes include `test_scpp_stan_bounded_inference.php`,
+`test_scpp_stan_strict_discipline.php` and `test_scpp_stan_diagnostics_session.php`.
+
+Evidence: `/tmp/my-try-native-20260929-bfd12958/phpp/.prism/cache/stan_report.json`;
+refresh command: `php bin/scpp.php stan` from the converted project, using the
+checkout's absolute CLI path. This catalog changes documentation only; repair counts
+must be measured after each slice rather than subtracting estimated cascades.
