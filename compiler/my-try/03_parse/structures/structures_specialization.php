@@ -515,13 +515,13 @@ final class call_node extends expression_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$items /** Storage<named_type_node> */ = $this->template_arguments;
-		foreach ($items as $child) {
-			$worker->edge($this, $child);
+		$template_arguments /** Storage<named_type_node> */ = $this->template_arguments;
+		foreach ($template_arguments as $template_argument) {
+			$worker->edge($this, $template_argument);
 		}
-		$items /** Storage<expression_node> */ = $this->arguments;
-		foreach ($items as $child) {
-			$worker->edge($this, $child);
+		$arguments /** Storage<expression_node> */ = $this->arguments;
+		foreach ($arguments as $argument) {
+			$worker->edge($this, $argument);
 		}
 	}
 

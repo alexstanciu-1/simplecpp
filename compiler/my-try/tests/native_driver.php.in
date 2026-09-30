@@ -100,12 +100,12 @@ elseif (string_byte_starts_with($path, 's2s:'))
 	try
 	{
 		$compiler->exec_cpp();
-		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-		$first = $outputs[0];
+		$cpp_outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+		$first = $cpp_outputs[0];
 		$compiler->prepare();
 		$compiler->cpp();
-		$outputs = Model::$cpp_files;
-		if (($outputs[0] === $first) || ($outputs[0]->text !== $first->text)) {
+		$cpp_outputs = Model::$cpp_files;
+		if (($cpp_outputs[0] === $first) || ($cpp_outputs[0]->text !== $first->text)) {
 			throw new \LogicException('Repeated S2S preparation changed output or reused artifacts');
 		}
 		echo $first->text;
@@ -113,15 +113,15 @@ elseif (string_byte_starts_with($path, 's2s:'))
 	catch (\Throwable $error)
 	{
 		$message = $error->getMessage();
-		$failed_outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-		if (!$failed_outputs->is_empty()) {
+		$cpp_failed_outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+		if (!$cpp_failed_outputs->is_empty()) {
 			throw new \LogicException('Failed S2S compilation published output');
 		}
 		$recovery_paths /** vector<string> */ = [__RECOVERY_DIR__];
 		$compiler->init($recovery_paths);
 		$compiler->exec_cpp();
-		$recovered /** Storage<cpp_module> */ = Model::$cpp_files;
-		if (q_count($recovered) !== 1) {
+		$cpp_recovered /** Storage<cpp_module> */ = Model::$cpp_files;
+		if (q_count($cpp_recovered) !== 1) {
 			throw new \LogicException('S2S recovery did not produce one module');
 		}
 		echo "ERROR\n", $message;
@@ -160,9 +160,9 @@ else
 				}
 			}
 
-			$outputs /** Storage<llvm_module> */ = Model::$llvm_files;
+			$llvm_outputs /** Storage<llvm_module> */ = Model::$llvm_files;
 			$trace = "OK\n";
-			foreach ($outputs as $output) {
+			foreach ($llvm_outputs as $output) {
 				$trace .= string_byte_len($output->file_name) . ':' . $output->file_name . string_byte_len($output->text) . ':' . $output->text;
 			}
 			if ($attempt === 1)
@@ -172,34 +172,34 @@ else
 				}
 				foreach ($retained as $index => $old)
 				{
-					if ($old === $outputs[$index]) {
+					if ($old === $llvm_outputs[$index]) {
 						throw new \LogicException('Rebuild reused an output record');
 					}
-					if ($old->text !== $outputs[$index]->text) {
+					if ($old->text !== $llvm_outputs[$index]->text) {
 						throw new \LogicException('Rebuild damaged retained output');
 					}
 				}
 			}
 			$previous = $trace;
-			$retained = $outputs;
+			$retained = $llvm_outputs;
 		}
 		echo $previous;
 	}
 	catch (\Throwable $error)
 	{
 		$message = $error->getMessage();
-		$failed_outputs /** Storage<llvm_module> */ = Model::$llvm_files;
-		if (!$failed_outputs->is_empty()) {
+		$llvm_failed_outputs /** Storage<llvm_module> */ = Model::$llvm_files;
+		if (!$llvm_failed_outputs->is_empty()) {
 			throw new \LogicException('Failed compilation published output');
 		}
 		$recovery_paths /** vector<string> */ = [__RECOVERY_DIR__];
 		$compiler->init($recovery_paths);
 		$compiler->exec_llvm();
-		$recovered /** Storage<llvm_module> */ = Model::$llvm_files;
-		if (q_count($recovered) !== 1) {
+		$llvm_recovered /** Storage<llvm_module> */ = Model::$llvm_files;
+		if (q_count($llvm_recovered) !== 1) {
 			throw new \LogicException('Recovery did not produce one module');
 		}
-		if ($recovered[0]->text !== "define i32 @main() {\n_Gb0:\n    ret i32 0\n}\n") {
+		if ($llvm_recovered[0]->text !== "define i32 @main() {\n_Gb0:\n    ret i32 0\n}\n") {
 			throw new \LogicException('Recovery changed the expected output');
 		}
 		echo "ERROR\n", $message;

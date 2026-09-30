@@ -49,13 +49,13 @@ work_check($body === $function->body->work() && $body->version === $version, 'No
 // Wrong-role relationships fail at the typed constructor/attachment boundary.
 $rejected = 0;
 try {
-	$invalid = new function_body_work($record->occurrence());
+	$invalid_body = new function_body_work($record->occurrence());
 }
 catch (\TypeError $expected) {
 	$rejected++;
 }
 try {
-	$invalid = new record_definition_work($function->occurrence());
+	$invalid_record = new record_definition_work($function->occurrence());
 }
 catch (\TypeError $expected) {
 	$rejected++;

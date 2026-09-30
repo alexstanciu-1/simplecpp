@@ -155,3 +155,10 @@ is gone. Native/PHP finally behavior matches in `/tmp/finally-scopes-proof-03`;
 existing return/loop cases and new local/catch/exception cases pass with STAN
 disabled. The compiler still fails on independent assignment, ternary and
 covariant-return issues.
+
+The local-type audit fixes call_node's reused Storage local, three CPP/LLVM
+output-local name pairs in the native driver, and a test's unrelated work-record
+local. AST, structure-access and preparation-work tests pass. Conversion passes;
+`/tmp/my-try-native-local-types.stdout` confirms the Storage assignment failure
+is gone. Remaining emitted failures are the parser's array-count assignment,
+ternary branch types and covariant return declarations.
