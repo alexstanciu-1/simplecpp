@@ -68,6 +68,8 @@ $cases = [
 	'cast_string' => ['$b = 7; $a = (string)$b;', 0],
 	'cast_identity' => ['$b = 7; $a = (int)$b; return $a;', 7],
 	'cast_fixed_width' => ['$b = 7; $a = (uint8)$b; return $a;', 7],
+	'cast_alias_identity' => ['$b uint8 = 7; $a = (byte)$b; return $a;', 7],
+	'cast_field' => ['struct Box { int32 $value; } $box Box; $box->value = 9; return (int)$box->value;', 9],
 	'cast_nested' => ['$b = 2; $a = (string)(float)$b;', 0],
 	'string_single' => ['$a = \'x\';', 0],
 	'string_double' => ['$a = "x";', 0],
@@ -540,6 +542,7 @@ $rejections = ['function f(int &$x): void {} f(1);',
 	'struct S { uint8 $x; } $s S = [1];',
 	'struct Box {} $box Box; $value = (int)$box;',
 	'struct Box {} $box Box; $value = (Box)$box;',
+	'$value = (uint8)true;',
 	'function f(int &$x): void {} $x uint8 = 1; f($x);',
 	'$a float = 1;', '$a int = 1.5;', '$a = 1.5; $a = false;', '$a int = true;', '$a bool = 1;', '$a = true; $a = 1;', '$a = 1; $a = false;', '$a = 9223372036854775808;', '$a = 010;', '$a = $a;', '$a = $b = $a;', '$b = true; $a = $b = 1;', '$a = unknown();', '$a = UNKNOWN_CONSTANT;', '$a = php_int_max;', '$a void;', "return 'x';", 'template<T> function f(): int { return 1; }'];
 foreach ($rejections as $source)

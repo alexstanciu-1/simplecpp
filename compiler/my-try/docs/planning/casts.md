@@ -329,3 +329,19 @@ The existing expression grammar does not yet support parenthesized grouping.
 Consequently `(int)2.5 + 1` proves that a cast binds before addition, while
 `(int)($a + $b)` remains deferred with grouped expressions rather than being
 silently treated as part of cast syntax.
+
+### Stage 4 — proof completion
+
+Implemented in the working tree:
+
+- explicit canonical alias identity through `uint8` to `byte`, proving that source
+  spelling does not create a runtime conversion;
+- a field-access operand using the ordinary prepared field facts before the cast
+  decision;
+- exact generated-C++ assertions for both the field runtime cast and the unwrapped
+  alias identity path;
+- integer-target admission aligned with the current runtime contract: canonical
+  `int` accepts every bounded scalar source, while fixed-width targets currently
+  accept integer and string sources rather than producing unsupported C++;
+- authored S2S fixtures retaining both cases for later explicitly requested native
+  validation.

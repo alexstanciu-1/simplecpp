@@ -200,4 +200,39 @@ if (!$failed) {
 	throw new \LogicException('Unsupported nominal cast target passed through identity handling');
 }
 
+$failed = false;
+try {
+	conversion_test_source('$value = (uint8)true;');
+}
+catch (\RuntimeException $error) {
+	$failed = str_contains($error->getMessage(), 'explicit integer cast is not supported');
+}
+if (!$failed) {
+	throw new \LogicException('Frontend admitted a fixed-width scalar pair absent from the runtime cast contract');
+}
+
+$syntax = conversion_test_source(
+	'struct Box { int32 $value; } $box Box; $box->value = 9; '
+	. '$field = (int)$box->value; $alias uint8 = 7; $same = (byte)$alias; return $field;');
+$statements = $syntax->root->body->statements;
+$field_assignment = object_cast(object_cast($statements[2], expression_statement_node::class)->expression,
+	assignment_expression_node::class);
+$field_cast = object_cast($field_assignment->value, cast_expression_node::class);
+$alias_assignment = object_cast(object_cast($statements[4], expression_statement_node::class)->expression,
+	assignment_expression_node::class);
+$alias_cast = object_cast($alias_assignment->value, cast_expression_node::class);
+if (!($field_cast->operand instanceof field_access_node)
+	|| ($field_cast->require_cast_preparation()->conversion->operation
+		!== conversion_operation::explicit_runtime_cast)
+	|| ($alias_cast->require_cast_preparation()->conversion->operation !== conversion_operation::identity)
+	|| !$alias_cast->require_cast_preparation()->conversion->source_type->matches(
+		$alias_cast->require_cast_preparation()->conversion->target_type)) {
+	throw new \LogicException('Field operand or canonical alias identity lost its explicit-cast decision');
+}
+$text = Model::$cpp_files[0]->text;
+if (!str_contains($text, 'scpp::cast<scpp::int_t<>>((local_box).field_value)')
+	|| !str_contains($text, 'auto local_same = local_alias;')) {
+	throw new \LogicException('Field cast or alias identity did not retain decision-driven C++ emission');
+}
+
 echo "conversion preparation tests passed\n";

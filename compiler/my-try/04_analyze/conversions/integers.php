@@ -10,7 +10,10 @@ final class Integer_Conversions
 		conversion_context $context): conversion_decision
 	{
 		if ($context === conversion_context::explicit_cast) {
-			if (Conversion_Preparation::is_scalar($source)) {
+			$source_family = Type_Preparation::canonical($source)->family();
+			$default_target = $target->matches(Language_Types::integer(Model::$language_scope));
+			if (($source_family === type_family::integer) || String_Conversions::is_string($source)
+				|| ($default_target && Conversion_Preparation::is_scalar($source))) {
 				return Conversion_Preparation::operation(
 					$source, $target, $context, conversion_operation::explicit_runtime_cast);
 			}
