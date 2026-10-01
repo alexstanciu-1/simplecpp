@@ -225,6 +225,10 @@ The wrapped declaration retains its ordinary grammar and owners. This avoids a
 separate `templated_struct`, `templated_class` and `templated_function` hierarchy.
 The template wrapper is a declaration node, not a type node.
 
+Formal parameter order has one owner: the template definition's ordered parameter
+list. A parameter record stores its name and contract, not a duplicate position.
+Its semantic identity is the template definition ID plus its zero-based list slot.
+
 A template type use should have one application AST node that owns:
 
 - the target type/template reference;

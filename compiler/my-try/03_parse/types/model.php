@@ -248,30 +248,19 @@ final class no_value_type_definition extends semantic_type_definition implements
 	}
 }
 
-/** Ordered formal identity is its owning template definition plus this zero-based position. */
+/** The owning definition's ordered parameter list supplies this formal's position. */
 final class template_type_parameter
 {
-	private int $parameter_position /** uint32 */;
 	private string $parameter_name;
 	private generic_contract $parameter_contract;
 
-	public function __construct(int $position, string $name,
-		generic_contract $contract = generic_contract::copyable_value)
+	public function __construct(string $name, generic_contract $contract = generic_contract::copyable_value)
 	{
-		if (($position < 0) || ($position > Type_Identity::MAX)) {
-			throw new \OutOfRangeException('Template parameter position must be a uint32');
-		}
 		if ($name === '') {
 			throw new \InvalidArgumentException('Template parameter name must not be empty');
 		}
-		$this->parameter_position = $position;
 		$this->parameter_name = $name;
 		$this->parameter_contract = $contract;
-	}
-
-	public function position(): int
-	{
-		return $this->parameter_position;
 	}
 
 	public function name(): string
@@ -291,7 +280,7 @@ final class template_type_definition extends semantic_type_definition
 	private nominal_type_kind $result_kind;
 	private array $ordered_parameters /** vector<template_type_parameter> */;
 
-	/** Validate stable positional identity and reject duplicate formal names. */
+	/** Preserve the owner's explicit list order and reject duplicate formal names. */
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
 		nominal_type_kind $result_kind, array $parameters /** vector<template_type_parameter> */)
 	{
@@ -304,7 +293,7 @@ final class template_type_definition extends semantic_type_definition
 		$names /** hash<string, bool> */ = [];
 		foreach ($parameters as $position => $parameter)
 		{
-			if (($position !== $expected_position) || ($parameter->position() !== $expected_position)) {
+			if (($position !== $expected_position) || !($parameter instanceof template_type_parameter)) {
 				throw new \InvalidArgumentException('Template parameters must use ordered zero-based positions');
 			}
 			if (isset($names[$parameter->name()])) {
@@ -333,6 +322,15 @@ final class template_type_definition extends semantic_type_definition
 		return $this->ordered_parameters;
 	}
 
+	/** Resolve the formal whose identity is this definition and the supplied zero-based slot. */
+	public function parameter(int $position): template_type_parameter
+	{
+		if (($position < 0) || !isset($this->ordered_parameters[$position])) {
+			throw new \OutOfBoundsException('Unknown template type parameter position');
+		}
+		return $this->ordered_parameters[$position];
+	}
+
 	public function arity(): int
 	{
 		return q_count($this->ordered_parameters);
@@ -350,13 +348,11 @@ interface canonical_type_i
 abstract class canonical_type implements canonical_type_i
 {
 	private int $identity /** uint32 */;
-	private type_definition_i $type_definition;
 
-	public function __construct(int $identity, type_definition_i $definition)
+	public function __construct(int $identity)
 	{
 		Type_Identity::require_valid($identity, 'Canonical type identity');
 		$this->identity = $identity;
-		$this->type_definition = $definition;
 	}
 
 	public function type_id(): int
@@ -364,10 +360,7 @@ abstract class canonical_type implements canonical_type_i
 		return $this->identity;
 	}
 
-	public function definition(): type_definition_i
-	{
-		return $this->type_definition;
-	}
+	abstract public function definition(): type_definition_i;
 }
 
 final class boolean_type extends canonical_type
@@ -376,13 +369,18 @@ final class boolean_type extends canonical_type
 
 	public function __construct(int $identity, boolean_type_definition $definition)
 	{
-		parent::__construct($identity, $definition);
+		parent::__construct($identity);
 		$this->boolean_definition = $definition;
 	}
 
 	public function family(): type_family
 	{
 		return type_family::boolean;
+	}
+
+	public function definition(): type_definition_i
+	{
+		return $this->boolean_definition;
 	}
 
 	public function boolean_definition(): boolean_type_definition
@@ -397,13 +395,18 @@ final class integer_type extends canonical_type
 
 	public function __construct(int $identity, integer_type_definition $definition)
 	{
-		parent::__construct($identity, $definition);
+		parent::__construct($identity);
 		$this->integer_definition = $definition;
 	}
 
 	public function family(): type_family
 	{
 		return type_family::integer;
+	}
+
+	public function definition(): type_definition_i
+	{
+		return $this->integer_definition;
 	}
 
 	public function integer_definition(): integer_type_definition
@@ -418,13 +421,18 @@ final class floating_type extends canonical_type
 
 	public function __construct(int $identity, floating_type_definition $definition)
 	{
-		parent::__construct($identity, $definition);
+		parent::__construct($identity);
 		$this->floating_definition = $definition;
 	}
 
 	public function family(): type_family
 	{
 		return type_family::floating;
+	}
+
+	public function definition(): type_definition_i
+	{
+		return $this->floating_definition;
 	}
 
 	public function floating_definition(): floating_type_definition
@@ -439,13 +447,18 @@ final class nominal_type extends canonical_type
 
 	public function __construct(int $identity, nominal_type_definition $definition)
 	{
-		parent::__construct($identity, $definition);
+		parent::__construct($identity);
 		$this->nominal_definition = $definition;
 	}
 
 	public function family(): type_family
 	{
 		return type_family::nominal;
+	}
+
+	public function definition(): type_definition_i
+	{
+		return $this->nominal_definition;
 	}
 
 	public function nominal_definition(): nominal_type_definition
@@ -460,13 +473,18 @@ final class no_value_type extends canonical_type
 
 	public function __construct(int $identity, no_value_type_definition $definition)
 	{
-		parent::__construct($identity, $definition);
+		parent::__construct($identity);
 		$this->no_value_definition = $definition;
 	}
 
 	public function family(): type_family
 	{
 		return type_family::no_value;
+	}
+
+	public function definition(): type_definition_i
+	{
+		return $this->no_value_definition;
 	}
 
 	public function no_value_definition(): no_value_type_definition
@@ -484,7 +502,7 @@ final class applied_template_type extends canonical_type
 	public function __construct(int $identity, template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */)
 	{
-		parent::__construct($identity, $definition);
+		parent::__construct($identity);
 		$this->template_definition = $definition;
 		$this->arguments = $arguments;
 	}
@@ -492,6 +510,11 @@ final class applied_template_type extends canonical_type
 	public function family(): type_family
 	{
 		return type_family::nominal;
+	}
+
+	public function definition(): type_definition_i
+	{
+		return $this->template_definition;
 	}
 
 	public function template_definition(): template_type_definition
