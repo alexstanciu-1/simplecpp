@@ -6,11 +6,6 @@
  */
 namespace scpp\compiler;
 
-/** Backend-neutral operation selected during semantic preparation. */
-enum binary_operation {
-	case addition;
-}
-
 /** Common backend-neutral result of preparing an expression. */
 abstract class prepared_expression {
 	public canonical_type_use $type;
@@ -56,9 +51,9 @@ final class prepared_cast_expression extends prepared_expression
 	public conversion_decision $conversion;
 }
 
-/** Binary result type and selected language operation; operands retain their own facts. */
+/** Binary syntax retains the common selected operator decision. */
 final class prepared_binary_expression extends prepared_expression {
-	public binary_operation $operation;
+	public operator_decision $decision;
 }
 
 /** Typed storage identity shared by bindings, parameters and fields; never an owning AST link. */

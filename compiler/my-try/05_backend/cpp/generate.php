@@ -345,14 +345,19 @@ final class CPP_Generator
 	/** Render the prepared operation recursively; token spelling has no backend authority. */
 	public static function generate_binary(binary_expression_node $syntax, cpp_generation_context $context): string
 	{
-		$facts = $syntax->require_binary_preparation();
-		if ($facts->operation !== binary_operation::addition) {
+		$decision = $syntax->require_binary_preparation()->decision;
+		if ($decision->operation !== operator_operation::integer_addition) {
 			throw new \RuntimeException('C++ binary operation is not supported yet');
+		}
+		if (q_count($decision->operands) !== 2) {
+			throw new \LogicException('C++ binary operation requires two prepared operands');
 		}
 
 		$worker = new CPP_Syntax($context);
-		$left = $syntax->left->generate_cpp($worker);
-		$right = $syntax->right->generate_cpp($worker);
+		$left = CPP_Declarations::conversion(
+			$syntax->left->generate_cpp($worker), $decision->operands[0], $context);
+		$right = CPP_Declarations::conversion(
+			$syntax->right->generate_cpp($worker), $decision->operands[1], $context);
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $left . ' + ' . $right . ')';
 	}

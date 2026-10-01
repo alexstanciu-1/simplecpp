@@ -96,6 +96,7 @@ $cases = [
 	'var_reassign_002_value' => ['$a = 1; $a = $a + 1; return $a;', 2],
 	'var_reassign_003' => ['$a = 1; $a = $a + $a;', 0],
 	'var_reassign_003_value' => ['$a = 1; $a = $a + $a; return $a;', 2],
+	'expr_arith_001' => ['$a = 1 + 2; return $a;', 3],
 	'copy' => ['$a = 10; $b = $a; $a = 12; return $b;', 10],
 	'wide' => ['$a = 4294967296; return 7;', 7],
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
@@ -313,7 +314,8 @@ foreach ($cases as $name => [$source, $exit])
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 			. "\tauto local_b = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
 		$text = Model::$cpp_files[0]->text;
-		if (($binary_facts->operation !== binary_operation::addition) || (!$binary_facts->type->matches($integer_type)) ||
+		if (($binary_facts->decision->operation !== operator_operation::integer_addition)
+			|| (!$binary_facts->type->matches($integer_type)) ||
 			$binary_facts->addressable || (!$left->require_preparation()->type->matches($integer_type)) ||
 			(!$right->require_preparation()->type->matches($integer_type)) || (!$second_facts->type->matches($integer_type)) ||
 			(weakref_get($left->require_variable_reference_preparation()->declaration) !== weakref_get($first_facts->binding->declaration)) ||
@@ -339,7 +341,7 @@ foreach ($cases as $name => [$source, $exit])
 			($second_facts->binding->resolved_kind !== binding_kind::assignment) ||
 			(weakref_get($second_facts->binding->declaration) !== $declaration) ||
 			(weakref_get($self_reference->require_variable_reference_preparation()->declaration) !== $declaration) ||
-			($binary_facts->operation !== binary_operation::addition) ||
+			($binary_facts->decision->operation !== operator_operation::integer_addition) ||
 			(!$first_facts->type->matches($binary_facts->type)) || (!$second_facts->type->matches($binary_facts->type)) ||
 			!str_contains($text, $expected) || (substr_count($text, 'auto local_a =') !== 1)) {
 			throw new \LogicException('VAR-REASSIGN-002 redeclared its target or lost self-read/addition facts');
@@ -368,7 +370,7 @@ foreach ($cases as $name => [$source, $exit])
 			($left === $right) || ($left_facts === $right_facts) ||
 			(weakref_get($left_facts->declaration) !== $declaration) ||
 			(weakref_get($right_facts->declaration) !== $declaration) ||
-			($binary_facts->operation !== binary_operation::addition) ||
+			($binary_facts->decision->operation !== operator_operation::integer_addition) ||
 			(!$left_facts->type->matches($binary_facts->type)) || (!$right_facts->type->matches($binary_facts->type)) ||
 			(!$second_facts->type->matches($binary_facts->type)) || !str_contains($text, $expected) ||
 			(substr_count($text, 'auto local_a =') !== 1)) {

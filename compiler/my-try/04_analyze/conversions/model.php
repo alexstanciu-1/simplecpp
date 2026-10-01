@@ -9,6 +9,7 @@ enum conversion_context
 	case argument;
 	case return_value;
 	case explicit_cast;
+	case operator_operand;
 }
 
 enum conversion_operation

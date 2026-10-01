@@ -101,40 +101,7 @@ final class Expression_Preparation
 	/** Prepare operands in source order and admit only the agreed canonical integer addition. */
 	public static function prepare_binary(binary_expression_node $node, preparation_context $context): prepared_binary_expression
 	{
-		$operator_text = $context->collection->token_snapshot()->text_at($node->operator_token_index);
-		if ($operator_text !== '+') {
-			throw new \RuntimeException('S2S binary operator is not supported yet');
-		}
-		self::require_order_independent_addition_operand($node->left);
-		self::require_order_independent_addition_operand($node->right);
-
-		$left = self::prepare($node->left, $context);
-		$right = self::prepare($node->right, $context);
-		if ((!$left->type->matches($context->integer)) || (!$right->type->matches($context->integer))) {
-			throw new \RuntimeException('S2S integer addition requires canonical int operands');
-		}
-
-		$facts = new prepared_binary_expression();
-		$facts->operation = binary_operation::addition;
-		$facts->type = $context->integer;
-		return $facts;
-	}
-
-	/** Keep C++ operand-order freedom harmless until general effect facts are available. */
-	private static function require_order_independent_addition_operand(expression_node $node): void
-	{
-		if ($node instanceof cast_expression_node) {
-			$cast = object_cast($node, cast_expression_node::class);
-			self::require_order_independent_addition_operand($cast->operand);
-			return;
-		}
-		if (($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
-			($node instanceof boolean_literal_node) || ($node instanceof string_literal_node) ||
-			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node) ||
-			($node instanceof binary_expression_node)) {
-			return;
-		}
-		throw new \RuntimeException('S2S integer addition requires order-independent operands');
+		return Operator_Preparation::prepare_binary($node, $context);
 	}
 
 	/** Resolve source-order locals without modifying the retained declaration inventory. */

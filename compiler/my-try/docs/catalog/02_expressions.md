@@ -16,7 +16,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [EXPR-PAREN-001](#expr-paren-001) | pending-discussion | `$a = ($b + 1);` | unverified | unverified | deferred | — |
-| [EXPR-ARITH-001](#expr-arith-001) | pending-discussion | `$a = 1 + 2;` | unverified | unverified | deferred | — |
+| [EXPR-ARITH-001](#expr-arith-001) | agreed | `$a = 1 + 2;` | proved | in-progress | deferred | [Prepared operator decision](../../tests/operators.php); exact native validation not requested |
 | [EXPR-SUB-001](#expr-sub-001) | pending-discussion | `$a = 1 - 2;` | unverified | unverified | deferred | — |
 | [EXPR-MUL-001](#expr-mul-001) | pending-discussion | `$a = 2 * 3;` | unverified | unverified | deferred | — |
 | [EXPR-DIV-001](#expr-div-001) | pending-discussion | `$a = 4 / 2;` | unverified | unverified | deferred | — |
@@ -114,7 +114,23 @@ auto a = (b + static_cast<int_t>(1));
 
 ## EXPR-ARITH-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** This entry currently selects only canonical
+`int + int -> int`; the imported generalized arithmetic prose does not activate
+subtraction, multiplication, division, modulus or mixed numeric pairs. Preparation
+selects the hard-coded language operation `integer_addition`, retains two ordered
+identity operand conversions and publishes canonical `int` as the result. C++
+lowering consumes that decision and preserves:
+
+```cpp
+auto local_a = (static_cast<scpp::int_t<>>(1LL) + static_cast<scpp::int_t<>>(2LL));
+```
+
+Non-canonical operands are hard errors. An explicit cast may establish canonical
+`int` before this operator, but explicit-cast permission does not become an implicit
+operator conversion. Calls remain rejected as operands until effect analysis can
+prove that target-language evaluation order preserves source behavior. Mixed-width
+integer promotion requires a normative contract before implementation; see the
+[operator plan](../planning/operators.md).
 
 ### Imported version 1
 
