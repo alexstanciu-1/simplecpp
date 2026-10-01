@@ -18,7 +18,7 @@ function token_check(bool $ok): void
 	}
 }
 
-$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=+';
+$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=+-';
 for ($value = 0; $value < 256; $value++)
 {
 	$byte = chr($value);
@@ -48,7 +48,14 @@ token_check(count($tokens) === count($expected));
 foreach ($tokens as $index => $token) {
 	token_check([$token->offset, $token->length, $token->text()] === $expected[$index]);
 }
-foreach (['$', '$0', '12a', '1.e+', '1..', '==', '=>', '-', "\0", "\xc3\xa9"] as $invalid)
+// Binary minus remains separate while arrows and exponent signs keep their existing tokens.
+$tokens = token_scan('$x->field-1e-3')->tokens;
+$expected_text = ['$x', '->', 'field', '-', '1e-3'];
+token_check(count($tokens) === count($expected_text));
+foreach ($tokens as $index => $token) {
+	token_check($token->text() === $expected_text[$index]);
+}
+foreach (['$', '$0', '12a', '1.e+', '1..', '==', '=>', "\0", "\xc3\xa9"] as $invalid)
 {
 	$failed = false;
 	try {

@@ -97,6 +97,15 @@ $cases = [
 	'var_reassign_003' => ['$a = 1; $a = $a + $a;', 0],
 	'var_reassign_003_value' => ['$a = 1; $a = $a + $a; return $a;', 2],
 	'expr_arith_001' => ['$a = 1 + 2; return $a;', 3],
+	'sub_catalog' => ['$a = 1 - 2; return $a + 2;', 1],
+	'sub_left' => ['return 10 - 3 - 2;', 5],
+	'sub_grouped' => ['return 10 - (3 - 2);', 9],
+	'sub_mixed' => ['return 10 - 3 + 2;', 9],
+	'sub_mixed_reverse' => ['return 10 + 3 - 2;', 11],
+	'sub_reassignment' => ['$a = 10; $a = $a - 3; return $a;', 7],
+	'sub_cast' => ['$x uint8 = 7; return (int)$x - 2;', 5],
+	'sub_minimum' => ['$a = 0 - PHP_INT_MAX - 1; return $a + PHP_INT_MAX + 1;', 0],
+	'sub_maximum' => ['$a = (PHP_INT_MAX) - 0; return 0;', 0],
 	'group_catalog' => ['$b = 2; $a = ($b + 1); return $a;', 3],
 	'group_right' => ['return 1 + (2 + 3);', 6],
 	'group_left' => ['return ((1 + 2)) + 3;', 6],
@@ -519,6 +528,20 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 
+	// Verify signed values directly; process exit codes alone lose sign and high bits.
+	$subtraction_values = ['sub_catalog' => '-1LL',
+		'sub_minimum' => '(-9223372036854775807LL - 1LL)', 'sub_maximum' => '9223372036854775807LL'];
+	if (isset($subtraction_values[$name]))
+	{
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
+		$probe .= "\tif (local_a.native_value() != " . $subtraction_values[$name] . ") { return 91; }\n";
+		$text = Model::$cpp_files[0]->text;
+		$site = $name === 'sub_maximum' ? "\treturn 0;" : "\treturn static_cast<int>";
+		$probe_path = $directory . '/' . $name . '_value.cpp';
+		file_put_contents($probe_path, str_replace($site, $probe . $site, $text));
+		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
+	}
+
 	Preparation_Cleanup::tree($syntax->root);
 	if (s2s_snapshot($syntax) !== $before) {
 		throw new \LogicException('Preparation/emission changed source syntax or its scopes');
@@ -644,10 +667,10 @@ foreach ($variable_copy_rejections as $name => [$source, $diagnostic])
 
 $integer_addition_rejections = [
 	'undeclared operand' => ['$b = $missing + 1;', 'established local declaration for missing'],
-	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer addition requires canonical int operands'],
-	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer addition requires canonical int operands'],
-	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'integer addition requires order-independent operands'],
-	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'integer addition requires order-independent operands'],
+	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer additive operation requires canonical int operands'],
+	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer additive operation requires canonical int operands'],
+	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'integer additive operation requires order-independent operands'],
+	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'integer additive operation requires order-independent operands'],
 ];
 foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 {

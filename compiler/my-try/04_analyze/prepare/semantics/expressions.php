@@ -98,7 +98,7 @@ final class Expression_Preparation
 		return $facts;
 	}
 
-	/** Prepare operands in source order and admit only the agreed canonical integer addition. */
+	/** Prepare operands and retain the operation selected by the shared operator owner. */
 	public static function prepare_binary(binary_expression_node $node, preparation_context $context): prepared_binary_expression
 	{
 		return Operator_Preparation::prepare_binary($node, $context);

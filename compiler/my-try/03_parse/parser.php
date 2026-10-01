@@ -643,12 +643,12 @@ final class Parser_Run
 		return $statement;
 	}
 
-	/** Parse the currently supported left-associative binary precedence level. */
+	/** Addition and subtraction share one left-associative precedence level. */
 	private function expression(bool $allow_assignment = false): expression_node
 	{
 		$start = $this->position;
 		$left = $this->primary_expression($allow_assignment);
-		while ($this->text() === '+')
+		while (($this->text() === '+') || ($this->text() === '-'))
 		{
 			$operator_token_index = $this->position++;
 			$binary = new binary_expression_node();

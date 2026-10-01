@@ -346,7 +346,14 @@ final class CPP_Generator
 	public static function generate_binary(binary_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_binary_preparation()->decision;
-		if ($decision->operation !== operator_operation::integer_addition) {
+		$spelling = '';
+		if ($decision->operation === operator_operation::integer_addition) {
+			$spelling = '+';
+		}
+		elseif ($decision->operation === operator_operation::integer_subtraction) {
+			$spelling = '-';
+		}
+		else {
 			throw new \RuntimeException('C++ binary operation is not supported yet');
 		}
 		if (q_count($decision->operands) !== 2) {
@@ -359,7 +366,7 @@ final class CPP_Generator
 		$right = CPP_Declarations::conversion(
 			$syntax->right->generate_cpp($worker), $decision->operands[1], $context);
 		$context->headers['scpp/generated/operators.hpp'] = true;
-		return '(' . $left . ' + ' . $right . ')';
+		return '(' . $left . ' ' . $spelling . ' ' . $right . ')';
 	}
 
 	/** Preserve decimal spelling until the target toolchain performs floating conversion. */

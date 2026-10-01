@@ -17,7 +17,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [EXPR-PAREN-001](#expr-paren-001) | agreed | `$b = 2; $a = ($b + 1);` | proved | proved | deferred | [Grammar, AST, spans and incremental proof](../../tests/grouping.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
 | [EXPR-ARITH-001](#expr-arith-001) | agreed | `$a = 1 + 2;` | proved | proved | deferred | [Prepared operator decision](../../tests/operators.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
-| [EXPR-SUB-001](#expr-sub-001) | pending-discussion | `$a = 1 - 2;` | unverified | unverified | deferred | — |
+| [EXPR-SUB-001](#expr-sub-001) | agreed | `$a = 1 - 2;` | proved | proved | deferred | [Prepared decisions, rejection and incremental proof](../../tests/operators.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
 | [EXPR-MUL-001](#expr-mul-001) | pending-discussion | `$a = 2 * 3;` | unverified | unverified | deferred | — |
 | [EXPR-DIV-001](#expr-div-001) | pending-discussion | `$a = 4 / 2;` | unverified | unverified | deferred | — |
 | [EXPR-MOD-001](#expr-mod-001) | pending-discussion | `$a = 5 % 2;` | unverified | unverified | deferred | — |
@@ -226,7 +226,49 @@ auto a = static_cast<int_t>(1) + static_cast<int_t>(2);
 
 ## EXPR-SUB-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Agreed 2026-10-01: canonical `int - int -> int`,
+using the existing runtime subtraction operation. The example produces `-1`:
+
+```cpp
+auto local_a = (static_cast<scpp::int_t<>>(1LL) - static_cast<scpp::int_t<>>(2LL));
+```
+
+Addition and subtraction share one left-associative parser level: `10 - 3 - 2`
+produces `5`, `10 - (3 - 2)` produces `9`, and `10 - 3 + 2` produces `9`.
+Tokenizer recognition preserves `->` and signs inside floating exponents. Binary
+minus does not enable unary negation, decrement or compound assignment.
+
+**Ownership and retained facts:** reuse `binary_expression_node`,
+`prepared_binary_expression` and `operator_decision` without new structures or
+fields. Add `operator_kind::subtraction` and `operator_operation::integer_subtraction`.
+`Integer_Operators::decide_additive()` shares the exact canonical-int operand check,
+two identity conversions in `operator_operand` context and canonical result type
+between addition and subtraction. Diagnostics now name the shared integer additive
+operation. `Operator_Preparation` owns source normalization and the existing
+order-independence restriction; C++ consumes the selected operation and conversions.
+
+**Legacy/runtime review:** the legacy `Generator::renderExpr` lowers `AstKind::MINUS`
+recursively as `(left - right)` on normalized operands. This slice reuses that target
+form with explicitly prepared type permission. The runtime's generated `sub` helper
+subtracts native representations; it does not check signed overflow. No wrapping,
+checked overflow or PHP overflow-to-float guarantee is introduced. Proofs exercise
+representable values, including the signed 64-bit minimum and maximum. Mixed widths,
+floats and other numeric compatibility remain separate decisions.
+
+**Proof and cost:** `tests/operators.php` checks selected decisions/conversions,
+mixed additive AST shape, grouped subtraction, unsupported operands and syntax,
+equal-length operator edits, token cleanup, signature retention and fresh/incremental
+agreement. `tests/tokenizer.php` checks minus/arrow/exponent token boundaries.
+The nine `sub_*` source fixtures in `tests/s2s.php` cover grouping, associativity,
+reassignment, explicit cast operands, negative results and representable limits;
+three additional generated-C++ probes assert exact signed values and canonical
+result type independently of process exit codes. These twelve programs pass Clang
+C++20 execution after PHP-host generation. Native compiler execution was not rerun.
+The existing operator header and expression lowering are reused; no additional
+temporary, runtime helper or output artifact policy is introduced.
+
+Non-goals: other operator families, unary minus, `--`, `-=`, mixed-width promotion,
+floating operands, broader effect analysis, arithmetic overflow redesign and LLVM.
 
 ### Imported version 1
 

@@ -34,8 +34,8 @@ considered against each candidate's expected operand types. A missing candidate 
 an ambiguous best candidate is a hard diagnostic; registration order must never be
 a semantic tie-breaker.
 
-The first slice has one hard-coded language candidate, so it needs neither a
-candidate registry nor conversion ranking yet. Those mechanisms should be added
+Each currently supported operator has one hard-coded language candidate, so it
+needs neither a candidate registry nor conversion ranking yet. Those mechanisms should be added
 only when a second viable candidate makes them real.
 
 ## Shared model
@@ -115,8 +115,8 @@ language contract must define it. If no Simple C++-specific rule is adopted, the
 fallback decision is to adopt the exact C++ usual arithmetic conversions rather
 than accidentally depending on emitted C++ behavior.
 
-This requirement is dormant in the first slice: only canonical `int + int -> int`
-is admitted. `uint32 + int`, other fixed-width pairs and floating/integer pairs
+This requirement is dormant in the current additive slice: only canonical
+`int + int -> int` and `int - int -> int` are admitted. `uint32 + int`, other fixed-width pairs and floating/integer pairs
 remain hard rejections.
 
 ## Legacy S2S evidence
@@ -133,10 +133,12 @@ preserve now is:
 
 Parenthesized grouping is now covered by
 [EXPR-PAREN-001](../catalog/02_expressions.md#expr-paren-001), normalizing to the
-existing expression tree. Subtraction, multiplication, division, modulus and broader
-numeric compatibility remain separate catalog slices.
+existing expression tree. Subtraction is covered by
+[EXPR-SUB-001](../catalog/02_expressions.md#expr-sub-001) through the same additive
+policy. Multiplication, division, modulus and broader numeric compatibility remain
+separate catalog slices.
 
-## First implementation slice
+## First implementation slice (completed addition checkpoint)
 
 1. Add the shared operator model and central preparation owner.
 2. Add the hard-coded integer language policy.
@@ -167,7 +169,7 @@ numeric compatibility remain separate catalog slices.
 - LLVM and legacy STAN. Native compiler validation remains an explicit post-slice
   checkpoint rather than an automatic implementation step.
 
-## Implementation result
+## Implementation result — addition checkpoint
 
 The first slice is implemented:
 
@@ -194,3 +196,16 @@ reserved C++ local/parameter name `$operator` with `$source_operator`. See the
 
 No deferred operator family, syntax form, overload source or promotion rule was
 implicitly activated by this migration.
+
+## Current additive extension
+
+The agreed subtraction slice reuses the existing binary syntax and decision records,
+adding only source/selected-operation enum cases. `Integer_Operators::decide_additive`
+now owns shared canonical-int operand checks and conversions for both `+` and `-`.
+Their parser level is left-associative; grouping retains the existing tree shape.
+Shared diagnostics name the integer additive operation. No conversion ranking,
+mixed-width promotion, unary operation or effectful operand support was added.
+
+The [subtraction card](../catalog/02_expressions.md#expr-sub-001) owns detailed
+behavior and PHP-host/generated-C++ proof. The native compiler checkpoint above
+predates grouping and subtraction and does not certify these later source changes.
