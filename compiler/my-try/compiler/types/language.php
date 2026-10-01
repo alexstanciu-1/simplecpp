@@ -5,11 +5,11 @@ namespace scpp\compiler;
 
 final class Language_Types
 {
-	/** Publish the already registered concrete language definitions into lexical lookup. */
+	/** Publish supported concrete definitions and the bounded vector recipe into lexical lookup. */
 	public static function install(scope $language_scope): void
 	{
 		foreach (['void', 'bool', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
-			'int64', 'uint64', 'byte', 'int', 'float', 'string'] as $name) {
+			'int64', 'uint64', 'byte', 'int', 'float', 'string', 'vector'] as $name) {
 			$language_scope->register_type(Model::$type_catalog->definition($name));
 		}
 	}

@@ -11,6 +11,24 @@ final class CPP_Types
 		$type = Type_Preparation::canonical($type_use);
 		$definition = $type->definition();
 		$result = new cpp_type();
+		if ($type instanceof applied_template_type) {
+			$application = object_cast($type, applied_template_type::class);
+			$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
+			$arguments = '';
+			foreach ($application->arguments() as $position => $argument) {
+				if ($argument->by_value()) {
+					throw new \RuntimeException('C++ applied by-value type arguments are not supported yet');
+				}
+				if ($position !== 0) {
+					$arguments .= ', ';
+				}
+				$arguments .= self::representation($argument)->spelling;
+			}
+			$result->spelling = $binding->name() . '<' . $arguments . '>';
+			$result->header = $binding->header();
+			$result->literal = cpp_literal_kind::none;
+			return $result;
+		}
 		if ($definition->origin() === type_definition_origin::source) {
 			$entry = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			$result->spelling = CPP_Generator::source_name('record', $entry->name);

@@ -355,9 +355,7 @@ final class Parser_Run
 		if (!$this->identifier()) {
 			throw new \RuntimeException($this->error_message('Expected field type'));
 		}
-		$type_start = $this->position++;
-		$type = $this->named_type($type_start);
-		$type->collect($this->collector, $scope, $type_start);
+		$type = $this->type_syntax($scope);
 		if (!string_byte_starts_with($this->text(), '$')) {
 			throw new \RuntimeException($this->error_message('Expected field variable name'));
 		}
@@ -486,9 +484,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected return type name'));
 		}
 
-		$type_start = $this->position++;
-		$return_type = $this->named_type($type_start);
-		$return_type->collect($this->collector, $local_scope, $type_start);
+		$return_type = $this->type_syntax($local_scope);
 
 		$body_start = $this->position;
 		$body_end = $this->body_end();
@@ -528,9 +524,7 @@ final class Parser_Run
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected parameter type'));
 		}
-		$this->position++;
-		$type = $this->named_type($start);
-		$type->collect($this->collector, $scope, $start);
+		$type = $this->type_syntax($scope);
 		$mode = passing_mode::value;
 		if ($this->text() === '&') {
 			$mode = passing_mode::reference;
@@ -612,9 +606,7 @@ final class Parser_Run
 		{
 			$declaration = new variable_declaration_node();
 			$declaration->name = $name;
-			$type_start = $this->position++;
-			$type = $this->named_type($type_start);
-			$type->collect($this->collector, $this->current_scope, $type_start);
+			$type = $this->type_syntax($this->current_scope);
 			$declaration->type_syntax = $this->text() === '['
 				? object_cast($this->array_type($type), type_node::class)
 				: object_cast($type, type_node::class);
@@ -858,6 +850,39 @@ final class Parser_Run
 		$node->name = $this->name_at($start);
 		$this->finish_node($node, $start);
 		return $node;
+	}
+
+	/** Parse one named type or structured template application and collect every name occurrence. */
+	private function type_syntax(scope $lookup_scope): type_node
+	{
+		if (!$this->identifier()) {
+			throw new \RuntimeException($this->error_message('Expected type name'));
+		}
+		$start = $this->position++;
+		$definition = $this->named_type($start);
+		$definition->collect($this->collector, $lookup_scope, $start);
+		if ($this->text() !== '<') {
+			return $definition;
+		}
+
+		$application = new template_application_type_node();
+		$application->definition = $definition;
+		$arguments /** Storage<type_node> */ = $application->arguments;
+		$this->position++;
+		if ($this->text() === '>') {
+			throw new \RuntimeException($this->error_message('Template type application requires an argument'));
+		}
+		do {
+			$arguments->append($this->type_syntax($lookup_scope));
+			if ($this->text() !== ',') {
+				break;
+			}
+			$this->position++;
+		}
+		while (true);
+		$this->expect('>');
+		$this->finish_node($application, $start);
+		return $application;
 	}
 
 	/** A variable occurrence is classified as a read or write by its parser context. */

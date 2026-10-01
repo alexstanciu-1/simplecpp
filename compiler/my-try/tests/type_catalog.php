@@ -50,6 +50,7 @@ type_catalog_check($value_provider->family() === 'value',
 	'By-value runtime identity was conflated with its value_p backend spelling');
 type_catalog_rejects(fn() => $catalog->definition('value'));
 type_catalog_rejects(fn() => $catalog->definition('shared_p'));
+type_catalog_rejects(fn() => $catalog->definition('vector_t'));
 
 $shared = $catalog->definition('shared');
 $shared_provider = $catalog->providers()->provider_for($shared->definition_id())->identity();

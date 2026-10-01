@@ -307,6 +307,33 @@ final class array_type_children_iterator extends children_iterator
 	}
 }
 
+/** Retain the constructor name followed by its ordered type arguments. */
+final class template_application_type_children_iterator extends children_iterator
+{
+	private template_application_type_node $source;
+	private int $next_child = 0;
+
+	public function __construct(template_application_type_node $source)
+	{
+		$this->source = $source;
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_child === 0) {
+			$this->next_child++;
+			return $this->source->definition;
+		}
+		$argument_position = $this->next_child - 1;
+		$arguments /** Storage<type_node> */ = $this->source->arguments;
+		if ($argument_position >= q_count($arguments)) {
+			return null;
+		}
+		$this->next_child++;
+		return $arguments[$argument_position];
+	}
+}
+
 /** Retain the source and visit its named fields in grammar order. */
 final class index_children_iterator extends children_iterator
 {

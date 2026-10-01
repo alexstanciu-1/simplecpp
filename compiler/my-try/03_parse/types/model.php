@@ -686,7 +686,7 @@ final class Type_Registry
 		array $arguments /** vector<canonical_type_use> */): applied_template_type
 	{
 		$this->require_registered_definition($definition);
-		$complete_arguments = $this->complete_arguments($definition, $arguments);
+		$complete_arguments = $this->complete_application_arguments($definition, $arguments);
 		$key = $this->application_key($definition->definition_id(), $complete_arguments);
 		$type_id = $this->applied_types[$key] ?? 0;
 		if ($type_id !== 0) {
@@ -769,13 +769,11 @@ final class Type_Registry
 	}
 
 	/** Validate supplied arguments and append the definition's trailing defaults. */
-	private function complete_arguments(template_type_definition $definition,
+	public function complete_application_arguments(template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */): array /** vector<canonical_type_use> */
 	{
 		$count = q_count($arguments);
-		if (($count < $definition->required_arity()) || ($count > $definition->arity())) {
-			throw new \InvalidArgumentException('Template type argument count does not match definition arity');
-		}
+		$this->validate_application_arity($definition, $count);
 
 		$expected_position = 0;
 		foreach ($arguments as $position => $argument)
@@ -799,6 +797,15 @@ final class Type_Registry
 			$expected_position++;
 		}
 		return $complete;
+	}
+
+	/** Reject an impossible argument list before preparing any nested application. */
+	public function validate_application_arity(template_type_definition $definition, int $argument_count): void
+	{
+		$this->require_registered_definition($definition);
+		if (($argument_count < $definition->required_arity()) || ($argument_count > $definition->arity())) {
+			throw new \InvalidArgumentException('Template type argument count does not match definition arity');
+		}
 	}
 
 	/** Encode the complete tuple reversibly; this string indexes identity but is not an identity. */

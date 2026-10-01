@@ -1118,6 +1118,52 @@ final class array_type_node extends type_node
 	}
 }
 
+/** A source type constructor and its ordered arguments; preparation attaches one interned identity. */
+final class template_application_type_node extends type_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?canonical_type_use $prepared_facts = null;
+	public named_type_node $definition;
+	public Storage $arguments /** Storage<type_node> */;
+
+	public function __construct()
+	{
+		$this->arguments = new Storage /** Storage<type_node> */();
+	}
+
+	public function kind(): node_kind
+	{
+		return node_kind::template_application_type;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new template_application_type_children_iterator($this);
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		Type_Preparation::prepare_template_application_type($this, $context);
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->definition);
+		$arguments /** Storage<type_node> */ = $this->arguments;
+		foreach ($arguments as $argument) {
+			$worker->edge($this, $argument);
+		}
+	}
+
+	public function require_preparation(): canonical_type_use
+	{
+		return $this->prepared_facts;
+	}
+}
+
 final class array_literal_node extends expression_node
 {
 	use Node_Source_Span;

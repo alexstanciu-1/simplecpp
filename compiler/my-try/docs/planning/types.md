@@ -463,7 +463,7 @@ through the owners established by earlier items.
    assignment compatibility, field validation, dependencies and C++ representation
    onto the common path. Do not add templates merely to prove the refactor; first
    prove every currently supported type through the new model.
-5. **Add one bounded constructed-type proof.** After migration stability, add one
+5. **Add one bounded constructed-type proof (complete).** After migration stability, add one
    runtime-template application, initially `vector<int>` or `nullable<int>`, proving
    template-definition lookup, argument validation, canonical application creation,
    repeated-use reuse, lightweight occurrence attachment and backend binding.
@@ -552,6 +552,32 @@ reset no longer has the retired catalog that owns that graph's source-definition
 associations. Repairing that cross-reset legacy lookup belongs to a future explicit
 LLVM adaptation; it is not addressed by rebuilding LLVM semantics or adding a
 parallel compatibility type model here.
+
+### Bounded constructed-type checkpoint
+
+The first demanded source application is the exact spelling `vector<int>`. A
+dedicated `template_application_type_node` retains the constructor occurrence and
+ordered type arguments rather than flattening `vector<int>` into a name string.
+Preparation resolves the registered `vector` recipe and `int` argument through
+ordinary scope lookup, validates arity before preparing nested arguments, checks
+the current bounded readiness policy, interns the exact application and attaches a
+lightweight `canonical_type_use` to each occurrence. Repeated declarations and
+re-preparation reuse the same canonical `uint32` identity.
+
+The C++ backend resolves both the applied definition and its canonical argument
+through the independent binding catalog, producing
+`scpp::vector_t<scpp::int_t<>>` plus the runtime vector header. The source spelling
+`vector_t` remains unavailable; legacy backend aliases do not enter strict source
+lookup.
+
+This checkpoint deliberately supports only uninitialized `vector<int>` storage.
+It does not enable vector literals, indexing, mutation, parameters/results as a
+separately proved language feature, nested applications, other element types,
+`hash`/`nullable`/ownership families, by-value template arguments or general
+generic-contract enforcement. Unsupported arity, `vector<bool>`, bare `vector` and
+`vector<vector<int>>` reject without publishing a partial canonical application.
+Those later features must extend the same structured syntax, registry and backend
+binding path rather than adding encoded names or eager specialization lists.
 
 ## Open decisions and recorded debt
 
