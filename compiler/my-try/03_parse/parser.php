@@ -298,13 +298,15 @@ final class Parser_Run
 		if ($this->text() === 'return') {
 			return $this->return_statement();
 		}
-		if (string_byte_starts_with($this->text(), '$')) {
-			return $this->binding_statement();
-		}
-		if ($this->identifier()) {
+		if (string_byte_starts_with($this->text(), '$'))
+		{
+			$next = $this->text_at_offset(1);
+			if (Source_Text::identifier($next) || ($next === '=') || ($next === '[') || ($next === '->')) {
+				return $this->binding_statement();
+			}
 			return $this->expression_statement();
 		}
-		throw new \RuntimeException($this->error_message('Expected a declaration, call or return statement'));
+		return $this->expression_statement();
 	}
 
 	/** Register the record immediately, then reconcile fields within its retained member scope. */
@@ -381,7 +383,7 @@ final class Parser_Run
 		return $field;
 	}
 
-	/** A statement owns its semicolon; the call remains an independent expression node. */
+	/** A statement owns its semicolon; its value expression keeps its existing syntax shape. */
 	private function expression_statement(): expression_statement_node
 	{
 		$start = $this->position;
@@ -674,11 +676,26 @@ final class Parser_Run
 	private function binary_precedence(): int
 	{
 		$text = $this->text();
-		if (($text === '+') || ($text === '-')) {
+		if ($text === '||') {
 			return 1;
 		}
-		if ($text === '*') {
+		if ($text === '&&') {
 			return 2;
+		}
+		if (($text === '==') || ($text === '!=') || ($text === '===') || ($text === '!==') || ($text === '<=>')) {
+			return 3;
+		}
+		if (($text === '<') || ($text === '<=') || ($text === '>') || ($text === '>=')) {
+			return 4;
+		}
+		if ($text === '.') {
+			return 5;
+		}
+		if (($text === '+') || ($text === '-')) {
+			return 6;
+		}
+		if (($text === '*') || ($text === '/') || ($text === '%')) {
+			return 7;
 		}
 		return 0;
 	}
@@ -708,7 +725,7 @@ final class Parser_Run
 			return $this->array_literal();
 		}
 		if ($this->identifier()) {
-			if (($this->text_at_offset(1) === '(') || ($this->text_at_offset(1) === '<')) {
+			if ($this->call_ahead()) {
 				return $this->call_expression();
 			}
 			$start = $this->position++;
@@ -745,7 +762,7 @@ final class Parser_Run
 			$node = new string_literal_node();
 			$this->finish_node($node, $start);
 		}
-		elseif (Source_Text::floating($text)) {
+		elseif (($text !== '.') && Source_Text::floating($text)) {
 			$node = new float_literal_node();
 			$this->finish_node($node, $start);
 		}
@@ -772,7 +789,20 @@ final class Parser_Run
 		$first = string_byte_at($operand, 0);
 		return Source_Text::identifier($operand) || Source_Text::digit($first)
 			|| ($first === 36) || ($first === 39) || ($first === 34)
-			|| ($operand === '(') || ($operand === '[') || ($first === 46);
+			|| ($operand === '(') || ($operand === '[') || (($first === 46) && (string_byte_len($operand) > 1));
+	}
+
+	/** Distinguish named/template calls from constants followed by relational operators. */
+	private function call_ahead(): bool
+	{
+		if ($this->text_at_offset(1) === '(') {
+			return true;
+		}
+		$end = $this->type_syntax_end(0);
+		if ($end < 0) {
+			return false;
+		}
+		return $this->text_at_offset($end) === '(';
 	}
 
 	/** Scan the existing name / name<type,...> grammar; -1 means no complete type form. */

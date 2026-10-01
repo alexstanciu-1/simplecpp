@@ -116,7 +116,8 @@ fallback decision is to adopt the exact C++ usual arithmetic conversions rather
 than accidentally depending on emitted C++ behavior.
 
 This requirement is dormant in the current arithmetic slice: canonical
-`int + int -> int`, `int - int -> int` and `int * int -> int` are admitted.
+`int + int -> int`, subtraction, multiplication, division and remainder are admitted.
+Canonical-int comparisons are also supported; see the [current scalar guide](../s2s_scalar_operators.md).
 `uint32 + int`, other fixed-width pairs and floating/integer pairs remain hard rejections.
 
 ## Legacy S2S evidence
@@ -136,8 +137,9 @@ Parenthesized grouping is now covered by
 existing expression tree. Subtraction and multiplication are covered by
 [EXPR-SUB-001](../catalog/02_expressions.md#expr-sub-001) and
 [EXPR-MUL-001](../catalog/02_expressions.md#expr-mul-001) through the same integer
-arithmetic policy. Division, modulus and broader numeric compatibility remain
-separate catalog slices.
+binary policy. Division, remainder, integer comparisons, string concatenation and
+boolean logical operations now have bounded catalog proofs. Broader numeric
+compatibility remains a separate decision.
 
 ## First implementation slice (completed addition checkpoint)
 
@@ -160,12 +162,12 @@ separate catalog slices.
 - mixed-width integer promotion and its normative contract;
 - conversion viability ranking and ambiguity resolution machinery;
 - runtime and source-declared overload registries;
-- floating-point, boolean, comparison and assignment operators;
-- PHP++ string concatenation beyond its current language contract;
+- floating-point operators, broader comparison types and assignment operators;
+- implicit conversions for PHP++ string concatenation;
 - JS++ `+` string concatenation and possible future operator carrier changes;
 - unary syntax and operations;
 - ternary syntax and the shared three-operand call;
-- broader precedence levels;
+- keyword logical and assignment precedence;
 - effect analysis that can safely admit calls as operands;
 - LLVM and legacy STAN. Native compiler validation remains an explicit post-slice
   checkpoint rather than an automatic implementation step.
@@ -198,17 +200,19 @@ reserved C++ local/parameter name `$operator` with `$source_operator`. See the
 No deferred operator family, syntax form, overload source or promotion rule was
 implicitly activated by this migration.
 
-## Current arithmetic extension
+## Current scalar extension
 
-Subtraction and multiplication reuse the existing binary syntax and decision records,
-adding only source/selected-operation enum cases. `Integer_Operators::decide_arithmetic`
-owns shared canonical-int operand checks and conversions for `+`, `-` and `*`.
-The parser uses precedence climbing: multiplication binds more tightly than addition
-and subtraction, all associate left-to-right, and grouping controls the same tree.
-Shared diagnostics name the integer arithmetic operation. No conversion ranking,
-mixed-width promotion, unary operation or effectful operand support was added.
+The existing binary syntax and decision records now support canonical-int arithmetic
+and comparisons, canonical-string concatenation and canonical-bool `&&`/`||`.
+`Integer_Operators::decide_binary` owns the shared exact integer operand policy;
+`Operator_Preparation` owns the bounded string and boolean candidates. Each selected
+operand still carries its conversion decision. No retained structures or fields were added.
 
-The [subtraction card](../catalog/02_expressions.md#expr-sub-001) and
-[multiplication card](../catalog/02_expressions.md#expr-mul-001) own detailed
-behavior and PHP-host/generated-C++ proof. The native compiler checkpoint above
-predates grouping, subtraction and multiplication and does not certify these later source changes.
+The parser uses precedence climbing and normalizes grouping into the existing tree.
+The backend consumes selected operations, including lazy native-bool logical lowering
+and integer three-way comparison with single-evaluation temporaries. Existing
+expression statements now accept ordinary scalar expressions.
+
+The [scalar operator guide](../s2s_scalar_operators.md) owns the precise contracts,
+precedence, proofs and remaining decisions. The native compiler checkpoint above
+predates grouping and these operator extensions; it does not certify the current source.

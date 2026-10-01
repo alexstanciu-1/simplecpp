@@ -18,7 +18,7 @@ function token_check(bool $ok): void
 	}
 }
 
-$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=+-*';
+$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=+-*/%.';
 for ($value = 0; $value < 256; $value++)
 {
 	$byte = chr($value);
@@ -55,7 +55,14 @@ token_check(count($tokens) === count($expected_text));
 foreach ($tokens as $index => $token) {
 	token_check($token->text() === $expected_text[$index]);
 }
-foreach (['$', '$0', '12a', '1.e+', '1..', '==', '=>', "\0", "\xc3\xa9"] as $invalid)
+// Supported comparisons use longest-token matching without consuming the next operand.
+$tokens = token_scan('1===2!==3==4!=5<=6>=7<8>9/2%1<=>0&&true||false')->tokens;
+$expected_text = ['1', '===', '2', '!==', '3', '==', '4', '!=', '5', '<=', '6', '>=', '7', '<', '8', '>', '9', '/', '2', '%', '1', '<=>', '0', '&&', 'true', '||', 'false'];
+token_check(count($tokens) === count($expected_text));
+foreach ($tokens as $index => $token) {
+	token_check($token->text() === $expected_text[$index]);
+}
+foreach (['$', '$0', '12a', '1.e+', '1..', '=>', "\0", "\xc3\xa9"] as $invalid)
 {
 	$failed = false;
 	try {

@@ -19,28 +19,28 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-ARITH-001](#expr-arith-001) | agreed | `$a = 1 + 2;` | proved | proved | deferred | [Prepared operator decision](../../tests/operators.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [EXPR-SUB-001](#expr-sub-001) | agreed | `$a = 1 - 2;` | proved | proved | deferred | [Prepared decisions, rejection and incremental proof](../../tests/operators.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
 | [EXPR-MUL-001](#expr-mul-001) | agreed | `$a = 2 * 3;` | proved | proved | deferred | [Prepared decisions, precedence and incremental proof](../../tests/operators.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
-| [EXPR-DIV-001](#expr-div-001) | pending-discussion | `$a = 4 / 2;` | unverified | unverified | deferred | — |
-| [EXPR-MOD-001](#expr-mod-001) | pending-discussion | `$a = 5 % 2;` | unverified | unverified | deferred | — |
-| [EXPR-POW-001](#expr-pow-001) | pending-discussion | `$a = 2 ** 3;` | unverified | unverified | deferred | — |
+| [EXPR-DIV-001](#expr-div-001) | agreed | `$a = 4 / 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-MOD-001](#expr-mod-001) | agreed | `$a = 5 % 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-POW-001](#expr-pow-001) | pending-discussion | `$a = 2 ** 3;` | unverified | unverified | deferred | Missing runtime power helper and unresolved result/domain policy; see [remaining decisions](../s2s_scalar_operators.md#remaining-decisions) |
 | [EXPR-NEG-001](#expr-neg-001) | pending-discussion | `$a = -$b;` | unverified | unverified | deferred | — |
 | [EXPR-POS-001](#expr-pos-001) | pending-discussion | `$a = +$b;` | unverified | unverified | deferred | — |
 | [EXPR-BNOT-001](#expr-bnot-001) | pending-discussion | `$a = ~$b;` | unverified | unverified | deferred | — |
-| [EXPR-NESTED-001](#expr-nested-001) | pending-discussion | `$a = ($b + 1) * 2;` | unverified | unverified | deferred | — |
-| [EXPR-CHAIN-001](#expr-chain-001) | pending-discussion | `$a = $b + 1 + $c;` | unverified | unverified | deferred | — |
-| [EXPR-CONCAT-001](#expr-concat-001) | pending-discussion | `$a = "a" . "b";` | unverified | unverified | deferred | — |
-| [EXPR-CONCAT-002](#expr-concat-002) | pending-discussion | `$a = $b . "x";` | unverified | unverified | deferred | — |
-| [EXPR-CONCAT-003](#expr-concat-003) | pending-discussion | `$a = "x" . $b;` | unverified | unverified | deferred | — |
-| [EXPR-COMP-001](#expr-comp-001) | pending-discussion | `$a = ($b == 1);` | unverified | unverified | deferred | — |
-| [EXPR-NEQ-001](#expr-neq-001) | pending-discussion | `$a = ($b != 1);` | unverified | unverified | deferred | — |
-| [EXPR-SEQ-001](#expr-seq-001) | pending-discussion | `$a = ($b === 1);` | unverified | unverified | deferred | — |
-| [EXPR-SNEQ-001](#expr-sneq-001) | pending-discussion | `$a = ($b !== 1);` | unverified | unverified | deferred | — |
-| [EXPR-LT-001](#expr-lt-001) | pending-discussion | `$a = ($b < 1);` | unverified | unverified | deferred | — |
-| [EXPR-LTE-001](#expr-lte-001) | pending-discussion | `$a = ($b <= 1);` | unverified | unverified | deferred | — |
-| [EXPR-GT-001](#expr-gt-001) | pending-discussion | `$a = ($b > 1);` | unverified | unverified | deferred | — |
-| [EXPR-GTE-001](#expr-gte-001) | pending-discussion | `$a = ($b >= 1);` | unverified | unverified | deferred | — |
-| [EXPR-SPACESHIP-001](#expr-spaceship-001) | pending-discussion | `$a = ($b <=> $c);` | unverified | unverified | deferred | — |
-| [EXPR-LOGIC-001](#expr-logic-001) | pending-discussion | `$a = true && false;` | unverified | unverified | deferred | — |
-| [EXPR-OR-001](#expr-or-001) | pending-discussion | `$a = true \|\| false;` | unverified | unverified | deferred | — |
+| [EXPR-NESTED-001](#expr-nested-001) | agreed | `$b = 3; $a = ($b + 1) * 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-CHAIN-001](#expr-chain-001) | agreed | `$b = 3; $c = 4; $a = $b + 1 + $c;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-CONCAT-001](#expr-concat-001) | agreed | `$a = "a" . "b";` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-CONCAT-002](#expr-concat-002) | agreed | `$b = "b"; $a = $b . "x";` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-CONCAT-003](#expr-concat-003) | agreed | `$b = "b"; $a = "x" . $b;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-COMP-001](#expr-comp-001) | agreed | `$b = 1; $a = ($b == 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-NEQ-001](#expr-neq-001) | agreed | `$b = 1; $a = ($b != 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-SEQ-001](#expr-seq-001) | agreed | `$b = 1; $a = ($b === 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-SNEQ-001](#expr-sneq-001) | agreed | `$b = 1; $a = ($b !== 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-LT-001](#expr-lt-001) | agreed | `$b = 1; $a = ($b < 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-LTE-001](#expr-lte-001) | agreed | `$b = 1; $a = ($b <= 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-GT-001](#expr-gt-001) | agreed | `$b = 1; $a = ($b > 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-GTE-001](#expr-gte-001) | agreed | `$b = 1; $a = ($b >= 1);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-SPACESHIP-001](#expr-spaceship-001) | agreed | `$b = 1; $c = 2; $a = ($b <=> $c);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-LOGIC-001](#expr-logic-001) | agreed | `$a = true && false;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
+| [EXPR-OR-001](#expr-or-001) | agreed | `$a = true \|\| false;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-NOT-001](#expr-not-001) | pending-discussion | `$a = !$b;` | unverified | unverified | deferred | — |
 | [EXPR-ANDWORD-001](#expr-andword-001) | pending-discussion | `$a = $b and $c;` | unverified | unverified | deferred | — |
 | [EXPR-ORWORD-001](#expr-orword-001) | pending-discussion | `$a = $b or $c;` | unverified | unverified | deferred | — |
@@ -49,7 +49,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-POSTINC-001](#expr-postinc-001) | pending-discussion | `$a = $b++;` | unverified | unverified | deferred | — |
 | [EXPR-PREDEC-001](#expr-predec-001) | pending-discussion | `$a = --$b;` | unverified | unverified | deferred | — |
 | [EXPR-POSTDEC-001](#expr-postdec-001) | pending-discussion | `$a = $b--;` | unverified | unverified | deferred | — |
-| [STMT-EXPR-001](#stmt-expr-001) | pending-discussion | `$a + 1;` | unverified | unverified | deferred | — |
+| [STMT-EXPR-001](#stmt-expr-001) | agreed | `$a = 1; $a + 1;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [STMT-ASSIGNOP-001](#stmt-assignop-001) | pending-discussion | `$a += 1;` | unverified | unverified | deferred | — |
 | [STMT-ASSIGNOP-002](#stmt-assignop-002) | pending-discussion | `$a -= 1;` | unverified | unverified | deferred | — |
 | [STMT-ASSIGNOP-003](#stmt-assignop-003) | pending-discussion | `$a *= 2;` | unverified | unverified | deferred | — |
@@ -241,11 +241,9 @@ minus does not enable unary negation, decrement or compound assignment.
 **Ownership and retained facts:** reuse `binary_expression_node`,
 `prepared_binary_expression` and `operator_decision` without new structures or
 fields. Add `operator_kind::subtraction` and `operator_operation::integer_subtraction`.
-`Integer_Operators::decide_arithmetic()` (generalized from `decide_additive` by the
-multiplication slice) shares the exact canonical-int operand check,
+`Integer_Operators::decide_binary()` (generalized as the binary families grew) shares the exact canonical-int operand check,
 two identity conversions in `operator_operand` context and canonical result type
-between addition and subtraction. Diagnostics now name the shared integer arithmetic
-operation. `Operator_Preparation` owns source normalization and the existing
+between addition and subtraction. Diagnostics name the shared integer binary operation. `Operator_Preparation` owns source normalization and the existing
 order-independence restriction; C++ consumes the selected operation and conversions.
 
 **Legacy/runtime review:** the legacy `Generator::renderExpr` lowers `AstKind::MINUS`
@@ -318,8 +316,8 @@ Reuse the existing binary AST and prepared decision records; add only the
 The parser owns precedence through a shared precedence-climbing path. Integer
 preparation shares exact operand checks, identity conversions and result typing
 across the supported arithmetic operations; C++ renders the selected operation.
-The shared policy is now named `Integer_Operators::decide_arithmetic`; diagnostics
-likewise name integer arithmetic rather than only addition/subtraction.
+The shared policy is now named `Integer_Operators::decide_binary`; diagnostics
+likewise name the shared integer binary operation.
 
 Legacy `Generator::renderExpr` emits `AstKind::MUL` as parenthesized recursive
 runtime arithmetic. The runtime `mul` helper multiplies native representations
@@ -374,6 +372,12 @@ auto a = static_cast<int_t>(2) * static_cast<int_t>(3);
 
 ## EXPR-DIV-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -410,6 +414,12 @@ auto a = static_cast<int_t>(4) / static_cast<int_t>(2);
 
 
 ## EXPR-MOD-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -590,6 +600,12 @@ auto a = ~b;
 
 ## EXPR-NESTED-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -626,6 +642,12 @@ auto a = (b + static_cast<int_t>(1)) * static_cast<int_t>(2);
 
 
 ## EXPR-CHAIN-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -664,6 +686,12 @@ auto a = b + static_cast<int_t>(1) + c;
 
 ## EXPR-CONCAT-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -699,6 +727,12 @@ auto a = string_t("a") + string_t("b");
 
 ## EXPR-CONCAT-002
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -731,6 +765,12 @@ auto a = cast<string_t>(b) + string_t("x");
 
 
 ## EXPR-CONCAT-003
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -766,6 +806,12 @@ auto a = string_t("x") + cast<string_t>(b);
 
 
 ## EXPR-COMP-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -804,6 +850,12 @@ auto a = (b == static_cast<int_t>(1));
 
 ## EXPR-NEQ-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -838,6 +890,12 @@ auto a = (b != static_cast<int_t>(1));
 
 
 ## EXPR-SEQ-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -876,6 +934,12 @@ auto a = php::identical(b, static_cast<int_t>(1));
 
 ## EXPR-SNEQ-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -913,6 +977,12 @@ auto a = php::not_identical(b, static_cast<int_t>(1));
 
 ## EXPR-LT-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -945,6 +1015,12 @@ auto a = (b < static_cast<int_t>(1));
 
 
 ## EXPR-LTE-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -979,6 +1055,12 @@ auto a = (b <= static_cast<int_t>(1));
 
 ## EXPR-GT-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -1012,6 +1094,12 @@ auto a = (b > static_cast<int_t>(1));
 
 ## EXPR-GTE-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -1044,6 +1132,12 @@ auto a = (b >= static_cast<int_t>(1));
 
 
 ## EXPR-SPACESHIP-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -1082,6 +1176,12 @@ auto a = scpp::cmp(b, c);
 
 ## EXPR-LOGIC-001
 
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
+
 **v0.2 decision / target C++:** Pending discussion.
 
 ### Imported version 1
@@ -1118,6 +1218,12 @@ auto a = static_cast<bool_t>(true) && static_cast<bool_t>(false);
 
 
 ## EXPR-OR-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 
@@ -1433,6 +1539,12 @@ auto a = b--;
 
 
 ## STMT-EXPR-001
+
+**v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
+expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
+defines the bounded operand contract, lowering, legacy differences and proof.
+The initialized strict working example is in the progress table; imported examples
+below remain historical evidence. Native compiler execution was not rerun.
 
 **v0.2 decision / target C++:** Pending discussion.
 

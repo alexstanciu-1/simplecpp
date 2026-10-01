@@ -86,13 +86,17 @@ final class Tokenizer
 		if (($byte === 39) || ($byte === 34)) {
 			return $this->quoted_end($start, $byte);
 		}
-		if (Source_Text::digit($byte) || ($byte === 46)) {
+		if (Source_Text::digit($byte) || (($byte === 46) && Source_Text::digit(string_byte_at($this->content, $offset + 1)))) {
 			return $this->numeric_end($start);
 		}
-		if (string_byte_slice($this->content, $offset, 2) === '->') {
-			return $offset + 2;
+		// Longest supported punctuation wins; a bare ! remains outside this slice.
+		foreach (['===', '!==', '<=>', '==', '!=', '<=', '>=', '->', '&&', '||'] as $operator_text) {
+			$operator_length = string_byte_len($operator_text);
+			if (string_byte_slice($this->content, $offset, $operator_length) === $operator_text) {
+				return $offset + $operator_length;
+			}
 		}
-		$punctuation = ';(){}:,&[]<>+-*';
+		$punctuation = ';(){}:,&[]<>+-*/%.';
 		for ($index = 0; $index < string_byte_len($punctuation); $index++) {
 			if ($byte === string_byte_at($punctuation, $index)) {
 				return $offset + 1;

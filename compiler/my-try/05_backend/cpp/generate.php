@@ -347,7 +347,14 @@ final class CPP_Generator
 	{
 		$decision = $syntax->require_binary_preparation()->decision;
 		$spelling = '';
-		if ($decision->operation === operator_operation::integer_addition) {
+		if ($decision->operation === operator_operation::boolean_and) {
+			$spelling = '&&';
+		}
+		elseif ($decision->operation === operator_operation::boolean_or) {
+			$spelling = '||';
+		}
+		elseif (($decision->operation === operator_operation::integer_addition)
+			|| ($decision->operation === operator_operation::string_concatenation)) {
 			$spelling = '+';
 		}
 		elseif ($decision->operation === operator_operation::integer_subtraction) {
@@ -355,6 +362,39 @@ final class CPP_Generator
 		}
 		elseif ($decision->operation === operator_operation::integer_multiplication) {
 			$spelling = '*';
+		}
+		elseif ($decision->operation === operator_operation::integer_division) {
+			$spelling = '/';
+		}
+		elseif ($decision->operation === operator_operation::integer_remainder) {
+			$spelling = '%';
+		}
+		elseif ($decision->operation === operator_operation::integer_equal) {
+			$spelling = '==';
+		}
+		elseif ($decision->operation === operator_operation::integer_not_equal) {
+			$spelling = '!=';
+		}
+		elseif ($decision->operation === operator_operation::integer_identical) {
+			$spelling = 'scpp::php::identical';
+		}
+		elseif ($decision->operation === operator_operation::integer_not_identical) {
+			$spelling = 'scpp::php::not_identical';
+		}
+		elseif ($decision->operation === operator_operation::integer_less) {
+			$spelling = '<';
+		}
+		elseif ($decision->operation === operator_operation::integer_less_equal) {
+			$spelling = '<=';
+		}
+		elseif ($decision->operation === operator_operation::integer_greater) {
+			$spelling = '>';
+		}
+		elseif ($decision->operation === operator_operation::integer_greater_equal) {
+			$spelling = '>=';
+		}
+		elseif ($decision->operation === operator_operation::integer_three_way) {
+			$spelling = '<=>';
 		}
 		else {
 			throw new \RuntimeException('C++ binary operation is not supported yet');
@@ -368,6 +408,30 @@ final class CPP_Generator
 			$syntax->left->generate_cpp($worker), $decision->operands[0], $context);
 		$right = CPP_Declarations::conversion(
 			$syntax->right->generate_cpp($worker), $decision->operands[1], $context);
+		if ($decision->operation === operator_operation::integer_three_way)
+		{
+			$context->headers['scpp/generated/operators.hpp'] = true;
+			$left_name = 'operand_' . $context->next_temporary;
+			$context->next_temporary++;
+			$right_name = 'operand_' . $context->next_temporary;
+			$context->next_temporary++;
+			$result_type = CPP_Declarations::type($decision->result_type, $context);
+			return '([&]() -> ' . $result_type . ' { auto ' . $left_name . ' = ' . $left
+				. '; auto ' . $right_name . ' = ' . $right . '; return ' . $result_type
+				. '(static_cast<bool>(' . $left_name . ' < ' . $right_name . ') ? -1 : '
+				. '(static_cast<bool>(' . $left_name . ' > ' . $right_name . ') ? 1 : 0)); }())';
+		}
+		if (($decision->operation === operator_operation::boolean_and)
+			|| ($decision->operation === operator_operation::boolean_or)) {
+			$context->headers['scpp/bool_t.hpp'] = true;
+			return 'scpp::bool_t(static_cast<bool>(' . $left . ') ' . $spelling
+				. ' static_cast<bool>(' . $right . '))';
+		}
+		if (($decision->operation === operator_operation::integer_identical)
+			|| ($decision->operation === operator_operation::integer_not_identical)) {
+			$context->headers['lang/php/operators/identity/strict_identity.hpp'] = true;
+			return $spelling . '(' . $left . ', ' . $right . ')';
+		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $left . ' ' . $spelling . ' ' . $right . ')';
 	}

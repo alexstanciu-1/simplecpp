@@ -20,6 +20,7 @@ experiment retained for regressions, not a second semantic development path.
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
 | Active type-model discussion | [Type model direction](planning/types.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
+| Current scalar operators | [Bounded contracts, lowering and proof](s2s_scalar_operators.md) |
 | Active operator discussion | [Operator preparation and resolution](planning/operators.md) |
 | Next language feature | [Catalog](catalog/README.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |

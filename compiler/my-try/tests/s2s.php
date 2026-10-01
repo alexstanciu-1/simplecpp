@@ -106,6 +106,48 @@ $cases = [
 	'sub_cast' => ['$x uint8 = 7; return (int)$x - 2;', 5],
 	'sub_minimum' => ['$a = 0 - PHP_INT_MAX - 1; return $a + PHP_INT_MAX + 1;', 0],
 	'sub_maximum' => ['$a = (PHP_INT_MAX) - 0; return 0;', 0],
+	'div_catalog' => ['$a = 4 / 2; return $a;', 2],
+	'div_truncate' => ['return 7 / 3;', 2],
+	'div_negative' => ['return (0 - 7) / 3 + 10;', 8],
+	'div_negative_rhs' => ['return 7 / (0 - 3) + 10;', 8],
+	'div_precedence' => ['return 20 / 2 * 3 + 1;', 31],
+	'div_grouped' => ['return 20 / (2 * 2);', 5],
+	'div_minimum' => ['$a = (0 - PHP_INT_MAX - 1) / 1; return $a + PHP_INT_MAX + 1;', 0],
+	'div_zero_guard' => ['function fail(): int { return 1 / 0; } return 0;', 0],
+	'mod_catalog' => ['$a = 5 % 2; return $a;', 1],
+	'mod_negative' => ['return (0 - 7) % 3 + 10;', 9],
+	'mod_negative_rhs' => ['return 7 % (0 - 3);', 1],
+	'mod_precedence' => ['return 20 % 6 * 3 + 1;', 7],
+	'mod_grouped' => ['return 20 % (6 * 3);', 2],
+	'mod_zero_guard' => ['function fail(): int { return 1 % 0; } return 0;', 0],
+	'concat_literals' => ['$a = "a" . "b";', 0],
+	'concat_left' => ['$b = "b"; $a = $b . "x";', 0],
+	'concat_right' => ['$b = "b"; $a = "x" . $b;', 0],
+	'concat_cast' => ['$a = "x" . (string)(2 + 3 * 4);', 0],
+	'concat_grouped' => ['$a = ("a" . "b") . "c";', 0],
+	'concat_empty' => ['$a = "" . "x" . "";', 0],
+	'concat_statement' => ['"a" . "b"; return 0;', 0],
+	'expr_statement' => ['$a = 1; $a + 1; return $a;', 1],
+	'expr_statement_grouped' => ['$a = 1; ($a + 1) * 2; return $a;', 1],
+	'logical_and_table' => ['return (int)(false && false) + (int)(false && true) * 2 + (int)(true && false) * 4 + (int)(true && true) * 8;', 8],
+	'logical_or_table' => ['return (int)(false || false) + (int)(false || true) * 2 + (int)(true || false) * 4 + (int)(true || true) * 8;', 14],
+	'logical_precedence' => ['return true || false && false;', 1],
+	'logical_grouped' => ['return (true || false) && false;', 0],
+	'logical_compare' => ['return 1 + 2 < 4 && 7 % 3 == 1;', 1],
+	'logical_and_skip' => ['return false && (1 / 0 == 0);', 0],
+	'logical_or_skip' => ['return true || (1 % 0 == 0);', 1],
+	'logical_and_guard' => ['function fail(): bool { return true && (1 / 0 == 0); } return 0;', 0],
+	'logical_or_guard' => ['function fail(): bool { return false || (1 % 0 == 0); } return 0;', 0],
+	'nested_catalog' => ['$b = 3; $a = ($b + 1) * 2; return $a;', 8],
+	'chain_catalog' => ['$b = 2; $c = 4; $a = $b + 1 + $c; return $a;', 7],
+	'compare_precedence' => ['return 2 + 3 * 4 > 13;', 1],
+	'compare_constant' => ['return PHP_INT_MAX < 1;', 0],
+	'compare_grouped_constant' => ['return (PHP_INT_MAX) >= 1;', 1],
+	'compare_limits' => ['return (0 - PHP_INT_MAX - 1) < PHP_INT_MAX;', 1],
+	'compare_three_way_less' => ['$a = 1 <=> 2; return $a + 1;', 0],
+	'compare_three_way_equal' => ['return 2 <=> 2;', 0],
+	'compare_three_way_greater' => ['return 3 <=> 2;', 1],
+	'compare_three_way_limits' => ['return PHP_INT_MAX <=> (0 - PHP_INT_MAX - 1);', 1],
 	'mul_catalog' => ['$a = 2 * 3; return $a;', 6],
 	'mul_precedence_right' => ['return 2 + 3 * 4 - 5;', 9],
 	'mul_precedence_left' => ['return 2 * 3 + 4;', 10],
@@ -166,6 +208,17 @@ $cases += [
 	'struct_empty' => ['struct Empty {} function copy(Empty $e): Empty { return $e; } $e Empty; $f = copy($e); return 0;', 0],
 	'integer_boundary' => ['function identity(uint16 $x): uint8 { return $x; } $x int32 = 59; return identity($x);', 59],
 ];
+// Each fixture independently distinguishes true, false and equality-boundary behavior.
+$comparison_cases = [
+	'equal' => ['==', 3, 4, 3], 'not_equal' => ['!=', 4, 3, 3],
+	'identical' => ['===', 3, 4, 3], 'not_identical' => ['!==', 4, 3, 3],
+	'less' => ['<', 4, 3, 3], 'less_equal' => ['<=', 3, 2, 3],
+	'greater' => ['>', 2, 3, 3], 'greater_equal' => ['>=', 3, 4, 3],
+];
+foreach ($comparison_cases as $name => [$symbol, $true_rhs, $false_rhs, $left]) {
+	$cases['compare_' . $name] = ['$yes bool = ' . $left . ' ' . $symbol . ' ' . $true_rhs . '; '
+		. '$no bool = ' . $left . ' ' . $symbol . ' ' . $false_rhs . '; return (int)$yes + (int)$no * 2;', 1];
+}
 foreach (['int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'] as $type) {
 	$cases['field_' . $type] = ['struct Item { ' . $type . ' $value; } $x Item; $x->value = 61; return $x->value;', 61];
 }
@@ -542,6 +595,7 @@ foreach ($cases as $name => [$source, $exit])
 	// Verify signed values directly; process exit codes alone lose sign and high bits.
 	$arithmetic_values = ['sub_catalog' => '-1LL',
 		'sub_minimum' => '(-9223372036854775807LL - 1LL)', 'sub_maximum' => '9223372036854775807LL',
+		'div_minimum' => '(-9223372036854775807LL - 1LL)', 'compare_three_way_less' => '-1LL',
 		'mul_negative' => '-6LL', 'mul_wide' => '9223372030926249001LL'];
 	if (isset($arithmetic_values[$name]))
 	{
@@ -552,6 +606,32 @@ foreach ($cases as $name => [$source, $exit])
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace($site, $probe . $site, $text));
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
+	}
+
+	$concatenation_values = ['concat_literals' => 'ab', 'concat_left' => 'bx',
+		'concat_right' => 'xb', 'concat_cast' => 'x14', 'concat_grouped' => 'abc', 'concat_empty' => 'x'];
+	if (isset($concatenation_values[$name]))
+	{
+		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::string_t>);\n";
+		$probe .= '	if (local_a.native_value() != "' . $concatenation_values[$name] . '") { return 91; }' . "\n";
+		$probe_path = $directory . '/' . $name . '_value.cpp';
+		file_put_contents($probe_path, str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text));
+		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
+	}
+
+	// Observe runtime exceptions in-process without introducing source try/catch support.
+	$runtime_error_codes = ['div_zero_guard' => 'division_by_zero', 'mod_zero_guard' => 'modulo_by_zero',
+		'logical_and_guard' => 'division_by_zero', 'logical_or_guard' => 'modulo_by_zero'];
+	if (isset($runtime_error_codes[$name]))
+	{
+		$error_code = $runtime_error_codes[$name];
+		$probe = '
+int main() { try { (void)function_fail(); } catch (const scpp::runtime_error& error) {'
+			. ' return error.code() == "' . $error_code . '" ? 0 : 91; } return 92; }
+';
+		$probe_path = $directory . '/' . $name . '_throw.cpp';
+		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', Model::$cpp_files[0]->text) . $probe);
+		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 
 	Preparation_Cleanup::tree($syntax->root);
@@ -679,10 +759,10 @@ foreach ($variable_copy_rejections as $name => [$source, $diagnostic])
 
 $integer_addition_rejections = [
 	'undeclared operand' => ['$b = $missing + 1;', 'established local declaration for missing'],
-	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer arithmetic operation requires canonical int operands'],
-	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer arithmetic operation requires canonical int operands'],
-	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'integer arithmetic operation requires order-independent operands'],
-	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'integer arithmetic operation requires order-independent operands'],
+	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer binary operation requires canonical int operands'],
+	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer binary operation requires canonical int operands'],
+	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'binary operation requires order-independent operands'],
+	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'binary operation requires order-independent operands'],
 ];
 foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 {
