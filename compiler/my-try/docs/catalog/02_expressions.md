@@ -16,7 +16,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [EXPR-PAREN-001](#expr-paren-001) | pending-discussion | `$a = ($b + 1);` | unverified | unverified | deferred | — |
-| [EXPR-ARITH-001](#expr-arith-001) | agreed | `$a = 1 + 2;` | proved | in-progress | deferred | [Prepared operator decision](../../tests/operators.php); exact native validation not requested |
+| [EXPR-ARITH-001](#expr-arith-001) | agreed | `$a = 1 + 2;` | proved | proved | deferred | [Prepared operator decision](../../tests/operators.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [EXPR-SUB-001](#expr-sub-001) | pending-discussion | `$a = 1 - 2;` | unverified | unverified | deferred | — |
 | [EXPR-MUL-001](#expr-mul-001) | pending-discussion | `$a = 2 * 3;` | unverified | unverified | deferred | — |
 | [EXPR-DIV-001](#expr-div-001) | pending-discussion | `$a = 4 / 2;` | unverified | unverified | deferred | — |

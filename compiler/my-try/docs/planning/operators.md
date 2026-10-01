@@ -162,7 +162,8 @@ numeric compatibility remain separate catalog slices.
 - ternary syntax and the shared three-operand call;
 - parenthesized grouping and broader precedence levels;
 - effect analysis that can safely admit calls as operands;
-- LLVM, legacy STAN and native compiler validation.
+- LLVM and legacy STAN. Native compiler validation remains an explicit post-slice
+  checkpoint rather than an automatic implementation step.
 
 ## Implementation result
 
@@ -180,6 +181,14 @@ The first slice is implemented:
   operand and effectful-operand behavior remain intact;
 - focused operator, full PHP-host S2S, conversion and PHP-host incremental C++
   generation tests pass.
+
+The subsequently requested native checkpoint also passes. The compiler converts
+and builds with Clang 18 and `--no-stan`; PHP-host and native-compiler output is
+byte-identical for all 105 valid S2S fixtures, all generated programs compile and
+execute, all 32 rejection/recovery cases agree, and the 15 specialized floating
+spelling assertions remain exact. The only portability correction was replacing the
+reserved C++ local/parameter name `$operator` with `$source_operator`. See the
+[portability evidence](../portability/conversion_review.md).
 
 No deferred operator family, syntax form, overload source or promotion rule was
 implicitly activated by this migration.
