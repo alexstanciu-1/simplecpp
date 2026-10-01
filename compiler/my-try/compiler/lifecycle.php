@@ -68,6 +68,7 @@ final class Compiler_Lifecycle
 		}
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
 		Model::$cpp_output_program = new cpp_program();
+		self::reset_types();
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
@@ -103,6 +104,7 @@ final class Compiler_Lifecycle
 		}
 		self::$syntax_initialized = true;
 
+		self::reset_types();
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
@@ -110,6 +112,14 @@ final class Compiler_Lifecycle
 		Model::$global_scope->set_parent(Model::$language_scope);
 
 		self::reset_llvm();
+	}
+
+	/** Replace semantic and backend type roots together at a full syntax identity boundary. */
+	private static function reset_types(): void
+	{
+		$registry = new Type_Registry();
+		Model::$type_catalog = Type_Definition_Registration::install($registry);
+		Model::$cpp_type_bindings = CPP_Type_Binding_Registration::install(Model::$type_catalog);
 	}
 
 	/** Clear node-owned facts before releasing preparation/output roots or replacing syntax. */

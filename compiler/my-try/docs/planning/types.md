@@ -523,6 +523,20 @@ referenced definitions and uint32 identity limits before publishing any catalog.
 Loading must still create no applied-template Cartesian product: applications stay
 demand-driven and interned by the canonical registry.
 
+### Migration checkpoint: compiler ownership
+
+Step 4 begins with lifecycle ownership only. `Model` now owns the registered
+semantic catalog and the independent C++ binding catalog. Full compilation/syntax
+resets replace both roots together; ordinary preparation and generation preserve
+their identity. The semantic catalog also owns a definition-ID-to-`collected_struct`
+association so source syntax remains owned by its collected file rather than being
+embedded in every canonical type.
+
+This checkpoint does not yet replace the active scope `type_definition` records or
+prepared facts. It intentionally adds no constructed type and creates no runtime
+template application. The next migration slice moves lookup and attached facts to
+canonical type uses before backend emission changes.
+
 ## Open decisions and recorded debt
 
 - Exact `type_family` cases and whether template application is a construction kind

@@ -248,12 +248,63 @@ final class Runtime_Type_Providers
 	}
 }
 
+/** One non-owning association from a semantic definition to collected source syntax. */
+final class source_type_declaration
+{
+	/** @storage.reference collected_file.entries @reference.weak */
+	private collected_struct $source_declaration /** weak<collected_struct> */;
+
+	public function __construct(collected_struct $declaration)
+	{
+		$this->source_declaration = $declaration;
+	}
+
+	public function declaration(): collected_struct
+	{
+		return object_cast(weakref_get($this->source_declaration), collected_struct::class);
+	}
+}
+
+/** Source syntax remains owned by collected files; this is a non-owning identity index. */
+final class Source_Type_Declarations
+{
+	private array $declarations /** hash<int, source_type_declaration> */ = [];
+
+	public function register(nominal_type_definition $definition, collected_struct $declaration): void
+	{
+		if ($definition->origin() !== type_definition_origin::source) {
+			throw new \InvalidArgumentException('Source declaration requires a source type definition');
+		}
+		$id = $definition->definition_id();
+		if (isset($this->declarations[$id])) {
+			throw new \LogicException('Duplicate source type declaration association');
+		}
+		$this->declarations[$id] = new source_type_declaration($declaration);
+	}
+
+	public function declaration(int $definition_id): collected_struct
+	{
+		Type_Identity::require_valid($definition_id, 'Source type definition identity');
+		$declaration = $this->declarations[$definition_id] ?? null;
+		if ($declaration === null) {
+			throw new \OutOfBoundsException('Source type definition has no declaration association');
+		}
+		return $declaration->declaration();
+	}
+
+	public function count(): int
+	{
+		return q_count($this->declarations);
+	}
+}
+
 /** Complete semantic installation result; backend bindings are deliberately absent. */
 final class registered_type_catalog
 {
 	private Type_Registry $type_registry;
 	private Source_Type_Exposures $source_exposures;
 	private Runtime_Type_Providers $runtime_providers;
+	private Source_Type_Declarations $source_declarations;
 
 	public function __construct(Type_Registry $registry, Source_Type_Exposures $source,
 		Runtime_Type_Providers $providers)
@@ -261,6 +312,7 @@ final class registered_type_catalog
 		$this->type_registry = $registry;
 		$this->source_exposures = $source;
 		$this->runtime_providers = $providers;
+		$this->source_declarations = new Source_Type_Declarations();
 	}
 
 	public function registry(): Type_Registry
@@ -276,6 +328,21 @@ final class registered_type_catalog
 	public function providers(): Runtime_Type_Providers
 	{
 		return $this->runtime_providers;
+	}
+
+	public function source_declarations(): Source_Type_Declarations
+	{
+		return $this->source_declarations;
+	}
+
+	/** Create one source nominal identity while syntax remains owned by its collected file. */
+	public function define_source_structure(string $name, collected_struct $declaration): nominal_type
+	{
+		$definition = $this->type_registry->define_nominal($name, type_definition_origin::source,
+			nominal_type_kind::structure);
+		$this->source_declarations->register($definition, $declaration);
+		$type = $this->type_registry->canonical($definition);
+		return object_cast($type, nominal_type::class);
 	}
 
 	public function definition(string $source_name): type_definition_i

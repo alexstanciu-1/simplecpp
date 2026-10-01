@@ -32,6 +32,10 @@ final class Model
 	public static scope $global_scope;
 	/** Built-in and runtime definitions; parent of global scope. @ownership owner */
 	public static scope $language_scope;
+	/** Canonical semantic definitions, concrete identities and source-definition associations. */
+	public static registered_type_catalog $type_catalog;
+	/** C++ representation metadata remains independent of the semantic catalog. */
+	public static CPP_Type_Bindings $cpp_type_bindings;
 	/**
 	 * Numeric storage of llvm_module records, including their LLVM text.
 	 * @storage.owner

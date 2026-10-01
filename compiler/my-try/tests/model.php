@@ -12,6 +12,7 @@ final class Model_Test
 	{
 		$compiler = new Compiler();
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
+		$type_catalog = self::check_type_roots();
 		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
 			if (!$storage instanceof Storage) {
 				throw new \RuntimeException('Model collection is not Storage');
@@ -19,6 +20,10 @@ final class Model_Test
 		}
 		$empty_output = Model::$llvm_files;
 		$compiler->exec_llvm();
+		if (Model::$type_catalog !== $type_catalog) {
+			throw new \RuntimeException('Ordinary compilation replaced canonical type roots');
+		}
+		self::check_source_type_association($type_catalog);
 		if ((count(Model::$modules) !== 1) || (count(Model::tokens()) !== 2) || (count(Model::syntax_files()) !== 2) || (count(Model::collected_files()) !== 2) || (count(Model::$llvm_files) !== 2)) {
 			throw new \RuntimeException('Unexpected model collection counts');
 		}
@@ -32,7 +37,8 @@ final class Model_Test
 			}
 		}
 		$seen = new \SplObjectStorage();
-		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::$global_scope, Model::collected_files(), Model::$llvm_files] as $root) {
+		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::$global_scope,
+			Model::$type_catalog, Model::$cpp_type_bindings, Model::collected_files(), Model::$llvm_files] as $root) {
 			self::check_graph($root, $seen);
 		}
 		if ((Model::$llvm_files === $empty_output) || !$empty_output->is_empty()) {
@@ -41,6 +47,10 @@ final class Model_Test
 
 		$old_output = Model::$llvm_files;
 		$compiler->init([]);
+		if ((Model::$type_catalog === $type_catalog)
+			|| (Model::$type_catalog->source_declarations()->count() !== 0)) {
+			throw new \RuntimeException('Compilation reset retained canonical source type roots');
+		}
 		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
 			if (!$storage->is_empty()) {
 				throw new \RuntimeException('Reset retained previous rows');
@@ -56,6 +66,48 @@ final class Model_Test
 		self::check_restarts($compiler);
 		self::check_preparation_recovery($compiler);
 		echo "Model: data-only graph, Storage boundaries, sharing, failure publication and reset passed\n";
+	}
+
+	/** Verify lifecycle-owned semantic/backend roots before active facts migrate to them. */
+	private static function check_type_roots(): registered_type_catalog
+	{
+		$catalog = Model::$type_catalog;
+		$registry = $catalog->registry();
+		if (($registry->definition_count() !== 20) || ($registry->type_count() !== 14)
+			|| ($registry->application_count() !== 0)) {
+			throw new \RuntimeException('Canonical built-in type roots were not initialized exactly once');
+		}
+		$vector = $catalog->definition('vector');
+		if (Model::$cpp_type_bindings->definition($vector->definition_id())->name() !== 'scpp::vector_t') {
+			throw new \RuntimeException('C++ type bindings are not attached to the semantic catalog');
+		}
+		if (Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value)->name() !== 'scpp::value_p') {
+			throw new \RuntimeException('By-value backend binding was not initialized');
+		}
+		return $catalog;
+	}
+
+	/** Prove source syntax remains separately owned while a canonical nominal identity observes it. */
+	private static function check_source_type_association(registered_type_catalog $catalog): void
+	{
+		$record /** nullable<collected_struct> */ = null;
+		foreach (Model::collected_files() as $file) {
+			foreach ($file->entries as $entry) {
+				if ($entry instanceof collected_struct) {
+					$record = object_cast($entry, collected_struct::class);
+				}
+			}
+		}
+		if ($record === null) {
+			throw new \RuntimeException('Type-root fixture has no source structure');
+		}
+		$record_entry /** collected_struct */ = $record;
+		$type = $catalog->define_source_structure($record_entry->name, $record_entry);
+		$definition = $type->nominal_definition();
+		if (($definition->origin() !== type_definition_origin::source)
+			|| ($catalog->source_declarations()->declaration($definition->definition_id()) !== $record_entry)) {
+			throw new \RuntimeException('Canonical source definition lost its separately owned declaration');
+		}
 	}
 
 	/** Stage failure must not leave output or backlinks from the previous run. */
@@ -337,7 +389,10 @@ final class Model_Test
 			return;
 		}
 		$type = new \ReflectionClass($value);
-		if (!in_array(basename($type->getFileName()), ['structures.php', 'structures_specialization.php'], true)) {
+		if (!in_array(basename($type->getFileName()), [
+			'structures.php', 'structures_specialization.php', 'model.php', 'catalog.php',
+			'type_bindings_catalog.php',
+		], true)) {
 			throw new \RuntimeException('Worker retained in model: ' . $type->getName());
 		}
 		foreach ($type->getProperties() as $property)
