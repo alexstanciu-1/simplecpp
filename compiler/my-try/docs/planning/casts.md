@@ -309,3 +309,23 @@ Implemented in the working tree:
 All existing integer assignment, argument and return boundaries now use the central
 conversion owner. Explicit-cast syntax and the remaining scalar-family policies are
 the next stage.
+
+### Stage 3 — explicit scalar casts
+
+Implemented in the working tree:
+
+- one source-written cast expression for the general `(type)expression` form;
+- target lookup through the canonical type registry rather than parser-owned cast
+  keyword cases;
+- boolean, integer, floating-point and string target-family policies;
+- exact canonical identity emitting the operand unchanged;
+- non-identity scalar casts retaining `explicit_runtime_cast` and lowering through
+  `scpp::cast<target>(operand)` with the required runtime header;
+- nested casts, registered fixed-width integer targets, effectful operands and
+  operator-precedence proofs;
+- explicit rejection of nominal-to-scalar pairs outside the bounded contract.
+
+The existing expression grammar does not yet support parenthesized grouping.
+Consequently `(int)2.5 + 1` proves that a cast binds before addition, while
+`(int)($a + $b)` remains deferred with grouped expressions rather than being
+silently treated as part of cast syntax.

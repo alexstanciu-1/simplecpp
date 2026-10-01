@@ -50,6 +50,12 @@ final class prepared_constant_reference extends prepared_expression {
 	public constant_definition $definition;
 }
 
+/** Explicit source cast retains the central conversion decision and its result type. */
+final class prepared_cast_expression extends prepared_expression
+{
+	public conversion_decision $conversion;
+}
+
 /** Binary result type and selected language operation; operands retain their own facts. */
 final class prepared_binary_expression extends prepared_expression {
 	public binary_operation $operation;

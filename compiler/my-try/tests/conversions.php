@@ -96,4 +96,108 @@ if ($reference_arguments[0]->conversion !== null) {
 	throw new \LogicException('Reference argument incorrectly acquired a value conversion');
 }
 
+$scalar_sources = [
+	'bool' => 'true',
+	'int' => '7',
+	'float' => '7.5',
+	'string' => '"7"',
+];
+$cast_source = '';
+foreach ($scalar_sources as $name => $literal) {
+	$cast_source .= '$source_' . $name . ' = ' . $literal . '; ';
+}
+foreach ($scalar_sources as $target => $unused) {
+	foreach ($scalar_sources as $source => $literal) {
+		$cast_source .= '$cast_' . $target . '_from_' . $source
+			. ' = (' . $target . ')$source_' . $source . '; ';
+	}
+}
+$cast_source .= '$fixed = (uint8)$source_int; return 0;';
+$syntax = conversion_test_source($cast_source);
+$statements = $syntax->root->body->statements;
+$position = q_count($scalar_sources);
+$runtime_casts = 0;
+foreach ($scalar_sources as $target => $unused)
+{
+	foreach ($scalar_sources as $source => $literal)
+	{
+		$assignment = object_cast(object_cast($statements[$position], expression_statement_node::class)->expression,
+			assignment_expression_node::class);
+		$cast = object_cast($assignment->value, cast_expression_node::class);
+		$decision = $cast->require_cast_preparation()->conversion;
+		$expected = $target === $source ? conversion_operation::identity
+			: conversion_operation::explicit_runtime_cast;
+		if (($decision->context !== conversion_context::explicit_cast)
+			|| ($decision->operation !== $expected)
+			|| (!$cast->require_preparation()->type->matches($decision->target_type))) {
+			throw new \LogicException('Scalar cast matrix lost its target-family decision');
+		}
+		if ($decision->requires_cast()) {
+			$runtime_casts++;
+		}
+		$position++;
+	}
+}
+$fixed_assignment = object_cast(object_cast($statements[$position], expression_statement_node::class)->expression,
+	assignment_expression_node::class);
+$fixed_cast = object_cast($fixed_assignment->value, cast_expression_node::class);
+if ($fixed_cast->require_cast_preparation()->conversion->operation
+	!== conversion_operation::explicit_runtime_cast) {
+	throw new \LogicException('Registered fixed-width integer cast target was not resolved generically');
+}
+$runtime_casts++;
+$text = Model::$cpp_files[0]->text;
+if (($runtime_casts !== 13) || (substr_count($text, 'scpp::cast<') !== $runtime_casts)
+	|| (substr_count($text, '#include "scpp/cast.hpp"') !== 1)) {
+	throw new \LogicException('Scalar cast emission did not match prepared identity/runtime decisions');
+}
+
+$syntax = conversion_test_source(
+	'function source(): float { return 2.5; } $value = (int)source(); $nested = (string)(float)$value; '
+	. '$sum = (int)2.5 + 1; return $value;');
+$statements = $syntax->root->body->statements;
+$value_assignment = object_cast(object_cast($statements[0], expression_statement_node::class)->expression,
+	assignment_expression_node::class);
+$value_cast = object_cast($value_assignment->value, cast_expression_node::class);
+$nested_assignment = object_cast(object_cast($statements[1], expression_statement_node::class)->expression,
+	assignment_expression_node::class);
+$outer_cast = object_cast($nested_assignment->value, cast_expression_node::class);
+$inner_cast = object_cast($outer_cast->operand, cast_expression_node::class);
+$sum_assignment = object_cast(object_cast($statements[2], expression_statement_node::class)->expression,
+	assignment_expression_node::class);
+$sum = object_cast($sum_assignment->value, binary_expression_node::class);
+if (!($value_cast->operand instanceof call_node) || !($sum->left instanceof cast_expression_node)
+	|| ($outer_cast->require_cast_preparation()->conversion->operation !== conversion_operation::explicit_runtime_cast)
+	|| ($inner_cast->require_cast_preparation()->conversion->operation !== conversion_operation::explicit_runtime_cast)) {
+	throw new \LogicException('Explicit cast operand, nesting or binary precedence changed');
+}
+$text = Model::$cpp_files[0]->text;
+if ((substr_count($text, 'return function_source();') !== 1)
+	|| !str_contains($text, 'scpp::cast<scpp::string_t>(scpp::cast<scpp::float_t>(local_value))')
+	|| !str_contains($text, '(scpp::cast<scpp::int_t<>>(static_cast<scpp::float_t>(2.5)) + static_cast<scpp::int_t<>>(1LL))')) {
+	throw new \LogicException('Explicit cast lowering lost single evaluation, nesting or precedence');
+}
+
+$failed = false;
+try {
+	conversion_test_source('struct Box {} $box Box; $value = (int)$box;');
+}
+catch (\RuntimeException $error) {
+	$failed = str_contains($error->getMessage(), 'explicit integer cast is not supported');
+}
+if (!$failed) {
+	throw new \LogicException('Unsupported nominal-to-scalar cast was not rejected during preparation');
+}
+
+$failed = false;
+try {
+	conversion_test_source('struct Box {} $box Box; $value = (Box)$box;');
+}
+catch (\RuntimeException $error) {
+	$failed = str_contains($error->getMessage(), 'explicit cast target is not supported');
+}
+if (!$failed) {
+	throw new \LogicException('Unsupported nominal cast target passed through identity handling');
+}
+
 echo "conversion preparation tests passed\n";

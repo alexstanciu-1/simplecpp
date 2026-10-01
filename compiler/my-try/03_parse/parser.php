@@ -663,6 +663,9 @@ final class Parser_Run
 	/** Parse literals, calls, variables and right-associative assignment expressions. */
 	private function primary_expression(bool $allow_assignment): expression_node
 	{
+		if ($this->text() === '(') {
+			return $this->cast_expression();
+		}
 		if (($this->text() === 'true') || ($this->text() === 'false')) {
 			$start = $this->position;
 			$literal = new boolean_literal_node();
@@ -720,6 +723,18 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected scalar literal or variable reference'));
 		}
 		return $this->access_suffix($node);
+	}
+
+	/** Parse one general source cast; the type registry decides its target meaning later. */
+	private function cast_expression(): expression_node
+	{
+		$start = $this->expect('(');
+		$cast = new cast_expression_node();
+		$cast->target_type = $this->type_syntax($this->current_scope);
+		$this->expect(')');
+		$cast->operand = $this->primary_expression(false);
+		$this->finish_node($cast, $start);
+		return $this->access_suffix($cast);
 	}
 
 	/** Preserve the element type and literal extent independently of LLVM spelling. */

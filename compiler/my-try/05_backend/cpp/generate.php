@@ -271,6 +271,15 @@ final class CPP_Generator
 		return "\t" . $expression->generate_cpp(new CPP_Syntax($context)) . ";\n";
 	}
 
+	/** Render an explicit cast solely from its prepared decision and ordinary operand path. */
+	public static function generate_cast(cast_expression_node $syntax,
+		cpp_generation_context $context): string
+	{
+		$value = $syntax->operand->generate_cpp(new CPP_Syntax($context));
+		return CPP_Declarations::conversion(
+			$value, $syntax->require_cast_preparation()->conversion, $context);
+	}
+
 	/** Flatten right-associative writes so introduced locals remain in the surrounding body. */
 	private static function generate_assignment_statement(assignment_expression_node $syntax, cpp_generation_context $context): string
 	{

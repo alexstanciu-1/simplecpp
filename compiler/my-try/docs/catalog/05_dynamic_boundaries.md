@@ -20,10 +20,10 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-EMPTY-001](#var-empty-001) | pending-discussion | `$a = empty($b);` | unverified | unverified | deferred | — |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | pending-discussion | `$a = $b ?? $c;` | unverified | unverified | deferred | — |
 | [EXPR-ELVIS-001](#expr-elvis-001) | pending-discussion | `$a = $b ?: $c;` | unverified | unverified | deferred | — |
-| [CAST-INT-001](#cast-int-001) | pending-discussion | `$a = (int)$b;` | unverified | unverified | deferred | — |
-| [CAST-FLOAT-001](#cast-float-001) | pending-discussion | `$a = (float)$b;` | unverified | unverified | deferred | — |
-| [CAST-BOOL-001](#cast-bool-001) | pending-discussion | `$a = (bool)$b;` | unverified | unverified | deferred | — |
-| [CAST-STRING-001](#cast-string-001) | pending-discussion | `$a = (string)$b;` | unverified | unverified | deferred | — |
+| [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
+| [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
+| [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
+| [CAST-STRING-001](#cast-string-001) | agreed | `$a = (string)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
 | [CAST-OBJECT-001](#cast-object-001) | pending-discussion | `$a = (object)$b;` | unverified | unverified | deferred | — |
 | [FUNC-NULLABLE-001](#func-nullable-001) | pending-discussion | `function f(?int $a): ?int { return $a; }` | unverified | unverified | deferred | — |
 | [TYPE-VAR-002](#type-var-002) | pending-discussion | `$x ?string = null;` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
@@ -219,7 +219,19 @@ auto a = ([&]() -> auto { auto __scpp_cond_value = b; return php::ternary_eval([
 
 ## CAST-INT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** `(int)` is one use of the general explicit-cast
+expression, not an integer-specific AST node. Preparation resolves `int` through
+the canonical type registry and asks the integer conversion policy for an explicit
+decision after preparing the operand. Exact `int` identity emits only the operand;
+other supported scalar sources emit:
+
+```cpp
+scpp::cast<scpp::int_t<>>(operand)
+```
+
+The runtime owns parsing, truncation, range and failure behavior. Unsupported
+source families are rejected during semantic preparation. Fixed-width registered
+integer targets use this same path.
 
 ### Imported version 1
 
@@ -254,7 +266,17 @@ auto a = cast<int_t>(b);
 
 ## CAST-FLOAT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** `(float)` uses the common explicit-cast expression,
+canonical registry lookup and the floating-point target-family policy. Exact
+floating identity emits only the operand; another supported scalar source emits:
+
+```cpp
+scpp::cast<scpp::float_t>(operand)
+```
+
+This intentionally resolves the imported row's stale `static_cast` example in
+favor of its own stated runtime-cast rule. The runtime owns conversion behavior;
+unsupported source families are rejected during preparation.
 
 ### Imported version 1
 
@@ -289,7 +311,17 @@ auto a = static_cast<float_t>(b);
 
 ## CAST-BOOL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** `(bool)` uses the common explicit-cast expression,
+canonical registry lookup and the boolean target-family policy. Exact boolean
+identity emits only the operand; another supported scalar source emits:
+
+```cpp
+scpp::cast<scpp::bool_t>(operand)
+```
+
+This intentionally resolves the imported row's stale `static_cast` example in
+favor of its own stated runtime-cast rule. Truth conversion behavior belongs to
+the runtime; unsupported source families are rejected during preparation.
 
 ### Imported version 1
 
@@ -324,7 +356,17 @@ auto a = static_cast<bool_t>(b);
 
 ## CAST-STRING-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** `(string)` uses the common explicit-cast expression,
+canonical registry lookup and the string target-family policy. Exact string
+identity emits only the operand; another supported scalar source emits:
+
+```cpp
+scpp::cast<scpp::string_t>(operand)
+```
+
+Formatting and failure behavior belong to the runtime. No implicit constructor
+fallback is permitted, and unsupported source families are rejected during
+semantic preparation.
 
 ### Imported version 1
 

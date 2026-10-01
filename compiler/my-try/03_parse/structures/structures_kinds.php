@@ -33,6 +33,7 @@ enum node_kind
 	case string_literal;
 	case variable_reference;
 	case constant_reference;
+	case cast_expression;
 	case binary_expression;
 	case assignment_expression;
 	case call_expression;

@@ -62,6 +62,11 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_constant($node->require_constant_reference_preparation(), $this->context);
 	}
 
+	public function generate_cast_expression(cast_expression_node $node): string
+	{
+		return CPP_Generator::generate_cast($node, $this->context);
+	}
+
 	public function generate_binary_expression(binary_expression_node $node): string
 	{
 		return CPP_Generator::generate_binary($node, $this->context);

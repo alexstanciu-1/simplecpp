@@ -868,6 +868,55 @@ final class binary_expression_node extends expression_node
 	}
 }
 
+/** One source-written cast shape; contextual conversions never inject this node. */
+final class cast_expression_node extends expression_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_cast_expression $prepared_facts = null;
+
+	public type_node $target_type;
+	public expression_node $operand;
+
+	public function kind(): node_kind
+	{
+		return node_kind::cast_expression;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new cast_expression_children_iterator($this);
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_cast_preparation();
+	}
+
+	public function require_cast_preparation(): prepared_cast_expression
+	{
+		return $this->prepared_facts;
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_cast($this, $context));
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->target_type);
+		$worker->edge($this, $this->operand);
+	}
+
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_cast_expression($this);
+	}
+}
+
 
 /**
  * Assignment is an expression at every depth, including a standalone statement.

@@ -172,6 +172,32 @@ final class binary_expression_children_iterator extends children_iterator
 	}
 }
 
+/** Retain explicit target syntax followed by the converted operand. */
+final class cast_expression_children_iterator extends children_iterator
+{
+	private cast_expression_node $source;
+	private int $next_field = 0;
+
+	public function __construct(cast_expression_node $source)
+	{
+		$this->source = $source;
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		switch ($this->next_field)
+		{
+			case 0:
+				$this->next_field = 1;
+				return $this->source->target_type;
+			case 1:
+				$this->next_field = 2;
+				return $this->source->operand;
+		}
+		return null;
+	}
+}
+
 /** Retain the source and visit its named fields in grammar order. */
 final class assignment_expression_children_iterator extends children_iterator
 {

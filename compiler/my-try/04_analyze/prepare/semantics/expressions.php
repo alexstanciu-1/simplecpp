@@ -85,6 +85,19 @@ final class Expression_Preparation
 		return $facts;
 	}
 
+	/** Prepare the operand first, then resolve and decide the source-written target request. */
+	public static function prepare_cast(cast_expression_node $node,
+		preparation_context $context): prepared_cast_expression
+	{
+		$operand = self::prepare($node->operand, $context);
+		$target = Type_Preparation::type($node->target_type, $context);
+		$facts = new prepared_cast_expression();
+		$facts->conversion = Conversion_Preparation::decide(
+			$operand->type, $target, conversion_context::explicit_cast);
+		$facts->type = $facts->conversion->result_type;
+		return $facts;
+	}
+
 	/** Prepare operands in source order and admit only the agreed canonical integer addition. */
 	public static function prepare_binary(binary_expression_node $node, preparation_context $context): prepared_binary_expression
 	{
@@ -110,6 +123,11 @@ final class Expression_Preparation
 	/** Keep C++ operand-order freedom harmless until general effect facts are available. */
 	private static function require_order_independent_addition_operand(expression_node $node): void
 	{
+		if ($node instanceof cast_expression_node) {
+			$cast = object_cast($node, cast_expression_node::class);
+			self::require_order_independent_addition_operand($cast->operand);
+			return;
+		}
 		if (($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
 			($node instanceof boolean_literal_node) || ($node instanceof string_literal_node) ||
 			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node) ||

@@ -8,12 +8,14 @@ enum conversion_context
 	case assignment;
 	case argument;
 	case return_value;
+	case explicit_cast;
 }
 
 enum conversion_operation
 {
 	case identity;
 	case integer_value_cast;
+	case explicit_runtime_cast;
 }
 
 /** Retained semantic result of comparing one produced value with its consumer. */

@@ -24,6 +24,11 @@ final class CPP_Declarations
 			return 'static_cast<' . self::type($decision->target_type, $context)
 				. '>((' . $expression . ').native_value())';
 		}
+		if ($decision->operation === conversion_operation::explicit_runtime_cast) {
+			$context->headers['scpp/cast.hpp'] = true;
+			return 'scpp::cast<' . self::type($decision->target_type, $context)
+				. '>(' . $expression . ')';
+		}
 
 		throw new \RuntimeException('C++ conversion operation is not implemented');
 	}
