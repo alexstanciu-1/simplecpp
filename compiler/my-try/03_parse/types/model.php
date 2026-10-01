@@ -479,14 +479,14 @@ final class no_value_type extends canonical_type
 final class applied_template_type extends canonical_type
 {
 	private template_type_definition $template_definition;
-	private array $arguments /** vector<uint32> */;
+	private array $arguments /** vector<canonical_type_use> */;
 
 	public function __construct(int $identity, template_type_definition $definition,
-		array $argument_type_ids /** vector<uint32> */)
+		array $arguments /** vector<canonical_type_use> */)
 	{
 		parent::__construct($identity, $definition);
 		$this->template_definition = $definition;
-		$this->arguments = $argument_type_ids;
+		$this->arguments = $arguments;
 	}
 
 	public function family(): type_family
@@ -499,7 +499,7 @@ final class applied_template_type extends canonical_type
 		return $this->template_definition;
 	}
 
-	public function argument_type_ids(): array /** vector<uint32> */
+	public function arguments(): array /** vector<canonical_type_use> */
 	{
 		return $this->arguments;
 	}
@@ -606,18 +606,18 @@ final class Type_Registry
 
 	/** Intern exactly one canonical type for a definition and ordered canonical arguments. */
 	public function intern_application(template_type_definition $definition,
-		array $argument_type_ids /** vector<uint32> */): applied_template_type
+		array $arguments /** vector<canonical_type_use> */): applied_template_type
 	{
 		$this->require_registered_definition($definition);
-		$this->require_arguments($definition, $argument_type_ids);
-		$key = $this->application_key($definition->definition_id(), $argument_type_ids);
+		$this->require_arguments($definition, $arguments);
+		$key = $this->application_key($definition->definition_id(), $arguments);
 		$type_id = $this->applied_types[$key] ?? 0;
 		if ($type_id !== 0) {
 			$type = $this->type($type_id);
 			return object_cast($type, applied_template_type::class);
 		}
 
-		$type = new applied_template_type($this->allocate_type_id(), $definition, $argument_type_ids);
+		$type = new applied_template_type($this->allocate_type_id(), $definition, $arguments);
 		$this->register_type($type);
 		$this->applied_types[$key] = $type->type_id();
 		return $type;
@@ -678,30 +678,31 @@ final class Type_Registry
 
 	/** Validate arity, list order and membership without interpreting argument capabilities. */
 	private function require_arguments(template_type_definition $definition,
-		array $argument_type_ids /** vector<uint32> */): void
+		array $arguments /** vector<canonical_type_use> */): void
 	{
-		if (q_count($argument_type_ids) !== $definition->arity()) {
+		if (q_count($arguments) !== $definition->arity()) {
 			throw new \InvalidArgumentException('Template type argument count does not match definition arity');
 		}
 
 		$expected_position = 0;
-		foreach ($argument_type_ids as $position => $type_id)
+		foreach ($arguments as $position => $argument)
 		{
-			if ($position !== $expected_position) {
+			if (($position !== $expected_position) || !($argument instanceof canonical_type_use)) {
 				throw new \InvalidArgumentException('Template type arguments must be an ordered list');
 			}
-			$this->type($type_id);
+			$this->type($argument->type_id());
 			$expected_position++;
 		}
 	}
 
 	/** Encode the complete tuple reversibly; this string indexes identity but is not an identity. */
 	private function application_key(int $definition_id,
-		array $argument_type_ids /** vector<uint32> */): string
+		array $arguments /** vector<canonical_type_use> */): string
 	{
-		$key = (string)$definition_id . ':' . (string)q_count($argument_type_ids);
-		foreach ($argument_type_ids as $type_id) {
-			$key .= ':' . (string)$type_id;
+		$key = (string)$definition_id . ':' . (string)q_count($arguments);
+		foreach ($arguments as $argument) {
+			$value_flag = $argument->by_value() ? '1' : '0';
+			$key .= ':' . (string)$argument->type_id() . ':' . $value_flag;
 		}
 		return $key;
 	}

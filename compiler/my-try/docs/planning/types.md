@@ -152,7 +152,8 @@ observe them. The owner and lifetime of each allocation sequence must be explici
 An applied template is interned by its complete exact key:
 
 ```text
-(template definition ID, ordered type IDs, ordered validated value arguments)
+(template definition ID, ordered (type ID, by-value flag) type arguments,
+ ordered validated value arguments)
 ```
 
 A hash table may index that key, but a hash is never proof of identity. Descriptive
@@ -331,8 +332,9 @@ not enter source lookup.
 It resolves the underlying type and records that this use requires by-value
 representation. It must not allocate a fake `value` template definition or a new
 canonical template type merely to select storage. The likely prepared shape is the
-underlying canonical `type_id` plus a by-value flag; the exact fact owner will be
-settled when its first consumer is implemented.
+underlying canonical `type_id` plus a by-value flag. Canonical template applications
+retain that same compact pair for every ordered type argument so `vector<Foo>` and
+`vector<value<Foo>>` have distinct exact application identities.
 
 Three identities remain separate:
 
@@ -477,8 +479,8 @@ thereafter.
   storage.
 - Floating formats beyond the current language `float`.
 - Struct versus class semantic differences, visibility and reference/value behavior.
-- Exact prepared-fact owner and propagation rules for the hard-coded `value<T>`
-  by-value flag.
+- Propagation rules for the hard-coded `value<T>` by-value flag at storage,
+  parameter, result and backend boundaries.
 - Inner-type exposure through public values and signatures.
 - User-authored template constraint syntax and contracts beyond `copyable_value`.
 - Runtime-family formation and operation requirements, especially `hash` keys.
