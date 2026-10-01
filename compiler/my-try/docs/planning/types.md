@@ -16,8 +16,10 @@ portable native compiler. C++ output is a backend representation, not the semant
 type model. LLVM remains parked and is not an implementation target for this work.
 
 This plan covers type concepts, retained structures and the processes that own
-them. Casts and operators will be discussed separately. They may consume the type
-model, but must not determine its shape by accumulating pair-specific cases.
+them. Casts are discussed separately in
+[Cast and conversion preparation](casts.md), and operators remain a later
+discussion. Both may consume the type model, but must not determine its shape by
+accumulating pair-specific cases.
 
 ## Current implementation baseline
 
@@ -632,7 +634,8 @@ facts; or solve incomplete/recursive layout. Backend-only spellings such as
   declarations only.
 - Type aliases, qualified names and module-facing compile-time surfaces.
 - Layout readiness, incomplete types, recursive indirection and error recovery.
-- Cast representation and conversion selection.
+- Cast implementation and conversion selection; see the active
+  [cast/conversion plan](casts.md).
 - Operator capability/selection representation.
 - Required tests, incremental invalidation and diagnostics for each later slice.
 - JSON schema, loader and ownership for predefined language/runtime definitions and

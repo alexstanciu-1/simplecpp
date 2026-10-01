@@ -11,12 +11,13 @@ No separate resolution pass precedes it. LLVM preparation remains
 
 | File | Responsibility |
 | --- | --- |
+| `../conversions/` | Backend-neutral conversion decisions, central routing and target-family policies |
 | `worker.php` | Select/order work, require prerequisites, maintain dependencies, compare/settle results and handle failures |
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
 | `semantics/expressions.php` | Expression dispatch, variable/member access, calls and assignments |
-| `semantics/types.php`, `literals.php` | Canonical type resolution/conversion requirements and exact literal facts |
+| `semantics/types.php`, `literals.php` | Canonical type resolution, storage identity checks and exact literal facts |
 | `data/structures.php` | Facts, invocation contexts and lookup observations |
 | `data/work_records.php` | Typed retained work and shared dependency/error state |
 | `changes.php` | `same_signature`/`same_record` equivalence and fact restoration |

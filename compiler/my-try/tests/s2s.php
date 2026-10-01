@@ -457,7 +457,8 @@ foreach ($cases as $name => [$source, $exit])
 			(substr_count($text, $signature) !== 2) ||
 			(substr_count($text, 'auto local_x = static_cast<scpp::int_t<>>(7LL);') !== 1) ||
 			(substr_count($text, 'local_x = static_cast<scpp::int_t<>>(12LL);') !== 1) ||
-			!str_contains($text, 'scpp::int_t<> argument_0 = static_cast<scpp::int_t<>>((local_x).native_value());') ||
+			!str_contains($text, 'scpp::int_t<> argument_0 = local_x;') ||
+			str_contains($text, 'argument_0 = static_cast<scpp::int_t<>>') ||
 			!str_contains($text, 'return function_own(argument_0);') ||
 			!str_contains($text, 'return static_cast<int>((local_x).native_value());')) {
 			throw new \LogicException('NOTE-033.a lost executable-unit isolation or parameter-seeded reassignment');

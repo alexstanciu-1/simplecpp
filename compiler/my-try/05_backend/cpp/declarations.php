@@ -14,15 +14,18 @@ final class CPP_Declarations
 		return $mapping->spelling;
 	}
 
-	/** Integer wrapper conversions are explicit; struct and other scalar copies keep their type. */
-	public static function value(string $expression, canonical_type_use $destination, cpp_generation_context $context): string
+	/** Render only the operation selected by shared conversion preparation. */
+	public static function conversion(string $expression, conversion_decision $decision, cpp_generation_context $context): string
 	{
-		if ((!$destination->by_value())
-			&& (Type_Preparation::canonical($destination)->family() === type_family::integer)) {
-			return 'static_cast<' . self::type($destination, $context) . '>((' . $expression . ').native_value())';
+		if ($decision->operation === conversion_operation::identity) {
+			return $expression;
+		}
+		if ($decision->operation === conversion_operation::integer_value_cast) {
+			return 'static_cast<' . self::type($decision->target_type, $context)
+				. '>((' . $expression . ').native_value())';
 		}
 
-		return $expression;
+		throw new \RuntimeException('C++ conversion operation is not implemented');
 	}
 
 	/** All signatures precede all bodies, including mutually recursive declarations. */
@@ -100,6 +103,7 @@ final class CPP_Declarations
 		$entry = object_cast(weakref_get($facts->declaration), collected_name::class);
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
 		$arguments /** Storage<expression_node> */ = $syntax->arguments;
+		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 
 		// The immediately invoked lambda sequences arguments and contains their temporaries.
 		$text = '([&]() -> ' . self::type($facts->type, $context) . " {\n";
@@ -114,7 +118,8 @@ final class CPP_Declarations
 			$context->next_temporary++;
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
 			if ($parameter->mode === passing_mode::value) {
-				$value = self::value($value, $parameter->type, $context);
+				$value = self::conversion(
+					$value, $prepared_arguments[$index]->require_conversion(), $context);
 			}
 
 			$text .= "\t" . self::type($parameter->type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";

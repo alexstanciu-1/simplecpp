@@ -58,7 +58,12 @@ final class Body_Preparation
 		// The declaration is still unpublished while its initializer is prepared.
 		if ($value !== null)
 		{
-			Type_Preparation::require_assignable($binding->type, $value->type);
+			$has_expected_type = ($type_syntax !== null)
+				|| ($binding->resolved_kind === binding_kind::assignment);
+			if ($has_expected_type) {
+				$binding->conversion = Conversion_Preparation::decide(
+					$value->type, $binding->type, conversion_context::assignment);
+			}
 		}
 		Type_Preparation::require_value_type($binding->type);
 		if ($binding->resolved_kind === binding_kind::declaration) {
@@ -74,8 +79,9 @@ final class Body_Preparation
 	}
 
 	/** Function returns use the signature; program-entry returns remain scalar exit values. */
-	public static function prepare_return(return_node $syntax, preparation_context $context): void
+	public static function prepare_return(return_node $syntax, preparation_context $context): prepared_return
 	{
+		$facts = new prepared_return();
 		if ($syntax->expression === null)
 		{
 			if ($context->return_type !== null) {
@@ -84,18 +90,20 @@ final class Body_Preparation
 					throw new \RuntimeException('S2S non-void return requires a value');
 				}
 			}
-			return;
+			return $facts;
 		}
 
 		$expression /** expression_node */ = $syntax->expression;
 		$value = Expression_Preparation::prepare($expression, $context);
 		if ($context->return_type !== null) {
 			$type /** canonical_type_use */ = $context->return_type;
-			Type_Preparation::require_assignable($type, $value->type);
+			$facts->conversion = Conversion_Preparation::decide(
+				$value->type, $type, conversion_context::return_value);
 		}
 		elseif (!Type_Preparation::entry_return_type($value->type)) {
 			throw new \RuntimeException('S2S entry return requires an integer, float or bool value');
 		}
+		return $facts;
 	}
 
 	/** Seed the worker-owned body context with parameters before source-order bindings. */

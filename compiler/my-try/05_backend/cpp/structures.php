@@ -22,7 +22,6 @@ final class cpp_assignment_sequence
 {
 	public string $statements = '';
 	public string $value;
-	public canonical_type_use $type;
 }
 
 /** Final bytes own no references into preparation or source syntax. */

@@ -65,6 +65,8 @@ abstract class prepared_storage {
 /** A local binding or member write retains its resolved storage declaration and canonical type. */
 final class prepared_binding extends prepared_storage {
 	public binding_kind $resolved_kind;
+	/** Null only when an inferred declaration has no pre-existing expected type. */
+	public ?conversion_decision $conversion = null;
 }
 
 /** Parameter facts add the source passing mode to the resolved storage identity. */
@@ -107,11 +109,33 @@ final class prepared_field_access extends prepared_expression {
 }
 
 /** Resolved call target and signature; evaluation order remains with the process workers. */
-final class prepared_call extends prepared_expression {
+final class prepared_call extends prepared_expression
+{
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_function $declaration /** weak<collected_function> */;
 	/** @reference.source function_node.prepared_facts */
 	public prepared_function $signature;
+	/** One boundary per source argument, aligned with syntax and signature positions. */
+	public Storage $arguments /** Storage<prepared_call_argument> */;
+
+	public function __construct()
+	{
+		$this->arguments = new Storage /** Storage<prepared_call_argument> */();
+	}
+}
+
+/** A reference argument has no conversion; a by-value argument requires one decision. */
+final class prepared_call_argument
+{
+	public ?conversion_decision $conversion = null;
+
+	public function require_conversion(): conversion_decision
+	{
+		if ($this->conversion === null) {
+			throw new \LogicException('Prepared by-value argument has no conversion decision');
+		}
+		return $this->conversion;
+	}
 }
 
 /** Completed file preparation; the source tree owns the actual facts. */
@@ -161,4 +185,18 @@ final class prepared_assignment extends prepared_expression
 {
 	/** @ownership owner */
 	public prepared_binding $binding;
+}
+
+/** A typed value return owns a decision; void and program-entry returns do not. */
+final class prepared_return
+{
+	public ?conversion_decision $conversion = null;
+
+	public function require_conversion(): conversion_decision
+	{
+		if ($this->conversion === null) {
+			throw new \LogicException('Prepared typed return has no conversion decision');
+		}
+		return $this->conversion;
+	}
 }

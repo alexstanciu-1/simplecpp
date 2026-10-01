@@ -45,7 +45,8 @@ final class Expression_Preparation
 		$binding->resolved_kind = binding_kind::assignment;
 		$binding->declaration = $place->field->declaration;
 		$value = Expression_Preparation::prepare($initializer, $context);
-		Type_Preparation::require_assignable($binding->type, $value->type);
+		$binding->conversion = Conversion_Preparation::decide(
+			$value->type, $binding->type, conversion_context::assignment);
 		Type_Preparation::require_value_type($binding->type);
 		return $binding;
 	}
@@ -175,6 +176,7 @@ final class Expression_Preparation
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
 		$arguments /** Storage<expression_node> */ = $syntax->arguments;
+		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		if (q_count($parameters) !== q_count($arguments)) {
 			throw new \RuntimeException('S2S call argument count does not match its signature');
 		}
@@ -184,14 +186,17 @@ final class Expression_Preparation
 		{
 			$value = Expression_Preparation::prepare($argument, $context);
 			$parameter = $parameters[$index];
+			$prepared_argument = new prepared_call_argument();
 			if ($parameter->mode === passing_mode::reference) {
 				if ((!$value->addressable) || !Type_Preparation::same_storage_type($value->type, $parameter->type)) {
 					throw new \RuntimeException('S2S reference arguments require stable storage of the exact parameter type');
 				}
 			}
 			else {
-				Type_Preparation::require_assignable($parameter->type, $value->type);
+				$prepared_argument->conversion = Conversion_Preparation::decide(
+					$value->type, $parameter->type, conversion_context::argument);
 			}
+			$prepared_arguments->append($prepared_argument);
 		}
 
 		return $facts;

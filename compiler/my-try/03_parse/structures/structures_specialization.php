@@ -969,6 +969,9 @@ final class expression_statement_node extends statement_node
 final class return_node extends statement_node
 {
 	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_return $prepared_facts = null;
 
 	public ?expression_node $expression = null;
 
@@ -985,10 +988,15 @@ final class return_node extends statement_node
 		return new return_children_iterator($this);
 	}
 
+	public function require_preparation(): prepared_return
+	{
+		return $this->prepared_facts;
+	}
+
 	/** Forward this specialized node and its active context to the owning preparation algorithm. */
 	public function prepare(preparation_context $context): void
 	{
-		Body_Preparation::prepare_return($this, $context);
+		$this->set_preparation(Body_Preparation::prepare_return($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */

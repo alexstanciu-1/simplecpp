@@ -117,24 +117,6 @@ final class Type_Preparation
 			|| ($family === type_family::floating);
 	}
 
-	/** Integer destinations use the existing runtime conversion; other values keep exact identity. */
-	public static function require_assignable(canonical_type_use $destination, canonical_type_use $source): void
-	{
-		self::require_value_type($destination);
-		if ($destination->matches($source)) {
-			return;
-		}
-		if ($destination->by_value() !== $source->by_value()) {
-			throw new \RuntimeException('S2S value boundary requires matching type-use modifiers');
-		}
-		if ((self::canonical($destination)->family() === type_family::integer)
-			&& (self::canonical($source)->family() === type_family::integer)) {
-			return;
-		}
-
-		throw new \RuntimeException('S2S value boundary requires matching types or an integer conversion');
-	}
-
 	public static function canonical(canonical_type_use $type): canonical_type_i
 	{
 		return Model::$type_catalog->registry()->type($type->type_id());

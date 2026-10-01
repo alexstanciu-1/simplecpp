@@ -219,8 +219,7 @@ final class CPP_Generator
 
 		$initializer /** expression_node */ = $initializer;
 		$value = $initializer->generate_cpp(new CPP_Syntax($context));
-		$value_type = $initializer->require_preparation()->type;
-		return self::generate_storage_value($binding, $name, $value, $value_type, $explicit_type, $context);
+		return self::generate_storage_value($binding, $name, $value, $explicit_type, $context);
 	}
 
 	/** Select the declared local or concrete assignable target without rendering its value. */
@@ -235,15 +234,14 @@ final class CPP_Generator
 	}
 
 	/** Render one declaration or assignment from an already evaluated value expression. */
-	private static function generate_storage_value(prepared_binding $binding, string $name, string $value, canonical_type_use $value_type, bool $explicit_type, cpp_generation_context $context): string
+	private static function generate_storage_value(prepared_binding $binding, string $name, string $value, bool $explicit_type, cpp_generation_context $context): string
 	{
 		$prefix = '';
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
 		}
-		if (($explicit_type || ($binding->resolved_kind === binding_kind::assignment)) &&
-			(!$binding->type->matches($value_type))) {
-			$value = CPP_Declarations::value($value, $binding->type, $context);
+		if ($binding->conversion !== null) {
+			$value = CPP_Declarations::conversion($value, $binding->conversion, $context);
 		}
 		return $prefix . $name . ' = ' . $value;
 	}
@@ -258,8 +256,8 @@ final class CPP_Generator
 		$expression /** ast_node */ = $syntax->expression;
 		$value = $expression->generate_cpp(new CPP_Syntax($context));
 		if ($context->return_type !== null) {
-			$type /** canonical_type_use */ = $context->return_type;
-			return "\treturn " . CPP_Declarations::value($value, $type, $context) . ";\n";
+			$decision = $syntax->require_preparation()->require_conversion();
+			return "\treturn " . CPP_Declarations::conversion($value, $decision, $context) . ";\n";
 		}
 		return "\treturn static_cast<int>((" . $value . ").native_value());\n";
 	}
@@ -289,7 +287,6 @@ final class CPP_Generator
 		}
 		else {
 			$source->value = $value_node->generate_cpp(new CPP_Syntax($context));
-			$source->type = $value_node->require_preparation()->type;
 		}
 
 		$binding = $syntax->require_assignment_preparation()->binding;
@@ -299,12 +296,11 @@ final class CPP_Generator
 		}
 		$name = self::storage_name($binding, $target, $context);
 		$statements = $source->statements;
-		$statements .= "\t" . self::generate_storage_value($binding, $name, $source->value, $source->type, false, $context) . ";\n";
+		$statements .= "\t" . self::generate_storage_value($binding, $name, $source->value, false, $context) . ";\n";
 
 		$result = new cpp_assignment_sequence();
 		$result->statements = $statements;
 		$result->value = $name;
-		$result->type = $binding->type;
 		return $result;
 	}
 
