@@ -178,17 +178,16 @@ record conversions are pressure tests for the model, not part of this first slic
 
 ## Interaction with existing code
 
-`Type_Preparation::require_assignable()` currently admits exact matches and
-integer-family assignment compatibility. `CPP_Declarations::value()` then
-rediscovers integer destinations and emits a `static_cast` directly. This splits
-semantic selection across preparation and lowering.
+Before Stage 1, `Type_Preparation::require_assignable()` admitted exact matches and
+integer-family assignment compatibility while `CPP_Declarations::value()`
+rediscovered integer destinations and emitted a `static_cast` directly. That split
+between semantic selection and lowering has now been removed for the migrated
+boundaries.
 
-The conversion design should ultimately replace that split with one prepared
-decision consumed by the backend. The implementation boundary must be agreed before
-work begins: the explicit-cast slice can either migrate the existing assignment,
-argument and return paths immediately or leave a clearly bounded bridge and migrate
-them in the following slice. It must not create a second permanent conversion
-system beside the existing path.
+The staged implementation replaced that split with one prepared decision consumed
+by the backend: assignments migrated first, followed by arguments and returns,
+before explicit source casts were added. No second compatibility system remains in
+those paths.
 
 ## Implementation steps
 
@@ -282,7 +281,7 @@ system beside the existing path.
 
 ### Stage 1 — assignment decisions
 
-Implemented in the working tree:
+Implemented:
 
 - the minimal decision model and central identity/target-family router;
 - the integer target-family owner preserving the existing assignment behavior;
@@ -296,7 +295,7 @@ Explicit-cast syntax and boolean, floating-point and string policies had not sta
 
 ### Stage 2 — argument and return decisions
 
-Implemented in the working tree:
+Implemented:
 
 - one aligned prepared boundary per call argument;
 - conversion decisions for every by-value argument after callable resolution;
@@ -312,7 +311,7 @@ the next stage.
 
 ### Stage 3 — explicit scalar casts
 
-Implemented in the working tree:
+Implemented:
 
 - one source-written cast expression for the general `(type)expression` form;
 - target lookup through the canonical type registry rather than parser-owned cast
@@ -332,7 +331,7 @@ silently treated as part of cast syntax.
 
 ### Stage 4 — proof completion
 
-Implemented in the working tree:
+Implemented:
 
 - explicit canonical alias identity through `uint8` to `byte`, proving that source
   spelling does not create a runtime conversion;
