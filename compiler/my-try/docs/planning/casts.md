@@ -344,3 +344,13 @@ Implemented:
   accept integer and string sources rather than producing unsupported C++;
 - authored S2S fixtures retaining both cases for later explicitly requested native
   validation.
+
+### Native validation closeout
+
+The explicitly requested native checkpoint at commit `0746c2e4` converted and built
+the compiler with Clang 18 and `--no-stan`, compared PHP-host and native-compiler
+C++ byte-for-byte, and compiled and executed all 104 valid authored S2S fixtures.
+The run included all cast fixtures, retained the 15 floating-point spelling checks,
+matched 32 rejection/recovery cases and passed an incremental rebuild. LLVM and
+legacy STAN remained parked. The reproducible evidence path and command are recorded
+in the [portability review](../portability/conversion_review.md).

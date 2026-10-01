@@ -20,10 +20,10 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-EMPTY-001](#var-empty-001) | pending-discussion | `$a = empty($b);` | unverified | unverified | deferred | — |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | pending-discussion | `$a = $b ?? $c;` | unverified | unverified | deferred | — |
 | [EXPR-ELVIS-001](#expr-elvis-001) | pending-discussion | `$a = $b ?: $c;` | unverified | unverified | deferred | — |
-| [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
-| [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
-| [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
-| [CAST-STRING-001](#cast-string-001) | agreed | `$a = (string)$b;` | proved | in-progress | deferred | [Prepared scalar matrix and exact C++ emission](../../tests/conversions.php); native execution not requested |
+| [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
+| [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
+| [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
+| [CAST-STRING-001](#cast-string-001) | agreed | `$a = (string)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-OBJECT-001](#cast-object-001) | pending-discussion | `$a = (object)$b;` | unverified | unverified | deferred | — |
 | [FUNC-NULLABLE-001](#func-nullable-001) | pending-discussion | `function f(?int $a): ?int { return $a; }` | unverified | unverified | deferred | — |
 | [TYPE-VAR-002](#type-var-002) | pending-discussion | `$x ?string = null;` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
