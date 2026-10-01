@@ -18,6 +18,7 @@ experiment retained for regressions, not a second semantic development path.
 | Collection APIs | [Storage](storage/STORAGE.md) |
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
+| Active type-model discussion | [Type model direction](planning/types.md) |
 | Next language feature | [Catalog](catalog/README.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 

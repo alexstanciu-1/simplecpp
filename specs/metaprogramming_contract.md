@@ -140,7 +140,7 @@ Examples include:
 - `value_storable`;
 - `hashable`;
 - `comparable`;
-- `copyable`;
+- `copyable_value`;
 - `movable`;
 - `layout_known`;
 - `abi_lowerable`.
@@ -150,6 +150,88 @@ operation, and metadata surfaces.
 
 The compiler may reject generic code that omits a necessary concept and then
 depends on operations that are not guaranteed by the declared interface.
+
+### 6.1 Default contract for a bare type parameter
+
+A source type parameter written without an explicit concept or constraint is not
+unconstrained. A bare parameter such as `T` in `template<typename T>` implicitly
+declares the `copyable_value` contract.
+
+`copyable_value` requires a concrete supplied type to provide:
+
+- known concrete type and representation information;
+- supported copy construction;
+- supported copy assignment;
+- a valid compiler-managed cleanup contract.
+
+An explicitly established no-op cleanup contract is valid. Missing lifecycle
+information must not be interpreted as trivial copy or cleanup behavior.
+
+Within a generic definition, `copyable_value` permits:
+
+- retaining and using the type's identity and representation;
+- call-scoped read-only borrowing that does not escape;
+- forwarding to another parameter whose declared contract and passing mode are
+  satisfied;
+- copy construction of a new owned value;
+- copy assignment into an existing mutable value;
+- returning an owned copy;
+- cleanup according to the supplied type's lifecycle contract.
+
+The contract does not by itself permit:
+
+- default construction or zero initialization;
+- move construction, ownership transfer or borrowed returns;
+- arithmetic, ordering, equality or hashing;
+- access to arbitrary fields or methods of the supplied type;
+- `new T` or another construction operation not explicitly guaranteed;
+- any operation discovered only because a favorable concrete type happens to
+  provide it.
+
+Copy permission means use of the supplied type's declared copy operation. It does
+not imply raw byte copying, deep copying, allocation-free execution or identical
+copy behavior across value and handle types.
+
+### 6.2 Definition permissions and argument eligibility
+
+A generic definition must be valid using only the contracts declared by its formal
+parameters. This check is independent of any concrete application and applies even
+when the definition is currently unused. A later specialization must not expand
+the definition's permissions.
+
+Separately, every concrete argument supplied for a bare type parameter must satisfy
+the complete `copyable_value` contract. Eligibility is checked at the application,
+even when a particular body does not exercise every operation guaranteed by the
+contract. Missing requirements should be diagnosed in the context of that
+application and its requesting dependency path when available.
+
+For example, this definition is invalid under a bare `T`, even if its only requested
+application supplies an integer:
+
+```text
+template<typename T>
+function add_one($value T): T
+{
+  return $value + 1;
+}
+```
+
+The concrete integer's addition operation cannot grant arithmetic permission to
+the definition retroactively.
+
+### 6.3 Initial scope and deferred constraints
+
+This contract defines the implicit baseline for bare source type parameters. It
+does not introduce syntax for user-authored constraints. Additional contracts such
+as default construction, movement, equality, ordering and hashing require later
+normative definitions before use.
+
+Metadata-defined runtime families must publish their parameter requirements through
+their compile-time surfaces. This revision does not choose or claim enforcement of
+requirements for existing families such as `vector`, `hash`, `nullable`, `shared`,
+`weak` or `unique`; that integration remains implementation debt. Runtime/backend
+knowledge must not grant a source generic definition permissions absent from its
+declared contract.
 
 ## 7. Explicitly Rejected C++-Style Behavior
 
