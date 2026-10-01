@@ -97,6 +97,16 @@ $cases = [
 	'var_reassign_003' => ['$a = 1; $a = $a + $a;', 0],
 	'var_reassign_003_value' => ['$a = 1; $a = $a + $a; return $a;', 2],
 	'expr_arith_001' => ['$a = 1 + 2; return $a;', 3],
+	'group_catalog' => ['$b = 2; $a = ($b + 1); return $a;', 3],
+	'group_right' => ['return 1 + (2 + 3);', 6],
+	'group_left' => ['return ((1 + 2)) + 3;', 6],
+	'group_cast_operand' => ['return (int)(1 + 2);', 3],
+	'group_cast_result' => ['$x = 3.5; return ((int)$x) + 2;', 5],
+	'group_constant' => ['$a = (PHP_INT_MAX); return 0;', 0],
+	'group_bool' => ['return ((true));', 1],
+	'group_reference' => ['function set(int &$x): void { $x = 13; } $x = 1; set((($x))); return $x;', 13],
+	'group_field_reference' => ['struct Box { int32 $value; } function set(int32 &$x): void { $x = 17; } $box Box; set((($box)->value)); return ($box)->value;', 17],
+	'group_call_once' => ['function bump(int &$x): int { $x = $x + 1; return $x; } $x = 0; $a = (bump($x)); return $x;', 1],
 	'copy' => ['$a = 10; $b = $a; $a = 12; return $b;', 10],
 	'wide' => ['$a = 4294967296; return 7;', 7],
 	'maximum' => ['$a = 9223372036854775807; return 9;', 9],
@@ -535,6 +545,7 @@ foreach ($scope_isolation_rejections as $source => $diagnostic)
 }
 
 $rejections = ['function f(int &$x): void {} f(1);',
+	'function f(int &$x): void {} f(((1)));',
 	'function f(int $x): int { return $x; } f();',
 	'function f(): int { return; }',
 	'function f(): void { return 1; }',
@@ -636,6 +647,7 @@ $integer_addition_rejections = [
 	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer addition requires canonical int operands'],
 	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer addition requires canonical int operands'],
 	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'integer addition requires order-independent operands'],
+	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'integer addition requires order-independent operands'],
 ];
 foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 {

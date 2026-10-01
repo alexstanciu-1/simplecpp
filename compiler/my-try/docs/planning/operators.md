@@ -131,7 +131,9 @@ preserve now is:
 - hard rejection when an operand is outside the selected numeric shape;
 - no unsafe assumption about C++ operand evaluation order for effectful operands.
 
-Parenthesized grouping, subtraction, multiplication, division, modulus and broader
+Parenthesized grouping is now covered by
+[EXPR-PAREN-001](../catalog/02_expressions.md#expr-paren-001), normalizing to the
+existing expression tree. Subtraction, multiplication, division, modulus and broader
 numeric compatibility remain separate catalog slices.
 
 ## First implementation slice
@@ -160,7 +162,7 @@ numeric compatibility remain separate catalog slices.
 - JS++ `+` string concatenation and possible future operator carrier changes;
 - unary syntax and operations;
 - ternary syntax and the shared three-operand call;
-- parenthesized grouping and broader precedence levels;
+- broader precedence levels;
 - effect analysis that can safely admit calls as operands;
 - LLVM and legacy STAN. Native compiler validation remains an explicit post-slice
   checkpoint rather than an automatic implementation step.

@@ -15,7 +15,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [EXPR-PAREN-001](#expr-paren-001) | pending-discussion | `$a = ($b + 1);` | unverified | unverified | deferred | — |
+| [EXPR-PAREN-001](#expr-paren-001) | agreed | `$b = 2; $a = ($b + 1);` | proved | proved | deferred | [Grammar, AST, spans and incremental proof](../../tests/grouping.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
 | [EXPR-ARITH-001](#expr-arith-001) | agreed | `$a = 1 + 2;` | proved | proved | deferred | [Prepared operator decision](../../tests/operators.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [EXPR-SUB-001](#expr-sub-001) | pending-discussion | `$a = 1 - 2;` | unverified | unverified | deferred | — |
 | [EXPR-MUL-001](#expr-mul-001) | pending-discussion | `$a = 2 * 3;` | unverified | unverified | deferred | — |
@@ -77,7 +77,66 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-054](#note-054) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## EXPR-PAREN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Agreed 2026-10-01: normalize grouping parentheses
+away during parsing. Return the existing inner expression node; its position in the
+tree preserves grouping. No grouping AST node or prepared-fact structure is needed.
+The existing preparation and C++ paths consume that tree unchanged. For:
+
+```php
+$b = 2;
+$a = ($b + 1);
+return $a;
+```
+
+the assignment remains:
+
+```cpp
+auto local_a = (local_b + static_cast<scpp::int_t<>>(1LL));
+```
+
+The result is `3`. Nested grouping preserves type, storage identity/reference
+eligibility, and evaluation count. Grouping does not make a value addressable or
+admit otherwise rejected operator operands.
+
+**Grammar and ownership:** `Parser_Run` recognizes `(type) operand` using read-only
+lookahead over the existing `name` / `name<type,...>` syntax, including nested
+applications and type-use modifiers. A complete parenthesized type form selects a
+cast only when the next token starts a currently supported primary operand: a name,
+variable, scalar literal, `(` or `[`. Otherwise `(` parses an expression followed
+by `)`. Lookahead neither resolves names nor allocates/collects speculative syntax.
+`(PHP_INT_MAX)` is therefore grouping, `(Unknown) + 1` groups an unresolved constant,
+and `(Unknown)$x` is a cast whose target is resolved during preparation.
+
+Cast syntax takes priority for `(Name)(...)` and `(Name)[...]`; indirect invocation
+and indexed bare constants are not activated by this slice. Grouped variable bases
+such as `($items)[0]` retain the existing index syntax, whose semantic support remains
+separate. Adding unary operators, indirect calls or broader type syntax requires
+reviewing ambiguous forms and keeping lookahead aligned with the type grammar.
+
+The inner node retains its own half-open source span. Enclosing binary, cast and
+postfix-access nodes use the consumed source extent, including parentheses where
+applicable. Parentheses do not acquire a retained identity. Collection and token
+cleanup still visit the same concrete syntax nodes and occurrences once.
+
+**Legacy review:** the old generator recursively renders binary AST children and
+parenthesizes their output (`Generator::renderExpr`, `BINARY_OP`), with scalar casts
+handled separately. Its `EXPR-PAREN-001` imported wording asks to preserve parentheses
+to maintain evaluation order. The v0.2 rule preserves grouping, not redundant source
+punctuation; parentheses alone do not establish operand evaluation order. Existing
+operator ordering restrictions continue to apply. No new runtime helper, include,
+temporary, output unit or compilation-cost benchmark is needed.
+
+**Proof:** `tests/grouping.php` checks both addition tree shapes (their equal numeric
+results alone would not distinguish them), cast/group disambiguation, one collected
+constant occurrence, nested type syntax, source spans, malformed/out-of-slice forms,
+retained-body token cleanup and fresh/incremental equivalence after regrouping.
+The ten `group_*` fixtures in `tests/s2s.php` pass PHP-host preparation/generation and
+Clang C++20 execution, including grouped casts, constants, booleans, reference and
+field arguments, and a call evaluated once. The compiler itself was not rebuilt
+natively for this slice; earlier native checkpoints remain revision-specific.
+
+Non-goals: new operators/precedence levels, standalone expression statements,
+assignments inside groups, wider index support, general effect analysis and LLVM.
 
 ### Imported version 1
 

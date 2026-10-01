@@ -30,6 +30,11 @@ Name-bearing nodes save their spelling. Half-open uint32 source spans
 `[first_token_index, end_token_index)` are provenance, not symbol keys. Common
 span methods preserve typed access through a property-free base. Exact name token
 positions remain on collected occurrences for diagnostics and parked LLVM indexes.
+Grouping parentheses normalize to the inner expression node. The inner span remains
+its own; enclosing expressions capture consumed parentheses in their source extent.
+There is no retained grouping identity. The parser uses read-only type-form lookahead
+to distinguish casts; see [the grouping decision](../catalog/02_expressions.md#expr-paren-001)
+for its grammar boundary and proofs.
 `constant_reference_node` is a direct expression specialization, distinct from the
 assignable `variable_reference_node`; preparation resolves its occurrence to a
 scope-owned immutable definition without changing that syntax distinction.

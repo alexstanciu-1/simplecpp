@@ -624,7 +624,7 @@ final class Parser_Run
 		$assignment = new assignment_expression_node();
 		if (($this->text() === '[') || ($this->text() === '->')) {
 			$target->collect($this->collector, $this->current_scope, $start);
-			$assignment->target = object_cast($this->access_suffix($target), assignable_expression_node::class);
+			$assignment->target = object_cast($this->access_suffix($target, $start), assignable_expression_node::class);
 		}
 		else {
 			$target->collect_write($this->collector, $this->current_scope, $start);
@@ -646,6 +646,7 @@ final class Parser_Run
 	/** Parse the currently supported left-associative binary precedence level. */
 	private function expression(bool $allow_assignment = false): expression_node
 	{
+		$start = $this->position;
 		$left = $this->primary_expression($allow_assignment);
 		while ($this->text() === '+')
 		{
@@ -654,7 +655,7 @@ final class Parser_Run
 			$binary->left = $left;
 			$binary->operator_token_index = $operator_token_index;
 			$binary->right = $this->primary_expression(false);
-			$this->finish_node($binary, $left->start_token());
+			$this->finish_node($binary, $start);
 			$left = $binary;
 		}
 		return $left;
@@ -663,8 +664,15 @@ final class Parser_Run
 	/** Parse literals, calls, variables and right-associative assignment expressions. */
 	private function primary_expression(bool $allow_assignment): expression_node
 	{
-		if ($this->text() === '(') {
-			return $this->cast_expression();
+		if ($this->text() === '(')
+		{
+			if ($this->cast_ahead()) {
+				return $this->cast_expression();
+			}
+			$group_start = $this->position++;
+			$inner = $this->expression();
+			$this->expect(')');
+			return $this->access_suffix($inner, $group_start);
 		}
 		if (($this->text() === 'true') || ($this->text() === 'false')) {
 			$start = $this->position;
@@ -686,7 +694,7 @@ final class Parser_Run
 			$constant->name = $this->name_at($start);
 			$this->finish_node($constant, $start);
 			$constant->collect($this->collector, $this->current_scope, $start);
-			return $this->access_suffix($constant);
+			return $this->access_suffix($constant, $start);
 		}
 		$start = $this->position;
 		$text = $this->text();
@@ -722,7 +730,51 @@ final class Parser_Run
 		else {
 			throw new \RuntimeException($this->error_message('Expected scalar literal or variable reference'));
 		}
-		return $this->access_suffix($node);
+		return $this->access_suffix($node, $start);
+	}
+
+	/** Recognize cast syntax without moving the parser or collecting speculative type names. */
+	private function cast_ahead(): bool
+	{
+		$end = $this->type_syntax_end(1);
+		if ($end < 0) {
+			return false;
+		}
+		if ($this->text_at_offset($end) !== ')') {
+			return false;
+		}
+		$operand = $this->text_at_offset($end + 1);
+		if ($operand === '') {
+			return false;
+		}
+		$first = string_byte_at($operand, 0);
+		return Source_Text::identifier($operand) || Source_Text::digit($first)
+			|| ($first === 36) || ($first === 39) || ($first === 34)
+			|| ($operand === '(') || ($operand === '[') || ($first === 46);
+	}
+
+	/** Scan the existing name / name<type,...> grammar; -1 means no complete type form. */
+	private function type_syntax_end(int $offset): int
+	{
+		if (!Source_Text::identifier($this->text_at_offset($offset))) {
+			return -1;
+		}
+		$offset++;
+		if ($this->text_at_offset($offset) !== '<') {
+			return $offset;
+		}
+		do
+		{
+			$offset = $this->type_syntax_end($offset + 1);
+			if ($offset < 0) {
+				return -1;
+			}
+		}
+		while ($this->text_at_offset($offset) === ',');
+		if ($this->text_at_offset($offset) !== '>') {
+			return -1;
+		}
+		return $offset + 1;
 	}
 
 	/** Parse one general source cast; the type registry decides its target meaning later. */
@@ -734,7 +786,7 @@ final class Parser_Run
 		$this->expect(')');
 		$cast->operand = $this->primary_expression(false);
 		$this->finish_node($cast, $start);
-		return $this->access_suffix($cast);
+		return $this->access_suffix($cast, $start);
 	}
 
 	/** Preserve the element type and literal extent independently of LLVM spelling. */
@@ -776,7 +828,7 @@ final class Parser_Run
 	}
 
 	/** Member and index access retain a base expression so reads, writes and references share one shape. */
-	private function access_suffix(expression_node $base): expression_node
+	private function access_suffix(expression_node $base, int $start): expression_node
 	{
 		while ((($this->text() === '[') || ($this->text() === '->')))
 		{
@@ -790,7 +842,7 @@ final class Parser_Run
 				$field->base = $base;
 				$field_index = $this->position++;
 				$field->name = $this->name_at($field_index);
-				$this->finish_node($field, $base->start_token());
+				$this->finish_node($field, $start);
 				$base = $field;
 				$field->collect($this->collector, $this->current_scope, $field_index);
 				continue;
@@ -800,7 +852,7 @@ final class Parser_Run
 			$access->base = $base;
 			$access->index = $this->expression();
 			$this->expect(']');
-			$this->finish_node($access, $base->start_token());
+			$this->finish_node($access, $start);
 			$base = $access;
 		}
 		return $base;
