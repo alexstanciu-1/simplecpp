@@ -50,18 +50,15 @@ final class Declaration_Preparation
 		$syntax->set_preparation($facts);
 	}
 
-	/** Keep field eligibility within the current compact-layout contract. */
+	/** Field eligibility uses the common declared storage capability path. */
 	public static function prepare_field(field_node $field, preparation_context $context): void
 	{
 		$prepared = new prepared_field();
 		$prepared->declaration = $field->occurrence();
 		$prepared->type = Type_Preparation::type($field->type_syntax, $context);
-		$type = Type_Preparation::canonical($prepared->type);
-		$definition = $type->definition();
-		$fixed_integer = ($type->family() === type_family::integer) && ($definition->name() !== 'int');
-		$source_record = Type_Preparation::source_record($prepared->type) !== null;
-		if ((!$fixed_integer) && ($type->family() !== type_family::boolean) && (!$source_record)) {
-			throw new \RuntimeException('S2S struct fields require bool, fixed-width integers or supported structs');
+		if (!Model::$type_catalog->registry()->has_capability($prepared->type,
+			generic_contract::value_storable)) {
+			throw new \RuntimeException('S2S struct field type does not declare value_storable');
 		}
 		$context->worker->require_record($prepared->type, $context);
 		$field->set_preparation($prepared);

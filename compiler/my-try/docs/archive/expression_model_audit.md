@@ -5,8 +5,9 @@ Archived 2026-09-29. This records an earlier design/checkpoint, not current inst
 See [the documentation index](../README.md) for active guidance.
 
 Review date: 2026-09-29. Scope: PHP++/PHS strict-first expression representation in
-[the AST proposal](../../03_parse/proposal/structures.php.example), compared with
-Simple C++ contracts, the imported v0.2 catalog, and legacy lowering evidence.
+the then-frozen AST proposal, compared with Simple C++ contracts, the imported v0.2
+catalog, and legacy lowering evidence. The implemented model is documented in
+[the active AST guide](../architecture/ast_layout.md); git history retains the proposal.
 
 **Architectural conclusion: yes, the specialized expression model can grow to
 represent the reviewed language families without replacing its foundation.**

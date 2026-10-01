@@ -112,7 +112,7 @@ function bodies from blocks and named types from other name uses.
 
 ## Consolidated lifecycle and maintenance decision
 
-See the [proposal group](../../03_parse/proposal/structures.php.example) and
+See the [active AST guide](../architecture/ast_layout.md) and
 [non-expression audit](non_expression_structure_audit.md). The following replaces
 the earlier open choice of separate maintenance hooks versus a typed visitor.
 

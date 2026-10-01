@@ -73,7 +73,7 @@ final class Model_Test
 	{
 		$catalog = Model::$type_catalog;
 		$registry = $catalog->registry();
-		if (($registry->definition_count() !== 20) || ($registry->type_count() !== 14)
+		if (($registry->definition_count() !== 19) || ($registry->type_count() !== 13)
 			|| ($registry->application_count() !== 0)) {
 			throw new \RuntimeException('Canonical built-in type roots were not initialized exactly once');
 		}

@@ -85,8 +85,14 @@ final class scope
 
 	public function register_type(type_definition_i $definition): void
 	{
+		$this->register_type_as($definition->name(), $definition);
+	}
+
+	/** Publish a semantic definition under one source spelling, including true aliases. */
+	public function register_type_as(string $name, type_definition_i $definition): void
+	{
 		$types /** Key_Storage_List<type_definition_i> */ = $this->types;
-		$types->add($definition->name(), $definition);
+		$types->add($name, $definition);
 	}
 
 	public function register_constant(constant_definition $definition): void

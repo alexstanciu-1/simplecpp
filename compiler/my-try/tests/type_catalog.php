@@ -32,13 +32,13 @@ $registry = new Type_Registry();
 $catalog = Type_Definition_Registration::install($registry);
 $bindings = CPP_Type_Binding_Registration::install($catalog);
 
-type_catalog_check($registry->definition_count() === 20, 'Unexpected semantic definition count');
-type_catalog_check($registry->type_count() === 14, 'Concrete built-in type count changed');
+type_catalog_check($registry->definition_count() === 19, 'Unexpected semantic definition count');
+type_catalog_check($registry->type_count() === 13, 'Concrete built-in type count changed');
 type_catalog_check($registry->application_count() === 0, 'Registration eagerly materialized a template application');
 type_catalog_check($catalog->source()->type_count() === 20, 'Source exposure count changed');
 type_catalog_check($catalog->source()->modifier_count() === 1, 'Source modifier count changed');
 type_catalog_check($catalog->providers()->count() === 7, 'Runtime provider count changed');
-type_catalog_check($bindings->definition_count() === 20, 'C++ binding count changed');
+type_catalog_check($bindings->definition_count() === 19, 'C++ binding count changed');
 
 $value_modifier = $catalog->source()->modifier('value');
 type_catalog_check($value_modifier->kind() === type_use_modifier_kind::by_value,
@@ -78,6 +78,15 @@ type_catalog_check($unique->parameter(0)->contracts() === [],
 $integer = $catalog->canonical('int');
 $string = $catalog->canonical('string');
 type_catalog_check($catalog->canonical('int') === $integer, 'Concrete type identity was not reused');
+type_catalog_check($catalog->canonical('byte') === $catalog->canonical('uint8'),
+	'byte did not reuse the stable uint8 canonical identity');
+type_catalog_check($catalog->definition('byte')->name() === 'uint8',
+	'byte source spelling created a second semantic definition');
+type_catalog_check($string->definition()->capabilities() === [generic_contract::copyable_value,
+	generic_contract::value_storable, generic_contract::hashable, generic_contract::comparable],
+	'String declarative capabilities changed');
+type_catalog_check($unique->capabilities() === [generic_contract::value_storable],
+	'Unique ownership was incorrectly declared copyable');
 
 $vector_int = $registry->intern_application($vector, [$registry->use($integer->type_id())]);
 type_catalog_check($registry->intern_application($vector, [$registry->use($integer->type_id())]) === $vector_int,
@@ -101,5 +110,19 @@ type_catalog_check($by_value_vector !== $vector_int,
 	'By-value template argument flag was omitted from canonical identity');
 type_catalog_check($registry->application_count() === 6,
 	'Only demanded exact template applications should be materialized');
+
+$copy_template = $registry->define_template('copy_box', type_definition_origin::source,
+	nominal_type_kind::structure, [new template_type_parameter('T')], []);
+$rejected = false;
+try {
+	$registry->intern_application($copy_template, [$registry->use($registry->intern_application($unique,
+		[$registry->use($integer->type_id())])->type_id())]);
+}
+catch (\InvalidArgumentException $error) {
+	$rejected = str_contains($error->getMessage(), 'copyable_value');
+}
+type_catalog_check($rejected, 'Declared template capability requirement was not enforced');
+type_catalog_check($registry->application_count() === 7,
+	'Rejected capability validation published the outer canonical application');
 
 echo "Type catalog: definitions, contracts, identity separation and demand-only reuse passed\n";

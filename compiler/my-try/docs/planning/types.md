@@ -363,9 +363,10 @@ resolve and intern `vector<int>` before its target representation and demanded
 native operations have been prepared. Backend spelling or equal layout never
 establishes semantic identity.
 
-The initial runtime-family restrictions remain debt. Definitions may record their
-intended parameter contracts now, but the compiler must not claim that it enforces
-them until both definition permissions and concrete eligibility are checked.
+The registry now checks declared parameter requirements against declared concrete
+capabilities. Runtime-family formation restrictions, definition-body permissions
+and proof that each declaration corresponds to a real implementation remain debt;
+declarative acceptance must not be described as inferred eligibility.
 
 `value_p<T>` remains a backend/runtime spelling selected by the hard-coded by-value
 flag; it is not categorized as pointer ownership or registered as a semantic
@@ -442,8 +443,9 @@ through the owners established by earlier items.
 1. **Adopt the stricter template-parameter requirements in the normative docs
    (complete).** Bare `T` is the implicit `copyable_value` contract, definition
    permissions remain separate from concrete argument eligibility, and a favorable
-   specialization cannot expand permissions. Enforcement, runtime family
-   restrictions and additional contracts remain explicit later debt.
+   specialization cannot expand permissions. This pass now enforces explicitly
+   registered application requirements from declarative capability facts; body
+   permission checking and inferred/composed capabilities remain later debt.
 2. **Create the type data model and structures (complete).** Represent boolean,
    integer and floating-point families; nominal structures/classes; template
    structure/class definitions; and exact canonical applied-template types. Add
@@ -463,10 +465,12 @@ through the owners established by earlier items.
    assignment compatibility, field validation, dependencies and C++ representation
    onto the common path. Do not add templates merely to prove the refactor; first
    prove every currently supported type through the new model.
-5. **Add one bounded constructed-type proof (complete).** After migration stability, add one
-   runtime-template application, initially `vector<int>` or `nullable<int>`, proving
-   template-definition lookup, argument validation, canonical application creation,
-   repeated-use reuse, lightweight occurrence attachment and backend binding.
+5. **Add and then generalize the constructed-type proof (complete).** The initial
+	 `vector<int>` application established template-definition lookup, argument
+	 validation, canonical application creation, repeated-use reuse, lightweight
+	 occurrence attachment and backend binding. The current checkpoint exercises all
+	 registered runtime recipes, nesting and the `value<T>` type-use modifier through
+	 the same owners.
 
 Each slice must name its non-goals and prove that existing scalar/record lookup,
 preparation and C++ emission still use the common path. Native compiler validation
@@ -478,10 +482,10 @@ thereafter.
 
 ### Registered definition checkpoint (2026-10-01)
 
-The reviewed model now has an isolated registration layer, still deliberately not
-wired into the current compiler pipeline before item 4:
+The reviewed model has an isolated registration layer wired into the active
+compiler pipeline:
 
-- concrete language definitions: `void`, `bool`, `byte`, `int`, `float`, `string`,
+- concrete language definitions: `void`, `bool`, `int`, `float`, `string`,
   and every signed/unsigned fixed-width integer from 8 through 64 bits;
 - runtime template definitions: `vector`, `hash`, `nullable`, `shared`, `weak`, and
   `unique`;
@@ -489,11 +493,25 @@ wired into the current compiler pipeline before item 4:
   `scpp::value_p` without creating a semantic template family;
 - independent source-exposure, runtime-provider and C++-binding catalogs.
 
+`byte` is a source alias of the stable `uint8` definition and canonical type
+identity. Its source occurrence still retains the written token spelling; it does
+not create a second semantic integer definition or backend binding.
+
 Runtime definitions record the requirements that are currently known:
 `vector.Value`, `hash.Value`, and `nullable.Value` are `value_storable`, while
 `hash.Key` requires both `hashable` and `comparable`. Pointer target parameters
 currently carry an explicit empty requirement set rather than a false copyability
-claim. Enforcement remains debt.
+claim. The registry now validates these requirements against declared capabilities
+before interning an application.
+
+Capability facts are deliberately declarative in this checkpoint. Language scalar
+values and `string` explicitly declare the supported `copyable_value`,
+`value_storable`, `hashable` and `comparable` facts. Runtime result families declare
+their known static facts: `vector`, `hash`, `nullable`, `shared` and `weak` are
+currently copyable/value-storable, while `unique` is value-storable but not
+copyable. Source structures provisionally declare copyable/value-storable to match
+the current compiler behavior. No field inspection, lifecycle inference or
+capability composition attempts to prove those declarations yet.
 
 Current Simple C++ hash syntax is value-first: `hash<Value, Key>`. `Key` defaults
 to `string`, matching the runtime and legacy S2S behavior. The registry completes
@@ -540,11 +558,13 @@ field access, record dependencies and C++ representation recover invariant/backe
 metadata through the canonical identity. The old flat `type_definition`,
 `type_kind` and `type_origin` records no longer own active behavior.
 
-This migration intentionally adds no constructed source syntax and creates no
-runtime template application. PHP-host validation covers the canonical catalog,
+At this checkpoint the migration also owns structured application/modifier syntax
+and demand-created runtime applications. PHP-host validation covers the canonical catalog,
 all 95 valid S2S fixtures, source-record behavior, preparation recovery and
-incremental C++ generation with unchanged output expectations. Native compiler
-validation remains explicit-request work.
+incremental C++ generation with unchanged output expectations. The explicit
+2026-10-01 native type-and-S2S checkpoint is recorded in the
+[portability status](../portability/conversion_review.md); LLVM and STAN remained
+parked in that run.
 
 The parked LLVM recovery proof can still prepare the current model, but its special
 test that re-prepares an externally retained old syntax graph after a full lifecycle
@@ -553,31 +573,48 @@ associations. Repairing that cross-reset legacy lookup belongs to a future expli
 LLVM adaptation; it is not addressed by rebuilding LLVM semantics or adding a
 parallel compatibility type model here.
 
-### Bounded constructed-type checkpoint
+### Constructed types and value-use checkpoint
 
-The first demanded source application is the exact spelling `vector<int>`. A
-dedicated `template_application_type_node` retains the constructor occurrence and
-ordered type arguments rather than flattening `vector<int>` into a name string.
-Preparation resolves the registered `vector` recipe and `int` argument through
-ordinary scope lookup, validates arity before preparing nested arguments, checks
-the current bounded readiness policy, interns the exact application and attaches a
-lightweight `canonical_type_use` to each occurrence. Repeated declarations and
-re-preparation reuse the same canonical `uint32` identity.
+`template_application_type_node` retains the constructor occurrence and ordered
+type arguments rather than flattening applications into name strings. Preparation
+resolves every registered runtime recipe—`vector`, `hash`, `nullable`, `shared`,
+`weak` and `unique`—through ordinary scope lookup. The registry owns arity,
+defaults, ordered argument validation, declarative contract checking and exact
+interning. Nested applications are demand-created and repeated occurrences reuse
+one canonical `uint32` identity.
 
-The C++ backend resolves both the applied definition and its canonical argument
-through the independent binding catalog, producing
-`scpp::vector_t<scpp::int_t<>>` plus the runtime vector header. The source spelling
-`vector_t` remains unavailable; legacy backend aliases do not enter strict source
-lookup.
+`value<T>` has a separate `type_use_modifier_node`. It is not resolved or interned as a
+template definition: preparation retains `T`'s type identity and sets the compact
+`canonical_type_use.by_value` flag. That fact now survives locals, fields,
+parameters, results, assignment compatibility and nested application arguments.
+The application key includes it, so `vector<T>` and `vector<value<T>>` remain
+distinct canonical applications. Repeating the modifier is rejected, and modified
+and unmodified uses do not implicitly assign to each other.
 
-This checkpoint deliberately supports only uninitialized `vector<int>` storage.
-It does not enable vector literals, indexing, mutation, parameters/results as a
-separately proved language feature, nested applications, other element types,
-`hash`/`nullable`/ownership families, by-value template arguments or general
-generic-contract enforcement. Unsupported arity, `vector<bool>`, bare `vector` and
-`vector<vector<int>>` reject without publishing a partial canonical application.
-Those later features must extend the same structured syntax, registry and backend
-binding path rather than adding encoded names or eager specialization lists.
+The C++ representation result now owns a deduplicated header set. Recursive
+rendering combines the runtime-family, nested argument and `scpp::value_p` headers
+while producing exact nested spellings such as
+`scpp::vector_t<scpp::value_p<scpp::int_t<>>>`. This is the narrow correctness
+mechanism agreed for constructed type emission, not the deferred general backend
+dependency/readiness system.
+
+Exact application reuse is indexed by an ordered trie. The first edge is the
+template definition's uint32 identity; each later edge is one argument's uint32
+identity plus its by-value branch. The trie avoids textual identity conversion and
+hash collisions, supports arbitrary parameter counts, and publishes a concrete
+type only after validation succeeds. It is registry-owned indexing, not additional
+state on lightweight source occurrences.
+
+The native closing proof also found and repaired one backend boundary: an integer
+whose use is modified by `value<T>` must not receive the ordinary scalar
+`.native_value()` conversion when passed or returned. Modifier-aware C++ value
+conversion now leaves that already matching wrapper representation intact.
+
+The proof remains type-formation focused. It does not add container literals,
+indexing, mutation or runtime-family operations; infer capabilities; inspect source
+fields to compose capabilities; validate runtime implementations behind declarative
+facts; or solve incomplete/recursive layout. Backend-only spellings such as
+`vector_t` remain unavailable in source.
 
 ## Open decisions and recorded debt
 
@@ -585,17 +622,14 @@ binding path rather than adding encoded names or eager specialization lists.
   or a top-level family.
 - Exact interface/base/concrete class names and compact native storage layout.
 - ID allocation scope, built-in reservations and future artifact stability.
-- Whether `byte` is a true alias of `uint8` or a distinct semantic type with equal
-  storage.
 - Floating formats beyond the current language `float`.
 - Struct versus class semantic differences, visibility and reference/value behavior.
-- Propagation rules for the hard-coded `value<T>` by-value flag at storage,
-  parameter, result and backend boundaries.
 - Inner-type exposure through public values and signatures.
-- User-authored template constraint syntax and enforcement of the registered
-  `value_storable`, `hashable`, and `comparable` contracts.
+- User-authored template constraint syntax, implementation-backed validation of
+  declarative capabilities, and definition-body permission checking.
 - Runtime-family formation and operation requirements, especially `hash` keys.
-- Capability composition for source nominal types.
+- Capability inference/composition for source nominal types; current facts are
+  declarations only.
 - Type aliases, qualified names and module-facing compile-time surfaces.
 - Layout readiness, incomplete types, recursive indirection and error recovery.
 - Cast representation and conversion selection.
@@ -607,9 +641,9 @@ binding path rather than adding encoded names or eager specialization lists.
 ## Non-goals of this planning pass
 
 - Implementing template bodies, inner structures, runtime-family operations,
-  casts or operators; this pass only registers runtime-family definitions.
+  casts or operators; this pass forms and lowers types but adds no family operations.
 - Resuming LLVM type semantics.
-- Running native compiler validation.
+- Resuming the parked LLVM sweep or legacy STAN analysis as part of type work.
 - Treating C++ templates, names or traits as the Simple C++ semantic authority.
 - Designing every future concept or capability before a real consumer requires it.
 - Claiming compactness or performance improvements without native measurement.

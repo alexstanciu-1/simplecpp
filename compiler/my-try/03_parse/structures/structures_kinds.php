@@ -21,6 +21,7 @@ enum node_kind
 	case function_body;
 	case named_type;
 	case template_application_type;
+	case type_use_modifier;
 	case punctuation;
 	case comment;
 	case array_type;

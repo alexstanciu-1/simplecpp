@@ -318,7 +318,7 @@ final class CPP_Generator
 	private static function generate_integer_value(canonical_type_use $type, string $decimal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($type);
-		$context->headers[$mapping->header] = true;
+		CPP_Types::record_headers($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::signed_integer) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
@@ -356,7 +356,7 @@ final class CPP_Generator
 	public static function generate_float(prepared_float_literal $literal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($literal->type);
-		$context->headers[$mapping->header] = true;
+		CPP_Types::record_headers($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::floating) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
@@ -368,7 +368,7 @@ final class CPP_Generator
 	public static function generate_boolean(prepared_boolean_literal $literal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($literal->type);
-		$context->headers[$mapping->header] = true;
+		CPP_Types::record_headers($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::boolean) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
@@ -382,7 +382,7 @@ final class CPP_Generator
 	public static function generate_string(prepared_string_literal $literal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($literal->type);
-		$context->headers[$mapping->header] = true;
+		CPP_Types::record_headers($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::string_value) {
 			throw new \RuntimeException('C++ string literal emission requires the canonical string type');
 		}

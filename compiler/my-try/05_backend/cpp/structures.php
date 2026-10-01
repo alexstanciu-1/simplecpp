@@ -13,7 +13,7 @@ enum cpp_literal_kind {
 
 final class cpp_type {
 	public string $spelling;
-	public string $header;
+	public array $headers /** hash<bool> */ = [];
 	public cpp_literal_kind $literal;
 }
 

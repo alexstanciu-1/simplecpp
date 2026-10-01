@@ -4,9 +4,10 @@ Doc Status: supporting
 The active PHP model uses a property-free `ast_node` abstract base and concrete
 syntax nodes. Each node owns its named syntax fields, source span and applicable
 facts. There is no outer node/payload pair, mutable kind/payload agreement, sibling
-chain or parallel child list. The frozen review proposal remains under
-`03_parse/proposal/`; see the [migration audit](../archive/specialized_ast_migration_audit.md)
-for implemented differences and the bounded native iterator checkpoint.
+chain or parallel child list. The completed migration retired its frozen review
+proposal; see the [migration audit](../archive/specialized_ast_migration_audit.md)
+for implemented differences and the bounded native iterator checkpoint. Git history
+retains the former `03_parse/proposal/` snapshots when historical comparison is needed.
 
 ## Typed ownership
 

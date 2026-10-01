@@ -852,13 +852,26 @@ final class Parser_Run
 		return $node;
 	}
 
-	/** Parse one named type or structured template application and collect every name occurrence. */
+	/** Parse one named type, template application or registered type-use modifier. */
 	private function type_syntax(scope $lookup_scope): type_node
 	{
 		if (!$this->identifier()) {
 			throw new \RuntimeException($this->error_message('Expected type name'));
 		}
 		$start = $this->position++;
+		$name = $this->name_at($start);
+		$modifier = Model::$type_catalog->source()->modifier_or_null($name);
+		if (($modifier !== null) && ($this->text() === '<'))
+		{
+			$this->position++;
+			$modified = new type_use_modifier_node();
+			$modified->name = $name;
+			$modified->modifier = $modifier->kind();
+			$modified->operand = $this->type_syntax($lookup_scope);
+			$this->expect('>');
+			$this->finish_node($modified, $start);
+			return $modified;
+		}
 		$definition = $this->named_type($start);
 		$definition->collect($this->collector, $lookup_scope, $start);
 		if ($this->text() !== '<') {

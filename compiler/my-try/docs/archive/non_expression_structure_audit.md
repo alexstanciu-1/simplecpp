@@ -21,9 +21,9 @@ This is not a full converter-capability certification or a layout/performance pr
 
 ## Evidence and authority
 
-- Proposal: [nodes](../../03_parse/proposal/structures.php.example),
-  [abstractions](../../03_parse/proposal/abstractions.php.example),
-  [iterators](../../03_parse/proposal/iterators.php.example).
+- Then-frozen proposal: removed after the migration completed; retained in git
+  history. The implemented model is documented in the
+  [active AST guide](../architecture/ast_layout.md).
 - Current owners: [parser](../../03_parse/parser.php),
   [parse records](../../03_parse/structures/structures.php),
   [collection](../../04_analyze/collect/structures.php),

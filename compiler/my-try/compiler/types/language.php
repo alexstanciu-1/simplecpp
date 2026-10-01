@@ -5,12 +5,13 @@ namespace scpp\compiler;
 
 final class Language_Types
 {
-	/** Publish supported concrete definitions and the bounded vector recipe into lexical lookup. */
+	/** Publish every current built-in spelling while retaining canonical alias identity. */
 	public static function install(scope $language_scope): void
 	{
 		foreach (['void', 'bool', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
-			'int64', 'uint64', 'byte', 'int', 'float', 'string', 'vector'] as $name) {
-			$language_scope->register_type(Model::$type_catalog->definition($name));
+			'int64', 'uint64', 'byte', 'int', 'float', 'string', 'vector', 'hash', 'nullable',
+			'shared', 'weak', 'unique'] as $name) {
+			$language_scope->register_type_as($name, Model::$type_catalog->definition($name));
 		}
 	}
 

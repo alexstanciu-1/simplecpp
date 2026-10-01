@@ -527,7 +527,6 @@ $rejections = ['function f(int &$x): void {} f(1);',
 	'function f(): int { return; }',
 	'function f(): void { return 1; }',
 	'function f(): void {} $x = f();',
-	'struct S { int $x; }', 'struct S { float $x; }',
 	'struct S { uint8 $x; } $s S; $s->missing = 1;',
 	'struct A {} struct B {} $a A; $b B = $a;',
 	'struct S { uint8 $x; } $s S = [1];',
@@ -1008,7 +1007,7 @@ if (($first_data->require_assignment_preparation() !== $binding_facts) || (Model
 }
 $compiler->cpp();
 $valid_integer_type = $first_literal_data->require_integer_literal_preparation()->type;
-$first_literal_data->require_integer_literal_preparation()->type = new canonical_type_use(Type_Identity::MAX);
+$first_literal_data->require_integer_literal_preparation()->type = new canonical_type_use(Type_Identity::maximum());
 // Fault injection must invalidate the fragment whose prepared representation was altered.
 Model::$cpp_output_program->fragments[$syntax->collection->root->body->work()]->change_status = change_state::changed;
 $failed = false;

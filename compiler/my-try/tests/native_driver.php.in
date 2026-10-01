@@ -1,6 +1,8 @@
 <?php
 namespace scpp\compiler;
 
+if (__RUN_LLVM_PROOFS__)
+{
 // Tokenization failure blocks parsing, including with a single worker slot.
 $pipeline_compiler = new Compiler();
 $pipeline_compiler->jobs = 1;
@@ -129,6 +131,7 @@ $scope_recovered = (new Parser((new Tokenizer($scope_source))->tokenize(), null,
 if ((!$scope_recovered->complete) || (q_count($scope_recovered->scopes) !== 4)) {
 	throw new \LogicException('Successful retry did not replace the accumulated scope inventory');
 }
+}
 
 // The same portable S2S proof runs in PHP and in this native executable.
 $cpp_proof = S2S_Proof::run();
@@ -137,6 +140,9 @@ $cpp_proof = S2S_Proof::run();
 $path = fs_read_text(__REQUEST_FILE__);
 if ($path === 's2s-proof') {
 	echo $cpp_proof;
+}
+elseif ($path === 'types-proof') {
+	echo S2S_Proof::types();
 }
 elseif (string_byte_starts_with($path, 's2s:'))
 {

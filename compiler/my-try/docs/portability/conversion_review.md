@@ -5,7 +5,40 @@ PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Current checkpoint — 2026-09-30
+## Current checkpoint — 2026-10-01 type-model closeout
+
+The type-model worktree based on `c853bcc9bb27435abaadc1c9a80bfec747b4b983`
+converted and built as the native compiler with Clang 18 and `--no-stan`. Because
+the compiler changes were not yet committed, `source_hashes.json` in the evidence
+directory is the exact compiler-source identity; the candidate revision alone is
+not presented as the tested source.
+
+The portable type proof runs under both PHP and the native compiler and compares
+their generated C++ byte-for-byte. It proves the `byte`/`uint8` identity, declared
+capability queries and rejection, all registered runtime recipes, nested exact
+application reuse, `value<T>` occurrence propagation and recursive C++ spelling
+and headers. The resulting constructed-type C++ compiles and executes. The same
+run compares, compiles and executes all 95 valid S2S fixtures, preserves all 15
+floating-point spelling assertions, checks the current 29 S2S rejection/recovery
+cases and completes an incremental native rebuild.
+
+This was deliberately a type-and-S2S checkpoint. The harness records both parked
+LLVM validation and STAN as skipped; it does not turn their absence into a full
+compiler-validation claim. Evidence is under
+`/tmp/my-try-types-native-20261001-gXHJnH/run/`: `summary.json`, `commands.json`,
+`source_hashes.json`, `logs-29/` and the generated/compiled programs. Reproduce it
+from a fresh result path with:
+
+```bash
+python3 compiler/my-try/tools/native_validate.py \
+  --target-checkout /absolute/path/to/simplecpp \
+  --candidate-revision FULL_COMMIT \
+  --results /tmp/FRESH_DIRECTORY --no-stan --types-only
+```
+
+Without `--types-only`, the standard harness retains its parked LLVM/sample sweep.
+
+## Earlier full checkpoint — 2026-09-30
 
 Native source/toolchain: `8ec5f924`. This is a revision-specific checkpoint, not
 certification of later changes. The compiler converted, built and ran successfully

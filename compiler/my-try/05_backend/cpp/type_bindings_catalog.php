@@ -22,7 +22,7 @@ final class cpp_type_definition_binding
 
 	public function definition_id(): int
 	{
-		return $this->semantic_definition_id;
+		return (int)$this->semantic_definition_id;
 	}
 
 	public function name(): string
@@ -71,8 +71,8 @@ final class cpp_type_modifier_binding
 /** Backend bindings remain independent of source spellings and provider identities. */
 final class CPP_Type_Bindings
 {
-	private array $definitions /** hash<int, cpp_type_definition_binding> */ = [];
-	private array $modifiers /** hash<int, cpp_type_modifier_binding> */ = [];
+	private array $definitions /** hash<cpp_type_definition_binding, int> */ = [];
+	private array $modifiers /** hash<cpp_type_modifier_binding> */ = [];
 
 	public function bind_definition(type_definition_i $definition, string $name, string $header): void
 	{
@@ -85,7 +85,7 @@ final class CPP_Type_Bindings
 
 	public function bind_modifier(type_use_modifier_kind $kind, string $name, string $header): void
 	{
-		$key = $kind->value;
+		$key = Type_Use_Modifier_Name::text($kind);
 		if (isset($this->modifiers[$key])) {
 			throw new \LogicException('Duplicate C++ type modifier binding');
 		}
@@ -95,20 +95,19 @@ final class CPP_Type_Bindings
 	public function definition(int $definition_id): cpp_type_definition_binding
 	{
 		Type_Identity::require_valid($definition_id, 'C++ binding definition identity');
-		$binding = $this->definitions[$definition_id] ?? null;
-		if ($binding === null) {
+		if (!isset($this->definitions[$definition_id])) {
 			throw new \OutOfBoundsException('Semantic type definition has no C++ binding');
 		}
-		return $binding;
+		return $this->definitions[$definition_id];
 	}
 
 	public function modifier(type_use_modifier_kind $kind): cpp_type_modifier_binding
 	{
-		$binding = $this->modifiers[$kind->value] ?? null;
-		if ($binding === null) {
+		$key = Type_Use_Modifier_Name::text($kind);
+		if (!isset($this->modifiers[$key])) {
 			throw new \OutOfBoundsException('Type-use modifier has no C++ binding');
 		}
-		return $binding;
+		return $this->modifiers[$key];
 	}
 
 	public function definition_count(): int
@@ -129,7 +128,7 @@ final class CPP_Type_Binding_Registration
 		return $bindings;
 	}
 
-	/** Bind each concrete built-in identity, including storage-equivalent aliases. */
+	/** Bind each concrete built-in identity; source aliases share its one binding. */
 	private static function bind_scalars(CPP_Type_Bindings $bindings, registered_type_catalog $types): void
 	{
 		$bindings->bind_definition($types->definition('void'), 'void', '');
@@ -141,8 +140,6 @@ final class CPP_Type_Binding_Registration
 			$bindings->bind_definition($types->definition('uint' . $bits),
 				'scpp::int_t<std::uint' . $bits . '_t>', 'scpp/int_t.hpp');
 		}
-		$bindings->bind_definition($types->definition('byte'),
-			'scpp::int_t<std::uint8_t>', 'scpp/int_t.hpp');
 		$bindings->bind_definition($types->definition('int'), 'scpp::int_t<>', 'scpp/int_t.hpp');
 		$bindings->bind_definition($types->definition('float'), 'scpp::float_t', 'scpp/float_t.hpp');
 		$bindings->bind_definition($types->definition('string'), 'scpp::string_t', 'scpp/string_t.hpp');

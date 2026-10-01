@@ -5,6 +5,100 @@ namespace scpp\compiler;
 
 final class S2S_Proof
 {
+	/** Prove the canonical type model through the portable compiler and emitted C++. */
+	public static function types(): string
+	{
+		Compiler_Lifecycle::reset();
+		$input_module = new module('/type-proof', '/type-proof', '/type-proof');
+		$source = new file();
+		$source->path = 'main.phs';
+		$source->content = 'struct Envelope { value<int> $item; vector<value<int>> $items; } '
+			. 'function carry(value<int> $item): value<int> { return $item; } '
+			. '$first vector<int>; $second vector<int>; '
+			. '$nested vector<vector<hash<int>>>; $maybe nullable<string>; '
+			. '$shared_value shared<int>; $weak_value weak<int>; $unique_value unique<int>; '
+			. '$by_value value<int>; $nested_value vector<value<int>>; return 0;';
+		Source_Registry::add($input_module, $source);
+		$modules /** Keyed_Storage<module> */ = Model::$modules;
+		$modules->add($input_module->name, $input_module);
+		$compiler = new Compiler();
+		$compiler->exec_cpp();
+
+		$catalog = Model::$type_catalog;
+		$registry = $catalog->registry();
+		if (($catalog->canonical('byte') !== $catalog->canonical('uint8'))
+			|| ($catalog->definition('byte')->name() !== 'uint8')) {
+			throw new \LogicException('byte did not reuse the stable uint8 identity');
+		}
+		$vector = object_cast($catalog->definition('vector'), template_type_definition::class);
+		$vector_contracts /** vector<generic_contract> */ = $vector->parameter(0)->contracts();
+		$string_type = $catalog->canonical('string');
+		$string_use = $registry->use($string_type->type_id());
+		if ((q_count($vector_contracts) !== 1)
+			|| ($vector_contracts[0] !== generic_contract::value_storable)
+			|| (!$registry->has_capability($string_use, generic_contract::copyable_value))
+			|| (!$registry->has_capability($string_use, generic_contract::value_storable))
+			|| (!$registry->has_capability($string_use, generic_contract::hashable))
+			|| (!$registry->has_capability($string_use, generic_contract::comparable))) {
+			throw new \LogicException('Declarative type capabilities changed');
+		}
+
+		$prepared_files /** Storage<prepared_file> */ = Model::$prepared_files;
+		$statements /** Storage<statement_node> */ = $prepared_files[0]->source->root->body->statements;
+		$first = object_cast($statements[0], variable_declaration_node::class);
+		$second = object_cast($statements[1], variable_declaration_node::class);
+		$first_syntax = object_cast($first->type_syntax, template_application_type_node::class);
+		$second_syntax = object_cast($second->type_syntax, template_application_type_node::class);
+		$first_use = $first_syntax->require_preparation();
+		$second_use = $second_syntax->require_preparation();
+		if (($first_use === $second_use) || (!$first_use->matches($second_use))) {
+			throw new \LogicException('Type occurrences did not reuse one canonical application identity');
+		}
+		$vector_int = object_cast(Type_Preparation::canonical($first_use), applied_template_type::class);
+		if (($vector_int->definition() !== $vector) || ($registry->application_count() !== 9)) {
+			throw new \LogicException('Demand-created runtime applications changed');
+		}
+		$by_value = object_cast($statements[7], variable_declaration_node::class);
+		$by_value_use = $by_value->type_syntax->require_preparation();
+		$nested_value = object_cast($statements[8], variable_declaration_node::class);
+		$nested_value_type = object_cast(Type_Preparation::canonical(
+			$nested_value->type_syntax->require_preparation()), applied_template_type::class);
+		$nested_value_arguments /** vector<canonical_type_use> */ = $nested_value_type->arguments();
+		if ((!$by_value_use->by_value())
+			|| ($by_value_use->type_id() !== Language_Types::integer(Model::$language_scope)->type_id())
+			|| (!$nested_value_arguments[0]->by_value())) {
+			throw new \LogicException('value<T> did not retain its compact type-use modifier');
+		}
+
+		$before_rejection = $registry->application_count();
+		$rejected = false;
+		try {
+			$no_value_type = $catalog->canonical('void');
+			$rejected_arguments /** vector<canonical_type_use> */ = [
+				$registry->use($no_value_type->type_id()),
+			];
+			$registry->intern_application($vector, $rejected_arguments);
+		}
+		catch (\InvalidArgumentException $error) {
+			$rejected = q_strpos($error->getMessage(), 'value_storable') !== false;
+		}
+		if ((!$rejected) || ($registry->application_count() !== $before_rejection)) {
+			throw new \LogicException('Capability rejection published a canonical application');
+		}
+
+		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+		$text = $outputs[0]->text;
+		if ((q_strpos($text, '#include "scpp/vector_t.hpp"') === false)
+			|| (q_strpos($text, '#include "scpp/hash_t.hpp"') === false)
+			|| (q_strpos($text, '#include "scpp/value_p.hpp"') === false)
+			|| (q_strpos($text, 'scpp::vector_t<scpp::value_p<scpp::int_t<>>> local_nestedU_value;') === false)
+			|| (q_strpos($text, 'scpp::value_p<scpp::int_t<>> field_item;') === false)
+			|| (q_strpos($text, 'scpp::value_p<scpp::int_t<>> function_carry(') === false)) {
+			throw new \LogicException('Recursive constructed-type C++ representation changed');
+		}
+		return $text;
+	}
+
 	/** Exercise language identity, inference, reassignment, source purity and regeneration. */
 	public static function run(): string
 	{

@@ -17,6 +17,20 @@ final class Type_Preparation
 		throw new \RuntimeException('S2S fixed array types are not supported yet');
 	}
 
+	/** Apply one registered representation modifier without inventing a canonical type identity. */
+	public static function prepare_type_use_modifier(type_use_modifier_node $node, preparation_context $context): void
+	{
+		$type = self::type($node->operand, $context);
+		self::require_value_type($type);
+		if ($node->modifier !== type_use_modifier_kind::by_value) {
+			throw new \RuntimeException('S2S type-use modifier is not supported');
+		}
+		if ($type->by_value()) {
+			throw new \RuntimeException('S2S value type modifier cannot be repeated');
+		}
+		$node->set_preparation(Model::$type_catalog->registry()->use($type->type_id(), true));
+	}
+
 	/** Resolve, validate and intern one source template application without eager combinations. */
 	public static function prepare_template_application_type(template_application_type_node $node,
 		preparation_context $context): void
@@ -37,14 +51,11 @@ final class Type_Preparation
 		$type_arguments /** Storage<type_node> */ = $node->arguments;
 		$registry = Model::$type_catalog->registry();
 		$registry->validate_application_arity($template_definition, q_count($type_arguments));
-		self::require_bounded_application_syntax($template_definition, $node);
 		foreach ($type_arguments as $argument) {
 			$arguments[] = self::type($argument, $context);
 		}
 
-		$complete = $registry->complete_application_arguments($template_definition, $arguments);
-		self::require_bounded_application($template_definition, $complete, $context);
-		$application = $registry->intern_application($template_definition, $complete);
+		$application = $registry->intern_application($template_definition, $arguments);
 		$node->set_preparation($registry->use($application->type_id()));
 	}
 
@@ -76,6 +87,9 @@ final class Type_Preparation
 	{
 		if ($left->matches($right)) {
 			return true;
+		}
+		if ($left->by_value() !== $right->by_value()) {
+			return false;
 		}
 		$left_type = self::canonical($left);
 		$right_type = self::canonical($right);
@@ -110,6 +124,9 @@ final class Type_Preparation
 		if ($destination->matches($source)) {
 			return;
 		}
+		if ($destination->by_value() !== $source->by_value()) {
+			throw new \RuntimeException('S2S value boundary requires matching type-use modifiers');
+		}
 		if ((self::canonical($destination)->family() === type_family::integer)
 			&& (self::canonical($source)->family() === type_family::integer)) {
 			return;
@@ -133,28 +150,4 @@ final class Type_Preparation
 		return Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 	}
 
-	/** Step 5 proves only the exact runtime vector<int> shape; later families remain unavailable. */
-	private static function require_bounded_application(template_type_definition $definition,
-		array $arguments /** vector<canonical_type_use> */, preparation_context $context): void
-	{
-		$vector = Model::$type_catalog->definition('vector');
-		if ($definition !== $vector) {
-			throw new \RuntimeException('S2S constructed-type proof currently supports vector<int> only');
-		}
-		if ((q_count($arguments) !== 1) || (!$arguments[0]->matches($context->integer))) {
-			throw new \RuntimeException('S2S constructed-type proof currently supports vector<int> only');
-		}
-	}
-
-	/** Reject nested or other-family syntax before it can publish a partial application. */
-	private static function require_bounded_application_syntax(template_type_definition $definition,
-		template_application_type_node $node): void
-	{
-		$vector = Model::$type_catalog->definition('vector');
-		$arguments /** Storage<type_node> */ = $node->arguments;
-		if (($definition !== $vector) || (q_count($arguments) !== 1)
-			|| !($arguments[0] instanceof named_type_node)) {
-			throw new \RuntimeException('S2S constructed-type proof currently supports vector<int> only');
-		}
-	}
 }

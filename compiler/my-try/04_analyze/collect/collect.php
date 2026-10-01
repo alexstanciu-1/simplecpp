@@ -95,7 +95,8 @@ final class Symbol_Collector
 		$entry = new collected_struct($this->collection, $node);
 		$entry->retained_symbol = true;
 		$this->append($entry, $scope, $node->name, $index);
-		$scope->register_type(Source_Types::definition($entry));
+		$structure_definition = Source_Types::definition($entry);
+		$scope->register_type(object_cast($structure_definition, type_definition_i::class));
 		$this->publish($entry, $scope);
 	}
 

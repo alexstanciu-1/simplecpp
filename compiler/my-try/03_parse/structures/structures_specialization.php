@@ -1164,6 +1164,44 @@ final class template_application_type_node extends type_node
 	}
 }
 
+/** One explicit source modifier over a type occurrence; it does not name a template definition. */
+final class type_use_modifier_node extends type_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?canonical_type_use $prepared_facts = null;
+	public string $name;
+	public type_use_modifier_kind $modifier;
+	public type_node $operand;
+
+	public function kind(): node_kind
+	{
+		return node_kind::type_use_modifier;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new type_use_modifier_children_iterator($this);
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		Type_Preparation::prepare_type_use_modifier($this, $context);
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->operand);
+	}
+
+	public function require_preparation(): canonical_type_use
+	{
+		return $this->prepared_facts;
+	}
+}
+
 final class array_literal_node extends expression_node
 {
 	use Node_Source_Span;
@@ -1443,7 +1481,7 @@ final class field_access_node extends assignable_expression_node
  * including locks, parse-complete gates and dependency notification before cleanup.
  * They call typed maintenance workers only for the selected syntax subtrees.
  *
- * Preparation contract is declared in abstractions.php.example. Workers consume
+ * Preparation contract is declared in abstractions.php. Workers consume
  * typed fields directly and attach specialized facts; they never walk children().
  * function_node::prepare() dispatches only its signature. Its body is a separate
  * scheduled function_body_node::prepare(), also used for file executable bodies.

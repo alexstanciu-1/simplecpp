@@ -45,7 +45,7 @@ enum floating_format: int
 	case decimal = 2;
 }
 
-/** Declared generic capabilities; checking them remains later semantic work. */
+/** Shared vocabulary for formal requirements and explicitly declared type capabilities. */
 enum generic_contract: int
 {
 	case copyable_value = 1;
@@ -54,15 +54,39 @@ enum generic_contract: int
 	case comparable = 4;
 }
 
+/** Stable text for contracts; native enum reflection is not required by the model. */
+final class Generic_Contract_Name
+{
+	public static function text(generic_contract $contract): string
+	{
+		if ($contract === generic_contract::copyable_value) {
+			return 'copyable_value';
+		}
+		if ($contract === generic_contract::value_storable) {
+			return 'value_storable';
+		}
+		if ($contract === generic_contract::hashable) {
+			return 'hashable';
+		}
+		if ($contract === generic_contract::comparable) {
+			return 'comparable';
+		}
+		throw new \LogicException('Unknown generic contract');
+	}
+}
+
 /** Validate the explicit uint32 boundary shared by definition and concrete IDs. */
 final class Type_Identity
 {
-	public const MAX = 4294967295;
+	public static function maximum(): int
+	{
+		return (int)4294967295;
+	}
 
 	public static function require_valid(int $identity, string $description): void
 	{
-		if (($identity <= 0) || ($identity > self::MAX)) {
-			throw new \OutOfRangeException($description . ' must be a positive uint32');
+		if (($identity <= 0) || ($identity > self::maximum())) {
+			throw new \RangeException($description . ' must be a positive uint32');
 		}
 	}
 }
@@ -73,10 +97,11 @@ interface type_definition_i
 	public function name(): string;
 	public function origin(): type_definition_origin;
 	public function kind(): type_definition_kind;
+	public function declares_capability(generic_contract $capability): bool;
 }
 
 /** A definition that denotes one concrete type before any template application. */
-interface concrete_type_definition_i extends type_definition_i
+interface concrete_type_definition_i
 {
 	public function create_canonical_type(int $type_id): canonical_type_i;
 }
@@ -87,8 +112,10 @@ abstract class semantic_type_definition implements type_definition_i
 	private int $identity /** uint32 */;
 	private string $source_name;
 	private type_definition_origin $definition_origin;
+	private array $declared_capabilities /** vector<generic_contract> */;
 
-	public function __construct(int $identity, string $source_name, type_definition_origin $origin)
+	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */)
 	{
 		Type_Identity::require_valid($identity, 'Type definition identity');
 		if ($source_name === '') {
@@ -97,11 +124,12 @@ abstract class semantic_type_definition implements type_definition_i
 		$this->identity = $identity;
 		$this->source_name = $source_name;
 		$this->definition_origin = $origin;
+		$this->declared_capabilities = self::validated_capabilities($capabilities);
 	}
 
 	public function definition_id(): int
 	{
-		return $this->identity;
+		return (int)$this->identity;
 	}
 
 	public function name(): string
@@ -112,6 +140,42 @@ abstract class semantic_type_definition implements type_definition_i
 	public function origin(): type_definition_origin
 	{
 		return $this->definition_origin;
+	}
+
+	public function capabilities(): array /** vector<generic_contract> */
+	{
+		return $this->declared_capabilities;
+	}
+
+	public function declares_capability(generic_contract $capability): bool
+	{
+		foreach ($this->declared_capabilities as $declared) {
+			if ($declared === $capability) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Preserve declaration order while rejecting malformed or duplicate capability facts. */
+	private static function validated_capabilities(array $capabilities /** vector<generic_contract> */): array /** vector<generic_contract> */
+	{
+		$result /** vector<generic_contract> */ = [];
+		$seen /** hash<bool> */ = [];
+		foreach ($capabilities as $position => $capability)
+		{
+			$declared_capability /** generic_contract */ = $capability;
+			if ($position !== q_count($result)) {
+				throw new \InvalidArgumentException('Type capabilities must be an ordered list');
+			}
+			$capability_key = Generic_Contract_Name::text($declared_capability);
+			if (isset($seen[$capability_key])) {
+				throw new \InvalidArgumentException('Type capabilities must be unique');
+			}
+			$seen[$capability_key] = true;
+			$result[] = $declared_capability;
+		}
+		return $result;
 	}
 }
 
@@ -134,11 +198,11 @@ final class integer_type_definition extends semantic_type_definition implements 
 	private bool $is_signed;
 
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
-		int $width, bool $is_signed)
+		int $width, bool $is_signed, array $capabilities /** vector<generic_contract> */)
 	{
-		parent::__construct($identity, $source_name, $origin);
-		if (($width <= 0) || ($width > Type_Identity::MAX)) {
-			throw new \OutOfRangeException('Integer width must be a positive uint32');
+		parent::__construct($identity, $source_name, $origin, $capabilities);
+		if (($width <= 0) || ($width > Type_Identity::maximum())) {
+			throw new \RangeException('Integer width must be a positive uint32');
 		}
 		$this->width = $width;
 		$this->is_signed = $is_signed;
@@ -151,7 +215,7 @@ final class integer_type_definition extends semantic_type_definition implements 
 
 	public function bit_width(): int
 	{
-		return $this->width;
+		return (int)$this->width;
 	}
 
 	public function signed(): bool
@@ -172,12 +236,13 @@ final class floating_type_definition extends semantic_type_definition implements
 	private int $precision /** uint32 */;
 
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
-		floating_format $format, int $stored_bits, int $precision_bits)
+		floating_format $format, int $stored_bits, int $precision_bits,
+		array $capabilities /** vector<generic_contract> */)
 	{
-		parent::__construct($identity, $source_name, $origin);
-		if (($stored_bits <= 0) || ($stored_bits > Type_Identity::MAX)
+		parent::__construct($identity, $source_name, $origin, $capabilities);
+		if (($stored_bits <= 0) || ($stored_bits > Type_Identity::maximum())
 			|| ($precision_bits <= 0) || ($precision_bits > $stored_bits)) {
-			throw new \OutOfRangeException('Floating storage and precision must be valid positive bit counts');
+			throw new \RangeException('Floating storage and precision must be valid positive bit counts');
 		}
 		$this->number_format = $format;
 		$this->stored_bits = $stored_bits;
@@ -196,12 +261,12 @@ final class floating_type_definition extends semantic_type_definition implements
 
 	public function storage_bits(): int
 	{
-		return $this->stored_bits;
+		return (int)$this->stored_bits;
 	}
 
 	public function precision_bits(): int
 	{
-		return $this->precision;
+		return (int)$this->precision;
 	}
 
 	public function create_canonical_type(int $type_id): canonical_type_i
@@ -213,13 +278,13 @@ final class floating_type_definition extends semantic_type_definition implements
 /** A source or predefined structure/class definition; its members retain their existing owners. */
 final class nominal_type_definition extends semantic_type_definition implements concrete_type_definition_i
 {
-	private nominal_type_kind $nominal_kind;
+	private nominal_type_kind $nominal_kind_data;
 
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
-		nominal_type_kind $nominal_kind)
+		nominal_type_kind $nominal_kind, array $capabilities /** vector<generic_contract> */)
 	{
-		parent::__construct($identity, $source_name, $origin);
-		$this->nominal_kind = $nominal_kind;
+		parent::__construct($identity, $source_name, $origin, $capabilities);
+		$this->nominal_kind_data = $nominal_kind;
 	}
 
 	public function kind(): type_definition_kind
@@ -229,7 +294,7 @@ final class nominal_type_definition extends semantic_type_definition implements 
 
 	public function nominal_kind(): nominal_type_kind
 	{
-		return $this->nominal_kind;
+		return $this->nominal_kind_data;
 	}
 
 	public function create_canonical_type(int $type_id): canonical_type_i
@@ -256,37 +321,43 @@ final class template_type_parameter
 {
 	private string $parameter_name;
 	private array $parameter_contracts /** vector<generic_contract> */;
-	private ?canonical_type_use $default_type;
+	private ?canonical_type_use $default_type_data = null;
 
 	/**
 	 * A null contract list means the source-language bare-T default. Runtime
 	 * definitions pass an explicit list, including an empty list when no provider
 	 * capability requirement is currently known.
 	 */
-	public function __construct(string $name, ?array $contracts = null,
+	public function __construct(string $name, ?array $contracts /** vector<generic_contract> */ = null,
 		?canonical_type_use $default_type = null)
 	{
 		if ($name === '') {
 			throw new \InvalidArgumentException('Template parameter name must not be empty');
 		}
+		$effective_contracts /** vector<generic_contract> */ = [];
 		if ($contracts === null) {
-			$contracts = [generic_contract::copyable_value];
+			$effective_contracts[] = generic_contract::copyable_value;
+		}
+		else {
+			$effective_contracts = $contracts;
 		}
 
-		$seen /** hash<int, bool> */ = [];
-		foreach ($contracts as $position => $contract)
+		$seen /** hash<bool> */ = [];
+		foreach ($effective_contracts as $position => $contract)
 		{
-			if (($position !== q_count($seen)) || !($contract instanceof generic_contract)) {
+			$parameter_contract /** generic_contract */ = $contract;
+			if ($position !== q_count($seen)) {
 				throw new \InvalidArgumentException('Template parameter contracts must be an ordered list');
 			}
-			if (isset($seen[$contract->value])) {
+			$contract_key = Generic_Contract_Name::text($parameter_contract);
+			if (isset($seen[$contract_key])) {
 				throw new \InvalidArgumentException('Template parameter contracts must be unique');
 			}
-			$seen[$contract->value] = true;
+			$seen[$contract_key] = true;
 		}
 		$this->parameter_name = $name;
-		$this->parameter_contracts = $contracts;
-		$this->default_type = $default_type;
+		$this->parameter_contracts = $effective_contracts;
+		$this->default_type_data = $default_type;
 	}
 
 	public function name(): string
@@ -301,22 +372,23 @@ final class template_type_parameter
 
 	public function default_type(): ?canonical_type_use
 	{
-		return $this->default_type;
+		return $this->default_type_data;
 	}
 }
 
 /** A template is a definition recipe and never a concrete type by itself. */
 final class template_type_definition extends semantic_type_definition
 {
-	private nominal_type_kind $result_kind;
+	private nominal_type_kind $result_kind_data;
 	private array $ordered_parameters /** vector<template_type_parameter> */;
 	private int $minimum_arity /** uint32 */;
 
 	/** Preserve the owner's explicit list order and reject duplicate formal names. */
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
-		nominal_type_kind $result_kind, array $parameters /** vector<template_type_parameter> */)
+		nominal_type_kind $result_kind, array $parameters /** vector<template_type_parameter> */,
+		array $capabilities /** vector<generic_contract> */)
 	{
-		parent::__construct($identity, $source_name, $origin);
+		parent::__construct($identity, $source_name, $origin, $capabilities);
 		if ($parameters === []) {
 			throw new \InvalidArgumentException('Template definition requires at least one type parameter');
 		}
@@ -324,16 +396,17 @@ final class template_type_definition extends semantic_type_definition
 		$expected_position = 0;
 		$minimum_arity = q_count($parameters);
 		$seen_default = false;
-		$names /** hash<string, bool> */ = [];
+		$names /** hash<bool> */ = [];
 		foreach ($parameters as $position => $parameter)
 		{
 			if (($position !== $expected_position) || !($parameter instanceof template_type_parameter)) {
 				throw new \InvalidArgumentException('Template parameters must use ordered zero-based positions');
 			}
-			if (isset($names[$parameter->name()])) {
+			$parameter_name = $parameter->name();
+			if (isset($names[$parameter_name])) {
 				throw new \InvalidArgumentException('Template parameter names must be unique');
 			}
-			$names[$parameter->name()] = true;
+			$names[$parameter_name] = true;
 			if ($parameter->default_type() !== null) {
 				if (!$seen_default) {
 					$minimum_arity = $position;
@@ -346,7 +419,7 @@ final class template_type_definition extends semantic_type_definition
 			$expected_position++;
 		}
 
-		$this->result_kind = $result_kind;
+		$this->result_kind_data = $result_kind;
 		$this->ordered_parameters = $parameters;
 		$this->minimum_arity = $minimum_arity;
 	}
@@ -358,7 +431,7 @@ final class template_type_definition extends semantic_type_definition
 
 	public function result_kind(): nominal_type_kind
 	{
-		return $this->result_kind;
+		return $this->result_kind_data;
 	}
 
 	public function parameters(): array /** vector<template_type_parameter> */
@@ -382,7 +455,7 @@ final class template_type_definition extends semantic_type_definition
 
 	public function required_arity(): int
 	{
-		return $this->minimum_arity;
+		return (int)$this->minimum_arity;
 	}
 }
 
@@ -406,7 +479,7 @@ abstract class canonical_type implements canonical_type_i
 
 	public function type_id(): int
 	{
-		return $this->identity;
+		return (int)$this->identity;
 	}
 
 	abstract public function definition(): type_definition_i;
@@ -414,12 +487,12 @@ abstract class canonical_type implements canonical_type_i
 
 final class boolean_type extends canonical_type
 {
-	private boolean_type_definition $boolean_definition;
+	private boolean_type_definition $boolean_definition_data;
 
 	public function __construct(int $identity, boolean_type_definition $definition)
 	{
 		parent::__construct($identity);
-		$this->boolean_definition = $definition;
+		$this->boolean_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -429,23 +502,23 @@ final class boolean_type extends canonical_type
 
 	public function definition(): type_definition_i
 	{
-		return $this->boolean_definition;
+		return object_cast($this->boolean_definition_data, type_definition_i::class);
 	}
 
 	public function boolean_definition(): boolean_type_definition
 	{
-		return $this->boolean_definition;
+		return $this->boolean_definition_data;
 	}
 }
 
 final class integer_type extends canonical_type
 {
-	private integer_type_definition $integer_definition;
+	private integer_type_definition $integer_definition_data;
 
 	public function __construct(int $identity, integer_type_definition $definition)
 	{
 		parent::__construct($identity);
-		$this->integer_definition = $definition;
+		$this->integer_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -455,23 +528,23 @@ final class integer_type extends canonical_type
 
 	public function definition(): type_definition_i
 	{
-		return $this->integer_definition;
+		return object_cast($this->integer_definition_data, type_definition_i::class);
 	}
 
 	public function integer_definition(): integer_type_definition
 	{
-		return $this->integer_definition;
+		return $this->integer_definition_data;
 	}
 }
 
 final class floating_type extends canonical_type
 {
-	private floating_type_definition $floating_definition;
+	private floating_type_definition $floating_definition_data;
 
 	public function __construct(int $identity, floating_type_definition $definition)
 	{
 		parent::__construct($identity);
-		$this->floating_definition = $definition;
+		$this->floating_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -481,23 +554,23 @@ final class floating_type extends canonical_type
 
 	public function definition(): type_definition_i
 	{
-		return $this->floating_definition;
+		return object_cast($this->floating_definition_data, type_definition_i::class);
 	}
 
 	public function floating_definition(): floating_type_definition
 	{
-		return $this->floating_definition;
+		return $this->floating_definition_data;
 	}
 }
 
 final class nominal_type extends canonical_type
 {
-	private nominal_type_definition $nominal_definition;
+	private nominal_type_definition $nominal_definition_data;
 
 	public function __construct(int $identity, nominal_type_definition $definition)
 	{
 		parent::__construct($identity);
-		$this->nominal_definition = $definition;
+		$this->nominal_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -507,23 +580,23 @@ final class nominal_type extends canonical_type
 
 	public function definition(): type_definition_i
 	{
-		return $this->nominal_definition;
+		return object_cast($this->nominal_definition_data, type_definition_i::class);
 	}
 
 	public function nominal_definition(): nominal_type_definition
 	{
-		return $this->nominal_definition;
+		return $this->nominal_definition_data;
 	}
 }
 
 final class no_value_type extends canonical_type
 {
-	private no_value_type_definition $no_value_definition;
+	private no_value_type_definition $no_value_definition_data;
 
 	public function __construct(int $identity, no_value_type_definition $definition)
 	{
 		parent::__construct($identity);
-		$this->no_value_definition = $definition;
+		$this->no_value_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -533,27 +606,27 @@ final class no_value_type extends canonical_type
 
 	public function definition(): type_definition_i
 	{
-		return $this->no_value_definition;
+		return object_cast($this->no_value_definition_data, type_definition_i::class);
 	}
 
 	public function no_value_definition(): no_value_type_definition
 	{
-		return $this->no_value_definition;
+		return $this->no_value_definition_data;
 	}
 }
 
 /** One canonical specialization of a template definition and exact ordered type arguments. */
 final class applied_template_type extends canonical_type
 {
-	private template_type_definition $template_definition;
-	private array $arguments /** vector<canonical_type_use> */;
+	private template_type_definition $template_definition_data;
+	private array $argument_types /** vector<canonical_type_use> */;
 
 	public function __construct(int $identity, template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */)
 	{
 		parent::__construct($identity);
-		$this->template_definition = $definition;
-		$this->arguments = $arguments;
+		$this->template_definition_data = $definition;
+		$this->argument_types = $arguments;
 	}
 
 	public function family(): type_family
@@ -563,17 +636,17 @@ final class applied_template_type extends canonical_type
 
 	public function definition(): type_definition_i
 	{
-		return $this->template_definition;
+		return object_cast($this->template_definition_data, type_definition_i::class);
 	}
 
 	public function template_definition(): template_type_definition
 	{
-		return $this->template_definition;
+		return $this->template_definition_data;
 	}
 
 	public function arguments(): array /** vector<canonical_type_use> */
 	{
-		return $this->arguments;
+		return $this->argument_types;
 	}
 }
 
@@ -592,7 +665,7 @@ final class canonical_type_use
 
 	public function type_id(): int
 	{
-		return $this->identity;
+		return (int)$this->identity;
 	}
 
 	public function by_value(): bool
@@ -606,61 +679,121 @@ final class canonical_type_use
 	}
 }
 
+/** Exact ordered application index; argument identities and modifier bits form trie edges. */
+final class type_application_index
+{
+	private array $ordinary_children /** hash<type_application_index, int> */ = [];
+	private array $by_value_children /** hash<type_application_index, int> */ = [];
+	private ?applied_template_type $published_type = null;
+
+	public function child(int $type_id, bool $by_value): type_application_index
+	{
+		Type_Identity::require_valid($type_id, 'Application index identity');
+		if ($by_value)
+		{
+			if (isset($this->by_value_children[$type_id])) {
+				return $this->by_value_children[$type_id];
+			}
+			else {
+				$child = new type_application_index();
+				$this->by_value_children[$type_id] = $child;
+				return $child;
+			}
+		}
+
+		if (isset($this->ordinary_children[$type_id])) {
+			return $this->ordinary_children[$type_id];
+		}
+		else {
+			$child = new type_application_index();
+			$this->ordinary_children[$type_id] = $child;
+			return $child;
+		}
+	}
+
+	public function application(): ?applied_template_type
+	{
+		return $this->published_type;
+	}
+
+	public function publish(applied_template_type $type): void
+	{
+		if ($this->published_type !== null) {
+			throw new \LogicException('Canonical template application was published twice');
+		}
+		$this->published_type = $type;
+	}
+}
+
 /** Own numeric identities, canonical concrete types and exact template application reuse. */
 final class Type_Registry
 {
-	private int $next_definition_id /** uint64 */ = 1;
-	private int $next_type_id /** uint64 */ = 1;
-	private array $definitions /** hash<int, type_definition_i> */ = [];
-	private array $types /** hash<int, canonical_type_i> */ = [];
+	private int $next_definition_id /** uint32 */ = 1;
+	private int $next_type_id /** uint32 */ = 1;
+	private bool $definition_ids_exhausted = false;
+	private bool $type_ids_exhausted = false;
+	private array $definitions /** hash<type_definition_i, int> */ = [];
+	private array $types /** hash<canonical_type_i, int> */ = [];
 	private array $concrete_types /** hash<int, int> */ = [];
-	private array $applied_types /** hash<string, int> */ = [];
+	private type_application_index $application_index;
+	private int $applied_type_count /** uint32 */ = 0;
 
-	public function define_boolean(string $name, type_definition_origin $origin): boolean_type_definition
+	public function __construct()
 	{
-		$definition = new boolean_type_definition($this->allocate_definition_id(), $name, $origin);
+		$this->application_index = new type_application_index();
+	}
+
+	public function define_boolean(string $name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */): boolean_type_definition
+	{
+		$definition = new boolean_type_definition($this->allocate_definition_id(), $name, $origin, $capabilities);
 		$this->register_definition($definition);
 		return $definition;
 	}
 
 	public function define_integer(string $name, type_definition_origin $origin,
-		int $bit_width, bool $signed): integer_type_definition
+		int $bit_width, bool $signed, array $capabilities /** vector<generic_contract> */): integer_type_definition
 	{
 		$definition = new integer_type_definition($this->allocate_definition_id(), $name, $origin,
-			$bit_width, $signed);
+			$bit_width, $signed, $capabilities);
 		$this->register_definition($definition);
 		return $definition;
 	}
 
 	public function define_floating(string $name, type_definition_origin $origin,
-		floating_format $format, int $storage_bits, int $precision_bits): floating_type_definition
+		floating_format $format, int $storage_bits, int $precision_bits,
+		array $capabilities /** vector<generic_contract> */): floating_type_definition
 	{
 		$definition = new floating_type_definition($this->allocate_definition_id(), $name, $origin,
-			$format, $storage_bits, $precision_bits);
+			$format, $storage_bits, $precision_bits, $capabilities);
 		$this->register_definition($definition);
 		return $definition;
 	}
 
 	public function define_nominal(string $name, type_definition_origin $origin,
-		nominal_type_kind $kind): nominal_type_definition
+		nominal_type_kind $kind, array $capabilities /** vector<generic_contract> */): nominal_type_definition
 	{
-		$definition = new nominal_type_definition($this->allocate_definition_id(), $name, $origin, $kind);
+		$definition = new nominal_type_definition($this->allocate_definition_id(), $name, $origin, $kind,
+			$capabilities);
 		$this->register_definition($definition);
 		return $definition;
 	}
 
 	public function define_no_value(string $name, type_definition_origin $origin): no_value_type_definition
 	{
-		$definition = new no_value_type_definition($this->allocate_definition_id(), $name, $origin);
+		$no_capabilities /** vector<generic_contract> */ = [];
+		$definition = new no_value_type_definition($this->allocate_definition_id(), $name, $origin,
+			$no_capabilities);
 		$this->register_definition($definition);
 		return $definition;
 	}
 
 	public function define_template(string $name, type_definition_origin $origin,
-		nominal_type_kind $result_kind, array $parameters /** vector<template_type_parameter> */): template_type_definition
+		nominal_type_kind $result_kind, array $parameters /** vector<template_type_parameter> */,
+		array $capabilities /** vector<generic_contract> */): template_type_definition
 	{
 		$definition = new template_type_definition($this->allocate_definition_id(), $name, $origin,
-			$result_kind, $parameters);
+			$result_kind, $parameters, $capabilities);
 		$this->register_definition($definition);
 		return $definition;
 	}
@@ -668,11 +801,11 @@ final class Type_Registry
 	/** Reuse the sole concrete type belonging to a non-template definition. */
 	public function canonical(concrete_type_definition_i $definition): canonical_type_i
 	{
-		$this->require_registered_definition($definition);
-		$definition_id = $definition->definition_id();
-		$type_id = $this->concrete_types[$definition_id] ?? 0;
-		if ($type_id !== 0) {
-			return $this->type($type_id);
+		$semantic_definition = object_cast($definition, type_definition_i::class);
+		$this->require_registered_definition($semantic_definition);
+		$definition_id = $semantic_definition->definition_id();
+		if (isset($this->concrete_types[$definition_id])) {
+			return $this->type($this->concrete_types[$definition_id]);
 		}
 
 		$type = $definition->create_canonical_type($this->allocate_type_id());
@@ -685,39 +818,39 @@ final class Type_Registry
 	public function intern_application(template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */): applied_template_type
 	{
-		$this->require_registered_definition($definition);
-		$complete_arguments = $this->complete_application_arguments($definition, $arguments);
-		$key = $this->application_key($definition->definition_id(), $complete_arguments);
-		$type_id = $this->applied_types[$key] ?? 0;
-		if ($type_id !== 0) {
-			$type = $this->type($type_id);
-			return object_cast($type, applied_template_type::class);
+		$complete_arguments = $this->validate_application($definition, $arguments);
+		$index = $this->application_index->child($definition->definition_id(), false);
+		foreach ($complete_arguments as $argument) {
+			$index = $index->child($argument->type_id(), $argument->by_value());
+		}
+		$existing = $index->application();
+		if ($existing !== null) {
+			return $existing;
 		}
 
 		$type = new applied_template_type($this->allocate_type_id(), $definition, $complete_arguments);
 		$this->register_type($type);
-		$this->applied_types[$key] = $type->type_id();
+		$index->publish($type);
+		$this->applied_type_count++;
 		return $type;
 	}
 
 	public function definition(int $definition_id): type_definition_i
 	{
 		Type_Identity::require_valid($definition_id, 'Type definition identity');
-		$definition = $this->definitions[$definition_id] ?? null;
-		if ($definition === null) {
+		if (!isset($this->definitions[$definition_id])) {
 			throw new \OutOfBoundsException('Unknown type definition identity');
 		}
-		return $definition;
+		return $this->definitions[$definition_id];
 	}
 
 	public function type(int $type_id): canonical_type_i
 	{
 		Type_Identity::require_valid($type_id, 'Canonical type identity');
-		$type = $this->types[$type_id] ?? null;
-		if ($type === null) {
+		if (!isset($this->types[$type_id])) {
 			throw new \OutOfBoundsException('Unknown canonical type identity');
 		}
-		return $type;
+		return $this->types[$type_id];
 	}
 
 	/** Create a compact occurrence fact only for an identity owned by this registry. */
@@ -739,7 +872,13 @@ final class Type_Registry
 
 	public function application_count(): int
 	{
-		return q_count($this->applied_types);
+		return (int)$this->applied_type_count;
+	}
+
+	/** Query only stored facts; this performs no structural or lifecycle inference. */
+	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
+	{
+		return $this->type($type_use->type_id())->definition()->declares_capability($capability);
 	}
 
 	private function register_definition(type_definition_i $definition): void
@@ -762,8 +901,9 @@ final class Type_Registry
 
 	private function require_registered_definition(type_definition_i $definition): void
 	{
-		$current = $this->definitions[$definition->definition_id()] ?? null;
-		if ($current !== $definition) {
+		$definition_id = $definition->definition_id();
+		if ((!isset($this->definitions[$definition_id]))
+			|| ($this->definitions[$definition_id] !== $definition)) {
 			throw new \InvalidArgumentException('Type definition belongs to another registry');
 		}
 	}
@@ -788,13 +928,31 @@ final class Type_Registry
 		$complete /** vector<canonical_type_use> */ = $arguments;
 		while ($expected_position < $definition->arity())
 		{
-			$default = $definition->parameter($expected_position)->default_type();
-			if ($default === null) {
+			$default_argument = $definition->parameter($expected_position)->default_type();
+			if ($default_argument === null) {
 				throw new \LogicException('Missing template argument has no default');
 			}
-			$this->type($default->type_id());
-			$complete[] = $default;
+			$this->type($default_argument->type_id());
+			$complete[] = $default_argument;
 			$expected_position++;
+		}
+		return $complete;
+	}
+
+	/** Validate one complete application from declared facts before interning any identity. */
+	public function validate_application(template_type_definition $definition,
+		array $arguments /** vector<canonical_type_use> */): array /** vector<canonical_type_use> */
+	{
+		$complete = $this->complete_application_arguments($definition, $arguments);
+		foreach ($complete as $position => $argument)
+		{
+			foreach ($definition->parameter($position)->contracts() as $required) {
+				$required_contract /** generic_contract */ = $required;
+				if (!$this->has_capability($argument, $required_contract)) {
+					throw new \InvalidArgumentException('Template type argument does not declare required capability '
+						. Generic_Contract_Name::text($required_contract) . ' for ' . $definition->name());
+				}
+			}
 		}
 		return $complete;
 	}
@@ -808,35 +966,33 @@ final class Type_Registry
 		}
 	}
 
-	/** Encode the complete tuple reversibly; this string indexes identity but is not an identity. */
-	private function application_key(int $definition_id,
-		array $arguments /** vector<canonical_type_use> */): string
-	{
-		$key = (string)$definition_id . ':' . (string)q_count($arguments);
-		foreach ($arguments as $argument) {
-			$value_flag = $argument->by_value() ? '1' : '0';
-			$key .= ':' . (string)$argument->type_id() . ':' . $value_flag;
-		}
-		return $key;
-	}
-
 	private function allocate_definition_id(): int
 	{
-		if ($this->next_definition_id > Type_Identity::MAX) {
+		if ($this->definition_ids_exhausted) {
 			throw new \OverflowException('Type definition identity space exhausted');
 		}
 		$identity = $this->next_definition_id;
-		$this->next_definition_id++;
-		return $identity;
+		if ($identity === Type_Identity::maximum()) {
+			$this->definition_ids_exhausted = true;
+		}
+		else {
+			$this->next_definition_id++;
+		}
+		return (int)$identity;
 	}
 
 	private function allocate_type_id(): int
 	{
-		if ($this->next_type_id > Type_Identity::MAX) {
+		if ($this->type_ids_exhausted) {
 			throw new \OverflowException('Canonical type identity space exhausted');
 		}
 		$identity = $this->next_type_id;
-		$this->next_type_id++;
-		return $identity;
+		if ($identity === Type_Identity::maximum()) {
+			$this->type_ids_exhausted = true;
+		}
+		else {
+			$this->next_type_id++;
+		}
+		return (int)$identity;
 	}
 }

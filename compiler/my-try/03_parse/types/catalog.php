@@ -8,6 +8,17 @@ enum type_use_modifier_kind: int
 	case by_value = 1;
 }
 
+final class Type_Use_Modifier_Name
+{
+	public static function text(type_use_modifier_kind $kind): string
+	{
+		if ($kind === type_use_modifier_kind::by_value) {
+			return 'by_value';
+		}
+		throw new \LogicException('Unknown type-use modifier');
+	}
+}
+
 final class source_type_exposure
 {
 	private string $source_name;
@@ -30,7 +41,7 @@ final class source_type_exposure
 
 	public function definition_id(): int
 	{
-		return $this->semantic_definition_id;
+		return (int)$this->semantic_definition_id;
 	}
 }
 
@@ -73,6 +84,14 @@ final class Source_Type_Exposures
 		$this->types[$name] = new source_type_exposure($name, $definition->definition_id());
 	}
 
+	public function modifier_or_null(string $name): ?source_type_modifier_exposure
+	{
+		if (!isset($this->modifiers[$name])) {
+			return null;
+		}
+		return $this->modifiers[$name];
+	}
+
 	public function expose_modifier(string $name, type_use_modifier_kind $kind): void
 	{
 		if (isset($this->types[$name]) || isset($this->modifiers[$name])) {
@@ -83,20 +102,18 @@ final class Source_Type_Exposures
 
 	public function type(string $name): source_type_exposure
 	{
-		$exposure = $this->types[$name] ?? null;
-		if ($exposure === null) {
+		if (!isset($this->types[$name])) {
 			throw new \OutOfBoundsException('Unknown source type: ' . $name);
 		}
-		return $exposure;
+		return $this->types[$name];
 	}
 
 	public function modifier(string $name): source_type_modifier_exposure
 	{
-		$exposure = $this->modifiers[$name] ?? null;
-		if ($exposure === null) {
+		if (!isset($this->modifiers[$name])) {
 			throw new \OutOfBoundsException('Unknown source type modifier: ' . $name);
 		}
-		return $exposure;
+		return $this->modifiers[$name];
 	}
 
 	public function type_count(): int
@@ -150,7 +167,7 @@ final class runtime_type_provider
 
 	public function definition_id(): int
 	{
-		return $this->semantic_definition_id;
+		return (int)$this->semantic_definition_id;
 	}
 
 	public function identity(): runtime_type_provider_identity
@@ -184,9 +201,9 @@ final class runtime_type_modifier_provider
 /** Provider registrations are keyed by semantic definition, never backend spelling. */
 final class Runtime_Type_Providers
 {
-	private array $providers /** hash<int, runtime_type_provider> */ = [];
-	private array $modifier_providers /** hash<int, runtime_type_modifier_provider> */ = [];
-	private array $identities /** hash<string, bool> */ = [];
+	private array $providers /** hash<runtime_type_provider, int> */ = [];
+	private array $modifier_providers /** hash<runtime_type_modifier_provider> */ = [];
+	private array $identities /** hash<bool> */ = [];
 
 	/** Attach one unique provider identity to a semantic runtime definition. */
 	public function register(type_definition_i $definition, string $provider, string $family): void
@@ -204,7 +221,7 @@ final class Runtime_Type_Providers
 	/** Keep modifier provider identity separate from its eventual backend wrapper. */
 	public function register_modifier(type_use_modifier_kind $kind, string $provider, string $family): void
 	{
-		$key = $kind->value;
+		$key = Type_Use_Modifier_Name::text($kind);
 		if (isset($this->modifier_providers[$key])) {
 			throw new \LogicException('Duplicate runtime provider for type-use modifier');
 		}
@@ -217,20 +234,19 @@ final class Runtime_Type_Providers
 	public function provider_for(int $definition_id): runtime_type_provider
 	{
 		Type_Identity::require_valid($definition_id, 'Runtime provider definition identity');
-		$provider = $this->providers[$definition_id] ?? null;
-		if ($provider === null) {
+		if (!isset($this->providers[$definition_id])) {
 			throw new \OutOfBoundsException('Semantic type definition has no runtime provider');
 		}
-		return $provider;
+		return $this->providers[$definition_id];
 	}
 
 	public function modifier_provider(type_use_modifier_kind $kind): runtime_type_modifier_provider
 	{
-		$provider = $this->modifier_providers[$kind->value] ?? null;
-		if ($provider === null) {
+		$key = Type_Use_Modifier_Name::text($kind);
+		if (!isset($this->modifier_providers[$key])) {
 			throw new \OutOfBoundsException('Type-use modifier has no runtime provider');
 		}
-		return $provider;
+		return $this->modifier_providers[$key];
 	}
 
 	public function count(): int
@@ -240,7 +256,7 @@ final class Runtime_Type_Providers
 
 	private function reserve_identity(string $provider, string $family): string
 	{
-		$key = strlen($provider) . ':' . $provider . strlen($family) . ':' . $family;
+		$key = q_strlen($provider) . ':' . $provider . q_strlen($family) . ':' . $family;
 		if (isset($this->identities[$key])) {
 			throw new \LogicException('Duplicate runtime provider type identity');
 		}
@@ -268,7 +284,7 @@ final class source_type_declaration
 /** Source syntax remains owned by collected files; this is a non-owning identity index. */
 final class Source_Type_Declarations
 {
-	private array $declarations /** hash<int, source_type_declaration> */ = [];
+	private array $declarations /** hash<source_type_declaration, int> */ = [];
 
 	public function register(nominal_type_definition $definition, collected_struct $declaration): void
 	{
@@ -285,11 +301,10 @@ final class Source_Type_Declarations
 	public function declaration(int $definition_id): collected_struct
 	{
 		Type_Identity::require_valid($definition_id, 'Source type definition identity');
-		$declaration = $this->declarations[$definition_id] ?? null;
-		if ($declaration === null) {
+		if (!isset($this->declarations[$definition_id])) {
 			throw new \OutOfBoundsException('Source type definition has no declaration association');
 		}
-		return $declaration->declaration();
+		return $this->declarations[$definition_id]->declaration();
 	}
 
 	public function count(): int
@@ -314,7 +329,7 @@ final class registered_type_catalog
 	private Type_Registry $type_registry;
 	private Source_Type_Exposures $source_exposures;
 	private Runtime_Type_Providers $runtime_providers;
-	private Source_Type_Declarations $source_declarations;
+	private Source_Type_Declarations $source_declaration_index;
 
 	public function __construct(Type_Registry $registry, Source_Type_Exposures $source,
 		Runtime_Type_Providers $providers)
@@ -322,7 +337,7 @@ final class registered_type_catalog
 		$this->type_registry = $registry;
 		$this->source_exposures = $source;
 		$this->runtime_providers = $providers;
-		$this->source_declarations = new Source_Type_Declarations();
+		$this->source_declaration_index = new Source_Type_Declarations();
 	}
 
 	public function registry(): Type_Registry
@@ -342,15 +357,17 @@ final class registered_type_catalog
 
 	public function source_declarations(): Source_Type_Declarations
 	{
-		return $this->source_declarations;
+		return $this->source_declaration_index;
 	}
 
 	/** Create one source nominal identity while syntax remains owned by its collected file. */
 	public function define_source_structure(string $name, collected_struct $declaration): nominal_type
 	{
+		$capabilities /** vector<generic_contract> */ = [generic_contract::copyable_value,
+			generic_contract::value_storable];
 		$definition = $this->type_registry->define_nominal($name, type_definition_origin::source,
-			nominal_type_kind::structure);
-		$this->source_declarations->register($definition, $declaration);
+			nominal_type_kind::structure, $capabilities);
+		$this->source_declaration_index->register($definition, $declaration);
 		$type = $this->type_registry->canonical($definition);
 		return object_cast($type, nominal_type::class);
 	}

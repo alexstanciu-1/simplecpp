@@ -44,6 +44,8 @@ def main():
     parser.add_argument('--candidate-revision', required=True)
     parser.add_argument('--results', required=True, type=Path)
     parser.add_argument('--no-stan', action='store_true', help='Explicitly isolate native validation from STAN; record analysis as skipped')
+    parser.add_argument('--types-only', action='store_true',
+                        help='Run frontend/C++ type validation while explicitly skipping parked LLVM proofs')
     parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
     args = parser.parse_args()
     target, results = args.target_checkout.resolve(), args.results.resolve()
@@ -83,7 +85,10 @@ def main():
     (pipeline / 'b.phs').write_text('$')
     driver = (APP / 'tests/native_driver.php.in').read_text()
     shutil.copyfile(APP / 'tests/s2s_proof.php', source / 's2s_proof.php')
-    driver = driver.replace('__REQUEST_FILE__', php_literal(request)).replace('__RECOVERY_DIR__', php_literal(recovery)).replace('__PIPELINE_DIR__', php_literal(pipeline))
+    driver = (driver.replace('__REQUEST_FILE__', php_literal(request))
+              .replace('__RECOVERY_DIR__', php_literal(recovery))
+              .replace('__PIPELINE_DIR__', php_literal(pipeline))
+              .replace('__RUN_LLVM_PROOFS__', 'false' if args.types_only else 'true'))
     (source / 'main.php').write_text(driver)
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
@@ -110,24 +115,32 @@ def main():
     run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=600)
     executable = project / '.prism/build/main'
     # Ordinary host tests independently assert the algorithms and expected sample exits.
-    for suite in ['storage', 'tokenizer', 'ast', 'model', 'llvm_text']:
+    host_suites = ['storage', 'tokenizer', 'ast']
+    if args.types_only:
+        host_suites += ['type_catalog', 'constructed_type']
+    else:
+        host_suites += ['model', 'llvm_text']
+    for suite in host_suites:
         run('php-' + suite, ['php', APP / 'tests' / (suite + '.php')])
     fixtures = results / 'fixtures'
     fixtures.mkdir(exist_ok=args.resume)
-    for suite in ['llvm', 'calls']:
-        folder = fixtures / suite
-        folder.mkdir(exist_ok=args.resume)
-        run('php-' + suite, ['php', APP / 'tests' / (suite + '.php'), folder])
+    if not args.types_only:
+        for suite in ['llvm', 'calls']:
+            folder = fixtures / suite
+            folder.mkdir(exist_ok=args.resume)
+            run('php-' + suite, ['php', APP / 'tests' / (suite + '.php'), folder])
     expected_exits = {}
-    for item in json.loads((fixtures / 'llvm/executions.json').read_text()):
-        expected_exits['llvm/' + Path(item['path']).stem] = item['exit_code']
-    call_log = (logs / 'php-calls.stdout').read_text()
-    for name, code in re.findall(r'^(\w+): dependencies verified, native exit (\d+)$', call_log, re.M):
-        expected_exits['calls/' + name] = int(code)
-    expected_exits['sample/01_base'] = 9
-    cases = [(suite + '/' + path.name, path) for suite in ['llvm', 'calls']
-             for path in sorted((fixtures / suite).iterdir()) if path.is_dir()]
-    cases.append(('sample/01_base', APP / 'tests/samples/01_base'))
+    cases = []
+    if not args.types_only:
+        for item in json.loads((fixtures / 'llvm/executions.json').read_text()):
+            expected_exits['llvm/' + Path(item['path']).stem] = item['exit_code']
+        call_log = (logs / 'php-calls.stdout').read_text()
+        for name, code in re.findall(r'^(\w+): dependencies verified, native exit (\d+)$', call_log, re.M):
+            expected_exits['calls/' + name] = int(code)
+        expected_exits['sample/01_base'] = 9
+        cases = [(suite + '/' + path.name, path) for suite in ['llvm', 'calls']
+                 for path in sorted((fixtures / suite).iterdir()) if path.is_dir()]
+        cases.append(('sample/01_base', APP / 'tests/samples/01_base'))
     php_code = 'require ' + php_literal(APP / 'boot.php') + '; require ' + php_literal(APP / 'tests/s2s_proof.php') + '; require ' + php_literal(source / 'main.php') + ';'
     # Compile generated C++ from both host implementations, independently of LLVM parity.
     request.write_text('s2s-proof')
@@ -138,6 +151,15 @@ def main():
     (results / 's2s.cpp').write_bytes(native_cpp)
     run('s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include', results / 's2s.cpp', '-o', results / 's2s-program'])
     run('s2s-execute', [results / 's2s-program'], expected=10)
+    request.write_text('types-proof')
+    expected_type_cpp = run('types-host', ['php', '-r', php_code])
+    native_type_cpp = run('types-native', [executable])
+    if native_type_cpp != expected_type_cpp:
+        raise RuntimeError('Native constructed-type C++ emission differs from PHP')
+    (results / 'types.cpp').write_bytes(native_type_cpp)
+    run('types-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
+                        results / 'types.cpp', '-o', results / 'types-program'])
+    run('types-execute', [results / 'types-program'])
     # Reuse every valid authored S2S case instead of maintaining native-only fixture subsets.
     s2s_fixtures = results / 's2s-fixtures'
     s2s_fixtures.mkdir(exist_ok=args.resume)
@@ -226,6 +248,9 @@ def main():
         stan = json.loads((project / '.prism/cache/stan_status.json').read_text())
         analysis = {key: stan[key] for key in ['compile_error_count', 'stan_error_count', 'stan_warning_count', 'stan_notice_count']}
     summary = dict(analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
+                   validation_scope='types-and-s2s' if args.types_only else 'full',
+                   parked_llvm_validation='skipped' if args.types_only else 'included',
+                   portable_type_proof=True,
                    s2s_valid_executions=len(valid_cases), s2s_float_spelling_assertions=float_spelling_assertions,
                    s2s_declaration_executions=declaration_case_count,
                    s2s_rejections=len(rejection_cases), cases=len(outcomes), valid=sum(x['valid'] for x in outcomes),

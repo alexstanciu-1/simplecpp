@@ -71,7 +71,7 @@ try
 	$target_return = object_cast($target_statements[0], return_node::class);
 	$target_literal = object_cast($target_return->expression, integer_literal_node::class);
 	$valid_literal_type = $target_literal->require_integer_literal_preparation()->type;
-	$target_literal->require_integer_literal_preparation()->type = new canonical_type_use(Type_Identity::MAX);
+	$target_literal->require_integer_literal_preparation()->type = new canonical_type_use(Type_Identity::maximum());
 	$failed = false;
 	try {
 		$compiler->cpp();

@@ -9,9 +9,7 @@ final class CPP_Declarations
 	public static function type(canonical_type_use $type, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($type);
-		if ($mapping->header !== '') {
-			$context->headers[$mapping->header] = true;
-		}
+		CPP_Types::record_headers($mapping, $context);
 
 		return $mapping->spelling;
 	}
@@ -19,7 +17,8 @@ final class CPP_Declarations
 	/** Integer wrapper conversions are explicit; struct and other scalar copies keep their type. */
 	public static function value(string $expression, canonical_type_use $destination, cpp_generation_context $context): string
 	{
-		if (Type_Preparation::canonical($destination)->family() === type_family::integer) {
+		if ((!$destination->by_value())
+			&& (Type_Preparation::canonical($destination)->family() === type_family::integer)) {
 			return 'static_cast<' . self::type($destination, $context) . '>((' . $expression . ').native_value())';
 		}
 

@@ -334,6 +334,27 @@ final class template_application_type_children_iterator extends children_iterato
 	}
 }
 
+/** Retain the single type operand owned by a source type-use modifier. */
+final class type_use_modifier_children_iterator extends children_iterator
+{
+	private type_use_modifier_node $source;
+	private bool $read = false;
+
+	public function __construct(type_use_modifier_node $source)
+	{
+		$this->source = $source;
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		if ($this->read) {
+			return null;
+		}
+		$this->read = true;
+		return $this->source->operand;
+	}
+}
+
 /** Retain the source and visit its named fields in grammar order. */
 final class index_children_iterator extends children_iterator
 {
