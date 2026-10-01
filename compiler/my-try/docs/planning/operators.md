@@ -115,9 +115,9 @@ language contract must define it. If no Simple C++-specific rule is adopted, the
 fallback decision is to adopt the exact C++ usual arithmetic conversions rather
 than accidentally depending on emitted C++ behavior.
 
-This requirement is dormant in the current additive slice: only canonical
-`int + int -> int` and `int - int -> int` are admitted. `uint32 + int`, other fixed-width pairs and floating/integer pairs
-remain hard rejections.
+This requirement is dormant in the current arithmetic slice: canonical
+`int + int -> int`, `int - int -> int` and `int * int -> int` are admitted.
+`uint32 + int`, other fixed-width pairs and floating/integer pairs remain hard rejections.
 
 ## Legacy S2S evidence
 
@@ -133,9 +133,10 @@ preserve now is:
 
 Parenthesized grouping is now covered by
 [EXPR-PAREN-001](../catalog/02_expressions.md#expr-paren-001), normalizing to the
-existing expression tree. Subtraction is covered by
-[EXPR-SUB-001](../catalog/02_expressions.md#expr-sub-001) through the same additive
-policy. Multiplication, division, modulus and broader numeric compatibility remain
+existing expression tree. Subtraction and multiplication are covered by
+[EXPR-SUB-001](../catalog/02_expressions.md#expr-sub-001) and
+[EXPR-MUL-001](../catalog/02_expressions.md#expr-mul-001) through the same integer
+arithmetic policy. Division, modulus and broader numeric compatibility remain
 separate catalog slices.
 
 ## First implementation slice (completed addition checkpoint)
@@ -197,15 +198,17 @@ reserved C++ local/parameter name `$operator` with `$source_operator`. See the
 No deferred operator family, syntax form, overload source or promotion rule was
 implicitly activated by this migration.
 
-## Current additive extension
+## Current arithmetic extension
 
-The agreed subtraction slice reuses the existing binary syntax and decision records,
-adding only source/selected-operation enum cases. `Integer_Operators::decide_additive`
-now owns shared canonical-int operand checks and conversions for both `+` and `-`.
-Their parser level is left-associative; grouping retains the existing tree shape.
-Shared diagnostics name the integer additive operation. No conversion ranking,
+Subtraction and multiplication reuse the existing binary syntax and decision records,
+adding only source/selected-operation enum cases. `Integer_Operators::decide_arithmetic`
+owns shared canonical-int operand checks and conversions for `+`, `-` and `*`.
+The parser uses precedence climbing: multiplication binds more tightly than addition
+and subtraction, all associate left-to-right, and grouping controls the same tree.
+Shared diagnostics name the integer arithmetic operation. No conversion ranking,
 mixed-width promotion, unary operation or effectful operand support was added.
 
-The [subtraction card](../catalog/02_expressions.md#expr-sub-001) owns detailed
+The [subtraction card](../catalog/02_expressions.md#expr-sub-001) and
+[multiplication card](../catalog/02_expressions.md#expr-mul-001) own detailed
 behavior and PHP-host/generated-C++ proof. The native compiler checkpoint above
-predates grouping and subtraction and does not certify these later source changes.
+predates grouping, subtraction and multiplication and does not certify these later source changes.

@@ -18,7 +18,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-PAREN-001](#expr-paren-001) | agreed | `$b = 2; $a = ($b + 1);` | proved | proved | deferred | [Grammar, AST, spans and incremental proof](../../tests/grouping.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
 | [EXPR-ARITH-001](#expr-arith-001) | agreed | `$a = 1 + 2;` | proved | proved | deferred | [Prepared operator decision](../../tests/operators.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [EXPR-SUB-001](#expr-sub-001) | agreed | `$a = 1 - 2;` | proved | proved | deferred | [Prepared decisions, rejection and incremental proof](../../tests/operators.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
-| [EXPR-MUL-001](#expr-mul-001) | pending-discussion | `$a = 2 * 3;` | unverified | unverified | deferred | — |
+| [EXPR-MUL-001](#expr-mul-001) | agreed | `$a = 2 * 3;` | proved | proved | deferred | [Prepared decisions, precedence and incremental proof](../../tests/operators.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
 | [EXPR-DIV-001](#expr-div-001) | pending-discussion | `$a = 4 / 2;` | unverified | unverified | deferred | — |
 | [EXPR-MOD-001](#expr-mod-001) | pending-discussion | `$a = 5 % 2;` | unverified | unverified | deferred | — |
 | [EXPR-POW-001](#expr-pow-001) | pending-discussion | `$a = 2 ** 3;` | unverified | unverified | deferred | — |
@@ -241,9 +241,10 @@ minus does not enable unary negation, decrement or compound assignment.
 **Ownership and retained facts:** reuse `binary_expression_node`,
 `prepared_binary_expression` and `operator_decision` without new structures or
 fields. Add `operator_kind::subtraction` and `operator_operation::integer_subtraction`.
-`Integer_Operators::decide_additive()` shares the exact canonical-int operand check,
+`Integer_Operators::decide_arithmetic()` (generalized from `decide_additive` by the
+multiplication slice) shares the exact canonical-int operand check,
 two identity conversions in `operator_operand` context and canonical result type
-between addition and subtraction. Diagnostics now name the shared integer additive
+between addition and subtraction. Diagnostics now name the shared integer arithmetic
 operation. `Operator_Preparation` owns source normalization and the existing
 order-independence restriction; C++ consumes the selected operation and conversions.
 
@@ -303,7 +304,42 @@ auto a = static_cast<int_t>(1) - static_cast<int_t>(2);
 
 ## EXPR-MUL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-01: canonical `int * int -> int`, extending the current
+integer arithmetic policy. Multiplication binds more tightly than addition and
+subtraction and associates left-to-right. Grouping overrides that precedence.
+The example produces `6`:
+
+```cpp
+auto local_a = (static_cast<scpp::int_t<>>(2LL) * static_cast<scpp::int_t<>>(3LL));
+```
+
+Reuse the existing binary AST and prepared decision records; add only the
+`multiplication` source kind and `integer_multiplication` selected operation.
+The parser owns precedence through a shared precedence-climbing path. Integer
+preparation shares exact operand checks, identity conversions and result typing
+across the supported arithmetic operations; C++ renders the selected operation.
+The shared policy is now named `Integer_Operators::decide_arithmetic`; diagnostics
+likewise name integer arithmetic rather than only addition/subtraction.
+
+Legacy `Generator::renderExpr` emits `AstKind::MUL` as parenthesized recursive
+runtime arithmetic. The runtime `mul` helper multiplies native representations
+without signed-overflow checks. Preserve that behavior, with representable-value
+proofs and no new wrapping or checked-overflow guarantee. Reuse the existing
+operator header without additional helpers or temporaries.
+
+**Proof:** `tests/operators.php` checks mixed-precedence ASTs, left associativity,
+grouping, canonical result/operand conversions, rejected operand families and
+effectful expressions, and equal-length operator edits through token cleanup and
+fresh/incremental agreement. Existing grouping tests continue to check source spans
+and cast disambiguation. `tests/s2s.php` contains eleven `mul_*` source fixtures and
+two additional exact-value/type probes, all passing PHP-host generation and Clang
+C++20 execution. They cover grouping, mixed precedence, casts, reassignment, chained
+assignment, zero, a negative product and a large representable signed product.
+Native execution of the compiler itself was not rerun.
+
+Non-goals: division, modulus, exponentiation, compound assignment, unary operators,
+mixed-width or floating operands, broader effect analysis, runtime overflow changes
+and LLVM. Existing effectful-operand restrictions remain in force.
 
 ### Imported version 1
 

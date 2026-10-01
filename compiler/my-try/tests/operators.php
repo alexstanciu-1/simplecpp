@@ -97,19 +97,59 @@ if (($outer->left instanceof binary_expression_node)
 	throw new \LogicException('Subtraction lost right grouping');
 }
 
+// Multiplication retains the same operand facts and forms a tighter binary subtree.
+$syntax = operator_test_source('return 2 + 3 * 4 - 5;');
+$outer = $syntax->root->body->statements[0]->expression;
+$sum = $outer->left;
+$product = $sum->right;
+$decision = $product->require_binary_preparation()->decision;
+$integer = Language_Types::integer(Model::$language_scope);
+if (($outer->require_binary_preparation()->decision->operation !== operator_operation::integer_subtraction)
+|| ($sum->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)
+|| ($decision->source_operator !== operator_kind::multiplication)
+|| ($decision->operation !== operator_operation::integer_multiplication)
+|| (!$decision->result_type->matches($integer)) || (count($decision->operands) !== 2)) {
+	throw new \LogicException('Multiplication lost precedence or its selected canonical operation');
+}
+foreach ($decision->operands as $operand) {
+	if (($operand->context !== conversion_context::operator_operand)
+	|| ($operand->operation !== conversion_operation::identity)
+	|| (!$operand->source_type->matches($integer)) || (!$operand->target_type->matches($integer))) {
+		throw new \LogicException('Multiplication lost its identity operand conversions');
+	}
+}
+$syntax = operator_test_source('return 2 * 3 * 4;');
+$outer = $syntax->root->body->statements[0]->expression;
+if (!($outer->left instanceof binary_expression_node) || ($outer->right instanceof binary_expression_node)) {
+	throw new \LogicException('Multiplication chain lost left associativity');
+}
+$syntax = operator_test_source('return (2 + 3) * 4;');
+$product = $syntax->root->body->statements[0]->expression;
+if (($product->require_binary_preparation()->decision->operation !== operator_operation::integer_multiplication)
+|| ($product->left->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)) {
+	throw new \LogicException('Grouping did not override multiplication precedence');
+}
+
 $rejections = [
-	'boolean operand' => ['$value = 1 + true;', 'integer additive operation requires canonical int operands'],
-	'narrow operand' => ['$left uint8 = 1; $value = $left + 2;', 'integer additive operation requires canonical int operands'],
-	'effectful operand' => ['function value(): int { return 1; } $result = value() + 2;', 'integer additive operation requires order-independent operands'],
-	'subtraction boolean' => ['$value = 1 - true;', 'integer additive operation requires canonical int operands'],
-	'subtraction float' => ['$value = 3.0 - 1;', 'integer additive operation requires canonical int operands'],
-	'subtraction string' => ['$value = 3 - "1";', 'integer additive operation requires canonical int operands'],
-	'subtraction width' => ['$left uint8 = 3; $value = $left - 1;', 'integer additive operation requires canonical int operands'],
-	'subtraction call' => ['function value(): int { return 1; } $result = 2 - value();', 'integer additive operation requires order-independent operands'],
-	'nested subtraction call' => ['function value(): int { return 1; } $result = 2 + (3 - value());', 'integer additive operation requires order-independent operands'],
+	'boolean operand' => ['$value = 1 + true;', 'integer arithmetic operation requires canonical int operands'],
+	'narrow operand' => ['$left uint8 = 1; $value = $left + 2;', 'integer arithmetic operation requires canonical int operands'],
+	'effectful operand' => ['function value(): int { return 1; } $result = value() + 2;', 'integer arithmetic operation requires order-independent operands'],
+	'subtraction boolean' => ['$value = 1 - true;', 'integer arithmetic operation requires canonical int operands'],
+	'subtraction float' => ['$value = 3.0 - 1;', 'integer arithmetic operation requires canonical int operands'],
+	'subtraction string' => ['$value = 3 - "1";', 'integer arithmetic operation requires canonical int operands'],
+	'subtraction width' => ['$left uint8 = 3; $value = $left - 1;', 'integer arithmetic operation requires canonical int operands'],
+	'subtraction call' => ['function value(): int { return 1; } $result = 2 - value();', 'integer arithmetic operation requires order-independent operands'],
+	'nested subtraction call' => ['function value(): int { return 1; } $result = 2 + (3 - value());', 'integer arithmetic operation requires order-independent operands'],
 	'unary minus' => ['$value = -1;', 'Expected scalar literal or variable reference'],
 	'decrement' => ['$value = 1; $value--;', 'Expected type name or = after variable name'],
 	'compound subtraction' => ['$value = 1; $value -= 1;', 'Expected type name or = after variable name'],
+	'multiplication boolean' => ['$value = true * 2;', 'integer arithmetic operation requires canonical int operands'],
+	'multiplication float' => ['$value = 2 * 3.5;', 'integer arithmetic operation requires canonical int operands'],
+	'multiplication string' => ['$value = "2" * 3;', 'integer arithmetic operation requires canonical int operands'],
+	'multiplication width' => ['$x uint8 = 2; $value = $x * 3;', 'integer arithmetic operation requires canonical int operands'],
+	'multiplication call' => ['function value(): int { return 2; } $result = 1 + 3 * value();', 'integer arithmetic operation requires order-independent operands'],
+	'compound multiplication' => ['$value = 1; $value *= 2;', 'Expected type name or = after variable name'],
+	'power' => ['$value = 2 ** 3;', 'Expected scalar literal or variable reference'],
 ];
 foreach ($rejections as $name => [$source, $diagnostic])
 {
@@ -148,20 +188,29 @@ try
 	|| ($function->require_preparation() !== $signature)) {
 		throw new \LogicException('Operator edit lost its new decision or invalidated an unchanged signature');
 	}
+	$changed = str_replace('10 - 3', '10 * 3', $changed);
+	file_put_contents($path, $changed);
+	$compiler->update_cpp([$path]);
+	$body = $function->body;
+	$binary = $body->statements[0]->expression;
+	if (($binary->require_binary_preparation()->decision->operation !== operator_operation::integer_multiplication)
+	|| ($function->require_preparation() !== $signature)) {
+		throw new \LogicException('Multiplication edit retained a stale decision or changed the signature');
+	}
 	$changed = 'function before(): int { return 0; } ' . $changed;
 	file_put_contents($path, $changed);
 	$compiler->update_cpp([$path]);
 	$compiler->cleanup_tokens();
 	$tokens = Model::tokens()[0];
-	if (($function->body !== $body) || ($tokens->text_at($binary->operator_token_index) !== '-')) {
-		throw new \LogicException('Token cleanup lost the retained subtraction operator');
+	if (($function->body !== $body) || ($tokens->text_at($binary->operator_token_index) !== '*')) {
+		throw new \LogicException('Token cleanup lost the retained multiplication operator');
 	}
 	$incremental = Model::$cpp_files[0]->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	if (Model::$cpp_files[0]->text !== $incremental) {
-		throw new \LogicException('Incremental subtraction output differs from a fresh build');
+		throw new \LogicException('Incremental arithmetic output differs from a fresh build');
 	}
 }
 finally {

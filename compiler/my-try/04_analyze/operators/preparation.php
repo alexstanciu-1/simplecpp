@@ -31,8 +31,9 @@ final class Operator_Preparation
 		if ($operator_context !== operator_context::expression) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
 		}
-		if (($source_operator === operator_kind::addition) || ($source_operator === operator_kind::subtraction)) {
-			return Integer_Operators::decide_additive($source_operator, $operands, $context);
+		if (($source_operator === operator_kind::addition) || ($source_operator === operator_kind::subtraction)
+			|| ($source_operator === operator_kind::multiplication)) {
+			return Integer_Operators::decide_arithmetic($source_operator, $operands, $context);
 		}
 
 		throw new \RuntimeException('S2S operator is not supported yet');
@@ -48,6 +49,9 @@ final class Operator_Preparation
 		}
 		if ($operator_text === '-') {
 			return operator_kind::subtraction;
+		}
+		if ($operator_text === '*') {
+			return operator_kind::multiplication;
 		}
 		throw new \RuntimeException('S2S binary operator is not supported yet');
 	}
@@ -66,6 +70,6 @@ final class Operator_Preparation
 		($node instanceof binary_expression_node)) {
 			return;
 		}
-		throw new \RuntimeException('S2S integer additive operation requires order-independent operands');
+		throw new \RuntimeException('S2S integer arithmetic operation requires order-independent operands');
 	}
 }

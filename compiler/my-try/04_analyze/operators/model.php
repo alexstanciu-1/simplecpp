@@ -10,11 +10,13 @@ enum operator_context {
 enum operator_kind {
 	case addition;
 	case subtraction;
+	case multiplication;
 }
 
 enum operator_operation {
 	case integer_addition;
 	case integer_subtraction;
+	case integer_multiplication;
 }
 
 /** One selected operator shape with ordered operand conversions and result type. */

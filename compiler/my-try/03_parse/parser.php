@@ -643,22 +643,44 @@ final class Parser_Run
 		return $statement;
 	}
 
-	/** Addition and subtraction share one left-associative precedence level. */
 	private function expression(bool $allow_assignment = false): expression_node
+	{
+		return $this->binary_expression(1, $allow_assignment);
+	}
+
+	/** Climb supported precedence levels; a tighter RHS preserves left associativity. */
+	private function binary_expression(int $minimum_precedence, bool $allow_assignment): expression_node
 	{
 		$start = $this->position;
 		$left = $this->primary_expression($allow_assignment);
-		while (($this->text() === '+') || ($this->text() === '-'))
+		while (true)
 		{
+			$precedence = $this->binary_precedence();
+			if ($precedence < $minimum_precedence) {
+				break;
+			}
 			$operator_token_index = $this->position++;
 			$binary = new binary_expression_node();
 			$binary->left = $left;
 			$binary->operator_token_index = $operator_token_index;
-			$binary->right = $this->primary_expression(false);
+			$binary->right = $this->binary_expression($precedence + 1, false);
 			$this->finish_node($binary, $start);
 			$left = $binary;
 		}
 		return $left;
+	}
+
+	/** Zero ends the expression; only admitted operators receive a precedence level. */
+	private function binary_precedence(): int
+	{
+		$text = $this->text();
+		if (($text === '+') || ($text === '-')) {
+			return 1;
+		}
+		if ($text === '*') {
+			return 2;
+		}
+		return 0;
 	}
 
 	/** Parse literals, calls, variables and right-associative assignment expressions. */

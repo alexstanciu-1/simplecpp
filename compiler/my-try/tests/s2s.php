@@ -106,6 +106,17 @@ $cases = [
 	'sub_cast' => ['$x uint8 = 7; return (int)$x - 2;', 5],
 	'sub_minimum' => ['$a = 0 - PHP_INT_MAX - 1; return $a + PHP_INT_MAX + 1;', 0],
 	'sub_maximum' => ['$a = (PHP_INT_MAX) - 0; return 0;', 0],
+	'mul_catalog' => ['$a = 2 * 3; return $a;', 6],
+	'mul_precedence_right' => ['return 2 + 3 * 4 - 5;', 9],
+	'mul_precedence_left' => ['return 2 * 3 + 4;', 10],
+	'mul_grouped' => ['return (2 + 3) * 4;', 20],
+	'mul_chain' => ['return 2 * 3 * 4;', 24],
+	'mul_cast' => ['$x uint8 = 3; return (int)$x * 2;', 6],
+	'mul_reassignment' => ['$a = 3; $a = $a * 2; return $a;', 6],
+	'mul_assignment_chain' => ['$a = $b = 2 + 3 * 4; return $a + $b;', 28],
+	'mul_zero' => ['return PHP_INT_MAX * 0;', 0],
+	'mul_negative' => ['$a = (0 - 3) * 2; return $a + 6;', 0],
+	'mul_wide' => ['$a = 3037000499 * 3037000499; return 0;', 0],
 	'group_catalog' => ['$b = 2; $a = ($b + 1); return $a;', 3],
 	'group_right' => ['return 1 + (2 + 3);', 6],
 	'group_left' => ['return ((1 + 2)) + 3;', 6],
@@ -529,14 +540,15 @@ foreach ($cases as $name => [$source, $exit])
 	}
 
 	// Verify signed values directly; process exit codes alone lose sign and high bits.
-	$subtraction_values = ['sub_catalog' => '-1LL',
-		'sub_minimum' => '(-9223372036854775807LL - 1LL)', 'sub_maximum' => '9223372036854775807LL'];
-	if (isset($subtraction_values[$name]))
+	$arithmetic_values = ['sub_catalog' => '-1LL',
+		'sub_minimum' => '(-9223372036854775807LL - 1LL)', 'sub_maximum' => '9223372036854775807LL',
+		'mul_negative' => '-6LL', 'mul_wide' => '9223372030926249001LL'];
+	if (isset($arithmetic_values[$name]))
 	{
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
-		$probe .= "\tif (local_a.native_value() != " . $subtraction_values[$name] . ") { return 91; }\n";
+		$probe .= "\tif (local_a.native_value() != " . $arithmetic_values[$name] . ") { return 91; }\n";
 		$text = Model::$cpp_files[0]->text;
-		$site = $name === 'sub_maximum' ? "\treturn 0;" : "\treturn static_cast<int>";
+		$site = (($name === 'sub_maximum') || ($name === 'mul_wide')) ? "\treturn 0;" : "\treturn static_cast<int>";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace($site, $probe . $site, $text));
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
@@ -667,10 +679,10 @@ foreach ($variable_copy_rejections as $name => [$source, $diagnostic])
 
 $integer_addition_rejections = [
 	'undeclared operand' => ['$b = $missing + 1;', 'established local declaration for missing'],
-	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer additive operation requires canonical int operands'],
-	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer additive operation requires canonical int operands'],
-	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'integer additive operation requires order-independent operands'],
-	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'integer additive operation requires order-independent operands'],
+	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer arithmetic operation requires canonical int operands'],
+	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer arithmetic operation requires canonical int operands'],
+	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'integer arithmetic operation requires order-independent operands'],
+	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'integer arithmetic operation requires order-independent operands'],
 ];
 foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 {

@@ -92,7 +92,7 @@ final class Tokenizer
 		if (string_byte_slice($this->content, $offset, 2) === '->') {
 			return $offset + 2;
 		}
-		$punctuation = ';(){}:,&[]<>+-';
+		$punctuation = ';(){}:,&[]<>+-*';
 		for ($index = 0; $index < string_byte_len($punctuation); $index++) {
 			if ($byte === string_byte_at($punctuation, $index)) {
 				return $offset + 1;

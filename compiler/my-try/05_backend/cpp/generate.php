@@ -353,6 +353,9 @@ final class CPP_Generator
 		elseif ($decision->operation === operator_operation::integer_subtraction) {
 			$spelling = '-';
 		}
+		elseif ($decision->operation === operator_operation::integer_multiplication) {
+			$spelling = '*';
+		}
 		else {
 			throw new \RuntimeException('C++ binary operation is not supported yet');
 		}

@@ -5,17 +5,17 @@ namespace scpp\compiler;
 
 final class Integer_Operators
 {
-	/** Select canonical-int additive operations through one exact operand/conversion policy. */
-	public static function decide_additive(operator_kind $source_operator,
+	/** Select canonical-int arithmetic operations through one exact operand/conversion policy. */
+	public static function decide_arithmetic(operator_kind $source_operator,
 	array $operands /** vector<canonical_type_use> */,
 	preparation_context $context): operator_decision
 	{
 		if (q_count($operands) !== 2) {
-			throw new \LogicException('Integer additive operation requires two operands');
+			throw new \LogicException('Integer arithmetic operation requires two operands');
 		}
 		$integer = $context->integer;
 		if ((!$operands[0]->matches($integer)) || (!$operands[1]->matches($integer))) {
-			throw new \RuntimeException('S2S integer additive operation requires canonical int operands');
+			throw new \RuntimeException('S2S integer arithmetic operation requires canonical int operands');
 		}
 
 		$decision = new operator_decision();
@@ -26,8 +26,11 @@ final class Integer_Operators
 		elseif ($source_operator === operator_kind::subtraction) {
 			$decision->operation = operator_operation::integer_subtraction;
 		}
+		elseif ($source_operator === operator_kind::multiplication) {
+			$decision->operation = operator_operation::integer_multiplication;
+		}
 		else {
-			throw new \LogicException('Unsupported integer additive operation');
+			throw new \LogicException('Unsupported integer arithmetic operation');
 		}
 		$decision->operands[] = Conversion_Preparation::decide(
 		$operands[0], $integer, conversion_context::operator_operand);
