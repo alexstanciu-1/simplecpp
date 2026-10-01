@@ -96,7 +96,7 @@ final class Expression_Preparation
 
 		$left = self::prepare($node->left, $context);
 		$right = self::prepare($node->right, $context);
-		if (($left->type !== $context->integer) || ($right->type !== $context->integer)) {
+		if ((!$left->type->matches($context->integer)) || (!$right->type->matches($context->integer))) {
 			throw new \RuntimeException('S2S integer addition requires canonical int operands');
 		}
 
@@ -202,13 +202,14 @@ final class Expression_Preparation
 	{
 		$base = $syntax->base;
 		$value = Expression_Preparation::prepare($base, $context);
-		if ($value->type->kind !== type_kind::record) {
+		$declaration = Type_Preparation::source_record($value->type);
+		if ($declaration === null) {
 			throw new \RuntimeException('S2S member access requires a struct value');
 		}
 
 		$context->worker->require_record($value->type, $context);
-		$declaration /** collected_struct */ = $value->type->declaration;
-		$record = $declaration->syntax()->require_preparation();
+		$record_entry /** collected_struct */ = $declaration;
+		$record = $record_entry->syntax()->require_preparation();
 		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;
 		$matches /** vector<prepared_field> */ = $fields->named($syntax->occurrence()->name);
 		if (q_count($matches) !== 1) {

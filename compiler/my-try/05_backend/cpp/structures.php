@@ -22,7 +22,7 @@ final class cpp_assignment_sequence
 {
 	public string $statements = '';
 	public string $value;
-	public type_definition $type;
+	public canonical_type_use $type;
 }
 
 /** Final bytes own no references into preparation or source syntax. */
@@ -50,7 +50,7 @@ final class cpp_generation_context
 	public string $functions = '';
 
 	/** Null selects native main-return spelling; a function uses its prepared return type. */
-	public ?type_definition $return_type = null;
+	public ?canonical_type_use $return_type = null;
 	/** Invocation-local allocation keeps nested argument temporaries distinct. */
 	public int $next_temporary = 0;
 	/** Fragment rendering leaves dependency ordering to assembly. */

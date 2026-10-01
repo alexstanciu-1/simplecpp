@@ -65,8 +65,13 @@ try
 	$compiler->sync([$path]);
 	$compiler->prepare();
 	$source = Model::collected_files()[0];
-	$body_owner = cpp_function('target')->body->work();
-	Language_Types::integer(Model::$language_scope)->value_bits = 32;
+	$target_body_node = cpp_function('target')->body;
+	$body_owner = $target_body_node->work();
+	$target_statements = $target_body_node->statements;
+	$target_return = object_cast($target_statements[0], return_node::class);
+	$target_literal = object_cast($target_return->expression, integer_literal_node::class);
+	$valid_literal_type = $target_literal->require_integer_literal_preparation()->type;
+	$target_literal->require_integer_literal_preparation()->type = new canonical_type_use(Type_Identity::MAX);
 	$failed = false;
 	try {
 		$compiler->cpp();
@@ -76,7 +81,7 @@ try
 	}
 	cpp_check($failed && Model::$cpp_files->is_empty() && isset($source->preparation_changes[$body_owner]), 'Failed generation lost dirty work or published output');
 	cpp_check(Model::$cpp_output_program->fragments[$body_owner]->change_status === change_state::changed, 'Failed fragment was settled');
-	Language_Types::integer(Model::$language_scope)->value_bits = 64;
+	$target_literal->require_integer_literal_preparation()->type = $valid_literal_type;
 	$compiler->cpp();
 	cpp_check(Model::$cpp_output_program->fragments[$body_owner]->change_status === change_state::unchanged && count($source->preparation_changes) === 0, 'Retry did not settle generation');
 

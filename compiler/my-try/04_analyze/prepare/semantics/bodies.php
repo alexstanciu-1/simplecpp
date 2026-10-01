@@ -79,8 +79,8 @@ final class Body_Preparation
 		if ($syntax->expression === null)
 		{
 			if ($context->return_type !== null) {
-				$type /** type_definition */ = $context->return_type;
-				if ($type->kind !== type_kind::void_type) {
+				$type /** canonical_type_use */ = $context->return_type;
+				if (Type_Preparation::canonical($type)->family() !== type_family::no_value) {
 					throw new \RuntimeException('S2S non-void return requires a value');
 				}
 			}
@@ -90,7 +90,7 @@ final class Body_Preparation
 		$expression /** expression_node */ = $syntax->expression;
 		$value = Expression_Preparation::prepare($expression, $context);
 		if ($context->return_type !== null) {
-			$type /** type_definition */ = $context->return_type;
+			$type /** canonical_type_use */ = $context->return_type;
 			Type_Preparation::require_assignable($type, $value->type);
 		}
 		elseif (!Type_Preparation::entry_return_type($value->type)) {

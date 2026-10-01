@@ -16,7 +16,7 @@ final class scope
 	/** @storage.reference collected_file.entries @reference.weak */
 	private Key_Storage_List $functions /** Key_Storage_List<collected_function> */;
 	/** Definitions owned here; published scopes retain the same definition objects. */
-	private Key_Storage_List $types /** Key_Storage_List<type_definition> */;
+	private Key_Storage_List $types /** Key_Storage_List<type_definition_i> */;
 	/** Constant namespace is independent of variables, functions and types. */
 	private Key_Storage_List $constants /** Key_Storage_List<constant_definition> */;
 
@@ -25,7 +25,7 @@ final class scope
 		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
 		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
-		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition> */();
+		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition_i> */();
 		$this->constants = new Key_Storage_List /** Key_Storage_List<constant_definition> */();
 	}
 
@@ -83,10 +83,10 @@ final class scope
 		}
 	}
 
-	public function register_type(type_definition $definition): void
+	public function register_type(type_definition_i $definition): void
 	{
-		$types /** Key_Storage_List<type_definition> */ = $this->types;
-		$types->add($definition->name, $definition);
+		$types /** Key_Storage_List<type_definition_i> */ = $this->types;
+		$types->add($definition->name(), $definition);
 	}
 
 	public function register_constant(constant_definition $definition): void
@@ -100,13 +100,17 @@ final class scope
 	{
 		$functions /** Key_Storage_List<collected_function> */ = $this->functions;
 		$variables /** Key_Storage_List<collected_name> */ = $this->variables;
-		$types /** Key_Storage_List<type_definition> */ = $this->types;
+		$types /** Key_Storage_List<type_definition_i> */ = $this->types;
 		if ($entry instanceof collected_function) {
 			$functions->remove($entry->name, object_cast($entry, collected_function::class));
 		}
 		$variables->remove($entry->name, $entry);
 		foreach ($types->named($entry->name) as $definition) {
-			if ($definition->declaration === $entry) {
+			if ($definition->origin() === type_definition_origin::source) {
+				$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+				if ($declaration !== $entry) {
+					continue;
+				}
 				$types->remove($entry->name, $definition);
 			}
 		}
@@ -146,9 +150,9 @@ final class scope
 	}
 
 	/** The small definition store owns records; lookup does not introduce another registry. */
-	public function types_named(string $name): array /** vector<type_definition> */
+	public function types_named(string $name): array /** vector<type_definition_i> */
 	{
-		$items /** Key_Storage_List<type_definition> */ = $this->types;
+		$items /** Key_Storage_List<type_definition_i> */ = $this->types;
 		return $items->named($name);
 	}
 
@@ -164,9 +168,8 @@ final class scope
 	{
 		$result /** vector<collected_struct> */ = [];
 		foreach ($this->types_named($name) as $definition) {
-			if ($definition->declaration !== null) {
-				$entry /** collected_struct */ = $definition->declaration;
-				$result[] = $entry;
+			if ($definition->origin() === type_definition_origin::source) {
+				$result[] = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			}
 		}
 		return $result;
@@ -203,10 +206,10 @@ final class scope
 	}
 
 	/** Snapshot membership while preserving type-definition identity. */
-	public function type_definitions(): array /** vector<type_definition> */
+	public function type_definitions(): array /** vector<type_definition_i> */
 	{
-		$result /** vector<type_definition> */ = [];
-		$types /** Key_Storage_List<type_definition> */ = $this->types;
+		$result /** vector<type_definition_i> */ = [];
+		$types /** Key_Storage_List<type_definition_i> */ = $this->types;
 		foreach ($types->items() as $definition) {
 			$result[] = $definition;
 		}

@@ -295,13 +295,14 @@ final class Preparation_Worker
 	}
 
 	/** By-value record layout requires completion and therefore detects declaration cycles. */
-	public function require_record(type_definition $type, preparation_context $context): void
+	public function require_record(canonical_type_use $type, preparation_context $context): void
 	{
-		if ($type->kind !== type_kind::record) {
+		$entry = Type_Preparation::source_record($type);
+		if ($entry === null) {
 			return;
 		}
-		$entry /** collected_struct */ = $type->declaration;
-		$this->require_declaration($context->owner, $entry);
+		$record /** collected_struct */ = $entry;
+		$this->require_declaration($context->owner, $record);
 	}
 
 	/** Preserve dependency ownership while replacing only the selected owner's registrations. */
@@ -658,6 +659,9 @@ final class Preparation_Worker
 			if ($entry->is_exported() && ($global !== null)) {
 				$published /** scope */ = $global;
 				$published->unregister($entry);
+			}
+			if ($entry instanceof collected_struct) {
+				Model::$type_catalog->source_declarations()->retire(object_cast($entry, collected_struct::class));
 			}
 			$removed[] = $entry->local_index;
 		}

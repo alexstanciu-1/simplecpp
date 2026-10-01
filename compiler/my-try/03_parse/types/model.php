@@ -2,8 +2,8 @@
 
 /*
  * Role: Canonical Simple C++ type definitions, concrete identities and exact
- * template-application interning. This review candidate contains no backend
- * spelling and is not bootstrapped into the current compiler yet.
+ * template-application interning. Backend spelling remains in the independent
+ * C++ binding catalog.
  */
 namespace scpp\compiler;
 
@@ -598,6 +598,11 @@ final class canonical_type_use
 	public function by_value(): bool
 	{
 		return $this->use_by_value;
+	}
+
+	public function matches(canonical_type_use $other): bool
+	{
+		return ($this->identity === $other->identity) && ($this->use_by_value === $other->use_by_value);
 	}
 }
 

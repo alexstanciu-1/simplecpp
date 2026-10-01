@@ -190,7 +190,7 @@ foreach ($cases as $name => [$source, $exit])
 		$facts = $constant->require_constant_reference_preparation();
 		$definition = object_cast($facts->definition, integer_constant_definition::class);
 		if (($definition !== Model::$language_scope->constants_named('PHP_INT_MAX')[0]) ||
-			($facts->type !== Language_Types::integer(Model::$language_scope)) ||
+			(!$facts->type->matches(Language_Types::integer(Model::$language_scope))) ||
 			($definition->decimal !== '9223372036854775807') || $facts->addressable ||
 			!str_contains($text, 'auto local_a = static_cast<scpp::int_t<>>(9223372036854775807LL);') ||
 			!str_contains($text, '#include "scpp/int_t.hpp"') || str_contains($text, 'string_support.hpp')) {
@@ -209,7 +209,7 @@ foreach ($cases as $name => [$source, $exit])
 			. "\tauto local_a = local_b;\n";
 		if (($inner_binding->resolved_kind !== binding_kind::declaration) ||
 			($outer_binding->resolved_kind !== binding_kind::declaration) ||
-			($inner_binding->type !== $outer_binding->type) || !str_contains($text, $expected)) {
+			(!$inner_binding->type->matches($outer_binding->type)) || !str_contains($text, $expected)) {
 			throw new \LogicException('Assignment chain lost right-associative facts or inner-first lowering');
 		}
 	}
@@ -283,7 +283,7 @@ foreach ($cases as $name => [$source, $exit])
 			($first_identity === $third_identity) ||
 			(weakref_get($second_source->require_variable_reference_preparation()->declaration) !== $first_identity) ||
 			(weakref_get($third_source->require_variable_reference_preparation()->declaration) !== $second_identity) ||
-			($first_facts->type !== $second_facts->type) || ($second_facts->type !== $third_facts->type) ||
+			(!$first_facts->type->matches($second_facts->type)) || (!$second_facts->type->matches($third_facts->type)) ||
 			!str_contains($text, $expected) || str_contains($text, 'auto local_b = static_cast') ||
 			str_contains($text, 'auto local_c = static_cast')) {
 			throw new \LogicException('VAR-CHAIN-003 lost source-order identities, canonical type or direct copy lowering');
@@ -304,9 +304,9 @@ foreach ($cases as $name => [$source, $exit])
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 			. "\tauto local_b = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
 		$text = Model::$cpp_files[0]->text;
-		if (($binary_facts->operation !== binary_operation::addition) || ($binary_facts->type !== $integer_type) ||
-			$binary_facts->addressable || ($left->require_preparation()->type !== $integer_type) ||
-			($right->require_preparation()->type !== $integer_type) || ($second_facts->type !== $integer_type) ||
+		if (($binary_facts->operation !== binary_operation::addition) || (!$binary_facts->type->matches($integer_type)) ||
+			$binary_facts->addressable || (!$left->require_preparation()->type->matches($integer_type)) ||
+			(!$right->require_preparation()->type->matches($integer_type)) || (!$second_facts->type->matches($integer_type)) ||
 			(weakref_get($left->require_variable_reference_preparation()->declaration) !== weakref_get($first_facts->binding->declaration)) ||
 			!str_contains($text, $expected) || !str_contains($text, '#include "scpp/generated/operators.hpp"')) {
 			throw new \LogicException('VAR-CHAIN-004 lost integer addition facts, source identity or normalized lowering');
@@ -331,7 +331,7 @@ foreach ($cases as $name => [$source, $exit])
 			(weakref_get($second_facts->binding->declaration) !== $declaration) ||
 			(weakref_get($self_reference->require_variable_reference_preparation()->declaration) !== $declaration) ||
 			($binary_facts->operation !== binary_operation::addition) ||
-			($first_facts->type !== $binary_facts->type) || ($second_facts->type !== $binary_facts->type) ||
+			(!$first_facts->type->matches($binary_facts->type)) || (!$second_facts->type->matches($binary_facts->type)) ||
 			!str_contains($text, $expected) || (substr_count($text, 'auto local_a =') !== 1)) {
 			throw new \LogicException('VAR-REASSIGN-002 redeclared its target or lost self-read/addition facts');
 		}
@@ -360,8 +360,8 @@ foreach ($cases as $name => [$source, $exit])
 			(weakref_get($left_facts->declaration) !== $declaration) ||
 			(weakref_get($right_facts->declaration) !== $declaration) ||
 			($binary_facts->operation !== binary_operation::addition) ||
-			($left_facts->type !== $binary_facts->type) || ($right_facts->type !== $binary_facts->type) ||
-			($second_facts->type !== $binary_facts->type) || !str_contains($text, $expected) ||
+			(!$left_facts->type->matches($binary_facts->type)) || (!$right_facts->type->matches($binary_facts->type)) ||
+			(!$second_facts->type->matches($binary_facts->type)) || !str_contains($text, $expected) ||
 			(substr_count($text, 'auto local_a =') !== 1)) {
 			throw new \LogicException('VAR-REASSIGN-003 lost distinct reads, shared identity or reassignment lowering');
 		}
@@ -388,7 +388,7 @@ foreach ($cases as $name => [$source, $exit])
 			($source->name !== 'int') || ($source->occurrence()->name !== 'int') ||
 			($parameter_identity === $local_identity) ||
 			(weakref_get($source_facts->declaration) !== $parameter_identity) ||
-			($parameter_facts->type !== $source_facts->type) || ($source_facts->type !== $assignment_facts->type) ||
+			(!$parameter_facts->type->matches($source_facts->type)) || (!$source_facts->type->matches($assignment_facts->type)) ||
 			(substr_count($text, $signature) !== 2) || !str_contains($text, $definition) ||
 			str_contains($text, 'int__') || str_contains($text, 'while__')) {
 			throw new \LogicException('IDENT-VAR-001 lost role-prefixed names, identity or signature consistency');
@@ -579,9 +579,9 @@ if (($source_binding->resolved_kind !== binding_kind::declaration) ||
 	(weakref_get($source_reference_facts->declaration) !== $source_identity) ||
 	(weakref_get($mutation_binding->declaration) !== $source_identity) ||
 	(weakref_get($copy_reference_facts->declaration) !== $copy_identity) ||
-	($source_binding->type !== $integer_type) || ($copy_facts->type !== $integer_type) ||
-	($copy_binding->type !== $integer_type) || ($source_reference_facts->type !== $integer_type) ||
-	($mutation_binding->type !== $integer_type) || ($copy_reference_facts->type !== $integer_type)) {
+	(!$source_binding->type->matches($integer_type)) || (!$copy_facts->type->matches($integer_type)) ||
+	(!$copy_binding->type->matches($integer_type)) || (!$source_reference_facts->type->matches($integer_type)) ||
+	(!$mutation_binding->type->matches($integer_type)) || (!$copy_reference_facts->type->matches($integer_type))) {
 	throw new \LogicException('Variable copy lost source order, declaration identity or canonical type');
 }
 $compiler->cpp();
@@ -659,9 +659,9 @@ if (($declaration_facts->binding->resolved_kind !== binding_kind::declaration) |
 	($reassignment_facts->binding->resolved_kind !== binding_kind::assignment) ||
 	(weakref_get($reassignment_facts->binding->declaration) !== $declaration_identity) ||
 	(weakref_get($result_facts->declaration) !== $declaration_identity) ||
-	($declaration_facts->type !== $integer_type) || ($declaration_facts->binding->type !== $integer_type) ||
-	($reassignment_facts->type !== $integer_type) || ($reassignment_facts->binding->type !== $integer_type) ||
-	($result_facts->type !== $integer_type)) {
+	(!$declaration_facts->type->matches($integer_type)) || (!$declaration_facts->binding->type->matches($integer_type)) ||
+	(!$reassignment_facts->type->matches($integer_type)) || (!$reassignment_facts->binding->type->matches($integer_type)) ||
+	(!$result_facts->type->matches($integer_type))) {
 	throw new \LogicException('Reassignment lost declaration identity, outcome or canonical type');
 }
 $compiler->cpp();
@@ -737,7 +737,7 @@ $assignment_facts = $assignment->require_assignment_preparation()->binding;
 $string_type = Language_Types::string_type(Model::$language_scope);
 if (($declaration_facts->resolved_kind !== binding_kind::declaration) ||
 	($assignment_facts->resolved_kind !== binding_kind::assignment) ||
-	($declaration_facts->type !== $string_type) || ($assignment_facts->type !== $string_type) ||
+	(!$declaration_facts->type->matches($string_type)) || (!$assignment_facts->type->matches($string_type)) ||
 	(weakref_get($declaration_facts->declaration) !== weakref_get($assignment_facts->declaration))) {
 	throw new \LogicException('Explicit string local lost its prepared type or declaration identity');
 }
@@ -842,7 +842,10 @@ $compiler->prepare();
 $float_facts = $float_data->require_float_literal_preparation();
 $floating = Language_Types::floating(Model::$language_scope);
 $resolved = Scope_Lookup::types(Model::$global_scope, 'float');
-if (($resolved[0] !== $floating) || ($floating->value_bits !== 64) || !$floating->signed || ($float_facts->decimal !== '1.2345678901234567') || ($float_facts->type !== $floating) || ($children[1]->expression->require_preparation()->type !== $floating)) {
+$floating_definition = object_cast($resolved[0], floating_type_definition::class);
+if (($floating_definition->storage_bits() !== 64) || ($floating_definition->precision_bits() !== 53)
+	|| ($float_facts->decimal !== '1.2345678901234567') || (!$float_facts->type->matches($floating))
+	|| (!$children[1]->expression->require_preparation()->type->matches($floating))) {
 	throw new \LogicException('Floating literal lost precision or canonical type identity');
 }
 $compiler->cpp();
@@ -887,13 +890,13 @@ $compiler = new Compiler();
 $compiler->prepare();
 $string_type = Language_Types::string_type(Model::$language_scope);
 $resolved = Scope_Lookup::types(Model::$global_scope, 'string');
-if (($resolved[0] !== $string_type) || ($string_type->kind !== type_kind::string_type)) {
+if (Type_Preparation::canonical($string_type)->definition() !== $resolved[0]) {
 	throw new \LogicException('Canonical string identity changed');
 }
 foreach ($string_nodes as $index => $string_node)
 {
 	$facts = $string_node->require_string_literal_preparation();
-	if (($facts->value !== $expected_values[$index]) || ($facts->type !== $string_type)) {
+	if (($facts->value !== $expected_values[$index]) || (!$facts->type->matches($string_type))) {
 		throw new \LogicException('String literal lost decoded bytes or canonical type');
 	}
 	foreach ($syntax->collection->entries as $entry) {
@@ -933,7 +936,7 @@ $compiler = new Compiler();
 $compiler->prepare();
 $boolean_type = Language_Types::boolean(Model::$language_scope);
 $literal_facts = $literal_data->require_boolean_literal_preparation();
-if (($literal_node->kind() !== node_kind::boolean_literal) || (Syntax_Nodes::category($literal_node) !== node_category::expression) || $literal_data->value || $literal_facts->value || ($literal_facts->type !== $boolean_type) || ($reference_data->require_preparation()->type !== $boolean_type)) {
+if (($literal_node->kind() !== node_kind::boolean_literal) || (Syntax_Nodes::category($literal_node) !== node_category::expression) || $literal_data->value || $literal_facts->value || (!$literal_facts->type->matches($boolean_type)) || (!$reference_data->require_preparation()->type->matches($boolean_type))) {
 	throw new \LogicException('Boolean syntax, false value or inferred type changed');
 }
 foreach ($syntax->collection->entries as $entry) {
@@ -1004,7 +1007,8 @@ if (($first_data->require_assignment_preparation() !== $binding_facts) || (Model
 	throw new \LogicException('Output reset changed shared preparation');
 }
 $compiler->cpp();
-Language_Types::integer(Model::$language_scope)->value_bits = 32;
+$valid_integer_type = $first_literal_data->require_integer_literal_preparation()->type;
+$first_literal_data->require_integer_literal_preparation()->type = new canonical_type_use(Type_Identity::MAX);
 // Fault injection must invalidate the fragment whose prepared representation was altered.
 Model::$cpp_output_program->fragments[$syntax->collection->root->body->work()]->change_status = change_state::changed;
 $failed = false;
@@ -1017,7 +1021,7 @@ catch (\RuntimeException $expected) {
 if ((!$failed) || ($first_data->preparation() !== $binding_facts) || ($first_literal_data->preparation() !== $literal_facts) || (Model::$prepared_files[0] !== $completion) || (!Model::$cpp_files->is_empty())) {
 	throw new \LogicException('Emission failure damaged shared preparation or retained stale output');
 }
-Language_Types::integer(Model::$language_scope)->value_bits = 64;
+$first_literal_data->require_integer_literal_preparation()->type = $valid_integer_type;
 $compiler->cpp();
 if (Model::$cpp_files[0]->text !== $output->text) {
 	throw new \LogicException('Emission retry changed output');
@@ -1069,21 +1073,18 @@ $root = $syntax->root->file_scope();
 $local = new scope();
 $local->set_parent($root);
 $found = Scope_Lookup::types($local, 'int');
-if (count($found) !== 1 || $found[0]->origin !== type_origin::source || $found[0] !== $root->types_named('int')[0]) {
+if (count($found) !== 1 || $found[0]->origin() !== type_definition_origin::source || $found[0] !== $root->types_named('int')[0]) {
 	throw new \LogicException('Source type did not shadow parent or publication copied its identity');
 }
-$entry = $found[0]->declaration;
+$entry = Model::$type_catalog->source_declarations()->declaration($found[0]->definition_id());
 $entry->change_status = change_state::deleted;
 (new Preparation_Worker(Model::$language_scope))->remove_deleted_sources(Model::collected_files());
 $found = Scope_Lookup::types($local, 'int');
-if (count($found) !== 1 || $found[0] !== Language_Types::integer(Model::$language_scope)) {
+$language_integer = Type_Preparation::canonical(Language_Types::integer(Model::$language_scope))->definition();
+if (count($found) !== 1 || $found[0] !== $language_integer) {
 	throw new \LogicException('Deleted source type blocked parent lookup');
 }
-$replacement = new type_definition();
-$replacement->name = 'int';
-$replacement->kind = type_kind::record;
-$replacement->origin = type_origin::source;
-$replacement->declaration = $entry;
+$replacement = Model::$type_catalog->define_source_structure('int', $entry)->nominal_definition();
 $entry->changes = 0;
 $local->register_type($replacement);
 if (Scope_Lookup::types($local, 'int')[0] !== $replacement) {

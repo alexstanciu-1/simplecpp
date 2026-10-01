@@ -154,8 +154,9 @@ final class CPP_Generator
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 				$records /** Storage<collected_struct> */ = $next->records;
 				foreach ($fields->items() as $field) {
-					if ($field->type->kind === type_kind::record) {
-						$record /** collected_struct */ = $field->type->declaration;
+					$source_record = Type_Preparation::source_record($field->type);
+					if ($source_record !== null) {
+						$record /** collected_struct */ = $source_record;
 						$records->append($record);
 					}
 				}
@@ -234,14 +235,14 @@ final class CPP_Generator
 	}
 
 	/** Render one declaration or assignment from an already evaluated value expression. */
-	private static function generate_storage_value(prepared_binding $binding, string $name, string $value, type_definition $value_type, bool $explicit_type, cpp_generation_context $context): string
+	private static function generate_storage_value(prepared_binding $binding, string $name, string $value, canonical_type_use $value_type, bool $explicit_type, cpp_generation_context $context): string
 	{
 		$prefix = '';
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
 		}
 		if (($explicit_type || ($binding->resolved_kind === binding_kind::assignment)) &&
-			($binding->type !== $value_type)) {
+			(!$binding->type->matches($value_type))) {
 			$value = CPP_Declarations::value($value, $binding->type, $context);
 		}
 		return $prefix . $name . ' = ' . $value;
@@ -257,7 +258,7 @@ final class CPP_Generator
 		$expression /** ast_node */ = $syntax->expression;
 		$value = $expression->generate_cpp(new CPP_Syntax($context));
 		if ($context->return_type !== null) {
-			$type /** type_definition */ = $context->return_type;
+			$type /** canonical_type_use */ = $context->return_type;
 			return "\treturn " . CPP_Declarations::value($value, $type, $context) . ";\n";
 		}
 		return "\treturn static_cast<int>((" . $value . ").native_value());\n";
@@ -314,7 +315,7 @@ final class CPP_Generator
 	}
 
 	/** Constants and source literals share exact integer representation and header selection. */
-	private static function generate_integer_value(type_definition $type, string $decimal, cpp_generation_context $context): string
+	private static function generate_integer_value(canonical_type_use $type, string $decimal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($type);
 		$context->headers[$mapping->header] = true;

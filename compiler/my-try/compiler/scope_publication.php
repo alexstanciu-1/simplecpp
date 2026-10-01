@@ -14,9 +14,12 @@ final class Scope_Publication
 		elseif ($entry instanceof collected_struct)
 		{
 			foreach ($local_scope->types_named($entry->name) as $definition) {
-				if ($definition->declaration === $entry) {
-					$global->register_type($definition);
-					break;
+				if ($definition->origin() === type_definition_origin::source) {
+					$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+					if ($declaration === $entry) {
+						$global->register_type($definition);
+						break;
+					}
 				}
 			}
 		}
@@ -33,8 +36,9 @@ final class Scope_Publication
 			$global->register($entry);
 		}
 		foreach ($local_scope->type_definitions() as $definition) {
-			if ($definition->declaration !== null) {
-				object_cast($definition->declaration, collected_declaration::class)->exported = true;
+			if ($definition->origin() === type_definition_origin::source) {
+				$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+				object_cast($declaration, collected_declaration::class)->exported = true;
 			}
 			$global->register_type($definition);
 		}

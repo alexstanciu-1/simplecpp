@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class CPP_Declarations
 {
 	/** Type spelling also records the narrow runtime include needed by the output unit. */
-	public static function type(type_definition $type, cpp_generation_context $context): string
+	public static function type(canonical_type_use $type, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($type);
 		if ($mapping->header !== '') {
@@ -17,9 +17,9 @@ final class CPP_Declarations
 	}
 
 	/** Integer wrapper conversions are explicit; struct and other scalar copies keep their type. */
-	public static function value(string $expression, type_definition $destination, cpp_generation_context $context): string
+	public static function value(string $expression, canonical_type_use $destination, cpp_generation_context $context): string
 	{
-		if ($destination->kind === type_kind::integer) {
+		if (Type_Preparation::canonical($destination)->family() === type_family::integer) {
 			return 'static_cast<' . self::type($destination, $context) . '>((' . $expression . ').native_value())';
 		}
 
@@ -77,9 +77,12 @@ final class CPP_Declarations
 		foreach ($fields->items() as $field)
 		{
 			$type = $field->type;
-			if (($type->kind === type_kind::record) && $context->expand_records) {
-				$entry = object_cast($type->declaration, collected_name::class);
-				self::generate_struct(object_cast($entry, collected_struct::class)->syntax(), $context);
+			$source_record = Type_Preparation::source_record($type);
+			if ($source_record !== null) {
+				$record_entry /** collected_struct */ = $source_record;
+				if ($context->expand_records) {
+					self::generate_struct($record_entry->syntax(), $context);
+				}
 			}
 
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);

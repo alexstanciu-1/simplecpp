@@ -21,19 +21,20 @@ model, but must not determine its shape by accumulating pair-specific cases.
 
 ## Current implementation baseline
 
-The current compiler already separates several useful responsibilities:
+The compiler now separates these responsibilities:
 
 - `type_node` describes source type syntax;
-- `type_definition` is the canonical prepared meaning currently attached to uses;
+- specialized semantic definitions describe boolean, integer, floating, nominal,
+  template and no-value invariants;
+- `canonical_type_use` is the lightweight identity currently attached to prepared
+  source occurrences;
 - scopes own type lookup;
 - preparation resolves names and publishes canonical type facts;
 - the C++ backend maps prepared facts to target spelling and required headers.
 
-The present `type_definition` is one flat record with a `type_kind`, name, origin,
-numeric width/signedness fields and an optional source-record declaration. That is
-adequate for the current scalar/record slice, but it becomes misleading when a
-class carries integer-only fields or every new constructed type adds another kind
-and another optional property.
+The former flat `type_definition` record has been retired from the active frontend
+and C++ path. Family-specific definitions now hold only meaningful invariant data,
+and source declaration association remains a separate non-owning catalog index.
 
 The redesign must preserve current strengths:
 
@@ -456,7 +457,7 @@ through the owners established by earlier items.
    Cartesian enumeration or speculative combination generation. A later explicit
    fixed pre-preparation list may be considered independently, but is not part of
    this pass.
-4. **Migrate the current `my-try` implementation.** Move existing bool, integer,
+4. **Migrate the current `my-try` implementation (complete).** Move existing bool, integer,
    float, string, record, variable, constant, signature and expression facts to
    canonical type identities. Preserve current behavior and C++ output. Move lookup,
    assignment compatibility, field validation, dependencies and C++ representation
@@ -523,19 +524,34 @@ referenced definitions and uint32 identity limits before publishing any catalog.
 Loading must still create no applied-template Cartesian product: applications stay
 demand-driven and interned by the canonical registry.
 
-### Migration checkpoint: compiler ownership
+### Migration checkpoint: active frontend and C++ path
 
-Step 4 begins with lifecycle ownership only. `Model` now owns the registered
+`Model` owns the registered
 semantic catalog and the independent C++ binding catalog. Full compilation/syntax
 resets replace both roots together; ordinary preparation and generation preserve
 their identity. The semantic catalog also owns a definition-ID-to-`collected_struct`
 association so source syntax remains owned by its collected file rather than being
 embedded in every canonical type.
 
-This checkpoint does not yet replace the active scope `type_definition` records or
-prepared facts. It intentionally adds no constructed type and creates no runtime
-template application. The next migration slice moves lookup and attached facts to
-canonical type uses before backend emission changes.
+Active scopes now store semantic definitions. Type syntax, prepared expressions,
+storage, constants, signatures and generation contexts attach lightweight
+`canonical_type_use` facts. Lookup canonicalizes concrete definitions; assignment,
+field access, record dependencies and C++ representation recover invariant/backend
+metadata through the canonical identity. The old flat `type_definition`,
+`type_kind` and `type_origin` records no longer own active behavior.
+
+This migration intentionally adds no constructed source syntax and creates no
+runtime template application. PHP-host validation covers the canonical catalog,
+all 95 valid S2S fixtures, source-record behavior, preparation recovery and
+incremental C++ generation with unchanged output expectations. Native compiler
+validation remains explicit-request work.
+
+The parked LLVM recovery proof can still prepare the current model, but its special
+test that re-prepares an externally retained old syntax graph after a full lifecycle
+reset no longer has the retired catalog that owns that graph's source-definition
+associations. Repairing that cross-reset legacy lookup belongs to a future explicit
+LLVM adaptation; it is not addressed by rebuilding LLVM semantics or adding a
+parallel compatibility type model here.
 
 ## Open decisions and recorded debt
 

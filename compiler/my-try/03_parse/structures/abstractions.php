@@ -74,7 +74,7 @@ abstract class ast_node implements ast_node_i
 abstract class type_node extends ast_node
 {
 	/** Resolved canonical type identity, attached by preparation in its owning context. */
-	public abstract function require_preparation(): type_definition;
+	public abstract function require_preparation(): canonical_type_use;
 }
 
 /** An expression produces a value; concrete forms define their own operands. */

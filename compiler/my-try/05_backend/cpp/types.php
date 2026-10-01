@@ -1,59 +1,46 @@
 <?php
 
-/* Role: map canonical types to C++ representations. */
+/* Role: map canonical type identities to independent C++ representation bindings. */
 namespace scpp\compiler;
 
 final class CPP_Types
 {
-	/** Mapping accepts only the implemented canonical representation, never an unknown fallback. */
-	public static function representation(type_definition $definition): cpp_type
+	/** Resolve the semantic identity first; backend metadata never establishes type equality. */
+	public static function representation(canonical_type_use $type_use): cpp_type
 	{
+		$type = Type_Preparation::canonical($type_use);
+		$definition = $type->definition();
 		$result = new cpp_type();
-		if ($definition->kind === type_kind::record) {
-			$entry = object_cast($definition->declaration, collected_name::class);
+		if ($definition->origin() === type_definition_origin::source) {
+			$entry = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			$result->spelling = CPP_Generator::source_name('record', $entry->name);
 			$result->header = '';
 			$result->literal = cpp_literal_kind::none;
-		}
-		elseif ($definition->kind === type_kind::void_type) {
-			$result->spelling = 'void';
-			$result->header = '';
-			$result->literal = cpp_literal_kind::none;
-		}
-		elseif ($definition->kind === type_kind::integer)
-		{
-			if (($definition->name === 'int') && (((int) $definition->value_bits !== 64) || (!$definition->signed))) {
-				throw new \RuntimeException('Invalid canonical default integer representation');
-			}
-
-			// Default int and fixed-width aliases share the wrapper family, not its source spelling.
-			$result->spelling = 'scpp::int_t<>';
-			if ($definition->name !== 'int') {
-				$prefix = $definition->signed ? 'int' : 'uint';
-				$result->spelling = 'scpp::int_t<std::' . $prefix . $definition->value_bits . '_t>';
-			}
-			$result->header = 'scpp/int_t.hpp';
-			$result->literal = cpp_literal_kind::signed_integer;
-		}
-		elseif (($definition->kind === type_kind::floating) && ((int) $definition->value_bits === 64) && $definition->signed) {
-			$result->spelling = 'scpp::float_t';
-			$result->header = 'scpp/float_t.hpp';
-			$result->literal = cpp_literal_kind::floating;
-		}
-		elseif ($definition->kind === type_kind::boolean) {
-			$result->spelling = 'scpp::bool_t';
-			$result->header = 'scpp/bool_t.hpp';
-			$result->literal = cpp_literal_kind::boolean;
-		}
-		elseif ($definition->kind === type_kind::string_type) {
-			$result->spelling = 'scpp::string_t';
-			$result->header = 'scpp/string_t.hpp';
-			$result->literal = cpp_literal_kind::string_value;
-		}
-		else {
-			throw new \RuntimeException('No C++ representation for this type');
+			return $result;
 		}
 
+		$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
+		$result->spelling = $binding->name();
+		$result->header = $binding->header();
+		$result->literal = self::literal_kind($type, $definition);
 		return $result;
+	}
+
+	/** Literal families are semantic; exact target spelling remains in the binding catalog. */
+	private static function literal_kind(canonical_type_i $type, type_definition_i $definition): cpp_literal_kind
+	{
+		if ($type->family() === type_family::integer) {
+			return cpp_literal_kind::signed_integer;
+		}
+		if ($type->family() === type_family::floating) {
+			return cpp_literal_kind::floating;
+		}
+		if ($type->family() === type_family::boolean) {
+			return cpp_literal_kind::boolean;
+		}
+		if (($type->family() === type_family::nominal) && ($definition->name() === 'string')) {
+			return cpp_literal_kind::string_value;
+		}
+		return cpp_literal_kind::none;
 	}
 }

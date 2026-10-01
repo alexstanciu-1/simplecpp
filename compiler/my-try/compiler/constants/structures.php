@@ -7,7 +7,7 @@ namespace scpp\compiler;
 abstract class constant_definition implements preparation_lookup_candidate_i
 {
 	public string $name;
-	public type_definition $type;
+	public canonical_type_use $type;
 }
 
 /** Exact signed integer value retained as decimal text to avoid host-width conversion. */

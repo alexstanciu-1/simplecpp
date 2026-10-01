@@ -31,15 +31,19 @@ final class S2S_Proof
 		$assignment = $assignment_data->require_assignment_preparation()->binding;
 		$literal = $literal_data->require_integer_literal_preparation();
 		$reference = $reference_data->require_variable_reference_preparation();
-		if (($literal->decimal !== '10') || (weakref_get($reference->declaration) !== weakref_get($first->declaration)) || ($reference->type !== $first->type)) {
+		if (($literal->decimal !== '10') || (weakref_get($reference->declaration) !== weakref_get($first->declaration)) || (!$reference->type->matches($first->type))) {
 			throw new \LogicException('Specialized expression facts lost literal value or reference identity');
 		}
 		$integer = Language_Types::integer(Model::$language_scope);
-		$resolved /** vector<type_definition> */ = Scope_Lookup::types(Model::$global_scope, 'int');
-		if (($resolved[0] !== $integer) || ($integer->origin !== type_origin::language) || ((int) $integer->value_bits !== 64) || (!$integer->signed) || ($integer->declaration !== null)) {
+		$resolved /** vector<type_definition_i> */ = Scope_Lookup::types(Model::$global_scope, 'int');
+		$integer_definition = object_cast($resolved[0], integer_type_definition::class);
+		if (($integer_definition->origin() !== type_definition_origin::language)
+			|| ($integer_definition->bit_width() !== 64) || (!$integer_definition->signed())
+			|| (Type_Preparation::canonical($integer)->definition() !== $integer_definition)) {
 			throw new \LogicException('Canonical integer identity or representation changed');
 		}
-		if ((Model::$global_scope->parent_scope() !== Model::$language_scope) || ($first->type !== $integer) || ($literal->type !== $integer)) {
+		if ((Model::$global_scope->parent_scope() !== Model::$language_scope)
+			|| (!$first->type->matches($integer)) || (!$literal->type->matches($integer))) {
 			throw new \LogicException('Literal or local did not retain the canonical integer type');
 		}
 		if (($first->resolved_kind !== binding_kind::declaration) || ($assignment->resolved_kind !== binding_kind::assignment) || (weakref_get($assignment->declaration) !== weakref_get($first->declaration))) {
@@ -106,14 +110,14 @@ final class S2S_Proof
 	{
 		$first = Language_Types::integer(Model::$language_scope);
 		$second = Language_Types::boolean(Model::$language_scope);
-		$groups /** Key_Storage_List<type_definition> */ = new Key_Storage_List();
+		$groups /** Key_Storage_List<canonical_type_use> */ = new Key_Storage_List();
 		$groups->add('1', $first);
 		$groups->add('01', $second);
 		$groups->add('1', $first);
-		$all /** vector<type_definition> */ = $groups->items();
-		$named /** vector<type_definition> */ = $groups->named('1');
-		$other /** vector<type_definition> */ = $groups->named('01');
-		$missing /** vector<type_definition> */ = $groups->named('missing');
+		$all /** vector<canonical_type_use> */ = $groups->items();
+		$named /** vector<canonical_type_use> */ = $groups->named('1');
+		$other /** vector<canonical_type_use> */ = $groups->named('01');
+		$missing /** vector<canonical_type_use> */ = $groups->named('missing');
 		if ((q_count($all) !== 3) || (q_count($named) !== 2) || (q_count($other) !== 1) || (q_count($missing) !== 0)) {
 			throw new \LogicException('Duplicate-key collection lost membership');
 		}
@@ -121,9 +125,9 @@ final class S2S_Proof
 			throw new \LogicException('Duplicate-key collection lost ordering or object identity');
 		}
 		$all[] = $second;
-		$alias /** Key_Storage_List<type_definition> */ = $groups;
+		$alias /** Key_Storage_List<canonical_type_use> */ = $groups;
 		$alias->add('1', $second);
-		$after /** vector<type_definition> */ = $groups->items();
+		$after /** vector<canonical_type_use> */ = $groups->items();
 		if ((q_count($after) !== 4) || ($after[3] !== $second) || $groups->is_empty()) {
 			throw new \LogicException('Collection alias or snapshot membership changed');
 		}

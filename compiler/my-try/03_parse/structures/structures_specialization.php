@@ -231,7 +231,7 @@ final class named_type_node extends type_node
 	use Preparation_Facts;
 
 	/** Canonical type alias; clearing syntax facts must not destroy or mutate the type definition. */
-	private ?type_definition $prepared_facts = null;
+	private ?canonical_type_use $prepared_facts = null;
 	use Collected_Occurrence;
 
 	/** Stored reference spelling, independent of the token buffer lifetime. */
@@ -260,7 +260,7 @@ final class named_type_node extends type_node
 		$worker->enter($this);
 	}
 
-	public function require_preparation(): type_definition
+	public function require_preparation(): canonical_type_use
 	{
 		return $this->prepared_facts;
 	}
@@ -1079,7 +1079,7 @@ final class array_type_node extends type_node
 	use Preparation_Facts;
 
 	/** Canonical type alias; clearing syntax facts must not destroy or mutate the type definition. */
-	private ?type_definition $prepared_facts = null;
+	private ?canonical_type_use $prepared_facts = null;
 
 	public type_node $element_type;
 	/** Current frontend requires a nonnegative integer literal extent. */
@@ -1112,7 +1112,7 @@ final class array_type_node extends type_node
 		$worker->edge($this, $this->count);
 	}
 
-	public function require_preparation(): type_definition
+	public function require_preparation(): canonical_type_use
 	{
 		return $this->prepared_facts;
 	}

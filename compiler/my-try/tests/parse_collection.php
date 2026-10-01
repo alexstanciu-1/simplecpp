@@ -58,7 +58,8 @@ try
 	$parameter = $function->parameters[0];
 	$parameter_entry = $parameter->occurrence();
 	$type = Model::$global_scope->types_named('Box')[0];
-	$box = $type->declaration->syntax();
+	$box_entry = Model::$type_catalog->source_declarations()->declaration($type->definition_id());
+	$box = $box_entry->syntax();
 	$field = object_cast($box, struct_node::class)->fields[0];
 	$removed = object_cast($box, struct_node::class)->fields[1]->occurrence();
 	$old_revision = $get->revision;

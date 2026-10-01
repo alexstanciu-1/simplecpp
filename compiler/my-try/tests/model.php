@@ -87,7 +87,7 @@ final class Model_Test
 		return $catalog;
 	}
 
-	/** Prove source syntax remains separately owned while a canonical nominal identity observes it. */
+	/** Prove collection registered one separately owned source definition and canonical identity. */
 	private static function check_source_type_association(registered_type_catalog $catalog): void
 	{
 		$record /** nullable<collected_struct> */ = null;
@@ -102,11 +102,19 @@ final class Model_Test
 			throw new \RuntimeException('Type-root fixture has no source structure');
 		}
 		$record_entry /** collected_struct */ = $record;
-		$type = $catalog->define_source_structure($record_entry->name, $record_entry);
-		$definition = $type->nominal_definition();
+		$definitions = Model::$global_scope->types_named($record_entry->name);
+		if (q_count($definitions) !== 1) {
+			throw new \RuntimeException('Collection did not register exactly one source type definition');
+		}
+		$definition = $definitions[0];
 		if (($definition->origin() !== type_definition_origin::source)
 			|| ($catalog->source_declarations()->declaration($definition->definition_id()) !== $record_entry)) {
 			throw new \RuntimeException('Canonical source definition lost its separately owned declaration');
+		}
+		$concrete = object_cast($definition, concrete_type_definition_i::class);
+		$type = $catalog->registry()->canonical($concrete);
+		if ($type->definition() !== $definition) {
+			throw new \RuntimeException('Source type identity does not point back to its collected definition');
 		}
 	}
 

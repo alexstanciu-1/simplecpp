@@ -13,12 +13,12 @@ final class Preparation_Changes
 		}
 		$previous /** Storage<prepared_parameter> */ = $old->parameters;
 		$parameters /** Storage<prepared_parameter> */ = $current->parameters;
-		if (($old->return_type !== $current->return_type) || (q_count($previous) !== q_count($parameters))) {
+		if ((!$old->return_type->matches($current->return_type)) || (q_count($previous) !== q_count($parameters))) {
 			return false;
 		}
 		foreach ($parameters as $index => $parameter) {
 			$before = $previous[$index];
-			if (($before->type !== $parameter->type) || ($before->mode !== $parameter->mode) || (weakref_get($before->declaration) !== weakref_get($parameter->declaration))) {
+			if ((!$before->type->matches($parameter->type)) || ($before->mode !== $parameter->mode) || (weakref_get($before->declaration) !== weakref_get($parameter->declaration))) {
 				return false;
 			}
 		}
@@ -40,7 +40,7 @@ final class Preparation_Changes
 		}
 		foreach ($fields as $index => $field) {
 			$before = $previous[$index];
-			if (($before->type !== $field->type) || (weakref_get($before->declaration) !== weakref_get($field->declaration))) {
+			if ((!$before->type->matches($field->type)) || (weakref_get($before->declaration) !== weakref_get($field->declaration))) {
 				return false;
 			}
 		}

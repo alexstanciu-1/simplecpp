@@ -5,100 +5,48 @@ namespace scpp\compiler;
 
 final class Language_Types
 {
-	/** Install canonical language types supported by scalar generation. */
+	/** Publish the already registered concrete language definitions into lexical lookup. */
 	public static function install(scope $language_scope): void
 	{
-		// Fixed-width aliases select explicit integer wrapper representations.
-		foreach ([8, 16, 32, 64] as $bits) {
-			self::install_integer($language_scope, 'int' . $bits, $bits, true);
-			self::install_integer($language_scope, 'uint' . $bits, $bits, false);
+		foreach (['void', 'bool', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+			'int64', 'uint64', 'byte', 'int', 'float', 'string'] as $name) {
+			$language_scope->register_type(Model::$type_catalog->definition($name));
 		}
-		self::install_integer($language_scope, 'byte', 8, false);
-		$void_type = new type_definition();
-		$void_type->name = 'void';
-		$void_type->kind = type_kind::void_type;
-		$void_type->origin = type_origin::language;
-		$language_scope->register_type($void_type);
-
-		$integer = new type_definition();
-		$integer->name = 'int';
-		$integer->kind = type_kind::integer;
-		$integer->origin = type_origin::language;
-		$integer->value_bits = 64;
-		$integer->signed = true;
-		$language_scope->register_type($integer);
-
-		$floating = new type_definition();
-		$floating->name = 'float';
-		$floating->kind = type_kind::floating;
-		$floating->origin = type_origin::language;
-		$floating->value_bits = 64;
-		$floating->signed = true;
-		$language_scope->register_type($floating);
-
-		$boolean = new type_definition();
-		$boolean->name = 'bool';
-		$boolean->kind = type_kind::boolean;
-		$boolean->origin = type_origin::language;
-		$boolean->value_bits = 1;
-		$language_scope->register_type($boolean);
-
-		$string_type = new type_definition();
-		$string_type->name = 'string';
-		$string_type->kind = type_kind::string_type;
-		$string_type->origin = type_origin::language;
-		$language_scope->register_type($string_type);
-	}
-
-	/** Install each source alias once; literal defaults remain the ordinary int definition. */
-	private static function install_integer(scope $language_scope, string $name, int $bits, bool $signed): void
-	{
-		$definition = new type_definition();
-		$definition->name = $name;
-		$definition->kind = type_kind::integer;
-		$definition->origin = type_origin::language;
-		$definition->value_bits = $bits;
-		$definition->signed = $signed;
-		$language_scope->register_type($definition);
 	}
 
 	/** Literal defaults use the language definition, independently of source shadowing. */
-	public static function integer(scope $language_scope): type_definition
+	public static function integer(scope $language_scope): canonical_type_use
 	{
-		$types /** vector<type_definition> */ = $language_scope->types_named('int');
-		if (q_count($types) !== 1) {
-			throw new \LogicException('Missing canonical integer definition');
-		}
-		return $types[0];
+		return self::canonical($language_scope, 'int');
 	}
 
 	/** Boolean defaults use the same language scope as integer defaults. */
-	public static function boolean(scope $language_scope): type_definition
+	public static function boolean(scope $language_scope): canonical_type_use
 	{
-		$types /** vector<type_definition> */ = $language_scope->types_named('bool');
-		if (q_count($types) !== 1) {
-			throw new \LogicException('Missing canonical boolean definition');
-		}
-		return $types[0];
+		return self::canonical($language_scope, 'bool');
 	}
 
 	/** Floating-point defaults use the same language scope as integer defaults. */
-	public static function floating(scope $language_scope): type_definition
+	public static function floating(scope $language_scope): canonical_type_use
 	{
-		$types /** vector<type_definition> */ = $language_scope->types_named('float');
-		if (q_count($types) !== 1) {
-			throw new \LogicException('Missing canonical floating definition');
-		}
-		return $types[0];
+		return self::canonical($language_scope, 'float');
 	}
 
 	/** String literals and declarations share one binary-safe language identity. */
-	public static function string_type(scope $language_scope): type_definition
+	public static function string_type(scope $language_scope): canonical_type_use
 	{
-		$types /** vector<type_definition> */ = $language_scope->types_named('string');
+		return self::canonical($language_scope, 'string');
+	}
+
+	/** Resolve the published definition and attach only its compact canonical identity. */
+	private static function canonical(scope $language_scope, string $name): canonical_type_use
+	{
+		$types /** vector<type_definition_i> */ = $language_scope->types_named($name);
 		if (q_count($types) !== 1) {
-			throw new \LogicException('Missing canonical string definition');
+			throw new \LogicException('Missing canonical language type definition');
 		}
-		return $types[0];
+		$definition = object_cast($types[0], concrete_type_definition_i::class);
+		$type = Model::$type_catalog->registry()->canonical($definition);
+		return Model::$type_catalog->registry()->use($type->type_id());
 	}
 }

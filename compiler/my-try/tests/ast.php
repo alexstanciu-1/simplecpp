@@ -4,6 +4,7 @@ namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
 \define('dbg', false);
+Compiler_Lifecycle::reset();
 
 final class AST_Test
 {

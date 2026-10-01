@@ -32,10 +32,10 @@ final class Scope_Lookup
 	}
 
 	/** Resolve the nearest live type pool, including the language/runtime parent. */
-	public static function types(scope $start, string $name, ?preparation_context $context = null): array /** vector<type_definition> */
+	public static function types(scope $start, string $name, ?preparation_context $context = null): array /** vector<type_definition_i> */
 	{
 		$current_scope = $start;
-		$result /** vector<type_definition> */ = [];
+		$result /** vector<type_definition_i> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);

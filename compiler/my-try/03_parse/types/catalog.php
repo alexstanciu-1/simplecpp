@@ -296,6 +296,16 @@ final class Source_Type_Declarations
 	{
 		return q_count($this->declarations);
 	}
+
+	/** Remove every semantic association for one retired collected declaration. */
+	public function retire(collected_struct $declaration): void
+	{
+		foreach ($this->declarations as $definition_id => $association) {
+			if ($association->declaration() === $declaration) {
+				unset($this->declarations[$definition_id]);
+			}
+		}
+	}
 }
 
 /** Complete semantic installation result; backend bindings are deliberately absent. */

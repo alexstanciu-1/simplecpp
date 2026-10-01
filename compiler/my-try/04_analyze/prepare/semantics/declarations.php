@@ -56,12 +56,14 @@ final class Declaration_Preparation
 		$prepared = new prepared_field();
 		$prepared->declaration = $field->occurrence();
 		$prepared->type = Type_Preparation::type($field->type_syntax, $context);
-		$type = $prepared->type;
-		$fixed_integer = ($type->kind === type_kind::integer) && ($type->name !== 'int');
-		if ((!$fixed_integer) && ($type->kind !== type_kind::boolean) && ($type->kind !== type_kind::record)) {
+		$type = Type_Preparation::canonical($prepared->type);
+		$definition = $type->definition();
+		$fixed_integer = ($type->family() === type_family::integer) && ($definition->name() !== 'int');
+		$source_record = Type_Preparation::source_record($prepared->type) !== null;
+		if ((!$fixed_integer) && ($type->family() !== type_family::boolean) && (!$source_record)) {
 			throw new \RuntimeException('S2S struct fields require bool, fixed-width integers or supported structs');
 		}
-		$context->worker->require_record($type, $context);
+		$context->worker->require_record($prepared->type, $context);
 		$field->set_preparation($prepared);
 	}
 }

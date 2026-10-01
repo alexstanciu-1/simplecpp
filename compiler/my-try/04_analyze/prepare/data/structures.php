@@ -13,7 +13,7 @@ enum binary_operation {
 
 /** Common backend-neutral result of preparing an expression. */
 abstract class prepared_expression {
-	public type_definition $type;
+	public canonical_type_use $type;
 	/** True only for stable local/parameter storage and direct struct-field paths. */
 	public bool $addressable = false;
 }
@@ -59,7 +59,7 @@ final class prepared_binary_expression extends prepared_expression {
 abstract class prepared_storage {
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_name $declaration /** weak<collected_name> */;
-	public type_definition $type;
+	public canonical_type_use $type;
 }
 
 /** A local binding or member write retains its resolved storage declaration and canonical type. */
@@ -75,7 +75,7 @@ final class prepared_parameter extends prepared_storage {
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
 final class prepared_function
 {
-	public type_definition $return_type;
+	public canonical_type_use $return_type;
 	/** Ordered aliases of facts owned by parameter specializations. @storage.reference parameter_node.prepared_facts */
 	public Storage $parameters /** Storage<prepared_parameter> */;
 
@@ -128,11 +128,11 @@ final class preparation_context
 	/** Invocation-local lookup of attached binding/parameter facts; does not mutate source scopes. */
 	public Key_Storage_List $locals /** Key_Storage_List<prepared_storage> */;
 	/** Null identifies the entry body; function bodies retain their declared return type. */
-	public ?type_definition $return_type = null;
-	public type_definition $integer;
-	public type_definition $boolean;
-	public type_definition $floating;
-	public type_definition $string_type;
+	public ?canonical_type_use $return_type = null;
+	public canonical_type_use $integer;
+	public canonical_type_use $boolean;
+	public canonical_type_use $floating;
+	public canonical_type_use $string_type;
 }
 
 /** Name-pool observation also represents absent or ambiguous lookup results. */
