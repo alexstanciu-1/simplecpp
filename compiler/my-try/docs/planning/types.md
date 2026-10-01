@@ -438,32 +438,34 @@ The following is the agreed broad implementation order. Each numbered item may b
 split into independently reviewable concept slices, but later work must continue
 through the owners established by earlier items.
 
-Documentation progress: the bare-`T`/`copyable_value` contract in item 4 was
-adopted normatively on 2026-10-01. Compiler enforcement and runtime-family
-restrictions remain deferred as stated below.
-
-1. **Create the type data model and structures.** Represent boolean, integer and
-   floating-point families; nominal structures/classes; template
-   structure/class definitions; and exact canonical applied-template types. Add
-   the `uint32` canonical type registry and exact application interning/reuse.
-   Template definitions retain definition identity but receive a type identity
-   only in an exact applied shape.
-2. **Define and register the types that already exist in Simple C++ (complete).** Install the
-   existing concrete language/runtime definitions and the known runtime template
-   definitions with their separate source exposure and backend binding. Create a
-   concrete applied-template instance only for an actual demand. There is no
-   Cartesian enumeration or speculative combination generation. A later explicit
-   fixed pre-preparation list may be considered independently, but is not part of
-   this pass.
-3. **Migrate the current `my-try` implementation.** Move existing bool, integer,
-   float, string and source-record behavior, prepared facts, lookup, compatibility,
-   dependencies and C++ emission onto the new common model. Preserve current
-   behavior before using the representation to add broader language features.
-4. **Adopt the stricter template-parameter requirements in the normative docs
+1. **Adopt the stricter template-parameter requirements in the normative docs
    (complete).** Bare `T` is the implicit `copyable_value` contract, definition
    permissions remain separate from concrete argument eligibility, and a favorable
    specialization cannot expand permissions. Enforcement, runtime family
    restrictions and additional contracts remain explicit later debt.
+2. **Create the type data model and structures (complete).** Represent boolean,
+   integer and floating-point families; nominal structures/classes; template
+   structure/class definitions; and exact canonical applied-template types. Add
+   the `uint32` canonical type registry and exact application interning/reuse.
+   Template definitions retain definition identity but receive a type identity
+   only in an exact applied shape.
+3. **Define and register the types that already exist in Simple C++ (complete).**
+   Install the existing concrete language/runtime definitions and the known runtime
+   template definitions with their separate source exposure and backend binding. Create a
+   concrete applied-template instance only for an actual demand. There is no
+   Cartesian enumeration or speculative combination generation. A later explicit
+   fixed pre-preparation list may be considered independently, but is not part of
+   this pass.
+4. **Migrate the current `my-try` implementation.** Move existing bool, integer,
+   float, string, record, variable, constant, signature and expression facts to
+   canonical type identities. Preserve current behavior and C++ output. Move lookup,
+   assignment compatibility, field validation, dependencies and C++ representation
+   onto the common path. Do not add templates merely to prove the refactor; first
+   prove every currently supported type through the new model.
+5. **Add one bounded constructed-type proof.** After migration stability, add one
+   runtime-template application, initially `vector<int>` or `nullable<int>`, proving
+   template-definition lookup, argument validation, canonical application creation,
+   repeated-use reuse, lightweight occurrence attachment and backend binding.
 
 Each slice must name its non-goals and prove that existing scalar/record lookup,
 preparation and C++ emission still use the common path. Native compiler validation
@@ -476,7 +478,7 @@ thereafter.
 ### Registered definition checkpoint (2026-10-01)
 
 The reviewed model now has an isolated registration layer, still deliberately not
-wired into the current compiler pipeline before item 3:
+wired into the current compiler pipeline before item 4:
 
 - concrete language definitions: `void`, `bool`, `byte`, `int`, `float`, `string`,
   and every signed/unsigned fixed-width integer from 8 through 64 bits;
@@ -509,6 +511,18 @@ backend-only, and the agreed strict spelling is `weak`. Nested-wrapper validatio
 is retained as runtime-family formation debt rather than being hidden in
 registration.
 
+The current PHP registration code is a bootstrap representation, not the intended
+long-term source of predefined type metadata. Move the predefined language/runtime
+catalog to validated JSON and load it during compiler initialization. The JSON
+boundary should describe semantic definitions, source exposures, provider
+identities, ordered parameters and declared contracts/defaults; backend bindings
+may use either a separate backend-owned JSON document or a clearly separated
+backend section. The loader must validate schema/version, duplicate identities,
+unknown contract names, invalid/default-before-required parameter order, missing
+referenced definitions and uint32 identity limits before publishing any catalog.
+Loading must still create no applied-template Cartesian product: applications stay
+demand-driven and interned by the canonical registry.
+
 ## Open decisions and recorded debt
 
 - Exact `type_family` cases and whether template application is a construction kind
@@ -531,6 +545,8 @@ registration.
 - Cast representation and conversion selection.
 - Operator capability/selection representation.
 - Required tests, incremental invalidation and diagnostics for each later slice.
+- JSON schema, loader and ownership for predefined language/runtime definitions and
+  backend bindings, replacing the current bootstrap registration code.
 
 ## Non-goals of this planning pass
 
