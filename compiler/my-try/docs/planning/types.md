@@ -448,7 +448,7 @@ restrictions remain deferred as stated below.
    the `uint32` canonical type registry and exact application interning/reuse.
    Template definitions retain definition identity but receive a type identity
    only in an exact applied shape.
-2. **Define and register the types that already exist in Simple C++.** Install the
+2. **Define and register the types that already exist in Simple C++ (complete).** Install the
    existing concrete language/runtime definitions and the known runtime template
    definitions with their separate source exposure and backend binding. Create a
    concrete applied-template instance only for an actual demand. There is no
@@ -473,6 +473,42 @@ No step authorizes generating all possible template arguments or combinations.
 Canonical applications arise only from exact source/compiler demand and are reused
 thereafter.
 
+### Registered definition checkpoint (2026-10-01)
+
+The reviewed model now has an isolated registration layer, still deliberately not
+wired into the current compiler pipeline before item 3:
+
+- concrete language definitions: `void`, `bool`, `byte`, `int`, `float`, `string`,
+  and every signed/unsigned fixed-width integer from 8 through 64 bits;
+- runtime template definitions: `vector`, `hash`, `nullable`, `shared`, `weak`, and
+  `unique`;
+- one source type-use modifier: `value`, whose backend binding may select
+  `scpp::value_p` without creating a semantic template family;
+- independent source-exposure, runtime-provider and C++-binding catalogs.
+
+Runtime definitions record the requirements that are currently known:
+`vector.Value`, `hash.Value`, and `nullable.Value` are `value_storable`, while
+`hash.Key` requires both `hashable` and `comparable`. Pointer target parameters
+currently carry an explicit empty requirement set rather than a false copyability
+claim. Enforcement remains debt.
+
+Current Simple C++ hash syntax is value-first: `hash<Value, Key>`. `Key` defaults
+to `string`, matching the runtime and legacy S2S behavior. The registry completes
+that default before interning, so `hash<int>` and `hash<int, string>` select the
+same canonical type identity.
+
+Registration creates canonical identities only for the concrete built-ins. It
+creates no applied runtime-template types. Applications are materialized by exact
+demand and then reused, including nested applications and the by-value bit carried
+by each argument.
+
+The legacy S2S review also found aliases such as `vector_t`, `hash_t`, `shared_p`
+and `weakref`, plus rejection rules for nested ownership/value wrappers. Those
+aliases are not added to the strict source-exposure catalog: backend names remain
+backend-only, and the agreed strict spelling is `weak`. Nested-wrapper validation
+is retained as runtime-family formation debt rather than being hidden in
+registration.
+
 ## Open decisions and recorded debt
 
 - Exact `type_family` cases and whether template application is a construction kind
@@ -486,7 +522,8 @@ thereafter.
 - Propagation rules for the hard-coded `value<T>` by-value flag at storage,
   parameter, result and backend boundaries.
 - Inner-type exposure through public values and signatures.
-- User-authored template constraint syntax and contracts beyond `copyable_value`.
+- User-authored template constraint syntax and enforcement of the registered
+  `value_storable`, `hashable`, and `comparable` contracts.
 - Runtime-family formation and operation requirements, especially `hash` keys.
 - Capability composition for source nominal types.
 - Type aliases, qualified names and module-facing compile-time surfaces.
@@ -497,7 +534,8 @@ thereafter.
 
 ## Non-goals of this planning pass
 
-- Implementing templates, inner structures, runtime families, casts or operators.
+- Implementing template bodies, inner structures, runtime-family operations,
+  casts or operators; this pass only registers runtime-family definitions.
 - Resuming LLVM type semantics.
 - Running native compiler validation.
 - Treating C++ templates, names or traits as the Simple C++ semantic authority.

@@ -45,10 +45,13 @@ enum floating_format: int
 	case decimal = 2;
 }
 
-/** Bare type parameters use this contract; richer contracts remain future work. */
+/** Declared generic capabilities; checking them remains later semantic work. */
 enum generic_contract: int
 {
 	case copyable_value = 1;
+	case value_storable = 2;
+	case hashable = 3;
+	case comparable = 4;
 }
 
 /** Validate the explicit uint32 boundary shared by definition and concrete IDs. */
@@ -252,15 +255,38 @@ final class no_value_type_definition extends semantic_type_definition implements
 final class template_type_parameter
 {
 	private string $parameter_name;
-	private generic_contract $parameter_contract;
+	private array $parameter_contracts /** vector<generic_contract> */;
+	private ?canonical_type_use $default_type;
 
-	public function __construct(string $name, generic_contract $contract = generic_contract::copyable_value)
+	/**
+	 * A null contract list means the source-language bare-T default. Runtime
+	 * definitions pass an explicit list, including an empty list when no provider
+	 * capability requirement is currently known.
+	 */
+	public function __construct(string $name, ?array $contracts = null,
+		?canonical_type_use $default_type = null)
 	{
 		if ($name === '') {
 			throw new \InvalidArgumentException('Template parameter name must not be empty');
 		}
+		if ($contracts === null) {
+			$contracts = [generic_contract::copyable_value];
+		}
+
+		$seen /** hash<int, bool> */ = [];
+		foreach ($contracts as $position => $contract)
+		{
+			if (($position !== q_count($seen)) || !($contract instanceof generic_contract)) {
+				throw new \InvalidArgumentException('Template parameter contracts must be an ordered list');
+			}
+			if (isset($seen[$contract->value])) {
+				throw new \InvalidArgumentException('Template parameter contracts must be unique');
+			}
+			$seen[$contract->value] = true;
+		}
 		$this->parameter_name = $name;
-		$this->parameter_contract = $contract;
+		$this->parameter_contracts = $contracts;
+		$this->default_type = $default_type;
 	}
 
 	public function name(): string
@@ -268,9 +294,14 @@ final class template_type_parameter
 		return $this->parameter_name;
 	}
 
-	public function contract(): generic_contract
+	public function contracts(): array /** vector<generic_contract> */
 	{
-		return $this->parameter_contract;
+		return $this->parameter_contracts;
+	}
+
+	public function default_type(): ?canonical_type_use
+	{
+		return $this->default_type;
 	}
 }
 
@@ -279,6 +310,7 @@ final class template_type_definition extends semantic_type_definition
 {
 	private nominal_type_kind $result_kind;
 	private array $ordered_parameters /** vector<template_type_parameter> */;
+	private int $minimum_arity /** uint32 */;
 
 	/** Preserve the owner's explicit list order and reject duplicate formal names. */
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
@@ -290,6 +322,8 @@ final class template_type_definition extends semantic_type_definition
 		}
 
 		$expected_position = 0;
+		$minimum_arity = q_count($parameters);
+		$seen_default = false;
 		$names /** hash<string, bool> */ = [];
 		foreach ($parameters as $position => $parameter)
 		{
@@ -300,11 +334,21 @@ final class template_type_definition extends semantic_type_definition
 				throw new \InvalidArgumentException('Template parameter names must be unique');
 			}
 			$names[$parameter->name()] = true;
+			if ($parameter->default_type() !== null) {
+				if (!$seen_default) {
+					$minimum_arity = $position;
+					$seen_default = true;
+				}
+			}
+			elseif ($seen_default) {
+				throw new \InvalidArgumentException('Required template parameter cannot follow a defaulted parameter');
+			}
 			$expected_position++;
 		}
 
 		$this->result_kind = $result_kind;
 		$this->ordered_parameters = $parameters;
+		$this->minimum_arity = $minimum_arity;
 	}
 
 	public function kind(): type_definition_kind
@@ -334,6 +378,11 @@ final class template_type_definition extends semantic_type_definition
 	public function arity(): int
 	{
 		return q_count($this->ordered_parameters);
+	}
+
+	public function required_arity(): int
+	{
+		return $this->minimum_arity;
 	}
 }
 
@@ -632,15 +681,15 @@ final class Type_Registry
 		array $arguments /** vector<canonical_type_use> */): applied_template_type
 	{
 		$this->require_registered_definition($definition);
-		$this->require_arguments($definition, $arguments);
-		$key = $this->application_key($definition->definition_id(), $arguments);
+		$complete_arguments = $this->complete_arguments($definition, $arguments);
+		$key = $this->application_key($definition->definition_id(), $complete_arguments);
 		$type_id = $this->applied_types[$key] ?? 0;
 		if ($type_id !== 0) {
 			$type = $this->type($type_id);
 			return object_cast($type, applied_template_type::class);
 		}
 
-		$type = new applied_template_type($this->allocate_type_id(), $definition, $arguments);
+		$type = new applied_template_type($this->allocate_type_id(), $definition, $complete_arguments);
 		$this->register_type($type);
 		$this->applied_types[$key] = $type->type_id();
 		return $type;
@@ -673,6 +722,21 @@ final class Type_Registry
 		return new canonical_type_use($type_id, $by_value);
 	}
 
+	public function definition_count(): int
+	{
+		return q_count($this->definitions);
+	}
+
+	public function type_count(): int
+	{
+		return q_count($this->types);
+	}
+
+	public function application_count(): int
+	{
+		return q_count($this->applied_types);
+	}
+
 	private function register_definition(type_definition_i $definition): void
 	{
 		$id = $definition->definition_id();
@@ -699,11 +763,12 @@ final class Type_Registry
 		}
 	}
 
-	/** Validate arity, list order and membership without interpreting argument capabilities. */
-	private function require_arguments(template_type_definition $definition,
-		array $arguments /** vector<canonical_type_use> */): void
+	/** Validate supplied arguments and append the definition's trailing defaults. */
+	private function complete_arguments(template_type_definition $definition,
+		array $arguments /** vector<canonical_type_use> */): array /** vector<canonical_type_use> */
 	{
-		if (q_count($arguments) !== $definition->arity()) {
+		$count = q_count($arguments);
+		if (($count < $definition->required_arity()) || ($count > $definition->arity())) {
 			throw new \InvalidArgumentException('Template type argument count does not match definition arity');
 		}
 
@@ -716,6 +781,19 @@ final class Type_Registry
 			$this->type($argument->type_id());
 			$expected_position++;
 		}
+
+		$complete /** vector<canonical_type_use> */ = $arguments;
+		while ($expected_position < $definition->arity())
+		{
+			$default = $definition->parameter($expected_position)->default_type();
+			if ($default === null) {
+				throw new \LogicException('Missing template argument has no default');
+			}
+			$this->type($default->type_id());
+			$complete[] = $default;
+			$expected_position++;
+		}
+		return $complete;
 	}
 
 	/** Encode the complete tuple reversibly; this string indexes identity but is not an identity. */

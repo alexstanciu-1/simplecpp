@@ -84,6 +84,8 @@ def verify(root, output):
     (output / "publication.log").write_text(publication.stdout + publication.stderr)
     model = run(["php", str(root / "tests/model.php")])
     (output / "model.log").write_text(model.stdout + model.stderr)
+    type_catalog = run(["php", str(root / "tests/type_catalog.php")])
+    (output / "type_catalog.log").write_text(type_catalog.stdout + type_catalog.stderr)
 
     text = run(["php", str(root / "tests/llvm_text.php")])
     (output / "llvm_text.log").write_text(text.stdout + text.stderr)
