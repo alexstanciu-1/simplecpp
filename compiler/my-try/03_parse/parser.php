@@ -289,6 +289,7 @@ final class Parser_Run
 	/** Select a statement from its leading syntax; names are never looked up here. */
 	private function statement(): ast_node
 	{
+		if ($this->text() === 'switch') { return $this->switch_statement(); }
 		if ($this->text() === 'while') { return $this->while_statement(); }
 		if ($this->text() === 'do') { return $this->do_while_statement(); }
 		if ($this->text() === 'for') { return $this->for_statement(); }
@@ -319,6 +320,53 @@ final class Parser_Run
 			return $this->expression_statement();
 		}
 		return $this->expression_statement();
+	}
+
+	/** Consecutive labels select a single body; a statement begins a new lexical group. */
+	private function switch_statement(): switch_node
+	{
+		$start = $this->position++;
+		$selection = new switch_node();
+		$this->expect('(');
+		$selection->selector = $this->expression();
+		$this->expect(')');
+		$this->expect('{');
+		$groups /** Storage<switch_case_group> */ = $selection->groups;
+		while ($this->text() !== '}')
+		{
+			$group_start = $this->position;
+			$group = new switch_case_group();
+			$labels /** Storage<switch_label> */ = $group->labels;
+			while (($this->text() === 'case') || ($this->text() === 'default'))
+			{
+				$label_start = $this->position;
+				$label = new switch_label($this->text() === 'case' ? switch_label_kind::value : switch_label_kind::fallback);
+				$this->position++;
+				if ($label->label_kind === switch_label_kind::value) { $label->value = $this->expression(); }
+				$this->expect(':');
+				$this->finish_node($label, $label_start);
+				$labels->append($label);
+			}
+			if ($labels->is_empty()) {
+				throw new \RuntimeException($this->error_message('Expected case or default label in switch'));
+			}
+			$body_start = $this->position;
+			$group->body = new block_node();
+			$statements /** Storage<statement_node> */ = $group->body->statements;
+			while (($this->text() !== '}') && ($this->text() !== 'case') && ($this->text() !== 'default'))
+			{
+				if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'template')) {
+					throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
+				}
+				$statements->append(object_cast($this->statement(), statement_node::class));
+			}
+			$this->finish_node($group->body, $body_start);
+			$this->finish_node($group, $group_start);
+			$groups->append($group);
+		}
+		$this->expect('}');
+		$this->finish_node($selection, $start);
+		return $selection;
 	}
 
 	private function while_statement(): while_node

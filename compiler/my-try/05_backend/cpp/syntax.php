@@ -50,6 +50,36 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return '(' . $value . ').native_value()';
 	}
 
+	/** Native switch preserves single selection, source-order fallthrough and loop continue. */
+	public function generate_switch(switch_node $node): string
+	{
+		$text = 'switch ((' . $node->selector->generate_cpp($this) . ").native_value()) {\n";
+		$outer_break /** nullable<breakable_node> */ = $this->context->break_target;
+		$this->context->break_target = $node;
+		try {
+			$groups /** Storage<switch_case_group> */ = $node->groups;
+			foreach ($groups as $group) { $text .= $group->generate_cpp($this); }
+		}
+		finally { $this->context->break_target = $outer_break; }
+		return $text . "}\n";
+	}
+
+	public function generate_switch_group(switch_case_group $node): string
+	{
+		$text = '';
+		$labels /** Storage<switch_label> */ = $node->labels;
+		foreach ($labels as $label) { $text .= $label->generate_cpp($this); }
+		return $text . $node->body->generate_cpp($this);
+	}
+
+	public function generate_switch_label(switch_label $node): string
+	{
+		$value /** nullable<string> */ = $node->require_preparation()->decimal;
+		if ($value === null) { return "default:\n"; }
+		if ($value === '-9223372036854775808') { return "case (-9223372036854775807LL - 1LL):\n"; }
+		return 'case ' . $value . "LL:\n";
+	}
+
 	private function loop_body(loop_node $node): string
 	{
 		$outer_break /** nullable<breakable_node> */ = $this->context->break_target;
@@ -113,7 +143,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		if (weakref_get($facts->target) !== $expected) {
 			throw new \RuntimeException('Prepared control transfer disagrees with emission target');
 		}
-		return $facts->transfer_kind === control_transfer_kind::break_loop ? "break;\n" : "continue;\n";
+		return $facts->transfer_kind === control_transfer_kind::break_construct ? "break;\n" : "continue;\n";
 	}
 
 	public function generate_integer_literal(integer_literal_node $node): string

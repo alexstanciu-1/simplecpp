@@ -25,7 +25,10 @@ owns its ordered statements. Conditional arms own their block and successor arm;
 there is no payload or generic parent/sibling graph. Loops own their block body and
 typed header children. Prepared control transfers observe the enclosing breakable
 syntax through a supported weak field, not an owning back-edge. Invocation-local
-preparation/emission contexts restore their nearest transfer targets after each loop.
+preparation/emission contexts restore their nearest transfer targets after each loop
+or switch. Switches own ordered case groups, groups own labels and an ordinary block
+body, and value labels own their constant expression. No group adds a parser scope
+or independent preparation-work owner; its lexical environment is transient.
 
 Functions own signature scopes; structs own member scopes. File/body scopes observe
 owners retained by the parsed file. Occurrences observe syntax, collection and scope;

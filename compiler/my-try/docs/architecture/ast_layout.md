@@ -36,6 +36,13 @@ same named edges; execution order is not inferred from inspection order. The res
 abstract `foreach_node` shares the loop protocol but has no executable/parser support.
 Break/continue nodes retain a weak prepared target, never an owning parent link.
 
+`switch_node extends breakable_node` owns its selector and `Storage<switch_case_group>`.
+Each group owns `Storage<switch_label>` and one `block_node`; adjacent labels share
+that body and its lexical scope. Labels have an explicit value/default kind, with an
+expression only for value labels. Lazy inspection and maintenance traverse selector,
+groups, labels and bodies in source order. Constant evaluation dispatches through
+expressions; only supported literal/reference/unary-sign forms supply exact integers.
+
 `function_node` owns parameters, a `type_node` return type and a
 `function_body_node`. `struct_node` owns fields. `file_node` owns file declarations
 and a separate executable body. Statements cannot contain file declarations:

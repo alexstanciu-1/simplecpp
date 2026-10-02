@@ -80,6 +80,12 @@ abstract class type_node extends ast_node
 /** An expression produces a value; concrete forms define their own operands. */
 abstract class expression_node extends ast_node
 {
+	/** Bounded constant evaluation is explicit; ordinary runtime values are not labels. */
+	public function integer_constant(): string
+	{
+		throw new \RuntimeException('S2S requires a supported constant integer expression');
+	}
+
 	/** Shared expression view; specialized facts use distinctly named concrete accessors. */
 	public function require_preparation(): prepared_expression
 	{
@@ -211,7 +217,7 @@ abstract class control_transfer_node extends statement_node
 
 	public function prepare(preparation_context $context): void
 	{
-		$this->set_preparation(Loop_Preparation::prepare_transfer($this, $context));
+		$this->set_preparation(Control_Transfer_Preparation::prepare($this, $context));
 	}
 
 	public function prepare_completion(preparation_context $context): statement_completion
@@ -358,6 +364,9 @@ interface cpp_generation_worker_i
 	public function generate_function_body(function_body_node $node): string;
 	public function generate_block(statement_body_node $node): string;
 	public function generate_if(if_node $node): string;
+	public function generate_switch(switch_node $node): string;
+	public function generate_switch_group(switch_case_group $node): string;
+	public function generate_switch_label(switch_label $node): string;
 	public function generate_while(while_node $node): string;
 	public function generate_do_while(do_while_node $node): string;
 	public function generate_for(for_node $node): string;

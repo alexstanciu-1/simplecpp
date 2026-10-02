@@ -154,7 +154,7 @@ final class break_node extends control_transfer_node
 
 	public function transfer_kind(): control_transfer_kind
 	{
-		return control_transfer_kind::break_loop;
+		return control_transfer_kind::break_construct;
 	}
 }
 

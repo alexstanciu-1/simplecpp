@@ -223,6 +223,12 @@ final class prepared_loop
 	public ?prepared_condition $condition = null;
 }
 
+/** Default has no value; every case retains its normalized exact signed decimal. */
+final class prepared_switch_label
+{
+	public ?string $decimal = null;
+}
+
 /** Semantic transfer identity; the enclosing syntax tree owns its target. */
 final class prepared_control_transfer
 {

@@ -19,6 +19,9 @@ enum node_kind
 	case parameter_declaration;
 	case block;
 	case conditional;
+	case switch_statement;
+	case switch_group;
+	case switch_label;
 	case while_loop;
 	case do_while_loop;
 	case for_loop;
@@ -80,6 +83,11 @@ enum passing_mode {
 }
 
 enum control_transfer_kind {
-	case break_loop;
+	case break_construct;
 	case continue_loop;
+}
+
+enum switch_label_kind {
+	case value;
+	case fallback;
 }

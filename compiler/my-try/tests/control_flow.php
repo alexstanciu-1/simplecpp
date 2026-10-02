@@ -1,6 +1,6 @@
 <?php
 
-/* Prove structured branches, local identities, completion and incremental recovery. */
+/* Prove structured branches, loops, switches, completion and incremental recovery. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 
@@ -42,6 +42,28 @@ $path = $directory . '/main.phs';
 try
 {
 	$cases = [
+		'switch_basic' => ['$x = 2; switch ($x) { case 1: return 1; case 2: return 2; default: return 3; }', 2],
+		'switch_fallthrough' => ['$x = 0; switch (1) { case 1: $x += 2; case 2: $x += 3; default: $x += 4; } return $x;', 9],
+		'switch_group' => ['switch (2) { case 1: case 2: return 7; default: return 1; }', 7],
+		'switch_default_middle_match' => ['switch (2) { case 1: return 1; default: return 3; case 2: return 2; }', 2],
+		'switch_default_middle_fall' => ['$x = 0; switch (8) { case 1: return 1; default: $x += 3; case 2: $x += 2; } return $x;', 5],
+		'switch_default_group' => ['switch (9) { default: case 1: return 4; }', 4],
+		'switch_no_match' => ['$x = 1; switch (8) { case 1: $x = 7; } return $x;', 1],
+		'switch_empty' => ['$x = 0; switch ($x++) {} return $x;', 1],
+		'switch_trailing_labels' => ['switch (2) { case 1: return 1; case 2: default: } return 4;', 4],
+		'switch_once' => ['function select(int &$n): int { $n++; return 2; } $n = 0; switch (select($n)) { case 1: $n += 9; break; case 2: $n += 2; break; } return $n;', 3],
+		'switch_signed_constant' => ['switch (-PHP_INT_MAX) { case -(PHP_INT_MAX): return 5; default: return 1; }', 5],
+		'switch_double_sign' => ['switch (2) { case -(-2): return 5; default: return 1; }', 5],
+		'switch_maximum' => ['switch (PHP_INT_MAX) { case 9223372036854775807: return 6; default: return 1; }', 6],
+		'switch_shadow' => ['$x int = 9; $sum = 0; switch (1) { case 1: $x int = 2; $sum += $x; case 2: $x int = 3; $sum += $x; } return $sum + $x;', 14],
+		'switch_break_in_loop' => ['$sum = 0; for ($i = 0; $i < 3; $i++) { switch ($i) { case 1: break; default: $sum++; } $sum += 2; } return $sum;', 8],
+		'switch_continue_for' => ['$sum = 0; for ($i = 0; $i < 3; $i++) { switch ($i) { case 1: continue; default: $sum++; } $sum += 2; } return $sum;', 6],
+		'switch_continue_do' => ['$i = 0; do { $i++; switch ($i) { default: continue; } $i += 20; } while ($i < 3); return $i;', 3],
+		'switch_nested_break' => ['$x = 0; switch (1) { case 1: switch (2) { default: $x++; break; } $x += 2; break; default: $x += 10; } return $x;', 3],
+		'switch_loop_inside' => ['$x = 0; switch (1) { default: while (true) { $x++; break; } $x += 2; break; } return $x;', 3],
+		'switch_return_fallthrough' => ['function f(int $x): int { switch ($x) { case 1: $x++; default: return $x; } } return f(1);', 2],
+		'switch_return_branches' => ['function f(int $x): int { switch ($x) { case 1: if (true) { return 3; } else { return 4; } default: return 5; } } return f(1);', 3],
+		'switch_return_loop' => ['function f(): int { for (;;) { switch (1) { default: break; } return 8; } } return f();', 8],
 		'while_zero' => ['$n = 2; while (false) { $n++; } return $n;', 2],
 		'while_count' => ['$n = 0; while ($n < 4) { $n++; } return $n;', 4],
 		'do_once' => ['$n = 0; do { $n++; } while (false); return $n;', 1],
@@ -103,6 +125,22 @@ try
 	}
 
 	foreach ([
+		['switch (true) {}', 'selector requires canonical int'],
+		['switch ("1") {}', 'selector requires canonical int'],
+		['switch (1) { case true: break; }', 'case requires canonical int'],
+		['$x = 1; switch (1) { case $x: break; }', 'supported constant integer expression'],
+		['switch (1) { case 1 + 1: break; }', 'supported constant integer expression'],
+		['switch (1) { case PHP_INT_MAX: case 9223372036854775807: break; }', 'duplicate case value'],
+		['switch (1) { case -0: break; case +0: break; }', 'duplicate case value'],
+		['switch (1) { default: break; default: break; }', 'duplicate default'],
+		['switch (1) { default: continue; }', 'enclosing legal target'],
+		['switch (1) { case 1: $x = 2; case 2: return $x; }', 'established local declaration'],
+		['switch (1) { case 1: $x = 2; } return $x;', 'established local declaration'],
+		['switch (1) { case 1: break; default: return $missing; }', 'established local declaration'],
+		['function f(int $x): int { switch ($x) { case 1: return 1; } }', 'can reach the end'],
+		['function f(int $x): int { switch ($x) { case 1: break; default: return 1; } }', 'can reach the end'],
+		['function f(int $x): int { switch ($x) { default: return 1; case 2: } }', 'can reach the end'],
+		['function f(): int { do { switch (1) { default: continue; } return 1; } while (false); }', 'can reach the end'],
 		['while (1) {}', 'condition requires canonical bool'],
 		['do {} while (1);', 'condition requires canonical bool'],
 		['for (; 1;) {}', 'condition requires canonical bool'],
@@ -143,7 +181,9 @@ try
 	}
 
 	// The bounded grammar requires braces and does not admit declarations in branch bodies.
-	foreach (['while (true) break;', 'do {} while (true)', 'for (;;) { break 2; }',
+	foreach (['switch (1) { $x = 2; case 1: break; }', 'switch (1) { case 1: return 1;',
+		'switch (1) { default: function local(): int { return 1; } }',
+		'while (true) break;', 'do {} while (true)', 'for (;;) { break 2; }',
 		'for (;;) { continue 2; }', 'foreach ($items as $item) {}',
 		'if (true) return 1;', 'if (true): return 1; endif;',
 		'if (true) { function local(): int { return 1; } }', 'if (true) { return 1;'] as $source)
@@ -158,6 +198,70 @@ try
 		control_check($rejected, 'Unsupported or incomplete branch grammar was accepted');
 		control_check(Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Parse failure published output');
 	}
+
+	// Case grouping, named inspection edges and distinct break/continue targets.
+	$switch_source = 'function f(): int { for ($i = 0; $i < 2; $i++) { switch ($i) { case 0: case +1: break; default: continue; } } return 4; } return f();';
+	$compiler = control_program($path, $switch_source);
+	$compiler->prepare();
+	$switch_body = Model::$global_scope->functions_named('f')[0]->syntax()->body;
+	$enclosing_loop = $switch_body->statements[0];
+	$selection = $enclosing_loop->body->statements[0];
+	$first_group = $selection->groups[0];
+	$default_group = $selection->groups[1];
+	control_check(count($selection->groups) === 2 && count($first_group->labels) === 2, 'Consecutive case labels did not share one group');
+	control_check($first_group->body instanceof block_node, 'Switch group replaced the shared statement body');
+	control_check(weakref_get($first_group->body->statements[0]->require_preparation()->target) === $selection, 'Switch break targets the loop');
+	control_check(weakref_get($default_group->body->statements[0]->require_preparation()->target) === $enclosing_loop, 'Switch intercepted loop continue');
+	control_check($first_group->labels[1]->require_preparation()->decimal === '1', 'Case sign was not normalized');
+	control_check($default_group->labels[0]->require_preparation()->decimal === null, 'Default has a fabricated value');
+	control_check(iterator_to_array($selection->children()) === [$selection->selector, $first_group, $default_group], 'Switch inspection order');
+	control_check(iterator_to_array($first_group->children()) === [$first_group->labels[0], $first_group->labels[1], $first_group->body], 'Case group inspection order');
+	control_check(iterator_to_array($first_group->labels[0]->children()) === [$first_group->labels[0]->value], 'Case value inspection');
+	control_check(iterator_to_array($default_group->labels[0]->children()) === [], 'Default inspection must be empty');
+	$compiler->cpp();
+	$switch_original = Model::$cpp_files[0]->text;
+	file_put_contents($path, "\n\n" . $switch_source);
+	$compiler->update_cpp([$path]);
+	control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $switch_body, 'Moving unchanged switch lost body identity');
+	control_check(Model::$cpp_files[0]->text === $switch_original, 'Moving switch changed generated output');
+
+	// Signature, label and completion failures withhold output and recover incrementally.
+	$switch_valid = 'function selector(): int { return 1; } function f(): int { switch (selector()) { case 1: return 7; default: return 8; } } function stable(): int { return 3; } return f();';
+	$compiler = control_program($path, $switch_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	$switch_original = Model::$cpp_files[0]->text;
+	$switch_stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+	$switch_version = $switch_stable->version;
+	foreach ([
+		str_replace('selector(): int { return 1;', 'selector(): bool { return true;', $switch_valid) => 'selector requires canonical int',
+		str_replace('default:', 'case +1:', $switch_valid) => 'duplicate case value',
+		str_replace('default: return 8;', 'default: break;', $switch_valid) => 'can reach the end',
+		str_replace('default: return 8;', 'default: continue;', $switch_valid) => 'enclosing legal target',
+	] as $invalid => $diagnostic)
+	{
+		file_put_contents($path, $invalid);
+		$compiler->sync([$path]);
+		control_reject($compiler, $diagnostic);
+		$compiler->sync([]);
+		control_reject($compiler, $diagnostic);
+		control_check($switch_stable->version === $switch_version, 'Switch failure rebuilt independent body');
+		file_put_contents($path, $switch_valid);
+		$compiler->update_cpp([$path]);
+		control_check(Model::$cpp_files[0]->text === $switch_original, 'Switch repair differs from original output');
+	}
+	file_put_contents($path, str_replace('case 1:', 'case :', $switch_valid));
+	$parse_failed = false;
+	try { $compiler->sync([$path]); }
+	catch (\RuntimeException $error) { $parse_failed = true; }
+	control_check($parse_failed && !Model::$rebuild_required && Model::$cpp_files->is_empty(), 'Malformed switch did not fail cleanly');
+	file_put_contents($path, $switch_valid);
+	$compiler->update_cpp([$path]);
+	control_check(Model::$cpp_files[0]->text === $switch_original, 'Malformed switch repair changed output');
+	$compiler = control_program($path, $switch_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	control_check(Model::$cpp_files[0]->text === $switch_original, 'Clean/incremental switch mismatch');
 
 	// Named loop edges, prepared transfer identities and independent lazy cursors.
 	$loop_source = 'function f(): int { for ($i = 0; $i < 2; $i++) { while (true) { break; } continue; } do { return 4; } while (false); } return f();';

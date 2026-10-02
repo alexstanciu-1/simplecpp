@@ -159,6 +159,49 @@ compiler rebuild.
 Final loop evidence: `/tmp/my-try-loops-20261002-final/` — 10 focused PHP suites
 (shared FPM pool) and 43 generated-C++ programs passed.
 
+## Agreed switch slice — 2026-10-02
+
+`switch_node extends breakable_node` owns a selector and ordered
+`switch_case_group` records. Each group owns explicit case/default labels and one
+existing `block_node` body. Consecutive labels share a group. Group locals do not
+escape to another group, even on fallthrough; outer locals remain assignable.
+
+The first pass selects on canonical int, evaluated once. Case labels resolve exact
+integer values before duplicate checking: decimal literals, resolved integer
+constants, parentheses and unary signs. General constant-expression folding,
+other selector types, enum/string cases and runtime labels are deferred. Default
+is optional, unique and may occur anywhere; empty switches/bodies are valid.
+Statements before the first label reject. Source braces delimit the switch;
+case-group bodies do not require additional braces.
+
+Preparation validates selection/labels and composes group completion in source
+order, admitting direct entry at every group plus fallthrough from its predecessor.
+The switch consumes break but propagates return and loop-targeting continue.
+`Control_Transfer_Preparation` now owns target resolution shared by loops and switches;
+the break kind is named `break_construct`, not the former loop-only spelling.
+No default means a possible unmatched normal exit. All syntax is checked, including
+unreachable bodies. No CFG or constant-selector reachability is introduced.
+
+C++ uses a native switch of the prepared selector's native integer value, exact
+resolved constant labels and a braced block per group. Native break exits the switch;
+native continue passes through it to the enclosing loop. No new runtime helper,
+lambda or dependency family is needed. Compilation-cost benchmarking is deferred.
+
+Legacy review: `Generator::renderSwitchExpr` extracts the native value, while
+`renderSwitchCaseValue` handles numeric literals/enums and emits an unsupported
+comment for other forms. The basic retained switch fixture proves integer selection.
+This slice instead validates labels centrally, rejects unsupported forms before
+emission, and brackets group-local declarations explicitly. Legacy PHP loose matching
+and its level-1 transfer spellings are not imported.
+
+Proof: [control_flow.php](../../tests/control_flow.php) covers selection, fallthrough,
+group-local scope, exact duplicate detection, nearest transfer identities, return
+completion, lazy inspection, moved-body identity, failed/no-edit retries and clean/
+incremental recovery (including malformed syntax). Final evidence:
+`/tmp/my-try-switch-20261002-reviewed/` — 10 focused PHP suites through the shared
+FPM pool and 65 generated-C++ executions passed with `-Werror=return-type`.
+This does not prove a native compiler rebuild; that checkpoint remains on demand.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -170,7 +213,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CTRL-IF-003](#ctrl-if-003) | agreed | `if (false) { } elseif (true) { } else { }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
 | [CTRL-WHILE-001](#ctrl-while-001) | agreed | `while ($a) { $b++; }` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [EXPR-TERNARY-001](#expr-ternary-001) | pending-discussion | `$a = $b ? $c : $d;` | unverified | unverified | deferred | — |
-| [CTRL-SWITCH-001](#ctrl-switch-001) | pending-discussion | `switch ($a) { case 1: break; default: break; }` | unverified | unverified | deferred | — |
+| [CTRL-SWITCH-001](#ctrl-switch-001) | agreed | `switch ($a) { case 1: break; default: break; }` | proved | proved | deferred | [Switch slice](#agreed-switch-slice--2026-10-02), control_flow.php |
 | [CTRL-MATCH-001](#ctrl-match-001) | pending-discussion | `$a = match ($b) { 1 => 10, default => 0 };` | unverified | unverified | deferred | — |
 | [CTRL-DOWHILE-001](#ctrl-dowhile-001) | agreed | `do { $b++; } while ($a);` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [CTRL-FOR-001](#ctrl-for-001) | agreed | `for ($i = 0; $i < 10; $i++) { }` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
@@ -359,7 +402,7 @@ auto a = php::ternary_eval([&]() -> decltype(auto) { return b; }, [&]() -> declt
 
 ## CTRL-SWITCH-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed switch slice](#agreed-switch-slice--2026-10-02).
 
 ### Imported version 1
 

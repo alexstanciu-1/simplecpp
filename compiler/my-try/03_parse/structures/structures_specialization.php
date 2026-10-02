@@ -301,6 +301,11 @@ final class comment_node extends trivia_node
 
 final class integer_literal_node extends expression_node
 {
+	public function integer_constant(): string
+	{
+		return $this->require_integer_literal_preparation()->decimal;
+	}
+
 	use Node_Source_Span;
 	use Preparation_Facts;
 
@@ -662,6 +667,11 @@ final class variable_reference_node extends assignable_expression_node
 /** A named immutable value is an expression, never an assignment target. */
 final class constant_reference_node extends expression_node
 {
+	public function integer_constant(): string
+	{
+		return Integer_Constants::reference($this->require_constant_reference_preparation());
+	}
+
 	use Node_Source_Span;
 	use Collected_Occurrence;
 	use Preparation_Facts;
@@ -1063,6 +1073,11 @@ final class mutation_expression_node extends expression_node
 
 final class unary_expression_node extends expression_node
 {
+	public function integer_constant(): string
+	{
+		return Integer_Constants::unary($this);
+	}
+
 	use Node_Source_Span;
 	use Preparation_Facts;
 

@@ -15,7 +15,7 @@ final class Completion_Preparation
 	public static function transfer(control_transfer_kind $kind): statement_completion
 	{
 		$result = new statement_completion(false);
-		$result->can_break = $kind === control_transfer_kind::break_loop;
+		$result->can_break = $kind === control_transfer_kind::break_construct;
 		$result->can_continue = $kind === control_transfer_kind::continue_loop;
 		return $result;
 	}
@@ -37,6 +37,15 @@ final class Completion_Preparation
 		$result->can_return = $left->can_return || $right->can_return;
 		$result->can_break = $left->can_break || $right->can_break;
 		$result->can_continue = $left->can_continue || $right->can_continue;
+		return $result;
+	}
+
+	/** Selection consumes its breaks, preserving transfers to an enclosing loop. */
+	public static function selection(statement_completion $paths, bool $has_default): statement_completion
+	{
+		$result = new statement_completion(!$has_default || $paths->can_fall_through || $paths->can_break);
+		$result->can_return = $paths->can_return;
+		$result->can_continue = $paths->can_continue;
 		return $result;
 	}
 

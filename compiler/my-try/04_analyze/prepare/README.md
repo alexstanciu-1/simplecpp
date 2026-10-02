@@ -67,6 +67,16 @@ composition consumes nearest break/continue exits and propagates return. Do-whil
 tests are reachable only from normal body completion or continue; omitted for tests
 cannot exit normally without break. Explicit constant tests remain conservative.
 Exceptions and non-returning calls need explicit completion rules when enabled.
+
+Switch groups compose direct entry and preceding fallthrough in source order.
+Switch completion consumes break, propagates return/continue, and admits unmatched
+normal exit without default. `Control_Transfer_Preparation` resolves bare transfers
+for both loops and switches. `Switch_Preparation` replaces only the break target;
+each group uses ordinary block preparation with isolated local membership.
+Selectors require canonical int. Labels retain normalized exact decimal facts from
+bounded integer-constant resolution; duplicate values/defaults reject before output.
+The constant worker supports literals, resolved integer definitions and unary signs;
+general folding, other selector types and runtime labels remain deferred.
 Conditions retain central conversion decisions with the `condition` context;
 only canonical bool is admitted implicitly. The emitter consumes these decisions
 and emits native lazy branches and loops. Loop header scope and transfer targets are

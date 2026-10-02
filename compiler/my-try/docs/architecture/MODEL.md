@@ -47,7 +47,9 @@ Conditional arms own explicit body/next-arm edges. The common `loop_node` owns a
 body; concrete while/do-while/for nodes own typed headers. An abstract foreach
 specialization reserves the same protocol for Chapter 06. Break/continue facts observe
 their prepared enclosing target; transient completion composes four exit possibilities
-without a CFG. There are no payload objects, generic sibling chains
+without a CFG. Switches own selectors and ordered label groups; each group owns
+labels and one ordinary block body. Exact case values are attached to labels after
+bounded constant resolution, before duplicate checking. There are no payload objects, generic sibling chains
 or inspection parents. [AST layout](ast_layout.md) owns detailed traversal rules.
 
 Parsed files retain file/executable scopes. Functions own signature scopes; structs

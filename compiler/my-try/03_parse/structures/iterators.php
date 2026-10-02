@@ -175,6 +175,75 @@ final class for_children_iterator extends children_iterator
 	}
 }
 
+/** Switch syntax exposes its selector before its existing ordered group storage. */
+final class switch_children_iterator extends children_iterator
+{
+	private switch_node $source;
+	private Storage_Cursor $groups /** Storage_Cursor<switch_case_group> */;
+	private bool $selector_read = false;
+
+	public function __construct(switch_node $source)
+	{
+		$this->source = $source;
+		$this->groups = new Storage_Cursor /** Storage_Cursor<switch_case_group> */($source->groups);
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		if (!$this->selector_read) {
+			$this->selector_read = true;
+			return $this->source->selector;
+		}
+		$groups /** Storage_Cursor<switch_case_group> */ = $this->groups;
+		if (!$groups->valid()) { return null; }
+		$group = $groups->current();
+		$groups->next();
+		return $group;
+	}
+}
+
+/** A group's labels precede its one shared statement body. */
+final class switch_group_children_iterator extends children_iterator
+{
+	private switch_case_group $source;
+	private Storage_Cursor $labels /** Storage_Cursor<switch_label> */;
+	private bool $body_read = false;
+
+	public function __construct(switch_case_group $source)
+	{
+		$this->source = $source;
+		$this->labels = new Storage_Cursor /** Storage_Cursor<switch_label> */($source->labels);
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		$labels /** Storage_Cursor<switch_label> */ = $this->labels;
+		if ($labels->valid()) {
+			$label = $labels->current();
+			$labels->next();
+			return $label;
+		}
+		if ($this->body_read) { return null; }
+		$this->body_read = true;
+		return $this->source->body;
+	}
+}
+
+final class switch_label_children_iterator extends children_iterator
+{
+	private switch_label $source;
+	private bool $value_read = false;
+
+	public function __construct(switch_label $source) { $this->source = $source; }
+
+	protected function read_next(): ?ast_node
+	{
+		if ($this->value_read) { return null; }
+		$this->value_read = true;
+		return $this->source->value;
+	}
+}
+
 /** Leaves need no source owner and have no cursor state. */
 final class empty_children_iterator implements child_iterator_i
 {
