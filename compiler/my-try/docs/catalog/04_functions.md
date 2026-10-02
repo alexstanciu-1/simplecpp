@@ -9,7 +9,24 @@ Requires locals and expressions. Begin with a no-argument function, then returns
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
-## Current ordinary-function slice (2026-09-27)
+## Handoff from chapter 03 — 2026-10-02
+
+[Chapter 03's bounded first pass is complete](03_control_flow.md#positive-pass-conclusion--2026-10-02).
+Functions use `function_body_node` over the common `statement_body_node`; ordinary
+blocks share statement storage/processing without owning function work identity.
+Preparation now rejects non-void fallthrough under the documented structured-control
+rules. Branches and arithmetic needed for terminating recursion are available; the
+old prerequisite limitation below is historical, not a current blocker.
+
+Next, reconcile existing functionality before adding features: FUNC-DECL-004 (string
+parameters), FUNC-RETURN-003 (expression returns), FUNC-CALL-003 (multiple arguments),
+and FUNC-RECURSION-001 (replace its nonterminating example with a bounded working case).
+Existing `tests/s2s.php` and Chapter 03 proofs are starting evidence; leave unverified
+rows unverified until their agreed examples are checked. This handoff adds no test run.
+The omitted-type examples FUNC-DECL-001/005 need explicit contract discussion, not
+assumed PHP inference. Defaults, variadics and overload selection remain later decisions.
+
+## Ordinary-function foundation (2026-09-27)
 
 Implemented through shared signature/body preparation and specialization-attached
 facts: explicit scalar/record return types, `void`, positional value/reference
@@ -34,8 +51,9 @@ is not introduced. LLVM's experimental scalar type choices are not inherited.
 Scope: retain the current single-source S2S boundary and existing frontend grammar.
 Templates await review. No defaults, variadics, overload selection, arithmetic,
 control-flow expansion, new construction syntax or general validation pass is added.
-Recursive signatures compile, but terminating recursive programs require frontend
-control flow that this slice does not add. Missing-return analysis remains deferred.
+At this checkpoint, recursive signatures compiled but terminating recursive programs
+and missing-return analysis still needed control-flow work. Chapter 03 now supplies
+that bounded foundation; see the current handoff above.
 
 ## Deferred v0.2 planning: explicit captures for functions and methods
 

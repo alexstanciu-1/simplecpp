@@ -5,11 +5,54 @@ Doc Status: planning
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)
 
-Requires expressions. Start with if/else, then joins, loops and control transfer.
+Requires expressions. The agreed bounded first pass is complete; see the conclusion
+and handoff below before reopening a deferred extension.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Positive-pass conclusion — 2026-10-02
+
+Chapter 03 is concluded for the agreed frontend + C++ S2S first pass: shared statement
+bodies and block scope, if chains, while/do-while/for, bare break/continue, canonical-int
+switch, shared scalar truthiness, matching-scalar ternary/Elvis, and integer-label match
+with optional default. [NOTE-017](#note-017) reconciles the imported overview and routes
+foreach to Chapter 06. This is bounded functionality, not full language coverage.
+
+The latest focused evidence remains 12 PHP suites and 132 generated-C++ programs
+passing in `/tmp/my-try-match-20261002-second`; see the match slice for coverage.
+Documentation closeout adds no execution evidence or native compiler checkpoint.
+
+### Remaining debt and scope boundaries
+
+- Syntax: unbraced/alternative statement syntax and numbered transfers are not enabled.
+  Full ternary nesting and fallback assignments retain the documented parentheses rules.
+- Selection: broader switch/match selector types, runtime labels and general constant
+  folding are deferred. Ternary/Elvis/match admit matching scalar results only; broader
+  joins remain future work. Empty match needs non-returning expression typing.
+- Analysis: no CFG, general constant reachability, definite-assignment/branch merging
+  or general effect analysis. Existing conservative completion and eager-effect checks
+  remain in force; exceptions/non-returning calls need their own completion rules.
+- Iteration: executable foreach belongs to Chapter 06, retaining the reserved shared
+  loop specialization and its TODO. Reference iteration additionally needs lifetime rules.
+- Inherited debt: PE-03 duplicate declarations, conditional runtime-template copyability,
+  bracket overload/lowering, and output partitioning remain with their existing owners.
+  LLVM, a fresh native compiler build and compilation-cost benchmarking remain deferred.
+
+Reopen these only when an agreed slice needs them; none blocks the function discussion.
+
+### Handoff to Chapter 04
+
+Continue with [functions, parameters and calls](04_functions.md#handoff-from-chapter-03--2026-10-02).
+Function signatures/calls already exist. First reconcile working rows against focused
+proofs, particularly string parameters, expression returns, multiple arguments and
+terminating recursion. Do not rebuild the existing function/body model or treat stale
+catalog cells as evidence of missing code. Discuss omitted type annotations, defaults,
+variadics and overload selection separately before extending semantics.
+
 ## Handoff from chapter 02 — 2026-10-02
+
+Historical starting context: the original prerequisites below were resolved by the
+agreed slices that follow. They do not describe the current block or condition model.
 
 Chapter 02 is [concluded for its positive pass](02_expressions.md#positive-pass-conclusion--2026-10-02).
 Continue with working bounded functionality, sound model/ownership and focused proof;
