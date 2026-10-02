@@ -654,7 +654,7 @@ final class Parser_Run
 	private function binary_expression(int $minimum_precedence, bool $allow_assignment): expression_node
 	{
 		$start = $this->position;
-		$left = $this->primary_expression($allow_assignment);
+		$left = $this->unary_expression($allow_assignment);
 		while (true)
 		{
 			$precedence = $this->binary_precedence();
@@ -698,6 +698,21 @@ final class Parser_Run
 			return 7;
 		}
 		return 0;
+	}
+
+	/** Prefix operators nest right-to-left and bind tighter than supported binary operators. */
+	private function unary_expression(bool $allow_assignment): expression_node
+	{
+		$text = $this->text();
+		if (($text !== '+') && ($text !== '-') && ($text !== '~') && ($text !== '!')) {
+			return $this->primary_expression($allow_assignment);
+		}
+		$start = $this->position++;
+		$unary = new unary_expression_node();
+		$unary->operator_token_index = $start;
+		$unary->operand = $this->unary_expression(false);
+		$this->finish_node($unary, $start);
+		return $unary;
 	}
 
 	/** Parse literals, calls, variables and right-associative assignment expressions. */
@@ -789,6 +804,7 @@ final class Parser_Run
 		$first = string_byte_at($operand, 0);
 		return Source_Text::identifier($operand) || Source_Text::digit($first)
 			|| ($first === 36) || ($first === 39) || ($first === 34)
+			|| ($operand === '!') || ($operand === '~')
 			|| ($operand === '(') || ($operand === '[') || (($first === 46) && (string_byte_len($operand) > 1));
 	}
 
@@ -836,7 +852,7 @@ final class Parser_Run
 		$cast = new cast_expression_node();
 		$cast->target_type = $this->type_syntax($this->current_scope);
 		$this->expect(')');
-		$cast->operand = $this->primary_expression(false);
+		$cast->operand = $this->unary_expression(false);
 		$this->finish_node($cast, $start);
 		return $this->access_suffix($cast, $start);
 	}

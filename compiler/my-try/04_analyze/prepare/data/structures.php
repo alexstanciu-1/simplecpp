@@ -51,6 +51,11 @@ final class prepared_cast_expression extends prepared_expression
 	public conversion_decision $conversion;
 }
 
+/** Unary syntax retains the common selected operator decision. */
+final class prepared_unary_expression extends prepared_expression {
+	public operator_decision $decision;
+}
+
 /** Binary syntax retains the common selected operator decision. */
 final class prepared_binary_expression extends prepared_expression {
 	public operator_decision $decision;

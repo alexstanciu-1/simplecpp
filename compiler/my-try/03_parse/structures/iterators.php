@@ -610,3 +610,25 @@ final class function_children_iterator extends children_iterator
 		return null;
 	}
 }
+
+/** Inspect the one owned unary operand lazily. */
+final class unary_expression_children_iterator extends children_iterator
+{
+	private unary_expression_node $source;
+	private bool $consumed = false;
+
+	public function __construct(unary_expression_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** Read the next named field only when requested. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) {
+			return null;
+		}
+		$this->consumed = true;
+		return $this->source->operand;
+	}
+}

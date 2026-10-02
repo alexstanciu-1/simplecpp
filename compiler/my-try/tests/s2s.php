@@ -51,6 +51,22 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'unary_negative' => ['$b = 3; $a = -$b; return $a + 3;', 0],
+	'unary_positive' => ['$b = 3; $a = +$b; return $a;', 3],
+	'unary_complement' => ['$b = 3; $a = ~$b; return $a + 4;', 0],
+	'unary_not' => ['$b = false; $a = !$b; return $a;', 1],
+	'unary_not_true' => ['return !true;', 0],
+	'unary_precedence' => ['return -2 * 3 + 8;', 2],
+	'unary_grouped' => ['return -(2 + 3) + 8;', 3],
+	'unary_nested' => ['return - -3 + +2;', 5],
+	'unary_complement_nested' => ['return ~~3;', 3],
+	'unary_logic' => ['return !false && !!true;', 1],
+	'unary_comparison' => ['return !(1 == 2);', 1],
+	'unary_cast' => ['return -(int)3.5 + (int)(-2) + 8;', 3],
+	'unary_minimum' => ['$a = -PHP_INT_MAX - 1; return 0;', 0],
+	'unary_complement_limit' => ['$a = ~PHP_INT_MAX; return 0;', 0],
+	'unary_grouped_constant' => ['return (PHP_INT_MAX) - PHP_INT_MAX;', 0],
+
 	'float_explicit' => ['$a float = 10.5; return $a;', 10],
 	'float_copy' => ['$a = 10.5; $b float = $a; $a = .5; return $b;', 10],
 	'float_reassign' => ['$a = 10.5; $a = 2.5; return $a;', 2],
@@ -593,7 +609,9 @@ foreach ($cases as $name => [$source, $exit])
 	}
 
 	// Verify signed values directly; process exit codes alone lose sign and high bits.
-	$arithmetic_values = ['sub_catalog' => '-1LL',
+	$arithmetic_values = ['unary_negative' => '-3LL', 'unary_complement' => '-4LL',
+		'unary_minimum' => '(-9223372036854775807LL - 1LL)',
+		'unary_complement_limit' => '(-9223372036854775807LL - 1LL)', 'sub_catalog' => '-1LL',
 		'sub_minimum' => '(-9223372036854775807LL - 1LL)', 'sub_maximum' => '9223372036854775807LL',
 		'div_minimum' => '(-9223372036854775807LL - 1LL)', 'compare_three_way_less' => '-1LL',
 		'mul_negative' => '-6LL', 'mul_wide' => '9223372030926249001LL'];
@@ -602,7 +620,7 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
 		$probe .= "\tif (local_a.native_value() != " . $arithmetic_values[$name] . ") { return 91; }\n";
 		$text = Model::$cpp_files[0]->text;
-		$site = (($name === 'sub_maximum') || ($name === 'mul_wide')) ? "\treturn 0;" : "\treturn static_cast<int>";
+		$site = (($name === 'sub_maximum') || ($name === 'mul_wide') || ($name === 'unary_minimum') || ($name === 'unary_complement_limit')) ? "\treturn 0;" : "\treturn static_cast<int>";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace($site, $probe . $site, $text));
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
@@ -956,7 +974,7 @@ foreach (['struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }'
 }
 
 // Malformed numeric tokens must not split into accidentally valid expressions.
-foreach (['.', '.e2', '1e', '1e+', '1e-', '1.2.3', '1e2e3', '1.0f', '1_0.5', '0x1.2', '-1.5', '+1.5'] as $spelling)
+foreach (['.', '.e2', '1e', '1e+', '1e-', '1.2.3', '1e2e3', '1.0f', '1_0.5', '0x1.2'] as $spelling)
 {
 	Compiler_Lifecycle::reset();
 	$failed = false;

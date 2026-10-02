@@ -5,6 +5,32 @@ namespace scpp\compiler;
 
 final class Operator_Preparation
 {
+	/** Prepare one value operand and retain the common operation decision. */
+	public static function prepare_unary(unary_expression_node $syntax,
+		preparation_context $context): prepared_unary_expression
+	{
+		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
+		$source_operator = operator_kind::unary_plus;
+		if ($text === '-') {
+			$source_operator = operator_kind::unary_minus;
+		}
+		elseif ($text === '~') {
+			$source_operator = operator_kind::bitwise_not;
+		}
+		elseif ($text === '!') {
+			$source_operator = operator_kind::logical_not;
+		}
+		elseif ($text !== '+') {
+			throw new \RuntimeException('S2S unary operator is not supported');
+		}
+		self::require_order_independent_operand($syntax->operand);
+		$operand = Expression_Preparation::prepare($syntax->operand, $context);
+		$facts = new prepared_unary_expression();
+		$facts->decision = self::decide($source_operator, [$operand->type], operator_context::expression, $context);
+		$facts->type = $facts->decision->result_type;
+		return $facts;
+	}
+
 	/** Prepare one binary syntax shape and attach only its selected semantic decision. */
 	public static function prepare_binary(binary_expression_node $syntax,
 		preparation_context $context): prepared_binary_expression
@@ -31,6 +57,10 @@ final class Operator_Preparation
 		if ($operator_context !== operator_context::expression) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
 		}
+		if (($source_operator === operator_kind::unary_plus) || ($source_operator === operator_kind::unary_minus)
+			|| ($source_operator === operator_kind::bitwise_not) || ($source_operator === operator_kind::logical_not)) {
+			return self::decide_unary($source_operator, $operands, $context);
+		}
 		if ($source_operator === operator_kind::concatenation) {
 			return self::decide_concatenation($operands, $context);
 		}
@@ -38,6 +68,37 @@ final class Operator_Preparation
 			return self::decide_logical($source_operator, $operands, $context);
 		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
+	}
+
+	/** One exact candidate per prefix operator; no implicit truthiness or numeric promotion. */
+	private static function decide_unary(operator_kind $source_operator,
+		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
+	{
+		if (q_count($operands) !== 1) {
+			throw new \LogicException('Unary operation requires one operand');
+		}
+		$expected = $context->integer;
+		$operation = operator_operation::integer_positive;
+		if ($source_operator === operator_kind::logical_not) {
+			$expected = $context->boolean;
+			$operation = operator_operation::boolean_not;
+		}
+		elseif ($source_operator === operator_kind::unary_minus) {
+			$operation = operator_operation::integer_negative;
+		}
+		elseif ($source_operator === operator_kind::bitwise_not) {
+			$operation = operator_operation::integer_complement;
+		}
+		if (!$operands[0]->matches($expected)) {
+			throw new \RuntimeException('S2S unary operation requires its canonical int or bool operand type');
+		}
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->operation = $operation;
+		$decision->result_type = $expected;
+		$decision->operands[] = Conversion_Preparation::decide(
+			$operands[0], $expected, conversion_context::operator_operand);
+		return $decision;
 	}
 
 	/** The bounded string candidate requires explicit casts at non-string source boundaries. */
@@ -147,6 +208,11 @@ final class Operator_Preparation
 	/** Keep C++ operand-order freedom harmless until general effect facts are available. */
 	private static function require_order_independent_operand(expression_node $node): void
 	{
+		if ($node instanceof unary_expression_node) {
+			$unary = object_cast($node, unary_expression_node::class);
+			self::require_order_independent_operand($unary->operand);
+			return;
+		}
 		if ($node instanceof cast_expression_node) {
 			$cast = object_cast($node, cast_expression_node::class);
 			self::require_order_independent_operand($cast->operand);

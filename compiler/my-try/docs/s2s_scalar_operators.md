@@ -98,9 +98,49 @@ program execution, not native execution of the compiler. The earlier 105-fixture
 [native compiler checkpoint](portability/conversion_review.md) predates these changes.
 LLVM and legacy STAN remain deferred.
 
+## Unary operators
+
+Added 2026-10-02 following agreement on one `unary_expression_node`. It owns one
+operand and the operator token location. Its prepared facts retain the existing
+`operator_decision` with one identity operand conversion. Maintenance visits the
+operand and remaps the operator token; inspection uses a lazy one-child iterator.
+Preparation owns operand permission and selected operation; emission only renders
+that selected operation through the existing runtime operators.
+
+Unary `+`, `-`, `~` accept canonical `int` and return canonical `int`; `!` accepts
+canonical `bool` and returns canonical `bool`. Results are values, not assignable
+storage. Explicit casts can establish the required type. Other numeric widths,
+floating operands and implicit truthiness remain rejected. The existing restriction
+on effectful operands remains in force, including beneath nested unary expressions.
+
+Prefix operators nest right-to-left and bind above the supported binary levels.
+Grouping controls their operand: `-2 * 3` differs from `-(2 * 3)`. `++` and `--`
+are distinct reserved tokens and remain rejected; repeated unary signs require
+separation, as in `- -3`. Strict comparisons and arrow tokens retain longest matching.
+
+The grammar keeps `(NAME) + expression` and `(NAME) - expression` as grouped-name
+binary expressions. Casts of signed operands use explicit grouping, for example
+`(int)(-2)`; `-(int)3.5` also works. This preserves syntax-only disambiguation of
+casts from grouped constants without consulting symbol resolution. `!` and `~`
+can follow a cast directly because they cannot be binary continuations.
+
+Decimal literal magnitudes retain the existing signed-64-bit bound. Consequently
+`-9223372036854775808` is rejected at literal preparation, while `-PHP_INT_MAX - 1`
+and `~PHP_INT_MAX` produce the exact minimum integer. The runtime negates native
+signed values; negating an already minimum-valued integer has no new overflow
+guarantee. No constant folding or widened literal type was introduced.
+
+Legacy `Generator::renderExpr` recursively emits parenthesized unary operations;
+this slice keeps those target forms with explicit prepared type permission.
+Focused operator tests verify decisions, result types, non-addressability, child
+inspection, cleanup, grouping, rejections, incremental operator replacement and
+fresh-output equivalence after token compaction. PHP-host S2S generation/purity and
+19 generated C++ programs/probes cover values, nesting, casts, logical composition
+and exact signed integer limits. Native compiler execution remains unverified for
+this extension; LLVM is deferred.
+
 ## Remaining decisions
 
-- Unary `+`, `-`, `!`, `~` require an agreed unary AST shape.
 - Prefix/postfix mutation and compound assignment need target identity, evaluation
   count and old/new result policy; they are not ordinary value-only binary operators.
 - Word `and` / `or` / `xor` interact with assignment precedence; the imported examples

@@ -213,7 +213,59 @@ if (!str_contains(Model::$cpp_files[0]->text, 'scpp::bool_t(static_cast<bool>(')
 	throw new \LogicException('Logical lowering did not select the native short-circuit bridge');
 }
 
+
+// Unary syntax retains one owned child and one ordinary conversion decision.
+foreach ([['+', '3', operator_operation::integer_positive],
+	['-', '3', operator_operation::integer_negative],
+	['~', '3', operator_operation::integer_complement],
+	['!', 'false', operator_operation::boolean_not]] as [$symbol, $literal, $operation])
+{
+	$syntax = operator_test_source('return ' . $symbol . $literal . ';');
+	$unary = $syntax->root->body->statements[0]->expression;
+	$decision = $unary->require_unary_preparation()->decision;
+	$expected = $symbol === '!' ? Language_Types::boolean(Model::$language_scope) : Language_Types::integer(Model::$language_scope);
+	if (($decision->operation !== $operation) || (count($decision->operands) !== 1)
+		|| !$decision->result_type->matches($expected) || $unary->require_preparation()->addressable
+		|| ($decision->operands[0]->operation !== conversion_operation::identity)
+		|| ($decision->operands[0]->context !== conversion_context::operator_operand)) {
+		throw new \LogicException('Unary operation lost its value/conversion contract');
+	}
+	if (($unary->kind() !== node_kind::unary_expression) || ($unary->start_token() !== 1)
+		|| ($unary->end_token() !== 3) || ($syntax->tokens->text_at($unary->operator_token_index) !== $symbol)) {
+		throw new \LogicException('Unary syntax lost its kind, operator position or source span');
+	}
+	$children = iterator_to_array($unary->children());
+	if ($children !== [$unary->operand]) {
+		throw new \LogicException('Unary inspection lost the owned operand');
+	}
+	Preparation_Cleanup::tree($syntax->root);
+	if ($unary->preparation() !== null) {
+		throw new \LogicException('Unary cleanup retained stale facts');
+	}
+}
+$syntax = operator_test_source('return -2 * 3;');
+$binary = $syntax->root->body->statements[0]->expression;
+if (!($binary instanceof binary_expression_node) || !($binary->left instanceof unary_expression_node)) {
+	throw new \LogicException('Unary sign did not bind tighter than multiplication');
+}
+$syntax = operator_test_source('return -(2 * 3);');
+$unary = $syntax->root->body->statements[0]->expression;
+if (!($unary instanceof unary_expression_node) || !($unary->operand instanceof binary_expression_node)) {
+	throw new \LogicException('Unary operand lost grouping');
+}
+
 $rejections = [
+	'unary positive float' => ['return +1.5;', 'unary operation requires'],
+	'unary float' => ['return -1.5;', 'unary operation requires'],
+	'unary bool' => ['return +true;', 'unary operation requires'],
+	'unary complement string' => ['return ~"x";', 'unary operation requires'],
+	'unary not int' => ['return !1;', 'unary operation requires'],
+	'unary narrow' => ['$x uint8 = 1; return -$x;', 'unary operation requires'],
+	'unary oversized magnitude' => ['return -9223372036854775808;', 'exceeds signed 64-bit'],
+	'unary call' => ['function value(): int { return 1; } return -value();', 'order-independent operands'],
+	'nested unary call' => ['function value(): int { return 1; } return 2 + -value();', 'order-independent operands'],
+	'prefix mutation' => ['$x = 1; return ++$x;', 'Expected scalar literal'],
+
 	'boolean operand' => ['$value = 1 + true;', 'integer binary operation requires canonical int operands'],
 	'narrow operand' => ['$left uint8 = 1; $value = $left + 2;', 'integer binary operation requires canonical int operands'],
 	'effectful operand' => ['function value(): int { return 1; } $result = value() + 2;', 'binary operation requires order-independent operands'],
@@ -223,8 +275,7 @@ $rejections = [
 	'subtraction width' => ['$left uint8 = 3; $value = $left - 1;', 'integer binary operation requires canonical int operands'],
 	'subtraction call' => ['function value(): int { return 1; } $result = 2 - value();', 'binary operation requires order-independent operands'],
 	'nested subtraction call' => ['function value(): int { return 1; } $result = 2 + (3 - value());', 'binary operation requires order-independent operands'],
-	'unary minus' => ['$value = -1;', 'Expected scalar literal or variable reference'],
-	'decrement' => ['$value = 1; $value--;', 'Expected scalar literal or variable reference'],
+	'decrement' => ['$value = 1; $value--;', "Expected ';'"],
 	'compound subtraction' => ['$value = 1; $value -= 1;', 'Expected scalar literal or variable reference'],
 	'multiplication boolean' => ['$value = true * 2;', 'integer binary operation requires canonical int operands'],
 	'multiplication float' => ['$value = 2 * 3.5;', 'integer binary operation requires canonical int operands'],
@@ -306,6 +357,59 @@ try
 	$compiler->exec_cpp();
 	if (Model::$cpp_files[0]->text !== $incremental) {
 		throw new \LogicException('Incremental arithmetic output differs from a fresh build');
+	}
+}
+finally {
+	unlink($path);
+	rmdir($directory);
+}
+
+// Equal-length operator edits must refresh decisions; token movement must preserve them.
+$directory = sys_get_temp_dir() . '/scpp_unary_' . bin2hex(random_bytes(6));
+mkdir($directory);
+$path = $directory . '/main.phs';
+$initial = 'function value(): int { return +3; } return value();';
+try
+{
+	file_put_contents($path, $initial);
+	Compiler_Lifecycle::reset();
+	$compiler = new Compiler();
+	$compiler->init([$directory]);
+	$compiler->exec_cpp();
+	$function = Model::$global_scope->functions_named('value')[0]->syntax();
+	$signature = $function->require_preparation();
+	$changed = str_replace('+3', '-3', $initial);
+	file_put_contents($path, $changed);
+	$compiler->update_cpp([$path]);
+	$body = $function->body;
+	$unary = $body->statements[0]->expression;
+	if (($unary->require_unary_preparation()->decision->operation !== operator_operation::integer_negative)
+		|| ($function->require_preparation() !== $signature)) {
+		throw new \LogicException('Operator edit lost its new decision or invalidated an unchanged signature');
+	}
+	$changed = str_replace('-3', '~3', $changed);
+	file_put_contents($path, $changed);
+	$compiler->update_cpp([$path]);
+	$body = $function->body;
+	$unary = $body->statements[0]->expression;
+	if (($unary->require_unary_preparation()->decision->operation !== operator_operation::integer_complement)
+		|| ($function->require_preparation() !== $signature)) {
+		throw new \LogicException('Unary complement edit retained a stale decision or changed the signature');
+	}
+	$changed = 'function before(): int { return 0; } ' . $changed;
+	file_put_contents($path, $changed);
+	$compiler->update_cpp([$path]);
+	$compiler->cleanup_tokens();
+	$tokens = Model::tokens()[0];
+	if (($function->body !== $body) || ($tokens->text_at($unary->operator_token_index) !== '~')) {
+		throw new \LogicException('Token cleanup lost the retained unary operator');
+	}
+	$incremental = Model::$cpp_files[0]->text;
+	Compiler_Lifecycle::reset();
+	$compiler->init([$directory]);
+	$compiler->exec_cpp();
+	if (Model::$cpp_files[0]->text !== $incremental) {
+		throw new \LogicException('Incremental unary output differs from a fresh build');
 	}
 }
 finally {

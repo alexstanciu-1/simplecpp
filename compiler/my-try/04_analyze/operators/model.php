@@ -8,6 +8,10 @@ enum operator_context {
 }
 
 enum operator_kind {
+	case unary_plus;
+	case unary_minus;
+	case bitwise_not;
+	case logical_not;
 	case three_way;
 	case logical_and;
 	case logical_or;
@@ -28,6 +32,10 @@ enum operator_kind {
 }
 
 enum operator_operation {
+	case integer_positive;
+	case integer_negative;
+	case integer_complement;
+	case boolean_not;
 	case integer_three_way;
 	case boolean_and;
 	case boolean_or;

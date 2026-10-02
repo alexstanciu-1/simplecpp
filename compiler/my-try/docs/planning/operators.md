@@ -165,7 +165,7 @@ compatibility remains a separate decision.
 - floating-point operators, broader comparison types and assignment operators;
 - implicit conversions for PHP++ string concatenation;
 - JS++ `+` string concatenation and possible future operator carrier changes;
-- unary syntax and operations;
+- broader unary operand types and signed-literal magnitude handling;
 - ternary syntax and the shared three-operand call;
 - keyword logical and assignment precedence;
 - effect analysis that can safely admit calls as operands;
@@ -216,3 +216,8 @@ expression statements now accept ordinary scalar expressions.
 The [scalar operator guide](../s2s_scalar_operators.md) owns the precise contracts,
 precedence, proofs and remaining decisions. The native compiler checkpoint above
 predates grouping and these operator extensions; it does not certify the current source.
+
+The 2026-10-02 unary slice adds the agreed unary syntax and its attached fact record,
+reusing `operator_decision` with one operand conversion. It covers integer `+`, `-`,
+`~` and boolean `!`; see the [unary contract](../s2s_scalar_operators.md#unary-operators)
+for grammar, literal limits and proof. Mutation remains separate.

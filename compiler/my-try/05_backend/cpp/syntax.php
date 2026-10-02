@@ -67,6 +67,11 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_cast($node, $this->context);
 	}
 
+	public function generate_unary_expression(unary_expression_node $node): string
+	{
+		return CPP_Generator::generate_unary($node, $this->context);
+	}
+
 	public function generate_binary_expression(binary_expression_node $node): string
 	{
 		return CPP_Generator::generate_binary($node, $this->context);

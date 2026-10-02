@@ -343,6 +343,33 @@ final class CPP_Generator
 	}
 
 	/** Render the prepared operation recursively; token spelling has no backend authority. */
+	public static function generate_unary(unary_expression_node $syntax, cpp_generation_context $context): string
+	{
+		$decision = $syntax->require_unary_preparation()->decision;
+		$spelling = '';
+		if ($decision->operation === operator_operation::integer_positive) {
+			$spelling = '+';
+		}
+		elseif ($decision->operation === operator_operation::integer_negative) {
+			$spelling = '-';
+		}
+		elseif ($decision->operation === operator_operation::integer_complement) {
+			$spelling = '~';
+		}
+		elseif ($decision->operation === operator_operation::boolean_not) {
+			$spelling = '!';
+		}
+		else {
+			throw new \RuntimeException('C++ unary operation is not supported');
+		}
+		$worker = new CPP_Syntax($context);
+		$operand = CPP_Declarations::conversion(
+			$syntax->operand->generate_cpp($worker), $decision->operands[0], $context);
+		$context->headers['scpp/generated/operators.hpp'] = true;
+		return '(' . $spelling . $operand . ')';
+	}
+
+	/** Render the selected binary operation and its retained operand conversions. */
 	public static function generate_binary(binary_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_binary_preparation()->decision;

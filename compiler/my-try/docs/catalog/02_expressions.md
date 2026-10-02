@@ -22,9 +22,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-DIV-001](#expr-div-001) | agreed | `$a = 4 / 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-MOD-001](#expr-mod-001) | agreed | `$a = 5 % 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-POW-001](#expr-pow-001) | pending-discussion | `$a = 2 ** 3;` | unverified | unverified | deferred | Missing runtime power helper and unresolved result/domain policy; see [remaining decisions](../s2s_scalar_operators.md#remaining-decisions) |
-| [EXPR-NEG-001](#expr-neg-001) | pending-discussion | `$a = -$b;` | unverified | unverified | deferred | — |
-| [EXPR-POS-001](#expr-pos-001) | pending-discussion | `$a = +$b;` | unverified | unverified | deferred | — |
-| [EXPR-BNOT-001](#expr-bnot-001) | pending-discussion | `$a = ~$b;` | unverified | unverified | deferred | — |
+| [EXPR-NEG-001](#expr-neg-001) | agreed | `$b = 3; $a = -$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
+| [EXPR-POS-001](#expr-pos-001) | agreed | `$b = 3; $a = +$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
+| [EXPR-BNOT-001](#expr-bnot-001) | agreed | `$b = 3; $a = ~$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
 | [EXPR-NESTED-001](#expr-nested-001) | agreed | `$b = 3; $a = ($b + 1) * 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-CHAIN-001](#expr-chain-001) | agreed | `$b = 3; $c = 4; $a = $b + 1 + $c;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-CONCAT-001](#expr-concat-001) | agreed | `$a = "a" . "b";` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
@@ -41,7 +41,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-SPACESHIP-001](#expr-spaceship-001) | agreed | `$b = 1; $c = 2; $a = ($b <=> $c);` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-LOGIC-001](#expr-logic-001) | agreed | `$a = true && false;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-OR-001](#expr-or-001) | agreed | `$a = true \|\| false;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
-| [EXPR-NOT-001](#expr-not-001) | pending-discussion | `$a = !$b;` | unverified | unverified | deferred | — |
+| [EXPR-NOT-001](#expr-not-001) | agreed | `$b = false; $a = !$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
 | [EXPR-ANDWORD-001](#expr-andword-001) | pending-discussion | `$a = $b and $c;` | unverified | unverified | deferred | — |
 | [EXPR-ORWORD-001](#expr-orword-001) | pending-discussion | `$a = $b or $c;` | unverified | unverified | deferred | — |
 | [EXPR-XORWORD-001](#expr-xorword-001) | pending-discussion | `$a = $b xor $c;` | unverified | unverified | deferred | — |
@@ -493,7 +493,11 @@ auto a = scpp::pow(static_cast<int_t>(2), static_cast<int_t>(3));
 
 ## EXPR-NEG-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 using the agreed unary
+node and the shared operator decision with one operand conversion. See the
+[unary operator contract and proof](../s2s_scalar_operators.md#unary-operators).
+The strict working example is initialized in the progress table. C++ uses the
+selected runtime unary operator; native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -528,7 +532,11 @@ auto a = -b;
 
 ## EXPR-POS-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 using the agreed unary
+node and the shared operator decision with one operand conversion. See the
+[unary operator contract and proof](../s2s_scalar_operators.md#unary-operators).
+The strict working example is initialized in the progress table. C++ uses the
+selected runtime unary operator; native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -563,7 +571,11 @@ auto a = +b;
 
 ## EXPR-BNOT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 using the agreed unary
+node and the shared operator decision with one operand conversion. See the
+[unary operator contract and proof](../s2s_scalar_operators.md#unary-operators).
+The strict working example is initialized in the progress table. C++ uses the
+selected runtime unary operator; native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1260,7 +1272,11 @@ auto a = static_cast<bool_t>(true) || static_cast<bool_t>(false);
 
 ## EXPR-NOT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 using the agreed unary
+node and the shared operator decision with one operand conversion. See the
+[unary operator contract and proof](../s2s_scalar_operators.md#unary-operators).
+The strict working example is initialized in the progress table. C++ uses the
+selected runtime unary operator; native compiler execution was not rerun.
 
 ### Imported version 1
 
