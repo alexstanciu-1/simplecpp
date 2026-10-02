@@ -67,6 +67,63 @@ startup. FPM without OPcache isolates worker reuse from opcode-cache effects.
 Configuration references: PHP's [OPcache settings](https://www.php.net/manual/en/opcache.configuration.php)
 and [FPM pool settings](https://www.php.net/manual/en/install.fpm.configuration.php).
 
+## CLI OPcache follow-up
+
+A follow-up on the same PHP 8.5.7 installation tests CLI OPcache explicitly. All four
+modes disable Xdebug, disable JIT, enable timestamp validation and use identical
+source fixtures. Each persistent-cache variant has its own directory, populated
+before timed trials. Values below are medians of three warm trials in this new run.
+
+| CLI mode | 341 fixtures, 1 job | 341 fixtures, 12 jobs | 48 operator-suite runs, 12 jobs |
+| --- | ---: | ---: | ---: |
+| OPcache disabled | 20.944 s | 3.390 s | 0.869 s |
+| `opcache.enable_cli=1`, no disk cache | 29.732 s | 4.702 s | 1.037 s |
+| OPcache with persistent disk cache | 20.039 s | 3.245 s | 0.825 s |
+| Persistent disk cache only | **17.132 s** | **2.745 s** | **0.769 s** |
+
+At 12 jobs, disk-cache-only uses **19% less elapsed time** for source generation and
+about **12% less time** for the repeated operator suite. Adding a disk cache while
+keeping the per-process memory cache gives only a small observed improvement.
+Enabling CLI OPcache alone makes the source sweep about **39% slower**.
+
+Each CLI request starts a new PHP process. Merely enabling its in-memory opcode
+cache does not establish reuse between these independent invocations; the persistent
+file cache is the relevant cross-process option. Both disk-cache modes produced
+102 `.bin` files (about 2.6 MB), and all measured response hashes match the uncached
+baseline. Disk-cache-only does not report a shared-memory cached-script count; the
+report records its file inventory separately. See PHP's
+[file-cache settings](https://www.php.net/manual/en/opcache.configuration.php).
+
+For these short-lived CLI jobs, the best measured cache configuration is:
+
+```bash
+mkdir -p /tmp/MY_TRY_OPCACHE
+XDEBUG_MODE=off php8.5 \
+  -d opcache.enable=1 -d opcache.enable_cli=1 \
+  -d opcache.file_cache=/tmp/MY_TRY_OPCACHE -d opcache.file_cache_only=1 \
+  -d opcache.validate_timestamps=1 -d opcache.file_update_protection=0 \
+  -d opcache.jit=disable compiler/my-try/tests/operators.php
+```
+
+This is a warm-cache measurement, not a source-edit invalidation proof or a change
+to runner defaults. It still does not reach the earlier warm-FPM result of 0.618
+seconds for the 12-job source sweep; that FPM number is from the preceding experiment,
+not a rerun in this CLI-only comparison.
+
+Reproduce with the extended benchmark's mode selection (no FPM daemon needed):
+
+```bash
+python3 compiler/my-try/tools/benchmark_php.py \
+  --programs /tmp/FRESH_FIXTURES/programs.json \
+  --results /tmp/FRESH_CLI_OPCACHE_RESULTS --jobs 12 --rounds 3 --repeat 48 \
+  --modes cli-no-xdebug cli-opcache cli-file-cache cli-file-cache-only
+```
+
+Evidence: `/tmp/my-try-cli-opcache-20261002/summary.json`, `measurements.json`,
+the generated entry/fixtures and both cache directories. The controller log is
+`/tmp/my-try-cli-opcache-20261002.log`. Compiler sources remain at the preceding
+checkpoint; the benchmark extension was uncommitted during measurement.
+
 ## Implications for my-try
 
 An optional FPM execution path is worthwhile for repeated PHP compilation requests
@@ -83,8 +140,8 @@ Keep CLI available for CLI-specific argument/stream/exit behavior and as a fallb
 Before enabling FPM for general tests, define request input, output/error envelopes,
 per-request temporary-directory isolation, timeout/cancellation behavior and worker
 lifecycle. The successful operator suite is one representative PHP suite, not proof
-that all 43 suites are HTTP/FastCGI-compatible. A persistent CLI worker or CLI disk
-opcode cache was not benchmarked.
+that all 43 suites are HTTP/FastCGI-compatible. The CLI disk-cache follow-up above provides another option while retaining process
+isolation. A persistent CLI worker was not benchmarked.
 
 ## Reproduction and evidence
 

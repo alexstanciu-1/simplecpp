@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Compare local PHP CLI and a private FPM pool on my-try workloads.
 
-Requires matching CLI/FPM versions and cgi-fcgi. Existing FPM services are untouched.
+FPM modes require matching CLI/FPM versions and cgi-fcgi; CLI-only modes need no daemon.
+Existing FPM services are untouched.
 Each measured request includes client process startup, output capture and verification.
 """
 import argparse
@@ -21,6 +22,8 @@ from test_runner import DEFAULT_JOBS, Task, positive_jobs, run_tasks
 
 ROOT = Path(__file__).resolve().parents[3]
 APP = ROOT / 'compiler/my-try'
+MODES = ('cli-current', 'cli-no-xdebug', 'cli-opcache', 'cli-file-cache',
+         'cli-file-cache-only', 'fpm-cache-0', 'fpm-cache-1')
 
 
 def php_literal(value):
@@ -75,6 +78,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', required=True, type=Path)
     parser.add_argument('--programs', required=True, type=Path, help='S2S programs.json manifest')
+    parser.add_argument('--modes', nargs='+', choices=MODES,
+                        default=['cli-current', 'cli-no-xdebug', 'fpm-cache-0', 'fpm-cache-1'])
     parser.add_argument('--php', default='php8.5')
     parser.add_argument('--fpm', default='/usr/sbin/php-fpm8.5')
     parser.add_argument('--ini', default='/etc/php/8.5/cli/php.ini')
@@ -85,6 +90,11 @@ def main():
     args = parser.parse_args()
     args.results = args.results.resolve()
     args.results.mkdir(parents=True)
+    cache_paths = {}
+    for mode in args.modes:
+        if mode.startswith('cli-file-cache'):
+            cache_paths[mode] = args.results / mode
+            cache_paths[mode].mkdir()
     programs = json.loads(args.programs.read_text())['valid']
     fixtures = args.results / 'fixtures'
     fixtures.mkdir()
@@ -104,8 +114,9 @@ if ($work === 'meta') {
         'ini' => php_ini_loaded_file(), 'scanned' => php_ini_scanned_files(),
         'extensions' => get_loaded_extensions(), 'opcache' => ini_get('opcache.enable'),
         'opcache_cli' => ini_get('opcache.enable_cli'), 'jit' => ini_get('opcache.jit'),
+        'file_cache' => ini_get('opcache.file_cache'), 'file_cache_only' => ini_get('opcache.file_cache_only'),
         'xdebug_env' => getenv('XDEBUG_MODE'),
-        'cached_scripts' => $status === false ? 0 : $status['opcache_statistics']['num_cached_scripts']]);
+        'cached_scripts' => $status === false ? 0 : ($status['opcache_statistics']['num_cached_scripts'] ?? 0)]);
     return;
 }
 if ($work === 'suite') {
@@ -132,7 +143,16 @@ echo Model::$cpp_files[0]->text;
         if mode != 'cli-current':
             environment['XDEBUG_MODE'] = 'off'
         if socket is None:
-            command = [args.php, '-c', args.ini, '-d', 'opcache.enable_cli=0', str(entry), work, value]
+            enabled = mode in ('cli-opcache', 'cli-file-cache', 'cli-file-cache-only')
+            settings = ['opcache.enable=1', f'opcache.enable_cli={int(enabled)}',
+                        'opcache.jit=disable', 'opcache.file_update_protection=0',
+                        'opcache.validate_timestamps=1',
+                        f'opcache.file_cache={cache_paths.get(mode, "")}',
+                        f'opcache.file_cache_only={int(mode == "cli-file-cache-only")}']
+            command = [args.php, '-c', args.ini]
+            for setting in settings:
+                command.extend(['-d', setting])
+            command.extend([str(entry), work, value])
         else:
             environment.update(SCRIPT_FILENAME=str(entry), SCRIPT_NAME='/entry.php',
                                REQUEST_METHOD='GET', QUERY_STRING=urlencode(dict(work=work, value=value)),
@@ -157,7 +177,7 @@ echo Model::$cpp_files[0]->text;
 
     def measure(mode, socket):
         metadata[mode] = json.loads(request(mode, socket, 'meta'))
-        if metadata[mode]['version'] != metadata['cli-current']['version']:
+        if metadata[mode]['version'] != next(iter(metadata.values()))['version']:
             raise RuntimeError('CLI and FPM versions differ')
         for work in ['noop', 'fixture', 'suite']:
             values = list(programs) if work == 'fixture' else [''] * args.repeat
@@ -189,15 +209,22 @@ echo Model::$cpp_files[0]->text;
                           f'{row["requests_per_second"]:.1f} requests/s', flush=True)
         metadata[mode + '-after'] = json.loads(request(mode, socket, 'meta'))
 
-    for mode in ['cli-current', 'cli-no-xdebug']:
-        measure(mode, None)
-    for cache in [0, 1]:
-        with fpm_pool(args, cache) as (socket, elapsed):
-            startup[f'fpm-{cache}-start_ms'] = elapsed
-            measure('fpm-cache-' + str(cache), socket)
+    for mode in args.modes:
+        if mode.startswith('cli-'):
+            measure(mode, None)
+        else:
+            cache = int(mode.rsplit('-', 1)[1])
+            with fpm_pool(args, cache) as (socket, elapsed):
+                startup[f'fpm-{cache}-start_ms'] = elapsed
+                measure(mode, socket)
+    cache_files = {mode: dict(files=len(list(path.rglob('*.bin'))),
+                             bytes=sum(p.stat().st_size for p in path.rglob('*.bin')))
+                   for mode, path in cache_paths.items()}
+    if any(info['files'] == 0 for info in cache_files.values()):
+        raise RuntimeError('A requested persistent OPcache produced no cache files')
     (args.results / 'summary.json').write_text(json.dumps(dict(
         metadata=metadata, startup=startup, rounds=args.rounds, jobs=args.jobs,
-        output_parity=True, measurements=rows), indent=2) + '\n')
+        output_parity=True, cache_files=cache_files, measurements=rows), indent=2) + '\n')
 
 
 if __name__ == '__main__':
