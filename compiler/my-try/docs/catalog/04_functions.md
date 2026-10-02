@@ -45,6 +45,36 @@ before implementing it. Keep defaults, variadics, overloads and omitted-type pol
 out of this reconciliation batch. Progress rows remain unverified until the corresponding
 focused proof is recorded.
 
+### Typed-signature verification — 2026-10-02
+
+Verified FUNC-DECL-004, FUNC-RETURN-003 and FUNC-CALL-003 through the existing
+`function_node` / ordered `parameter_node` / `function_body_node` model. Signature
+preparation owns parameter types, passing modes and return type; body preparation
+introduces parameter storage; call preparation owns positional argument checks and
+conversions. Strings need no special parameter node. Value parameters remain local
+copies, while explicit `&` preserves caller storage.
+
+Legacy review: `Generator::analyzeParamPassModes` distinguishes read-only versus
+written string parameters; `tests/php/functions/level_02/functions_004_multi_param_basic.phs`
+and the strict multi-int return case cover ordinary positional calls. This slice
+checks observable value semantics, not adoption of the legacy const-reference
+optimization. Current S2S emits ordinary value parameters by value.
+
+Eight new `function_typed_*` fixtures in `tests/s2s.php` observe string contents,
+distinct positional weights, both boolean branches, float input, local int/string
+reassignment without caller mutation, string expression returns, explicit string
+references, forward signatures and left-to-right string snapshots. Five rejection
+cases cover incompatible arguments/returns and excess arguments through the existing
+failure cleanup/purity checks. No compiler structure or semantics changed.
+
+Evidence: `tests/functions.py` with results retained at
+`/tmp/my-try-functions-signatures-20261002` passed six PHP suites and 22 generated C++
+programs using 12 slots. FPM socket startup was unavailable in the sandbox, so the
+documented CLI fallback ran. This is PHP compiler plus generated-program evidence,
+not a new native compiler checkpoint. The cases are also exported for future
+requested native validation. Executed terminating recursion remains unverified;
+defaults, variadics, omitted types and the wider TYPE-PARAM-003D policy remain deferred.
+
 ## Ordinary-function foundation (2026-09-27)
 
 Implemented through shared signature/body preparation and specialization-attached
@@ -101,14 +131,14 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-PARAM-001](#type-param-001) | agreed | `function f(int $a, float $b, bool $c): void {}` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-CALL-001](#func-call-001) | agreed | `f();` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-CALL-002](#func-call-002) | agreed | `f($a);` | proved | proved | deferred | `tests/s2s.php` |
-| [FUNC-DECL-004](#func-decl-004) | pending-discussion | `function f(int $a, string $b): int { return $a; }` | unverified | unverified | deferred | — |
+| [FUNC-DECL-004](#func-decl-004) | agreed | `function f(int $a, string $b): int { return $a; }` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
 | [FUNC-DEFAULT-001](#func-default-001) | pending-discussion | `function f(int $a = 1): int { return $a; }` | unverified | unverified | deferred | — |
 | [FUNC-RECURSION-001](#func-recursion-001) | pending-discussion | `function f(int $a): int { return f($a - 1); }` | unverified | unverified | deferred | — |
 | [FUNC-OVERLOAD-001](#func-overload-001) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
 | [FUNC-DECL-005](#func-decl-005) | pending-discussion | `function f($a) { return $a; }` | unverified | unverified | deferred | — |
 | [FUNC-RETURN-002](#func-return-002) | agreed | `return $a;` | proved | proved | deferred | `tests/s2s.php` |
-| [FUNC-RETURN-003](#func-return-003) | pending-discussion | `return $a + 1;` | unverified | unverified | deferred | — |
-| [FUNC-CALL-003](#func-call-003) | pending-discussion | `f($a, 1, "x", true);` | unverified | unverified | deferred | — |
+| [FUNC-RETURN-003](#func-return-003) | agreed | `return $a + 1;` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
+| [FUNC-CALL-003](#func-call-003) | agreed | `f($a, 1, "x", true);` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
 | [FUNC-CALL-004](#func-call-004) | pending-discussion | `sum_all(1, 2, 3);` | unverified | unverified | deferred | — |
 | [SCOPE-GLOBAL-001](#scope-global-001) | pending-discussion | `$a = 1; function f(): int { return $a; }` | unverified | unverified | deferred | — |
 | [SCOPE-LOCAL-001](#scope-local-001) | agreed | `function f(): void { $a = 1; $b = $a; }` | proved | proved | deferred | `tests/s2s.php` |
@@ -403,7 +433,7 @@ f(a);
 
 ## FUNC-DECL-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Verified with the existing ordered typed signature and value/reference call preparation; see typed-signature verification above.
 
 ### Imported version 1
 
@@ -605,7 +635,7 @@ return a;
 
 ## FUNC-RETURN-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Verified through shared expression/return preparation and typed C++ emission; no return-specific expression representation is needed.
 
 ### Imported version 1
 
@@ -640,7 +670,7 @@ return a + static_cast<int_t>(1);
 
 ## FUNC-CALL-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Verified positional scalar arguments, including strings; value arguments snapshot left-to-right and explicit references preserve storage.
 
 ### Imported version 1
 
