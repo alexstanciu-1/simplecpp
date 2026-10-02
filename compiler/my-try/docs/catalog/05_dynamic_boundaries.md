@@ -9,6 +9,33 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Handoff from chapter 04 — 2026-10-02
+
+[Chapter 04's bounded first pass is complete](04_functions.md#positive-pass-conclusion--2026-10-02).
+Reuse explicit signature preparation, parameter storage, argument/return conversions,
+value/reference boundaries and default ownership. Nullable syntax/values and wrapper
+boundaries are not implied by successful scalar or variadic tests. Chapter 04's native
+compiler checkpoint remains pending; its latest proof uses the PHP compiler plus
+generated C++ execution.
+
+Proposed discussion groups (not implementation approval or new semantic decisions):
+
+1. **Typed null and nullable foundation:** LIT-NULL-001, TYPE-VAR-002,
+   FUNC-NULLABLE-001, NULL-CHECK-001/002 and relevant NOTE-036/037 rules. Agree
+   contextual null typing, present/absent values and callable conversions together.
+2. **Presence and fallback:** VAR-ISSET-001, VAR-EMPTY-001, EXPR-COALESCE-001 and
+   NOTE-045. Keep null checks distinct from truthiness; scalar Elvis already works.
+3. **Wrapper/mixed boundaries:** TYPE-VAR-006B, NOTE-005/052/063 and applicable
+   NOTE-010 rules. Review nesting, extraction and failure behavior from owning specs;
+   do not assume all wrapper families belong in one implementation slice.
+4. **Conversion reconciliation:** retain proved scalar CAST-INT/FLOAT/BOOL/STRING
+   behavior, then discuss CAST-OBJECT-001 and remaining NOTE-015/010 mappings with
+   the relevant type owners. No automatic expansion of scalar conversion rules.
+
+Start discussion with group 1. The imported `$a = null` example is not an instruction
+to infer a nullable type from an untyped null. No Chapter 05 code or new support claim
+is introduced by this handoff.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

@@ -11,6 +11,9 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Handoff from chapter 03 — 2026-10-02
 
+This is the historical opening handoff. For current completion and next work, see
+[the closeout below](#positive-pass-conclusion--2026-10-02).
+
 [Chapter 03's bounded first pass is complete](03_control_flow.md#positive-pass-conclusion--2026-10-02).
 Functions use `function_body_node` over the common `statement_body_node`; ordinary
 blocks share statement storage/processing without owning function work identity.
@@ -257,6 +260,45 @@ invalidation, repair, retained parameter identity, no-op reuse and fresh equival
 evidence: `/tmp/my-try-function-variadics-20261002-2/summary.json` (12 slots, CLI fallback
 after sandbox FPM socket startup failed). No native compiler rebuild or LLVM run.
 
+## Positive-pass conclusion — 2026-10-02
+
+The agreed bounded Chapter 04 first pass is complete: explicit typed signatures,
+scalar/default/variadic arguments, value/reference parameter boundaries, ordinary
+value returns, terminating recursion, isolated locals and declaration-name validation.
+Imported implicit-void/auto and inferred reference-return rules are not adopted.
+NOTE-016/039/040 are reconciled for this scope; their broader forms remain below as
+explicit debt, not silently completed functionality.
+
+Latest focused evidence is the variadic checkpoint at implementation revision
+`10c51f9bbe5cfa6782dc0bc9fd679ec09b843655`: 12 PHP suites and 77 generated C++
+programs/probes in `/tmp/my-try-function-variadics-20261002-2/summary.json`.
+This closeout changes documentation only and adds no test run. Generated-program
+execution is not a native compiler rebuild. The last native compiler checkpoint
+predates Chapter 04; a new checkpoint remains pending an explicit request.
+
+### Remaining debt and scope boundaries
+
+| ID | Deferred work | Owning next area |
+| --- | --- | --- |
+| FN-01 | Nullable/wrapper parameter and return boundaries; primary-type normalized union signatures | Chapter 05; review established specs before selecting a bounded slice |
+| FN-02 | Explicit reference returns and their lifetime guarantees | Chapter 07; no inferred reference-return mode |
+| FN-03 | Explicit function/method captures and method-specific callable rules | Existing capture proposal; Chapters 10/12 |
+| FN-04 | Call-site unpacking, reference variadics and broader element-domain proofs | Function calls plus container/reference contracts; untyped/mixed packs remain outside the supported contract |
+| FN-05 | General constant/default expressions and composite defaults | Signature/default preparation plus the relevant type/constant owner |
+| FN-06 | Source vector reads/writes/iteration, including useful variadic-body iteration; container-specific copy behavior | Chapter 06; reuse ordinary vector storage, not pack-only operations |
+| FN-07 | Legacy annotation conflicts and syntax compatibility | Legacy-specific catalog work; not strict signature inference |
+| FN-08 | Duplicate struct fields (remaining PE-03), function templates and other broader declaration forms | Respective declaration/type chapters; function/parameter duplicates are already checked |
+| FN-09 | Native compiler validation of Chapter 04; parked LLVM adaptation | Explicit checkpoint request; LLVM only on request |
+
+No-overloading, explicit types, and no implicit capture are agreed rules, not missing
+features. Deep recursion limits and tail-call optimization remain outside the bounded
+proof; later optimization must preserve value/alias semantics. Inherited Chapter 03
+and preparation/emission debt remains tracked in its owning documents.
+
+Next: discuss Chapter 05 in grouped slices, starting with typed nullable values,
+null construction/checks and nullable function boundaries. Preserve the distinction
+between null, false, zero and empty values, and between truthiness and explicit casts.
+
 ## Ordinary-function foundation (2026-09-27)
 
 Implemented through shared signature/body preparation and specialization-attached
@@ -326,7 +368,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [SCOPE-LOCAL-001](#scope-local-001) | agreed | `function f(): void { $a = 1; $b = $a; }` | proved | proved | deferred | `tests/s2s.php` |
 | [SCOPE-SHADOW-001](#scope-shadow-001) | agreed | `$a = 1; function f(): void { $a = 2; }` | proved | proved | deferred | `tests/s2s.php` |
 | [TYPE-PARAM-003D](#type-param-003d) | agreed (string slice) | `function f(string $s): void { $s .= "x"; }` | proved | proved | deferred | Ownership proofs in `tests/s2s.php`; vectors deferred |
-| [NOTE-016](#note-016) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-016](#note-016) | agreed bounded subset | Explicit signatures, scalar defaults, explicit parameter references | proved for current slice | proved for current slice | deferred | FN-01/02/03/05/07 retain broader forms |
 | [NOTE-039](#note-039) | agreed bounded subset | Explicit typed value return | proved for current slice | proved for current slice | deferred | No implicit auto/reference returns; wrapper extensions deferred |
 | [NOTE-040](#note-040) | agreed bounded subset | Explicit parameters and value returns | proved for current slice | proved for current slice | deferred | Legacy annotation conflicts and explicit reference returns deferred |
 ## FUNC-DECL-001
@@ -1069,7 +1111,11 @@ returns are not completed by this agreement.
 
 **Source:** [generators/php/specs/rules.md:234](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Explicit types, normalized scalar defaults and explicit
+parameter references are proved by the Chapter 04 slices above. Defaults appear on
+C++ prototypes, not definitions. Nullable/union boundaries, methods, explicit reference
+returns and broader defaults remain FN-01/02/03/05. Imported prose below retains its
+historical provenance and is not a claim that those deferred forms are implemented.
 
 > ## 8. Functions
 >

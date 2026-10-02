@@ -3,6 +3,11 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
+That checkpoint predates Chapter 04's implementation changes; it does not certify
+the current checkout. Chapter 04 through `10c51f9b` has focused PHP compiler and
+generated-program evidence (12 PHP suites, 77 function programs/probes), but its
+native compiler rebuild/parity checkpoint is pending an explicit request. See the
+[Chapter 04 closeout](../catalog/04_functions.md#positive-pass-conclusion--2026-10-02).
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
 ## Latest native checkpoint — 2026-10-02 control-flow closeout
@@ -13,7 +18,8 @@ construction, PHP/native C++ byte parity and generated-program execution. This c
 the Chapter 02 follow-up repairs and Chapter 03's bounded first pass. The changes were
 uncommitted during testing: `source_hashes.json` and `harness_hashes.json`, not the base
 revision alone, identify the tested overlay. All 96 compiler/proof PHP source files
-(excluding the generated driver) and all recorded harness hashes match the checkout.
+(excluding the generated driver) and all recorded harness hashes matched the tested
+checkout at that checkpoint; subsequent Chapter 04 edits have changed those sources.
 
 The **12-job** run passes:
 
