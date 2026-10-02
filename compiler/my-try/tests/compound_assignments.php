@@ -77,7 +77,7 @@ $rejections = [
 	['PHP_INT_MAX += 1;', 'existing local or parameter'],
 	['$x = 1; ((int)$x) += 1;', 'existing local or parameter'],
 	['struct Box { int $value; } $box Box; ($box->value) += 1;', 'existing local or parameter'],
-	['$x = 1; ($x[0]) += 1;', 'existing local or parameter'],
+	['$x = 1; ($x[0]) += 1;', 'operator[] with 1 argument(s) overload resolution is deferred'],
 	['function value(): int { return 1; } $x = 1; $x += value();', 'order-independent operands'],
 	['$x = 1; $x += $x++;', 'order-independent operands'],
 	['$x = 1; $x += 1 + $x++;', 'order-independent operands'],

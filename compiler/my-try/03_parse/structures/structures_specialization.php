@@ -1602,11 +1602,18 @@ final class index_node extends assignable_expression_node
 	use Node_Source_Span;
 
 	public expression_node $base;
-	public expression_node $index;
+	/** Absence means zero explicit arguments, with no built-in append interpretation. */
+	public ?expression_node $index = null;
 
 	public function kind(): node_kind
 	{
 		return node_kind::index_expression;
+	}
+
+	/** Both arities enter the same operator selection boundary; no overload is defined yet. */
+	public function prepare(preparation_context $context): void
+	{
+		Operator_Preparation::prepare_index($this, $context);
 	}
 
 	/**
@@ -1622,7 +1629,10 @@ final class index_node extends assignable_expression_node
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->base);
-		$worker->edge($this, $this->index);
+		if ($this->index !== null) {
+			$argument /** expression_node */ = $this->index;
+			$worker->edge($this, $argument);
+		}
 	}
 }
 

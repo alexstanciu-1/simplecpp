@@ -52,6 +52,27 @@ final class Operator_Preparation
 		return $facts;
 	}
 
+	/** Receiver first, then the optional explicit argument; empty brackets imply no special role. */
+	public static function prepare_index(index_node $syntax, preparation_context $context): void
+	{
+		$statement_assignment = $context->statement_assignment;
+		$context->statement_assignment = false;
+		try
+		{
+			$base = Expression_Preparation::prepare($syntax->base, $context);
+			$operands /** vector<canonical_type_use> */ = [$base->type];
+			if ($syntax->index !== null) {
+				$argument /** expression_node */ = $syntax->index;
+				$value = Expression_Preparation::prepare($argument, $context);
+				$operands[] = $value->type;
+			}
+			self::decide(operator_kind::index, $operands, operator_context::expression, $context);
+		}
+		finally {
+			$context->statement_assignment = $statement_assignment;
+		}
+	}
+
 	/** Select from hard-coded language candidates; later providers join at this boundary. */
 	public static function decide(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, operator_context $operator_context,
@@ -59,6 +80,9 @@ final class Operator_Preparation
 	{
 		if ($operator_context !== operator_context::expression) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
+		}
+		if ($source_operator === operator_kind::index) {
+			return self::decide_index($operands);
 		}
 		if (($source_operator === operator_kind::pre_increment) || ($source_operator === operator_kind::post_increment)
 			|| ($source_operator === operator_kind::pre_decrement) || ($source_operator === operator_kind::post_decrement)) {
@@ -76,6 +100,21 @@ final class Operator_Preparation
 			return self::decide_logical($source_operator, $operands, $context);
 		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
+	}
+
+	/** No candidate means no result type or access contract can honestly be published. */
+	private static function decide_index(array $operands /** vector<canonical_type_use> */): operator_decision
+	{
+		$arity = q_count($operands) - 1;
+		if (($arity < 0) || ($arity > 1)) {
+			throw new \LogicException('operator[] requires a receiver and zero or one explicit argument');
+		}
+		if (String_Conversions::is_string($operands[0])) {
+			throw new \RuntimeException('S2S string operator[] with ' . $arity
+				. ' argument(s) is deferred; no string overload is defined');
+		}
+		throw new \RuntimeException('S2S operator[] with ' . $arity
+			. ' argument(s) overload resolution is deferred');
 	}
 
 	/** One exact candidate per prefix operator; no implicit truthiness or numeric promotion. */

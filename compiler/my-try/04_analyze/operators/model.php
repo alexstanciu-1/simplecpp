@@ -8,6 +8,7 @@ enum operator_context {
 }
 
 enum operator_kind {
+	case index;
 	case bitwise_and;
 	case bitwise_or;
 	case bitwise_xor;

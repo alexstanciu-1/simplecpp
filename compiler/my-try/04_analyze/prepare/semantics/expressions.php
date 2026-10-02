@@ -20,6 +20,9 @@ final class Expression_Preparation
 		try
 		{
 			$target = $node->target;
+			if ($target instanceof index_node) {
+				$target->prepare($context);
+			}
 			$facts = new prepared_assignment();
 			if ($target instanceof variable_reference_node) {
 				$variable = object_cast($target, variable_reference_node::class);

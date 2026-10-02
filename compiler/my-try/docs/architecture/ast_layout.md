@@ -60,6 +60,15 @@ provides the precise insertion range. Repeated references have distinct collecti
 identities. Typed maintenance traverses parts and their expressions, so preparation
 cleanup and retained-body compaction use the existing lifecycle.
 
+## Bracket expressions
+
+`index_node` owns a required receiver (`base`) and optional argument (`index`). Both
+arities dispatch to the same operator-preparation owner. A missing argument is arity
+zero, not an append tag or synthetic expression. Its existing syntactic assignable
+base admits target syntax without deciding whether an eventual overload result is
+writable. Typed maintenance and inspection omit the absent child. Overload selection
+and result/access facts remain deferred; see the [bracket contract](../../../../specs/index_operator.md).
+
 ## Scopes and lifecycle
 
 File/body scopes are required weak observers of scopes retained by the parsed file

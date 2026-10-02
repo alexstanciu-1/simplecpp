@@ -89,10 +89,14 @@ trait LLVM_Expressions
 		if ($base->array_type === null) {
 			throw new \RuntimeException('Indexing requires a fixed array');
 		}
-		if ($syntax->index->kind() !== node_kind::integer_literal) {
+		if ($syntax->index === null) {
+			throw new \RuntimeException('LLVM zero-argument operator[] lowering is deferred');
+		}
+		$argument /** expression_node */ = $syntax->index;
+		if ($argument->kind() !== node_kind::integer_literal) {
 			throw new \RuntimeException('Dynamic indexes require runtime bounds checks and are not supported yet');
 		}
-		$index = $this->to_llvm_integer_literal($syntax->index);
+		$index = $this->to_llvm_integer_literal($argument);
 		if ((int) $index->text >= $base->array_type->count) {
 			throw new \RuntimeException('Fixed array index out of bounds: ' . $index->text);
 		}

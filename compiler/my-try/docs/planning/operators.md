@@ -261,3 +261,13 @@ same agreed policy. This debt does not authorize a runtime behavior change now.
 Owner references: `runtime/specs/spec.md`, current operator-phase decision;
 `runtime/include/scpp/generated/operator_detail.hpp`, `shl`/`shr`;
 C++20 draft N4861 `[expr.shift]`.
+
+## Debt: bracket overload resolution
+
+Both bracket arities now use one AST and preparation path. Empty brackets do not
+imply append, writes or a particular return type. The next owning work must define
+operator providers/overload selection and carry the selected result type, effects
+and access properties before introducing lowering. String-specific byte/code-point,
+result and bounds rules remain undecided. See the
+[bracket model](../../../../specs/index_operator.md). This syntax/rejection slice
+neither adds overload declaration syntax nor changes legacy runtime container behavior.

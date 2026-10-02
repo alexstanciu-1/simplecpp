@@ -414,13 +414,38 @@ parameters, concatenation and compound concatenation. Focused grouping, operator
 tokenizer and collection PHP checks pass. All 371 prior generated fixtures remain
 byte-identical. Native compiler execution was not rerun; LLVM remains deferred.
 
+## General bracket operator
+
+Added 2026-10-02: `base[expression]` and `base[]` share the
+[normative bracket model](../../../specs/index_operator.md). The existing index node
+now has an optional argument; absence means arity zero and carries no append/read
+policy. Postfix parsing applies suffixes uniformly to primary expressions, including
+call results and literals. Normal expression grammar handles a present argument.
+
+`Operator_Preparation::prepare_index` owns both forms, preparing the receiver before
+any explicit argument and entering the existing operator-decision boundary with
+`operator_kind::index`. No overload candidate is implemented yet. String receivers
+receive a specific deferred-contract diagnostic; other receivers receive a deferred
+resolution diagnostic. Both report arity. Assignment and mutation target paths enter
+that same preparation boundary. Result types, effects and writability await actual
+overload contracts; no placeholder facts or C++ lowering are published.
+
+[Indexing tests](../tests/indexing.php) prove both arities, ordinary expression
+arguments, postfix bases, optional-child traversal, parser-only retention/compaction,
+shared read/write/update diagnostics and failure recovery. Focused grouping, mutation,
+compound, operator, interpolation and collection checks pass, as does PHP-host S2S
+generation/purity. All 391 prior generated programs remain byte-identical.
+There are no new generated bracket programs because lowering is
+intentionally deferred. LLVM only gains an absent-argument guard on its parked
+fixed-array path; native compiler validation was not rerun.
+
 ## Remaining decisions
 
 - Checked shift counts are [explicit debt](planning/operators.md#debt-checked-shift-counts).
   Broader mutation targets and mutation inside binary expressions remain deferred.
 - Floating-point power, other carrier types and `**=` remain deferred.
-- Mixed numeric promotion, other comparison types, complex interpolation and string
-  indexing remain outside this bounded slice.
+- Mixed numeric promotion, other comparison types, complex interpolation and concrete
+  bracket overload contracts remain outside this bounded slice.
 
 These remain open under the user's requirement to discuss new structures. The
 remaining catalog rows retain pending status; this batch does not complete chapter 02.

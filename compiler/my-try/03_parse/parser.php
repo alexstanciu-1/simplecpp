@@ -775,7 +775,7 @@ final class Parser_Run
 	private function postfix_expression(): expression_node
 	{
 		$start = $this->position;
-		$target = $this->primary_expression();
+		$target = $this->access_suffix($this->primary_expression(), $start);
 		while (($this->text() === '++') || ($this->text() === '--'))
 		{
 			$mutation = new mutation_expression_node();
@@ -796,10 +796,10 @@ final class Parser_Run
 			if ($this->cast_ahead()) {
 				return $this->cast_expression();
 			}
-			$group_start = $this->position++;
+			$this->position++;
 			$inner = $this->expression();
 			$this->expect(')');
-			return $this->access_suffix($inner, $group_start);
+			return $inner;
 		}
 		if (($this->text() === 'true') || ($this->text() === 'false')) {
 			$start = $this->position;
@@ -821,7 +821,7 @@ final class Parser_Run
 			$constant->name = $this->name_at($start);
 			$this->finish_node($constant, $start);
 			$constant->collect($this->collector, $this->current_scope, $start);
-			return $this->access_suffix($constant, $start);
+			return $constant;
 		}
 		$start = $this->position;
 		$text = $this->text();
@@ -856,7 +856,7 @@ final class Parser_Run
 		else {
 			throw new \RuntimeException($this->error_message('Expected scalar literal or variable reference'));
 		}
-		return $this->access_suffix($node, $start);
+		return $node;
 	}
 
 	/** Split only double-quoted variable insertions; all offsets stay relative to the source token. */
@@ -1015,7 +1015,7 @@ final class Parser_Run
 		$this->expect(')');
 		$cast->operand = $this->unary_expression();
 		$this->finish_node($cast, $start);
-		return $this->access_suffix($cast, $start);
+		return $cast;
 	}
 
 	/** Preserve the element type and literal extent independently of LLVM spelling. */
@@ -1079,7 +1079,9 @@ final class Parser_Run
 			$this->position++;
 			$access = new index_node();
 			$access->base = $base;
-			$access->index = $this->expression();
+			if ($this->text() !== ']') {
+				$access->index = $this->expression();
+			}
 			$this->expect(']');
 			$this->finish_node($access, $start);
 			$base = $access;
