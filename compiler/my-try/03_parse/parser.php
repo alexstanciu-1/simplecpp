@@ -847,8 +847,7 @@ final class Parser_Run
 			$this->finish_node($node, $start);
 		}
 		elseif (($text !== '') && ((string_byte_at($text, 0) === 39) || (string_byte_at($text, 0) === 34))) {
-			$node = new string_literal_node();
-			$this->finish_node($node, $start);
+			$node = $this->string_expression($start, $text);
 		}
 		elseif (($text !== '.') && Source_Text::floating($text)) {
 			$node = new float_literal_node();
@@ -858,6 +857,95 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected scalar literal or variable reference'));
 		}
 		return $this->access_suffix($node, $start);
+	}
+
+	/** Split only double-quoted variable insertions; all offsets stay relative to the source token. */
+	private function string_expression(int $start, string $text): expression_node
+	{
+		$literal = new string_literal_node();
+		$this->finish_node($literal, $start);
+		if (string_byte_at($text, 0) !== 34) {
+			return $literal;
+		}
+		$interpolation = new interpolated_string_node();
+		$this->finish_node($interpolation, $start);
+		$parts /** Storage<interpolation_part_node> */ = $interpolation->parts;
+		$end = string_byte_len($text) - 1;
+		$segment = 1;
+		$offset = 1;
+		$insertions = 0;
+		while ($offset < $end)
+		{
+			$byte = string_byte_at($text, $offset);
+			if ($byte === 92) {
+				$offset += 2;
+				continue;
+			}
+			$braced = ($byte === 123) && (string_byte_at($text, $offset + 1) === 36);
+			if (($byte !== 36) && !$braced) {
+				$offset++;
+				continue;
+			}
+			$first = $offset;
+			$variable_start = $braced ? $offset + 1 : $offset;
+			$name_start = $variable_start + 1;
+			$initial = string_byte_at($text, $name_start);
+			if (!Source_Text::letter($initial)) {
+				if ($braced || ($initial === 123) || ($initial === 36) || ($initial >= 128)) {
+					throw new \RuntimeException($this->error_message('Unsupported interpolation; expected $name or {$name}', $start, $first));
+				}
+				$offset++;
+				continue;
+			}
+			$offset = $name_start + 1;
+			while (Source_Text::letter(string_byte_at($text, $offset)) || Source_Text::digit(string_byte_at($text, $offset))) {
+				$offset++;
+			}
+			$name = string_byte_slice($text, $name_start, $offset - $name_start);
+			if ($braced) {
+				if (string_byte_at($text, $offset) !== 125) {
+					throw new \RuntimeException($this->error_message('Unsupported braced interpolation; expected {$name}', $start, $first));
+				}
+				$offset++;
+			}
+			elseif ((string_byte_at($text, $offset) === 91) || (string_byte_at($text, $offset) === 40)
+				|| (string_byte_slice($text, $offset, 2) === '->') || (string_byte_at($text, $offset) >= 128)) {
+				throw new \RuntimeException($this->error_message('Unsupported interpolation suffix; use {$name} before literal suffix text', $start, $first));
+			}
+			$this->interpolation_text($interpolation, $start, $segment, $first - $segment);
+			$variable = new variable_reference_node();
+			$variable->name = $name;
+			$this->finish_node($variable, $start);
+			$variable->collect($this->collector, $this->current_scope, $start);
+			$part = new interpolation_value_node();
+			$part->expression = $variable;
+			$part->byte_offset = $first;
+			$part->byte_length = $offset - $first;
+			$this->finish_node($part, $start);
+			$parts->append($part);
+			$insertions++;
+			$segment = $offset;
+		}
+		if ($insertions === 0) {
+			return $literal;
+		}
+		$this->interpolation_text($interpolation, $start, $segment, $end - $segment);
+		return $interpolation;
+	}
+
+	/** Keep literal source bytes separate from decoded preparation facts. */
+	private function interpolation_text(interpolated_string_node $parent, int $start,
+		int $offset, int $length): void
+	{
+		if ($length === 0) {
+			return;
+		}
+		$part = new interpolation_text_node();
+		$part->byte_offset = $offset;
+		$part->byte_length = $length;
+		$this->finish_node($part, $start);
+		$parts /** Storage<interpolation_part_node> */ = $parent->parts;
+		$parts->append($part);
 	}
 
 	/** Recognize cast syntax without moving the parser or collecting speculative type names. */
@@ -1149,12 +1237,15 @@ final class Parser_Run
 	}
 
 	/** Describe the current source position without publishing incomplete syntax. */
-	private function error_message(string $message): string
+	private function error_message(string $message, int $token_index = -1, int $within_token = 0): string
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
+		if ($token_index < 0) {
+			$token_index = $this->position;
+		}
 		$offset = string_byte_len($this->tokens->content) - $this->tokens->content_offset;
-		if (isset($token_rows[$this->position])) {
-			$offset = (int)$token_rows[$this->position]->offset - $this->tokens->content_offset;
+		if (isset($token_rows[$token_index])) {
+			$offset = (int)$token_rows[$token_index]->offset - $this->tokens->content_offset + $within_token;
 		}
 		return $message . " at " . $this->tokens->file->path . ": byte " . $offset;
 	}

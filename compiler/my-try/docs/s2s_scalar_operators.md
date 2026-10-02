@@ -380,12 +380,46 @@ including negative-exponent/overflow errors and unchanged assignment storage on 
 All 346 prior generated fixtures remain byte-identical. Native execution of the
 compiler itself was not rerun; LLVM remains deferred.
 
+## String interpolation
+
+Added 2026-10-02 under the [scalar interpolation contract](../../../specs/string_interpolation.md).
+Double-quoted `$name` and `{$name}` insert existing scalar locals/parameters using
+the same conversion rules as explicit string casts. Single quotes and escaped dollars
+remain literal. Fields, indexes, calls, writes and arbitrary expressions inside
+insertions are deferred; explicit braces disambiguate literal suffixes.
+
+The lexer keeps its complete string token. `Parser_Run` splits an interpolated token
+into `interpolation_text_node` and `interpolation_value_node` parts owned by
+`interpolated_string_node`. Each part retains its byte offset and length relative to
+that token. Value parts own normal variable references and distinct collected read
+occurrences, even for repeated names within one token. This preserves collection
+order and source provenance without manufacturing tokens. Ordinary strings retain
+their existing literal representation.
+
+Preparation owns escape decoding and attached per-insertion conversion decisions.
+The new `interpolation` conversion context admits the existing scalar string-cast
+policy without widening assignment or concatenation. C++ emits a value-returning
+lambda with one local string and sequential `append` statements. Each insertion is
+read and converted once, and the returned string remains independent of later writes.
+The existing runtime supplies all conversion, append and binary-safe literal behavior;
+no new runtime API is introduced.
+
+[Interpolation tests](../tests/interpolation.php) prove parts/children, source ranges,
+read identities, conversion decisions, rejection before publication, recursive cleanup,
+incremental edits, retained-body compaction and recovery from parser/semantic errors.
+PHP-host S2S generation and syntax purity pass. All 20 new generated Clang C++20
+programs pass exact byte comparisons covering scalar types, braced/unbraced names,
+name boundaries, escapes, embedded NULs, UTF-8, self-reassignment, snapshots,
+parameters, concatenation and compound concatenation. Focused grouping, operator,
+tokenizer and collection PHP checks pass. All 371 prior generated fixtures remain
+byte-identical. Native compiler execution was not rerun; LLVM remains deferred.
+
 ## Remaining decisions
 
 - Checked shift counts are [explicit debt](planning/operators.md#debt-checked-shift-counts).
   Broader mutation targets and mutation inside binary expressions remain deferred.
 - Floating-point power, other carrier types and `**=` remain deferred.
-- Mixed numeric promotion, other comparison types, interpolation and broader string
+- Mixed numeric promotion, other comparison types, complex interpolation and string
   indexing remain outside this bounded slice.
 
 These remain open under the user's requirement to discuss new structures. The

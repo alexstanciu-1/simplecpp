@@ -355,8 +355,9 @@ The tokenizer's quote-neutral scanner retains the complete source token. Prepara
 owns quote semantics and supplies the emitter with the canonical string type plus
 fully decoded bytes. It decodes `\\`, `\"`, `\$`, `\n`, `\r`, `\t`, `\v`, `\f`,
 `\e`, one-to-three-digit octal escapes and one-to-two-digit `\x` escapes. Unknown
-escape pairs retain their backslash. Interpolation is rejected rather than partially
-lowered, and `\u{...}` is rejected with guidance to use literal UTF-8 bytes.
+escape pairs retain their backslash. Interpolation now has its own
+[chapter 02 contract](../s2s_scalar_operators.md#string-interpolation); `\u{...}`
+remains rejected with guidance to use literal UTF-8 bytes.
 
 The prerequisite gate adds no new emitter fact for this spelling: preparation
 already resolves the literal's value and type, while the existing backend only

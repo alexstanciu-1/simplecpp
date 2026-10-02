@@ -104,6 +104,46 @@ final class Expression_Preparation
 		return $facts;
 	}
 
+	/** Prepare every part in source order; inserted names use normal local/parameter lookup. */
+	public static function prepare_interpolated_string(interpolated_string_node $node,
+		preparation_context $context): prepared_interpolated_string
+	{
+		$parts /** Storage<interpolation_part_node> */ = $node->parts;
+		foreach ($parts as $part) {
+			$part->prepare($context);
+		}
+		$facts = new prepared_interpolated_string();
+		$facts->type = $context->string_type;
+		return $facts;
+	}
+
+	/** Reuse the existing escape decoder on a complete literal-part boundary. */
+	public static function prepare_interpolation_text(interpolation_text_node $node,
+		preparation_context $context): prepared_string_literal
+	{
+		$token = $context->collection->token_snapshot()->text_at($node->start_token());
+		$text = string_byte_slice($token, $node->byte_offset, $node->byte_length);
+		$facts = new prepared_string_literal();
+		$facts->value = String_Literals::decode('"' . $text . '"');
+		$facts->type = $context->string_type;
+		return $facts;
+	}
+
+	/** Scalar interpolation shares explicit string-cast policy, with its own boundary context. */
+	public static function prepare_interpolation_value(interpolation_value_node $node,
+		preparation_context $context): prepared_interpolation_value
+	{
+		$value = self::prepare($node->expression, $context);
+		if (!Conversion_Preparation::is_scalar($value->type)) {
+			throw new \RuntimeException('S2S interpolation requires a scalar value');
+		}
+		$facts = new prepared_interpolation_value();
+		$facts->type = $context->string_type;
+		$facts->conversion = Conversion_Preparation::decide(
+			$value->type, $facts->type, conversion_context::interpolation);
+		return $facts;
+	}
+
 	/** Prepare the operand first, then resolve and decide the source-written target request. */
 	public static function prepare_cast(cast_expression_node $node,
 		preparation_context $context): prepared_cast_expression

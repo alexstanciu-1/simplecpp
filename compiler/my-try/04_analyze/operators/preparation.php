@@ -244,6 +244,10 @@ final class Operator_Preparation
 	/** Sequenced logical operands admit writes; eager parents inspect the entire subtree. */
 	private static function require_operand(expression_node $node, bool $sequenced): void
 	{
+		if ($node instanceof interpolated_string_node) {
+			// The admitted grammar contains only literal parts and ordinary variable reads.
+			return;
+		}
 		if ($node instanceof assignment_expression_node) {
 			if ($sequenced) {
 				return;

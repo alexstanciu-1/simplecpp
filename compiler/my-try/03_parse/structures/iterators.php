@@ -681,3 +681,24 @@ final class compound_assignment_expression_children_iterator extends children_it
 		return null;
 	}
 }
+
+final class interpolation_value_children_iterator extends children_iterator
+{
+	private interpolation_value_node $source;
+	private bool $consumed = false;
+
+	public function __construct(interpolation_value_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** Read the next named field only when requested. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) {
+			return null;
+		}
+		$this->consumed = true;
+		return $this->source->expression;
+	}
+}

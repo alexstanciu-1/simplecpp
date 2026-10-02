@@ -66,8 +66,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [STMT-PREDEC-001](#stmt-predec-001) | agreed | `$a = 3; --$a;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [STMT-POSTINC-001](#stmt-postinc-001) | agreed | `$a = 3; $a++;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [STMT-POSTDEC-001](#stmt-postdec-001) | agreed | `$a = 3; $a--;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
-| [STR-INTERP-001](#str-interp-001) | pending-discussion | `$a = "hello $name";` | unverified | unverified | deferred | — |
-| [STR-INTERP-002](#str-interp-002) | pending-discussion | `$a = "sum {$a}";` | unverified | unverified | deferred | — |
+| [STR-INTERP-001](#str-interp-001) | agreed | `$name = "Alex"; $a = "hello $name";` | proved | proved | deferred | [Interpolation contract and proof](../s2s_scalar_operators.md#string-interpolation) |
+| [STR-INTERP-002](#str-interp-002) | agreed | `$count = 3; $a = "sum {$count}";` | proved | proved | deferred | [Interpolation contract and proof](../s2s_scalar_operators.md#string-interpolation) |
 | [STR-INDEX-001](#str-index-001) | pending-discussion | `$a = $s[0];` | unverified | unverified | deferred | — |
 | [NOTE-013](#note-013) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-018](#note-018) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
@@ -2275,7 +2275,11 @@ a--;
 
 ## STR-INTERP-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented scalar local/parameter interpolation.
+The dedicated AST owns ordered literal/value parts with precise token-relative ranges;
+preparation retains ordinary string conversions and C++ appends parts left-to-right
+into a value snapshot. Complex insertions remain deferred. See the
+[contract and proof](../s2s_scalar_operators.md#string-interpolation).
 
 ### Imported version 1
 
@@ -2300,7 +2304,11 @@ _Not supplied in source._
 
 ## STR-INTERP-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented scalar local/parameter interpolation.
+The dedicated AST owns ordered literal/value parts with precise token-relative ranges;
+preparation retains ordinary string conversions and C++ appends parts left-to-right
+into a value snapshot. Complex insertions remain deferred. See the
+[contract and proof](../s2s_scalar_operators.md#string-interpolation).
 
 ### Imported version 1
 

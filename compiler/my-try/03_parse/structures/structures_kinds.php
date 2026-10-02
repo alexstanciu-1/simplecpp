@@ -31,6 +31,9 @@ enum node_kind
 	case boolean_literal;
 	case float_literal;
 	case string_literal;
+	case interpolated_string;
+	case interpolation_text;
+	case interpolation_value;
 	case variable_reference;
 	case constant_reference;
 	case cast_expression;

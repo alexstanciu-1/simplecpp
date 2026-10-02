@@ -10,6 +10,7 @@ enum conversion_context
 	case return_value;
 	case explicit_cast;
 	case operator_operand;
+	case interpolation;
 }
 
 enum conversion_operation

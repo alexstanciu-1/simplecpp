@@ -47,6 +47,22 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_boolean($node->require_boolean_literal_preparation(), $this->context);
 	}
 
+	public function generate_interpolated_string(interpolated_string_node $node): string
+	{
+		return CPP_Generator::generate_interpolated_string($node, $this->context);
+	}
+
+	public function generate_interpolation_text(interpolation_text_node $node): string
+	{
+		return CPP_Generator::generate_string($node->require_preparation(), $this->context);
+	}
+
+	public function generate_interpolation_value(interpolation_value_node $node): string
+	{
+		$value = $node->expression->generate_cpp($this);
+		return CPP_Declarations::conversion($value, $node->require_preparation()->conversion, $this->context);
+	}
+
 	public function generate_string_literal(string_literal_node $node): string
 	{
 		return CPP_Generator::generate_string($node->require_string_literal_preparation(), $this->context);

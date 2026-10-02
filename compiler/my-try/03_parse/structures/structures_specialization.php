@@ -464,6 +464,143 @@ final class string_literal_node extends expression_node
 	}
 }
 
+/** Ordered source parts; there are no synthetic concatenation operators or cast nodes. */
+final class interpolated_string_node extends expression_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_interpolated_string $prepared_facts = null;
+	public Storage $parts /** Storage<interpolation_part_node> */;
+
+	public function __construct()
+	{
+		$this->parts = new Storage /** Storage<interpolation_part_node> */();
+	}
+
+	public function kind(): node_kind
+	{
+		return node_kind::interpolated_string;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->parts));
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return $this->prepared_facts;
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_interpolated_string($this, $context));
+	}
+
+	/** Traverse owned parts in source order, preserving their precise token-relative ranges. */
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$parts /** Storage<interpolation_part_node> */ = $this->parts;
+		foreach ($parts as $part) {
+			$worker->edge($this, $part);
+		}
+	}
+
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_interpolated_string($this);
+	}
+}
+
+/** Only literal bytes and variable insertions belong to the bounded interpolation grammar. */
+abstract class interpolation_part_node extends ast_node
+{
+}
+
+/** Source range lies within the node's single quoted token, so compaction cannot invalidate it. */
+trait Interpolation_Source_Range
+{
+	public int $byte_offset;
+	public int $byte_length;
+}
+
+final class interpolation_text_node extends interpolation_part_node
+{
+	use Node_Source_Span;
+	use Interpolation_Source_Range;
+	use Preparation_Facts;
+
+	private ?prepared_string_literal $prepared_facts = null;
+
+	public function kind(): node_kind
+	{
+		return node_kind::interpolation_text;
+	}
+
+	public function require_preparation(): prepared_string_literal
+	{
+		return $this->prepared_facts;
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_interpolation_text($this, $context));
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+	}
+
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_interpolation_text($this);
+	}
+}
+
+final class interpolation_value_node extends interpolation_part_node
+{
+	use Node_Source_Span;
+	use Interpolation_Source_Range;
+	use Preparation_Facts;
+
+	private ?prepared_interpolation_value $prepared_facts = null;
+	public variable_reference_node $expression;
+
+	public function kind(): node_kind
+	{
+		return node_kind::interpolation_value;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new interpolation_value_children_iterator($this);
+	}
+
+	public function require_preparation(): prepared_interpolation_value
+	{
+		return $this->prepared_facts;
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_interpolation_value($this, $context));
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->expression);
+	}
+
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_interpolation_value($this);
+	}
+}
+
 final class variable_reference_node extends assignable_expression_node
 {
 	use Node_Source_Span;

@@ -51,6 +51,27 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'interp_simple' => ['$name = "Alex"; $a = "Hello $name";', 0],
+	'interp_braced' => ['$count = 3; $a = "Count: {$count}";', 0],
+	'interp_adjacent' => ['$x = "a"; $y = "b"; $a = "$x$y{$x}";', 0],
+	'interp_suffix' => ['$x = "a"; $a = "{$x}_end[0]()";', 0],
+	'interp_long_name' => ['$x = "bad"; $xy = "good"; $a = "$xy";', 0],
+	'interp_empty' => ['$x = ""; $a = "<$x>";', 0],
+	'interp_self' => ['$a = "old"; $a = "[$a]";', 0],
+	'interp_snapshot' => ['$x = "old"; $a = "$x"; $x = "new";', 0],
+	'interp_integer' => ['$x = -12; $a = "$x";', 0],
+	'interp_narrow' => ['$x uint8 = 255; $a = "$x";', 0],
+	'interp_bool' => ['$yes = true; $no = false; $a = "<$yes:$no>";', 0],
+	'interp_float' => ['$x = 1.5; $a = "$x";', 0],
+	'interp_parameter' => ['function show(string $x): string { return "<$x>"; } $a = show("ok");', 0],
+	'interp_concat' => ['$x = "a"; $a = "[$x]" . "!";', 0],
+	'interp_compound' => ['$x = "b"; $a = "a"; $a .= "$x";', 0],
+	'interp_escapes' => ['$x = "v"; $a = "\\"$x\\"\\n\\t\\$x";', 0],
+	'interp_binary' => ['$x = "v\\0z"; $a = "\\0$x\\x00";', 0],
+	'interp_utf8' => ['$name = "世界"; $a = "Hi {$name}!";', 0],
+	'interp_single_quote' => ['$a = \'hello $name {$name}\';', 0],
+	'interp_literal_escape' => ['$x = "v"; $a = "\\x24x=$x";', 0],
+
 	'power_basic' => ['return 2 ** 3;', 8],
 	'power_right' => ['return 2 ** 3 ** 2 == 512;', 1],
 	'power_grouped' => ['return (2 ** 3) ** 2;', 64],
@@ -377,6 +398,29 @@ $explicit_declarations = [
 	'bool_explicit' => ['scpp::bool_t', 'local_a'],
 	'string_explicit' => ['scpp::string_t', 'local_x'],
 ];
+$interpolation_values = [
+	'interp_simple' => hex2bin('48656c6c6f20416c6578'),
+	'interp_braced' => hex2bin('436f756e743a2033'),
+	'interp_adjacent' => hex2bin('616261'),
+	'interp_suffix' => hex2bin('615f656e645b305d2829'),
+	'interp_long_name' => hex2bin('676f6f64'),
+	'interp_empty' => hex2bin('3c3e'),
+	'interp_self' => hex2bin('5b6f6c645d'),
+	'interp_snapshot' => hex2bin('6f6c64'),
+	'interp_integer' => hex2bin('2d3132'),
+	'interp_narrow' => hex2bin('323535'),
+	'interp_bool' => hex2bin('3c313a3e'),
+	'interp_float' => hex2bin('312e35'),
+	'interp_parameter' => hex2bin('3c6f6b3e'),
+	'interp_concat' => hex2bin('5b615d21'),
+	'interp_compound' => hex2bin('6162'),
+	'interp_escapes' => hex2bin('2276220a092478'),
+	'interp_binary' => hex2bin('0076007a00'),
+	'interp_utf8' => hex2bin('486920e4b896e7958c21'),
+	'interp_single_quote' => hex2bin('68656c6c6f20246e616d65207b246e616d657d'),
+	'interp_literal_escape' => hex2bin('24783d76'),
+];
+
 $executions = [];
 foreach ($cases as $name => [$source, $exit])
 {
@@ -415,6 +459,18 @@ foreach ($cases as $name => [$source, $exit])
 		$probe .= "\tif (local_a.native_value() != std::string(\"" . $expected_value . '", '
 			. string_byte_len($expected_value) . ")) { return 91; }\n";
 		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", $text));
+	}
+
+	if (isset($interpolation_values[$name]))
+	{
+		$expected = $interpolation_values[$name];
+		$escaped = '';
+		foreach (str_split($expected) as $byte) {
+			$escaped .= '\x' . bin2hex($byte);
+		}
+		$probe = '	if (local_a.native_value() != std::string("' . $escaped . '", '
+			. strlen($expected) . ')) { return 91; }' . "\n";
+		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text));
 	}
 
 	if ($name === 'constant_int_max')
@@ -1086,8 +1142,7 @@ foreach ($typed_local_rejections as $source => $diagnostic)
 
 // Unsupported double-quoted forms fail during semantic preparation with their agreed diagnostic.
 $string_rejections = [
-	'$a = "hello $name";' => 'string interpolation is not supported',
-	'$a = "${name}";' => 'string interpolation is not supported',
+	'$a = "hello $name";' => 'established local declaration for name',
 	'$a = "\u{41}";' => 'Unicode escape syntax is not supported',
 ];
 foreach ($string_rejections as $source => $diagnostic)

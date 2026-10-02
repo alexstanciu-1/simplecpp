@@ -23,8 +23,9 @@ share storage/binding algorithms; assignment facts own the resolved binding and
 result type. Plain-variable chains retain nested right-associative assignment nodes;
 preparation classifies each write from inner to outer and C++ statement generation
 lifts declarations into the surrounding body without duplicating the RHS. Assignment
-expressions in other expression contexts, compound assignments and nested declarations
-remain separate language work.
+expressions also produce stored-value snapshots in admitted sequenced contexts;
+compound updates have their own target-owning node. New locals remain confined to
+standalone assignment chains. See the [operator contracts](../s2s_scalar_operators.md).
 
 Name-bearing nodes save their spelling. Half-open uint32 source spans
 `[first_token_index, end_token_index)` are provenance, not symbol keys. Common
@@ -43,6 +44,21 @@ Only name-bearing nodes use `Collected_Occurrence`. Its nullable weak observer
 rejects replacing a live occurrence; there is no second attachment boolean. Retired
 nodes must not re-enter the active graph. Declaration reconciliation keeps the
 existing node and occurrence. Renames follow existing remove/add reconciliation.
+
+## Interpolated strings
+
+`interpolated_string_node` owns `Storage<interpolation_part_node>` in source order.
+The property-free part base has two concrete forms: `interpolation_text_node` owns
+literal provenance and decoded-string facts; `interpolation_value_node` owns an
+ordinary variable reference and a string-conversion decision. There is no synthetic
+binary operator, cast syntax or duplicate semantic child list.
+
+Each part owns a token span plus byte offset/length within the whole quoted token.
+Token cleanup remaps the token span; relative ranges stay valid. A variable reference
+inside a value part uses the containing token for collection provenance; the part
+provides the precise insertion range. Repeated references have distinct collection
+identities. Typed maintenance traverses parts and their expressions, so preparation
+cleanup and retained-body compaction use the existing lifecycle.
 
 ## Scopes and lifecycle
 

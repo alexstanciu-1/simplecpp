@@ -93,7 +93,7 @@ final class String_Literals
 		return $value;
 	}
 
-	/** Double quotes decode PHP byte escapes but deliberately reject interpolation. */
+	/** Decode literal-only double-quoted bytes; interpolation must already be split by parsing. */
 	private static function double_quoted(string $text, int $end): string
 	{
 		$value = '';

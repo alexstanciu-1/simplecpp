@@ -33,6 +33,15 @@ final class prepared_string_literal extends prepared_expression {
 	public string $value;
 }
 
+/** Parts own their facts; the enclosing interpolation produces a non-addressable string. */
+final class prepared_interpolated_string extends prepared_expression {
+}
+
+/** Conversion is attached to the insertion that requires it, not a synthetic cast. */
+final class prepared_interpolation_value extends prepared_expression {
+	public conversion_decision $conversion;
+}
+
 /** A resolved reference always has a declaration; no literal fields belong here. */
 final class prepared_variable_reference extends prepared_expression {
 	/** @storage.reference collected_file.entries @reference.weak */

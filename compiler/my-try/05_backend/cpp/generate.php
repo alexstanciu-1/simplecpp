@@ -590,6 +590,22 @@ final class CPP_Generator
 		return 'static_cast<' . $mapping->spelling . '>(' . $spelling . ')';
 	}
 
+	/** Append once per source part, with full-expression sequencing between conversions. */
+	public static function generate_interpolated_string(interpolated_string_node $syntax,
+		cpp_generation_context $context): string
+	{
+		$type = CPP_Declarations::type($syntax->require_preparation()->type, $context);
+		$name = 'interpolation_' . $context->next_temporary;
+		$context->next_temporary++;
+		$text = '([&]() -> ' . $type . ' { ' . $type . ' ' . $name . '; ';
+		$worker = new CPP_Syntax($context);
+		$parts /** Storage<interpolation_part_node> */ = $syntax->parts;
+		foreach ($parts as $part) {
+			$text .= $name . '.append(' . $part->generate_cpp($worker) . '); ';
+		}
+		return $text . 'return ' . $name . '; }())';
+	}
+
 	/** Render decoded bytes as a C++ literal, retaining length when a C string would truncate. */
 	public static function generate_string(prepared_string_literal $literal, cpp_generation_context $context): string
 	{
