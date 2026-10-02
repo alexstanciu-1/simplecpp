@@ -72,6 +72,22 @@ final class token_list
 		$this->retained_ranges = new Storage /** Storage<retained_token_range> */();
 	}
 
+	/** Adjacent angle tokens can spell a shift while remaining separate generic delimiters. */
+	public function operator_text_at(int $index): string
+	{
+		$tokens /** Storage<token> */ = $this->tokens;
+		$first = $tokens[$index];
+		$text = $first->text();
+		if ((($text === '<') || ($text === '>')) && ($index + 1 < q_count($tokens)))
+		{
+			$second = $tokens[$index + 1];
+			if (($second->text() === $text) && ($second->offset === $first->offset + $first->length)) {
+				return $text . $text;
+			}
+		}
+		return $text;
+	}
+
 	public function text_at(int $index): string
 	{
 		$tokens /** Storage<token> */ = $this->tokens;

@@ -24,7 +24,12 @@ function compound_test_source(string $text): parsed_file
 
 
 
-foreach ([['+=', '3', '2', operator_operation::integer_addition],
+foreach ([['&=', '7', '3', operator_operation::integer_bitwise_and],
+	['|=', '7', '3', operator_operation::integer_bitwise_or],
+	['^=', '7', '3', operator_operation::integer_bitwise_xor],
+	['<<=', '7', '3', operator_operation::integer_shift_left],
+	['>>=', '7', '3', operator_operation::integer_shift_right],
+	['+=', '3', '2', operator_operation::integer_addition],
 	['-=', '3', '2', operator_operation::integer_subtraction],
 	['*=', '3', '2', operator_operation::integer_multiplication],
 	['/=', '3', '2', operator_operation::integer_division],

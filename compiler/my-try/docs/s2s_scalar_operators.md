@@ -45,11 +45,15 @@ Precedence from weakest to strongest is:
 
 1. `||`
 2. `&&`
-3. `==`, `!=`, `===`, `!==`, `<=>`
-4. `<`, `<=`, `>`, `>=`
-5. `.`
-6. `+`, `-`
-7. `*`, `/`, `%`
+3. `|`
+4. `^`
+5. `&`
+6. `==`, `!=`, `===`, `!==`, `<=>`
+7. `<`, `<=`, `>`, `>=`
+8. `.`
+9. `<<`, `>>`
+10. `+`, `-`
+11. `*`, `/`, `%`
 
 The current levels associate left-to-right; unsupported comparison chains fail the
 exact operand-type policy. Parentheses control the same binary tree without retained
@@ -239,9 +243,58 @@ errors with unchanged caller storage. Existing generated fixtures retain identic
 C++ after factoring the shared renderer. Native compiler execution was not rerun;
 LLVM remains deferred.
 
+## Bitwise and shift operators
+
+Added 2026-10-02: canonical `int` pairs now support `&`, `|`, `^`, `<<`, `>>` and
+compound forms `&=`, `|=`, `^=`, `<<=`, `>>=`. Result types remain canonical `int`.
+Existing binary/compound nodes, operator decisions and write-back conversions are
+reused; no AST structure or field was added. Non-int operands and effectful operands
+retain the existing rejections. Compound targets remain existing locals/parameters.
+
+The agreed [runtime contract](../../../runtime/specs/spec.md) delegates to native
+C++20 integer behavior. Counts 0 through 63 are valid for the canonical signed
+64-bit representation. Right shift sign-extends and rounds toward negative infinity:
+`-3 >> 1` is `-2`. Left shift follows congruence modulo 2^64, so `1 << 63` is the
+minimum signed integer and `PHP_INT_MAX << 1` is `-2`. This is the shift rule, not
+a new wrapping guarantee for addition or multiplication. Negative counts and counts
+at least 64 remain undefined behavior; no masking, runtime check or compile-time
+rejection was added. See [C++20 N4861](https://timsong-cpp.github.io/cppwp/n4861/expr.shift)
+and [checked-count debt](planning/operators.md#debt-checked-shift-counts).
+
+The lexer retains individual `<` and `>` tokens so nested generic applications,
+casts and calls keep their existing grammar. `token_list::operator_text_at` exposes
+physically adjacent matching angle tokens as a shift spelling in expression context.
+The parser consumes both, and preparation reads the same spelling from retained
+tokens. Spaced `< <` or `> >` are not shifts. Compound `<<=`/`>>=` are longest-match
+single tokens. Incremental body comparison includes source bytes, so inserting
+whitespace between shift characters cannot reuse the previous valid expression.
+
+Shift precedence is below addition and above concatenation. Bitwise precedence is
+`&` above `^` above `|`, all below comparisons and above `&&`. Ordinary reference
+parameter `&` and logical `&&`/`||` retain their grammar. Compound normalization
+removes the trailing `=` instead of assuming a one-character base operator.
+
+The existing runtime bitwise/shift helpers and legacy direct operator forms are
+reused with prepared exact types. No runtime changes or special backend arithmetic
+were introduced. Compound writes continue to use one target binding, one computation
+and an updated-value snapshot.
+
+[Operator tests](../tests/operators.php) cover selected operations/conversions and
+operand rejections; [compound tests](../tests/compound_assignments.php) cover all five
+new write-back decisions. [Bitwise tests](../tests/bitwise.php) cover retained
+multi-token shift spellings, incremental binary/compound changes, compaction,
+whitespace invalidation and recovery. Invalid counts are prepared/emitted only,
+never executed. Grouping regressions retain nested generic parsing.
+
+PHP-host S2S generation/purity passes. The 37 new Clang C++20 programs/probes cover
+precedence/associativity, all five compound forms, snapshots/reference updates,
+counts 0 and 63, negative operands, sign-bit changes, and exact native value/type
+assertions. Prior generated fixtures are byte-identical. Native execution of the
+compiler was not rerun; LLVM remains deferred.
+
 ## Remaining decisions
 
-- Bitwise/shift compound assignment requires its underlying binary operator contracts.
+- Checked shift counts are [explicit debt](planning/operators.md#debt-checked-shift-counts).
   Broader mutation targets and mutation inside binary expressions remain deferred.
 - Word `and` / `or` / `xor` interact with assignment precedence; the imported examples
   cannot be implemented truthfully by merely aliasing the symbolic operators.

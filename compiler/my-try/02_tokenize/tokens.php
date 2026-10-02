@@ -90,13 +90,13 @@ final class Tokenizer
 			return $this->numeric_end($start);
 		}
 		// Longest punctuation wins; mutation tokens remain reserved for their own grammar.
-		foreach (['===', '!==', '<=>', '==', '!=', '<=', '>=', '->', '&&', '||', '++', '--', '+=', '-=', '*=', '/=', '%=', '.='] as $operator_text) {
+		foreach (['<<=', '>>=', '===', '!==', '<=>', '==', '!=', '<=', '>=', '->', '&&', '||', '++', '--', '+=', '-=', '*=', '/=', '%=', '.=', '&=', '|=', '^='] as $operator_text) {
 			$operator_length = string_byte_len($operator_text);
 			if (string_byte_slice($this->content, $offset, $operator_length) === $operator_text) {
 				return $offset + $operator_length;
 			}
 		}
-		$punctuation = ';(){}:,&[]<>+-*/%.!~';
+		$punctuation = ';(){}:,&[]<>+-*/%.!~|^';
 		for ($index = 0; $index < string_byte_len($punctuation); $index++) {
 			if ($byte === string_byte_at($punctuation, $index)) {
 				return $offset + 1;

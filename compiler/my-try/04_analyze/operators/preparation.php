@@ -35,7 +35,7 @@ final class Operator_Preparation
 	public static function prepare_binary(binary_expression_node $syntax,
 		preparation_context $context): prepared_binary_expression
 	{
-		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
+		$text = $context->collection->token_snapshot()->operator_text_at($syntax->operator_token_index);
 		$source_operator = self::binary_kind($text);
 		self::require_order_independent_operand($syntax->left);
 		self::require_order_independent_operand($syntax->right);
@@ -154,6 +154,21 @@ final class Operator_Preparation
 	/** Normalize token spelling before candidate discovery; backends never inspect it. */
 	public static function binary_kind(string $operator_text): operator_kind
 	{
+		if ($operator_text === '&') {
+			return operator_kind::bitwise_and;
+		}
+		if ($operator_text === '|') {
+			return operator_kind::bitwise_or;
+		}
+		if ($operator_text === '^') {
+			return operator_kind::bitwise_xor;
+		}
+		if ($operator_text === '<<') {
+			return operator_kind::shift_left;
+		}
+		if ($operator_text === '>>') {
+			return operator_kind::shift_right;
+		}
 		if ($operator_text === '<=>') {
 			return operator_kind::three_way;
 		}

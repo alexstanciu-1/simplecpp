@@ -8,6 +8,11 @@ enum operator_context {
 }
 
 enum operator_kind {
+	case bitwise_and;
+	case bitwise_or;
+	case bitwise_xor;
+	case shift_left;
+	case shift_right;
 	case pre_increment;
 	case post_increment;
 	case pre_decrement;
@@ -36,6 +41,11 @@ enum operator_kind {
 }
 
 enum operator_operation {
+	case integer_bitwise_and;
+	case integer_bitwise_or;
+	case integer_bitwise_xor;
+	case integer_shift_left;
+	case integer_shift_right;
 	case integer_pre_increment;
 	case integer_post_increment;
 	case integer_pre_decrement;

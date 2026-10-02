@@ -132,6 +132,11 @@ if (($product->require_binary_preparation()->decision->operation !== operator_op
 
 // All admitted integer pairs share conversion preparation; comparisons retain bool results.
 $binary_cases = [
+	['&', operator_kind::bitwise_and, operator_operation::integer_bitwise_and, false],
+	['|', operator_kind::bitwise_or, operator_operation::integer_bitwise_or, false],
+	['^', operator_kind::bitwise_xor, operator_operation::integer_bitwise_xor, false],
+	['<<', operator_kind::shift_left, operator_operation::integer_shift_left, false],
+	['>>', operator_kind::shift_right, operator_operation::integer_shift_right, false],
 	['<=>', operator_kind::three_way, operator_operation::integer_three_way, false],
 	['/', operator_kind::division, operator_operation::integer_division, false],
 	['%', operator_kind::remainder, operator_operation::integer_remainder, false],
@@ -255,6 +260,14 @@ if (!($unary instanceof unary_expression_node) || !($unary->operand instanceof b
 }
 
 $rejections = [
+	'bitwise float' => ['return 1 & 2.0;', 'canonical int operands'],
+	'bitwise string' => ['return "a" | "b";', 'canonical int operands'],
+	'bitwise bool' => ['return true ^ false;', 'canonical int operands'],
+	'shift width' => ['$x uint8 = 1; return $x << 2;', 'canonical int operands'],
+	'shift count type' => ['return 1 >> true;', 'canonical int operands'],
+	'bitwise comparison precedence' => ['return 1 & 1 == 1;', 'canonical int operands'],
+	'shift spaced punctuation' => ['return 1 < < 2;', 'Expected scalar literal'],
+	'shift effect' => ['$x = 1; return $x++ << 2;', 'order-independent operands'],
 	'unary positive float' => ['return +1.5;', 'unary operation requires'],
 	'unary float' => ['return -1.5;', 'unary operation requires'],
 	'unary bool' => ['return +true;', 'unary operation requires'],

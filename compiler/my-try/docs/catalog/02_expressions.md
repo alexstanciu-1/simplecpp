@@ -57,11 +57,11 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [STMT-ASSIGNOP-005](#stmt-assignop-005) | agreed | `$a = "a"; $a .= "x";` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
 | [STMT-ASSIGNOP-006](#stmt-assignop-006) | agreed | `$a = 1; $a += 1;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
 | [STMT-ASSIGNOP-007](#stmt-assignop-007) | agreed | `$a = 3; $a %= 2;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
-| [STMT-ASSIGNOP-008](#stmt-assignop-008) | pending-discussion | `$a &= 3;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-009](#stmt-assignop-009) | pending-discussion | `$a \|= 3;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-010](#stmt-assignop-010) | pending-discussion | `$a ^= 3;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-011](#stmt-assignop-011) | pending-discussion | `$a <<= 1;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-012](#stmt-assignop-012) | pending-discussion | `$a >>= 1;` | unverified | unverified | deferred | — |
+| [STMT-ASSIGNOP-008](#stmt-assignop-008) | agreed | `$a = 7; $a &= 3;` | proved | proved | deferred | [Bitwise/shift contract and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators); [checked-count debt](../planning/operators.md#debt-checked-shift-counts) |
+| [STMT-ASSIGNOP-009](#stmt-assignop-009) | agreed | `$a = 7; $a \|= 3;` | proved | proved | deferred | [Bitwise/shift contract and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators); [checked-count debt](../planning/operators.md#debt-checked-shift-counts) |
+| [STMT-ASSIGNOP-010](#stmt-assignop-010) | agreed | `$a = 7; $a ^= 3;` | proved | proved | deferred | [Bitwise/shift contract and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators); [checked-count debt](../planning/operators.md#debt-checked-shift-counts) |
+| [STMT-ASSIGNOP-011](#stmt-assignop-011) | agreed | `$a = 7; $a <<= 1;` | proved | proved | deferred | [Bitwise/shift contract and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators); [checked-count debt](../planning/operators.md#debt-checked-shift-counts) |
+| [STMT-ASSIGNOP-012](#stmt-assignop-012) | agreed | `$a = 7; $a >>= 1;` | proved | proved | deferred | [Bitwise/shift contract and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators); [checked-count debt](../planning/operators.md#debt-checked-shift-counts) |
 | [STMT-PREINC-001](#stmt-preinc-001) | agreed | `$a = 3; ++$a;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [STMT-PREDEC-001](#stmt-predec-001) | agreed | `$a = 3; --$a;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [STMT-POSTINC-001](#stmt-postinc-001) | agreed | `$a = 3; $a++;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
@@ -1901,7 +1901,12 @@ a %= static_cast<int_t>(2);
 
 ## STMT-ASSIGNOP-008
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for canonical `int`
+locals/parameters, reusing the existing binary and compound-assignment decisions.
+See [bitwise/shift semantics and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators).
+Shifts preserve the runtime C++20 contract; invalid counts remain undefined behavior,
+with [checked-count debt](../planning/operators.md#debt-checked-shift-counts) recorded.
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1936,7 +1941,12 @@ a &= static_cast<int_t>(3);
 
 ## STMT-ASSIGNOP-009
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for canonical `int`
+locals/parameters, reusing the existing binary and compound-assignment decisions.
+See [bitwise/shift semantics and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators).
+Shifts preserve the runtime C++20 contract; invalid counts remain undefined behavior,
+with [checked-count debt](../planning/operators.md#debt-checked-shift-counts) recorded.
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1971,7 +1981,12 @@ a |= static_cast<int_t>(3);
 
 ## STMT-ASSIGNOP-010
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for canonical `int`
+locals/parameters, reusing the existing binary and compound-assignment decisions.
+See [bitwise/shift semantics and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators).
+Shifts preserve the runtime C++20 contract; invalid counts remain undefined behavior,
+with [checked-count debt](../planning/operators.md#debt-checked-shift-counts) recorded.
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -2006,7 +2021,12 @@ a ^= static_cast<int_t>(3);
 
 ## STMT-ASSIGNOP-011
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for canonical `int`
+locals/parameters, reusing the existing binary and compound-assignment decisions.
+See [bitwise/shift semantics and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators).
+Shifts preserve the runtime C++20 contract; invalid counts remain undefined behavior,
+with [checked-count debt](../planning/operators.md#debt-checked-shift-counts) recorded.
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -2041,7 +2061,12 @@ a <<= static_cast<int_t>(1);
 
 ## STMT-ASSIGNOP-012
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for canonical `int`
+locals/parameters, reusing the existing binary and compound-assignment decisions.
+See [bitwise/shift semantics and proof](../s2s_scalar_operators.md#bitwise-and-shift-operators).
+Shifts preserve the runtime C++20 contract; invalid counts remain undefined behavior,
+with [checked-count debt](../planning/operators.md#debt-checked-shift-counts) recorded.
+Native compiler execution was not rerun.
 
 ### Imported version 1
 

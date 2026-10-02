@@ -449,6 +449,21 @@ final class CPP_Generator
 		elseif ($decision->operation === operator_operation::integer_remainder) {
 			$spelling = '%';
 		}
+		elseif ($decision->operation === operator_operation::integer_bitwise_and) {
+			$spelling = '&';
+		}
+		elseif ($decision->operation === operator_operation::integer_bitwise_or) {
+			$spelling = '|';
+		}
+		elseif ($decision->operation === operator_operation::integer_bitwise_xor) {
+			$spelling = '^';
+		}
+		elseif ($decision->operation === operator_operation::integer_shift_left) {
+			$spelling = '<<';
+		}
+		elseif ($decision->operation === operator_operation::integer_shift_right) {
+			$spelling = '>>';
+		}
 		elseif ($decision->operation === operator_operation::integer_equal) {
 			$spelling = '==';
 		}

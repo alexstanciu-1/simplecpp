@@ -230,4 +230,22 @@ old/new value snapshots through the existing operator decision. Fields/indexes a
 Arithmetic/string compound updates now use their agreed dedicated node, the shared
 mutation target validator, the existing binary computation decision and an explicit
 write-back conversion. The [compound contract](../s2s_scalar_operators.md#compound-assignment)
-records proof and the remaining bitwise/shift, target and effect restrictions.
+records proof and the remaining target and effect restrictions.
+
+## Debt: checked shift counts
+
+Decision 2026-10-02: preserve the current runtime's native C++20 shift contract.
+For canonical signed 64-bit `int`, counts 0 through 63 are valid; negative counts
+and counts at least 64 remain undefined behavior. Neither my-try nor the runtime
+adds a guard, masks the count, or promises a diagnostic for invalid counts.
+
+A future checked-shift proposal must be owned by the runtime/language contract,
+not introduced only by this frontend. It must decide failure behavior and error
+codes, review the currently `noexcept` shift helpers, apply equally to binary and
+compound forms and wrapper delegation, and prove dynamic invalid counts without
+executing undefined shifts. Compile-time constant diagnostics can then follow the
+same agreed policy. This debt does not authorize a runtime behavior change now.
+
+Owner references: `runtime/specs/spec.md`, current operator-phase decision;
+`runtime/include/scpp/generated/operator_detail.hpp`, `shl`/`shr`;
+C++20 draft N4861 `[expr.shift]`.

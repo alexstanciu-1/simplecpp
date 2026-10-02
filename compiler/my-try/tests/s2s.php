@@ -51,6 +51,33 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'bits_and' => ['return 12 & 10;', 8],
+	'bits_or' => ['return 12 | 3;', 15],
+	'bits_xor' => ['return 12 ^ 5;', 9],
+	'bits_negative' => ['return -1 & 15;', 15],
+	'bits_precedence' => ['return 1 | 6 ^ 3 & 1;', 7],
+	'bits_shift_precedence' => ['return 1 << 2 + 1;', 8],
+	'bits_shift_associativity' => ['return 64 >> 2 >> 1;', 8],
+	'bits_shift_grouped' => ['return 1 << (2 + 2);', 16],
+	'bits_shift_zero' => ['$a = -7 >> 0; return $a + 7;', 0],
+	'bits_left_zero' => ['$a = -7 << 0; return $a + 7;', 0],
+	'bits_right_negative' => ['$a = -3 >> 1; return $a + 2;', 0],
+	'bits_left_negative' => ['$a = -3 << 1; return $a + 6;', 0],
+	'bits_sign_bit' => ['$a = 1 << 63; return 0;', 0],
+	'bits_wrap_left' => ['$a = PHP_INT_MAX << 1; return $a + 2;', 0],
+	'bits_right_63' => ['$a = (-PHP_INT_MAX - 1) >> 63; return $a + 1;', 0],
+	'bits_positive_right_63' => ['return PHP_INT_MAX >> 63;', 0],
+	'bits_negative_left_63' => ['$a = -1 << 63; return 0;', 0],
+	'bits_compound_and' => ['$a = 7; $a &= 3; return $a;', 3],
+	'bits_compound_or' => ['$a = 1; $a |= 4; return $a;', 5],
+	'bits_compound_xor' => ['$a = 7; $a ^= 3; return $a;', 4],
+	'bits_compound_left' => ['$a = 3; $a <<= 2; return $a;', 12],
+	'bits_compound_right' => ['$a = -3; $a >>= 1; return $a + 2;', 0],
+	'bits_compound_sign_bit' => ['$a = 1; $a <<= 63; return 0;', 0],
+	'bits_compound_right_63' => ['$a = -PHP_INT_MAX - 1; $a >>= 63; return $a + 1;', 0],
+	'bits_compound_snapshot' => ['$b = 3; $a = ($b <<= 1); $b >>= 1; return $a * 10 + $b;', 63],
+	'bits_reference' => ['function shift(int &$x): int { return $x <<= 2; } $b = 3; $a = shift($b); return $a + $b;', 24],
+
 	'compound_add' => ['$a = 3; $a += 2; return $a;', 5],
 	'compound_add_initialized' => ['$a = 1; $a += 1; return $a;', 2],
 	'compound_sub' => ['$a = 3; $a -= 2; return $a;', 1],
@@ -649,7 +676,13 @@ foreach ($cases as $name => [$source, $exit])
 	}
 
 	// Verify signed values directly; process exit codes alone lose sign and high bits.
-	$arithmetic_values = ['mutation_maximum' => '9223372036854775807LL',
+	$arithmetic_values = [ 'bits_shift_zero' => '-7LL', 'bits_left_zero' => '-7LL',
+		'bits_right_negative' => '-2LL', 'bits_left_negative' => '-6LL', 'bits_wrap_left' => '-2LL',
+		'bits_right_63' => '-1LL', 'bits_compound_right' => '-2LL', 'bits_compound_right_63' => '-1LL',
+		'bits_sign_bit' => '(-9223372036854775807LL - 1LL)',
+		'bits_negative_left_63' => '(-9223372036854775807LL - 1LL)',
+		'bits_compound_sign_bit' => '(-9223372036854775807LL - 1LL)',
+'mutation_maximum' => '9223372036854775807LL',
 		'mutation_minimum' => '(-9223372036854775807LL - 1LL)', 'unary_negative' => '-3LL', 'unary_complement' => '-4LL',
 		'unary_minimum' => '(-9223372036854775807LL - 1LL)',
 		'unary_complement_limit' => '(-9223372036854775807LL - 1LL)', 'sub_catalog' => '-1LL',
@@ -661,7 +694,8 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
 		$probe .= "\tif (local_a.native_value() != " . $arithmetic_values[$name] . ") { return 91; }\n";
 		$text = Model::$cpp_files[0]->text;
-		$site = (($name === 'sub_maximum') || ($name === 'mul_wide') || ($name === 'unary_minimum') || ($name === 'unary_complement_limit') || ($name === 'mutation_maximum') || ($name === 'mutation_minimum')) ? "\treturn 0;" : "\treturn static_cast<int>";
+		$site = (($name === 'sub_maximum') || ($name === 'mul_wide') || ($name === 'unary_minimum') || ($name === 'unary_complement_limit') || ($name === 'mutation_maximum') || ($name === 'mutation_minimum') || ($name === 'bits_sign_bit')
+			|| ($name === 'bits_negative_left_63') || ($name === 'bits_compound_sign_bit')) ? "\treturn 0;" : "\treturn static_cast<int>";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace($site, $probe . $site, $text));
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];

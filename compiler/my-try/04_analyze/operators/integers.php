@@ -36,6 +36,21 @@ final class Integer_Operators
 		elseif ($source_operator === operator_kind::remainder) {
 			$decision->operation = operator_operation::integer_remainder;
 		}
+		elseif ($source_operator === operator_kind::bitwise_and) {
+			$decision->operation = operator_operation::integer_bitwise_and;
+		}
+		elseif ($source_operator === operator_kind::bitwise_or) {
+			$decision->operation = operator_operation::integer_bitwise_or;
+		}
+		elseif ($source_operator === operator_kind::bitwise_xor) {
+			$decision->operation = operator_operation::integer_bitwise_xor;
+		}
+		elseif ($source_operator === operator_kind::shift_left) {
+			$decision->operation = operator_operation::integer_shift_left;
+		}
+		elseif ($source_operator === operator_kind::shift_right) {
+			$decision->operation = operator_operation::integer_shift_right;
+		}
 		elseif ($source_operator === operator_kind::three_way) {
 			$decision->operation = operator_operation::integer_three_way;
 		}

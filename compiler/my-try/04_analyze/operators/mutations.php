@@ -50,7 +50,7 @@ final class Mutation_Preparation
 		Operator_Preparation::require_order_independent_operand($syntax->value);
 		$value = Expression_Preparation::prepare($syntax->value, $context);
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
-		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, 1));
+		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
 		$facts = new prepared_compound_assignment_expression();
 		$facts->decision = Operator_Preparation::decide(
 			$source_operator, [$target->type, $value->type], operator_context::expression, $context);

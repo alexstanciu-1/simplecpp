@@ -18,7 +18,7 @@ function token_check(bool $ok): void
 	}
 }
 
-$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=+-*/%.!~';
+$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}:,&[]<>=+-*/%.!~|^';
 for ($value = 0; $value < 256; $value++)
 {
 	$byte = chr($value);
@@ -68,6 +68,17 @@ $expected_text = ['$x', '+=', '1', ';', '$x', '-=', '2', ';', '$x', '*=', '3', '
 	'$x', '/=', '4', ';', '$x', '%=', '5', ';', '$x', '.=', '"a"', ';'];
 token_check(count($tokens) === count($expected_text));
 foreach ($tokens as $index => $token) {
+	token_check($token->text() === $expected_text[$index]);
+}
+// Angle pairs stay available as generic closers; expression queries join only adjacent bytes.
+$scan = token_scan('1<<2 >> 1;1 < < 2; $x<<=2;$x>>=1;$x&=3;$x|=4;$x^=5;');
+token_check($scan->operator_text_at(1) === '<<');
+token_check($scan->operator_text_at(4) === '>>');
+token_check($scan->operator_text_at(9) === '<');
+$expected_text = ['1', '<', '<', '2', '>', '>', '1', ';', '1', '<', '<', '2', ';',
+	'$x', '<<=', '2', ';', '$x', '>>=', '1', ';', '$x', '&=', '3', ';',
+	'$x', '|=', '4', ';', '$x', '^=', '5', ';'];
+foreach ($scan->tokens as $index => $token) {
 	token_check($token->text() === $expected_text[$index]);
 }
 foreach (['$', '$0', '12a', '1.e+', '1..', '=>', "\0", "\xc3\xa9"] as $invalid)
