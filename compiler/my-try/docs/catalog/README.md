@@ -78,7 +78,9 @@ Discuss and split those rows rather than expanding a small slice silently.
 
 Chapter numbers organize the catalog; they are not a strict implementation queue.
 The [2026-10-02 preparation/emission audit](../planning/preparation_emission_audit.md)
-is complete. Duplicate-declaration admission and non-void fallthrough remain open.
+is complete. Duplicate-declaration admission (PE-03) is explicitly deferred debt.
+Non-void fallthrough now rejects during preparation for supported straight-line bodies;
+branch/loop completion rules remain a chapter 03 gate.
 Bounded copy admission now uses prepared source-record capabilities; conditional
 runtime-template capabilities remain debt. The entry-return carrier mismatch is
 resolved by registry normalization of redundant `value<T>` requests. The existing

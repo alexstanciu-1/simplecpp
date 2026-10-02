@@ -5,7 +5,8 @@ Audited 2026-10-02 at `091bf094483ce840c29e5e7543ff6197a330a1ec`.
 This report completes the bounded inspection requested by the
 [catalog prerequisite gate](../catalog/README.md#prerequisite-gates).
 **Inspection is complete. PE-01 is subsequently resolved for the agreed bounded
-copy policy, and PE-02 by registry normalization. PE-03 and PE-04 remain open.** No compiler structures,
+copy policy, PE-02 by registry normalization, and PE-04 for supported straight-line
+bodies. PE-03 (duplicate declarations) is explicitly deferred debt.** No compiler structures,
 semantics or generation behavior were changed by this audit.
 
 ## Result and boundary
@@ -150,7 +151,14 @@ unsupported results and recovery after a failed edit.
 
 ## PE-03 — duplicate declarations can reach C++
 
+**Status: deferred debt (explicitly retained, 2026-10-02).**
 **Priority: medium; declaration validation, not operator dispatch.**
+
+Owner: declaration preparation/publication. Duplicate fields, parameter names and
+currently non-overloaded function declarations can still pass preparation when
+unused and fail in C++. This slice does not repair or suppress them. Close this debt
+with preparation diagnostics and incremental introduction/removal/recovery proofs;
+retain the original candidates rather than deduplicating or renaming declarations.
 
 ```php
 struct A { int $x; int $x; } return 0;
@@ -174,6 +182,25 @@ introduction/removal, recovery and withheld completed output. General validation
 already deferred; this finding makes the concrete generation consequence explicit.
 
 ## PE-04 — non-void fallthrough is not established
+
+**Subsequent resolution (2026-10-02):** body preparation now rejects a non-void
+function whose supported straight-line statement sequence can reach its end.
+Empty bodies, local-only bodies and discarded value-returning calls all reject,
+including unused functions. A validated unconditional return ends the path; later
+statements still undergo normal semantic checking. Existing internal block nodes
+compose completion through the same traversal. Void functions and program entry
+may fall through; standalone block syntax remains deferred.
+
+The result is checked before body work settles, so successful preparation certifies
+completion without a new retained flag or emitter-generated fallback return.
+[Focused proofs](../../tests/fallthrough.php) cover return-value requirements,
+non-void scalar/record cases, void/entry controls, return removal, no-edit retries,
+signature-only changes, independent-body preservation and recovery. Eight focused
+PHP suites pass through FPM; six generated C++ controls compile with
+`-Werror=return-type` and run with expected exits. No native compiler rebuild was run.
+
+Branch, loop, exception and non-returning-call completion rules remain future
+control-flow work. The historical reproduction and audit evidence below are unchanged.
 
 **Priority: medium; required before broader control-flow generation.**
 
@@ -250,8 +277,8 @@ The earlier chapter checkpoint remains separate evidence.
 2. PE-01: bounded copy admission and source-record capabilities are resolved above;
    explicit transfer and conditional runtime-template contracts remain separate gates.
 3. PE-03: close duplicate-declaration admission within declaration preparation.
-4. PE-04 and child-block environments: establish completion/scope facts before
-   expanding chapter 03.
+4. PE-04 is resolved for supported straight-line bodies. Before expanding chapter
+   03, add branch/loop completion rules and child-block environments.
 
 Keep current hard rejections until the corresponding semantic facts exist. New
 operator providers or side-effectful operands must not bypass those gates. Completing

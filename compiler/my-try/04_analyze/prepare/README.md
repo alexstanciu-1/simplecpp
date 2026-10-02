@@ -57,6 +57,14 @@ Consumers register both selected declarations and visited scope/name pools, incl
 missing/ambiguous candidates. Effective signature/layout changes notify consumers;
 body-only edits do not invalidate callers. Required record completion detects cycles;
 recursive function calls remain valid. Return-type checks are per-body context.
+The statement traversal also reports whether its straight-line sequence can reach
+its end, composing existing internal blocks and validated unconditional returns.
+Non-void function bodies reject fallthrough before their work settles; void functions
+and program entry may fall through. All statements are still prepared after a return.
+Completion is a successful-body invariant, not a duplicate retained flag. Branches,
+loops, exceptions and non-returning calls need explicit completion rules when enabled.
+Duplicate fields, parameters and non-overloaded function declarations remain
+[PE-03 deferred debt](../../docs/planning/preparation_emission_audit.md#pe-03--duplicate-declarations-can-reach-c).
 Prepared records retain field-derived storage/copy capabilities. Capability consumers
 require declaration completion through `Capability_Preparation`; nested capability
 changes invalidate consumers even when their canonical type IDs stay unchanged.

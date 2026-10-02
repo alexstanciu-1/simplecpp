@@ -10,9 +10,9 @@ Requires locals. Establish precedence, operand types and evaluation order before
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
 The [preparation/emission audit](../planning/preparation_emission_audit.md) is complete;
-bounded copy admission and redundant value-modifier handling are repaired. Duplicate
-declarations and non-void fallthrough remain open, alongside conditional runtime
-capability debt. The proved rows below describe bounded examples, not unrestricted
+bounded copy admission, redundant value-modifier handling and straight-line non-void
+fallthrough are repaired. Duplicate declarations are explicitly deferred debt (PE-03),
+alongside conditional runtime capability debt. The proved rows below describe bounded examples, not unrestricted
 copying or declaration validity.
 
 ## Progress

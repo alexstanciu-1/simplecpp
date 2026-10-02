@@ -5,12 +5,26 @@ namespace scpp\compiler;
 
 final class Body_Preparation
 {
-	/** Bodies and blocks share source-order traversal with the caller's active context. */
-	public static function prepare_statements(Storage $nodes /** Storage<statement_node> */, preparation_context $context): void
+	/** Prepare every statement; report whether the supported straight-line sequence can reach its end. */
+	public static function prepare_statements(Storage $nodes /** Storage<statement_node> */,
+		preparation_context $context): bool
 	{
-		foreach ($nodes as $node) {
-			$node->prepare($context);
+		$can_fall_through = true;
+		foreach ($nodes as $node)
+		{
+			$statement_falls_through = true;
+			if ($node instanceof block_node) {
+				// Existing internal blocks compose sequences through this same traversal owner.
+				$block = object_cast($node, block_node::class);
+				$statement_falls_through = self::prepare_statements($block->statements, $context);
+			}
+			else {
+				$node->prepare($context);
+				$statement_falls_through = !($node instanceof return_node);
+			}
+			$can_fall_through = $can_fall_through && $statement_falls_through;
 		}
+		return $can_fall_through;
 	}
 
 	/** Establish source-order local storage before publishing it to later statements. */
@@ -130,6 +144,9 @@ final class Body_Preparation
 			$locals->add($entry->name, $parameter);
 		}
 
-		Body_Preparation::prepare_statements($syntax->body->statements, $context);
+		$can_fall_through = self::prepare_statements($syntax->body->statements, $context);
+		if ($can_fall_through && (Type_Preparation::canonical($signature->return_type)->family() !== type_family::no_value)) {
+			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
+		}
 	}
 }
