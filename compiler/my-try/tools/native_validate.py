@@ -96,6 +96,11 @@ def validate(args, target, results, logs, started, runner):
     (source / 'main.php').write_text(driver)
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
+    harness_paths = [Path(__file__), APP / 'tests/control_flow.php', APP / 'tests/s2s.php',
+                     APP / 'tests/native_driver.php.in', APP / 'tests/s2s_proof.php']
+    (results / 'harness_hashes.json').write_text(json.dumps({
+        str(path.relative_to(APP)): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in harness_paths}, indent=2) + '\n')
     target_hashes = {}
     for folder in ['bin', 'generators/php', 'runtime']:
         for p in (target / folder).rglob('*'):
@@ -167,12 +172,27 @@ def validate(args, target, results, logs, started, runner):
     run('types-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
                         results / 'types.cpp', '-o', results / 'types-program'])
     run('types-execute', [results / 'types-program'])
+    request.write_text('control-proof')
+    expected_control_cpp = run('control-host', ['php', '-r', php_code], cwd=results)
+    native_control_cpp = run('control-native', [executable], cwd=results)
+    if native_control_cpp != expected_control_cpp:
+        raise RuntimeError('Native control-flow incremental proof differs from PHP')
+    (results / 'control.cpp').write_bytes(native_control_cpp)
+    run('control-clang', ['clang++-18', '-std=c++20', '-Werror=return-type',
+                          '-I', ROOT / 'runtime/include', results / 'control.cpp', '-o', results / 'control-program'])
+    run('control-execute', [results / 'control-program'], expected=8)
     # Reuse every valid authored S2S case instead of maintaining native-only fixture subsets.
     s2s_fixtures = results / 's2s-fixtures'
     s2s_fixtures.mkdir(exist_ok=args.resume)
     run('php-s2s-suite', ['php', APP / 'tests/s2s.php', s2s_fixtures])
     programs = json.loads((s2s_fixtures / 'programs.json').read_text())
     valid_cases = [(name, text, code) for name, (text, code) in programs['valid'].items()]
+    control_fixtures = results / 'control-flow-fixtures'
+    control_fixtures.mkdir(exist_ok=args.resume)
+    run('php-control-flow-suite', ['php', APP / 'tests/control_flow.php', control_fixtures])
+    control_programs = json.loads((control_fixtures / 'programs.json').read_text())
+    valid_cases += [('control-' + name, text, code)
+                    for name, (text, code) in control_programs['valid'].items()]
     declaration_case_count = sum(name.startswith(('function_', 'struct_', 'integer_', 'field_'))
                                  for name, _, _ in valid_cases)
     def validate_source(name, text, code):
@@ -204,7 +224,7 @@ def validate(args, target, results, logs, started, runner):
                 raise RuntimeError(name + ': float spelling probe could not find the entry return')
             generated = generated_with_probe
         (folder / 'main.cpp').write_text(generated)
-        run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
+        run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-Werror=return-type', '-I', ROOT / 'runtime/include',
                                  folder / 'main.cpp', '-o', folder / 'program'])
         run(name + '-s2s-execute', [folder / 'program'], expected=code)
         return generated.encode(), code
@@ -229,8 +249,23 @@ def validate(args, target, results, logs, started, runner):
     run_tasks([Task('probe-' + Path(item['path']).stem, lambda item=item: validate_probe(item))
                for item in probe_cases], args.jobs)
     probe_executions = len(probe_cases)
+    # Runtime-error probes must first prove parity of their uninstrumented source.
+    def validate_control_probe(item):
+        name = 'control-' + item['name']
+        folder = results / 'control-probes' / name
+        folder.mkdir(parents=True, exist_ok=args.resume)
+        (folder / 'main.phs').write_text(item['source'])
+        (folder / 'request.txt').write_text('s2s:' + str(folder))
+        host_output = run(name + '-host', ['php', '-r', php_code], cwd=folder)
+        native_output = run(name + '-native', [executable], cwd=folder)
+        if native_output != host_output or native_output != Path(item['base_path']).read_bytes():
+            raise RuntimeError(name + ': native runtime-error probe base differs from PHP')
+        validate_probe(item)
+
+    run_tasks([Task('control-probe-' + item['name'], lambda item=item: validate_control_probe(item))
+               for item in control_programs['probes']], args.jobs)
     print(f'{probe_executions} supplementary instrumented programs passed', flush=True)
-    rejection_cases = programs['rejected'] + [
+    rejection_cases = programs['rejected'] + control_programs['rejected'] + [
         'struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }',
         '$s = "abc"; $s[];', '$s = "abc"; $s[0];',
         '$s = "abc"; $s[] = "d";', '$s = "abc"; $s[0] = "d";']
@@ -286,8 +321,12 @@ def validate(args, target, results, logs, started, runner):
                    validation_scope='types-and-s2s' if args.types_only else 'full',
                    parked_llvm_validation='skipped' if args.types_only else 'included',
                    portable_type_proof=True,
+                   control_flow_incremental_proof=True,
                    s2s_valid_executions=len(valid_cases), s2s_float_spelling_assertions=float_spelling_assertions,
                    s2s_supplementary_probe_executions=probe_executions,
+                   control_flow_valid_executions=len(control_programs['valid']),
+                   control_flow_runtime_error_probes=len(control_programs['probes']),
+                   control_flow_rejections=len(control_programs['rejected']),
                    s2s_declaration_executions=declaration_case_count,
                    s2s_rejections=len(rejection_cases), cases=len(outcomes), valid=sum(x['valid'] for x in outcomes),
                    rejected=sum(not x['valid'] for x in outcomes),

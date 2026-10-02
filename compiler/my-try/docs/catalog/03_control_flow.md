@@ -22,6 +22,12 @@ The latest focused evidence remains 12 PHP suites and 132 generated-C++ programs
 passing in `/tmp/my-try-match-20261002-second`; see the match slice for coverage.
 Documentation closeout adds no execution evidence or native compiler checkpoint.
 
+Subsequent user-requested native validation now covers this first pass: 479 total
+PHP/native source comparisons and executions (including 130 control-flow cases),
+76 supplementary probes, 135 rejection/recovery cases, portable incremental control-flow
+proof and final incremental build passed. See the [native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-02-control-flow-closeout)
+for exact source/harness identity and portability adaptations; LLVM/STAN remain skipped.
+
 ### Remaining debt and scope boundaries
 
 - Syntax: unbraced/alternative statement syntax and numbered transfers are not enabled.
@@ -36,7 +42,8 @@ Documentation closeout adds no execution evidence or native compiler checkpoint.
   loop specialization and its TODO. Reference iteration additionally needs lifetime rules.
 - Inherited debt: PE-03 duplicate declarations, conditional runtime-template copyability,
   bracket overload/lowering, and output partitioning remain with their existing owners.
-  LLVM, a fresh native compiler build and compilation-cost benchmarking remain deferred.
+  LLVM and compilation-cost benchmarking remain deferred. Native validation is an
+  explicit checkpoint, not an automatic requirement for each new feature slice.
 
 Reopen these only when an agreed slice needs them; none blocks the function discussion.
 

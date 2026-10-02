@@ -53,10 +53,11 @@ final class Declaration_Preparation
 				$copyable = false;
 			}
 		}
-		$facts->capabilities = [generic_contract::value_storable];
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable];
 		if ($copyable) {
-			$facts->capabilities[] = generic_contract::copyable_value;
+			$capabilities[] = generic_contract::copyable_value;
 		}
+		$facts->capabilities = $capabilities;
 		$syntax->set_preparation($facts);
 	}
 

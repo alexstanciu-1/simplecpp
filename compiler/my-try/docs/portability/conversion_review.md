@@ -5,31 +5,52 @@ PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Later source changes — evidence boundary
+## Latest native checkpoint — 2026-10-02 control-flow closeout
 
-The chapter 03 shared statement-body/conditional slice has focused PHP and generated
-C++ proofs in `tests/control_flow.py`, including local environments, shadowing,
-completion and incremental recovery. It has not received a native compiler rebuild.
-Its abstract body and tagged arm representations therefore have no new native
-portability claim. See the [agreed slice](../catalog/03_control_flow.md#agreed-first-slice--2026-10-02).
+The worktree based on `5c813f7de3cb1e17fdc252cb2785057ed1d8c6fc`, with the portable
+source adaptations and harness extensions below, passes conversion, native compiler
+construction, PHP/native C++ byte parity and generated-program execution. This covers
+the Chapter 02 follow-up repairs and Chapter 03's bounded first pass. The changes were
+uncommitted during testing: `source_hashes.json` and `harness_hashes.json`, not the base
+revision alone, identify the tested overlay. All 96 compiler/proof PHP source files
+(excluding the generated driver) and all recorded harness hashes match the checkout.
 
-Chapter 02's positive pass concludes at implementation revision
-`d3cedb46aee4b35dcd76763179535c0eef25dc2d`. After the native checkpoint below:
+The **12-job** run passes:
 
-| Commit | Change | Evidence scope |
-| --- | --- | --- |
-| `4f6a0f07` | Registry normalization of redundant `value<T>` | Focused PHP suites and generated C++ execution |
-| `6092d7f5` | Derived source-record capabilities and owned-copy checks | Eight focused FPM suites, two generated C++ programs, incremental rejection/recovery |
-| `d3cedb46` | Non-void straight-line fallthrough rejection | Eight focused FPM suites, six generated C++ programs with `-Werror=return-type`, incremental rejection/recovery |
+- 479 source comparisons and executions: 349 expression/declaration fixtures plus
+  130 control-flow fixtures, compiled with `-Werror=return-type`.
+- 74 existing supplementary value/type/error probes and two control-flow error probes
+  (explicit bool-cast rejection and unmatched match without default). Probe base output
+  is verified before the instrumented program runs.
+- 135 rejection/recovery cases, including 98 exported control-flow cases, and all
+  15 floating-spelling assertions.
+- Separate emission/type proofs, a portable control-flow span-move identity and
+  unselected-arm dependency failure/retry/repair proof, and the final incremental build.
 
-These commits have not received a native compiler rebuild/checkpoint. Do not project
-the earlier fixture totals or byte-parity result onto this newer revision. A later
-explicitly requested native run should record its own revision and fixture counts.
-Focused evidence directories are `/tmp/my-try-value-closing-20261002/`,
-`/tmp/my-try-value-normalization-final-20261002/`, `/tmp/my-try-capabilities-20261002/`
-and `/tmp/my-try-fallthrough-20261002/`; retained tests are the durable reproducers.
+The portable-PHP adaptations preserve the compiler model: initialize the optional
+lexical parent to null; use `-= 1` for the two remaining-count updates; construct
+record capabilities through an explicit `vector<generic_contract>` local; and extract
+a required `breakable_node` from the checked nullable target before storing its weak
+observer. No generator/runtime extension or language-feature expansion was needed.
+The native harness now consumes Chapter 03's source/rejection manifest as well as the
+older S2S manifest; previously it did not cover that chapter.
 
-## Latest native checkpoint — 2026-10-02 parallel test runner
+Evidence: `/tmp/my-try-ch03-native-20261002/summary.json`, `source_hashes.json`,
+`harness_hashes.json`, `candidate.json`, journals and `logs` through `logs-5`.
+Attempts 1–2 stopped at conversion (nullable field initialization, then decrement);
+attempt 3 stopped at native compilation (capability container and nullable weak-target
+assignment). Attempt 4 built the compiler but found a setup error in the new proof:
+it edited a stale source snapshot. The proof now edits the registered current snapshot.
+Attempt 5 passed in **395.55 seconds**, reusing build objects; this is an observed run,
+not a performance benchmark. Six affected PHP suites also pass independently under
+`/tmp/my-try-ch03-portability-php-2/`.
+
+LLVM and legacy STAN remain explicitly skipped (`--no-stan --types-only`). This does
+not certify all lifetime/effect behavior, parked LLVM, or a clean broad/style suite.
+Reproduce using the standard [native command](../testing.md#commands) with the commit
+containing these adaptations and a fresh results directory.
+
+## Earlier native checkpoint — 2026-10-02 parallel test runner
 
 The compiler sources at `4a8aa89ccf37f44da2a96092880c66bc0cd1676d` pass native
 validation with the new shared runner and an isolated request file per fixture.

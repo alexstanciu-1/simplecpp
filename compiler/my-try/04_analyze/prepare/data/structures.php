@@ -265,7 +265,7 @@ final class prepared_condition
 /** Invocation-local lexical membership; entries alias facts owned by syntax/signatures. */
 final class local_environment
 {
-	public ?local_environment $parent;
+	public ?local_environment $parent = null;
 	public Key_Storage_List $bindings /** Key_Storage_List<prepared_storage> */;
 	/** A typed declaration reserves its name while preparing its initializer. */
 	public ?string $initializing_name = null;

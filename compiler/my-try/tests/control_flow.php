@@ -3,6 +3,7 @@
 /* Prove structured branches, loops, switches, completion and incremental recovery. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/s2s_proof.php';
 
 function control_check(bool $condition, string $message): void
 {
@@ -41,6 +42,7 @@ mkdir($directory);
 $path = $directory . '/main.phs';
 try
 {
+	S2S_Proof::control_flow();
 	$cases = [
 		'match_first' => ['return match (1) { 1 => 3, 2 => 4, default => 5 };', 3],
 		'match_grouped' => ['return match (2) { 1, 2 => 7, default => 0, };', 7],
@@ -179,6 +181,8 @@ try
 		$cases['truth_' . $name] = [$source, $truthy ? 238 : 20];
 	}
 	$executions = [];
+	$native_probes = [];
+	$rejected_sources = [];
 	foreach ($cases as $name => [$source, $expected])
 	{
 		$compiler = control_program($path, $source);
@@ -204,6 +208,10 @@ try
 		$output = $argv[1] . '/truth_explicit_cast_reject.cpp';
 		file_put_contents($output, $cast_text);
 		$executions[] = ['path' => $output, 'exit_code' => 0];
+		$base = $argv[1] . '/truth_explicit_cast_reject.base.cpp';
+		file_put_contents($base, Model::$cpp_files[0]->text);
+		$native_probes[] = ['name' => 'truth_explicit_cast_reject', 'source' => 'return (bool) "yes";',
+			'base_path' => $base, 'path' => $output, 'exit_code' => 0];
 	}
 
 	// No default is valid; an unmatched selection must throw in-process, not invent a value.
@@ -216,6 +224,10 @@ try
 		$output = $argv[1] . '/match_unhandled.cpp';
 		file_put_contents($output, $match_text);
 		$executions[] = ['path' => $output, 'exit_code' => 0];
+		$base = $argv[1] . '/match_unhandled.base.cpp';
+		file_put_contents($base, Model::$cpp_files[0]->text);
+		$native_probes[] = ['name' => 'match_unhandled', 'source' => 'return match (2) { 1 => 7 };',
+			'base_path' => $base, 'path' => $output, 'exit_code' => 0];
 	}
 
 	foreach ([
@@ -298,6 +310,7 @@ try
 		['if (($x = true)) {}', 'established local declaration'],
 		['function probe(int &$n): bool { $n++; return true; } $n = 0; if (false && probe($n)) {}', 'order-independent operands'],
 	] as [$source, $diagnostic]) {
+		$rejected_sources[] = $source;
 		$compiler = control_program($path, $source);
 		control_reject($compiler, $diagnostic);
 	}
@@ -315,6 +328,7 @@ try
 		'if (true) return 1;', 'if (true): return 1; endif;',
 		'if (true) { function local(): int { return 1; } }', 'if (true) { return 1;'] as $source)
 	{
+		$rejected_sources[] = $source;
 		$rejected = false;
 		try {
 			control_program($path, $source);
@@ -615,6 +629,9 @@ try
 	control_check(Model::$cpp_files[0]->text === $incremental, 'Clean/incremental mismatch');
 	if (isset($argv[1])) {
 		file_put_contents($argv[1] . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
+		file_put_contents($argv[1] . '/programs.json', json_encode([
+			'valid' => $cases, 'rejected' => $rejected_sources, 'probes' => $native_probes,
+		], JSON_PRETTY_PRINT));
 	}
 	echo "Control flow: branches, scopes, completion, lazy execution fixtures and recovery passed\n";
 }

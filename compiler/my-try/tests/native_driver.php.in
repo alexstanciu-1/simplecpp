@@ -144,6 +144,9 @@ if ($path === 's2s-proof') {
 elseif ($path === 'types-proof') {
 	echo S2S_Proof::types();
 }
+elseif ($path === 'control-proof') {
+	echo S2S_Proof::control_flow();
+}
 elseif (string_byte_starts_with($path, 's2s:'))
 {
 	$paths /** vector<string> */ = [string_byte_slice($path, 4, string_byte_len($path) - 4)];

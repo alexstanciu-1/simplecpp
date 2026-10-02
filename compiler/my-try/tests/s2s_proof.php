@@ -5,6 +5,67 @@ namespace scpp\compiler;
 
 final class S2S_Proof
 {
+	/** Native control-flow identity and unselected-arm dependency recovery use one session. */
+	public static function control_flow(): string
+	{
+		Compiler_Lifecycle::reset();
+		$input_module = new module('/control-proof', '/control-proof', '/control-proof');
+		$source = new file();
+		$source->path = 'main.phs';
+		$body = 'function choose(): int { if ("0") { return 1; } '
+			. 'return match (1) { default => branch(), 1 => (true ? 8 : 2) }; } '
+			. 'function stable(): int { return 9; } return choose();';
+		$valid = 'function branch(): int { return 2; } ' . $body;
+		$source->content = $valid;
+		$record = Source_Registry::add($input_module, $source);
+		$modules /** Keyed_Storage<module> */ = Model::$modules;
+		$modules->add($input_module->name, $input_module);
+		$compiler = new Compiler();
+		$compiler->exec_cpp();
+		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+		$original = $outputs[0]->text;
+		$functions /** vector<collected_function> */ = Model::$global_scope->functions_named('choose');
+		$retained_body = $functions[0]->syntax()->body;
+		$stable_functions /** vector<collected_function> */ = Model::$global_scope->functions_named('stable');
+		$stable_work = $stable_functions[0]->syntax()->body->work();
+		$stable_version = $stable_work->version;
+		$paths /** vector<string> */ = ['/control-proof/main.phs'];
+		$record->file->content = "\n\n" . $valid;
+		$compiler->update_cpp($paths);
+		$functions = Model::$global_scope->functions_named('choose');
+		$outputs = Model::$cpp_files;
+		if (($functions[0]->syntax()->body !== $retained_body) || ($outputs[0]->text !== $original)) {
+			throw new \LogicException('Native control-flow span move lost body identity or output');
+		}
+
+		$record->file->content = 'function branch(): float { return 2.0; } ' . $body;
+		$compiler->sync($paths);
+		for ($attempt = 0; $attempt < 2; $attempt++)
+		{
+			$rejected = false;
+			try {
+				$compiler->prepare();
+			}
+			catch (\RuntimeException $error) {
+				$rejected = true;
+			}
+			$outputs = Model::$cpp_files;
+			if ((!$rejected) || (!$outputs->is_empty()) || Model::$rebuild_required) {
+				throw new \LogicException('Native match dependency failure was not withheld and retryable');
+			}
+		}
+		if ($stable_work->version !== $stable_version) {
+			throw new \LogicException('Native match failure invalidated an unrelated body');
+		}
+		$record->file->content = $valid;
+		$compiler->update_cpp($paths);
+		$outputs = Model::$cpp_files;
+		if ($outputs[0]->text !== $original) {
+			throw new \LogicException('Native match repair changed generated output');
+		}
+		return $original;
+	}
+
 	/** Prove the canonical type model through the portable compiler and emitted C++. */
 	public static function types(): string
 	{

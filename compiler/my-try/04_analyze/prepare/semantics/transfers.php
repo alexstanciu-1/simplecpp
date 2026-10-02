@@ -18,7 +18,8 @@ final class Control_Transfer_Preparation
 		}
 		$facts = new prepared_control_transfer();
 		$facts->transfer_kind = $kind;
-		$facts->target = $target;
+		$required_target /** breakable_node */ = $target;
+		$facts->target = $required_target;
 		return $facts;
 	}
 }

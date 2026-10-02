@@ -158,7 +158,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		foreach ($conditions as $condition)
 		{
 			if ($test !== '') { $test .= ', '; }
-			$remaining--;
+			$remaining -= 1;
 			if ($remaining === 0) {
 				$facts /** prepared_condition */ = $node->require_preparation()->condition;
 				$test .= $this->native_condition($condition, $facts);
