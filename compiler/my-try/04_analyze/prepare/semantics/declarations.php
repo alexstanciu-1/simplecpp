@@ -25,8 +25,13 @@ final class Declaration_Preparation
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
 		$optional_seen = false;
+		$variadic_seen = false;
 		$names /** hash<bool> */ = [];
 		foreach ($nodes as $parameter) {
+			if ($variadic_seen) {
+				throw new \RuntimeException('S2S variadic parameter must be last');
+			}
+			$variadic_seen = $parameter->variadic;
 			if (isset($names[$parameter->name])) {
 				throw new \RuntimeException('S2S duplicate parameter name: ' . $parameter->name);
 			}
@@ -35,7 +40,7 @@ final class Declaration_Preparation
 			if ($parameter->default_value !== null) {
 				$optional_seen = true;
 			}
-			elseif ($optional_seen) {
+			elseif ($optional_seen && !$parameter->variadic) {
 				throw new \RuntimeException('S2S required parameter cannot follow an optional parameter');
 			}
 			$parameters->append($parameter->require_preparation());
@@ -52,6 +57,14 @@ final class Declaration_Preparation
 		$facts->type = Type_Preparation::type($node->type_syntax, $context);
 		Type_Preparation::require_value_type($facts->type);
 		$facts->mode = $node->mode;
+		if ($node->variadic) {
+			if (($node->mode !== passing_mode::value) || ($node->default_value !== null)) {
+				throw new \RuntimeException('S2S variadic parameters must be by value without an explicit default');
+			}
+			Capability_Preparation::require_copy($facts->type, $context);
+			$facts->element_type = $facts->type;
+			$facts->type = Type_Preparation::vector_of($facts->type, $context);
+		}
 		if ($node->default_value !== null) {
 			$facts->default_value = Parameter_Defaults::prepare($node->default_value, $facts, $context);
 		}

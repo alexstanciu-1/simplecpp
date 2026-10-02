@@ -60,6 +60,10 @@ final class CPP_Declarations
 			if ($include_defaults && ($parameter->default_value !== null)) {
 				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
 			}
+			elseif ($include_defaults && ($parameter->element_type !== null)) {
+				// An empty tail is implicit in source; this also permits preceding C++ defaults.
+				$parts .= ' = ' . self::type($parameter->type, $context) . '{}';
+			}
 			$separator = ', ';
 		}
 
@@ -151,9 +155,13 @@ final class CPP_Declarations
 		$text = '([&]() -> ' . self::type($facts->type, $context) . " {\n";
 		$names = '';
 		$separator = '';
+		$packed_names = '';
+		$packed_separator = '';
 		foreach ($arguments as $index => $argument)
 		{
-			$parameter = $parameters[$index];
+			$parameter_index = $index < $facts->fixed_count ? $index : $facts->fixed_count;
+			$parameter = $parameters[$parameter_index];
+			$argument_type = $parameter->element_type ?? $parameter->type;
 			// Generate nested calls before assigning the outer temporary name.
 			$value = $argument->generate_cpp(new CPP_Syntax($context));
 			$name = 'argument_' . $context->next_temporary;
@@ -164,9 +172,25 @@ final class CPP_Declarations
 					$value, $prepared_arguments[$index]->require_conversion(), $context);
 			}
 
-			$text .= "\t" . self::type($parameter->type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";
-			$names .= $separator . $name;
-			$separator = ', ';
+			$text .= "\t" . self::type($argument_type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+			if ($index < $facts->fixed_count) {
+				$names .= $separator . $name;
+				$separator = ', ';
+			}
+			else {
+				$packed_names .= $packed_separator . $name;
+				$packed_separator = ', ';
+			}
+		}
+		if ($facts->variadic_parameter !== null) {
+			// A supplied pack occupies the final C++ position, so omitted fixed defaults are explicit.
+			for ($index = q_count($arguments); $index < $facts->fixed_count; $index++) {
+				$default_value /** prepared_parameter_default */ = $parameters[$index]->default_value;
+				$names .= $separator . self::parameter_default($default_value, $context);
+				$separator = ', ';
+			}
+			$pack /** prepared_parameter */ = $facts->variadic_parameter;
+			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
 		}
 
 		$text .= "\treturn " . CPP_Generator::source_name('function', $entry->name) . '(' . $names . ");\n}())";

@@ -40,6 +40,9 @@ Unchanged bodies retain nodes, scopes, occurrences and facts.
 Parameters own optional default expressions; normalized scalar default snapshots
 belong to their prepared facts and participate in signature equivalence. Source calls
 retain only explicit arguments, with omitted defaults supplied by the declaration.
+Variadic syntax marks one trailing parameter independently of passing mode; its
+prepared element type is distinct from its ordinary vector storage type. Prepared
+calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ## AST and scopes
 

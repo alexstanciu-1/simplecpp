@@ -117,6 +117,8 @@ final class prepared_binding extends prepared_storage {
 /** Parameter facts add the source passing mode to the resolved storage identity. */
 final class prepared_parameter extends prepared_storage {
 	public passing_mode $mode;
+	/** Present only for a variadic parameter; inherited type is its vector storage type. */
+	public ?canonical_type_use $element_type = null;
 	public ?prepared_parameter_default $default_value = null;
 }
 
@@ -176,11 +178,14 @@ final class prepared_field_access extends prepared_expression {
 /** Resolved call target and signature; evaluation order remains with the process workers. */
 final class prepared_call extends prepared_expression
 {
+	/** Fixed prefix length; the remaining source arguments belong to variadic_parameter. */
+	public int $fixed_count = 0;
+	public ?prepared_parameter $variadic_parameter = null;
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_function $declaration /** weak<collected_function> */;
 	/** @reference.source function_node.prepared_facts */
 	public prepared_function $signature;
-	/** One boundary per source argument, aligned with syntax and signature positions. */
+	/** One boundary per explicit source argument, including each variadic element. */
 	public Storage $arguments /** Storage<prepared_call_argument> */;
 
 	public function __construct()

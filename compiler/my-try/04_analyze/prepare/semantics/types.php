@@ -5,6 +5,17 @@ namespace scpp\compiler;
 
 final class Type_Preparation
 {
+	/** Implicit packs use the canonical runtime vector, independently of source shadowing. */
+	public static function vector_of(canonical_type_use $element, preparation_context $context): canonical_type_use
+	{
+		$definition = object_cast(Model::$type_catalog->definition('vector'), template_type_definition::class);
+		$registry = Model::$type_catalog->registry();
+		try {
+			$application = $registry->intern_application($definition, [$element], new Capability_Preparation($context));
+			return $registry->use($application->type_id());
+		}
+		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }
+	}
 	/** Named syntax resolves through the existing lexical/publication scope chain. */
 	public static function type(type_node $node, preparation_context $context): canonical_type_use
 	{

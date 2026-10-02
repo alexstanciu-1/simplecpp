@@ -271,6 +271,7 @@ foreach ([
 	'function f(int $x) { return $x; }' => 'explicit return type',
 	'function f($x): int { return $x; }' => 'Expected parameter type',
 	'function f($x = 1): int { return $x; }' => 'Expected parameter type',
+	'function f(...$items): void {}' => 'Expected parameter type',
 ] as $invalid_signature => $expected_diagnostic) {
 	$signature_source = new file();
 	$signature_source->path = 'invalid_signature.phs';

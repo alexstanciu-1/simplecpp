@@ -162,6 +162,32 @@ try
 		$compiler->update_cpp([$path]);
 		cpp_check(!Model::$cpp_files->is_empty(), 'Default repair failed to recover');
 	}
+	// A vector parameter and a variadic int parameter share storage, but not call contracts.
+	$ordinary_vector = 'function pack(vector<int> $items): vector<int> { return $items; } function caller(): vector<int> { $items vector<int>; return pack($items); } $items = caller(); return 0;';
+	file_put_contents($path, $ordinary_vector);
+	$compiler->update_cpp([$path]);
+	$pack_parameter = cpp_function('pack')->parameters[0];
+	$vector_type = $pack_parameter->require_preparation()->type;
+	$variadic_source = str_replace('pack(vector<int> $items)', 'pack(int ...$items)', $ordinary_vector);
+	file_put_contents($path, $variadic_source);
+	$pack_failed = false;
+	try { $compiler->update_cpp([$path]); }
+	catch (\RuntimeException $error) { $pack_failed = true; }
+	cpp_check($pack_failed && Model::$cpp_files->is_empty(), 'Variadic mode edit failed to invalidate vector caller');
+	cpp_check(cpp_function('pack')->parameters[0] === $pack_parameter && $pack_parameter->require_preparation()->type->matches($vector_type), 'Variadic storage lost canonical vector identity');
+	cpp_check($pack_parameter->variadic && $pack_parameter->require_preparation()->element_type !== null, 'Variadic element facts missing');
+	file_put_contents($path, str_replace('pack($items)', 'pack()', $variadic_source));
+	$compiler->update_cpp([$path]);
+	$pack_output = Model::$cpp_files[0]->text;
+	$pack_owner = cpp_function('pack')->occurrence()->preparation;
+	$pack_fragment = Model::$cpp_output_program->fragments[$pack_owner];
+	$compiler->exec_cpp();
+	cpp_check(Model::$cpp_output_program->fragments[$pack_owner] === $pack_fragment, 'No-op variadic signature rerendered');
+	Compiler_Lifecycle::reset();
+	$compiler->init([$directory]);
+	$compiler->exec_cpp();
+	cpp_check(Model::$cpp_files[0]->text === $pack_output, 'Variadic repair differs from fresh output');
+
 	// Every scalar snapshot participates in signature equivalence, including signed floats.
 	foreach ([['string', '"7"', '"9"'], ['float', '-1.5', '-2.5'], ['bool', 'true', 'false']] as [$default_type, $old_default, $new_default]) {
 		$scalar_source = 'function value(' . $default_type . ' $x = ' . $old_default . '): ' . $default_type . ' { return $x; } return 0;';

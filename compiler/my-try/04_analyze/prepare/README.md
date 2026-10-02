@@ -66,6 +66,14 @@ expression folding, and retains the literal value plus argument conversion. Thes
 snapshots participate in signature equivalence, including absent/present changes.
 Calls retain only explicit argument facts; their count and the prepared signature
 identify the validated defaulted suffix. Defaults are checked even without callers.
+Typed variadic parameters retain an element type separately from their canonical
+vector storage type. Signature preparation validates one trailing by-value pack
+without an explicit default. Prepared calls record the fixed-prefix length and pack
+parameter, convert each tail argument to the element type and permit an empty tail.
+Fixed scalar defaults may precede the pack. Signature equivalence distinguishes a
+variadic parameter from an ordinary vector parameter even with identical storage.
+Vector construction uses the existing registry and copy/storage capability contracts;
+source vector indexing and iteration remain separate Chapter 06 work.
 Statements report transient `statement_completion` through typed dispatch. The
 completion worker composes sequence fallthrough and conditional alternatives, with an
 unmatched fallthrough path when a chain lacks else. Nested blocks share this path.

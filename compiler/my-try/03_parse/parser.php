@@ -724,6 +724,8 @@ final class Parser_Run
 			$mode = passing_mode::reference;
 			$this->position++;
 		}
+		$variadic = $this->text() === '...';
+		if ($variadic) { $this->position++; }
 		if (!string_byte_starts_with($this->text(), '$')) {
 			throw new \RuntimeException($this->error_message('Expected parameter name'));
 		}
@@ -743,6 +745,7 @@ final class Parser_Run
 		$old_end = $parameter->end_token();
 		$parameter->type_syntax = $type;
 		$parameter->mode = $mode;
+		$parameter->variadic = $variadic;
 		$parameter->default_value = null;
 		if ($this->text() === '=') {
 			$this->position++;

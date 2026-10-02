@@ -18,6 +18,9 @@ final class Preparation_Changes
 		}
 		foreach ($parameters as $index => $parameter) {
 			$before = $previous[$index];
+			if (($before->element_type === null) !== ($parameter->element_type === null)) {
+				return false;
+			}
 			if (!Parameter_Defaults::same($before->default_value, $parameter->default_value)) {
 				return false;
 			}

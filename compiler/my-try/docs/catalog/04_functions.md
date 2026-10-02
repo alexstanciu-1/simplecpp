@@ -25,7 +25,7 @@ Existing `tests/s2s.php` and Chapter 03 proofs are starting evidence; leave unve
 rows unverified until their agreed examples are checked. This handoff adds no test run.
 The omitted-type examples FUNC-DECL-001/005 now reject under the explicit-signature
 agreement below. Defaults are covered by their bounded slice; ordinary function
-overloading is forbidden. Variadics remain a later discussion.
+overloading is forbidden. Typed trailing variadics are now implemented below.
 
 ### Opening verification batch
 
@@ -216,6 +216,47 @@ Containers/wrappers/shared-object handles retain their own copy semantics; strin
 independence is not a general deep-copy rule. TYPE-PARAM-003D is closed for its string
 example only; its imported vector extension remains for Chapter 06.
 
+### Typed trailing variadics — 2026-10-02
+
+`function pack(int ...$items): vector<int> { return $items; }` accepts zero or more
+typed arguments, packing them into an owned runtime vector. One variadic parameter
+is allowed, always last. Fixed parameters may precede it, including scalar defaults.
+There is no explicit variadic default; an omitted tail produces an empty vector.
+Reference, untyped/mixed variadics and call-site unpacking remain deferred.
+
+The existing `parameter_node` has a variadic property independent of passing mode.
+Its type syntax denotes the element type; prepared parameter facts retain optional
+`element_type` and the ordinary `vector<T>` storage type. Type construction uses the
+canonical runtime vector and its existing capability checks, not a new pack type.
+Elements require value storage and copying under existing contracts. Scalar element
+behavior is proved here; broader element domains retain their own support limits.
+
+Prepared calls retain the fixed-prefix length, optional variadic parameter and one
+conversion per explicit argument. Emission snapshots arguments once, left-to-right,
+then constructs the vector from the tail snapshots. Omitted fixed defaults are
+supplied before that vector. C++ prototypes give the vector an implicit empty default
+so preceding fixed defaults remain legal C++; source syntax still rejects an explicit
+default on the variadic parameter. Definitions contain no defaults. Pack ownership is
+by value, unlike the legacy `const vector_t<T>&` convention.
+
+Legacy intake: `generators/php/specs/unsupported.md` typed-trailing constraints and
+`Generator::renderCallArgsForParams` packing. The current implementation uses shared
+signature/conversion preparation and the existing sequenced call emitter.
+
+Vector type/storage, ordinary vector parameters and returns already existed. This
+slice reuses them for source-level return and forwarding of the pack. General source
+indexing and iteration still belong to Chapter 06; no variadic-only read operation
+was introduced. Generated-C++ probes observe actual vector lengths/elements, including
+empty, int, float, bool, string and left-to-right side-effect cases.
+
+Proof: 11 new source fixtures, eight value probes, seven semantic rejections and an
+untyped parser rejection in the focused suite. Incremental tests change an ordinary
+vector parameter to an int variadic with identical storage type, verify caller
+invalidation, repair, retained parameter identity, no-op reuse and fresh equivalence.
+`tests/functions.py` passed 12 PHP suites and 77 generated C++ programs/probes;
+evidence: `/tmp/my-try-function-variadics-20261002-2/summary.json` (12 slots, CLI fallback
+after sandbox FPM socket startup failed). No native compiler rebuild or LLVM run.
+
 ## Ordinary-function foundation (2026-09-27)
 
 Implemented through shared signature/body preparation and specialization-attached
@@ -280,7 +321,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [FUNC-RETURN-002](#func-return-002) | agreed | `return $a;` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-RETURN-003](#func-return-003) | agreed | `return $a + 1;` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
 | [FUNC-CALL-003](#func-call-003) | agreed | `f($a, 1, "x", true);` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
-| [FUNC-CALL-004](#func-call-004) | pending-discussion | `sum_all(1, 2, 3);` | unverified | unverified | deferred | — |
+| [FUNC-CALL-004](#func-call-004) | agreed bounded slice | `pack(1, 2, 3);` with `int ...$items` | proved | proved | deferred | Typed trailing variadics; `tests/functions.py`; source vector reads/iteration remain Chapter 06 |
 | [SCOPE-GLOBAL-001](#scope-global-001) | agreed-rejection | `$a = 1; function f(): int { return $a; }` | proved | rejected before emission | deferred | No implicit capture; `tests/s2s.php` |
 | [SCOPE-LOCAL-001](#scope-local-001) | agreed | `function f(): void { $a = 1; $b = $a; }` | proved | proved | deferred | `tests/s2s.php` |
 | [SCOPE-SHADOW-001](#scope-shadow-001) | agreed | `$a = 1; function f(): void { $a = 2; }` | proved | proved | deferred | `tests/s2s.php` |
@@ -866,7 +907,10 @@ f(a, static_cast<int_t>(1), string_t("x"), static_cast<bool_t>(true));
 
 ## FUNC-CALL-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented one typed trailing by-value pack with
+per-element conversions and left-to-right snapshots. Fixed defaults may precede it.
+The callee receives an ordinary owned `vector<T>`; no reference or untyped variadics,
+and no call-site unpacking. See the bounded slice and Chapter 06 boundary above.
 
 ### Imported version 1
 

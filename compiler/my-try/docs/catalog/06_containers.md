@@ -11,6 +11,13 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Implementation prerequisites
 
+Chapter 04 now packs typed trailing variadics into the existing canonical `vector<T>`
+storage type. Pack values can be returned or passed to ordinary vector parameters;
+generated-C++ probes verify their contents. This does not implement source vector
+indexing/iteration. Reuse the ordinary parameter/vector representation here rather
+than introducing a variadic-specific read or iteration path. See
+[the variadic slice](04_functions.md#typed-trailing-variadics--2026-10-02).
+
 Iteration already has a reserved `foreach_node extends loop_node` in
 `03_parse/structures/structures_loops.php`. Complete that specialization when this
 chapter reaches foreach; reuse its inherited `block_node` body, loop-local preparation

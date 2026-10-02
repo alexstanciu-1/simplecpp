@@ -915,8 +915,10 @@ final class parameter_node extends ast_node
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
 	public passing_mode $mode = passing_mode::value;
-	/** Optional declaration-owned expression; absence means a required argument. */
+	/** Optional declaration-owned expression; absence makes a fixed parameter required. */
 	public ?expression_node $default_value = null;
+	/** Independent of reference/value passing mode; type_syntax is the pack element type. */
+	public bool $variadic = false;
 
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void

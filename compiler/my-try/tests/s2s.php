@@ -352,6 +352,17 @@ $cases = [
 // Ordinary functions and value structs exercise the existing frontend without adding syntax.
 $cases += [
 	'function_no_arguments' => ['function value(): int { return 13; } return value();', 13],
+	'function_variadic_empty' => ['function pack(int ...$items): vector<int> { return $items; } $items = pack(); return 0;', 0],
+	'function_variadic_values' => ['function pack(int ...$items): vector<int> { return $items; } $items = pack(2, 5, 9); return 0;', 0],
+	'function_variadic_float' => ['function pack(float ...$items): vector<float> { return $items; } $items = pack(1.5, 2.5); return 0;', 0],
+	'function_variadic_bool' => ['function pack(bool ...$items): vector<bool> { return $items; } $items = pack(true, false); return 0;', 0],
+	'function_variadic_string' => ['function pack(string ...$items): vector<string> { return $items; } $text = "2"; $items = pack($text, "7"); $text .= "3"; return 0;', 0],
+	'function_variadic_default_empty' => ['function value(int $first = 10, int ...$items): int { return $first; } return value();', 10],
+	'function_variadic_default_override' => ['function value(int $first = 10, int ...$items): int { return $first; } return value(2, 3, 4);', 2],
+	'function_variadic_partial_defaults' => ['function value(int $first = 10, int $second = 20, int ...$items): int { return $first + $second; } return value(3);', 23],
+	'function_variadic_order' => ['function next(int &$x): int { $x += 1; return $x; } function pack(int $first, int ...$items): vector<int> { return $items; } $x = 0; $items = pack(next($x), next($x), next($x)); return 0;', 0],
+	'function_variadic_forward' => ['$items = pack(3); function pack(int ...$items): vector<int> { return $items; } return 0;', 0],
+	'function_variadic_vector_forward' => ['function identity(vector<int> $items): vector<int> { return $items; } function pack(int ...$items): vector<int> { return identity($items); } $items = pack(4, 8); return 0;', 0],
 	'function_default_int' => ['function add(int $left, int $right = 2): int { return $left + $right; } return add(5);', 7],
 	'function_default_override' => ['function add(int $left, int $right = 2): int { return $left + $right; } return add(5, 10);', 15],
 	'function_default_all' => ['function add(int $left = 20, int $right = 22): int { return $left + $right; } return add();', 42],
@@ -467,6 +478,16 @@ $interpolation_values = [
 	'interp_literal_escape' => hex2bin('24783d76'),
 ];
 
+$variadic_probes = [
+	'function_variadic_empty' => 'local_items.size() == 0',
+	'function_variadic_values' => 'local_items.size() == 3 && local_items.at(0).native_value() == 2 && local_items.at(1).native_value() == 5 && local_items.at(2).native_value() == 9',
+	'function_variadic_float' => 'local_items.size() == 2 && local_items.at(0).native_value() == 1.5 && local_items.at(1).native_value() == 2.5',
+	'function_variadic_bool' => 'local_items.size() == 2 && local_items.at(0).native_value() && !local_items.at(1).native_value()',
+	'function_variadic_string' => 'local_items.size() == 2 && local_items.at(0).native_value() == "2" && local_items.at(1).native_value() == "7"',
+	'function_variadic_order' => 'local_x.native_value() == 3 && local_items.size() == 2 && local_items.at(0).native_value() == 2 && local_items.at(1).native_value() == 3',
+	'function_variadic_forward' => 'local_items.size() == 1 && local_items.at(0).native_value() == 3',
+	'function_variadic_vector_forward' => 'local_items.size() == 2 && local_items.at(0).native_value() == 4 && local_items.at(1).native_value() == 8',
+];
 $ownership_parameters = [
 	'function_ownership_value_append' => 'scpp::string_t',
 	'function_ownership_reference_append' => 'scpp::string_t&',
@@ -487,6 +508,14 @@ foreach ($cases as $name => [$source, $exit])
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
+	if (isset($variadic_probes[$name])) {
+		$probe = "\tif (!(" . $variadic_probes[$name] . ")) { return 201; }\n";
+		$probe_path = $directory . '/' . $name . '_value.cpp';
+		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", Model::$cpp_files[0]->text);
+		if ($probe_text === Model::$cpp_files[0]->text) { throw new \LogicException('Variadic value probe missed entry return'); }
+		file_put_contents($probe_path, $probe_text);
+		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
+	}
 	if (isset($ownership_parameters[$name])) {
 		$probe = 'static_assert(std::is_same_v<decltype(&function_value), scpp::string_t (*)(' . $ownership_parameters[$name] . ')>);';
 		$probe_path = $directory . '/' . $name . '_type.cpp';
@@ -947,6 +976,13 @@ foreach ($scope_isolation_rejections as $source => $diagnostic)
 }
 
 $rejections = ['function f(int &$x): void {} f(1);',
+	'function f(int ...$items, int $last): void {}',
+	'function f(int ...$items, int ...$more): void {}',
+	'function f(int &...$items): void {}',
+	'function f(int ...$items = 1): void {}',
+	'function f(void ...$items): void {}',
+	'function f(int $first, int ...$items): void {} f();',
+	'function f(int ...$items): void {} f(1, "2");',
 	'function f(): int { return 1; } function f(): int { return 2; }',
 	'function f(int $x): int { return $x; } function f(string $x): int { return 2; }',
 	'function f(): int { return 1; } function f(): int { return 2; } return f();',
