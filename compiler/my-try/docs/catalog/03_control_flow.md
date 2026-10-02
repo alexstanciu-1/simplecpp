@@ -324,7 +324,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CTRL-BREAK-001](#ctrl-break-001) | agreed | `break;` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [CTRL-CONTINUE-001](#ctrl-continue-001) | agreed | `continue;` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [SCOPE-VAR-001](#scope-var-001) | agreed | `$x = 1; if (true) { $x = 2; } return $x;` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php; output 2 |
-| [NOTE-017](#note-017) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-017](#note-017) | split | See NOTE-017.a/b | not-applicable | not-applicable | deferred | Summary reconciled below; no separate implementation |
+| [NOTE-017.a](#note-017a--bounded-statement-control-flow) | agreed | Existing CTRL-IF/WHILE/DOWHILE/FOR/SWITCH examples | proved | proved | deferred | Existing bounded slices and tests/control_flow.php |
+| [NOTE-017.b](#note-017b--foreach-belongs-to-chapter-06) | deferred | `foreach ($items as $item) { }` | deferred | deferred | deferred | Chapter 06 CTRL-FOREACH-001–004; reserved loop specialization only |
 ## CTRL-IF-001
 
 **v0.2 decision / target C++:** [Agreed first slice](#agreed-first-slice--2026-10-02).
@@ -768,7 +770,44 @@ auto x = static_cast<int_t>(1); if (...) { x = static_cast<int_t>(2); } php::ech
 
 **Source:** [generators/php/specs/rules.md:249](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples — 2026-10-02:** Reconciled into the two bounded items
+below. This is an overview of existing feature entries, not another implementation
+task or a claim of full PHP control-flow compatibility. The imported text is retained
+unchanged for provenance.
+
+### NOTE-017.a — Bounded statement control flow
+
+The supported list is covered by the existing working examples and proofs:
+
+- `if / elseif / else`: CTRL-IF-001–003 and the [shared-body slice](#agreed-first-slice--2026-10-02).
+- `while`, `do-while`, `for`: CTRL-WHILE-001, CTRL-DOWHILE-001, CTRL-FOR-001 and the [loop slice](#agreed-loop-slice--2026-10-02).
+- `switch`: CTRL-SWITCH-001 and the [canonical-int switch slice](#agreed-switch-slice--2026-10-02).
+
+The legacy “known mismatch” remark does not expand switch admission: canonical-int
+selectors and constant-int labels are the proved scope. Other selector/label types
+remain deferred. Conditions use the already agreed shared scalar truthiness policy.
+Scope, completion and transfer rules remain owned by their respective slices.
+
+Evidence is [control_flow.php](../../tests/control_flow.php) through the
+[focused runner](../../tests/control_flow.py). The latest dated proof above passed
+12 PHP suites and 132 generated-C++ programs; this reconciliation adds no test run
+and makes no new native-compiler claim. Ternary and match remain separately tracked
+by EXPR-TERNARY-001 and CTRL-MATCH-001, not implied by the imported list.
+
+### NOTE-017.b — Foreach belongs to Chapter 06
+
+The imported “Rejected” heading contradicts its own lowering sentence. Treat that
+as an inherited documentation discrepancy, not a language-level ban or an agreed
+indexed-for lowering contract for this compiler.
+
+Executable foreach remains deferred to [Chapter 06, CTRL-FOREACH-001–004](06_containers.md#ctrl-foreach-001).
+That chapter already records the reserved `foreach_node extends loop_node` and its
+TODO in [structures_loops.php](../../03_parse/structures/structures_loops.php).
+Future work must reuse the shared loop/body/transfer protocol and establish container,
+binding and reference behavior there. The placeholder is not parser, preparation or
+emission support; current parser rejection does not complete the foreach feature.
+
+### Imported prose
 
 > ## 9. Control Flow
 >
