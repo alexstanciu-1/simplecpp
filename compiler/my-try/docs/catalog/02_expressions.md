@@ -9,6 +9,10 @@ Requires locals. Establish precedence, operand types and evaluation order before
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+The [preparation/emission audit](../planning/preparation_emission_audit.md) is complete;
+its cross-cutting repair findings remain open. The proved rows below describe their
+bounded examples, not unrestricted copying, return carriers or declaration validity.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

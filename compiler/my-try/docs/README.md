@@ -18,6 +18,7 @@ experiment retained for regressions, not a second semantic development path.
 | Collection and preparation | [Analysis](../04_analyze/README.md), [preparation](../04_analyze/prepare/README.md) |
 | Collection APIs | [Storage](storage/STORAGE.md) |
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
+| Preparation / C++ emission boundary audit | [Findings, evidence and open repair gates](planning/preparation_emission_audit.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
 | Active type-model discussion | [Type model direction](planning/types.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |

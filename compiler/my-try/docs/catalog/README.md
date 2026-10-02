@@ -77,10 +77,13 @@ Discuss and split those rows rather than expanding a small slice silently.
 ## Prerequisite gates
 
 Chapter numbers organize the catalog; they are not a strict implementation queue.
-Before the next feature expansion, audit the currently supported C++ generation paths
-for semantic decisions still made during emission. Record the findings and resolve
-missing preparation facts for the affected paths before extending them. This bounded
-audit is pending; this plan does not claim it has been completed.
+The [2026-10-02 preparation/emission audit](../planning/preparation_emission_audit.md)
+is complete. Its repairs remain open: copy eligibility, exact entry-return carrier
+handling, duplicate-declaration admission and non-void fallthrough. The existing
+bounded scalar operator path consumes prepared decisions; broader value transfer,
+effects and control flow still need their owning preparation guarantees. Resolve the
+findings affecting a path before extending it; audit completion does not complete
+those repairs.
 
 | Before enabling | Required semantic basis |
 | --- | --- |

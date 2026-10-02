@@ -1,0 +1,187 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-02",
+  "revision": "091bf094483ce840c29e5e7543ff6197a330a1ec",
+  "scope": "PHP-host preparation/emission and generated C++ syntax checks; no native compiler rebuild or generated-program execution",
+  "jobs": 12,
+  "results_directory": "/tmp/my-try-emission-audit-final-20261002",
+  "clang_flags": [
+    "-std=c++20",
+    "-Werror=return-type",
+    "-fsyntax-only"
+  ],
+  "toolchains": {
+    "php": "PHP 8.5.7 (cli) (built: Jun  6 2026 05:36:56) (NTS)",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)"
+  },
+  "source_sha256": {
+    "compiler/my-try/03_parse/types/catalog.php": "9d358d846cd4093a93d8df97fea0411433cc4cea6e9c1e0243991f2f455fd3c4",
+    "compiler/my-try/03_parse/types/register.php": "d31f5dbcaa37a4c35ccac9a26051fbdba4204f979df553cb1a03f511f8263a21",
+    "compiler/my-try/04_analyze/conversions/booleans.php": "40ba7c406e922fd73c28a5170c7a147ee8aab7ef7034c44b2093182e86d5c35d",
+    "compiler/my-try/04_analyze/conversions/floating_points.php": "017383562c97959b2bf2521cb90ffdfe5cc3b419ca5c6fb3b1c5afcb09e4e0d6",
+    "compiler/my-try/04_analyze/conversions/integers.php": "ea27f51f25812b49ab13370d4d50d8abdcdb5655fcc97d7c069c7dea50a16e5d",
+    "compiler/my-try/04_analyze/conversions/model.php": "53ba6e2b156ff1871d3bc2e38f03e6186808ec34f8bb2e14719484ffa08e6abf",
+    "compiler/my-try/04_analyze/conversions/preparation.php": "f2314595e023cd8363702a7f3378c6dfd7125e0f3cdc4d9ef18a5c03f382f516",
+    "compiler/my-try/04_analyze/conversions/strings.php": "d0b204f7d4d64cc37c2104371780434b0f20d95ac71c0485482eb90f629c2b05",
+    "compiler/my-try/04_analyze/operators/integers.php": "cb00243bf698743a1e6726195328283fa20df3d358960ba9aef5bd408cdd0c41",
+    "compiler/my-try/04_analyze/operators/model.php": "e4c2b8c2a04edfabd06719ea52fd48d0af7da5cf7bab39e170a17086faad9381",
+    "compiler/my-try/04_analyze/operators/mutations.php": "7d554ab543bb7d55b9a284823314d399825e5f4e61314b8ca825c862da413a9c",
+    "compiler/my-try/04_analyze/operators/preparation.php": "ccf95f45b8c33940a441aea362d5aaec6bf7017e3ab56b659a98fce46519c5cc",
+    "compiler/my-try/04_analyze/prepare/changes.php": "eccadde1e18076a4b904aa1b88ef50b7bf9036261dd2ef8e6bc05f27a603336c",
+    "compiler/my-try/04_analyze/prepare/cleanup.php": "239ef9d556e5e7681ef08c2b212547a325dd66ce8efb28fedf6a9c46afe7b296",
+    "compiler/my-try/04_analyze/prepare/data/structures.php": "ed05e6bc599e505a19b952b4b58d9a74d561738e252ee376555aba525be0e899",
+    "compiler/my-try/04_analyze/prepare/data/work_records.php": "5681c1e180d6e82dc0967c9982804c915453bab6d644b63bcbf3e753f3c9cdac",
+    "compiler/my-try/04_analyze/prepare/file.php": "90f347876de3fd9b36151c53c10206bd413402d505533794ac1f18b59645bfd7",
+    "compiler/my-try/04_analyze/prepare/semantics/bodies.php": "008b6b12f28c2f3e1fa61373db3158fbbef97db4155c523bf8a5942951d57fb3",
+    "compiler/my-try/04_analyze/prepare/semantics/declarations.php": "91c7dca9b9a510603ecc30d4c8984126ea938adef515960f417f2137cfc10198",
+    "compiler/my-try/04_analyze/prepare/semantics/expressions.php": "d96c56706145c475f745d9cbf051ec72d262c38619d2842dc3ab09a2ff1ea34b",
+    "compiler/my-try/04_analyze/prepare/semantics/literals.php": "49a1854bd149f347fe90729a2d9d75d7df70920a65fb5395c45682ca3cd86b79",
+    "compiler/my-try/04_analyze/prepare/semantics/types.php": "7ba49cc1c71c15beca783b79efd46d61c4b5155900065971b8baf7ed2bd0f92f",
+    "compiler/my-try/04_analyze/prepare/worker.php": "24d27ba7a0ea42a7348a39f320990ae969499c55343b8e88d7f6db244b06af8f",
+    "compiler/my-try/05_backend/cpp/declarations.php": "54482a635e6f794951e9958cfd42cc9eac95092d53c789758c578307c45ab48d",
+    "compiler/my-try/05_backend/cpp/generate.php": "01c8e6435f951e5a0e6e1c08f8f8cd13312ac072b8b6e2da77375c8c87724eb4",
+    "compiler/my-try/05_backend/cpp/structures.php": "9586747432919289afcb6ed0a891b346a119c1aad54290d00062f4ae9e0a3f2d",
+    "compiler/my-try/05_backend/cpp/syntax.php": "b53a090e29508b6f9853fedcb25c5cc124151e4bb8b873240c235f3b8c11ae03",
+    "compiler/my-try/05_backend/cpp/type_bindings_catalog.php": "dcd152072672a596339831364a7b3acc71aa596477ec47bcf657960f958e8009",
+    "compiler/my-try/05_backend/cpp/types.php": "bb0e71486a01a2fe72666a5dfeb92052b847d50ce42c43c1e69fa34425fd6b25"
+  },
+  "probe_php": "<?php\nnamespace scpp\\compiler;\nrequire '/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/boot.php';\n$stage = 'parse';\ntry {\n    $compiler = new Compiler();\n    $compiler->init([$argv[1]]);\n    $compiler->sync([]);\n    $stage = 'prepare';\n    $compiler->prepare();\n    $stage = 'emit';\n    $compiler->cpp();\n    file_put_contents($argv[1] . '/main.cpp', Model::$cpp_files[0]->text);\n    echo json_encode(['phase' => 'emitted']);\n} catch (\\Throwable $error) {\n    echo json_encode(['phase' => $stage, 'error' => $error->getMessage()]);\n}\n",
+  "probes": [
+    {
+      "name": "block_local_escape",
+      "source": "{ $x = 1; } return $x;",
+      "phase": "parse",
+      "error": "main.phs: Expected scalar literal or variable reference at main.phs: byte 2\n"
+    },
+    {
+      "name": "duplicate_function",
+      "source": "function f(): int { return 1; } function f(): int { return 2; } return 0;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/duplicate_function/main.cpp:9:15: error: redefinition of 'function_f'\n    9 | scpp::int_t<> function_f()\n      |               ^\n/tmp/my-try-emission-audit-final-20261002/duplicate_function/main.cpp:4:15: note: previous definition is here\n    4 | scpp::int_t<> function_f()\n      |               ^\n1 error generated.\n"
+    },
+    {
+      "name": "unique_reference",
+      "source": "function f(unique<int> &$a): void {} $a unique<int>; f($a);",
+      "phase": "emitted",
+      "clang": "pass"
+    },
+    {
+      "name": "entry_float",
+      "source": "return 3.5;",
+      "phase": "emitted",
+      "clang": "pass"
+    },
+    {
+      "name": "void_return",
+      "source": "function f(): void { return; } f();",
+      "phase": "emitted",
+      "clang": "pass"
+    },
+    {
+      "name": "scalar",
+      "source": "$a = 1; $a += 2; return $a;",
+      "phase": "emitted",
+      "clang": "pass"
+    },
+    {
+      "name": "logical",
+      "source": "$a = false; true and ($a = true); return $a;",
+      "phase": "emitted",
+      "clang": "pass"
+    },
+    {
+      "name": "record_cycle",
+      "source": "struct A { B $b; } struct B { A $a; }",
+      "phase": "prepare",
+      "error": "Cyclic by-value declaration dependency\n"
+    },
+    {
+      "name": "unique_copy",
+      "source": "$a unique<int>; $b = $a;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/unique_copy/main.cpp:7:7: error: call to deleted constructor of 'scpp::unique_p<scpp::int_t<>>'\n    7 |         auto local_b = local_a;\n      |              ^         ~~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:34:2: note: 'unique_p' has been explicitly marked deleted here\n   34 |         unique_p(const unique_p &) = delete;\n      |         ^\n1 error generated.\n"
+    },
+    {
+      "name": "unique_assignment",
+      "source": "$a unique<int>; $b unique<int>; $b = $a;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/unique_assignment/main.cpp:8:10: error: overload resolution selected deleted operator '='\n    8 |         local_b = local_a;\n      |         ~~~~~~~ ^ ~~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:35:12: note: candidate function has been explicitly deleted\n   35 |         unique_p &operator=(const unique_p &) = delete;\n      |                   ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:28:12: note: candidate function not viable: expects an rvalue for 1st argument\n   28 |         unique_p &operator=(unique_p &&) noexcept = default;\n      |                   ^         ~~~~~~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:37:12: note: candidate function not viable: no known conversion from 'scpp::unique_p<scpp::int_t<>>' to 'null_t' for 1st argument\n   37 |         unique_p &operator=(null_t) noexcept {\n      |                   ^         ~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:42:12: note: candidate function not viable: no known conversion from 'scpp::unique_p<scpp::int_t<>>' to 'nullptr_t' for 1st argument\n   42 |         unique_p &operator=(nullptr_t) noexcept {\n      |                   ^         ~~~~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:48:12: note: candidate function [with U = scpp::int_t<>] not viable: expects an rvalue for 1st argument\n   48 |         unique_p &operator=(unique_p<U> &&other) noexcept\n      |                   ^         ~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+    },
+    {
+      "name": "unique_argument",
+      "source": "function f(unique<int> $a): void {} $a unique<int>; f($a);",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/unique_argument/main.cpp:13:32: error: call to deleted constructor of 'scpp::unique_p<scpp::int_t<>>'\n   13 |         scpp::unique_p<scpp::int_t<>> argument_0 = local_a;\n      |                                       ^            ~~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:34:2: note: 'unique_p' has been explicitly marked deleted here\n   34 |         unique_p(const unique_p &) = delete;\n      |         ^\n/tmp/my-try-emission-audit-final-20261002/unique_argument/main.cpp:14:20: error: call to deleted constructor of 'scpp::unique_p<scpp::int_t<>>'\n   14 |         return function_f(argument_0);\n      |                           ^~~~~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:34:2: note: 'unique_p' has been explicitly marked deleted here\n   34 |         unique_p(const unique_p &) = delete;\n      |         ^\n/tmp/my-try-emission-audit-final-20261002/unique_argument/main.cpp:4:47: note: passing argument to parameter 'local_a' here\n    4 | void function_f(scpp::unique_p<scpp::int_t<>> local_a)\n      |                                               ^\n2 errors generated.\n"
+    },
+    {
+      "name": "unique_return",
+      "source": "function f(unique<int> &$a): unique<int> { return $a; } return 0;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/unique_return/main.cpp:6:9: error: call to deleted constructor of 'scpp::unique_p<scpp::int_t<>>'\n    6 |         return local_a;\n      |                ^~~~~~~\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:34:2: note: 'unique_p' has been explicitly marked deleted here\n   34 |         unique_p(const unique_p &) = delete;\n      |         ^\n1 error generated.\n"
+    },
+    {
+      "name": "record_unique_copy",
+      "source": "struct Box { unique<int> $p; } $a Box; $b = $a;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/record_unique_copy/main.cpp:12:7: error: call to implicitly-deleted copy constructor of 'record_Box'\n   12 |         auto local_b = local_a;\n      |              ^         ~~~~~~~\n/tmp/my-try-emission-audit-final-20261002/record_unique_copy/main.cpp:5:32: note: copy constructor of 'record_Box' is implicitly deleted because field 'field_p' has a deleted copy constructor\n    5 |         scpp::unique_p<scpp::int_t<>> field_p;\n      |                                       ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:34:2: note: 'unique_p' has been explicitly marked deleted here\n   34 |         unique_p(const unique_p &) = delete;\n      |         ^\n1 error generated.\n"
+    },
+    {
+      "name": "duplicate_field",
+      "source": "struct A { int $x; int $x; } return 0;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/duplicate_field/main.cpp:5:16: error: duplicate member 'field_x'\n    5 |         scpp::int_t<> field_x;\n      |                       ^\n/tmp/my-try-emission-audit-final-20261002/duplicate_field/main.cpp:4:16: note: previous declaration is here\n    4 |         scpp::int_t<> field_x;\n      |                       ^\n1 error generated.\n"
+    },
+    {
+      "name": "duplicate_parameter",
+      "source": "function f(int $x, int $x): void {} return 0;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/duplicate_parameter/main.cpp:2:54: error: redefinition of parameter 'local_x'\n    2 | void function_f(scpp::int_t<> local_x, scpp::int_t<> local_x);\n      |                                                      ^\n/tmp/my-try-emission-audit-final-20261002/duplicate_parameter/main.cpp:2:31: note: previous declaration is here\n    2 | void function_f(scpp::int_t<> local_x, scpp::int_t<> local_x);\n      |                               ^\n/tmp/my-try-emission-audit-final-20261002/duplicate_parameter/main.cpp:3:54: error: redefinition of parameter 'local_x'\n    3 | void function_f(scpp::int_t<> local_x, scpp::int_t<> local_x)\n      |                                                      ^\n/tmp/my-try-emission-audit-final-20261002/duplicate_parameter/main.cpp:3:31: note: previous declaration is here\n    3 | void function_f(scpp::int_t<> local_x, scpp::int_t<> local_x)\n      |                               ^\n2 errors generated.\n"
+    },
+    {
+      "name": "missing_return",
+      "source": "function f(): int {} return 0;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/missing_return/main.cpp:5:1: error: non-void function does not return a value [-Werror,-Wreturn-type]\n    5 | }\n      | ^\n1 error generated.\n"
+    },
+    {
+      "name": "entry_value_modifier",
+      "source": "$a value<int>; return $a;",
+      "phase": "emitted",
+      "clang": "fail",
+      "diagnostic": "/tmp/my-try-emission-audit-final-20261002/entry_value_modifier/main.cpp:7:35: error: no member named 'native_value' in 'scpp::value_p<scpp::int_t<>>'; did you mean to use '->' instead of '.'?\n    7 |         return static_cast<int>((local_a).native_value());\n      |                                          ^\n      |                                          ->\n1 error generated.\n"
+    },
+    {
+      "name": "default_int",
+      "source": "$a int; return $a;",
+      "phase": "emitted",
+      "clang": "pass"
+    },
+    {
+      "name": "bracket",
+      "source": "$s = \"abc\"; return $s[0];",
+      "phase": "prepare",
+      "error": "S2S string operator[] with 1 argument(s) is deferred; no string overload is defined\n"
+    },
+    {
+      "name": "eager_mutation",
+      "source": "$a = 1; return $a++ + 1;",
+      "phase": "prepare",
+      "error": "S2S binary operation requires order-independent operands\n"
+    },
+    {
+      "name": "nested_field_write",
+      "source": "struct A { int $x; } $a A; return $a->x = 3;",
+      "phase": "prepare",
+      "error": "S2S assignment target is not supported in this context\n"
+    }
+  ]
+}
