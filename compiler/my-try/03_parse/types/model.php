@@ -725,8 +725,14 @@ final class type_application_index
 	}
 }
 
+/** Capability providers answer from registered contracts or completed semantic facts. */
+interface type_capability_query
+{
+	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool;
+}
+
 /** Own numeric identities, canonical concrete types and exact template application reuse. */
-final class Type_Registry
+final class Type_Registry implements type_capability_query
 {
 	private int $next_definition_id /** uint32 */ = 1;
 	private int $next_type_id /** uint32 */ = 1;
@@ -816,9 +822,9 @@ final class Type_Registry
 
 	/** Intern exactly one canonical type for a definition and ordered canonical arguments. */
 	public function intern_application(template_type_definition $definition,
-		array $arguments /** vector<canonical_type_use> */): applied_template_type
+		array $arguments /** vector<canonical_type_use> */, ?type_capability_query $capabilities = null): applied_template_type
 	{
-		$complete_arguments = $this->validate_application($definition, $arguments);
+		$complete_arguments = $this->validate_application($definition, $arguments, $capabilities);
 		$index = $this->application_index->child($definition->definition_id(), false);
 		foreach ($complete_arguments as $argument) {
 			$index = $index->child($argument->type_id(), $argument->by_value());
@@ -902,7 +908,11 @@ final class Type_Registry
 	/** Query only stored facts; this performs no structural or lifecycle inference. */
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
 	{
-		return $this->type($type_use->type_id())->definition()->declares_capability($capability);
+		$definition = $this->type($type_use->type_id())->definition();
+		if ($definition->origin() === type_definition_origin::source) {
+			throw new \LogicException('Source type capabilities require completed declaration preparation');
+		}
+		return $definition->declares_capability($capability);
 	}
 
 	private function register_definition(type_definition_i $definition): void
@@ -965,14 +975,21 @@ final class Type_Registry
 
 	/** Validate one complete application from declared facts before interning any identity. */
 	public function validate_application(template_type_definition $definition,
-		array $arguments /** vector<canonical_type_use> */): array /** vector<canonical_type_use> */
+		array $arguments /** vector<canonical_type_use> */, ?type_capability_query $capabilities = null): array /** vector<canonical_type_use> */
 	{
 		$complete = $this->complete_application_arguments($definition, $arguments);
 		foreach ($complete as $position => $argument)
 		{
 			foreach ($definition->parameter($position)->contracts() as $required) {
 				$required_contract /** generic_contract */ = $required;
-				if (!$this->has_capability($argument, $required_contract)) {
+				$supported = false;
+				if ($capabilities === null) {
+					$supported = $this->has_capability($argument, $required_contract);
+				}
+				else {
+					$supported = $capabilities->has_capability($argument, $required_contract);
+				}
+				if (!$supported) {
 					throw new \InvalidArgumentException('Template type argument does not declare required capability '
 						. Generic_Contract_Name::text($required_contract) . ' for ' . $definition->name());
 				}

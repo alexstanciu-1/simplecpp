@@ -42,10 +42,20 @@ final class Declaration_Preparation
 		$facts = new prepared_record();
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 
+		$copyable = true;
+		$query = new Capability_Preparation($context);
 		$nodes /** Storage<field_node> */ = $syntax->fields;
 		foreach ($nodes as $field) {
 			$field->prepare($context);
-			$fields->add($field->name, $field->require_preparation());
+			$field_facts = $field->require_preparation();
+			$fields->add($field->name, $field_facts);
+			if (!$query->has_capability($field_facts->type, generic_contract::copyable_value)) {
+				$copyable = false;
+			}
+		}
+		$facts->capabilities = [generic_contract::value_storable];
+		if ($copyable) {
+			$facts->capabilities[] = generic_contract::copyable_value;
 		}
 		$syntax->set_preparation($facts);
 	}
@@ -56,7 +66,8 @@ final class Declaration_Preparation
 		$prepared = new prepared_field();
 		$prepared->declaration = $field->occurrence();
 		$prepared->type = Type_Preparation::type($field->type_syntax, $context);
-		if (!Model::$type_catalog->registry()->has_capability($prepared->type,
+		$query = new Capability_Preparation($context);
+		if (!$query->has_capability($prepared->type,
 			generic_contract::value_storable)) {
 			throw new \RuntimeException('S2S struct field type does not declare value_storable');
 		}

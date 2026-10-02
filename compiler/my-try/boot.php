@@ -50,6 +50,7 @@ require_once __DIR__ . '/04_analyze/prepare/worker.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/cleanup.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/types.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/capabilities.php';
 require_once __DIR__ . '/04_analyze/conversions/strings.php';
 require_once __DIR__ . '/04_analyze/conversions/booleans.php';
 require_once __DIR__ . '/04_analyze/conversions/integers.php';

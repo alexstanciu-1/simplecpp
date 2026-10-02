@@ -40,6 +40,9 @@ final class Expression_Preparation
 				throw new \RuntimeException('S2S assignment target is not supported in this context');
 			}
 			$facts->type = $facts->binding->type;
+			if (!$statement_assignment) {
+				Capability_Preparation::require_copy($facts->type, $context);
+			}
 			return $facts;
 		}
 		finally {
@@ -69,6 +72,7 @@ final class Expression_Preparation
 		$value = Expression_Preparation::prepare($initializer, $context);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment);
+		Capability_Preparation::require_copy($binding->type, $context);
 		Type_Preparation::require_value_type($binding->type);
 		return $binding;
 	}
@@ -247,6 +251,7 @@ final class Expression_Preparation
 			else {
 				$prepared_argument->conversion = Conversion_Preparation::decide(
 					$value->type, $parameter->type, conversion_context::argument);
+				Capability_Preparation::require_copy($parameter->type, $context);
 			}
 			$prepared_arguments->append($prepared_argument);
 		}

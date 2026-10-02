@@ -31,6 +31,14 @@ final class Preparation_Changes
 		if ($old === null) {
 			return false;
 		}
+		foreach ($old->capabilities as $capability) {
+			if (!$current->has_capability($capability)) {
+				return false;
+			}
+		}
+		if (q_count($old->capabilities) !== q_count($current->capabilities)) {
+			return false;
+		}
 		$old_fields /** Key_Storage_List<prepared_field> */ = $old->fields;
 		$new_fields /** Key_Storage_List<prepared_field> */ = $current->fields;
 		$previous /** vector<prepared_field> */ = $old_fields->items();

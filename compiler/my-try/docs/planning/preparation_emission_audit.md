@@ -4,8 +4,8 @@ Doc Status: supporting
 Audited 2026-10-02 at `091bf094483ce840c29e5e7543ff6197a330a1ec`.
 This report completes the bounded inspection requested by the
 [catalog prerequisite gate](../catalog/README.md#prerequisite-gates).
-**Inspection is complete. PE-02 is subsequently resolved by registry normalization;
-PE-01, PE-03 and PE-04 remain open.** No compiler structures,
+**Inspection is complete. PE-01 is subsequently resolved for the agreed bounded
+copy policy, and PE-02 by registry normalization. PE-03 and PE-04 remain open.** No compiler structures,
 semantics or generation behavior were changed by this audit.
 
 ## Result and boundary
@@ -54,6 +54,25 @@ is performing type resolution. Similarly, `CPP_Types` maps an existing type iden
 to a representation; it does not choose operand compatibility.
 
 ## PE-01 — copying is admitted without copy permission
+
+**Subsequent bounded resolution (2026-10-02):** source records now derive storage
+and copy capabilities after field preparation. A common semantic query requires
+completion and records dependencies; runtime/language types use registry contracts.
+Owned initialization/assignment, value arguments, returns and assignment snapshots
+require copy permission. Reference-only use remains valid, and no implicit move is
+introduced. Template constraints consult the same query, including cached applications.
+The historical reproductions below now reject during preparation.
+
+[Capability proofs](../../tests/capabilities.php) cover direct/nested/empty records,
+no inferred hash/comparison operation, typed/inferred copies, field writes, arguments,
+returns, snapshots, reference controls, cleanup, nested-field edits, cached template
+constraint revalidation and recovery. Focused PHP suites and two generated C++
+programs validate this slice; the native compiler itself was not rebuilt.
+
+Runtime-template conditional copyability and effective class-like modifier contracts
+remain explicit [type-system debt](types.md), outside this bounded repair. These
+limits prevent treating this result as unrestricted ownership/copy support.
+The original audit evidence below remains unchanged for provenance.
 
 **Priority: high; before expanding value-producing operators/overloads.**
 
@@ -228,8 +247,8 @@ The earlier chapter checkpoint remains separate evidence.
 ## Suggested repair order
 
 1. PE-02: resolved by the agreed registry-based modifier normalization above.
-2. PE-01: discuss the value-transfer/capability ownership boundary before overloads
-   or broader expression composition. This is the largest architecture risk found.
+2. PE-01: bounded copy admission and source-record capabilities are resolved above;
+   explicit transfer and conditional runtime-template contracts remain separate gates.
 3. PE-03: close duplicate-declaration admission within declaration preparation.
 4. PE-04 and child-block environments: establish completion/scope facts before
    expanding chapter 03.

@@ -119,6 +119,9 @@ final class prepared_field extends prepared_storage {
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
 final class prepared_record {
+	/** Derived only after every field has completed preparation. */
+	public array $capabilities /** vector<generic_contract> */ = [];
+
 	/** Ordered aliases of facts owned by field specializations. @storage.reference field_node.prepared_facts */
 	public Key_Storage_List $fields /** Key_Storage_List<prepared_field> */;
 
@@ -126,6 +129,16 @@ final class prepared_record {
 	{
 		$this->fields = new Key_Storage_List /** Key_Storage_List<prepared_field> */();
 	}
+	public function has_capability(generic_contract $capability): bool
+	{
+		foreach ($this->capabilities as $available) {
+			if ($available === $capability) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }
 
 /** Member access references the declaration facts without copying its field schema. */

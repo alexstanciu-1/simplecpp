@@ -176,6 +176,13 @@ and containers copy their elements (including shared handles). Moving and
 destruction use the existing member lifetimes. Structs do not acquire implicit
 deep object cloning, raw-byte serialization, or shared-ownership cycle collection.
 
+For the compiler-provided memberwise operations, a struct satisfies
+`copyable_value` exactly when every field type satisfies that contract; an empty
+struct satisfies it. A valid value-storable layout does not itself grant copying.
+Field capabilities do not automatically provide struct comparison or hashing
+operations. This capability rule does not expand the field types admitted by this
+specification or introduce implicit ownership transfer.
+
 `float` is not promoted by this spec in the current first slice.
 
 ### 2.4 Initialization

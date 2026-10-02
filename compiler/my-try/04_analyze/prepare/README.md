@@ -17,6 +17,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
 | `semantics/expressions.php` | Expression dispatch, variable/member access, calls and assignments |
+| `semantics/capabilities.php` | Dependency-aware capability queries and owned-copy admission |
 | `semantics/types.php`, `literals.php` | Canonical type resolution, storage identity checks and exact literal facts |
 | `data/structures.php` | Facts, invocation contexts and lookup observations |
 | `data/work_records.php` | Typed retained work and shared dependency/error state |
@@ -56,6 +57,13 @@ Consumers register both selected declarations and visited scope/name pools, incl
 missing/ambiguous candidates. Effective signature/layout changes notify consumers;
 body-only edits do not invalidate callers. Required record completion detects cycles;
 recursive function calls remain valid. Return-type checks are per-body context.
+Prepared records retain field-derived storage/copy capabilities. Capability consumers
+require declaration completion through `Capability_Preparation`; nested capability
+changes invalidate consumers even when their canonical type IDs stay unchanged.
+Template contracts use that same query before canonical application reuse. Registry
+constraint failures become normal preparation diagnostics and retain retry state.
+Copy checks belong to owned-value boundaries, independently of conversion identity;
+reference arguments retain their existing storage-compatibility checks.
 
 Failed work stays pending and keeps its diagnostic; consumers cannot use failed
 prerequisites. Independent work can finish, and later increments retry pending work

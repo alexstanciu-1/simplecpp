@@ -10,8 +10,10 @@ Requires locals. Establish precedence, operand types and evaluation order before
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
 The [preparation/emission audit](../planning/preparation_emission_audit.md) is complete;
-its cross-cutting repair findings remain open. The proved rows below describe their
-bounded examples, not unrestricted copying, return carriers or declaration validity.
+bounded copy admission and redundant value-modifier handling are repaired. Duplicate
+declarations and non-void fallthrough remain open, alongside conditional runtime
+capability debt. The proved rows below describe bounded examples, not unrestricted
+copying or declaration validity.
 
 ## Progress
 

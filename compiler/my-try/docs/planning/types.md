@@ -503,17 +503,37 @@ Runtime definitions record the requirements that are currently known:
 `vector.Value`, `hash.Value`, and `nullable.Value` are `value_storable`, while
 `hash.Key` requires both `hashable` and `comparable`. Pointer target parameters
 currently carry an explicit empty requirement set rather than a false copyability
-claim. The registry now validates these requirements against declared capabilities
-before interning an application.
+claim. Application validation consults the capability query before interning or
+reusing an application. Source preparation supplies the dependency-aware query;
+registry-only callers can query registered runtime/language contracts.
 
-Capability facts are deliberately declarative in this checkpoint. Language scalar
+Language scalar
 values and `string` explicitly declare the supported `copyable_value`,
 `value_storable`, `hashable` and `comparable` facts. Runtime result families declare
 their known static facts: `vector`, `hash`, `nullable`, `shared` and `weak` are
 currently copyable/value-storable, while `unique` is value-storable but not
-copyable. Source structures provisionally declare copyable/value-storable to match
-the current compiler behavior. No field inspection, lifecycle inference or
-capability composition attempts to prove those declarations yet.
+copyable. Source structures register identity without speculative capabilities.
+Their prepared records derive `value_storable` from accepted field storage and
+completed layout, and `copyable_value` from every field's capability (including
+empty structs). They do not infer `hashable` or `comparable`.
+
+`Capability_Preparation` is the semantic query owner: it requires source declaration
+completion and records the consumer dependency, or delegates runtime/language facts
+to the registry. `prepared_record` owns the derived result; the registry does not
+retain a duplicate capability cache or a worker. An unprepared/failed source record
+has no consumable answer. Registry-only source queries fail explicitly.
+Capability changes participate in record equivalence and nested version propagation.
+
+Owned initialization, assignment, value arguments, function returns and assignment
+snapshots require `copyable_value`; matching types alone do not grant copying.
+Reference arguments and uninitialized typed declarations do not require a copy.
+This bounded policy introduces no implicit move or user-defined copy operation.
+
+**Remaining debt:** runtime `vector`, `hash` and `nullable` still advertise static
+copyability. Deriving their result capabilities from arguments requires a separate
+runtime-template contract slice; a source struct containing one inherits that
+registered contract, not an inferred element-copy guarantee. Effective class-like
+`value<T>` carrier contracts also remain outside this source-record change.
 
 Current Simple C++ hash syntax is value-first: `hash<Value, Key>`. `Key` defaults
 to `string`, matching the runtime and legacy S2S behavior. The registry completes

@@ -55,8 +55,15 @@ final class Type_Preparation
 			$arguments[] = self::type($argument, $context);
 		}
 
-		$application = $registry->intern_application($template_definition, $arguments);
-		$node->set_preparation($registry->use($application->type_id()));
+		try {
+			$application = $registry->intern_application($template_definition, $arguments,
+				new Capability_Preparation($context));
+			$node->set_preparation($registry->use($application->type_id()));
+		}
+		catch (\InvalidArgumentException $error) {
+			// Source contract failures participate in normal declaration/body retry scheduling.
+			throw new \RuntimeException($error->getMessage());
+		}
 	}
 
 	/** Named types resolve against the collected lexical scope and record dependencies. */

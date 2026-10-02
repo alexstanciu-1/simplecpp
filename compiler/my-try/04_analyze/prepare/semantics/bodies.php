@@ -65,6 +65,9 @@ final class Body_Preparation
 					$value->type, $binding->type, conversion_context::assignment);
 			}
 		}
+		if ($value !== null) {
+			Capability_Preparation::require_copy($binding->type, $context);
+		}
 		Type_Preparation::require_value_type($binding->type);
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$locals->add($entry->name, $binding);
@@ -105,6 +108,9 @@ final class Body_Preparation
 			$type /** canonical_type_use */ = $context->return_type;
 			$facts->conversion = Conversion_Preparation::decide(
 				$value->type, $type, conversion_context::return_value);
+			if (Type_Preparation::canonical($type)->family() !== type_family::no_value) {
+				Capability_Preparation::require_copy($type, $context);
+			}
 		}
 		elseif (!Type_Preparation::entry_return_type($value->type)) {
 			throw new \RuntimeException('S2S entry return requires an integer, float or bool value');
