@@ -190,6 +190,9 @@ final class preparation_context
 	public collected_file $collection;
 	/** Invocation-local lookup of attached binding/parameter facts; does not mutate source scopes. */
 	public local_environment $locals;
+	/** Nearest legal targets; restored when leaving a structured construct. */
+	public ?breakable_node $break_target = null;
+	public ?loop_node $continue_target = null;
 	/** Null identifies the entry body; function bodies retain their declared return type. */
 	public ?canonical_type_use $return_type = null;
 	/** Only a statement-root assignment and its direct RHS chain may introduce locals. */
@@ -204,11 +207,28 @@ final class preparation_context
 final class statement_completion
 {
 	public bool $can_fall_through;
+	public bool $can_return = false;
+	public bool $can_break = false;
+	public bool $can_continue = false;
 
 	public function __construct(bool $can_fall_through)
 	{
 		$this->can_fall_through = $can_fall_through;
 	}
+}
+
+/** A missing test denotes the omitted for condition, which always continues. */
+final class prepared_loop
+{
+	public ?prepared_condition $condition = null;
+}
+
+/** Semantic transfer identity; the enclosing syntax tree owns its target. */
+final class prepared_control_transfer
+{
+	public control_transfer_kind $transfer_kind;
+	/** @reference.weak @reference.source enclosing syntax */
+	public breakable_node $target /** weak<breakable_node> */;
 }
 
 /** Condition consumers retain the central conversion decision, including identity. */

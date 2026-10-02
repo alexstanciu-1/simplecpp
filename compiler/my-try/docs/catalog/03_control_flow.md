@@ -96,7 +96,7 @@ handling does not establish explicit typed-shadowing semantics for my-try; the
 lexical-resolution evidence above does. Legacy condition truthiness/hints are not
 imported into this bool-only slice.
 
-Non-goals: loops, switch/match, ternary, unbraced and colon/endif syntax, CFG, LLVM,
+First-slice non-goals: loops, switch/match, ternary, unbraced and colon/endif syntax, CFG, LLVM,
 general effect analysis and the unrelated PE-03 duplicate-declaration debt.
 
 Proof: [focused suite](../../tests/control_flow.php) and
@@ -109,6 +109,56 @@ with `-Werror=return-type`. Final evidence: `/tmp/my-try-control-flow-20261002-f
 (10 PHP suites and 24 generated programs passed).
 This is PHP-host/compiler and generated-program proof, not a native compiler rebuild.
 
+## Agreed loop slice — 2026-10-02
+
+`loop_node extends breakable_node` owns one `block_node` body and shared preparation
+dispatch. `while_node` and `do_while_node` own their condition; `for_node` owns ordered
+initialization statements, condition expressions and update expressions. Named edges
+drive maintenance and lazy inspection. `foreach_node` is an abstract reserved
+specialization with a Chapter 06 TODO, not an accepted syntax form. Future iteration
+must reuse this body/scope/transfer protocol; iterable/binding facts remain undecided.
+
+`Loop_Preparation` establishes a loop-local environment and nearest break/continue
+targets, then restores both on every exit. Body blocks have their own child environment.
+For initialization supports ordinary first writes and explicit typed declarations,
+including ordered comma lists; bindings do not escape the loop. Conditions/updates
+cannot introduce locals or see body-local declarations. The final condition expression
+uses the existing `condition` boolean conversion; earlier expressions are evaluated
+and discarded in order. An omitted for condition is unconditional. Braces are required.
+
+`Completion_Preparation` composes normal fallthrough, return, break and continue.
+Sequences discard unreachable exits (but still validate syntax); branches join exits;
+loops consume their own bare transfers. A do-while whose body must return cannot fall
+through. An omitted-test for has no normal exit unless its body can break. Explicit
+constant conditions remain conservative; there is no CFG or constant reachability pass.
+Return checking stays on the enclosing function, not a flag/backlink on loop blocks.
+
+C++ uses native while/do/for and prepared native boolean tests. A surrounding block
+owns for initialization, preserving ordinary declaration lowering. Native for updates
+ensure continue executes the update; do-while continue reaches the test; break skips
+both. Comma prefixes/updates are explicitly discarded to preserve built-in sequencing.
+Transfers retain weak prepared target identities and emission checks those identities.
+Breakable and continuable targets stay distinct for future switch support.
+
+Legacy review: renderWhileStatement, renderDoWhileStatement, renderForStatement and
+their clause helpers already use native loops and last-expression tests; one-level
+break/continue fixtures establish their target behavior. This slice retains the shared
+preparation boundary, canonical-bool policy and lexical binding rules, not legacy
+truthiness inference or its separate declaration-rendering shortcuts.
+
+Non-goals: executable foreach, switch, numbered transfers, unbraced loops, CFG,
+constant reachability, LLVM and new expression capabilities. Foreach continuation and
+iteration lifetime need Chapter 06-specific facts/lowering, not a second loop family.
+
+Proof: `tests/control_flow.php` / `tests/control_flow.py` cover execution order,
+header/body scope, nearest transfer identity, lazy inspection, completion, moved body
+identity, failed/no-edit retries and clean/incremental repair. Generated programs use
+`-Werror=return-type`. These are PHP-host and generated-program proofs, not a native
+compiler rebuild.
+
+Final loop evidence: `/tmp/my-try-loops-20261002-final/` — 10 focused PHP suites
+(shared FPM pool) and 43 generated-C++ programs passed.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -118,14 +168,14 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CTRL-IF-001](#ctrl-if-001) | agreed | `$a bool = true; if ($a) { $b = 1; }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
 | [CTRL-IF-002](#ctrl-if-002) | agreed | `$a bool = false; if ($a) { $b = 1; } else { $b = 2; }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
 | [CTRL-IF-003](#ctrl-if-003) | agreed | `if (false) { } elseif (true) { } else { }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
-| [CTRL-WHILE-001](#ctrl-while-001) | pending-discussion | `while ($a) { $b++; }` | unverified | unverified | deferred | — |
+| [CTRL-WHILE-001](#ctrl-while-001) | agreed | `while ($a) { $b++; }` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [EXPR-TERNARY-001](#expr-ternary-001) | pending-discussion | `$a = $b ? $c : $d;` | unverified | unverified | deferred | — |
 | [CTRL-SWITCH-001](#ctrl-switch-001) | pending-discussion | `switch ($a) { case 1: break; default: break; }` | unverified | unverified | deferred | — |
 | [CTRL-MATCH-001](#ctrl-match-001) | pending-discussion | `$a = match ($b) { 1 => 10, default => 0 };` | unverified | unverified | deferred | — |
-| [CTRL-DOWHILE-001](#ctrl-dowhile-001) | pending-discussion | `do { $b++; } while ($a);` | unverified | unverified | deferred | — |
-| [CTRL-FOR-001](#ctrl-for-001) | pending-discussion | `for ($i = 0; $i < 10; $i++) { }` | unverified | unverified | deferred | — |
-| [CTRL-BREAK-001](#ctrl-break-001) | pending-discussion | `break;` | unverified | unverified | deferred | — |
-| [CTRL-CONTINUE-001](#ctrl-continue-001) | pending-discussion | `continue;` | unverified | unverified | deferred | — |
+| [CTRL-DOWHILE-001](#ctrl-dowhile-001) | agreed | `do { $b++; } while ($a);` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
+| [CTRL-FOR-001](#ctrl-for-001) | agreed | `for ($i = 0; $i < 10; $i++) { }` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
+| [CTRL-BREAK-001](#ctrl-break-001) | agreed | `break;` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
+| [CTRL-CONTINUE-001](#ctrl-continue-001) | agreed | `continue;` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [SCOPE-VAR-001](#scope-var-001) | agreed | `$x = 1; if (true) { $x = 2; } return $x;` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php; output 2 |
 | [NOTE-017](#note-017) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## CTRL-IF-001
@@ -237,7 +287,7 @@ if (a) { } else if (b) { } else { }
 
 ## CTRL-WHILE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed loop slice](#agreed-loop-slice--2026-10-02).
 
 ### Imported version 1
 
@@ -383,7 +433,7 @@ int_t tmp; if (php::identical(b, static_cast<int_t>(1))) { tmp = static_cast<int
 
 ## CTRL-DOWHILE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed loop slice](#agreed-loop-slice--2026-10-02).
 
 ### Imported version 1
 
@@ -418,7 +468,7 @@ do { b++; } while (a);
 
 ## CTRL-FOR-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed loop slice](#agreed-loop-slice--2026-10-02).
 
 ### Imported version 1
 
@@ -455,7 +505,7 @@ for (auto i = static_cast<int_t>(0); i < static_cast<int_t>(10); i++) { }
 
 ## CTRL-BREAK-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed loop slice](#agreed-loop-slice--2026-10-02).
 
 ### Imported version 1
 
@@ -490,7 +540,7 @@ break;
 
 ## CTRL-CONTINUE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed loop slice](#agreed-loop-slice--2026-10-02).
 
 ### Imported version 1
 

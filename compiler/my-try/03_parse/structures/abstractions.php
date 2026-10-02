@@ -152,6 +152,85 @@ abstract class statement_body_node extends statement_node
 	}
 }
 
+/** Structured break targets are distinct from constructs that also accept continue. */
+abstract class breakable_node extends statement_node
+{
+}
+
+/** Shared loop body, preparation entry and facts; concrete forms own their headers. */
+abstract class loop_node extends breakable_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	/** @ownership owner */
+	public block_node $body;
+	private ?prepared_loop $prepared_facts = null;
+
+	public function require_preparation(): prepared_loop
+	{
+		return $this->prepared_facts;
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->prepare_completion($context);
+	}
+
+	public function prepare_completion(preparation_context $context): statement_completion
+	{
+		return Loop_Preparation::prepare($this, $context);
+	}
+
+	public abstract function prepare_header(preparation_context $context): prepared_loop;
+
+	public function prepare_continuation(preparation_context $context): void
+	{
+	}
+
+	public function body_runs_first(): bool
+	{
+		return false;
+	}
+}
+
+/** Bare transfers share preparation and emission, retaining their selected target. */
+abstract class control_transfer_node extends statement_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_control_transfer $prepared_facts = null;
+
+	public abstract function transfer_kind(): control_transfer_kind;
+
+	public function require_preparation(): prepared_control_transfer
+	{
+		return $this->prepared_facts;
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Loop_Preparation::prepare_transfer($this, $context));
+	}
+
+	public function prepare_completion(preparation_context $context): statement_completion
+	{
+		$this->prepare($context);
+		return Completion_Preparation::transfer($this->transfer_kind());
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+	}
+
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_control_transfer($this);
+	}
+}
+
 /** File-level declarations only in the current grammar: functions and structs. */
 abstract class declaration_node extends ast_node
 {
@@ -279,6 +358,10 @@ interface cpp_generation_worker_i
 	public function generate_function_body(function_body_node $node): string;
 	public function generate_block(statement_body_node $node): string;
 	public function generate_if(if_node $node): string;
+	public function generate_while(while_node $node): string;
+	public function generate_do_while(do_while_node $node): string;
+	public function generate_for(for_node $node): string;
+	public function generate_control_transfer(control_transfer_node $node): string;
 	public function generate_integer_literal(integer_literal_node $node): string;
 	public function generate_float_literal(float_literal_node $node): string;
 	public function generate_boolean_literal(boolean_literal_node $node): string;

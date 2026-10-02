@@ -11,6 +11,13 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Implementation prerequisites
 
+Iteration already has a reserved `foreach_node extends loop_node` in
+`03_parse/structures/structures_loops.php`. Complete that specialization when this
+chapter reaches foreach; reuse its inherited `block_node` body, loop-local preparation
+and nearest break/continue protocol. The [Chapter 03 loop design](03_control_flow.md#agreed-loop-slice--2026-10-02)
+owns the shared foundation. Iterable/key/value syntax, binding/lifetime facts and
+iteration-specific continuation are TODOs here; the placeholder is not parser support.
+
 Follow the [catalog gates](README.md#prerequisite-gates). Begin with explicit typed
 vector/hash construction and reads, then writes/appends and value-call boundaries,
 then value iteration. Split `ARR-INIT-004` source variants before choosing its strict

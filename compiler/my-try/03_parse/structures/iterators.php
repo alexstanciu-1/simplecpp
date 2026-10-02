@@ -101,6 +101,80 @@ final class if_children_iterator extends children_iterator
 	}
 }
 
+/** Two named loop edges in source order, without a temporary child collection. */
+final class loop_pair_children_iterator extends children_iterator
+{
+	private ast_node $first;
+	private ast_node $second;
+	private int $position = 0;
+
+	public function __construct(ast_node $first, ast_node $second)
+	{
+		$this->first = $first;
+		$this->second = $second;
+	}
+
+	/** Inspect source order without a temporary child collection. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->position === 0) {
+			$this->position = 1;
+			return $this->first;
+		}
+		if ($this->position === 1) {
+			$this->position = 2;
+			return $this->second;
+		}
+		return null;
+	}
+}
+
+/** Independent inspection cursors borrow the three typed for-clause collections. */
+final class for_children_iterator extends children_iterator
+{
+	private for_node $source;
+	private Storage_Cursor $initialization /** Storage_Cursor<statement_node> */;
+	private Storage_Cursor $conditions /** Storage_Cursor<expression_node> */;
+	private Storage_Cursor $updates /** Storage_Cursor<expression_node> */;
+	private bool $body_read = false;
+
+	public function __construct(for_node $source)
+	{
+		$this->source = $source;
+		$this->initialization = new Storage_Cursor /** Storage_Cursor<statement_node> */($source->initialization);
+		$this->conditions = new Storage_Cursor /** Storage_Cursor<expression_node> */($source->conditions);
+		$this->updates = new Storage_Cursor /** Storage_Cursor<expression_node> */($source->updates);
+	}
+
+	/** Exhaust each existing collection before moving to the next named edge. */
+	protected function read_next(): ?ast_node
+	{
+		$initialization /** Storage_Cursor<statement_node> */ = $this->initialization;
+		if ($initialization->valid()) {
+			$statement = $initialization->current();
+			$initialization->next();
+			return $statement;
+		}
+		$conditions /** Storage_Cursor<expression_node> */ = $this->conditions;
+		if ($conditions->valid()) {
+			$condition = $conditions->current();
+			$conditions->next();
+			return $condition;
+		}
+		$updates /** Storage_Cursor<expression_node> */ = $this->updates;
+		if ($updates->valid()) {
+			$update = $updates->current();
+			$updates->next();
+			return $update;
+		}
+		if (!$this->body_read) {
+			$this->body_read = true;
+			return $this->source->body;
+		}
+		return null;
+	}
+}
+
 /** Leaves need no source owner and have no cursor state. */
 final class empty_children_iterator implements child_iterator_i
 {

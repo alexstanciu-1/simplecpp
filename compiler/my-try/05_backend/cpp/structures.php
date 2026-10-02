@@ -39,6 +39,8 @@ enum cpp_record_state {
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	public ?breakable_node $break_target = null;
+	public ?loop_node $continue_target = null;
 	public array $headers /** hash<bool> */ = [];
 	/** Scoped source names are stable across token movement in the current single-source grammar. */
 	public array $record_states /** hash<cpp_record_state> */ = [];

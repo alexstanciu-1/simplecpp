@@ -58,15 +58,21 @@ missing/ambiguous candidates. Effective signature/layout changes notify consumer
 body-only edits do not invalidate callers. Required record completion detects cycles;
 recursive function calls remain valid. Return-type checks are per-body context.
 Statements report transient `statement_completion` through typed dispatch. The
-body worker composes sequence fallthrough and conditional alternatives, with an
+completion worker composes sequence fallthrough and conditional alternatives, with an
 unmatched fallthrough path when a chain lacks else. Nested blocks share this path.
 Non-void function bodies reject fallthrough before their work settles; void functions
 and program entry may fall through. All statements are still prepared after a return.
-Completion is a successful-body invariant, not a duplicate retained flag. Loops,
-exceptions and non-returning calls need explicit completion rules when enabled.
+Completion is a successful-body invariant, not a duplicate retained flag. Loop
+composition consumes nearest break/continue exits and propagates return. Do-while
+tests are reachable only from normal body completion or continue; omitted for tests
+cannot exit normally without break. Explicit constant tests remain conservative.
+Exceptions and non-returning calls need explicit completion rules when enabled.
 Conditions retain central conversion decisions with the `condition` context;
 only canonical bool is admitted implicitly. The emitter consumes these decisions
-and emits native lazy branches. Existing expression-effect restrictions still apply.
+and emits native lazy branches and loops. Loop header scope and transfer targets are
+worker-local, restored on success and failure; facts retain a weak selected target.
+For initialization uses statement preparation, with expressions for tests/updates.
+Existing expression-effect restrictions still apply.
 
 `local_environment` is transient, with parent-linked membership referencing attached
 storage facts. Blocks allocate children and restore the enclosing environment even

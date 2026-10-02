@@ -9,14 +9,14 @@ final class Body_Preparation
 	public static function prepare_statements(statement_body_node $body,
 			preparation_context $context): statement_completion
 	{
-		$can_fall_through = true;
+		$result = new statement_completion(true);
 		$nodes /** Storage<statement_node> */ = $body->statements;
 		foreach ($nodes as $node)
 		{
 			$completion = $node->prepare_completion($context);
-			$can_fall_through = $can_fall_through && $completion->can_fall_through;
+			$result = Completion_Preparation::sequence($result, $completion);
 		}
-		return new statement_completion($can_fall_through);
+		return $result;
 	}
 
 	/** A block borrows the body context and restores its enclosing environment on every exit. */
@@ -46,9 +46,7 @@ final class Body_Preparation
 			throw new \LogicException('Conditional arm requires a condition');
 		}
 		$condition /** expression_node */ = $syntax->condition;
-		$value = Expression_Preparation::prepare($condition, $context);
-		$facts = new prepared_condition();
-		$facts->conversion = Conversion_Preparation::decide($value->type, $context->boolean, conversion_context::condition);
+		$facts = self::prepare_condition($condition, $context);
 		$syntax->set_preparation($facts);
 		$taken = $syntax->body->prepare_completion($context);
 		$unmatched = new statement_completion(true);
@@ -60,7 +58,16 @@ final class Body_Preparation
 			}
 			$unmatched = $next->prepare_completion($context);
 		}
-		return new statement_completion($taken->can_fall_through || $unmatched->can_fall_through);
+		return Completion_Preparation::alternatives($taken, $unmatched);
+	}
+
+	/** All structured tests share the same boolean conversion boundary. */
+	public static function prepare_condition(expression_node $condition, preparation_context $context): prepared_condition
+	{
+		$value = Expression_Preparation::prepare($condition, $context);
+		$facts = new prepared_condition();
+		$facts->conversion = Conversion_Preparation::decide($value->type, $context->boolean, conversion_context::condition);
+		return $facts;
 	}
 
 	/** Establish source-order local storage before publishing it to later statements. */

@@ -19,6 +19,11 @@ enum node_kind
 	case parameter_declaration;
 	case block;
 	case conditional;
+	case while_loop;
+	case do_while_loop;
+	case for_loop;
+	case break_statement;
+	case continue_statement;
 	case function_body;
 	case named_type;
 	case template_application_type;
@@ -72,4 +77,9 @@ enum if_arm_kind {
 enum passing_mode {
 	case value;
 	case reference;
+}
+
+enum control_transfer_kind {
+	case break_loop;
+	case continue_loop;
 }

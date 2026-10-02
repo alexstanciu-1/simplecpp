@@ -289,6 +289,12 @@ final class Parser_Run
 	/** Select a statement from its leading syntax; names are never looked up here. */
 	private function statement(): ast_node
 	{
+		if ($this->text() === 'while') { return $this->while_statement(); }
+		if ($this->text() === 'do') { return $this->do_while_statement(); }
+		if ($this->text() === 'for') { return $this->for_statement(); }
+		if (($this->text() === 'break') || ($this->text() === 'continue')) {
+			return $this->control_transfer();
+		}
 		if ($this->text() === 'if') {
 			return $this->conditional_arm(if_arm_kind::initial);
 		}
@@ -313,6 +319,92 @@ final class Parser_Run
 			return $this->expression_statement();
 		}
 		return $this->expression_statement();
+	}
+
+	private function while_statement(): while_node
+	{
+		$start = $this->position++;
+		$loop = new while_node();
+		$this->expect('(');
+		$loop->condition = $this->expression();
+		$this->expect(')');
+		$loop->body = $this->statement_block();
+		$this->finish_node($loop, $start);
+		return $loop;
+	}
+
+	private function do_while_statement(): do_while_node
+	{
+		$start = $this->position++;
+		$loop = new do_while_node();
+		$loop->body = $this->statement_block();
+		$this->expect('while');
+		$this->expect('(');
+		$loop->condition = $this->expression();
+		$this->expect(')');
+		$this->expect(';');
+		$this->finish_node($loop, $start);
+		return $loop;
+	}
+
+	/** Header initialization owns statement-root writes; tests and updates are expressions. */
+	private function for_statement(): for_node
+	{
+		$start = $this->position++;
+		$loop = new for_node();
+		$this->expect('(');
+		$initialization /** Storage<statement_node> */ = $loop->initialization;
+		while ($this->text() !== ';')
+		{
+			$next = $this->text_at_offset(1);
+			if (string_byte_starts_with($this->text(), '$') && Source_Text::identifier($next)
+				&& ($next !== 'and') && ($next !== 'or') && ($next !== 'xor')) {
+				$initialization->append($this->variable_declaration(false));
+			}
+			else {
+				$item_start = $this->position;
+				$item = new expression_statement_node();
+				$item->expression = $this->expression();
+				$this->finish_node($item, $item_start);
+				$initialization->append($item);
+			}
+			if ($this->text() !== ',') { break; }
+			$this->position++;
+			if ($this->text() === ';') {
+				throw new \RuntimeException($this->error_message('Expected for initializer after comma'));
+			}
+		}
+		$this->expect(';');
+		$this->for_expressions($loop->conditions, ';');
+		$this->for_expressions($loop->updates, ')');
+		$loop->body = $this->statement_block();
+		$this->finish_node($loop, $start);
+		return $loop;
+	}
+
+	private function for_expressions(Storage $expressions /** Storage<expression_node> */, string $end): void
+	{
+		if ($this->text() !== $end)
+		{
+			while (true) {
+				$expressions->append($this->expression());
+				if ($this->text() !== ',') { break; }
+				$this->position++;
+			}
+		}
+		$this->expect($end);
+	}
+
+	private function control_transfer(): control_transfer_node
+	{
+		$start = $this->position;
+		$transfer = $this->text() === 'break'
+			? object_cast(new break_node(), control_transfer_node::class)
+			: object_cast(new continue_node(), control_transfer_node::class);
+		$this->position++;
+		$this->expect(';');
+		$this->finish_node($transfer, $start);
+		return $transfer;
 	}
 
 	/** Parse an ordinary braced statement body without inventing an executable work owner. */
@@ -649,7 +741,7 @@ final class Parser_Run
 	}
 
 	/** Explicit type syntax declares storage; plain writes use the expression grammar. */
-	private function variable_declaration(): statement_node
+	private function variable_declaration(bool $terminated = true): statement_node
 	{
 		$start = $this->position++;
 		$declaration = new variable_declaration_node();
@@ -662,7 +754,7 @@ final class Parser_Run
 			$this->position++;
 			$declaration->initializer = $this->expression();
 		}
-		$this->expect(';');
+		if ($terminated) { $this->expect(';'); }
 		$this->finish_node($declaration, $start);
 		$declaration->collect($this->collector, $this->current_scope, $start);
 		return $declaration;

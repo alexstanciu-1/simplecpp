@@ -43,7 +43,11 @@ Unchanged bodies retain nodes, scopes, occurrences and facts.
 The property-free `ast_node` base supplies operation contracts; specialized node
 families own typed syntax fields and uint32 spans. `statement_body_node` shares
 ordered body storage/traversal between executable roots and nested blocks.
-Conditional arms own explicit body/next-arm edges. There are no payload objects, generic sibling chains
+Conditional arms own explicit body/next-arm edges. The common `loop_node` owns a block
+body; concrete while/do-while/for nodes own typed headers. An abstract foreach
+specialization reserves the same protocol for Chapter 06. Break/continue facts observe
+their prepared enclosing target; transient completion composes four exit possibilities
+without a CFG. There are no payload objects, generic sibling chains
 or inspection parents. [AST layout](ast_layout.md) owns detailed traversal rules.
 
 Parsed files retain file/executable scopes. Functions own signature scopes; structs

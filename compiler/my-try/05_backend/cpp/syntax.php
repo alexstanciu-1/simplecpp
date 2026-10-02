@@ -34,15 +34,86 @@ final class CPP_Syntax implements cpp_generation_worker_i
 			return 'else ' . $node->body->generate_cpp($this);
 		}
 		$condition /** expression_node */ = $node->condition;
-		$value = $condition->generate_cpp($this);
-		$value = CPP_Declarations::conversion($value, $node->require_preparation()->conversion, $this->context);
+		$value = $this->native_condition($condition, $node->require_preparation());
 		$prefix = $node->arm_kind === if_arm_kind::initial ? 'if' : 'else if';
-		$text = $prefix . ' ((' . $value . ').native_value()) ' . $node->body->generate_cpp($this);
+		$text = $prefix . ' (' . $value . ') ' . $node->body->generate_cpp($this);
 		if ($node->next_arm !== null) {
 			$next /** if_node */ = $node->next_arm;
 			$text .= $next->generate_cpp($this);
 		}
 		return $text;
+	}
+
+	private function native_condition(expression_node $expression, prepared_condition $facts): string
+	{
+		$value = CPP_Declarations::conversion($expression->generate_cpp($this), $facts->conversion, $this->context);
+		return '(' . $value . ').native_value()';
+	}
+
+	private function loop_body(loop_node $node): string
+	{
+		$outer_break /** nullable<breakable_node> */ = $this->context->break_target;
+		$outer_continue /** nullable<loop_node> */ = $this->context->continue_target;
+		$this->context->break_target = $node;
+		$this->context->continue_target = $node;
+		try { return $node->body->generate_cpp($this); }
+		finally {
+			$this->context->break_target = $outer_break;
+			$this->context->continue_target = $outer_continue;
+		}
+	}
+
+	public function generate_while(while_node $node): string
+	{
+		$facts /** prepared_condition */ = $node->require_preparation()->condition;
+		return 'while (' . $this->native_condition($node->condition, $facts) . ') ' . $this->loop_body($node);
+	}
+
+	public function generate_do_while(do_while_node $node): string
+	{
+		$facts /** prepared_condition */ = $node->require_preparation()->condition;
+		return 'do ' . $this->loop_body($node) . 'while (' . $this->native_condition($node->condition, $facts) . ");\n";
+	}
+
+	/** A surrounding block preserves header bindings and ordinary declaration lowering. */
+	public function generate_for(for_node $node): string
+	{
+		$text = "{\n";
+		$initialization /** Storage<statement_node> */ = $node->initialization;
+		foreach ($initialization as $statement) { $text .= $statement->generate_cpp($this); }
+		$test = '';
+		$conditions /** Storage<expression_node> */ = $node->conditions;
+		$remaining = q_count($conditions);
+		foreach ($conditions as $condition)
+		{
+			if ($test !== '') { $test .= ', '; }
+			$remaining--;
+			if ($remaining === 0) {
+				$facts /** prepared_condition */ = $node->require_preparation()->condition;
+				$test .= $this->native_condition($condition, $facts);
+			}
+			else { $test .= '(void)(' . $condition->generate_cpp($this) . ')'; }
+		}
+		$update_text = '';
+		$updates /** Storage<expression_node> */ = $node->updates;
+		foreach ($updates as $update) {
+			if ($update_text !== '') { $update_text .= ', '; }
+			$update_text .= '(void)(' . $update->generate_cpp($this) . ')';
+		}
+		return $text . 'for (; ' . $test . '; ' . $update_text . ') ' . $this->loop_body($node) . "}\n";
+	}
+
+	public function generate_control_transfer(control_transfer_node $node): string
+	{
+		$facts = $node->require_preparation();
+		$expected /** nullable<breakable_node> */ = $this->context->break_target;
+		if ($facts->transfer_kind === control_transfer_kind::continue_loop) {
+			$expected = $this->context->continue_target;
+		}
+		if (weakref_get($facts->target) !== $expected) {
+			throw new \RuntimeException('Prepared control transfer disagrees with emission target');
+		}
+		return $facts->transfer_kind === control_transfer_kind::break_loop ? "break;\n" : "continue;\n";
 	}
 
 	public function generate_integer_literal(integer_literal_node $node): string

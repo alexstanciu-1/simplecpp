@@ -1354,7 +1354,7 @@ final class return_node extends statement_node
 	public function prepare_completion(preparation_context $context): statement_completion
 	{
 		$this->prepare($context);
-		return new statement_completion(false);
+		return Completion_Preparation::returned();
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */

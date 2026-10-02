@@ -28,6 +28,14 @@ visit condition, body and next arm in order; preparation and emission each own t
 typed traversal. Branches and standalone nested braces share the same block node.
 No nested block introduces a separate preparation work item or parser scope owner.
 
+`loop_node extends breakable_node` owns one block body and common preparation/facts.
+While/do-while own a condition and inspect it before/after the body respectively.
+For owns three ordered typed collections (initialization statements, conditions,
+updates), inspected in header order followed by the body. Maintenance visits those
+same named edges; execution order is not inferred from inspection order. The reserved
+abstract `foreach_node` shares the loop protocol but has no executable/parser support.
+Break/continue nodes retain a weak prepared target, never an owning parent link.
+
 `function_node` owns parameters, a `type_node` return type and a
 `function_body_node`. `struct_node` owns fields. `file_node` owns file declarations
 and a separate executable body. Statements cannot contain file declarations:
