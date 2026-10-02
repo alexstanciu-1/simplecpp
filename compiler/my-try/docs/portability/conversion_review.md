@@ -5,7 +5,57 @@ PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Current checkpoint — 2026-10-01 operator closeout
+## Current checkpoint — 2026-10-02 expression chapter closeout
+
+The worktree based on `a17ec891af2f30bb7635bd0fe1290b4555aa8ab9`, with the two
+portability adaptations below, converted and built with Clang 18 and
+`--no-stan --types-only`. All 81 compiler source hashes match the tested snapshot.
+The source changes were not yet committed when the run finished;
+`source_hashes.json` identifies the exact tested compiler sources.
+
+- Parser diagnostics use separate current-position and explicit-position methods,
+  avoiding unsupported integer parameter defaults while preserving diagnostic text.
+- Mutation and compound preparation bind operand arrays to explicitly typed
+  `vector<canonical_type_use>` locals before calling the shared operator owner.
+
+The first attempt stopped at conversion on the integer defaults; the second stopped
+at C++ compilation on the untyped cross-class array arguments. The third passed,
+including the final incremental rebuild. Focused PHP grouping, logical, operator,
+mutation, compound, interpolation and indexing tests also pass.
+
+Native and PHP compilers produced identical C++ for all **341 source fixtures** and
+the separate emission/type proofs. Every source fixture compiled and executed with
+its expected exit code. The harness now also consumes the existing execution
+manifest after establishing base-output parity: **74 supplementary instrumented
+programs** passed, checking exact scalar/string values, types and error/store behavior.
+These include both additional probe files and instrumented replacements of base
+programs; they are not 74 additional language examples. All **15 float-spelling
+assertions** and **37 rejection/recovery cases** passed, including both bracket
+arities in read and assignment positions. No bracket overload or lowering was enabled.
+
+Evidence: `/tmp/my-try-ch02-native-20261002/`, including `summary.json`,
+`source_hashes.json`, `candidate.json`, `commands.json`, attempt directories
+`logs`, `logs-2`, `logs-3`, and generated/compiled programs. The successful attempt's
+recorded command time totals 1,012.346 seconds: 932.763 seconds compiling generated
+programs, 41.307 seconds building the native compiler, and 0.532 seconds for the
+final incremental build. These are one-run measurements, not a benchmark claim.
+The harness currently runs fixtures serially; independent program compilation and
+execution are candidates for bounded parallelism, while the native driver uses a
+shared serial request file.
+
+Reproduce from a fresh result path using the commit containing these adaptations:
+
+```bash
+python3 compiler/my-try/tools/native_validate.py \
+  --target-checkout /home/alexv/__AI/simple_cpp/simple_cpp_01 \
+  --candidate-revision FULL_COMMIT \
+  --results /tmp/FRESH_DIRECTORY --no-stan --types-only
+```
+
+LLVM and legacy STAN remain explicitly skipped. This checkpoint proves the bounded
+current source/fixture set, not all deferred operator, lifetime or incremental cases.
+
+## Earlier checkpoint — 2026-10-01 operator closeout
 
 The operator worktree based on `ac91df0d377afc2e8b6f0730c9ef5bdda67530b5`,
 with the portability-only `$operator` to `$source_operator` identifier correction,

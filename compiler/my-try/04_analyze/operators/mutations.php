@@ -22,8 +22,9 @@ final class Mutation_Preparation
 			throw new \LogicException('Unexpected mutation token');
 		}
 		$facts = new prepared_mutation_expression();
+		$operands /** vector<canonical_type_use> */ = [$target->type];
 		$facts->decision = Operator_Preparation::decide(
-			$source_operator, [$target->type], operator_context::expression, $context);
+			$source_operator, $operands, operator_context::expression, $context);
 		$facts->type = $facts->decision->result_type;
 		return $facts;
 	}
@@ -55,8 +56,9 @@ final class Mutation_Preparation
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
 		$facts = new prepared_compound_assignment_expression();
+		$operands /** vector<canonical_type_use> */ = [$target->type, $value->type];
 		$facts->decision = Operator_Preparation::decide(
-			$source_operator, [$target->type, $value->type], operator_context::expression, $context);
+			$source_operator, $operands, operator_context::expression, $context);
 		$facts->write_back = Conversion_Preparation::decide(
 			$facts->decision->result_type, $target->type, conversion_context::assignment);
 		$facts->type = $target->type;

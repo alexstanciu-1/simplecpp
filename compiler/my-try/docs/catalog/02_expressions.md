@@ -69,12 +69,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [STR-INTERP-001](#str-interp-001) | agreed | `$name = "Alex"; $a = "hello $name";` | proved | proved | deferred | [Interpolation contract and proof](../s2s_scalar_operators.md#string-interpolation) |
 | [STR-INTERP-002](#str-interp-002) | agreed | `$count = 3; $a = "sum {$count}";` | proved | proved | deferred | [Interpolation contract and proof](../s2s_scalar_operators.md#string-interpolation) |
 | [STR-INDEX-001](#str-index-001) | agreed | `$s = "abc"; $a = $s[0];` and `$s[];` | proved | deferred | deferred | [General bracket syntax and shared deferred-overload diagnostic](../../tests/indexing.php); no string overload or lowering selected |
-| [NOTE-013](#note-013) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-018](#note-018) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-027](#note-027) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-043](#note-043) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-044](#note-044) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-054](#note-054) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-013](#note-013) | agreed | Recursive expressions and grouping | proved | proved | deferred | Existing bounded implementation; [proof](../../tests/grouping.php) and [contracts](../s2s_scalar_operators.md) |
+| [NOTE-018](#note-018) | agreed | Expression statements and updates | proved | proved | deferred | Existing bounded implementation; [proof](../../tests/compound_assignments.php) and [contracts](../s2s_scalar_operators.md) |
+| [NOTE-027](#note-027) | agreed | Preparation and emission responsibilities | proved | proved | deferred | Existing bounded implementation; [proof](../../tests/operators.php) and [contracts](../s2s_scalar_operators.md) |
+| [NOTE-043](#note-043) | agreed | Recursive expressions and chained assignment | proved | proved | deferred | Existing bounded implementation; [proof](../../tests/logical.php) and [contracts](../s2s_scalar_operators.md) |
+| [NOTE-044](#note-044) | agreed | Shared operator families | proved | proved | deferred | Existing bounded implementation; [proof](../../tests/operators.php) and [contracts](../s2s_scalar_operators.md) |
+| [NOTE-054](#note-054) | agreed | Assignment snapshots and lowering | proved | proved | deferred | Existing bounded implementation; [proof](../../tests/logical.php) and [contracts](../s2s_scalar_operators.md) |
 ## EXPR-PAREN-001
 
 **v0.2 decision / target C++:** Agreed 2026-10-01: normalize grouping parentheses
@@ -2368,7 +2368,17 @@ _Not supplied in source._
 
 **Source:** [generators/php/specs/rules.md:190](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Agreed 2026-10-02. Recursive preparation resolves supported
+operators and their operands through the shared operator path. Parsing preserves precedence and
+grouping in tree structure and discards grouping parentheses; C++ emission adds parentheses as
+needed to preserve that structure. Literals retain their resolved types. Compositions reuse
+these paths, subject to existing type and effect restrictions, without per-combination rules.
+
+This reconciles existing behavior; no compiler structures or semantics are added.
+See [focused proof](../../tests/grouping.php) and the [bounded scalar contracts and
+generated-program evidence](../s2s_scalar_operators.md). Native compiler evidence is tracked
+separately in the [portability review](../portability/conversion_review.md). Imported prose
+follows unchanged as provenance.
 
 > ## 5. Expressions
 >
@@ -2389,7 +2399,18 @@ _Not supplied in source._
 
 **Source:** [generators/php/specs/rules.md:263](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Agreed 2026-10-02. Supported expressions may stand alone with
+their result discarded. Compound assignments reuse ordinary operator computation followed by
+destination conversion and a store. Concatenation and `.=` require string operands; other scalar
+values need an explicit `(string)` cast. Mutations and compound assignments require existing
+writable storage, currently supported locals/parameters, and never declare variables. Field and
+bracket targets await their access contracts.
+
+This reconciles existing behavior; no compiler structures or semantics are added.
+See [focused proof](../../tests/compound_assignments.php) and the [bounded scalar contracts and
+generated-program evidence](../s2s_scalar_operators.md). Native compiler evidence is tracked
+separately in the [portability review](../portability/conversion_review.md). Imported prose
+follows unchanged as provenance.
 
 > ## 10. Statements
 >
@@ -2403,7 +2424,18 @@ _Not supplied in source._
 
 **Source:** [generators/php/specs/rules.md:459](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Agreed 2026-10-02. Shared preparation owns type/operator
+resolution, conversions and semantic rejection. C++ emission consumes those facts and preserves
+grouping, single evaluation and required sequencing. Runtime helpers implement selected runtime
+behavior and checks. Emission diagnoses missing or unsupported lowering without independently
+rediscovering semantics. The imported type-blind policy remains legacy-generator provenance, not
+the my-try architecture.
+
+This reconciles existing behavior; no compiler structures or semantics are added.
+See [focused proof](../../tests/operators.php) and the [bounded scalar contracts and
+generated-program evidence](../s2s_scalar_operators.md). Native compiler evidence is tracked
+separately in the [portability review](../portability/conversion_review.md). Imported prose
+follows unchanged as provenance.
 
 > ## 16. Expression Emission Policy
 >
@@ -2418,7 +2450,18 @@ _Not supplied in source._
 
 **Source:** [generators/php/specs/rules.md:894](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Agreed 2026-10-02. Recursive preparation and grouping follow
+NOTE-013. An assignment chain evaluates its rightmost expression once, converts and stores
+right-to-left, and passes each stored-value snapshot to the next assignment. Inferred
+declarations remain confined to supported standalone chains. Emission uses the established
+statement or expression lowering appropriate to context; a universal decomposition into
+standalone statements is not required.
+
+This reconciles existing behavior; no compiler structures or semantics are added.
+See [focused proof](../../tests/logical.php) and the [bounded scalar contracts and
+generated-program evidence](../s2s_scalar_operators.md). Native compiler evidence is tracked
+separately in the [portability review](../portability/conversion_review.md). Imported prose
+follows unchanged as provenance.
 
 > ## 14. Expression normalization rules
 >
@@ -2448,7 +2491,18 @@ _Not supplied in source._
 
 **Source:** [generators/php/specs/rules.md:918](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Agreed 2026-10-02. Each implemented operator family shares
+preparation and lowering across nested expressions. Its current bounded contract determines
+supported operand types and conversions; literals retain resolved types and appropriate runtime
+representations. Imported C++ examples are illustrative rather than mandatory spelling, and
+introduce no implicit coercions or extra type promotions. In particular, concatenation of a
+string and an integer requires an explicit string cast.
+
+This reconciles existing behavior; no compiler structures or semantics are added.
+See [focused proof](../../tests/operators.php) and the [bounded scalar contracts and
+generated-program evidence](../s2s_scalar_operators.md). Native compiler evidence is tracked
+separately in the [portability review](../portability/conversion_review.md). Imported prose
+follows unchanged as provenance.
 
 > ## 15. Generalized operator families
 >
@@ -2533,7 +2587,18 @@ _Not supplied in source._
 
 **Source:** [generators/php/specs/rules.md:1228](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Agreed 2026-10-02. Assignment lowering evaluates target and RHS
+once in the required order, converts before storing, and returns a snapshot of the stored value
+rather than an alias. Helper lambdas and direct assignment are lowering choices permitted only
+where they preserve those guarantees; the note mandates neither spelling universally. Existing
+lowering is retained. Imported append examples establish no meaning for `[]`; its eventual
+overload contract owns result and writability.
+
+This reconciles existing behavior; no compiler structures or semantics are added.
+See [focused proof](../../tests/logical.php) and the [bounded scalar contracts and
+generated-program evidence](../s2s_scalar_operators.md). Native compiler evidence is tracked
+separately in the [portability review](../portability/conversion_review.md). Imported prose
+follows unchanged as provenance.
 
 > ## Assignment-expression lambda fallback
 >

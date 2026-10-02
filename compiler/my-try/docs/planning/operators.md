@@ -162,12 +162,11 @@ compatibility remains a separate decision.
 - mixed-width integer promotion and its normative contract;
 - conversion viability ranking and ambiguity resolution machinery;
 - runtime and source-declared overload registries;
-- floating-point operators, broader comparison types and assignment operators;
+- floating-point operators, broader comparison types and assignment targets;
 - implicit conversions for PHP++ string concatenation;
 - JS++ `+` string concatenation and possible future operator carrier changes;
 - broader unary operand types and signed-literal magnitude handling;
 - ternary syntax and the shared three-operand call;
-- keyword logical and assignment precedence;
 - effect analysis that can safely admit calls as operands;
 - LLVM and legacy STAN. Native compiler validation remains an explicit post-slice
   checkpoint rather than an automatic implementation step.

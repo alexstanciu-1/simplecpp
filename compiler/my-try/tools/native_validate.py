@@ -169,6 +169,7 @@ def main():
     declaration_case_count = sum(name.startswith(('function_', 'struct_', 'integer_', 'field_'))
                                  for name, _, _ in valid_cases)
     float_spelling_assertions = 0
+    executed_cpp = set()
     for name, text, code in valid_cases:
         folder = results / 's2s-programs' / name
         folder.mkdir(parents=True, exist_ok=args.resume)
@@ -202,8 +203,26 @@ def main():
         run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
                                  folder / 'main.cpp', '-o', folder / 'program'])
         run(name + '-s2s-execute', [folder / 'program'], expected=code)
+        executed_cpp.add((generated.encode(), code))
+    # These instrumented programs assert exact values, string bytes and error/store
+    # behavior. Their base compiler output has passed PHP/native parity above.
+    probe_executions = 0
+    for item in json.loads((s2s_fixtures / 'executions.json').read_text()):
+        probe_source = Path(item['path'])
+        probe_bytes = probe_source.read_bytes()
+        if (probe_bytes, item['exit_code']) in executed_cpp:
+            continue
+        name = probe_source.stem
+        executable_probe = results / ('probe-' + name)
+        run(name + '-probe-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
+                                  probe_source, '-o', executable_probe])
+        run(name + '-probe-execute', [executable_probe], expected=item['exit_code'])
+        probe_executions += 1
+    print(f'{probe_executions} supplementary instrumented programs passed', flush=True)
     rejection_cases = programs['rejected'] + [
-        'struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }']
+        'struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }',
+        '$s = "abc"; $s[];', '$s = "abc"; $s[0];',
+        '$s = "abc"; $s[] = "d";', '$s = "abc"; $s[0] = "d";']
     for index, text in enumerate(rejection_cases):
         name = 's2s-rejected-' + str(index)
         folder = results / 'declaration-programs' / name
@@ -252,6 +271,7 @@ def main():
                    parked_llvm_validation='skipped' if args.types_only else 'included',
                    portable_type_proof=True,
                    s2s_valid_executions=len(valid_cases), s2s_float_spelling_assertions=float_spelling_assertions,
+                   s2s_supplementary_probe_executions=probe_executions,
                    s2s_declaration_executions=declaration_case_count,
                    s2s_rejections=len(rejection_cases), cases=len(outcomes), valid=sum(x['valid'] for x in outcomes),
                    rejected=sum(not x['valid'] for x in outcomes),

@@ -437,7 +437,18 @@ compound, operator, interpolation and collection checks pass, as does PHP-host S
 generation/purity. All 391 prior generated programs remain byte-identical.
 There are no new generated bracket programs because lowering is
 intentionally deferred. LLVM only gains an absent-argument guard on its parked
-fixed-array path; native compiler validation was not rerun.
+fixed-array path. Native compiler validation was deferred at implementation time;
+the subsequent checkpoint below includes both bracket arities as rejection cases.
+
+## Native chapter checkpoint
+
+The subsequent 2026-10-02 native validation passes: 341 source fixtures produce
+identical PHP/native C++, all generated base programs execute, 74 supplementary
+instrumented programs pass, and 37 rejection/recovery cases agree. Type proofs,
+15 float-spelling assertions and the final incremental native rebuild also pass.
+Two portability-only source adaptations were required; see the
+[checkpoint, timings and evidence](portability/conversion_review.md).
+LLVM and legacy STAN remain skipped.
 
 ## Remaining decisions
 
@@ -447,5 +458,7 @@ fixed-array path; native compiler validation was not rerun.
 - Mixed numeric promotion, other comparison types, complex interpolation and concrete
   bracket overload contracts remain outside this bounded slice.
 
-These remain open under the user's requirement to discuss new structures. The
-remaining catalog rows retain pending status; this batch does not complete chapter 02.
+These remain open under the user's requirement to discuss new structures. All six
+imported prose notes are now reconciled and agreed.
+Chapter 02 has no pending discussion rows; the explicit deferred capabilities above
+remain deferred, including bracket overload resolution and lowering.

@@ -892,7 +892,7 @@ final class Parser_Run
 			$initial = string_byte_at($text, $name_start);
 			if (!Source_Text::letter($initial)) {
 				if ($braced || ($initial === 123) || ($initial === 36) || ($initial >= 128)) {
-					throw new \RuntimeException($this->error_message('Unsupported interpolation; expected $name or {$name}', $start, $first));
+					throw new \RuntimeException($this->error_message_at('Unsupported interpolation; expected $name or {$name}', $start, $first));
 				}
 				$offset++;
 				continue;
@@ -904,13 +904,13 @@ final class Parser_Run
 			$name = string_byte_slice($text, $name_start, $offset - $name_start);
 			if ($braced) {
 				if (string_byte_at($text, $offset) !== 125) {
-					throw new \RuntimeException($this->error_message('Unsupported braced interpolation; expected {$name}', $start, $first));
+					throw new \RuntimeException($this->error_message_at('Unsupported braced interpolation; expected {$name}', $start, $first));
 				}
 				$offset++;
 			}
 			elseif ((string_byte_at($text, $offset) === 91) || (string_byte_at($text, $offset) === 40)
 				|| (string_byte_slice($text, $offset, 2) === '->') || (string_byte_at($text, $offset) >= 128)) {
-				throw new \RuntimeException($this->error_message('Unsupported interpolation suffix; use {$name} before literal suffix text', $start, $first));
+				throw new \RuntimeException($this->error_message_at('Unsupported interpolation suffix; use {$name} before literal suffix text', $start, $first));
 			}
 			$this->interpolation_text($interpolation, $start, $segment, $first - $segment);
 			$variable = new variable_reference_node();
@@ -1239,12 +1239,15 @@ final class Parser_Run
 	}
 
 	/** Describe the current source position without publishing incomplete syntax. */
-	private function error_message(string $message, int $token_index = -1, int $within_token = 0): string
+	private function error_message(string $message): string
+	{
+		return $this->error_message_at($message, $this->position, 0);
+	}
+
+	/** Describe a byte within a specific token, including interpolation failures. */
+	private function error_message_at(string $message, int $token_index, int $within_token): string
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
-		if ($token_index < 0) {
-			$token_index = $this->position;
-		}
 		$offset = string_byte_len($this->tokens->content) - $this->tokens->content_offset;
 		if (isset($token_rows[$token_index])) {
 			$offset = (int)$token_rows[$token_index]->offset - $this->tokens->content_offset + $within_token;
