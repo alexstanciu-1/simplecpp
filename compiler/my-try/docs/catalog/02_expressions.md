@@ -42,9 +42,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-LOGIC-001](#expr-logic-001) | agreed | `$a = true && false;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-OR-001](#expr-or-001) | agreed | `$a = true \|\| false;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-NOT-001](#expr-not-001) | agreed | `$b = false; $a = !$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
-| [EXPR-ANDWORD-001](#expr-andword-001) | pending-discussion | `$a = $b and $c;` | unverified | unverified | deferred | — |
-| [EXPR-ORWORD-001](#expr-orword-001) | pending-discussion | `$a = $b or $c;` | unverified | unverified | deferred | — |
-| [EXPR-XORWORD-001](#expr-xorword-001) | pending-discussion | `$a = $b xor $c;` | unverified | unverified | deferred | — |
+| [EXPR-ANDWORD-001](#expr-andword-001) | agreed | `$a = false; $b = true; $c = false; $a = $b and $c;` | proved | proved | deferred | [Assignment/logical contract and proof](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic) |
+| [EXPR-ORWORD-001](#expr-orword-001) | agreed | `$a = false; $b = true; $c = false; $a = $b or $c;` | proved | proved | deferred | [Assignment/logical contract and proof](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic) |
+| [EXPR-XORWORD-001](#expr-xorword-001) | agreed | `$a = false; $b = true; $c = false; $a = $b xor $c;` | proved | proved | deferred | [Assignment/logical contract and proof](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic) |
 | [EXPR-PREINC-001](#expr-preinc-001) | agreed | `$b = 3; $a = ++$b;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [EXPR-POSTINC-001](#expr-postinc-001) | agreed | `$b = 3; $a = $b++;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [EXPR-PREDEC-001](#expr-predec-001) | agreed | `$b = 3; $a = --$b;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
@@ -1311,7 +1311,10 @@ auto a = !b;
 
 ## EXPR-ANDWORD-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Agreed canonical-bool operation, below assignment
+precedence. The imported `$a`/`$b`/`$c` example requires established locals. Assignment
+returns the converted stored-value snapshot. Use native bool short circuiting, then wrap the result.
+See the [contract and proof](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic).
 
 ### Imported version 1
 
@@ -1346,7 +1349,10 @@ ERROR
 
 ## EXPR-ORWORD-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Agreed canonical-bool operation, below assignment
+precedence. The imported `$a`/`$b`/`$c` example requires established locals. Assignment
+returns the converted stored-value snapshot. Use native bool short circuiting, then wrap the result.
+See the [contract and proof](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic).
 
 ### Imported version 1
 
@@ -1381,7 +1387,10 @@ ERROR
 
 ## EXPR-XORWORD-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Agreed canonical-bool operation, below assignment
+precedence. The imported `$a`/`$b`/`$c` example requires established locals. Assignment
+returns the converted stored-value snapshot. Snapshot both bool operands left-to-right and compare with native `!=`.
+See the [contract and proof](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic).
 
 ### Imported version 1
 

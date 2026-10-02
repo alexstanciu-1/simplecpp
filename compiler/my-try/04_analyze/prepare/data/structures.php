@@ -170,6 +170,8 @@ final class preparation_context
 	public Key_Storage_List $locals /** Key_Storage_List<prepared_storage> */;
 	/** Null identifies the entry body; function bodies retain their declared return type. */
 	public ?canonical_type_use $return_type = null;
+	/** Only a statement-root assignment and its direct RHS chain may introduce locals. */
+	public bool $statement_assignment = false;
 	public canonical_type_use $integer;
 	public canonical_type_use $boolean;
 	public canonical_type_use $floating;

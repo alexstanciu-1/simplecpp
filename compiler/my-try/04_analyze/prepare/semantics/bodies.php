@@ -75,7 +75,13 @@ final class Body_Preparation
 	public static function prepare_expression_statement(expression_statement_node $syntax, preparation_context $context): void
 	{
 		$expression = $syntax->expression;
-		Expression_Preparation::prepare($expression, $context);
+		$context->statement_assignment = $expression instanceof assignment_expression_node;
+		try {
+			Expression_Preparation::prepare($expression, $context);
+		}
+		finally {
+			$context->statement_assignment = false;
+		}
 	}
 
 	/** Function returns use the signature; program-entry returns remain scalar exit values. */

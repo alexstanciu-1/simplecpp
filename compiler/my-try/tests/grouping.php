@@ -95,7 +95,7 @@ grouping_check(($index instanceof index_node) && ($index->index instanceof integ
 	'Grouping changed index syntax');
 grouping_check(grouping_span($index, $syntax) === '( $items ) [ ( 0 ) ]', 'Index span lost grouped base');
 
-foreach (['return ();', 'return (1 + 2;', 'return (1, 2);', '$a = ($b = 1);', 'return (vector<>)$x;'] as $source)
+foreach (['return ();', 'return (1 + 2;', 'return (1, 2);', 'return (vector<>)$x;'] as $source)
 {
 	$failed = false;
 	try {

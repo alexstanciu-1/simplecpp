@@ -1,7 +1,7 @@
 # Bounded scalar operators
 Doc Status: supporting
 
-Implemented and checked 2026-10-01. This guide records the current my-try frontend
+Updated and checked 2026-10-02. This guide records the current my-try frontend
 and C++ S2S slice for [catalog chapter 02](catalog/02_expressions.md). Root language
 and runtime specifications remain authoritative. Imported legacy examples do not
 activate additional operand types or coercions.
@@ -15,7 +15,8 @@ activate additional operand types or coercions.
 | `===`, `!==` | canonical `int`, `int` | canonical `bool` | `scpp::php::identical` / `not_identical` |
 | `<=>` | canonical `int`, `int` | canonical `int`, exactly -1/0/1 | Snapshot each operand once, compare with `<` and `>` |
 | `.` | canonical `string`, `string` | canonical `string` | Existing string-wrapper `+` |
-| `&&`, `\|\|` | canonical `bool`, `bool` | canonical `bool` | Convert each operand explicitly to native bool around native lazy operators, wrap result |
+| `&&`, `\|\|`, `and`, `or` | canonical `bool`, `bool` | canonical `bool` | Convert each operand explicitly to native bool around native lazy operators, wrap result |
+| `xor` | canonical `bool`, `bool` | canonical `bool` | Snapshot native bools left-to-right, compare with `!=`, wrap result |
 
 Integer division truncates toward zero; remainder has the dividend's sign. Zero
 raises the existing runtime errors `division_by_zero` / `modulo_by_zero`.
@@ -29,7 +30,8 @@ helpers preserve the distinction from ordinary comparison, even though the curre
 exact same-type integer slice produces the same truth values. No cross-type equality
 or implicit numeric promotion is admitted.
 
-Logical RHS evaluation is lazy. Both sides are still prepared and typechecked;
+`&&`, `||`, `and` and `or` evaluate the RHS lazily; `xor` evaluates both sides
+left-to-right. Both sides are still prepared and typechecked;
 an invalid RHS is rejected even when a constant left side would skip it at runtime.
 The explicit native-bool bridge follows runtime spec section 6.2 and avoids invoking
 overloaded wrapper logical operators, which would evaluate both sides.
@@ -43,20 +45,24 @@ It neither subtracts potentially extreme values nor returns a C++ ordering categ
 
 Precedence from weakest to strongest is:
 
-1. `||`
-2. `&&`
-3. `|`
-4. `^`
-5. `&`
-6. `==`, `!=`, `===`, `!==`, `<=>`
-7. `<`, `<=`, `>`, `>=`
-8. `.`
-9. `<<`, `>>`
-10. `+`, `-`
-11. `*`, `/`, `%`
+1. `or`
+2. `xor`
+3. `and`
+4. `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `.=` and bitwise/shift compound assignments
+5. `||`
+6. `&&`
+7. `|`
+8. `^`
+9. `&`
+10. `==`, `!=`, `===`, `!==`, `<=>`
+11. `<`, `<=`, `>`, `>=`
+12. `.`
+13. `<<`, `>>`
+14. `+`, `-`
+15. `*`, `/`, `%`
 
-The current levels associate left-to-right; unsupported comparison chains fail the
-exact operand-type policy. Parentheses control the same binary tree without retained
+Assignments associate right-to-left; other binary levels associate left-to-right;
+unsupported comparison chains fail the exact operand-type policy. Parentheses control the same binary tree without retained
 grouping nodes. A read-only call lookahead distinguishes a constant followed by `<`
 from a generic call. Longest-token recognition preserves strict comparisons, `<=>`,
 `->`, floating exponents and leading-dot floats.
@@ -69,12 +75,14 @@ in `operator_operand` context. Only enum cases were added; no retained structure
 or fields changed. C++ generation consumes the selected operation and conversions.
 
 Existing `expression_statement_node` now accepts ordinary scalar expressions,
-including `$a + 1;`, grouped expressions and concatenation. Existing binding/member/
-index statement paths remain separate; this is not a general assignment-expression
-or mutation grammar extension.
+including `$a + 1;`, grouped expressions and concatenation. Plain assignment
+statements use the same expression grammar; explicitly typed declarations remain
+a separate statement form.
 
-Calls and other effectful binary operands remain rejected by the existing shape
-restriction. Casts and nested admitted binaries are supported. Eager runtime operand
+Calls, mutations and compound updates remain rejected as binary operands. Logical
+operators also admit assignments to existing locals/parameters. Eager operators
+inspect nested logical trees too, so casts and grouping cannot hide writes. Casts
+and nested admitted binaries are otherwise supported. Eager runtime operand
 error ordering is not newly specified; this slice does not introduce effect analysis.
 
 ## Legacy review and proof
@@ -205,7 +213,7 @@ implicitly declares storage. Fields, indexes, calls/casts as targets, mixed widt
 and implicit string coercion remain rejected.
 
 The parser recognizes the six compound tokens with longest matching and places
-compound assignment below supported binary precedence. It retains nested syntax
+compound assignment below symbolic binary precedence and above keyword logic. It retains nested syntax
 right-to-left, but preparation rejects effectful RHS expressions, including another
 assignment, compound update, mutation or call. Pure nested binary/unary expressions
 and explicit casts retain their existing permissions. A compound update itself
@@ -292,12 +300,53 @@ counts 0 and 63, negative operands, sign-bit changes, and exact native value/typ
 assertions. Prior generated fixtures are byte-identical. Native execution of the
 compiler was not rerun; LLVM remains deferred.
 
+## Assignment expressions and keyword logic
+
+Added 2026-10-02: `and`, `or` and `xor` accept canonical bools. `and`/`or` share
+prepared semantic operations with `&&`/`||`, but bind below assignment. For example,
+with `$a` already declared, `$a = true and false;` stores `true`; `$a = true && false;`
+stores `false`. Parentheses around the whole logical RHS select that logical result.
+`(true) and ...` is grouping, not cast syntax. Legacy catalog cards reject the word
+operators; v0.2 deliberately admits them under these explicit precedence/type rules.
+
+The existing assignment node and `prepared_assignment` carry this behavior. A nested
+assignment evaluates its RHS once, converts to the target type, stores once and returns
+a non-addressable copy of the stored value. C++ uses an immediately invoked lambda
+with an explicit value return type. Failed RHS computation leaves the target unchanged.
+Return values, typed initializers, casts and sequenced value arguments can consume the
+snapshot; reference arguments cannot. Assignment targets in these contexts must be
+existing locals or parameters. Nested field/index writes remain deferred.
+
+Standalone first assignments and their direct right-associative chains retain their
+existing declaration behavior and statement-owned lowering. Grouping normalizes away,
+so `$a = ($b = 3);` has the same chain as `$a = $b = 3;`. An invocation-local preparation
+flag permits declarations only along that chain, never through a logical operand,
+call argument, typed initializer or field base. Thus `$a = true and false;` requires
+an already established `$a`, even though its left operand always executes. This slice
+does not introduce branch-sensitive initialization or conditional declarations.
+
+Logical operands are prepared left-to-right and both must be valid, including a
+statically skipped RHS. `and`/`or` use native bool short circuiting. `xor` snapshots the
+left bool, then the right bool, and compares those snapshots. This preserves results
+when both operands write the same local. Assignment inside ordinary arithmetic,
+comparison, concatenation, unary operators or compound RHS remains rejected, including
+writes hidden inside a nested logical expression. Calls, mutation and compound-update
+operands retain their earlier binary restrictions; general effect analysis is deferred.
+
+[Logical tests](../tests/logical.php) cover AST precedence, assignment facts, grouped
+write collection, diagnostics, cleanup, incremental edits, token compaction and failed
+edit recovery. [S2S tests](../tests/s2s.php) preserve syntax/scopes during preparation
+and generation. The 38 new Clang C++20 programs/probes cover the three catalog rows,
+lazy writes and exceptions, XOR snapshots/order, assignment conversions, reference
+parameter writes, sequenced arguments, single evaluation and failed stores. Existing
+operator, mutation, compound, grouping, tokenizer and collection PHP checks pass.
+Prior generated fixtures remain byte-identical. Native execution
+of the compiler was not rerun; LLVM remains deferred.
+
 ## Remaining decisions
 
 - Checked shift counts are [explicit debt](planning/operators.md#debt-checked-shift-counts).
   Broader mutation targets and mutation inside binary expressions remain deferred.
-- Word `and` / `or` / `xor` interact with assignment precedence; the imported examples
-  cannot be implemented truthfully by merely aliasing the symbolic operators.
 - Exponentiation references an unavailable `scpp::pow` helper. Result type, negative
   exponents and overflow/domain policy must be settled before adding a runtime path.
 - Mixed numeric promotion, other comparison types, interpolation and broader string

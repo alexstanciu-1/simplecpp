@@ -37,8 +37,10 @@ final class Operator_Preparation
 	{
 		$text = $context->collection->token_snapshot()->operator_text_at($syntax->operator_token_index);
 		$source_operator = self::binary_kind($text);
-		self::require_order_independent_operand($syntax->left);
-		self::require_order_independent_operand($syntax->right);
+		$sequenced = ($source_operator === operator_kind::logical_and)
+			|| ($source_operator === operator_kind::logical_or) || ($source_operator === operator_kind::logical_xor);
+		self::require_operand($syntax->left, $sequenced);
+		self::require_operand($syntax->right, $sequenced);
 
 		$left = Expression_Preparation::prepare($syntax->left, $context);
 		$right = Expression_Preparation::prepare($syntax->right, $context);
@@ -69,7 +71,8 @@ final class Operator_Preparation
 		if ($source_operator === operator_kind::concatenation) {
 			return self::decide_concatenation($operands, $context);
 		}
-		if (($source_operator === operator_kind::logical_and) || ($source_operator === operator_kind::logical_or)) {
+		if (($source_operator === operator_kind::logical_and) || ($source_operator === operator_kind::logical_or)
+			|| ($source_operator === operator_kind::logical_xor)) {
 			return self::decide_logical($source_operator, $operands, $context);
 		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
@@ -143,6 +146,9 @@ final class Operator_Preparation
 		$decision->source_operator = $source_operator;
 		$decision->operation = $source_operator === operator_kind::logical_and
 			? operator_operation::boolean_and : operator_operation::boolean_or;
+		if ($source_operator === operator_kind::logical_xor) {
+			$decision->operation = operator_operation::boolean_xor;
+		}
 		$decision->result_type = $boolean;
 		$decision->operands[] = Conversion_Preparation::decide(
 			$operands[0], $boolean, conversion_context::operator_operand);
@@ -172,11 +178,14 @@ final class Operator_Preparation
 		if ($operator_text === '<=>') {
 			return operator_kind::three_way;
 		}
-		if ($operator_text === '&&') {
+		if (($operator_text === '&&') || ($operator_text === 'and')) {
 			return operator_kind::logical_and;
 		}
-		if ($operator_text === '||') {
+		if (($operator_text === '||') || ($operator_text === 'or')) {
 			return operator_kind::logical_or;
+		}
+		if ($operator_text === 'xor') {
+			return operator_kind::logical_xor;
 		}
 		if ($operator_text === '.') {
 			return operator_kind::concatenation;
@@ -226,20 +235,38 @@ final class Operator_Preparation
 	/** Keep C++ operand-order freedom harmless until general effect facts are available. */
 	public static function require_order_independent_operand(expression_node $node): void
 	{
+		self::require_operand($node, false);
+	}
+
+	/** Sequenced logical operands admit writes; eager parents inspect the entire subtree. */
+	private static function require_operand(expression_node $node, bool $sequenced): void
+	{
+		if ($node instanceof assignment_expression_node) {
+			if ($sequenced) {
+				return;
+			}
+		}
+		if ($node instanceof binary_expression_node) {
+			if (!$sequenced) {
+				$binary = object_cast($node, binary_expression_node::class);
+				self::require_operand($binary->left, false);
+				self::require_operand($binary->right, false);
+			}
+			return;
+		}
 		if ($node instanceof unary_expression_node) {
 			$unary = object_cast($node, unary_expression_node::class);
-			self::require_order_independent_operand($unary->operand);
+			self::require_operand($unary->operand, $sequenced);
 			return;
 		}
 		if ($node instanceof cast_expression_node) {
 			$cast = object_cast($node, cast_expression_node::class);
-			self::require_order_independent_operand($cast->operand);
+			self::require_operand($cast->operand, $sequenced);
 			return;
 		}
 		if (($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
 			($node instanceof boolean_literal_node) || ($node instanceof string_literal_node) ||
-			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node) ||
-			($node instanceof binary_expression_node)) {
+			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node)) {
 			return;
 		}
 		throw new \RuntimeException('S2S binary operation requires order-independent operands');

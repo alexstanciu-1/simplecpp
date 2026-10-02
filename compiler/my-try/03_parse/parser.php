@@ -301,8 +301,8 @@ final class Parser_Run
 		if (string_byte_starts_with($this->text(), '$'))
 		{
 			$next = $this->text_at_offset(1);
-			if (Source_Text::identifier($next) || ($next === '=') || ($next === '[') || ($next === '->')) {
-				return $this->binding_statement();
+			if (Source_Text::identifier($next) && ($next !== 'and') && ($next !== 'or') && ($next !== 'xor')) {
+				return $this->variable_declaration();
 			}
 			return $this->expression_statement();
 		}
@@ -599,78 +599,37 @@ final class Parser_Run
 		return $return_statement;
 	}
 
-	/** Explicit type syntax declares a variable; plain writes always use assignment expressions. */
-	private function binding_statement(): statement_node
+	/** Explicit type syntax declares storage; plain writes use the expression grammar. */
+	private function variable_declaration(): statement_node
 	{
 		$start = $this->position++;
-		$name = $this->name_at($start);
-		if ($this->identifier() && ($this->text() !== 'return') && ($this->text() !== 'function'))
-		{
-			$declaration = new variable_declaration_node();
-			$declaration->name = $name;
-			$type = $this->type_syntax($this->current_scope);
-			$declaration->type_syntax = $this->text() === '['
-				? object_cast($this->array_type($type), type_node::class)
-				: object_cast($type, type_node::class);
-			if ($this->text() === '=') {
-				$this->position++;
-				$declaration->initializer = $this->expression();
-			}
-			$this->expect(';');
-			$this->finish_node($declaration, $start);
-			$declaration->collect($this->collector, $this->current_scope, $start);
-			return $declaration;
+		$declaration = new variable_declaration_node();
+		$declaration->name = $this->name_at($start);
+		$type = $this->type_syntax($this->current_scope);
+		$declaration->type_syntax = $this->text() === '['
+			? object_cast($this->array_type($type), type_node::class)
+			: object_cast($type, type_node::class);
+		if ($this->text() === '=') {
+			$this->position++;
+			$declaration->initializer = $this->expression();
 		}
-		$target = $this->variable_reference($start);
-		$target->name = $name;
-		$assignment = new assignment_expression_node();
-		if (($this->text() === '[') || ($this->text() === '->')) {
-			$target->collect($this->collector, $this->current_scope, $start);
-			$assignment->target = object_cast($this->access_suffix($target, $start), assignable_expression_node::class);
-		}
-		else {
-			$target->collect_write($this->collector, $this->current_scope, $start);
-			$assignment->target = $target;
-		}
-		if ($this->text() !== '=') {
-			throw new \RuntimeException($this->error_message('Expected type name or = after variable name'));
-		}
-		$this->position++;
-		$assignment->value = $this->expression(true);
-		$this->finish_node($assignment, $start);
 		$this->expect(';');
-		$statement = new expression_statement_node();
-		$statement->expression = $assignment;
-		$this->finish_node($statement, $start);
-		return $statement;
+		$this->finish_node($declaration, $start);
+		$declaration->collect($this->collector, $this->current_scope, $start);
+		return $declaration;
 	}
 
-	/** Compound assignment binds below binary operators and retains its own target/RHS shape. */
-	private function expression(bool $allow_assignment = false): expression_node
+	/** One precedence ladder includes right-associative writes and weaker keyword logic. */
+	private function expression(): expression_node
 	{
-		$start = $this->position;
-		$target = $this->binary_expression(1, $allow_assignment);
-		$text = $this->text();
-		if (($text === '+=') || ($text === '-=') || ($text === '*=')
-			|| ($text === '/=') || ($text === '%=') || ($text === '.=')
-			|| ($text === '&=') || ($text === '|=') || ($text === '^=')
-			|| ($text === '<<=') || ($text === '>>='))
-		{
-			$compound = new compound_assignment_expression_node();
-			$compound->target = $target;
-			$compound->operator_token_index = $this->position++;
-			$compound->value = $this->expression(true);
-			$this->finish_node($compound, $start);
-			return $compound;
-		}
-		return $target;
+		return $this->binary_expression(1);
 	}
 
-	/** Climb supported precedence levels; a tighter RHS preserves left associativity. */
-	private function binary_expression(int $minimum_precedence, bool $allow_assignment): expression_node
+	/** Assignments recurse at the same precedence; other binary operators associate left. */
+	private function binary_expression(int $minimum_precedence): expression_node
 	{
 		$start = $this->position;
-		$left = $this->unary_expression($allow_assignment);
+		$left = $this->unary_expression();
 		while (true)
 		{
 			$precedence = $this->binary_precedence();
@@ -682,10 +641,32 @@ final class Parser_Run
 			if (($operator_text === '<<') || ($operator_text === '>>')) {
 				$this->position++;
 			}
+			if ($precedence === 4)
+			{
+				if ($operator_text === '=') {
+					if (!($left instanceof assignable_expression_node)) {
+						throw new \RuntimeException($this->error_message('Assignment requires an assignable target'));
+					}
+					$assignment = new assignment_expression_node();
+					$assignment->target = object_cast($left, assignable_expression_node::class);
+					$assignment->value = $this->binary_expression($precedence);
+					$this->finish_node($assignment, $start);
+					$left = $assignment;
+				}
+				else {
+					$compound = new compound_assignment_expression_node();
+					$compound->target = $left;
+					$compound->operator_token_index = $operator_token_index;
+					$compound->value = $this->binary_expression($precedence);
+					$this->finish_node($compound, $start);
+					$left = $compound;
+				}
+				continue;
+			}
 			$binary = new binary_expression_node();
 			$binary->left = $left;
 			$binary->operator_token_index = $operator_token_index;
-			$binary->right = $this->binary_expression($precedence + 1, false);
+			$binary->right = $this->binary_expression($precedence + 1);
 			$this->finish_node($binary, $start);
 			$left = $binary;
 		}
@@ -699,44 +680,59 @@ final class Parser_Run
 			return 0;
 		}
 		$text = $this->tokens->operator_text_at($this->position);
-		if ($text === '||') {
+		if ($text === 'or') {
 			return 1;
 		}
-		if ($text === '&&') {
+		if ($text === 'xor') {
 			return 2;
 		}
-		if ($text === '|') {
+		if ($text === 'and') {
 			return 3;
 		}
-		if ($text === '^') {
+		if (($text === '=') || ($text === '+=') || ($text === '-=') || ($text === '*=')
+			|| ($text === '/=') || ($text === '%=') || ($text === '.=')
+			|| ($text === '&=') || ($text === '|=') || ($text === '^=')
+			|| ($text === '<<=') || ($text === '>>=')) {
 			return 4;
 		}
-		if ($text === '&') {
+		if ($text === '||') {
 			return 5;
 		}
-		if (($text === '==') || ($text === '!=') || ($text === '===') || ($text === '!==') || ($text === '<=>')) {
+		if ($text === '&&') {
 			return 6;
 		}
-		if (($text === '<') || ($text === '<=') || ($text === '>') || ($text === '>=')) {
+		if ($text === '|') {
 			return 7;
 		}
-		if ($text === '.') {
+		if ($text === '^') {
 			return 8;
 		}
-		if (($text === '<<') || ($text === '>>')) {
+		if ($text === '&') {
 			return 9;
 		}
-		if (($text === '+') || ($text === '-')) {
+		if (($text === '==') || ($text === '!=') || ($text === '===') || ($text === '!==') || ($text === '<=>')) {
 			return 10;
 		}
-		if (($text === '*') || ($text === '/') || ($text === '%')) {
+		if (($text === '<') || ($text === '<=') || ($text === '>') || ($text === '>=')) {
 			return 11;
+		}
+		if ($text === '.') {
+			return 12;
+		}
+		if (($text === '<<') || ($text === '>>')) {
+			return 13;
+		}
+		if (($text === '+') || ($text === '-')) {
+			return 14;
+		}
+		if (($text === '*') || ($text === '/') || ($text === '%')) {
+			return 15;
 		}
 		return 0;
 	}
 
 	/** Prefix operators nest right-to-left and bind tighter than supported binary operators. */
-	private function unary_expression(bool $allow_assignment): expression_node
+	private function unary_expression(): expression_node
 	{
 		$text = $this->text();
 		if (($text === '++') || ($text === '--'))
@@ -744,26 +740,26 @@ final class Parser_Run
 			$start = $this->position++;
 			$mutation = new mutation_expression_node();
 			$mutation->operator_token_index = $start;
-			$mutation->target = $this->unary_expression(false);
+			$mutation->target = $this->unary_expression();
 			$this->finish_node($mutation, $start);
 			return $mutation;
 		}
 		if (($text !== '+') && ($text !== '-') && ($text !== '~') && ($text !== '!')) {
-			return $this->postfix_expression($allow_assignment);
+			return $this->postfix_expression();
 		}
 		$start = $this->position++;
 		$unary = new unary_expression_node();
 		$unary->operator_token_index = $start;
-		$unary->operand = $this->unary_expression(false);
+		$unary->operand = $this->unary_expression();
 		$this->finish_node($unary, $start);
 		return $unary;
 	}
 
 	/** Postfix mutation binds to the complete primary/access expression, before prefix operators. */
-	private function postfix_expression(bool $allow_assignment): expression_node
+	private function postfix_expression(): expression_node
 	{
 		$start = $this->position;
-		$target = $this->primary_expression($allow_assignment);
+		$target = $this->primary_expression();
 		while (($this->text() === '++') || ($this->text() === '--'))
 		{
 			$mutation = new mutation_expression_node();
@@ -776,8 +772,8 @@ final class Parser_Run
 		return $target;
 	}
 
-	/** Parse literals, calls, variables and right-associative assignment expressions. */
-	private function primary_expression(bool $allow_assignment): expression_node
+	/** Parse literals, calls, variables and normalized grouping. */
+	private function primary_expression(): expression_node
 	{
 		if ($this->text() === '(')
 		{
@@ -817,17 +813,17 @@ final class Parser_Run
 		$node /** expression_node */;
 		if (string_byte_starts_with($text, '$')) {
 			$variable = $this->variable_reference($start);
-			if ($allow_assignment && ($this->text() === '='))
-			{
-				$variable->collect_write($this->collector, $this->current_scope, $start);
-				$this->position++;
-				$assignment = new assignment_expression_node();
-				$assignment->target = $variable;
-				$assignment->value = $this->expression(true);
-				$this->finish_node($assignment, $start);
-				return $assignment;
+			// Parentheses normalize away; a grouped bare variable keeps its write role.
+			$offset = 0;
+			while ($this->text_at_offset($offset) === ')') {
+				$offset++;
 			}
-			$variable->collect($this->collector, $this->current_scope, $start);
+			if ($this->text_at_offset($offset) === '=') {
+				$variable->collect_write($this->collector, $this->current_scope, $start);
+			}
+			else {
+				$variable->collect($this->collector, $this->current_scope, $start);
+			}
 			$node = $variable;
 		}
 		elseif (($text !== '') && Source_Text::digits($text)) {
@@ -859,7 +855,7 @@ final class Parser_Run
 			return false;
 		}
 		$operand = $this->text_at_offset($end + 1);
-		if ($operand === '') {
+		if (($operand === '') || ($operand === 'and') || ($operand === 'or') || ($operand === 'xor')) {
 			return false;
 		}
 		$first = string_byte_at($operand, 0);
@@ -913,7 +909,7 @@ final class Parser_Run
 		$cast = new cast_expression_node();
 		$cast->target_type = $this->type_syntax($this->current_scope);
 		$this->expect(')');
-		$cast->operand = $this->unary_expression(false);
+		$cast->operand = $this->unary_expression();
 		$this->finish_node($cast, $start);
 		return $this->access_suffix($cast, $start);
 	}

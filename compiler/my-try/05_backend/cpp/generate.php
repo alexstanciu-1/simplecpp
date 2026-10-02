@@ -280,6 +280,22 @@ final class CPP_Generator
 			$value, $syntax->require_cast_preparation()->conversion, $context);
 	}
 
+	/** Evaluate and convert the RHS once, store once, then return the stored value by copy. */
+	public static function generate_assignment_expression(assignment_expression_node $syntax,
+		cpp_generation_context $context): string
+	{
+		$binding = $syntax->require_assignment_preparation()->binding;
+		if (($binding->resolved_kind !== binding_kind::assignment)
+			|| !($syntax->target instanceof variable_reference_node)) {
+			throw new \LogicException('Nested assignment requires prepared existing local storage');
+		}
+		$name = self::storage_name($binding, null, $context);
+		$value = $syntax->value->generate_cpp(new CPP_Syntax($context));
+		$write = self::generate_storage_value($binding, $name, $value, false, $context);
+		$result_type = CPP_Declarations::type($binding->type, $context);
+		return '([&]() -> ' . $result_type . ' { ' . $write . '; return ' . $name . '; }())';
+	}
+
 	/** Flatten right-associative writes so introduced locals remain in the surrounding body. */
 	private static function generate_assignment_statement(assignment_expression_node $syntax, cpp_generation_context $context): string
 	{
@@ -433,6 +449,9 @@ final class CPP_Generator
 		elseif ($decision->operation === operator_operation::boolean_or) {
 			$spelling = '||';
 		}
+		elseif ($decision->operation === operator_operation::boolean_xor) {
+			$spelling = '!=';
+		}
 		elseif (($decision->operation === operator_operation::integer_addition)
 			|| ($decision->operation === operator_operation::string_concatenation)) {
 			$spelling = '+';
@@ -500,6 +519,16 @@ final class CPP_Generator
 
 		$left = CPP_Declarations::conversion($left, $decision->operands[0], $context);
 		$right = CPP_Declarations::conversion($right, $decision->operands[1], $context);
+		if ($decision->operation === operator_operation::boolean_xor) {
+			$left_name = 'operand_' . $context->next_temporary;
+			$context->next_temporary++;
+			$right_name = 'operand_' . $context->next_temporary;
+			$context->next_temporary++;
+			$result_type = CPP_Declarations::type($decision->result_type, $context);
+			return '([&]() -> ' . $result_type . ' { bool ' . $left_name . ' = static_cast<bool>(' . $left
+				. '); bool ' . $right_name . ' = static_cast<bool>(' . $right . '); return ' . $result_type
+				. '(' . $left_name . ' != ' . $right_name . '); }())';
+		}
 		if ($decision->operation === operator_operation::integer_three_way)
 		{
 			$context->headers['scpp/generated/operators.hpp'] = true;

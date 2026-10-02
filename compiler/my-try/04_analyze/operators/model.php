@@ -22,6 +22,7 @@ enum operator_kind {
 	case bitwise_not;
 	case logical_not;
 	case three_way;
+	case logical_xor;
 	case logical_and;
 	case logical_or;
 	case concatenation;
@@ -55,6 +56,7 @@ enum operator_operation {
 	case integer_complement;
 	case boolean_not;
 	case integer_three_way;
+	case boolean_xor;
 	case boolean_and;
 	case boolean_or;
 	case string_concatenation;

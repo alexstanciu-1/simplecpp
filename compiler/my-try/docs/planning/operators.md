@@ -203,7 +203,7 @@ implicitly activated by this migration.
 ## Current scalar extension
 
 The existing binary syntax and decision records now support canonical-int arithmetic
-and comparisons, canonical-string concatenation and canonical-bool `&&`/`||`.
+and comparisons, canonical-string concatenation and canonical-bool `&&`/`||`/`and`/`or`/`xor`.
 `Integer_Operators::decide_binary` owns the shared exact integer operand policy;
 `Operator_Preparation` owns the bounded string and boolean candidates. Each selected
 operand still carries its conversion decision. No retained structures or fields were added.
@@ -231,6 +231,13 @@ Arithmetic/string compound updates now use their agreed dedicated node, the shar
 mutation target validator, the existing binary computation decision and an explicit
 write-back conversion. The [compound contract](../s2s_scalar_operators.md#compound-assignment)
 records proof and the remaining target and effect restrictions.
+
+Assignment expressions now share the precedence ladder with symbolic and keyword
+operators. Existing assignment facts describe the stored-value snapshot; a transient
+preparation flag confines inferred declarations to standalone assignment chains.
+Logical paths admit existing-local writes with explicit sequencing. General effect
+analysis, conditional declarations and nested field/index assignment remain deferred.
+See the [assignment/logical contract](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic).
 
 ## Debt: checked shift counts
 

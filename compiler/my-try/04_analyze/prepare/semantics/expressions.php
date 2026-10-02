@@ -15,27 +15,46 @@ final class Expression_Preparation
 	/** A variable write enters local binding; supported member writes retain their exact field target. */
 	public static function prepare_assignment(assignment_expression_node $node, preparation_context $context): prepared_assignment
 	{
-		$target = $node->target;
-		$facts = new prepared_assignment();
-		if ($target instanceof variable_reference_node) {
-			$variable = object_cast($target, variable_reference_node::class);
-			$facts->binding = Body_Preparation::prepare_local_storage($variable->occurrence(), null, $node->value, $context);
+		$statement_assignment = $context->statement_assignment;
+		$context->statement_assignment = $statement_assignment && ($node->value instanceof assignment_expression_node);
+		try
+		{
+			$target = $node->target;
+			$facts = new prepared_assignment();
+			if ($target instanceof variable_reference_node) {
+				$variable = object_cast($target, variable_reference_node::class);
+				if (!$statement_assignment) {
+					// Resolve before the RHS: nested writes cannot establish their own target.
+					self::prepare_reference($variable, $context);
+				}
+				$facts->binding = Body_Preparation::prepare_local_storage($variable->occurrence(), null, $node->value, $context);
+			}
+			elseif ($statement_assignment && ($target instanceof field_access_node)) {
+				$field = object_cast($target, field_access_node::class);
+				$facts->binding = self::prepare_field_write($field, $node->value, $context);
+			}
+			else {
+				throw new \RuntimeException('S2S assignment target is not supported in this context');
+			}
+			$facts->type = $facts->binding->type;
+			return $facts;
 		}
-		elseif ($target instanceof field_access_node) {
-			$field = object_cast($target, field_access_node::class);
-			$facts->binding = self::prepare_field_write($field, $node->value, $context);
+		finally {
+			$context->statement_assignment = $statement_assignment;
 		}
-		else {
-			throw new \RuntimeException('S2S assignment target is not supported yet');
-		}
-		$facts->type = $facts->binding->type;
-		return $facts;
 	}
 
 	/** Member assignment requires an addressable prepared field and never introduces a local. */
 	private static function prepare_field_write(field_access_node $target, expression_node $initializer, preparation_context $context): prepared_binding
 	{
-		$target->prepare($context);
+		$statement_assignment = $context->statement_assignment;
+		$context->statement_assignment = false;
+		try {
+			$target->prepare($context);
+		}
+		finally {
+			$context->statement_assignment = $statement_assignment;
+		}
 		$place = $target->require_field_access_preparation();
 		if (!$place->addressable) {
 			throw new \RuntimeException('S2S assignment requires stable storage');

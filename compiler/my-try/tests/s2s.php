@@ -51,6 +51,43 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'logic_word_and' => ['$a = false; $b = true; $c = false; $a = $b and $c; return $a;', 1],
+	'logic_word_or' => ['$a = false; $b = false; $c = true; $a = $b or $c; return $a;', 0],
+	'logic_word_xor' => ['$a = false; $b = true; $c = true; $a = $b xor $c; return $a;', 1],
+	'logic_symbolic_and' => ['$a = false; $a = true && false; return $a;', 0],
+	'logic_symbolic_or' => ['$a = false; $a = false || true; return $a;', 1],
+	'logic_grouped_and' => ['$a = (true and false); return $a;', 0],
+	'logic_grouped_or' => ['$a = (false or true); return $a;', 1],
+	'logic_grouped_xor' => ['$a = (true xor true); return $a;', 0],
+	'logic_precedence' => ['return true or true xor true and false;', 1],
+	'logic_symbolic_precedence' => ['return false and true || true;', 0],
+	'logic_and_skip' => ['$a = false; false and ($a = true); return $a;', 0],
+	'logic_and_write' => ['$a = false; true and ($a = true); return $a;', 1],
+	'logic_or_skip' => ['$a = false; true or ($a = true); return $a;', 0],
+	'logic_or_write' => ['$a = false; false or ($a = true); return $a;', 1],
+	'logic_symbolic_skip' => ['$a = false; false && ($a = true); true || ($a = true); return $a;', 0],
+	'logic_symbolic_write' => ['$a = false; true && ($a = true); return $a;', 1],
+	'logic_left_snapshot' => ['$a = false; return ($a = true) xor ($a = false);', 1],
+	'logic_xor_write_order' => ['$a = false; ($a = true) xor ($a = false); return $a;', 0],
+	'logic_xor_reads' => ['$a = true; return $a xor ($a = false);', 1],
+	'logic_xor_associativity' => ['return true xor true xor true;', 1],
+	'logic_and_throw_skipped' => ['return false and (bool)(1 / 0);', 0],
+	'logic_or_throw_skipped' => ['return true or (bool)(1 / 0);', 1],
+	'logic_grouped_literal' => ['return (true) and (false) or (true);', 1],
+	'logic_assignment_throw' => ['function fail(int &$x): int { return $x = 1 / 0; } return 0;', 0],
+	'logic_xor_throw' => ['function fail(): bool { return true xor (bool)(1 / 0); } return 0;', 0],
+	'logic_assignment_return' => ['$a = 0; return $a = 7;', 7],
+	'logic_assignment_group_target' => ['$a = 0; return (($a)) = 8;', 8],
+	'logic_assignment_chain' => ['$a = false; $b = false; return $a = $b = true;', 1],
+	'logic_assignment_declaration_chain' => ['$a = ($b = 3); return $a + $b;', 6],
+	'logic_assignment_conversion' => ['$a uint8 = 0; $b uint8 = ($a = 258); return $b;', 2],
+	'logic_assignment_snapshot' => ['$a = 1; $b = ($a = 3); $a = 8; return $a * 10 + $b;', 83],
+	'logic_assignment_parameter' => ['function change(bool &$a): bool { return $a = true; } $x = false; $r = change($x); return $r && $x;', 1],
+	'logic_assignment_arguments' => ['function pair(int $a, int $b): int { return $a * 10 + $b; } $x = 0; return pair($x = 2, $x = 3);', 23],
+	'logic_assignment_call_once' => ['function next(int &$x): int { return ++$x; } $x = 0; $a = 0; $b = 0; $b = $a = next($x); return $x * 100 + $a * 10 + $b;', 111],
+	'logic_nested_assignment_call_once' => ['function next(int &$x): int { return ++$x; } $x = 0; $a = 0; $b int = ($a = next($x)); return $x * 100 + $a * 10 + $b;', 111],
+	'logic_cast_assignment' => ['$a = 0; return (bool)($a = 2) and true;', 1],
+
 	'bits_and' => ['return 12 & 10;', 8],
 	'bits_or' => ['return 12 | 3;', 15],
 	'bits_xor' => ['return 12 ^ 5;', 9],
@@ -713,10 +750,10 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 
-	// A failed compound computation must preserve the original caller-owned target.
-	if (($name === 'compound_div_zero') || ($name === 'compound_mod_zero'))
+	// A failed assignment RHS or compound computation preserves the caller-owned target.
+	if (($name === 'compound_div_zero') || ($name === 'compound_mod_zero') || ($name === 'logic_assignment_throw'))
 	{
-		$error_code = $name === 'compound_div_zero' ? 'division_by_zero' : 'modulo_by_zero';
+		$error_code = $name === 'compound_mod_zero' ? 'modulo_by_zero' : 'division_by_zero';
 		$probe = "\nint main() { scpp::int_t<> target(7); try { (void)function_fail(target); }"
 			. ' catch (const scpp::runtime_error& error) { return error.code() == "' . $error_code
 			. '" && target.native_value() == 7 ? 0 : 91; } return 92; }';
@@ -727,7 +764,8 @@ foreach ($cases as $name => [$source, $exit])
 
 	// Observe runtime exceptions in-process without introducing source try/catch support.
 	$runtime_error_codes = ['div_zero_guard' => 'division_by_zero', 'mod_zero_guard' => 'modulo_by_zero',
-		'logical_and_guard' => 'division_by_zero', 'logical_or_guard' => 'modulo_by_zero'];
+		'logical_and_guard' => 'division_by_zero', 'logical_or_guard' => 'modulo_by_zero',
+		'logic_xor_throw' => 'division_by_zero'];
 	if (isset($runtime_error_codes[$name]))
 	{
 		$error_code = $runtime_error_codes[$name];
