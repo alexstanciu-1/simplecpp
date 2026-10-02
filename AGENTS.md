@@ -31,6 +31,11 @@ Then read the owning spec for the task.
 - If emitted C++ is semantically invalid, that failure normally belongs to the C++ compiler or runtime contract unless a generator rule explicitly says otherwise.
 - Do not write source code that depends on the generator having standard-PHP runtime knowledge.
 
+These generator rules apply to `generators/php/`. The experimental
+`compiler/my-try/` pipeline has its own shared semantic preparation stage; follow
+its local rules and preparation/emission boundary instead of treating its C++
+emitter as the semantic validator.
+
 ## Work By Owning Layer
 
 - language meaning -> `specs/`

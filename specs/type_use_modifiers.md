@@ -19,7 +19,10 @@ This rule does not inspect source spelling, C++ type names or target layout. A c
 registered integer follows the same rule as `int`; a class named `int` does not.
 Aliases use their resolved definition. Copyability and default value storage are
 different properties: identifying a struct as a value does not prove that all its
-fields can be copied.
+fields can be copied. Source structs follow the
+[memberwise copy contract](compact_layout_types.md); owned copies require the
+[`copyable_value` contract](metaprogramming_contract.md#61-default-contract-for-a-bare-type-parameter).
+Neither the presence nor the normalization of an AST modifier grants copy permission.
 
 Normalization precedes assignment, argument, reference, return and operator checks,
 and template application interning. Therefore `vector<value<int>>` and `vector<int>`

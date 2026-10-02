@@ -5,7 +5,25 @@ PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Current checkpoint — 2026-10-02 parallel test runner
+## Later source changes — evidence boundary
+
+Chapter 02's positive pass concludes at implementation revision
+`d3cedb46aee4b35dcd76763179535c0eef25dc2d`. After the native checkpoint below:
+
+| Commit | Change | Evidence scope |
+| --- | --- | --- |
+| `4f6a0f07` | Registry normalization of redundant `value<T>` | Focused PHP suites and generated C++ execution |
+| `6092d7f5` | Derived source-record capabilities and owned-copy checks | Eight focused FPM suites, two generated C++ programs, incremental rejection/recovery |
+| `d3cedb46` | Non-void straight-line fallthrough rejection | Eight focused FPM suites, six generated C++ programs with `-Werror=return-type`, incremental rejection/recovery |
+
+These commits have not received a native compiler rebuild/checkpoint. Do not project
+the earlier fixture totals or byte-parity result onto this newer revision. A later
+explicitly requested native run should record its own revision and fixture counts.
+Focused evidence directories are `/tmp/my-try-value-closing-20261002/`,
+`/tmp/my-try-value-normalization-final-20261002/`, `/tmp/my-try-capabilities-20261002/`
+and `/tmp/my-try-fallthrough-20261002/`; retained tests are the durable reproducers.
+
+## Latest native checkpoint — 2026-10-02 parallel test runner
 
 The compiler sources at `4a8aa89ccf37f44da2a96092880c66bc0cd1676d` pass native
 validation with the new shared runner and an isolated request file per fixture.

@@ -33,6 +33,19 @@ when historical context is needed; their former plans are not current instructio
 - An explicitly requested partial refactor may temporarily break later stages;
   discuss cross-owner repairs instead of silently introducing compatibility code.
 
+- Catalog development currently uses a positive-pass approach: make the agreed
+  bounded functionality work through sound structures, ownership and reusable paths.
+  Keep focused behavioral/recovery proofs; record peripheral hardening and deferred
+  extensions as debt rather than expanding the slice to exhaust them.
+- Discuss new retained structures and semantic/ownership changes before implementing
+  them. Once a batch is agreed, carry analogous cases through without requesting
+  confirmation for each one. Stop for a newly discovered cross-owner redesign.
+- Use the [shared test runner](docs/testing.md) for focused checks as well as broad
+  runs: 12 continuously refilled task slots, PHP-FPM with OPcache by default and CLI
+  fallback on unavailability. Keep dependent steps within each fixture ordered;
+  supplementary probes also use the pool. A generated-C++ run does not prove the
+  compiler itself was rebuilt natively.
+
 ## Model and processing
 
 Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
@@ -49,6 +62,10 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
   compiler operations use typed fields/hooks. Every operation has one traversal owner.
 - Keep stable identity and collection positions. Do not sort syntax membership or
   turn non-owning indexes into new semantic owners. Document index maintenance.
+- Keep semantic type identity, value-storage representation and operation capability
+  separate. Normalize redundant modifiers through registry facts, not source names.
+  Source-derived capabilities belong to completed declaration facts; semantic queries
+  require completion and register dependencies. Do not duplicate them in registry caches.
 - Required fields stay nonnullable and must be populated before read/publication.
   Absence is explicit `?T`; weak-reference intent does not imply nullable.
 
@@ -57,6 +74,9 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
 Follow [code_style.md](docs/code_style.md). Use `namespace scpp\compiler;`, lowercase
 `snake_case` data types and `Capitalized_Snake_Case` workers. Qualify external
 exceptions/constants; prefer short same-namespace types in portability annotations.
+
+Continuation lines in a split statement or declaration need at least one extra tab
+beyond its first line, including parameter lists and multiline conditions.
 
 Keep data in its owning process's structures files and algorithms in named workers.
 Use explicit PHP types; add supported adjacent annotations for container element/key

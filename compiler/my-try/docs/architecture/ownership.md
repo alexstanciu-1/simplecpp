@@ -28,6 +28,13 @@ name-bearing nodes observe their canonical occurrence. Scope indexes reference
 those same records. Publication shares identities rather than copying definitions.
 
 Prepared facts retain canonical types and reference collected declarations.
+Derived source-record capabilities are owned by `prepared_record`, alongside its
+prepared fields. Registry definitions retain identity and registered contracts;
+they do not cache a second mutable copy of source-derived capabilities. The transient
+`Capability_Preparation` query requires declaration completion and registers the
+consumer dependency before reading them. Unknown/failed preparation is not a negative
+capability answer. Nested changes propagate even when canonical type IDs are stable.
+
 Declaration work belongs to collected definitions; body work belongs to body nodes.
 Dependency and lookup memberships currently use strong identity containers with
 explicit unlinking. C++ fragments refer to existing work identities. Retained model

@@ -135,6 +135,14 @@ Native compiler runs are on explicit request; that project's legacy STAN bypass 
 local policy, not a recommendation to disable STAN for strict applications. Its
 harness and retained tests are distinct from the `compiler/src` rewrite ready set.
 Do not apply the rewrite's registration or stage-evidence requirements to my-try.
+Use its [shared runner](../../../compiler/my-try/docs/testing.md) for focused PHP
+checks and supplementary probes too: default FPM/OPcache, CLI fallback on startup
+unavailability, and 12 continuously refilled tasks. Keep compile/run dependencies
+inside each task; do not infer native compiler proof from generated-program execution.
+Its [catalog workflow](../../../compiler/my-try/docs/catalog/README.md) owns positive-pass
+scope and explicit debt. Type identity, storage representation and copy capability
+are separate concepts; consult the [preparation owner](../../../compiler/my-try/04_analyze/prepare/README.md)
+before placing source-derived facts or validation in a registry or emitter.
 
 For the `compiler/src` rewrite, use the [validation workflow](../../../specs/portability/validation_workflow.md).
 `python3 tools/php_portability/validate.py --results FRESH` runs the ready-set fast

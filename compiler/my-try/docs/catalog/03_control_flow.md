@@ -9,6 +9,46 @@ Requires expressions. Start with if/else, then joins, loops and control transfer
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Handoff from chapter 02 — 2026-10-02
+
+Chapter 02 is [concluded for its positive pass](02_expressions.md#positive-pass-conclusion--2026-10-02).
+Continue with working bounded functionality, sound model/ownership and focused proof;
+keep peripheral hardening as explicit debt. Chapter 03 semantics and new structures
+still require discussion. The imported rows below are not implementation approval.
+
+Start the discussion with block environments and `if`/`else`:
+
+- Decide condition admission/conversion explicitly. Existing boolean operators and
+  explicit casts provide reusable owners; ordinary PHP truthiness is not an agreed
+  implicit condition contract.
+- Decide child-local visibility, shadowing, assignment to outer storage and what
+  bindings survive a branch join. The current `preparation_context.locals` is one
+  body-local table; internal blocks currently share it. Source block parsing remains
+  deferred under [NOTE-033.b](01_literals_locals.md#note-033b--nested-statement-blocks).
+- Extend completion composition before accepting branches. `Body_Preparation` currently
+  reports straight-line fallthrough and composes internal blocks. It checks every
+  statement, including those after a return, and rejects non-void fallthrough before
+  body work settles. Merely finding a return in one branch cannot prove completion.
+- Preserve lazy branch execution and prepare conditions in the semantic owner; C++
+  generation consumes the selected facts. Do not loosen existing eager-effect
+  restrictions merely to make a control-flow fixture compile.
+
+Useful implementation owners: [body preparation](../../04_analyze/prepare/semantics/bodies.php),
+[contexts/facts](../../04_analyze/prepare/data/structures.php),
+[conversion preparation](../../04_analyze/conversions/preparation.php),
+[scope lookup](../../03_parse/scopes/lookup.php) and the
+[incremental scheduler](../../04_analyze/prepare/worker.php).
+Existing [fallthrough](../../tests/fallthrough.php),
+[internal-block dispatch](../../tests/preparation_dispatch.php) and
+[recovery](../../tests/preparation_recovery.php) proofs provide starting controls.
+Agree the first vertical slice before introducing a general control-flow graph.
+
+Carry forward PE-03 duplicate-declaration debt, conditional runtime-template
+copyability, bracket overload/lowering deferral and the preserved runtime arithmetic
+contracts. Reopen only dependencies of the selected slice. Check the
+[portability status](../portability/conversion_review.md): the latest chapter 02
+repairs have PHP/generated-C++ proof, not a new native compiler checkpoint.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

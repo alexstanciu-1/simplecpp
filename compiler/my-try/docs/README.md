@@ -25,7 +25,7 @@ experiment retained for regressions, not a second semantic development path.
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
 | Current scalar operators | [Bounded contracts, lowering and proof](s2s_scalar_operators.md) |
 | Active operator discussion | [Operator preparation and resolution](planning/operators.md) |
-| Next language feature | [Catalog](catalog/README.md) |
+| Next language feature | [Catalog](catalog/README.md), [chapter 03 handoff](catalog/03_control_flow.md#handoff-from-chapter-02--2026-10-02) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
