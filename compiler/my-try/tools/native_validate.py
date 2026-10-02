@@ -50,6 +50,8 @@ def main():
     parser.add_argument('--jobs', type=positive_jobs, default=DEFAULT_JOBS,
                         help='Maximum concurrent fixture tasks (default: 12)')
     parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
+    parser.add_argument('--php-executor', choices=('auto', 'fpm', 'cli'), default='auto',
+                        help='PHP backend: auto prefers FPM with CLI fallback (default)')
     args = parser.parse_args()
     target, results = args.target_checkout.resolve(), args.results.resolve()
     results.mkdir(parents=True, exist_ok=args.resume)
@@ -62,7 +64,15 @@ def main():
     logs.mkdir()
     started = time.monotonic()
 
-    runner = CommandRunner(logs, ROOT, journals=[results / 'commands.json'])
+    runner = CommandRunner(logs, ROOT, journals=[results / 'commands.json'],
+                           jobs=args.jobs, php_executor=args.php_executor)
+    try:
+        validate(args, target, results, logs, started, runner)
+    finally:
+        runner.close()
+
+
+def validate(args, target, results, logs, started, runner):
     run = runner.run
 
     source = results / 'source'
@@ -94,19 +104,19 @@ def main():
     (results / 'candidate.json').write_text(json.dumps(dict(revision=args.candidate_revision,
         checkout=str(target), files=target_hashes), indent=2) + '\n')
     project = results / 'phpp'
-    run('convert', ['php', ROOT / 'tools/php_portability/convert.php', source, project])
-    run('framework', ['php', ROOT / 'tools/php_portability/install_native_runtime.php', project, '--filesystem'])
+    run('convert', ['php', ROOT / 'tools/php_portability/convert.php', source, project], cli_reason='CLI build tool with process exit status')
+    run('framework', ['php', ROOT / 'tools/php_portability/install_native_runtime.php', project, '--filesystem'], cli_reason='CLI build tool with process exit status')
     cli = target / 'bin/scpp.php'
     config_path = project / 'prism.json'
     if not config_path.exists():
-        run('init', ['php', cli, 'init', '--php-profile=strict'], project)
+        run('init', ['php', cli, 'init', '--php-profile=strict'], project, cli_reason='CLI build tool with process exit status')
     config = json.loads(config_path.read_text())
     config['build']['cxx'] = 'clang++-18'
     config['runtime']['modules'] = ['compiler', 'filesystem', 'tasks']
     config_path.write_text(json.dumps(config, indent=2) + '\n')
     analysis_options = ['--no-stan'] if args.no_stan else []
     print('Building native compiler ' + ('without STAN...' if args.no_stan else 'with normal STAN...'), flush=True)
-    run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=600)
+    run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=600, cli_reason='CLI build tool with process exit status')
     executable = project / '.prism/build/main'
     # Ordinary host tests independently assert the algorithms and expected sample exits.
     host_suites = ['storage', 'tokenizer', 'ast']
@@ -267,12 +277,12 @@ def main():
 
     outcomes = [row.value for row in run_tasks(
         [Task(name, lambda name=name, path=path: validate_llvm(name, path)) for name, path in cases], args.jobs)]
-    run('incremental-build', ['php', cli, 'build', *analysis_options], project)
+    run('incremental-build', ['php', cli, 'build', *analysis_options], project, cli_reason='CLI build tool with process exit status')
     analysis = {'skipped': True}
     if not args.no_stan:
         stan = json.loads((project / '.prism/cache/stan_status.json').read_text())
         analysis = {key: stan[key] for key in ['compile_error_count', 'stan_error_count', 'stan_warning_count', 'stan_notice_count']}
-    summary = dict(jobs=args.jobs, wall_seconds=round(time.monotonic() - started, 3), analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
+    summary = dict(jobs=args.jobs, php_executor=args.php_executor, wall_seconds=round(time.monotonic() - started, 3), analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
                    validation_scope='types-and-s2s' if args.types_only else 'full',
                    parked_llvm_validation='skipped' if args.types_only else 'included',
                    portable_type_proof=True,

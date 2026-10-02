@@ -54,11 +54,11 @@ native driver binary and PHP driver read that relative file; each invocation own
 in-process compiler state. Recovery inputs are shared read-only. No shared mutable
 request file serializes or races concurrent fixtures.
 
-Each subprocess gets a private temporary directory through `TMPDIR`, `TMP` and
-`TEMP`, including PHP/native suites that inspect temporary-file cleanup. Output paths
+Each command gets a private temporary directory through `TMPDIR`, `TMP` and
+`TEMP` (and request-specific `sys_temp_dir` under FPM), including PHP/native suites that inspect temporary-file cleanup. Output paths
 and log names must be unique within a run. Stdout/stderr are retained per command;
 `commands.json` is updated atomically under a lock and records command, working
-directory, elapsed time, exit code and expected exit code. Timeouts kill the command's
+directory, elapsed time, exit code, expected exit code, executor and selection reason. Timeouts kill the command's
 process group, including compiler children, before collecting output and cleaning up.
 
 The pool reports each completion immediately and collects all failures in the current
@@ -73,7 +73,7 @@ hashes and a success summary as described in the [portability review](portabilit
 Import from `tools/test_runner.py`; the scheduler is independent of test language:
 
 ```python
-commands = CommandRunner(result_path / 'logs', repository_root)
+commands = CommandRunner(result_path / 'logs', repository_root, jobs=12)
 
 def check_fixture(source, executable, expected):
     commands.run(source.stem + '-compile', ['clang++', source, '-o', executable])
@@ -84,6 +84,7 @@ outcomes = run_tasks([
          check_fixture(source, executable, expected))
     for name, source, executable, expected in fixtures
 ], jobs=12)
+commands.close()  # Prefer a with block or try/finally in real callers.
 ```
 
 `tests/runner_test.py` proves the default concurrency bound and continuous slot refill
@@ -91,9 +92,60 @@ using synchronization events, stable result ordering, aggregated failures, comma
 isolation, expected nonzero exits, launch-failure evidence and child-process timeout
 cleanup.
 
-## PHP host performance
+## PHP execution
 
-The [CLI/FPM comparison](portability/php_cli_fpm.md) records the measured PHP-only
-benefit, controls and limits. `tools/benchmark_php.py` reproduces that comparison
-using this same pool. The test runners continue using CLI; no FPM integration is
-implicitly enabled by the benchmark.
+The shared `CommandRunner` defaults to **FPM with OPcache** for PHP scripts and
+`php -r` snippets. Both test entrypoints accept `--php-executor auto|fpm|cli`:
+
+- `auto` (default): try matching FPM, then use CLI if discovery/startup/health checks fail.
+- `fpm`: require FPM for eligible commands; unavailable FPM is an error.
+- `cli`: explicitly retain subprocess execution for all PHP.
+
+Install matching `php`/`php-fpm` versions and `cgi-fcgi` to use FPM. The runner discovers
+versioned FPM binaries via PATH or `/usr/sbin`, matches the exact PHP version, and uses
+the CLI INI and scanned extension directories. Unix sockets and PHP's POSIX extension
+must be available. Startup fallback is printed and recorded in the command journal;
+failed requests are **never retried through CLI**.
+
+Each runner lazily owns a private FPM master with `jobs` single-worker pools. A slot
+is leased until its request finishes or is cancelled, preventing a timeout from
+killing a worker reused by another command. Pools share OPcache; timestamp checks and
+fresh-file protection remain enabled, JIT and Xdebug are disabled for FPM. Existing
+system FPM services are untouched. `close()` / a context manager stops the private
+master; both entrypoints close it in `finally`, with an exit cleanup as a backstop.
+
+The host adapter supplies script arguments, working directory, binary stdin and separate
+stdout/stderr capture and private temporary files. Every request starts fresh PHP
+state. Returning normally means success; uncaught exceptions/fatal errors mean failure.
+`exit()`/`die()` cannot provide process exit status through FPM and are rejected as
+incomplete execution. This is host test infrastructure, not portable compiler source.
+
+CLI-specific commands stay explicit: PHP interpreter options such as `-l`, compiler
+CLI behavior checks, build/conversion tools using exit status, and `tests/native.php`
+which launches `PHP_BINARY` as a child CLI. Call `run(..., cli_reason='...')` for such
+contracts; the reason is recorded even in FPM-required mode. FPM does not emulate
+`PHP_SAPI` or `PHP_BINARY`. The style checker also uses the shared executor (one persistent worker for its
+sequential tokenizer requests). `MY_TRY_PHP_EXECUTOR=cli|fpm|auto` selects its backend;
+the main runner passes its selection to child Python tools. Direct shell invocations
+of `php` are unchanged.
+
+Run the executor's focused integration proofs (private sockets required):
+
+```bash
+MY_TRY_TEST_FPM=1 python3 compiler/my-try/tests/php_executor_test.py
+```
+
+These prove parallel isolation, argument/byte preservation, worker-state reset,
+OPcache refresh, unavailable-FPM fallback, no failed-request retries, and timeout
+cleanup of PHP child processes followed by worker recovery. Ordinary runner tests
+also cover the shared scheduler and subprocess paths.
+
+The 2026-10-02 checkpoint retained evidence in `/tmp/my-try-fpm-default-final-20261002/`
+and `/tmp/my-try-fpm-parity-final-20261002/`: 41/43 PHP suites passed, with the existing
+`model.php` and `structure_access.php` failures unchanged; 341 source fixtures and
+37 rejections matched CLI/native bytes, and 74 supplementary probes passed at 12 jobs.
+This reused the existing native binary; it is not a new native portability checkpoint.
+
+The [CLI/FPM comparison](portability/php_cli_fpm.md) records measured PHP-only benefits
+and limitations. `tools/benchmark_php.py` preserves explicit benchmark modes independent
+of the runner default.

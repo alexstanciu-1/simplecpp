@@ -136,12 +136,12 @@ previous run took 259.9 seconds and included native compiler construction and hu
 of C++ compilations. The isolated PHP fixture phase here falls from about 4.2 seconds
 to 0.6 seconds; integration would need a whole-run measurement under the same load.
 
-Keep CLI available for CLI-specific argument/stream/exit behavior and as a fallback.
-Before enabling FPM for general tests, define request input, output/error envelopes,
-per-request temporary-directory isolation, timeout/cancellation behavior and worker
-lifecycle. The successful operator suite is one representative PHP suite, not proof
-that all 43 suites are HTTP/FastCGI-compatible. The CLI disk-cache follow-up above provides another option while retaining process
-isolation. A persistent CLI worker was not benchmarked.
+The shared test runner now prefers FPM, with CLI fallback on unavailability and
+explicit CLI execution for SAPI/process-exit contracts. The [runner guide](../testing.md#php-execution)
+owns its request protocol, isolation, cancellation and validation evidence. The
+benchmark itself retains explicit modes. The CLI disk-cache follow-up above provides
+another option while retaining process isolation. A persistent CLI worker was not
+benchmarked.
 
 ## Reproduction and evidence
 

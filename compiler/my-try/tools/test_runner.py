@@ -15,6 +15,8 @@ import threading
 import time
 from typing import Callable, Any
 
+from php_executor import PhpExecutor
+
 DEFAULT_JOBS = 12
 
 
@@ -85,16 +87,26 @@ class CommandRunner:
     Each subprocess has its own temporary directory and process group. A timeout
     kills the group (including compiler children), then saves stdout/stderr.
     """
-    def __init__(self, logs, cwd, journals=()):
+    def __init__(self, logs, cwd, journals=(), *, jobs=DEFAULT_JOBS, php_executor=None):
         self.logs = Path(logs)
         self.logs.mkdir(parents=True, exist_ok=True)
         self.cwd = Path(cwd)
         self.journals = [self.logs / 'commands.json', *map(Path, journals)]
         self.commands = []
+        self.php = PhpExecutor(self.logs, positive_jobs(jobs), php_executor)
         self._names = set()
         self._lock = threading.Lock()
 
-    def run(self, name, command, cwd=None, expected=0, timeout=240):
+    def close(self):
+        self.php.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exception):
+        self.close()
+
+    def run(self, name, command, cwd=None, expected=0, timeout=240, *, cli_reason=None, input=None):
         if Path(name).name != name or name in ('', '.', '..'):
             raise ValueError('Command name must be a single nonempty path component')
         with self._lock:
@@ -105,25 +117,34 @@ class CommandRunner:
         cwd = Path(cwd) if cwd is not None else self.cwd
         started = time.monotonic()
         stdout, stderr, code, error = b'', b'', None, None
+        executor, reason = 'subprocess', None
         try:
             with tempfile.TemporaryDirectory(prefix='test-command-') as temporary:
-                environment = dict(os.environ, TMPDIR=temporary, TMP=temporary, TEMP=temporary)
-                process = subprocess.Popen(command, cwd=cwd, env=environment,
-                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                           start_new_session=True)
-                try:
-                    stdout, stderr = process.communicate(timeout=timeout)
-                    code = process.returncode
-                except subprocess.TimeoutExpired:
-                    os.killpg(process.pid, signal.SIGKILL)
-                    stdout, stderr = process.communicate()
-                    code, error = process.returncode, f'timeout after {timeout}s'
+                pool, reason = self.php.select(command, cli_reason)
+                executor = 'fpm' if pool is not None else ('cli' if reason != 'subprocess' else 'subprocess')
+                if pool is not None:
+                    stdout, stderr, code, error = pool.run(command, cwd, Path(temporary), timeout, input)
+                else:
+                    environment = dict(os.environ, TMPDIR=temporary, TMP=temporary, TEMP=temporary,
+                                       MY_TRY_PHP_EXECUTOR=self.php.mode)
+                    process = subprocess.Popen(command, cwd=cwd, env=environment,
+                                               stdin=subprocess.PIPE if input is not None else None,
+                                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                               start_new_session=True)
+                    try:
+                        stdout, stderr = process.communicate(input=input, timeout=timeout)
+                        code = process.returncode
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL)
+                        stdout, stderr = process.communicate()
+                        code, error = process.returncode, f'timeout after {timeout}s'
         except Exception as failure:
             error = f'{type(failure).__name__}: {failure}'
         (self.logs / (name + '.stdout')).write_bytes(stdout)
         (self.logs / (name + '.stderr')).write_bytes(stderr)
         record = dict(name=name, command=command, cwd=str(cwd),
-                      seconds=round(time.monotonic() - started, 3), code=code, expected=expected)
+                      seconds=round(time.monotonic() - started, 3), code=code, expected=expected,
+                      executor=executor, executor_reason=reason)
         if error is not None:
             record['error'] = error
         with self._lock:

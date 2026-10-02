@@ -6,7 +6,11 @@ segmentation, comment quality, expression grouping, and method call-flow order.
 """
 import argparse
 from pathlib import Path
-import subprocess
+import atexit
+from functools import lru_cache
+import tempfile
+
+from test_runner import CommandRunner
 
 ROOT = Path(__file__).resolve().parents[1]
 PHP_TOKENS = r'''
@@ -18,10 +22,27 @@ echo json_encode($out, JSON_THROW_ON_ERROR);
 '''
 
 
+_commands = None
+_temporary = None
+
+
+def close_executor():
+    if _commands is not None:
+        _commands.close()
+    if _temporary is not None:
+        _temporary.cleanup()
+
+
+@lru_cache(maxsize=128)
 def tokens(source):
     import json
-    raw = json.loads(subprocess.run(['php', '-r', PHP_TOKENS], input=source,
-                                    text=True, capture_output=True, check=True).stdout)
+    global _commands, _temporary
+    if _commands is None:
+        _temporary = tempfile.TemporaryDirectory(prefix='my-try-style-')
+        _commands = CommandRunner(Path(_temporary.name), ROOT, jobs=1)
+        atexit.register(close_executor)
+    raw = json.loads(_commands.run('tokens-' + str(len(_commands.commands)),
+                                  ['php', '-r', PHP_TOKENS], input=source.encode()))
     result, offset, quoted, heredoc = [], 0, False, False
     for kind, text in raw:
         # Interpolated strings contain punctuation tokens that are not code blocks.

@@ -1,12 +1,10 @@
 """Protect authored string contents while enforcing code layout."""
-import importlib.util
 from pathlib import Path
+import sys
 import unittest
 
-spec = importlib.util.spec_from_file_location(
-    'my_try_style', Path(__file__).resolve().parents[1] / 'tools/style_check.py')
-style = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(style)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
+import style_check as style
 
 
 class LayoutTests(unittest.TestCase):
