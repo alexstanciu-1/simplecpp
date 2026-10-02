@@ -5,7 +5,46 @@ PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Current checkpoint — 2026-10-02 expression chapter closeout
+## Current checkpoint — 2026-10-02 parallel test runner
+
+The compiler sources at `4a8aa89ccf37f44da2a96092880c66bc0cd1676d` pass native
+validation with the new shared runner and an isolated request file per fixture.
+The harness changes were uncommitted during this proof; source/toolchain hashes and
+the generated driver are retained in the result directory. The default **12-job**
+run passes all 341 source comparisons/executions, 74 supplementary instrumented
+programs, 15 float-spelling assertions and 37 rejection/recovery cases, plus the
+separate emission/type proofs and final incremental rebuild. LLVM and legacy STAN
+remain skipped (`--no-stan --types-only`).
+
+Evidence: `/tmp/my-try-parallel-native-20261002/summary.json`, `commands.json`,
+`source_hashes.json`, `candidate.json`, and per-command logs. Total measured wall
+time is **259.9 seconds**. The preceding serial run recorded 1,012.346 seconds of
+command time, dominated by generated-program compilation. These are observed runs,
+not a controlled benchmark: the parallel run used a fresh native build directory,
+while the earlier successful serial attempt reused objects from a failed attempt.
+
+See [test runners](../testing.md) for reusable scheduling, `--jobs`, private temporary
+directories, fixture isolation and failure evidence. The compiler build precedes the
+pool; each fixture then owns its sequential comparison/compile/execute operations.
+New tasks start as soon as individual slots become free.
+
+The parallel PHP-suite check completed all 43 suites, with 41 passing. Two failures
+also reproduce when invoked directly without the pool: `model.php` fails in parked
+LLVM preparation (`Object not found`), and `structure_access.php` reads the type
+catalog before initialization. These remain separate test/backend debt; this runner
+change does not suppress them or claim a fully passing broad suite. Evidence:
+`/tmp/my-try-parallel-php-20261002/php-summary.json` and `logs/`.
+
+The ordinary runner's generated-program and CLI helpers were then checked separately
+against the successfully emitted manifests: all 391 C++ and 19 LLVM fixture programs
+passed with 12 jobs in 144.002 seconds, along with host CLI output/usage and sample
+execution checks. This exercises generated LLVM fixtures without claiming that the
+parked native-compiler LLVM comparison path or the failing `model.php` suite passes.
+Evidence is `program-summary.json` and `program-logs/` in that same PHP result folder.
+The standalone runner unit tests pass, including the 12-slot refill proof, aggregate
+failures, temporary-file isolation and process-tree timeout cleanup.
+
+## Earlier checkpoint — 2026-10-02 expression chapter closeout
 
 The worktree based on `a17ec891af2f30bb7635bd0fe1290b4555aa8ab9`, with the two
 portability adaptations below, converted and built with Clang 18 and
@@ -39,9 +78,9 @@ Evidence: `/tmp/my-try-ch02-native-20261002/`, including `summary.json`,
 recorded command time totals 1,012.346 seconds: 932.763 seconds compiling generated
 programs, 41.307 seconds building the native compiler, and 0.532 seconds for the
 final incremental build. These are one-run measurements, not a benchmark claim.
-The harness currently runs fixtures serially; independent program compilation and
-execution are candidates for bounded parallelism, while the native driver uses a
-shared serial request file.
+At that checkpoint the harness ran fixtures serially and the native driver used a
+shared request file. The subsequent parallel-runner checkpoint above removes both
+limitations.
 
 Reproduce from a fresh result path using the commit containing these adaptations:
 

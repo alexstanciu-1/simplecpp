@@ -1,160 +1,132 @@
 #!/usr/bin/env python3
-"""Run the PHP suites and execute every LLVM fixture they emit."""
-
+"""Run my-try suites and generated programs through the shared bounded task pool."""
 import argparse
 import json
 from pathlib import Path
-import subprocess
+import sys
 import tempfile
 import time
 
-
-def run(command, expected=0):
-    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-    if result.returncode != expected:
-        raise RuntimeError(
-            f"{command}: expected exit {expected}, got {result.returncode}\n"
-            f"{result.stdout}\n{result.stderr}"
-        )
-    return result
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
+from test_runner import CommandRunner, DEFAULT_JOBS, Task, TaskFailures, positive_jobs, run_tasks
 
 
-def verify_php(root, output):
-    """Run every PHP test, retaining all failures; some PHP suites execute generated samples."""
-    results = []
-    for source in sorted((root / "tests").glob("*.php")):
-        command = ["php", str(source)]
-        if source.stem in ("calls", "llvm", "s2s"):
+def verify_php(root, output, runner, jobs):
+    """Run PHP suites independently, each with private temporary files and logs."""
+    def suite(source):
+        command = ['php', str(source)]
+        if source.stem in ('calls', 'llvm', 's2s'):
             directory = output / source.stem
             directory.mkdir()
             command.append(str(directory))
-        if source.stem == "incremental_smoke":
-            command.append("--restore")
-        started = time.monotonic()
-        try:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-            code, log = result.returncode, result.stdout + result.stderr
-        except subprocess.TimeoutExpired as error:
-            code, log = 124, str(error)
-        (output / f"{source.stem}.log").write_text(log)
-        results.append({"test": source.name, "exit_code": code,
-                        "seconds": round(time.monotonic() - started, 3)})
-        print(f"{source.name}: {'PASS' if code == 0 else 'FAIL'}", flush=True)
-    summary = {"tests": results, "passed": sum(row["exit_code"] == 0 for row in results)}
-    (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    if summary["passed"] != len(results):
-        raise RuntimeError(f"PHP tests failed; see {output / 'summary.json'}")
+        if source.stem == 'incremental_smoke':
+            command.append('--restore')
+        return runner.run('php-' + source.stem, command, timeout=120)
+
+    tasks = [Task(source.name, lambda source=source: suite(source))
+             for source in sorted((root / 'tests').glob('*.php'))]
+    try:
+        outcomes = run_tasks(tasks, jobs)
+    except TaskFailures as failure:
+        outcomes = failure.outcomes
+        raise
+    finally:
+        if 'outcomes' in locals():
+            summary = {'jobs': jobs, 'tests': [dict(test=row.name, passed=row.error is None,
+                       error=row.error, seconds=round(row.seconds, 3)) for row in outcomes],
+                       'passed': sum(row.error is None for row in outcomes)}
+            (output / 'php-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
 
 
-def verify(root, output):
-    clang = json.loads((root / "06_native/toolchain.json").read_text())["clang"]
-    run(["python3", str(root / "tests/style_check_test.py")])
-    run(["python3", str(root / "tools/style_check.py")])
-    php_files = sorted(p for p in root.rglob("*.php") if "build" not in p.relative_to(root).parts)
-    for source in php_files:
-        run(["php", "-l", str(source)])
+def verify_programs(root, output, runner, jobs):
+    clang = json.loads((root / '06_native/toolchain.json').read_text())['clang']
+    tasks = []
+    counts = {}
+    def program(suite, fixture):
+        source = Path(fixture['path'])
+        executable = source.with_suffix('.program')
+        name = suite + '-' + source.stem
+        if suite == 'llvm':
+            command = [clang, '-Wno-override-module', '-x', 'ir', source, '-o', executable]
+        else:
+            command = ['clang++', '-std=c++20', '-I', root.parents[1] / 'runtime/include',
+                       source, '-o', executable]
+        runner.run(name + '-compile', command)
+        runner.run(name + '-execute', [executable], expected=fixture['exit_code'])
 
-    storage = run(["php", str(root / "tests/storage.php")])
-    (output / "storage.log").write_text(storage.stdout + storage.stderr)
-    tokenizer = run(["php", str(root / "tests/tokenizer.php")])
-    (output / "tokenizer.log").write_text(tokenizer.stdout + tokenizer.stderr)
-    ast = run(["php", str(root / "tests/ast.php")])
-    (output / "ast.log").write_text(ast.stdout + ast.stderr)
-    access = run(["php", str(root / "tests/structure_access.php")])
-    (output / "structure_access.log").write_text(access.stdout + access.stderr)
-    invariants = run(["php", str(root / "tests/ast_invariants.php")])
-    (output / "ast_invariants.log").write_text(invariants.stdout + invariants.stderr)
-    roles = run(["php", str(root / "tests/collected_roles.php")])
-    (output / "collected_roles.log").write_text(roles.stdout + roles.stderr)
-    work = run(["php", str(root / "tests/preparation_work.php")])
-    (output / "preparation_work.log").write_text(work.stdout + work.stderr)
-    dispatch = run(["php", str(root / "tests/specialization_dispatch.php")])
-    (output / "specialization_dispatch.log").write_text(dispatch.stdout + dispatch.stderr)
-    incremental = run(["php", str(root / "tests/incremental.php")])
-    (output / "incremental.log").write_text(incremental.stdout + incremental.stderr)
-    discovery = run(["php", str(root / "tests/module_discovery.php")])
-    (output / "module_discovery.log").write_text(discovery.stdout + discovery.stderr)
-    module_sync = run(["php", str(root / "tests/module_sync.php")])
-    (output / "module_sync.log").write_text(module_sync.stdout + module_sync.stderr)
-    file_scan = run(["php", str(root / "tests/file_scan.php")])
-    (output / "file_scan.log").write_text(file_scan.stdout + file_scan.stderr)
-    pipeline = run(["php", str(root / "tests/pipeline.php")])
-    (output / "pipeline.log").write_text(pipeline.stdout + pipeline.stderr)
-    publication = run(["php", str(root / "tests/publication.php")])
-    (output / "publication.log").write_text(publication.stdout + publication.stderr)
-    model = run(["php", str(root / "tests/model.php")])
-    (output / "model.log").write_text(model.stdout + model.stderr)
-    type_catalog = run(["php", str(root / "tests/type_catalog.php")])
-    (output / "type_catalog.log").write_text(type_catalog.stdout + type_catalog.stderr)
+    for suite in ('llvm', 's2s'):
+        fixtures = json.loads((output / suite / 'executions.json').read_text())
+        counts[suite + '_executions'] = len(fixtures)
+        tasks.extend(Task(suite + '-' + Path(fixture['path']).stem,
+                          lambda suite=suite, fixture=fixture: program(suite, fixture))
+                     for fixture in fixtures)
+    run_tasks(tasks, jobs)
+    return counts
 
-    text = run(["php", str(root / "tests/llvm_text.php")])
-    (output / "llvm_text.log").write_text(text.stdout + text.stderr)
-    native = run(["php", str(root / "tests/native.php")])
-    (output / "native.log").write_text(native.stdout + native.stderr)
 
-    for suite in ("llvm", "calls"):
-        directory = output / suite
-        directory.mkdir()
-        result = run(["php", str(root / "tests" / f"{suite}.php"), str(directory)])
-        (output / f"{suite}.log").write_text(result.stdout + result.stderr)
-
-    executions = json.loads((output / "llvm/executions.json").read_text())
-    for fixture in executions:
-        source = Path(fixture["path"])
-        executable = source.with_suffix(".program")
-        run([clang, "-Wno-override-module", "-x", "ir", str(source), "-o", str(executable)])
-        run([str(executable)], fixture["exit_code"])
-
-    s2s = output / "s2s"
-    s2s.mkdir()
-    proof = run(["php", str(root / "tests/s2s.php"), str(s2s)])
-    (output / "s2s.log").write_text(proof.stdout + proof.stderr)
-    s2s_cases = json.loads((s2s / "executions.json").read_text())
-    for fixture in s2s_cases:
-        source = Path(fixture["path"])
-        executable = source.with_suffix(".program")
-        run(["clang++", "-std=c++20", "-I", str(root.parents[1] / "runtime/include"), str(source), "-o", str(executable)])
-        run([str(executable)], fixture["exit_code"])
-
-    # The single host entry exposes S2S without the report banner or diagnostics on stdout.
-    cli_source = output / "cli-source"
+def verify_cli(root, output, runner):
+    cli_source = output / 'cli-source'
     cli_source.mkdir()
-    (cli_source / "main.phs").write_text("$a = 10; return $a;")
-    cli = run(["php", str(root / "main.php"), "--s2s", str(cli_source)])
-    if cli.stdout != (s2s / "value.cpp").read_text() or cli.stderr:
-        raise RuntimeError("Host S2S mode differs from direct generation")
-    (output / "s2s-cli.log").write_text(cli.stdout)
-    for arguments in (["--s2s"], ["--unknown"], ["--s2s", str(cli_source), "extra"]):
-        bad_usage = run(["php", str(root / "main.php"), *arguments], expected=1)
-        if bad_usage.stdout or not bad_usage.stderr.startswith("Usage:"):
-            raise RuntimeError("Host usage failure did not stay on stderr")
-    missing = run(["php", str(root / "main.php"), "--s2s", str(output / "missing-source")], expected=1)
-    if missing.stdout or not missing.stderr.startswith("S2S generation failed:"):
-        raise RuntimeError("Host S2S failure did not stay on stderr")
+    (cli_source / 'main.phs').write_text('$a = 10; return $a;')
+    cli = runner.run('cli-s2s', ['php', root / 'main.php', '--s2s', cli_source])
+    if cli != (output / 's2s/value.cpp').read_bytes() or (runner.logs / 'cli-s2s.stderr').read_bytes():
+        raise RuntimeError('Host S2S mode differs from direct generation')
+    for index, arguments in enumerate((['--s2s'], ['--unknown'], ['--s2s', str(cli_source), 'extra'])):
+        name = 'cli-usage-' + str(index)
+        stdout = runner.run(name, ['php', root / 'main.php', *arguments], expected=1)
+        if stdout or not (runner.logs / (name + '.stderr')).read_bytes().startswith(b'Usage:'):
+            raise RuntimeError('Host usage failure did not stay on stderr')
+    stdout = runner.run('cli-missing', ['php', root / 'main.php', '--s2s', output / 'missing-source'], expected=1)
+    if stdout or not (runner.logs / 'cli-missing.stderr').read_bytes().startswith(b'S2S generation failed:'):
+        raise RuntimeError('Host S2S failure did not stay on stderr')
+    sample = runner.run('sample', ['php', root / 'main.php'])
+    if b'Native build: exit 0\n' not in sample or b'Executable exit code: 9\n' not in sample:
+        raise RuntimeError('Sample did not compile and execute with its expected exit code 9')
 
-    sample = run(["php", str(root / "main.php")])
-    (output / "sample.log").write_text(sample.stdout + sample.stderr)
-    if "Native build: exit 0\n" not in sample.stdout or "Executable exit code: 9\n" not in sample.stdout:
-        raise RuntimeError("Sample did not compile and execute with its expected exit code 9")
 
-    calls = (output / "calls.log").read_text().count("dependencies verified, native exit")
-    summary = {"php_lint_files": len(php_files), "llvm_executions": len(executions),
-               "call_executions": calls, "sample_exit": 9, "s2s_executions": len(s2s_cases)}
-    (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+def verify(root, output, jobs=DEFAULT_JOBS, php_only=False, skip_style=False):
+    started = time.monotonic()
+    runner = CommandRunner(output / 'logs', root.parents[1], journals=[output / 'commands.json'])
+    summary = dict(jobs=jobs, passed=False)
+    try:
+        if not php_only:
+            php_files = sorted(p for p in root.rglob('*.php') if 'build' not in p.relative_to(root).parts)
+            tasks = [Task('lint-' + str(index), lambda source=source, index=index:
+                          runner.run('lint-' + str(index), ['php', '-l', source]))
+                     for index, source in enumerate(php_files)]
+            tasks.extend(Task(source.stem, lambda source=source:
+                              runner.run(source.stem, [sys.executable, source]))
+                         for source in sorted((root / 'tests').glob('*_test.py')))
+            if not skip_style:
+                tasks.append(Task('style', lambda: runner.run('style', [sys.executable, root / 'tools/style_check.py'])))
+            run_tasks(tasks, jobs)
+            summary['php_lint_files'] = len(php_files)
+        verify_php(root, output, runner, jobs)
+        if not php_only:
+            summary.update(verify_programs(root, output, runner, jobs))
+            verify_cli(root, output, runner)
+            summary['sample_exit'] = 9
+            summary['call_executions'] = (runner.logs / 'php-calls.stdout').read_text().count('dependencies verified, native exit')
+        summary['passed'] = True
+    finally:
+        summary['wall_seconds'] = round(time.monotonic() - started, 3)
+        summary['style_skipped'] = php_only or skip_style
+        (output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps(summary))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results", type=Path, help="New directory in which to retain evidence")
-    parser.add_argument("--php-only", action="store_true", help="Run all PHP suites without the additional lint/style/native fixture sweep")
+    parser.add_argument('--results', type=Path, help='New directory in which to retain evidence')
+    parser.add_argument('--jobs', type=positive_jobs, default=DEFAULT_JOBS, help='Maximum concurrent tasks (default: 12)')
+    parser.add_argument('--php-only', action='store_true', help='Run PHP suites without lint/style/native fixture sweep')
+    parser.add_argument('--skip-style', action='store_true', help='Explicitly skip repository style gate; record in summary')
     arguments = parser.parse_args()
-    verify_selected = verify_php if arguments.php_only else verify
     root = Path(__file__).resolve().parents[1]
     if arguments.results:
         output = arguments.results.resolve()
         output.mkdir(parents=True, exist_ok=False)
-        verify_selected(root, output)
+        verify(root, output, arguments.jobs, arguments.php_only, arguments.skip_style)
     else:
-        with tempfile.TemporaryDirectory(prefix="scpp-my-try-proof-") as directory:
-            verify_selected(root, Path(directory))
+        with tempfile.TemporaryDirectory(prefix='scpp-my-try-proof-') as directory:
+            verify(root, Path(directory), arguments.jobs, arguments.php_only, arguments.skip_style)

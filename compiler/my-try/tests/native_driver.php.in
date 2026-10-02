@@ -136,7 +136,7 @@ if ((!$scope_recovered->complete) || (q_count($scope_recovered->scopes) !== 4)) 
 // The same portable S2S proof runs in PHP and in this native executable.
 $cpp_proof = S2S_Proof::run();
 
-// Host harness supplies literal paths before conversion.
+// Each invocation reads its own request in its isolated working directory.
 $path = fs_read_text(__REQUEST_FILE__);
 if ($path === 's2s-proof') {
 	echo $cpp_proof;

@@ -2,7 +2,7 @@
 """Build a candidate native compiler and compare its fixture behavior with PHP.
 
 The selected checkout is explicitly a candidate, not an update to the verified pin.
-The executable reads the module directory from RESULTS/request.txt (serial test entry).
+Each invocation reads request.txt from its own working directory.
 """
 import argparse
 import hashlib
@@ -10,8 +10,9 @@ import json
 from pathlib import Path
 import re
 import shutil
-import subprocess
 import time
+
+from test_runner import CommandRunner, DEFAULT_JOBS, Task, positive_jobs, run_tasks
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
@@ -46,30 +47,23 @@ def main():
     parser.add_argument('--no-stan', action='store_true', help='Explicitly isolate native validation from STAN; record analysis as skipped')
     parser.add_argument('--types-only', action='store_true',
                         help='Run frontend/C++ type validation while explicitly skipping parked LLVM proofs')
+    parser.add_argument('--jobs', type=positive_jobs, default=DEFAULT_JOBS,
+                        help='Maximum concurrent fixture tasks (default: 12)')
     parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
     args = parser.parse_args()
     target, results = args.target_checkout.resolve(), args.results.resolve()
     results.mkdir(parents=True, exist_ok=args.resume)
+    (results / 'summary.json').unlink(missing_ok=True)
     logs = results / 'logs'
     attempt = 1
     while logs.exists():
         attempt += 1
         logs = results / f'logs-{attempt}'
     logs.mkdir()
-    commands = []
+    started = time.monotonic()
 
-    def run(name, command, cwd=ROOT, expected=0, timeout=240):
-        start = time.monotonic()
-        process = subprocess.run([str(x) for x in command], cwd=cwd, capture_output=True, timeout=timeout)
-        (logs / (name + '.stdout')).write_bytes(process.stdout)
-        (logs / (name + '.stderr')).write_bytes(process.stderr)
-        commands.append(dict(name=name, command=[str(x) for x in command], cwd=str(cwd),
-                             seconds=round(time.monotonic() - start, 3), code=process.returncode))
-        (logs / 'commands.json').write_text(json.dumps(commands, indent=2) + '\n')
-        (results / 'commands.json').write_text(json.dumps(commands, indent=2) + '\n')
-        if process.returncode != expected:
-            raise RuntimeError(f'{name}: expected exit {expected}, got {process.returncode}; see {logs}')
-        return process.stdout
+    runner = CommandRunner(logs, ROOT, journals=[results / 'commands.json'])
+    run = runner.run
 
     source = results / 'source'
     source.mkdir(exist_ok=args.resume)
@@ -85,7 +79,7 @@ def main():
     (pipeline / 'b.phs').write_text('$')
     driver = (APP / 'tests/native_driver.php.in').read_text()
     shutil.copyfile(APP / 'tests/s2s_proof.php', source / 's2s_proof.php')
-    driver = (driver.replace('__REQUEST_FILE__', php_literal(request))
+    driver = (driver.replace('__REQUEST_FILE__', php_literal('request.txt'))
               .replace('__RECOVERY_DIR__', php_literal(recovery))
               .replace('__PIPELINE_DIR__', php_literal(pipeline))
               .replace('__RUN_LLVM_PROOFS__', 'false' if args.types_only else 'true'))
@@ -120,15 +114,18 @@ def main():
         host_suites += ['type_catalog', 'constructed_type']
     else:
         host_suites += ['model', 'llvm_text']
-    for suite in host_suites:
-        run('php-' + suite, ['php', APP / 'tests' / (suite + '.php')])
+    run_tasks([Task('php-' + suite, lambda suite=suite:
+                    run('php-' + suite, ['php', APP / 'tests' / (suite + '.php')]))
+               for suite in host_suites], args.jobs)
     fixtures = results / 'fixtures'
     fixtures.mkdir(exist_ok=args.resume)
     if not args.types_only:
-        for suite in ['llvm', 'calls']:
+        def emit_suite(suite):
             folder = fixtures / suite
             folder.mkdir(exist_ok=args.resume)
             run('php-' + suite, ['php', APP / 'tests' / (suite + '.php'), folder])
+        run_tasks([Task(suite, lambda suite=suite: emit_suite(suite))
+                   for suite in ['llvm', 'calls']], args.jobs)
     expected_exits = {}
     cases = []
     if not args.types_only:
@@ -144,16 +141,16 @@ def main():
     php_code = 'require ' + php_literal(APP / 'boot.php') + '; require ' + php_literal(APP / 'tests/s2s_proof.php') + '; require ' + php_literal(source / 'main.php') + ';'
     # Compile generated C++ from both host implementations, independently of LLVM parity.
     request.write_text('s2s-proof')
-    expected_cpp = run('s2s-host', ['php', '-r', php_code])
-    native_cpp = run('s2s-native', [executable])
+    expected_cpp = run('s2s-host', ['php', '-r', php_code], cwd=results)
+    native_cpp = run('s2s-native', [executable], cwd=results)
     if native_cpp != expected_cpp:
         raise RuntimeError('Native C++ emission differs from PHP')
     (results / 's2s.cpp').write_bytes(native_cpp)
     run('s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include', results / 's2s.cpp', '-o', results / 's2s-program'])
     run('s2s-execute', [results / 's2s-program'], expected=10)
     request.write_text('types-proof')
-    expected_type_cpp = run('types-host', ['php', '-r', php_code])
-    native_type_cpp = run('types-native', [executable])
+    expected_type_cpp = run('types-host', ['php', '-r', php_code], cwd=results)
+    native_type_cpp = run('types-native', [executable], cwd=results)
     if native_type_cpp != expected_type_cpp:
         raise RuntimeError('Native constructed-type C++ emission differs from PHP')
     (results / 'types.cpp').write_bytes(native_type_cpp)
@@ -168,15 +165,13 @@ def main():
     valid_cases = [(name, text, code) for name, (text, code) in programs['valid'].items()]
     declaration_case_count = sum(name.startswith(('function_', 'struct_', 'integer_', 'field_'))
                                  for name, _, _ in valid_cases)
-    float_spelling_assertions = 0
-    executed_cpp = set()
-    for name, text, code in valid_cases:
+    def validate_source(name, text, code):
         folder = results / 's2s-programs' / name
         folder.mkdir(parents=True, exist_ok=args.resume)
         (folder / 'main.phs').write_text(text)
-        request.write_text('s2s:' + str(folder))
-        host_output = run(name + '-s2s-host', ['php', '-r', php_code])
-        native_output = run(name + '-s2s-native', [executable])
+        (folder / 'request.txt').write_text('s2s:' + str(folder))
+        host_output = run(name + '-s2s-host', ['php', '-r', php_code], cwd=folder)
+        native_output = run(name + '-s2s-native', [executable], cwd=folder)
         if native_output != host_output or native_output.startswith(b'ERROR\n'):
             raise RuntimeError(name + ': native S2S output differs from PHP or was rejected')
         generated = native_output.decode()
@@ -198,49 +193,59 @@ def main():
             if generated_with_probe == generated:
                 raise RuntimeError(name + ': float spelling probe could not find the entry return')
             generated = generated_with_probe
-            float_spelling_assertions += 1
         (folder / 'main.cpp').write_text(generated)
         run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
                                  folder / 'main.cpp', '-o', folder / 'program'])
         run(name + '-s2s-execute', [folder / 'program'], expected=code)
-        executed_cpp.add((generated.encode(), code))
+        return generated.encode(), code
+
+    source_outcomes = run_tasks([Task(name, lambda name=name, text=text, code=code:
+                                      validate_source(name, text, code))
+                                for name, text, code in valid_cases], args.jobs)
+    executed_cpp = {row.value for row in source_outcomes}
+    float_spelling_assertions = sum(name.startswith('float_form_') for name, _, _ in valid_cases)
     # These instrumented programs assert exact values, string bytes and error/store
     # behavior. Their base compiler output has passed PHP/native parity above.
-    probe_executions = 0
-    for item in json.loads((s2s_fixtures / 'executions.json').read_text()):
+    def validate_probe(item):
         probe_source = Path(item['path'])
-        probe_bytes = probe_source.read_bytes()
-        if (probe_bytes, item['exit_code']) in executed_cpp:
-            continue
         name = probe_source.stem
         executable_probe = results / ('probe-' + name)
         run(name + '-probe-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
                                   probe_source, '-o', executable_probe])
         run(name + '-probe-execute', [executable_probe], expected=item['exit_code'])
-        probe_executions += 1
+
+    probe_cases = [item for item in json.loads((s2s_fixtures / 'executions.json').read_text())
+                   if (Path(item['path']).read_bytes(), item['exit_code']) not in executed_cpp]
+    run_tasks([Task('probe-' + Path(item['path']).stem, lambda item=item: validate_probe(item))
+               for item in probe_cases], args.jobs)
+    probe_executions = len(probe_cases)
     print(f'{probe_executions} supplementary instrumented programs passed', flush=True)
     rejection_cases = programs['rejected'] + [
         'struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }',
         '$s = "abc"; $s[];', '$s = "abc"; $s[0];',
         '$s = "abc"; $s[] = "d";', '$s = "abc"; $s[0] = "d";']
-    for index, text in enumerate(rejection_cases):
+    def validate_rejection(index, text):
         name = 's2s-rejected-' + str(index)
         folder = results / 'declaration-programs' / name
         folder.mkdir(parents=True, exist_ok=args.resume)
         (folder / 'main.phs').write_text(text)
-        request.write_text('s2s:' + str(folder))
-        host_output = run(name + '-host', ['php', '-r', php_code])
-        native_output = run(name + '-native', [executable])
+        (folder / 'request.txt').write_text('s2s:' + str(folder))
+        host_output = run(name + '-host', ['php', '-r', php_code], cwd=folder)
+        native_output = run(name + '-native', [executable], cwd=folder)
         if native_output != host_output or not native_output.startswith(b'ERROR\n'):
             raise RuntimeError(name + ': native rejection/recovery differs from PHP')
+    run_tasks([Task('rejected-' + str(index), lambda index=index, text=text:
+                    validate_rejection(index, text))
+               for index, text in enumerate(rejection_cases)], args.jobs)
     print(f'{len(valid_cases)} valid S2S executions, including {float_spelling_assertions} float spelling assertions, '
           f'and {len(rejection_cases)} S2S rejections passed', flush=True)
-    outcomes = []
-    for name, path in cases:
-        request.write_text(str(path))
+    def validate_llvm(name, path):
         key = name.replace('/', '-')
-        php_trace = run(key + '-php', ['php', '-r', php_code])
-        native_trace = run(key + '-native', [executable])
+        invocation = results / 'requests' / key
+        invocation.mkdir(parents=True, exist_ok=args.resume)
+        (invocation / 'request.txt').write_text(str(path))
+        php_trace = run(key + '-php', ['php', '-r', php_code], cwd=invocation)
+        native_trace = run(key + '-native', [executable], cwd=invocation)
         if native_trace != php_trace:
             raise RuntimeError(f'{name}: PHP/native trace mismatch; see {logs}')
         valid = name in expected_exits
@@ -258,15 +263,16 @@ def main():
             run(key + '-execute', [folder / 'program'], expected=expected_exits[name])
         elif not native_trace.startswith(b'ERROR\n'):
             raise RuntimeError(name + ': invalid input was not rejected')
-        outcomes.append(dict(name=name, valid=valid, passed=True))
-        if len(outcomes) % 20 == 0:
-            print(f'{len(outcomes)}/{len(cases)} native comparisons passed', flush=True)
+        return dict(name=name, valid=valid, passed=True)
+
+    outcomes = [row.value for row in run_tasks(
+        [Task(name, lambda name=name, path=path: validate_llvm(name, path)) for name, path in cases], args.jobs)]
     run('incremental-build', ['php', cli, 'build', *analysis_options], project)
     analysis = {'skipped': True}
     if not args.no_stan:
         stan = json.loads((project / '.prism/cache/stan_status.json').read_text())
         analysis = {key: stan[key] for key in ['compile_error_count', 'stan_error_count', 'stan_warning_count', 'stan_notice_count']}
-    summary = dict(analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
+    summary = dict(jobs=args.jobs, wall_seconds=round(time.monotonic() - started, 3), analysis=analysis, passed=True, executable=str(executable), request_file=str(request),
                    validation_scope='types-and-s2s' if args.types_only else 'full',
                    parked_llvm_validation='skipped' if args.types_only else 'included',
                    portable_type_proof=True,

@@ -10,7 +10,7 @@ experiment retained for regressions, not a second semantic development path.
 
 | Need | Read |
 | --- | --- |
-| Operating rules and checks | [AGENTS](../AGENTS.md), [code style](code_style.md) |
+| Operating rules and checks | [AGENTS](../AGENTS.md), [code style](code_style.md), [test runners](testing.md) |
 | Retained data and ownership | [Model](architecture/MODEL.md), [ownership](architecture/ownership.md) |
 | Specialized syntax and traversal | [AST layout](architecture/ast_layout.md) |
 | Incremental stages and failure handling | [Lifecycle](lifecycle/incremental.md), [work queue](lifecycle/work_queue.md) |
@@ -64,5 +64,7 @@ is [tools/apache/scpp-my-try.conf](../tools/apache/scpp-my-try.conf).
 Focused PHP tests are the default. Some fixtures require an existing temporary
 output directory; inspect their entry before invoking them. The full runner
 `python3 compiler/my-try/tests/run.py --results FRESH_DIRECTORY` and native compiler
-validation are on demand. Running the compiler in PHP and compiling its output is
+validation are on demand. Both runners default to 12 continuously refilled worker
+slots; use `--jobs N` to override. See [test runners](testing.md) for isolation and
+evidence details. Running the compiler in PHP and compiling its output is
 not proof that the compiler itself builds natively; see the portability review.
