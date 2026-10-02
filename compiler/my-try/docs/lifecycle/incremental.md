@@ -7,6 +7,10 @@ retired symbols after the successful join. `exec_cpp`/`update_cpp` add preparati
 and C++ generation; LLVM uses the same frontend followed by its parked preparation.
 See the [call map](../../compiler/calls.md) and [work queue](work_queue.md).
 
+The agreed post-collection concurrency boundaries and shared-write inventory are
+recorded in the [multithreading plan](../planning/multithreading.md).
+That discussion does not change the current execution model.
+
 ## Modules and files
 
 `init_modules(Storage<module_input>)` validates complete module configuration before

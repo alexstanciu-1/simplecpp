@@ -7,6 +7,20 @@ and [preparation](../../04_analyze/prepare/README.md). The
 [original discussion](../archive/incremental_strategy_history.md) is historical;
 its superseded proposals and completed tasks are not an implementation backlog.
 
+## Multithreading and incremental correctness
+
+The active MT design, agreed stage boundaries, shared-write inventory, proposed
+collection mechanisms and canonical type publication options belong to the
+[multithreading plan](multithreading.md). Implementation remains unauthorized.
+
+Incremental constraints on that design remain: preserve declaration/body work
+identities and effective-change invalidation; file batching must not widen body-only
+edits into whole-file invalidation. Missing/ambiguous lookup dependencies, deletion
+notification before unlinking, and failure/recovery retry obligations must survive.
+Parse/collect must join before semantic lookup, and affected declarations must settle
+before parallel bodies and fragment rendering; the MT plan records these as agreed
+boundaries rather than open questions.
+
 ## Completed bounded abstract-property review (2026-09-30)
 
 Reviewed retained fields, collection elements/keys and trait fields in input,

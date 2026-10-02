@@ -14,6 +14,7 @@ experiment retained for regressions, not a second semantic development path.
 | Retained data and ownership | [Model](architecture/MODEL.md), [ownership](architecture/ownership.md) |
 | Specialized syntax and traversal | [AST layout](architecture/ast_layout.md) |
 | Incremental stages and failure handling | [Lifecycle](lifecycle/incremental.md), [work queue](lifecycle/work_queue.md) |
+| Active multithreading design and shared-write inventory | [Multithreading plan](planning/multithreading.md) |
 | Collection and preparation | [Analysis](../04_analyze/README.md), [preparation](../04_analyze/prepare/README.md) |
 | Collection APIs | [Storage](storage/STORAGE.md) |
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |

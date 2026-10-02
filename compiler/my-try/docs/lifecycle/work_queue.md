@@ -6,6 +6,11 @@ Scanning selects source records in place. Tokenization joins before parsing star
 parsing joins before cleanup and preparation. No private whole-file replacement
 pipeline or second declaration comparison remains.
 
+Future per-file semantic preparation, shared-write segmentation and publication
+mechanisms are discussed in the [multithreading plan](../planning/multithreading.md).
+That plan preserves the incremental lifecycle and does not change this queue's
+current implementation.
+
 ## Work and execution
 
 `Source_Work_Queue` is invocation-local. Membership is sealed before dispatch; each
