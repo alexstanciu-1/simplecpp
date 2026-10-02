@@ -740,6 +740,11 @@ final class Parser_Run
 		$old_end = $parameter->end_token();
 		$parameter->type_syntax = $type;
 		$parameter->mode = $mode;
+		$parameter->default_value = null;
+		if ($this->text() === '=') {
+			$this->position++;
+			$parameter->default_value = $this->expression();
+		}
 
 		$parameter->name = $name;
 		$parameter->collect($this->collector, $scope, $name_index);

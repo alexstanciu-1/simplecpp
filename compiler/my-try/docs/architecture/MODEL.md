@@ -37,6 +37,9 @@ Function signatures and bodies have separate work identities. Fields/parameters
 settle with their definition; locals settle with their body. A body is a processing
 unit, not a symbol. Replacing body syntax transfers its retained work identity.
 Unchanged bodies retain nodes, scopes, occurrences and facts.
+Parameters own optional default expressions; normalized scalar default snapshots
+belong to their prepared facts and participate in signature equivalence. Source calls
+retain only explicit arguments, with omitted defaults supplied by the declaration.
 
 ## AST and scopes
 
@@ -92,6 +95,8 @@ Successful semantic changes/deletions accumulate in `collected_file.preparation_
 The backend retains fragments keyed by existing work owners, with completion versions,
 dirty state, text, includes and record dependencies. It renders selected fragments;
 unchanged bodies are not traversed. Assembly consumes the handoff only on success.
+Function signature fragments retain separate prototype and definition spellings so
+default values appear only on prototypes, without rerendering syntax during assembly.
 Failures retain pending work and withhold completed output; unexpected failures
 request a full rebuild.
 

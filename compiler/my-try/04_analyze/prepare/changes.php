@@ -18,6 +18,9 @@ final class Preparation_Changes
 		}
 		foreach ($parameters as $index => $parameter) {
 			$before = $previous[$index];
+			if (!Parameter_Defaults::same($before->default_value, $parameter->default_value)) {
+				return false;
+			}
 			if ((!$before->type->matches($parameter->type)) || ($before->mode !== $parameter->mode) || (weakref_get($before->declaration) !== weakref_get($parameter->declaration))) {
 				return false;
 			}

@@ -17,8 +17,15 @@ final class Declaration_Preparation
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
+		$optional_seen = false;
 		foreach ($nodes as $parameter) {
 			$parameter->prepare($context);
+			if ($parameter->default_value !== null) {
+				$optional_seen = true;
+			}
+			elseif ($optional_seen) {
+				throw new \RuntimeException('S2S required parameter cannot follow an optional parameter');
+			}
 			$parameters->append($parameter->require_preparation());
 		}
 
@@ -33,6 +40,9 @@ final class Declaration_Preparation
 		$facts->type = Type_Preparation::type($node->type_syntax, $context);
 		Type_Preparation::require_value_type($facts->type);
 		$facts->mode = $node->mode;
+		if ($node->default_value !== null) {
+			$facts->default_value = Parameter_Defaults::prepare($node->default_value, $facts, $context);
+		}
 		$node->set_preparation($facts);
 	}
 

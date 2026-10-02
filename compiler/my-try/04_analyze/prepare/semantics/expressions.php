@@ -233,8 +233,14 @@ final class Expression_Preparation
 		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
 		$arguments /** Storage<expression_node> */ = $syntax->arguments;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
-		if (q_count($parameters) !== q_count($arguments)) {
+		if (q_count($arguments) > q_count($parameters)) {
 			throw new \RuntimeException('S2S call argument count does not match its signature');
+		}
+		// The prepared signature and explicit argument count identify the defaulted suffix.
+		for ($index = q_count($arguments); $index < q_count($parameters); $index++) {
+			if ($parameters[$index]->default_value === null) {
+				throw new \RuntimeException('S2S call is missing a required argument');
+			}
 		}
 
 		// Prepare arguments in source order; references must preserve the selected storage.

@@ -47,7 +47,7 @@ final class CPP_Declarations
 	}
 
 	/** All signatures precede all bodies, including mutually recursive declarations. */
-	public static function signature(function_node $syntax, cpp_generation_context $context): string
+	public static function signature(function_node $syntax, cpp_generation_context $context, bool $include_defaults): string
 	{
 		$facts = $syntax->require_preparation();
 		$parts = '';
@@ -57,6 +57,9 @@ final class CPP_Declarations
 			$entry = object_cast(weakref_get($parameter->declaration), collected_name::class);
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
 			$parts .= $separator . self::type($parameter->type, $context) . $reference . ' ' . CPP_Generator::local_name($entry);
+			if ($include_defaults && ($parameter->default_value !== null)) {
+				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
+			}
 			$separator = ', ';
 		}
 
@@ -66,8 +69,8 @@ final class CPP_Declarations
 	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */
 	public static function generate_function(function_node $syntax, cpp_generation_context $context): string
 	{
-		$signature = self::signature($syntax, $context);
-		$context->prototypes .= $signature . ";\n";
+		$signature = self::signature($syntax, $context, false);
+		$context->prototypes .= self::signature($syntax, $context, true) . ";\n";
 
 		// The parser permits functions only at file scope; entry return handling resumes below.
 		$context->return_type = $syntax->require_preparation()->return_type;
@@ -76,6 +79,27 @@ final class CPP_Declarations
 
 		$context->functions .= $signature . "\n{\n" . $body . "}\n\n";
 		return '';
+	}
+
+	/** Consume normalized default facts; syntax and source tokens have no authority here. */
+	private static function parameter_default(prepared_parameter_default $facts, cpp_generation_context $context): string
+	{
+		$value = $facts->value;
+		$text = '';
+		if ($value instanceof prepared_integer_literal) {
+			$text = CPP_Generator::generate_integer(object_cast($value, prepared_integer_literal::class), $context);
+		}
+		elseif ($value instanceof prepared_float_literal) {
+			$text = CPP_Generator::generate_float(object_cast($value, prepared_float_literal::class), $context);
+		}
+		elseif ($value instanceof prepared_boolean_literal) {
+			$text = CPP_Generator::generate_boolean(object_cast($value, prepared_boolean_literal::class), $context);
+		}
+		elseif ($value instanceof prepared_string_literal) {
+			$text = CPP_Generator::generate_string(object_cast($value, prepared_string_literal::class), $context);
+		}
+		else { throw new \LogicException('Prepared parameter default is not a scalar literal'); }
+		return self::conversion($text, $facts->conversion, $context);
 	}
 
 	/** Complete nested value layouts before their users; reject a recursive by-value layout. */

@@ -65,6 +65,8 @@ final class cpp_fragment
 	/** Completion version is meaningful only for an unchanged fragment. */
 	public int $version = 0;
 	public string $text = '';
+	/** Function declaration spelling, including defaults; text remains the definition signature. */
+	public string $prototype_text = '';
 	public array $headers /** hash<bool> */ = [];
 	/** Declaration dependencies needed before a value-record definition. */
 	public Storage $records /** Storage<collected_struct> */;

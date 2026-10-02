@@ -33,7 +33,7 @@ For the focused ordinary-function checks, run:
 python3 compiler/my-try/tests/functions.py --results /tmp/FRESH_FUNCTION_RESULTS
 ```
 
-This runs the S2S preparation/export suite and five related PHP suites, then compiles
+This runs the S2S preparation/export suite and nine related PHP suites, then compiles
 and executes its `function_*` programs through the shared 12-slot pool. The full
 S2S and requested native runners also consume these fixtures. It does not rebuild
 the compiler natively.

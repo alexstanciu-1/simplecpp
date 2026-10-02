@@ -15,6 +15,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `worker.php` | Select/order work, require prerequisites, maintain dependencies, compare/settle results and handle failures |
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
+| `semantics/defaults.php` | Bounded scalar parameter-default normalization and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
 | `semantics/expressions.php` | Expression dispatch, variable/member access, calls and assignments |
 | `semantics/selection_results.php` | Shared matching-scalar value-result admission and conversions |
@@ -59,6 +60,12 @@ Consumers register both selected declarations and visited scope/name pools, incl
 missing/ambiguous candidates. Effective signature/layout changes notify consumers;
 body-only edits do not invalidate callers. Required record completion detects cycles;
 recursive function calls remain valid. Return-type checks are per-body context.
+Parameters own optional default expressions. Signature preparation admits trailing
+by-value scalar literal defaults, normalizes a single numeric sign without general
+expression folding, and retains the literal value plus argument conversion. These
+snapshots participate in signature equivalence, including absent/present changes.
+Calls retain only explicit argument facts; their count and the prepared signature
+identify the validated defaulted suffix. Defaults are checked even without callers.
 Statements report transient `statement_completion` through typed dispatch. The
 completion worker composes sequence fallthrough and conditional alternatives, with an
 unmatched fallthrough path when a chain lacks else. Nested blocks share this path.

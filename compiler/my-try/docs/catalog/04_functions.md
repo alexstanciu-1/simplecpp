@@ -24,7 +24,8 @@ and FUNC-RECURSION-001 (replace its nonterminating example with a bounded workin
 Existing `tests/s2s.php` and Chapter 03 proofs are starting evidence; leave unverified
 rows unverified until their agreed examples are checked. This handoff adds no test run.
 The omitted-type examples FUNC-DECL-001/005 need explicit contract discussion, not
-assumed PHP inference. Defaults, variadics and overload selection remain later decisions.
+assumed PHP inference. Defaults are now covered by the bounded slice below;
+variadics and overload selection remain later decisions.
 
 ### Opening verification batch
 
@@ -74,7 +75,8 @@ programs using 12 slots. FPM socket startup was unavailable in the sandbox, so t
 documented CLI fallback ran. This is PHP compiler plus generated-program evidence,
 not a new native compiler checkpoint. The cases are also exported for future
 requested native validation. Terminating recursion is covered by the next checkpoint;
-defaults, variadics, omitted types and the wider TYPE-PARAM-003D policy remain deferred.
+defaults were outside that checkpoint and are covered below. Variadics, omitted types
+and the wider TYPE-PARAM-003D policy remain deferred.
 
 ### Terminating-recursion verification — 2026-10-02
 
@@ -105,6 +107,48 @@ in future requested native validation through the existing S2S source manifest.
 
 Non-goals: proving arbitrary recursion terminates, stack-depth limits, tail-call
 optimization, general call-effect composition, or new return/type-inference rules.
+
+### Scalar parameter defaults — 2026-10-02
+
+Implemented FUNC-DEFAULT-001 for trailing by-value scalar parameters: bool, integer,
+float and string literals, with an optional single sign on numeric literals.
+Parameter types remain explicit, and defaults use the existing argument-conversion
+contract (including the existing integer-family conversions, not implicit scalar
+coercion). Parentheses already normalize away in the expression parser.
+
+`parameter_node` owns an optional `default_value` expression. Absence means required;
+there is no duplicate flag. Signature preparation checks every default even when the
+function is uncalled or a caller supplies that argument. `Parameter_Defaults` owns
+bounded literal normalization and immutable prepared value/conversion snapshots.
+Signed float literals do not extend the general unary-operator matrix. Inspection,
+maintenance and cleanup traverse the new syntax edge.
+
+Call preparation validates the omitted trailing suffix through the prepared signature;
+source argument lists stay unchanged. Explicit arguments retain their left-to-right
+snapshot/reference handling. The body sees ordinary parameters. C++ defaults appear
+only on prototypes: the signature fragment retains separate prototype and definition
+spellings. Default presence/value participates in signature equivalence, so changes
+invalidate callers and regenerate output rather than reusing stale facts.
+
+Legacy intake: `Generator::renderCanonicalParamsForExec` and
+`renderValueRefOverloadParams` gate defaults with `includeDefaults`; the strict
+`strict_functions_005_default_int_arg_return.phs` and
+`strict_functions_008_default_two_int_args_return.phs` cases supply the starting
+examples. This slice preserves the declaration-only rule without importing legacy
+overload machinery.
+
+Proofs: 17 new `function_default_*` generated-program fixtures, 16 rejection cases,
+and incremental signature/caller identity, prototype-only placement, no-op/token
+movement, default edit/removal/repair and fresh-output equivalence checks in
+`tests/incremental_cpp.php`. The focused runner covers ten PHP suites and 46 generated
+C++ programs. Evidence: `/tmp/my-try-function-defaults-20261002-2/summary.json`;
+12 slots, documented CLI fallback after sandbox FPM socket startup failed.
+Native compiler rebuild and LLVM remain untested for this slice.
+
+Deferred scope: reference defaults, named constants/general constant expressions,
+calls or parameter-dependent expressions, composite/wrapper values, named arguments
+and variadics. Required parameters after optional ones reject. Existing literal
+range/spelling restrictions still apply; this slice does not expand integer bounds.
 
 ## Ordinary-function foundation (2026-09-27)
 
@@ -163,7 +207,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [FUNC-CALL-001](#func-call-001) | agreed | `f();` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-CALL-002](#func-call-002) | agreed | `f($a);` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-DECL-004](#func-decl-004) | agreed | `function f(int $a, string $b): int { return $a; }` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
-| [FUNC-DEFAULT-001](#func-default-001) | pending-discussion | `function f(int $a = 1): int { return $a; }` | unverified | unverified | deferred | — |
+| [FUNC-DEFAULT-001](#func-default-001) | agreed | `function f(int $a = 1): int { return $a; }` | proved | proved | deferred | Scalar defaults; `tests/functions.py`, `tests/incremental_cpp.php` |
 | [FUNC-RECURSION-001](#func-recursion-001) | agreed | Base case plus recursive call; see working example below | proved | proved | deferred | Terminating-recursion verification; `tests/functions.py` |
 | [FUNC-OVERLOAD-001](#func-overload-001) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
 | [FUNC-DECL-005](#func-decl-005) | pending-discussion | `function f($a) { return $a; }` | unverified | unverified | deferred | — |
@@ -499,7 +543,10 @@ int_t f(int_t a, string_t b) { return a; }
 
 ## FUNC-DEFAULT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented trailing by-value scalar literal defaults;
+signature preparation owns validation and conversion, calls may omit the trailing
+optional suffix, and only C++ prototypes include the default expressions. See the
+bounded scalar-default slice above for proofs and deferred forms.
 
 ### Imported version 1
 

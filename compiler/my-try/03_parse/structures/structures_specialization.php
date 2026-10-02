@@ -915,6 +915,8 @@ final class parameter_node extends ast_node
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
 	public passing_mode $mode = passing_mode::value;
+	/** Optional declaration-owned expression; absence means a required argument. */
+	public ?expression_node $default_value = null;
 
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
@@ -951,6 +953,9 @@ final class parameter_node extends ast_node
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->type_syntax);
+		if ($this->default_value !== null) {
+			$worker->edge($this, $this->default_value);
+		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */

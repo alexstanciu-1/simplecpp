@@ -91,7 +91,7 @@ final class CPP_Generator
 					$this->assemble_record(object_cast($entry, collected_struct::class), $context);
 				}
 				else {
-					$context->prototypes .= $fragment->text . ";\n";
+					$context->prototypes .= $fragment->prototype_text . ";\n";
 				}
 			}
 		}
@@ -144,7 +144,9 @@ final class CPP_Generator
 				$next->text = self::generate_statements($syntax->body, $context);
 			}
 			elseif ($entry instanceof collected_function) {
-				$next->text = CPP_Declarations::signature(object_cast($entry, collected_function::class)->syntax(), $context);
+				$function_syntax = object_cast($entry, collected_function::class)->syntax();
+				$next->text = CPP_Declarations::signature($function_syntax, $context, false);
+				$next->prototype_text = CPP_Declarations::signature($function_syntax, $context, true);
 			}
 			else
 			{

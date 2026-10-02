@@ -391,7 +391,7 @@ final class storage_children_iterator extends children_iterator
 final class parameter_children_iterator extends children_iterator
 {
 	private parameter_node $source;
-	private bool $consumed = false;
+	private int $next_field = 0;
 
 	public function __construct(parameter_node $source)
 	{
@@ -401,11 +401,15 @@ final class parameter_children_iterator extends children_iterator
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
 	{
-		if ($this->consumed) {
-			return null;
+		if ($this->next_field === 0) {
+			$this->next_field++;
+			return $this->source->type_syntax;
 		}
-		$this->consumed = true;
-		return $this->source->type_syntax;
+		if ($this->next_field === 1) {
+			$this->next_field++;
+			return $this->source->default_value;
+		}
+		return null;
 	}
 }
 

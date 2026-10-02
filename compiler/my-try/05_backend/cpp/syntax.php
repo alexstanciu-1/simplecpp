@@ -296,7 +296,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 
 	public function generate_function_signature(function_node $node): string
 	{
-		return CPP_Declarations::signature($node, $this->context);
+		return CPP_Declarations::signature($node, $this->context, true);
 	}
 
 	public function generate_struct(struct_node $node): string

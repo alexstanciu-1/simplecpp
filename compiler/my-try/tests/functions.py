@@ -21,7 +21,8 @@ def main():
     with CommandRunner(output / 'logs', ROOT.parents[1], jobs=12,
                        journals=[output / 'commands.json']) as runner:
         suites = ['s2s', 'preparation_recovery', 'incremental_cpp',
-                  'conversions', 'fallthrough', 'specialization_dispatch']
+                  'conversions', 'fallthrough', 'specialization_dispatch',
+                  'ast', 'ast_invariants', 'token_generations', 'preparation_dispatch']
 
         def suite(name):
             command = ['php', ROOT / 'tests' / (name + '.php')]

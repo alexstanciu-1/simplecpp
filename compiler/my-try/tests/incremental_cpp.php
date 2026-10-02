@@ -124,6 +124,60 @@ try
 	file_put_contents($path, 'return 0;');
 	$compiler->update_cpp([$path]);
 	cpp_check(!str_contains(Model::$cpp_files[0]->text, 'scpp/float_t.hpp'), 'Deleted fragment retained stale include');
+
+	// Defaults belong to signatures; callers depend on their presence and value.
+	$defaults = 'function value(int $x = 7): int { return $x; } function caller(): int { return value(); } return caller();';
+	file_put_contents($path, $defaults);
+	$compiler->update_cpp([$path]);
+	$default_function = cpp_function('value');
+	$default_parameter = $default_function->parameters[0];
+	$default_children = iterator_to_array($default_parameter->children());
+	cpp_check(count($default_children) === 2 && $default_children[1] === $default_parameter->default_value, 'Parameter inspection omitted default syntax');
+	$default_owner = $default_function->occurrence()->preparation;
+	$default_caller = cpp_function('caller')->body->work();
+	$default_fragment = Model::$cpp_output_program->fragments[$default_owner];
+	$default_caller_fragment = Model::$cpp_output_program->fragments[$default_caller];
+	cpp_check(str_contains($default_fragment->prototype_text, ' = ') && !str_contains($default_fragment->text, ' = '), 'Defaults must appear only in the prototype');
+	$compiler->exec_cpp();
+	cpp_check(Model::$cpp_output_program->fragments[$default_owner] === $default_fragment, 'No-op default rerendered signature');
+	file_put_contents($path, str_replace('= 7', '= 9', $defaults));
+	$compiler->update_cpp([$path]);
+	cpp_check(cpp_function('value')->parameters[0] === $default_parameter, 'Default edit replaced parameter identity');
+	cpp_check(Model::$cpp_output_program->fragments[$default_owner] !== $default_fragment && Model::$cpp_output_program->fragments[$default_caller] !== $default_caller_fragment, 'Default edit left stale signature or caller');
+	$default_text = Model::$cpp_files[0]->text;
+	file_put_contents($path, ' ' . str_replace('= 7', '= 9', $defaults));
+	$compiler->update_cpp([$path]);
+	cpp_check(Model::$cpp_files[0]->text === $default_text, 'Default token movement changed output');
+	Compiler_Lifecycle::reset();
+	$compiler->init([$directory]);
+	$compiler->exec_cpp();
+	cpp_check(Model::$cpp_files[0]->text === $default_text, 'Fresh and incremental default output differ');
+	foreach ([str_replace(' = 7', '', $defaults), str_replace('= 7', '= "bad"', $defaults)] as $invalid_default) {
+		file_put_contents($path, $invalid_default);
+		$failed_default = false;
+		try { $compiler->update_cpp([$path]); }
+		catch (\RuntimeException $error) { $failed_default = true; }
+		cpp_check($failed_default && Model::$cpp_files->is_empty(), 'Invalid or removed default published stale output');
+		file_put_contents($path, $defaults);
+		$compiler->update_cpp([$path]);
+		cpp_check(!Model::$cpp_files->is_empty(), 'Default repair failed to recover');
+	}
+	// Every scalar snapshot participates in signature equivalence, including signed floats.
+	foreach ([['string', '"7"', '"9"'], ['float', '-1.5', '-2.5'], ['bool', 'true', 'false']] as [$default_type, $old_default, $new_default]) {
+		$scalar_source = 'function value(' . $default_type . ' $x = ' . $old_default . '): ' . $default_type . ' { return $x; } return 0;';
+		file_put_contents($path, $scalar_source);
+		$compiler->update_cpp([$path]);
+		$scalar_owner = cpp_function('value')->occurrence()->preparation;
+		$scalar_fragment = Model::$cpp_output_program->fragments[$scalar_owner];
+		file_put_contents($path, str_replace('= ' . $old_default, '= ' . $new_default, $scalar_source));
+		$compiler->update_cpp([$path]);
+		cpp_check(Model::$cpp_output_program->fragments[$scalar_owner] !== $scalar_fragment, 'Scalar default value edit kept stale signature');
+		$scalar_incremental = Model::$cpp_files[0]->text;
+		Compiler_Lifecycle::reset();
+		$compiler->init([$directory]);
+		$compiler->exec_cpp();
+		cpp_check(Model::$cpp_files[0]->text === $scalar_incremental, 'Scalar default fresh output differs');
+	}
 }
 finally {
 	unlink($path);

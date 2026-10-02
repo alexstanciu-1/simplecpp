@@ -117,6 +117,13 @@ final class prepared_binding extends prepared_storage {
 /** Parameter facts add the source passing mode to the resolved storage identity. */
 final class prepared_parameter extends prepared_storage {
 	public passing_mode $mode;
+	public ?prepared_parameter_default $default_value = null;
+}
+
+/** Normalized scalar literal snapshot; never retains mutable default syntax. */
+final class prepared_parameter_default {
+	public prepared_expression $value;
+	public conversion_decision $conversion;
 }
 
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
