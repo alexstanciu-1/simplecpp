@@ -6,7 +6,7 @@ This report completes the bounded inspection requested by the
 [catalog prerequisite gate](../catalog/README.md#prerequisite-gates).
 **Inspection is complete. PE-01 is subsequently resolved for the agreed bounded
 copy policy, PE-02 by registry normalization, and PE-04 for supported straight-line
-bodies. PE-03 (duplicate declarations) is explicitly deferred debt.** No compiler structures,
+bodies. PE-03 is resolved for function/parameter names; duplicate fields remain debt.** No compiler structures,
 semantics or generation behavior were changed by this audit.
 
 ## Result and boundary
@@ -151,12 +151,20 @@ unsupported results and recovery after a failed edit.
 
 ## PE-03 — duplicate declarations can reach C++
 
-**Status: deferred debt (explicitly retained, 2026-10-02).**
+**Status: partially resolved (2026-10-02); duplicate struct fields remain deferred.**
 **Priority: medium; declaration validation, not operator dispatch.**
 
-Owner: declaration preparation/publication. Duplicate fields, parameter names and
+Chapter 04 now rejects duplicate ordinary function names (including unused functions)
+and repeated parameter names during signature preparation. Function-name pool
+observations invalidate unchanged declarations when a duplicate is introduced or
+removed. Focused proofs cover retained candidates, cross-file introduction/removal,
+no-edit retry, parameter repair and withheld output. See
+[the declaration contract](../catalog/04_functions.md#declaration-and-scope-contract--2026-10-02).
+The remaining field-validation work stays with declaration preparation/publication.
+
+Original finding at the audit revision: duplicate fields, parameter names and
 currently non-overloaded function declarations can still pass preparation when
-unused and fail in C++. This slice does not repair or suppress them. Close this debt
+unused and fail in C++. Close the remaining field debt
 with preparation diagnostics and incremental introduction/removal/recovery proofs;
 retain the original candidates rather than deduplicating or renaming declarations.
 
@@ -166,7 +174,7 @@ function f(int $x, int $x): void {} return 0;
 function f(): int { return 1; } function f(): int { return 2; } return 0;
 ```
 
-All prepare and emit. Clang rejects duplicate fields, duplicate parameter names and
+At that revision all prepared and emitted. Clang rejects duplicate fields, duplicate parameter names and
 function redefinition. Lookup correctly rejects ambiguous uses elsewhere, but an
 unused invalid declaration can bypass that lookup.
 

@@ -122,7 +122,10 @@ A typed name is reserved during its initializer, rejecting self-access rather th
 falling back to an outer binding. Sibling/child locals never escape or merge. Root
 parameters and locals share an environment. This does not add definite-assignment
 analysis or constant-condition reachability.
-Duplicate fields, parameters and non-overloaded function declarations remain
+Signature preparation rejects duplicate function names through observed visible
+name pools, including unused declarations, and duplicate parameter names within
+each signature. Candidate identities are preserved for diagnostics and recovery.
+Duplicate struct fields remain
 [PE-03 deferred debt](../../docs/planning/preparation_emission_audit.md#pe-03--duplicate-declarations-can-reach-c).
 Prepared records retain field-derived storage/copy capabilities. Capability consumers
 require declaration completion through `Capability_Preparation`; nested capability

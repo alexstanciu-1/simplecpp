@@ -171,6 +171,34 @@ try
 		recovery_check(!Model::$rebuild_required && Model::$global_scope !== $old_global, 'Retry retained unsafe semantic state');
 		recovery_check(Model::sources()[0]->tokens !== $before && recovery_function('replacement') !== $broken, 'Retry did not rebuild tokens and syntax');
 	}
+
+	// Published function uniqueness is declaration-owned, even without any callers.
+	file_put_contents($a, 'function unique(int $x): int { return $x; }');
+	file_put_contents($b, 'return 0;');
+	file_put_contents($c, 'function other(int $x): int { return $x; }');
+	$compiler->sync([$a, $b, $c]);
+	$compiler->prepare();
+	$unique = recovery_function('unique');
+	$unique_owner = $unique->occurrence()->preparation;
+	file_put_contents($c, 'function unique(string $x): int { return 2; }');
+	$compiler->sync([$c]);
+	recovery_check(str_contains(recovery_failure($compiler), 'duplicate function name'), 'Unused duplicate lacked declaration diagnostic');
+	recovery_check($unique_owner->failed && count(Model::$global_scope->functions_named('unique')) === 2, 'Duplicate validation lost candidates or failed to invalidate original');
+	$compiler->sync([]);
+	recovery_failure($compiler);
+	file_put_contents($c, 'function other(int $x): int { return $x; }');
+	$compiler->sync([$c]);
+	$compiler->prepare();
+	recovery_check(recovery_function('unique') === $unique && !$unique_owner->failed, 'Duplicate removal failed to recover retained original');
+
+	// Repeated parameter names are invalid even in an uncalled function; repair reuses it.
+	file_put_contents($a, 'function unique(int $x, int $x): int { return $x; }');
+	$compiler->sync([$a]);
+	recovery_check(str_contains(recovery_failure($compiler), 'duplicate parameter name'), 'Duplicate parameter lacked signature diagnostic');
+	file_put_contents($a, 'function unique(int $x, int $y): int { return $x + $y; }');
+	$compiler->sync([$a]);
+	$compiler->prepare();
+	recovery_check(recovery_function('unique') === $unique && !$unique_owner->failed, 'Parameter repair replaced function or retained failure');
 }
 finally {
 	foreach (glob($directory . '/*') as $path) {

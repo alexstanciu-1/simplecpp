@@ -670,6 +670,9 @@ final class Parser_Run
 			while (true);
 		}
 		$this->expect(')');
+		if ($this->text() !== ':') {
+			throw new \RuntimeException($this->error_message('Function requires an explicit return type, including void'));
+		}
 		$this->expect(':');
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected return type name'));

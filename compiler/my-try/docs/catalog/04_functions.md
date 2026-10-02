@@ -23,9 +23,9 @@ parameters), FUNC-RETURN-003 (expression returns), FUNC-CALL-003 (multiple argum
 and FUNC-RECURSION-001 (replace its nonterminating example with a bounded working case).
 Existing `tests/s2s.php` and Chapter 03 proofs are starting evidence; leave unverified
 rows unverified until their agreed examples are checked. This handoff adds no test run.
-The omitted-type examples FUNC-DECL-001/005 need explicit contract discussion, not
-assumed PHP inference. Defaults are now covered by the bounded slice below;
-variadics and overload selection remain later decisions.
+The omitted-type examples FUNC-DECL-001/005 now reject under the explicit-signature
+agreement below. Defaults are covered by their bounded slice; ordinary function
+overloading is forbidden. Variadics remain a later discussion.
 
 ### Opening verification batch
 
@@ -150,6 +150,40 @@ calls or parameter-dependent expressions, composite/wrapper values, named argume
 and variadics. Required parameters after optional ones reject. Existing literal
 range/spelling restrictions still apply; this slice does not expand integer bounds.
 
+### Declaration and scope contract — 2026-10-02
+
+Ordinary named functions require explicit parameter and return types, including
+`: void`. Defaults do not infer parameter types. FUNC-DECL-001's implicit void and
+NOTE-039's implicit auto are conflicting imported guidance, not the v0.2 contract.
+The parser already required both types; missing return types now have an explicit
+diagnostic. Constructors, closures and expected-callable typing are not decided here.
+
+Function names are unique in their visible declaration scope regardless of parameter
+types or whether the function is called. Signature preparation observes the existing
+function-name lookup pool before publishing facts, so adding/removing an unused
+duplicate invalidates the original declaration too. Candidate identities stay intact
+for diagnostics and recovery. Parameter names must be unique within a signature;
+the same parameter name in different functions is valid. No overload selection or
+new symbol registry is introduced.
+
+Function locals/parameters remain isolated from entry-body variables. Outer reads
+and read-modify-writes do not implicitly capture them; pass values/references
+explicitly. A first plain assignment inside a function still establishes a local.
+The separate explicit-capture proposal below remains deferred.
+
+Legacy intake: the mandatory-type and no-overloading rules in `generators/php/specs/rules.md`,
+the duplicate diagnostics in `StanDiagnosticCollector::duplicateMessage`, and existing
+my-try local/reference and NOTE-033.a capture proofs. Validation here belongs to shared
+preparation, not the type-blind legacy generator or C++ compilation.
+
+Proof: four parser rejection cases, seven additional semantic rejection cases, and
+cross-file unused duplicate introduction/no-edit retry/removal plus parameter repair
+in `tests/preparation_recovery.php`. The focused runner passed ten PHP suites and
+46 generated C++ programs; evidence: `/tmp/my-try-function-declarations-20261002-1/summary.json`
+(12 slots, CLI fallback after sandbox FPM socket startup failed). Native compiler
+rebuild and LLVM were not run. PE-03 is closed for ordinary function/parameter names;
+duplicate struct fields remain debt. NOTE-016/039/040 retain unrelated deferred forms.
+
 ## Ordinary-function foundation (2026-09-27)
 
 Implemented through shared signature/body preparation and specialization-attached
@@ -198,7 +232,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [FUNC-DECL-001](#func-decl-001) | pending-discussion | `function f() { }` | unverified | unverified | deferred | — |
+| [FUNC-DECL-001](#func-decl-001) | agreed-rejection | `function f() { }` | proved | rejected before emission | deferred | Explicit return type required; `tests/ast.php` |
 | [FUNC-VOID-001](#func-void-001) | agreed | `function f(): void { return; }` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-DECL-002](#func-decl-002) | agreed | `function f(): int { return 1; }` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-RETURN-001](#func-return-001) | agreed | `return;` | proved | proved | deferred | `tests/s2s.php` |
@@ -209,13 +243,13 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [FUNC-DECL-004](#func-decl-004) | agreed | `function f(int $a, string $b): int { return $a; }` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
 | [FUNC-DEFAULT-001](#func-default-001) | agreed | `function f(int $a = 1): int { return $a; }` | proved | proved | deferred | Scalar defaults; `tests/functions.py`, `tests/incremental_cpp.php` |
 | [FUNC-RECURSION-001](#func-recursion-001) | agreed | Base case plus recursive call; see working example below | proved | proved | deferred | Terminating-recursion verification; `tests/functions.py` |
-| [FUNC-OVERLOAD-001](#func-overload-001) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
-| [FUNC-DECL-005](#func-decl-005) | pending-discussion | `function f($a) { return $a; }` | unverified | unverified | deferred | — |
+| [FUNC-OVERLOAD-001](#func-overload-001) | agreed-rejection | Same-name functions, including unused declarations | proved | rejected before emission | deferred | `tests/s2s.php`, `tests/preparation_recovery.php` |
+| [FUNC-DECL-005](#func-decl-005) | agreed-rejection | `function f($a): int { return $a; }` | proved | rejected before emission | deferred | Explicit parameter type required; `tests/ast.php` |
 | [FUNC-RETURN-002](#func-return-002) | agreed | `return $a;` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-RETURN-003](#func-return-003) | agreed | `return $a + 1;` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
 | [FUNC-CALL-003](#func-call-003) | agreed | `f($a, 1, "x", true);` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
 | [FUNC-CALL-004](#func-call-004) | pending-discussion | `sum_all(1, 2, 3);` | unverified | unverified | deferred | — |
-| [SCOPE-GLOBAL-001](#scope-global-001) | pending-discussion | `$a = 1; function f(): int { return $a; }` | unverified | unverified | deferred | — |
+| [SCOPE-GLOBAL-001](#scope-global-001) | agreed-rejection | `$a = 1; function f(): int { return $a; }` | proved | rejected before emission | deferred | No implicit capture; `tests/s2s.php` |
 | [SCOPE-LOCAL-001](#scope-local-001) | agreed | `function f(): void { $a = 1; $b = $a; }` | proved | proved | deferred | `tests/s2s.php` |
 | [SCOPE-SHADOW-001](#scope-shadow-001) | agreed | `$a = 1; function f(): void { $a = 2; }` | proved | proved | deferred | `tests/s2s.php` |
 | [TYPE-PARAM-003D](#type-param-003d) | pending-discussion | `function f(string $s): void { $s .= "x"; }` | unverified | unverified | deferred | — |
@@ -224,7 +258,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-040](#note-040) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## FUNC-DECL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Reject omitted return types, including empty bodies.
+Write `function f(): void {}` explicitly. The imported implicit-void rule below is
+not adopted.
 
 ### Imported version 1
 
@@ -618,7 +654,9 @@ _Not supplied in source._
 
 ## FUNC-OVERLOAD-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared signature preparation rejects duplicate
+function names even without callers and regardless of parameter differences.
+Incremental lookup observation preserves invalidation and recovery.
 
 ### Imported version 1
 
@@ -655,7 +693,8 @@ ERROR
 
 ## FUNC-DECL-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Reject missing parameter types; defaults do not infer
+them. Omitted return types independently reject under FUNC-DECL-001.
 
 ### Imported version 1
 
@@ -832,7 +871,8 @@ sum_all(::scpp::vector_t<int_t>{static_cast<int_t>(1), static_cast<int_t>(2), st
 
 ## SCOPE-GLOBAL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Reject implicit access to entry-body variables from
+ordinary function bodies. Pass them as explicit parameters; captures remain deferred.
 
 ### Imported version 1
 
@@ -944,6 +984,11 @@ void_t f(string_t s) { s += string_t("x"); }
 
 ## NOTE-016
 
+**Agreed subset (2026-10-02):** ordinary named functions require explicit parameter
+and return types; scalar defaults and explicit parameter references follow their
+implemented contracts above. Nullable/union signatures, methods and reference
+returns are not completed by this agreement.
+
 **Source:** [generators/php/specs/rules.md:234](../../../../generators/php/specs/rules.md)
 
 **v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
@@ -964,6 +1009,10 @@ void_t f(string_t s) { s += string_t("x"); }
 > ---
 
 ## NOTE-039
+
+**Agreed correction (2026-10-02):** no implicit `auto` return type for ordinary named
+functions. Their declared return type is required. The imported heavy/wrapper
+reference-return heuristics below are not adopted by this slice and remain for review.
 
 **Source:** [generators/php/specs/rules.md:788](../../../../generators/php/specs/rules.md)
 
@@ -1009,6 +1058,10 @@ void_t f(string_t s) { s += string_t("x"); }
 > ```
 
 ## NOTE-040
+
+**Agreed subset (2026-10-02):** explicit parameter types are mandatory and have no
+`auto` fallback. Named functions also require explicit return types. Legacy annotation
+conflicts and reference-return examples remain separate review items.
 
 **Source:** [generators/php/specs/rules.md:827](../../../../generators/php/specs/rules.md)
 

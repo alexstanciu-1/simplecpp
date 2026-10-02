@@ -266,4 +266,20 @@ foreach (['true', '1.5', '$size', '[]'] as $invalid_count) {
 		throw new \LogicException('Invalid array extent lost the parser diagnostic: ' . $invalid_count);
 	}
 }
+foreach ([
+	'function f() {}' => 'explicit return type',
+	'function f(int $x) { return $x; }' => 'explicit return type',
+	'function f($x): int { return $x; }' => 'Expected parameter type',
+	'function f($x = 1): int { return $x; }' => 'Expected parameter type',
+] as $invalid_signature => $expected_diagnostic) {
+	$signature_source = new file();
+	$signature_source->path = 'invalid_signature.phs';
+	$signature_source->content = $invalid_signature;
+	$signature_rejected = false;
+	try { (new Parser((new Tokenizer($signature_source))->tokenize()))->parse(); }
+	catch (\RuntimeException $error) {
+		$signature_rejected = str_contains($error->getMessage(), $expected_diagnostic);
+	}
+	if (!$signature_rejected) { throw new \LogicException('Missing explicit signature diagnostic'); }
+}
 AST_Test::run();

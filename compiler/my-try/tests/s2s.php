@@ -927,6 +927,13 @@ foreach ($scope_isolation_rejections as $source => $diagnostic)
 }
 
 $rejections = ['function f(int &$x): void {} f(1);',
+	'function f(): int { return 1; } function f(): int { return 2; }',
+	'function f(int $x): int { return $x; } function f(string $x): int { return 2; }',
+	'function f(): int { return 1; } function f(): int { return 2; } return f();',
+	'function f(int $x, int $x): void {}',
+	'function f(int $x, string $x): void {} f(1, "2");',
+	'$outside = 3; function f(): int { return $outside; }',
+	'$outside = 3; function f(): void { $outside += 1; }',
 	'function f(int $x, int $y = 1): int { return $x; } f();',
 	'function f(int $x = 1): int { return $x; } f(1, 2);',
 	'function f(int $x = 1, int $y): int { return $x; }',

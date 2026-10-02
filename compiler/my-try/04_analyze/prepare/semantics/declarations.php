@@ -8,6 +8,13 @@ final class Declaration_Preparation
 	/** Publish a complete signature before any body so calls do not depend on source order. */
 	public static function prepare_function(function_node $syntax, preparation_context $context): void
 	{
+		$declaration = $syntax->occurrence();
+		$declaring_scope = object_cast(weakref_get($declaration->scope), scope::class);
+		// Observe the name pool so adding/removing an unused duplicate invalidates this signature.
+		$candidates = Scope_Lookup::functions($declaring_scope, $declaration->name, $context);
+		if (q_count($candidates) !== 1) {
+			throw new \RuntimeException('S2S duplicate function name: ' . $declaration->name);
+		}
 		if (q_count($syntax->template_parameters) !== 0) {
 			throw new \RuntimeException('S2S function templates are deferred');
 		}
@@ -18,7 +25,12 @@ final class Declaration_Preparation
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
 		$optional_seen = false;
+		$names /** hash<bool> */ = [];
 		foreach ($nodes as $parameter) {
+			if (isset($names[$parameter->name])) {
+				throw new \RuntimeException('S2S duplicate parameter name: ' . $parameter->name);
+			}
+			$names[$parameter->name] = true;
 			$parameter->prepare($context);
 			if ($parameter->default_value !== null) {
 				$optional_seen = true;
