@@ -43,7 +43,8 @@ No new retained structure or semantic extension is proposed for this batch. If a
 reveals a missing capability, identify its owner and discuss any semantic expansion
 before implementing it. Keep defaults, variadics, overloads and omitted-type policies
 out of this reconciliation batch. Progress rows remain unverified until the corresponding
-focused proof is recorded.
+focused proof is recorded. This opening batch is now complete; see the two
+verification checkpoints below.
 
 ### Typed-signature verification — 2026-10-02
 
@@ -72,8 +73,38 @@ Evidence: `tests/functions.py` with results retained at
 programs using 12 slots. FPM socket startup was unavailable in the sandbox, so the
 documented CLI fallback ran. This is PHP compiler plus generated-program evidence,
 not a new native compiler checkpoint. The cases are also exported for future
-requested native validation. Executed terminating recursion remains unverified;
+requested native validation. Terminating recursion is covered by the next checkpoint;
 defaults, variadics, omitted types and the wider TYPE-PARAM-003D policy remain deferred.
+
+### Terminating-recursion verification — 2026-10-02
+
+FUNC-RECURSION-001 uses ordinary calls, not a special recursive-call node. Shared
+preparation publishes signatures before bodies; C++ emits prototypes before bodies.
+Each invocation has independent value parameters/locals, while explicit reference
+arguments continue to name their original storage.
+
+Seven `function_recursive_*` execution fixtures in `tests/s2s.php` prove immediate
+base-case return, factorial(5) = 120, direct recursive return, preserved caller and
+per-invocation locals, two recursive calls in one invocation (fib(7) = 13), mutual
+recursion through a forward declaration, and reference forwarding across five calls.
+Recursive results are bound to locals before arithmetic, respecting the existing
+eager-operator effect boundary rather than expanding expression support.
+
+Legacy intake: the imported FUNC-RECURSION-001 example has no base case and remains
+historical input below, not an executable acceptance test. The legacy
+`StanExpressionTypeResolver::collectReturnDiagnosticsForOwner` also has a separate
+direct-self-recursion diagnostic; this slice does not import that heuristic or resume
+STAN work. Existing my-try recursive-signature coverage only compiled uncalled bodies;
+the new cases execute them with bounded inputs.
+
+`tests/functions.py` passed six PHP suites and 29 generated C++ programs; evidence:
+`/tmp/my-try-functions-recursion-20261002/summary.json`. The shared runner used 12
+slots and CLI fallback after sandbox FPM socket startup failed. No compiler code
+changed, and no native compiler rebuild was performed. These fixtures participate
+in future requested native validation through the existing S2S source manifest.
+
+Non-goals: proving arbitrary recursion terminates, stack-depth limits, tail-call
+optimization, general call-effect composition, or new return/type-inference rules.
 
 ## Ordinary-function foundation (2026-09-27)
 
@@ -133,7 +164,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [FUNC-CALL-002](#func-call-002) | agreed | `f($a);` | proved | proved | deferred | `tests/s2s.php` |
 | [FUNC-DECL-004](#func-decl-004) | agreed | `function f(int $a, string $b): int { return $a; }` | proved | proved | deferred | Typed-signature verification; `tests/functions.py` |
 | [FUNC-DEFAULT-001](#func-default-001) | pending-discussion | `function f(int $a = 1): int { return $a; }` | unverified | unverified | deferred | — |
-| [FUNC-RECURSION-001](#func-recursion-001) | pending-discussion | `function f(int $a): int { return f($a - 1); }` | unverified | unverified | deferred | — |
+| [FUNC-RECURSION-001](#func-recursion-001) | agreed | Base case plus recursive call; see working example below | proved | proved | deferred | Terminating-recursion verification; `tests/functions.py` |
 | [FUNC-OVERLOAD-001](#func-overload-001) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
 | [FUNC-DECL-005](#func-decl-005) | pending-discussion | `function f($a) { return $a; }` | unverified | unverified | deferred | — |
 | [FUNC-RETURN-002](#func-return-002) | agreed | `return $a;` | proved | proved | deferred | `tests/s2s.php` |
@@ -503,7 +534,19 @@ int_t f(int_t a = static_cast<int_t>(1)) { return a; }
 
 ## FUNC-RECURSION-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Verified through ordinary prepared signatures and
+calls, with prototypes preceding bodies. No recursion-specific retained structure.
+
+Working acceptance example (result: 120):
+
+```php
+function factorial(int $n): int {
+	if ($n <= 1) { return 1; }
+	$previous = factorial($n - 1);
+	return $n * $previous;
+}
+return factorial(5);
+```
 
 ### Imported version 1
 
