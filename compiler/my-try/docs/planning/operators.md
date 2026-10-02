@@ -239,6 +239,11 @@ Logical paths admit existing-local writes with explicit sequencing. General effe
 analysis, conditional declarations and nested field/index assignment remain deferred.
 See the [assignment/logical contract](../s2s_scalar_operators.md#assignment-expressions-and-keyword-logic).
 
+Canonical integer power now reuses the binary model and runtime-owned checked
+calculation. The [power contract](../../../../specs/integer_power.md) owns its domain,
+result range and errors; floating-point power and `**=` remain deferred. See the
+[implementation/proof](../s2s_scalar_operators.md#integer-exponentiation).
+
 ## Debt: checked shift counts
 
 Decision 2026-10-02: preserve the current runtime's native C++20 shift contract.

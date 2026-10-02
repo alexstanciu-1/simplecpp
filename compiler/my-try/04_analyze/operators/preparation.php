@@ -196,6 +196,9 @@ final class Operator_Preparation
 		if ($operator_text === '-') {
 			return operator_kind::subtraction;
 		}
+		if ($operator_text === '**') {
+			return operator_kind::power;
+		}
 		if ($operator_text === '*') {
 			return operator_kind::multiplication;
 		}

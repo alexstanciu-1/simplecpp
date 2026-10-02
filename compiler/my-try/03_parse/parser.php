@@ -731,7 +731,7 @@ final class Parser_Run
 		return 0;
 	}
 
-	/** Prefix operators nest right-to-left and bind tighter than supported binary operators. */
+	/** Prefix operators nest right-to-left; exponentiation binds inside their operand. */
 	private function unary_expression(): expression_node
 	{
 		$text = $this->text();
@@ -745,7 +745,7 @@ final class Parser_Run
 			return $mutation;
 		}
 		if (($text !== '+') && ($text !== '-') && ($text !== '~') && ($text !== '!')) {
-			return $this->postfix_expression();
+			return $this->power_expression();
 		}
 		$start = $this->position++;
 		$unary = new unary_expression_node();
@@ -753,6 +753,22 @@ final class Parser_Run
 		$unary->operand = $this->unary_expression();
 		$this->finish_node($unary, $start);
 		return $unary;
+	}
+
+	/** Power associates right-to-left and accepts a signed exponent through unary parsing. */
+	private function power_expression(): expression_node
+	{
+		$start = $this->position;
+		$left = $this->postfix_expression();
+		if ($this->text() !== '**') {
+			return $left;
+		}
+		$power = new binary_expression_node();
+		$power->left = $left;
+		$power->operator_token_index = $this->position++;
+		$power->right = $this->unary_expression();
+		$this->finish_node($power, $start);
+		return $power;
 	}
 
 	/** Postfix mutation binds to the complete primary/access expression, before prefix operators. */

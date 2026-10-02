@@ -459,6 +459,9 @@ final class CPP_Generator
 		elseif ($decision->operation === operator_operation::integer_subtraction) {
 			$spelling = '-';
 		}
+		elseif ($decision->operation === operator_operation::integer_power) {
+			$spelling = 'scpp::pow';
+		}
 		elseif ($decision->operation === operator_operation::integer_multiplication) {
 			$spelling = '*';
 		}
@@ -519,6 +522,10 @@ final class CPP_Generator
 
 		$left = CPP_Declarations::conversion($left, $decision->operands[0], $context);
 		$right = CPP_Declarations::conversion($right, $decision->operands[1], $context);
+		if ($decision->operation === operator_operation::integer_power) {
+			$context->headers['operators/arithmetic/power.hpp'] = true;
+			return $spelling . '(' . $left . ', ' . $right . ')';
+		}
 		if ($decision->operation === operator_operation::boolean_xor) {
 			$left_name = 'operand_' . $context->next_temporary;
 			$context->next_temporary++;

@@ -28,6 +28,7 @@ enum operator_kind {
 	case concatenation;
 	case addition;
 	case subtraction;
+	case power;
 	case multiplication;
 	case division;
 	case remainder;
@@ -62,6 +63,7 @@ enum operator_operation {
 	case string_concatenation;
 	case integer_addition;
 	case integer_subtraction;
+	case integer_power;
 	case integer_multiplication;
 	case integer_division;
 	case integer_remainder;

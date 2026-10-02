@@ -70,6 +70,13 @@ token_check(count($tokens) === count($expected_text));
 foreach ($tokens as $index => $token) {
 	token_check($token->text() === $expected_text[$index]);
 }
+// Power is one token; whitespace keeps multiplication tokens separate.
+$tokens = token_scan('2**3 * * 4; $x*=2;')->tokens;
+$expected_text = ['2', '**', '3', '*', '*', '4', ';', '$x', '*=', '2', ';'];
+token_check(count($tokens) === count($expected_text));
+foreach ($tokens as $index => $token) {
+	token_check($token->text() === $expected_text[$index]);
+}
 // Angle pairs stay available as generic closers; expression queries join only adjacent bytes.
 $scan = token_scan('1<<2 >> 1;1 < < 2; $x<<=2;$x>>=1;$x&=3;$x|=4;$x^=5;');
 token_check($scan->operator_text_at(1) === '<<');

@@ -3001,7 +3001,8 @@
 			"not_identical",
 			"concat_assign",
 			"echo_eval",
-			"compare"
+			"compare",
+			"pow"
 		],
 		"namespaces": {
 			"core": "scpp",
@@ -3020,7 +3021,8 @@
 			"not_identical",
 			"concat_assign",
 			"echo_eval",
-			"compare"
+			"compare",
+			"pow"
 		],
 		"notes": {
 			"purpose": "declares stable runtime helper entry points that frontends/generators may target directly",
@@ -3031,6 +3033,17 @@
 				"operation_key_rule": "source-visible ABI descriptors use stable operation_key values such as php.text_coercion.int_t or string.compare.lexicographic",
 				"family_rule": "repeated source-TypeRef conversions use abi_bridge_rule_families with a stable family_id, member list, and deferred-member list",
 				"text_coercion_rule": "new printable source types add coercions.text.abi_bridge_rules or coercions.text.abi_bridge_rule_families plus any needed carrier adapter, not source-specific compiler casts"
+			},
+			"integer_power": {
+				"entrypoint": "scpp::pow",
+				"header": "operators/arithmetic/power.hpp",
+				"operands": ["int_t<int64>", "int_t<int64>"],
+				"result": "int_t<int64>",
+				"zero_exponent": "1, including 0 ** 0",
+				"negative_exponent_error": "power_negative_exponent",
+				"overflow_error": "power_overflow",
+				"rule": "exact signed 64-bit result or runtime_error; no float promotion, implicit carrier widening, or unchecked multiplication",
+				"scope": "canonical int only; float, mixed, wrapper delegation and compound power are deferred"
 			},
 			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity normalizing wrappers and comparing compatible shared-object views by managed identity.",
 			"php_identity": {

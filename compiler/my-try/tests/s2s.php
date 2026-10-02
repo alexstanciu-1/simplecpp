@@ -51,6 +51,28 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'power_basic' => ['return 2 ** 3;', 8],
+	'power_right' => ['return 2 ** 3 ** 2 == 512;', 1],
+	'power_grouped' => ['return (2 ** 3) ** 2;', 64],
+	'power_unary' => ['return -2 ** 2 == -4;', 1],
+	'power_negative_base' => ['return (-2) ** 2;', 4],
+	'power_unary_chain' => ['return -2 ** 2 ** 3 == -256;', 1],
+	'power_product' => ['return 2 * 3 ** 2 + 1;', 19],
+	'power_sum_exponent' => ['return 2 ** (1 + 2);', 8],
+	'power_zero' => ['return 0 ** 0;', 1],
+	'power_huge_exponent' => ['return (-1) ** PHP_INT_MAX == -1;', 1],
+	'power_maximum' => ['return PHP_INT_MAX ** 1 == PHP_INT_MAX;', 1],
+	'power_minimum' => ['return (-2) ** 63 == (-PHP_INT_MAX - 1);', 1],
+	'power_minimum_identity' => ['return (-PHP_INT_MAX - 1) ** 1 == (-PHP_INT_MAX - 1);', 1],
+	'power_square_boundary' => ['return 3037000499 ** 2 == 9223372030926249001;', 1],
+	'power_compound_rhs' => ['$a = 1; $a += 2 ** 3; return $a;', 9],
+	'power_dynamic' => ['function power(int $a, int $b): int { return $a ** $b; } return power(2, 6);', 64],
+	'power_short_circuit' => ['return false && (2 ** -1 == 0);', 0],
+	'power_negative_error' => ['function fail(): int { return 2 ** -1; } return 0;', 0],
+	'power_signed_exponent_error' => ['function fail(): int { return 2 ** -2 ** 2; } return 0;', 0],
+	'power_overflow_error' => ['function fail(): int { return 2 ** 63; } return 0;', 0],
+	'power_store_error' => ['function fail(int &$x): int { return $x = 2 ** 63; } return 0;', 0],
+
 	'logic_word_and' => ['$a = false; $b = true; $c = false; $a = $b and $c; return $a;', 1],
 	'logic_word_or' => ['$a = false; $b = false; $c = true; $a = $b or $c; return $a;', 0],
 	'logic_word_xor' => ['$a = false; $b = true; $c = true; $a = $b xor $c; return $a;', 1],
@@ -751,9 +773,13 @@ foreach ($cases as $name => [$source, $exit])
 	}
 
 	// A failed assignment RHS or compound computation preserves the caller-owned target.
-	if (($name === 'compound_div_zero') || ($name === 'compound_mod_zero') || ($name === 'logic_assignment_throw'))
+	if (($name === 'compound_div_zero') || ($name === 'compound_mod_zero') || ($name === 'logic_assignment_throw')
+		|| ($name === 'power_store_error'))
 	{
 		$error_code = $name === 'compound_mod_zero' ? 'modulo_by_zero' : 'division_by_zero';
+		if ($name === 'power_store_error') {
+			$error_code = 'power_overflow';
+		}
 		$probe = "\nint main() { scpp::int_t<> target(7); try { (void)function_fail(target); }"
 			. ' catch (const scpp::runtime_error& error) { return error.code() == "' . $error_code
 			. '" && target.native_value() == 7 ? 0 : 91; } return 92; }';
@@ -765,7 +791,8 @@ foreach ($cases as $name => [$source, $exit])
 	// Observe runtime exceptions in-process without introducing source try/catch support.
 	$runtime_error_codes = ['div_zero_guard' => 'division_by_zero', 'mod_zero_guard' => 'modulo_by_zero',
 		'logical_and_guard' => 'division_by_zero', 'logical_or_guard' => 'modulo_by_zero',
-		'logic_xor_throw' => 'division_by_zero'];
+		'logic_xor_throw' => 'division_by_zero', 'power_negative_error' => 'power_negative_exponent',
+		'power_signed_exponent_error' => 'power_negative_exponent', 'power_overflow_error' => 'power_overflow'];
 	if (isset($runtime_error_codes[$name]))
 	{
 		$error_code = $runtime_error_codes[$name];

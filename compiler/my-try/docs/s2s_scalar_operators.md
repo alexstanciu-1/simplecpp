@@ -10,6 +10,7 @@ activate additional operand types or coercions.
 
 | Source operation | Exact operand types | Result | Selected C++ lowering |
 | --- | --- | --- | --- |
+| `**` | canonical `int`, `int` | canonical `int` | Checked shared `scpp::pow` |
 | `+`, `-`, `*`, `/`, `%` | canonical `int`, `int` | canonical `int` | Existing runtime wrapper arithmetic |
 | `==`, `!=`, `<`, `<=`, `>`, `>=` | canonical `int`, `int` | canonical `bool` | Existing runtime wrapper comparisons |
 | `===`, `!==` | canonical `int`, `int` | canonical `bool` | `scpp::php::identical` / `not_identical` |
@@ -61,7 +62,9 @@ Precedence from weakest to strongest is:
 14. `+`, `-`
 15. `*`, `/`, `%`
 
-Assignments associate right-to-left; other binary levels associate left-to-right;
+Power `**` binds above prefix unary operators and associates right-to-left. Its
+RHS accepts a unary expression, so signed exponents parse before domain checking.
+Assignments associate right-to-left; the binary levels listed above otherwise associate left-to-right;
 unsupported comparison chains fail the exact operand-type policy. Parentheses control the same binary tree without retained
 grouping nodes. A read-only call lookahead distinguishes a constant followed by `<`
 from a generic call. Longest-token recognition preserves strict comparisons, `<=>`,
@@ -125,7 +128,8 @@ storage. Explicit casts can establish the required type. Other numeric widths,
 floating operands and implicit truthiness remain rejected. The existing restriction
 on effectful operands remains in force, including beneath nested unary expressions.
 
-Prefix operators nest right-to-left and bind above the supported binary levels.
+Prefix operators nest right-to-left and bind above ordinary binary levels,
+but below exponentiation.
 Grouping controls their operand: `-2 * 3` differs from `-(2 * 3)`. `++` and `--`
 are distinct mutation tokens; repeated unary signs require
 separation, as in `- -3`. Strict comparisons and arrow tokens retain longest matching.
@@ -343,12 +347,44 @@ operator, mutation, compound, grouping, tokenizer and collection PHP checks pass
 Prior generated fixtures remain byte-identical. Native execution
 of the compiler was not rerun; LLVM remains deferred.
 
+## Integer exponentiation
+
+Added 2026-10-02 under the [normative contract](../../../specs/integer_power.md):
+canonical `int ** int -> int`, right-associative and above prefix unary precedence.
+The existing binary AST and decision records are reused. The lexer recognizes `**`;
+a dedicated parser step between unary and postfix parsing handles both `-2 ** 2`
+and `2 ** -2`. Ordinary arithmetic effect restrictions remain in force.
+
+`Integer_Operators` selects `integer_power`; C++ lowering consumes that decision,
+includes `operators/arithmetic/power.hpp` and calls registered shared `scpp::pow`.
+The runtime computes exact power by squaring, with bounded unsigned-magnitude
+products checked before multiplication. This represents the magnitude of the signed
+minimum safely. It skips unused final squaring, preserving `MAX ** 1` and `MIN ** 1`.
+The loop takes logarithmic time in the exponent, including large exponents for 0/±1.
+
+Zero exponent returns 1, including `0 ** 0`. Negative exponents throw
+`power_negative_exponent`; out-of-range results throw `power_overflow`. Neither
+failure uses floating-point approximation, promotion or signed-overflow behavior.
+The imported legacy helper requirement is now fulfilled for canonical ints only;
+legacy generator support is unchanged. Floating power and `**=` are deferred.
+
+[Runtime tests](../../../tests/runtime/native/test_pow.cpp) pass with Clang C++20
+undefined-behavior sanitization. They exercise both signed boundaries, exact and
+out-of-range powers, huge exponents, stable error metadata, API type restrictions,
+and an independent repeated-multiplication oracle for small inputs.
+[Power tests](../tests/power.php) cover AST precedence, decisions, cleanup, incremental
+header addition/removal, compaction and error recovery. PHP-host S2S generation and
+syntax-purity checks pass, as do the affected operator/tokenizer/grouping/logical/
+compound/mutation checks. All 25 new generated C++ programs/probes compile and run,
+including negative-exponent/overflow errors and unchanged assignment storage on failure.
+All 346 prior generated fixtures remain byte-identical. Native execution of the
+compiler itself was not rerun; LLVM remains deferred.
+
 ## Remaining decisions
 
 - Checked shift counts are [explicit debt](planning/operators.md#debt-checked-shift-counts).
   Broader mutation targets and mutation inside binary expressions remain deferred.
-- Exponentiation references an unavailable `scpp::pow` helper. Result type, negative
-  exponents and overflow/domain policy must be settled before adding a runtime path.
+- Floating-point power, other carrier types and `**=` remain deferred.
 - Mixed numeric promotion, other comparison types, interpolation and broader string
   indexing remain outside this bounded slice.
 

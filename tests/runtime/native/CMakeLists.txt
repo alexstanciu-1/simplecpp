@@ -186,3 +186,8 @@ add_test(NAME scpp_test_shared_self COMMAND test_shared_self)
 add_executable(test_storage_cursor test_storage_cursor.cpp)
 target_link_libraries(test_storage_cursor PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_storage_cursor COMMAND test_storage_cursor)
+
+# Checked canonical integer exponentiation.
+add_executable(test_pow test_pow.cpp)
+target_link_libraries(test_pow PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_pow COMMAND test_pow)

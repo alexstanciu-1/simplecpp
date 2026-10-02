@@ -21,7 +21,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-MUL-001](#expr-mul-001) | agreed | `$a = 2 * 3;` | proved | proved | deferred | [Prepared decisions, precedence and incremental proof](../../tests/operators.php); [PHP-host generation and Clang execution fixtures](../../tests/s2s.php); native compiler execution not rerun for this slice |
 | [EXPR-DIV-001](#expr-div-001) | agreed | `$a = 4 / 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
 | [EXPR-MOD-001](#expr-mod-001) | agreed | `$a = 5 % 2;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
-| [EXPR-POW-001](#expr-pow-001) | pending-discussion | `$a = 2 ** 3;` | unverified | unverified | deferred | Missing runtime power helper and unresolved result/domain policy; see [remaining decisions](../s2s_scalar_operators.md#remaining-decisions) |
+| [EXPR-POW-001](#expr-pow-001) | agreed | `$a = 2 ** 3;` | proved | proved | deferred | [Checked integer power contract and proof](../s2s_scalar_operators.md#integer-exponentiation) |
 | [EXPR-NEG-001](#expr-neg-001) | agreed | `$b = 3; $a = -$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
 | [EXPR-POS-001](#expr-pos-001) | agreed | `$b = 3; $a = +$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
 | [EXPR-BNOT-001](#expr-bnot-001) | agreed | `$b = 3; $a = ~$b;` | proved | proved | deferred | [Unary contract, limits and proof](../s2s_scalar_operators.md#unary-operators) |
@@ -456,7 +456,12 @@ auto a = static_cast<int_t>(5) % static_cast<int_t>(2);
 
 ## EXPR-POW-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Agreed canonical `int ** int -> int`, lowered to
+shared `scpp::pow`. Right-associative, above unary precedence; zero exponent returns
+1, negative exponent and overflow throw runtime errors. Floats, other widths and
+`**=` remain deferred. The existing binary AST and prepared operator decisions are
+reused. See the [contract and proof](../s2s_scalar_operators.md#integer-exponentiation).
+The legacy numeric-compatible wording below does not extend this exact-type slice.
 
 ### Imported version 1
 

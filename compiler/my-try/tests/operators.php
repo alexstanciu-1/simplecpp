@@ -304,7 +304,11 @@ $rejections = [
 	'concatenation call' => ['function value(): string { return "a"; } $a = "x" . value();', 'binary operation requires order-independent operands'],
 	'logical non-bool' => ['return false && 1;', 'logical operation requires canonical bool operands'],
 	'logical skipped unknown' => ['return false && $missing;', 'established local declaration for missing'],
-	'power' => ['$value = 2 ** 3;', 'Expected scalar literal or variable reference'],
+	'power float' => ['return 2.0 ** 3;', 'canonical int operands'],
+	'power narrow' => ['$x uint8 = 2; return $x ** 3;', 'canonical int operands'],
+	'power effect' => ['$x = 2; return $x++ ** 3;', 'order-independent operands'],
+	'power assignment' => ['$x = 2; return ($x = 3) ** 2;', 'order-independent operands'],
+	'power compound deferred' => ['$x = 2; $x **= 3;', 'Expected scalar literal'],
 ];
 foreach ($rejections as $name => [$source, $diagnostic])
 {

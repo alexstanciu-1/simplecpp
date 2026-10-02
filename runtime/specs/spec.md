@@ -289,6 +289,15 @@ Included initially:
 - translated PHP `throw` / `try` / `catch` / `finally` must not depend on `exit()` / `abort()` style control transfer in normal error flow
 - native numeric widening/narrowing semantics must not leak implicitly unless configuration says so
 
+### 6.3a Checked canonical integer power
+
+The [integer power contract](../../specs/integer_power.md) defines exact signed
+64-bit `int ** int -> int`, including `0 ** 0 = 1`, negative-exponent rejection and
+checked overflow. The shared helper `scpp::pow` lives in
+`operators/arithmetic/power.hpp`; generators include that header when selecting it.
+Its signature and errors are registered under `runtime_helpers_contract` in config.
+This operation does not alter ordinary arithmetic or add dynamic/wrapper delegation.
+
 ### 6.4 `string_t`
 - `string_t` is a semantic string wrapper
 - textual behavior is independent of numeric behavior

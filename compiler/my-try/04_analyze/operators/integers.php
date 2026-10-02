@@ -27,6 +27,9 @@ final class Integer_Operators
 		elseif ($source_operator === operator_kind::subtraction) {
 			$decision->operation = operator_operation::integer_subtraction;
 		}
+		elseif ($source_operator === operator_kind::power) {
+			$decision->operation = operator_operation::integer_power;
+		}
 		elseif ($source_operator === operator_kind::multiplication) {
 			$decision->operation = operator_operation::integer_multiplication;
 		}

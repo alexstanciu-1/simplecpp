@@ -4,6 +4,11 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/integer_power.md",
+                        "kind": "markdown",
+                        "doc_status": "normative"
+                    },
+                    {
                         "path": "specs/compiler_storage.md",
                         "kind": "markdown",
                         "doc_status": "normative"
