@@ -453,10 +453,15 @@ LLVM and legacy STAN remain skipped.
 ## Remaining decisions
 
 The [preparation/emission audit](planning/preparation_emission_audit.md) confirms the
-bounded scalar operation/conversion boundary. Copy eligibility, duplicate declarations
-and non-void fallthrough remain open. The entry-return mismatch is resolved by
-[registry normalization of redundant value modifiers](../../../specs/type_use_modifiers.md). Those findings gate affected expansions; they do not reopen the six
-agreed chapter notes or claim the current sample set covers those additional shapes.
+bounded scalar operation/conversion boundary. Bounded copy eligibility and source-record
+capabilities are implemented; straight-line non-void fallthrough rejects in preparation.
+The entry-return mismatch is resolved by
+[registry normalization of redundant value modifiers](../../../specs/type_use_modifiers.md).
+Duplicate declarations remain explicit PE-03 debt, alongside conditional runtime-template
+capabilities. Chapter 02 is [concluded for this positive pass](catalog/02_expressions.md#positive-pass-conclusion--2026-10-02).
+The latest repairs have focused PHP/generated-C++ proof; the native checkpoint above
+predates them. Deferred work gates affected expansions without reopening the six
+agreed chapter notes.
 
 - Checked shift counts are [explicit debt](planning/operators.md#debt-checked-shift-counts).
   Broader mutation targets and mutation inside binary expressions remain deferred.

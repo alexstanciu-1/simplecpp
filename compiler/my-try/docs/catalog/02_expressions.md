@@ -15,6 +15,30 @@ fallthrough are repaired. Duplicate declarations are explicitly deferred debt (P
 alongside conditional runtime capability debt. The proved rows below describe bounded examples, not unrestricted
 copying or declaration validity.
 
+## Positive pass conclusion — 2026-10-02
+
+**Status: positive pass complete for the agreed bounded frontend + C++ S2S scope.**
+Implementation checkpoint: `d3cedb46aee4b35dcd76763179535c0eef25dc2d`.
+
+The pass prioritizes working functionality and sound structures, semantic ownership
+and reusable processing paths. Grouping is represented by expression-tree shape;
+preparation owns operator/conversion selection, storage and copy eligibility;
+source-record capabilities belong to completed declarations; emission consumes the
+prepared decisions. Incremental invalidation and recovery have focused proofs.
+No further detail-hardening is required to conclude this pass.
+
+Deferred work stays visible: concrete bracket overloads/lowering (both bracket forms
+already share one syntax/preparation path), broader operand/effect combinations,
+conditional runtime-template capabilities, checked shift counts, floating power and
+other documented scalar extensions. Duplicate declarations remain PE-03 debt.
+Branch/loop completion and child-block environments belong to the next control-flow
+work. Revisit a debt item when an agreed feature depends on it.
+
+The latest repairs have focused PHP and generated-C++ validation. The earlier native
+compiler checkpoint remains revision-specific; this conclusion does not claim a
+native rebuild of the latest implementation. Existing row-level proof/deferred
+statuses remain authoritative for individual capabilities.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

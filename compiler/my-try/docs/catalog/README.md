@@ -77,6 +77,9 @@ Discuss and split those rows rather than expanding a small slice silently.
 ## Prerequisite gates
 
 Chapter numbers organize the catalog; they are not a strict implementation queue.
+Chapter 02 is [concluded as a positive pass](02_expressions.md#positive-pass-conclusion--2026-10-02):
+working bounded functionality with sound model/ownership/process paths. Deferred
+features and hardening remain explicit and reopen when an agreed feature needs them.
 The [2026-10-02 preparation/emission audit](../planning/preparation_emission_audit.md)
 is complete. Duplicate-declaration admission (PE-03) is explicitly deferred debt.
 Non-void fallthrough now rejects during preparation for supported straight-line bodies;
