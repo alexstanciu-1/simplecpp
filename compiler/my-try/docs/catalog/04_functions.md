@@ -76,7 +76,7 @@ documented CLI fallback ran. This is PHP compiler plus generated-program evidenc
 not a new native compiler checkpoint. The cases are also exported for future
 requested native validation. Terminating recursion is covered by the next checkpoint;
 defaults were outside that checkpoint and are covered below. Variadics, omitted types
-and the wider TYPE-PARAM-003D policy remain deferred.
+and container-specific ownership remain deferred. String ownership is reconciled below.
 
 ### Terminating-recursion verification — 2026-10-02
 
@@ -184,6 +184,38 @@ in `tests/preparation_recovery.php`. The focused runner passed ten PHP suites an
 rebuild and LLVM were not run. PE-03 is closed for ordinary function/parameter names;
 duplicate struct fields remain debt. NOTE-016/039/040 retain unrelated deferred forms.
 
+### String parameter and return ownership — 2026-10-02
+
+By-value string parameters are local values: assignment and `.=` cannot change the
+caller's string. Explicit `&` aliases caller storage, so the same writes are visible
+to the caller. A read-only value parameter remains a snapshot even when another
+reference parameter aliases and changes the original during the call.
+
+Ordinary returns are by value, including returns of parameters, locals, and values
+read through reference parameters. The compiler does not infer `const &` return
+types or read-only parameter borrowing from the function body. The legacy
+`Generator::analyzeParamPassModes` optimization and NOTE-039/040 reference-return
+examples are not adopted for this first pass. Any later optimization must preserve
+the established value behavior, alias isolation and lifetime guarantees.
+
+No compiler or AST changes were needed. Six `function_ownership_*` cases prove local
+append versus reference append, independent source/result mutation after value and
+reference-parameter returns, a returned local surviving its function, and read-only
+snapshot isolation during aliased mutation. Six accompanying C++ static assertions
+check exact parameter and return types, so copying at the call site cannot hide an
+accidentally inferred reference-return signature. Existing tests cover reassignment,
+literal/computed string results and argument sequencing.
+
+Evidence: `tests/functions.py`, `/tmp/my-try-function-ownership-20261002/summary.json`:
+ten PHP suites and 58 generated C++ programs/probes, using 12 slots and CLI fallback
+after sandbox FPM socket startup failed. No native compiler rebuild or LLVM run.
+The fixture sources and probes are included in future requested native validation.
+
+Explicit reference returns require a separate lifetime contract and remain deferred.
+Containers/wrappers/shared-object handles retain their own copy semantics; string
+independence is not a general deep-copy rule. TYPE-PARAM-003D is closed for its string
+example only; its imported vector extension remains for Chapter 06.
+
 ## Ordinary-function foundation (2026-09-27)
 
 Implemented through shared signature/body preparation and specialization-attached
@@ -252,10 +284,10 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [SCOPE-GLOBAL-001](#scope-global-001) | agreed-rejection | `$a = 1; function f(): int { return $a; }` | proved | rejected before emission | deferred | No implicit capture; `tests/s2s.php` |
 | [SCOPE-LOCAL-001](#scope-local-001) | agreed | `function f(): void { $a = 1; $b = $a; }` | proved | proved | deferred | `tests/s2s.php` |
 | [SCOPE-SHADOW-001](#scope-shadow-001) | agreed | `$a = 1; function f(): void { $a = 2; }` | proved | proved | deferred | `tests/s2s.php` |
-| [TYPE-PARAM-003D](#type-param-003d) | pending-discussion | `function f(string $s): void { $s .= "x"; }` | unverified | unverified | deferred | — |
+| [TYPE-PARAM-003D](#type-param-003d) | agreed (string slice) | `function f(string $s): void { $s .= "x"; }` | proved | proved | deferred | Ownership proofs in `tests/s2s.php`; vectors deferred |
 | [NOTE-016](#note-016) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-039](#note-039) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-040](#note-040) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-039](#note-039) | agreed bounded subset | Explicit typed value return | proved for current slice | proved for current slice | deferred | No implicit auto/reference returns; wrapper extensions deferred |
+| [NOTE-040](#note-040) | agreed bounded subset | Explicit parameters and value returns | proved for current slice | proved for current slice | deferred | Legacy annotation conflicts and explicit reference returns deferred |
 ## FUNC-DECL-001
 
 **v0.2 decision / target C++:** Reject omitted return types, including empty bodies.
@@ -947,7 +979,9 @@ _Not supplied in source._
 
 ## TYPE-PARAM-003D
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** By-value string parameters remain local values,
+including when modified with `.=`. Explicit `&` retains aliasing. No body-inferred
+`const &` parameter mode; vector behavior remains deferred to Chapter 06.
 
 ### Imported version 1
 
@@ -1011,12 +1045,16 @@ returns are not completed by this agreement.
 ## NOTE-039
 
 **Agreed correction (2026-10-02):** no implicit `auto` return type for ordinary named
-functions. Their declared return type is required. The imported heavy/wrapper
-reference-return heuristics below are not adopted by this slice and remain for review.
+functions. Their declared return type is required. Ordinary returns remain by value;
+returning a local, parameter or reference-parameter value does not infer a reference.
+The imported reference-return heuristics below are not adopted. Explicit reference
+returns and wrapper-specific extensions remain deferred.
 
 **Source:** [generators/php/specs/rules.md:788](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** The agreed value-return subset above is proved;
+wrapper extensions and explicit reference returns remain deferred. Imported prose
+follows; its authority labels and v1 boundaries are not this catalog's status.
 
 > ## 10. Return rules
 >
@@ -1061,11 +1099,14 @@ reference-return heuristics below are not adopted by this slice and remain for r
 
 **Agreed subset (2026-10-02):** explicit parameter types are mandatory and have no
 `auto` fallback. Named functions also require explicit return types. Legacy annotation
-conflicts and reference-return examples remain separate review items.
+conflicts and explicit reference returns remain separate review items. The imported
+inferred `const string_t&` return example is not adopted; ordinary string returns are values.
 
 **Source:** [generators/php/specs/rules.md:827](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Explicit signatures and ordinary value returns are
+proved for the current slice. Legacy annotation conflicts and explicit reference
+returns remain deferred. Imported prose follows, not current implementation status.
 
 > ## 11. Function declaration rules
 >

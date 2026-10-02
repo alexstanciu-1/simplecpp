@@ -377,6 +377,12 @@ $cases += [
 	'function_typed_value_reassignment' => ['function change(int $amount, string $label): int { $amount = 9; $label = "8"; return $amount * 10 + (int)$label; } $amount = 2; $label = "3"; $changed = change($amount, $label); return $changed + $amount * 10 + (int)$label;', 121],
 	'function_typed_string_return' => ['function append(string $label): string { return $label . "7"; } $result = append("2"); return (int)$result;', 27],
 	'function_typed_string_reference' => ['function change(string &$label): void { $label = "41"; } $label = "3"; change($label); return (int)$label;', 41],
+	'function_ownership_value_append' => ['function value(string $text): string { $text .= "3"; return $text; } $original = "2"; $result = value($original); return (int)$original + (int)$result;', 25],
+	'function_ownership_reference_append' => ['function value(string &$text): string { $text .= "3"; return $text; } $original = "2"; $result = value($original); return (int)$original + (int)$result;', 46],
+	'function_ownership_return_parameter' => ['function value(string $text): string { return $text; } $original = "2"; $result = value($original); $original .= "3"; $result .= "4"; return (int)$original + (int)$result;', 47],
+	'function_ownership_return_reference_read' => ['function value(string &$text): string { return $text; } $original = "2"; $result = value($original); $original .= "3"; $result .= "4"; return (int)$original + (int)$result;', 47],
+	'function_ownership_return_local' => ['function value(): string { $local = "17"; return $local; } $result = value(); $result .= "3"; return (int)$result;', 173],
+	'function_ownership_readonly_alias' => ['function value(string $snapshot, string &$alias): string { $alias .= "3"; return $snapshot; } $original = "2"; $result = value($original, $original); return (int)$original + (int)$result;', 25],
 	'function_typed_forward_string' => ['$result = identity("37"); return (int)$result; function identity(string $label): string { return $label; }', 37],
 	'function_typed_string_snapshot' => ['function change(string &$label): int { $label = "99"; return 0; } function first(string $label, int $unused): int { return (int)$label; } $label = "23"; return first($label, change($label));', 23],
 	'function_local_shadow' => ['$x = 7; function own(): void { $x = 12; } own(); return $x;', 7],
@@ -461,6 +467,14 @@ $interpolation_values = [
 	'interp_literal_escape' => hex2bin('24783d76'),
 ];
 
+$ownership_parameters = [
+	'function_ownership_value_append' => 'scpp::string_t',
+	'function_ownership_reference_append' => 'scpp::string_t&',
+	'function_ownership_return_parameter' => 'scpp::string_t',
+	'function_ownership_return_reference_read' => 'scpp::string_t&',
+	'function_ownership_return_local' => '',
+	'function_ownership_readonly_alias' => 'scpp::string_t, scpp::string_t&',
+];
 $executions = [];
 foreach ($cases as $name => [$source, $exit])
 {
@@ -473,6 +487,12 @@ foreach ($cases as $name => [$source, $exit])
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
+	if (isset($ownership_parameters[$name])) {
+		$probe = 'static_assert(std::is_same_v<decltype(&function_value), scpp::string_t (*)(' . $ownership_parameters[$name] . ')>);';
+		$probe_path = $directory . '/' . $name . '_type.cpp';
+		file_put_contents($probe_path, "#include <type_traits>\n" . Model::$cpp_files[0]->text . "\n" . $probe . "\n");
+		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
+	}
 	// Verify actual member representation, not merely that small integer values survive.
 	if (str_starts_with($name, 'field_')) {
 		$alias = substr($name, strlen('field_'));

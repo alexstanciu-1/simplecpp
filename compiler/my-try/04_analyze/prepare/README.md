@@ -156,6 +156,13 @@ runtime contract; reference storage must have compatible representation. Program
 entry returns remain restricted to numeric/bool wrapper values with defined exit-code
 conversion; adding string values does not widen that ABI boundary.
 
+String value parameters preserve caller-independent values even when the body only
+reads them and another parameter aliases the original. Explicit `&` parameters alias
+caller storage. Ordinary returns remain values, including reads through reference
+parameters; there is no body-inferred borrowing or reference-return mode. Explicit
+reference returns await a separate lifetime contract. This does not imply deep copies
+for containers, wrappers or shared-object handles.
+
 Struct fields support bool, fixed-width integer aliases and nested structs under the
 compact-layout contract. Ordinary int/float fields, keyed construction, field
 initializers and richer object syntax are not added by this slice. Typed locals can
