@@ -370,7 +370,7 @@ capabilities. Runtime-family formation restrictions, definition-body permissions
 and proof that each declaration corresponds to a real implementation remain debt;
 declarative acceptance must not be described as inferred eligibility.
 
-`value_p<T>` remains a backend/runtime spelling selected by the hard-coded by-value
+`value_p<T>` remains a backend/runtime spelling selected by the effective by-value
 flag; it is not categorized as pointer ownership or registered as a semantic
 template family. `shared_p<T>`, `weak_p<T>` and `unique_p<T>` retain their distinct
 ownership semantics; those semantics are not inferred merely from their names.
@@ -585,32 +585,35 @@ defaults, ordered argument validation, declarative contract checking and exact
 interning. Nested applications are demand-created and repeated occurrences reuse
 one canonical `uint32` identity.
 
-`value<T>` has a separate `type_use_modifier_node`. It is not resolved or interned as a
-template definition: preparation retains `T`'s type identity and sets the compact
-`canonical_type_use.by_value` flag. That fact now survives locals, fields,
-parameters, results, assignment compatibility and nested application arguments.
-The application key includes it, so `vector<T>` and `vector<value<T>>` remain
-distinct canonical applications. Repeating the modifier is rejected, and modified
-and unmodified uses do not implicitly assign to each other.
+`value<T>` has a separate `type_use_modifier_node`; it is not a template definition.
+Under the [2026-10-02 storage-modifier contract](../../../../specs/type_use_modifiers.md),
+`Type_Registry::use()` normalizes redundant requests using registered type families
+and nominal/result kinds. Boolean, integer, floating and struct value types keep the
+ordinary semantic use: `value<int>` equals `int`, and `vector<value<int>>` reuses
+`vector<int>`. Only the AST retains redundant source modifiers, including nested ones.
 
-The C++ representation result now owns a deduplicated header set. Recursive
-rendering combines the runtime-family, nested argument and `scpp::value_p` headers
-while producing exact nested spellings such as
-`scpp::vector_t<scpp::value_p<scpp::int_t<>>>`. This is the narrow correctness
-mechanism agreed for constructed type emission, not the deferred general backend
-dependency/readiness system.
+The compact `canonical_type_use.by_value` flag now records only an effective storage
+change for other registered types. Such uses retain distinct compatibility and
+application keys; repeating an effective modifier remains rejected. This does not
+change class-like runtime families or infer copying/dereferencing behavior.
 
-Exact application reuse is indexed by an ordered trie. The first edge is the
-template definition's uint32 identity; each later edge is one argument's uint32
-identity plus its by-value branch. The trie avoids textual identity conversion and
-hash collisions, supports arbitrary parameter counts, and publishes a concrete
-type only after validation succeeds. It is registry-owned indexing, not additional
-state on lightweight source occurrences.
+The C++ representation result owns a deduplicated header set. For example,
+`vector<value<int>>` renders `scpp::vector_t<scpp::int_t<>>`, with no `value_p` include.
+Remaining effective modifiers continue to use their existing binding. This is the
+narrow representation path, not the deferred general backend readiness system.
 
-The native closing proof also found and repaired one backend boundary: an integer
-whose use is modified by `value<T>` must not receive the ordinary scalar
-`.native_value()` conversion when passed or returned. Modifier-aware C++ value
-conversion now leaves that already matching wrapper representation intact.
+Exact application reuse is indexed by an ordered trie. Each argument contributes its
+canonical identity and effective by-value flag, after normalization. There is no
+backend spelling comparison, extra wrapper identity or duplicate special case in
+assignment/call/return emission.
+
+Focused PHP registry, constructed-type/incremental, conversion, operator and S2S checks
+pass. Eight added generated C++ programs cover entry returns, bidirectional value and
+reference boundaries, aliases, bool/float, nested modifiers and structs. The earlier
+native type-formation checkpoint used the former redundant wrapper representation;
+it is historical evidence, not a native compiler proof of this normalization change.
+The portable type-proof source now expects normalized identities and output for the
+next explicitly requested native checkpoint.
 
 The proof remains type-formation focused. It does not add container literals,
 indexing, mutation or runtime-family operations; infer capabilities; inspect source

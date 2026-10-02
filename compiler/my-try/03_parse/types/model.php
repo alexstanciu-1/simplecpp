@@ -650,7 +650,7 @@ final class applied_template_type extends canonical_type
 	}
 }
 
-/** Lightweight prepared fact attached to a source occurrence; `value<T>` sets by_value. */
+/** Lightweight prepared use; by_value records only a non-redundant storage modifier. */
 final class canonical_type_use
 {
 	private int $identity /** uint32 */;
@@ -853,11 +853,35 @@ final class Type_Registry
 		return $this->types[$type_id];
 	}
 
-	/** Create a compact occurrence fact only for an identity owned by this registry. */
+	/** Retain only an effective storage modifier; source spelling remains in the AST. */
 	public function use(int $type_id, bool $by_value = false): canonical_type_use
 	{
-		$this->type($type_id);
-		return new canonical_type_use($type_id, $by_value);
+		$type = $this->type($type_id);
+		if ($by_value && $this->is_value_type($type_id)) {
+			$by_value = false;
+		}
+		return new canonical_type_use($type->type_id(), $by_value);
+	}
+
+	/** Registered families and nominal kinds establish default storage, never source names. */
+	public function is_value_type(int $type_id): bool
+	{
+		$type = $this->type($type_id);
+		$family = $type->family();
+		if (($family === type_family::boolean) || ($family === type_family::integer)
+			|| ($family === type_family::floating)) {
+			return true;
+		}
+		$definition = $type->definition();
+		if ($definition instanceof nominal_type_definition) {
+			$nominal = object_cast($definition, nominal_type_definition::class);
+			return $nominal->nominal_kind() === nominal_type_kind::structure;
+		}
+		if ($definition instanceof template_type_definition) {
+			$template_definition = object_cast($definition, template_type_definition::class);
+			return $template_definition->result_kind() === nominal_type_kind::structure;
+		}
+		return false;
 	}
 
 	public function definition_count(): int

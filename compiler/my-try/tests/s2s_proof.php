@@ -55,7 +55,7 @@ final class S2S_Proof
 			throw new \LogicException('Type occurrences did not reuse one canonical application identity');
 		}
 		$vector_int = object_cast(Type_Preparation::canonical($first_use), applied_template_type::class);
-		if (($vector_int->definition() !== $vector) || ($registry->application_count() !== 9)) {
+		if (($vector_int->definition() !== $vector) || ($registry->application_count() !== 8)) {
 			throw new \LogicException('Demand-created runtime applications changed');
 		}
 		$by_value = object_cast($statements[7], variable_declaration_node::class);
@@ -64,10 +64,10 @@ final class S2S_Proof
 		$nested_value_type = object_cast(Type_Preparation::canonical(
 			$nested_value->type_syntax->require_preparation()), applied_template_type::class);
 		$nested_value_arguments /** vector<canonical_type_use> */ = $nested_value_type->arguments();
-		if ((!$by_value_use->by_value())
+		if (($by_value_use->by_value())
 			|| ($by_value_use->type_id() !== Language_Types::integer(Model::$language_scope)->type_id())
-			|| (!$nested_value_arguments[0]->by_value())) {
-			throw new \LogicException('value<T> did not retain its compact type-use modifier');
+			|| ($nested_value_arguments[0]->by_value())) {
+			throw new \LogicException('Redundant value<T> did not normalize its semantic use');
 		}
 
 		$before_rejection = $registry->application_count();
@@ -90,10 +90,10 @@ final class S2S_Proof
 		$text = $outputs[0]->text;
 		if ((q_strpos($text, '#include "scpp/vector_t.hpp"') === false)
 			|| (q_strpos($text, '#include "scpp/hash_t.hpp"') === false)
-			|| (q_strpos($text, '#include "scpp/value_p.hpp"') === false)
-			|| (q_strpos($text, 'scpp::vector_t<scpp::value_p<scpp::int_t<>>> local_nestedU_value;') === false)
-			|| (q_strpos($text, 'scpp::value_p<scpp::int_t<>> field_item;') === false)
-			|| (q_strpos($text, 'scpp::value_p<scpp::int_t<>> function_carry(') === false)) {
+			|| (q_strpos($text, '#include "scpp/value_p.hpp"') !== false)
+			|| (q_strpos($text, 'scpp::vector_t<scpp::int_t<>> local_nestedU_value;') === false)
+			|| (q_strpos($text, 'scpp::int_t<> field_item;') === false)
+			|| (q_strpos($text, 'scpp::int_t<> function_carry(') === false)) {
 			throw new \LogicException('Recursive constructed-type C++ representation changed');
 		}
 		return $text;

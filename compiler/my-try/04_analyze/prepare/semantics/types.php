@@ -17,7 +17,7 @@ final class Type_Preparation
 		throw new \RuntimeException('S2S fixed array types are not supported yet');
 	}
 
-	/** Apply one registered representation modifier without inventing a canonical type identity. */
+	/** Resolve a source modifier through registry storage policy without inventing a type identity. */
 	public static function prepare_type_use_modifier(type_use_modifier_node $node, preparation_context $context): void
 	{
 		$type = self::type($node->operand, $context);

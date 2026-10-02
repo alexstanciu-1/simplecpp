@@ -78,8 +78,9 @@ Discuss and split those rows rather than expanding a small slice silently.
 
 Chapter numbers organize the catalog; they are not a strict implementation queue.
 The [2026-10-02 preparation/emission audit](../planning/preparation_emission_audit.md)
-is complete. Its repairs remain open: copy eligibility, exact entry-return carrier
-handling, duplicate-declaration admission and non-void fallthrough. The existing
+is complete. Copy eligibility, duplicate-declaration admission and non-void fallthrough
+remain open. The entry-return carrier mismatch is resolved by registry normalization
+of redundant `value<T>` requests. The existing
 bounded scalar operator path consumes prepared decisions; broader value transfer,
 effects and control flow still need their owning preparation guarantees. Resolve the
 findings affecting a path before extending it; audit completion does not complete

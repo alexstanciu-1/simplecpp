@@ -4,6 +4,11 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/type_use_modifiers.md",
+                        "kind": "markdown",
+                        "doc_status": "normative"
+                    },
+                    {
                         "path": "specs/index_operator.md",
                         "kind": "markdown",
                         "doc_status": "normative"

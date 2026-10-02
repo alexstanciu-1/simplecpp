@@ -20,6 +20,7 @@ experiment retained for regressions, not a second semantic development path.
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
 | Preparation / C++ emission boundary audit | [Findings, evidence and open repair gates](planning/preparation_emission_audit.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
+| Value storage modifier semantics | [Registry normalization and AST spelling](../../../specs/type_use_modifiers.md) |
 | Active type-model discussion | [Type model direction](planning/types.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
 | Current scalar operators | [Bounded contracts, lowering and proof](s2s_scalar_operators.md) |

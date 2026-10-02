@@ -51,6 +51,14 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'value_entry' => ['$a value<int> = 7; return $a;', 7],
+	'value_interchange' => ['function carry(value<int> $x): int { return $x; } function plain(int $x): value<int> { return $x; } $a value<int> = 2; $b int = $a; $a = $b + 1; $c = carry($a); $d = plain($b); return $c + $d;', 5],
+	'value_reference' => ['function bump(value<int> &$x): void { ++$x; } function plain(int &$x): void { ++$x; } $a int = 1; $b value<int> = 2; bump($a); plain($b); return $a + $b;', 5],
+	'value_alias' => ['$a value<byte> = 258; $b uint8 = $a; return $b;', 2],
+	'value_bool' => ['$a value<bool> = true; return $a && true;', 1],
+	'value_float' => ['$a value<float> = 3.5; $b float = $a; return $b;', 3],
+	'value_nested' => ['$a value<value<int>> = 9; return $a;', 9],
+	'value_record' => ['struct Point { uint16 $x; } function read(value<Point> $p): int { return $p->x; } $a Point; $a->x = 6; $b value<Point> = $a; return read($b);', 6],
 	'interp_simple' => ['$name = "Alex"; $a = "Hello $name";', 0],
 	'interp_braced' => ['$count = 3; $a = "Count: {$count}";', 0],
 	'interp_adjacent' => ['$x = "a"; $y = "b"; $a = "$x$y{$x}";', 0],

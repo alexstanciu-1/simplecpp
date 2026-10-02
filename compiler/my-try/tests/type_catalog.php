@@ -106,9 +106,9 @@ type_catalog_check($outer_vector->type_id() !== $inner_vector->type_id(),
 	'Nested template applications collapsed distinct identities');
 $by_value_vector = $registry->intern_application($vector,
 	[$registry->use($integer->type_id(), true)]);
-type_catalog_check($by_value_vector !== $vector_int,
-	'By-value template argument flag was omitted from canonical identity');
-type_catalog_check($registry->application_count() === 6,
+type_catalog_check($by_value_vector === $vector_int,
+	'Redundant scalar value modifier split canonical template identity');
+type_catalog_check($registry->application_count() === 5,
 	'Only demanded exact template applications should be materialized');
 
 $copy_template = $registry->define_template('copy_box', type_definition_origin::source,
@@ -122,7 +122,37 @@ catch (\InvalidArgumentException $error) {
 	$rejected = str_contains($error->getMessage(), 'copyable_value');
 }
 type_catalog_check($rejected, 'Declared template capability requirement was not enforced');
-type_catalog_check($registry->application_count() === 7,
+type_catalog_check($registry->application_count() === 6,
 	'Rejected capability validation published the outer canonical application');
+
+$record_application = $registry->intern_application($copy_template, [$registry->use($integer->type_id())]);
+type_catalog_check($registry->use($record_application->type_id(), true)->matches(
+	$registry->use($record_application->type_id())),
+	'Registered struct template result did not use value storage');
+type_catalog_check($registry->use($vector_int->type_id(), true)->by_value(),
+	'Registered class template result lost its effective modifier');
+
+// Names are not storage policy: a custom integer is a value, a class named int is not.
+$custom_registry = new Type_Registry();
+$renamed_integer = $custom_registry->canonical($custom_registry->define_integer(
+	'counter', type_definition_origin::runtime, 32, false, []));
+$class_named_int = $custom_registry->canonical($custom_registry->define_nominal(
+	'int', type_definition_origin::source, nominal_type_kind::class_type, []));
+$record = $custom_registry->canonical($custom_registry->define_nominal(
+	'Point', type_definition_origin::source, nominal_type_kind::structure, []));
+foreach ([$renamed_integer, $record] as $registered_value) {
+	type_catalog_check($custom_registry->is_value_type($registered_value->type_id())
+		&& $custom_registry->use($registered_value->type_id(), true)->matches(
+			$custom_registry->use($registered_value->type_id())),
+		'Registered value storage was not normalized independently of spelling');
+}
+type_catalog_check(!$custom_registry->is_value_type($class_named_int->type_id())
+	&& $custom_registry->use($class_named_int->type_id(), true)->by_value(),
+	'A class spelling was mistaken for a registered scalar value');
+foreach (['bool', 'int', 'uint8', 'byte', 'float'] as $name) {
+	$type = $catalog->canonical($name);
+	type_catalog_check($registry->use($type->type_id(), true)->matches($registry->use($type->type_id())),
+		'Registered scalar modifier was not a semantic no-op');
+}
 
 echo "Type catalog: definitions, contracts, identity separation and demand-only reuse passed\n";

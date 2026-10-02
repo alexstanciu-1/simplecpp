@@ -453,9 +453,9 @@ LLVM and legacy STAN remain skipped.
 ## Remaining decisions
 
 The [preparation/emission audit](planning/preparation_emission_audit.md) confirms the
-bounded scalar operation/conversion boundary and records four open repair areas:
-copy eligibility, exact entry-return carriers, duplicate declarations and non-void
-fallthrough. Those findings gate affected expansions; they do not reopen the six
+bounded scalar operation/conversion boundary. Copy eligibility, duplicate declarations
+and non-void fallthrough remain open. The entry-return mismatch is resolved by
+[registry normalization of redundant value modifiers](../../../specs/type_use_modifiers.md). Those findings gate affected expansions; they do not reopen the six
 agreed chapter notes or claim the current sample set covers those additional shapes.
 
 - Checked shift counts are [explicit debt](planning/operators.md#debt-checked-shift-counts).

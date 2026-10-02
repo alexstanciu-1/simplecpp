@@ -4,7 +4,8 @@ Doc Status: supporting
 Audited 2026-10-02 at `091bf094483ce840c29e5e7543ff6197a330a1ec`.
 This report completes the bounded inspection requested by the
 [catalog prerequisite gate](../catalog/README.md#prerequisite-gates).
-**Inspection is complete; the repairs below are open.** No compiler structures,
+**Inspection is complete. PE-02 is subsequently resolved by registry normalization;
+PE-01, PE-03 and PE-04 remain open.** No compiler structures,
 semantics or generation behavior were changed by this audit.
 
 ## Result and boundary
@@ -94,6 +95,14 @@ and typed copies, reassignment, arguments, returns, snapshots, reference control
 and incremental changes to a record member's copy capability.
 
 ## PE-02 — entry-return adaptation lacks an exact carrier contract
+
+**Subsequent resolution (2026-10-02):** the agreed
+[storage-modifier rule](../../../../specs/type_use_modifiers.md) makes `value<int>`
+semantically equal to `int`. Registry normalization removes the redundant effective
+modifier before preparation consumers see it. The existing scalar entry adaptation
+then applies correctly; no special emitter unwrapping or new return fact is needed.
+The new `value_entry` generated-program fixture returns 7. The original audit
+reproduction and evidence below remain unchanged for provenance.
 
 **Priority: high; small bounded repair candidate.**
 
@@ -218,7 +227,7 @@ The earlier chapter checkpoint remains separate evidence.
 
 ## Suggested repair order
 
-1. PE-02: agree the exact entry-return contract; close the bounded carrier mismatch.
+1. PE-02: resolved by the agreed registry-based modifier normalization above.
 2. PE-01: discuss the value-transfer/capability ownership boundary before overloads
    or broader expression composition. This is the largest architecture risk found.
 3. PE-03: close duplicate-declaration admission within declaration preparation.
