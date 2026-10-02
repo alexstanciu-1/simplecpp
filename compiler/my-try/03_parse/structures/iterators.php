@@ -273,6 +273,65 @@ final class conditional_expression_children_iterator extends children_iterator
 	}
 }
 
+/** Preserve source arm order even when default is written before ordinary arms. */
+final class match_children_iterator extends children_iterator
+{
+	private match_expression_node $source;
+	private Storage_Cursor $arms /** Storage_Cursor<match_arm_node> */;
+	private bool $selector_read = false;
+
+	public function __construct(match_expression_node $source)
+	{
+		$this->source = $source;
+		$this->arms = new Storage_Cursor /** Storage_Cursor<match_arm_node> */($source->arms);
+	}
+
+	/** Yield the selector followed by existing arm identities without a temporary list. */
+	protected function read_next(): ?ast_node
+	{
+		if (!$this->selector_read) {
+			$this->selector_read = true;
+			return $this->source->selector;
+		}
+		$arms /** Storage_Cursor<match_arm_node> */ = $this->arms;
+		if (!$arms->valid()) {
+			return null;
+		}
+		$arm = $arms->current();
+		$arms->next();
+		return $arm;
+	}
+}
+
+final class match_arm_children_iterator extends children_iterator
+{
+	private match_arm_node $source;
+	private Storage_Cursor $labels /** Storage_Cursor<expression_node> */;
+	private bool $result_read = false;
+
+	public function __construct(match_arm_node $source)
+	{
+		$this->source = $source;
+		$this->labels = new Storage_Cursor /** Storage_Cursor<expression_node> */($source->labels);
+	}
+
+	/** Default yields only its result; grouped labels never duplicate that expression. */
+	protected function read_next(): ?ast_node
+	{
+		$labels /** Storage_Cursor<expression_node> */ = $this->labels;
+		if ($labels->valid()) {
+			$label = $labels->current();
+			$labels->next();
+			return $label;
+		}
+		if ($this->result_read) {
+			return null;
+		}
+		$this->result_read = true;
+		return $this->source->result;
+	}
+}
+
 /** Leaves need no source owner and have no cursor state. */
 final class empty_children_iterator implements child_iterator_i
 {

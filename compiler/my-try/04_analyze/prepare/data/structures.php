@@ -62,6 +62,17 @@ final class prepared_conditional_expression extends prepared_expression
 	public conversion_decision $fallback_conversion;
 }
 
+/** The enclosing match owns the value type; each arm owns its selection facts. */
+final class prepared_match_expression extends prepared_expression
+{
+}
+
+final class prepared_match_arm
+{
+	public array $decimals /** vector<string> */ = [];
+	public conversion_decision $conversion;
+}
+
 /** Explicit source cast retains the central conversion decision and its result type. */
 final class prepared_cast_expression extends prepared_expression
 {

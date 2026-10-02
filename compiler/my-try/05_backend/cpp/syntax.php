@@ -75,8 +75,50 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	{
 		$value /** nullable<string> */ = $node->require_preparation()->decimal;
 		if ($value === null) { return "default:\n"; }
-		if ($value === '-9223372036854775808') { return "case (-9223372036854775807LL - 1LL):\n"; }
-		return 'case ' . $value . "LL:\n";
+		return 'case ' . self::integer_constant($value) . ":\n";
+	}
+
+	/** Strict canonical-int selection consumes exact constants; fallback is always last. */
+	public function generate_match_expression(match_expression_node $node): string
+	{
+		$result_type = CPP_Declarations::type($node->require_preparation()->type, $this->context);
+		$selector = $node->selector->generate_cpp($this);
+		$temporary = 'match_subject_' . $this->context->next_temporary;
+		$this->context->next_temporary++;
+		$text = '([&]() -> ' . $result_type . ' { const auto ' . $temporary
+			. ' = (' . $selector . ').native_value(); ';
+		$fallback = '';
+		$arms /** Storage<match_arm_node> */ = $node->arms;
+		foreach ($arms as $arm)
+		{
+			$facts = $arm->require_preparation();
+			$result = CPP_Declarations::conversion($arm->result->generate_cpp($this), $facts->conversion, $this->context);
+			if (q_count($facts->decimals) === 0) {
+				$fallback = 'return ' . $result . '; ';
+				continue;
+			}
+			$checks = '';
+			foreach ($facts->decimals as $decimal) {
+				if ($checks !== '') {
+					$checks .= ' || ';
+				}
+				$checks .= '(' . $temporary . ' == ' . self::integer_constant($decimal) . ')';
+			}
+			$text .= 'if (' . $checks . ') { return ' . $result . '; } ';
+		}
+		if ($fallback === '') {
+			$this->context->headers['stdexcept'] = true;
+			$fallback = 'throw std::runtime_error("Unhandled match expression"); ';
+		}
+		return $text . $fallback . '}())';
+	}
+
+	private static function integer_constant(string $decimal): string
+	{
+		if ($decimal === '-9223372036854775808') {
+			return '(-9223372036854775807LL - 1LL)';
+		}
+		return $decimal . 'LL';
 	}
 
 	private function loop_body(loop_node $node): string

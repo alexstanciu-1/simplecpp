@@ -34,6 +34,14 @@ edge is retained. Inspection and maintenance visit the present fields in that or
 Preparation attaches truthiness, result type and branch conversions; emission owns
 the shorthand snapshot temporary. Both spellings produce nonaddressable values.
 
+`match_expression_node` owns its selector and `Storage<match_arm_node>` in source
+order. Each arm owns `Storage<expression_node>` labels and one result expression;
+empty labels mean default. Lazy inspection and maintenance visit selector, arms,
+labels and results without copying membership. Preparation attaches exact label
+decimals and arm conversions. There is no shared statement-selection superclass:
+match has neither bodies nor control-transfer targets. Emission postpones default
+without reordering retained syntax.
+
 `loop_node extends breakable_node` owns one block body and common preparation/facts.
 While/do-while own a condition and inspect it before/after the body respectively.
 For owns three ordered typed collections (initialization statements, conditions,

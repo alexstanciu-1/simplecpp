@@ -1003,6 +1003,9 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->text() === 'match') {
+			return $this->match_expression();
+		}
 		if ($this->text() === '(')
 		{
 			if ($this->cast_ahead()) {
@@ -1069,6 +1072,46 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Expected scalar literal or variable reference'));
 		}
 		return $node;
+	}
+
+	/** Match arms own grouped labels and one expression, never statement blocks. */
+	private function match_expression(): match_expression_node
+	{
+		$start = $this->position++;
+		$selection = new match_expression_node();
+		$this->expect('(');
+		$selection->selector = $this->expression();
+		$this->expect(')');
+		$this->expect('{');
+		$arms /** Storage<match_arm_node> */ = $selection->arms;
+		while ($this->text() !== '}')
+		{
+			$arm_start = $this->position;
+			$arm = new match_arm_node();
+			$labels /** Storage<expression_node> */ = $arm->labels;
+			if ($this->text() === 'default') {
+				$this->position++;
+			}
+			else
+			{
+				$labels->append($this->expression());
+				while ($this->text() === ',') {
+					$this->position++;
+					$labels->append($this->expression());
+				}
+			}
+			$this->expect('=>');
+			$arm->result = $this->expression();
+			$this->finish_node($arm, $arm_start);
+			$arms->append($arm);
+			if ($this->text() !== ',') {
+				break;
+			}
+			$this->position++;
+		}
+		$this->expect('}');
+		$this->finish_node($selection, $start);
+		return $selection;
 	}
 
 	/** Split only double-quoted variable insertions; all offsets stay relative to the source token. */

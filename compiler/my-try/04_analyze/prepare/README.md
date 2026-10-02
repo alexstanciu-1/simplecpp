@@ -17,6 +17,8 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
 | `semantics/expressions.php` | Expression dispatch, variable/member access, calls and assignments |
+| `semantics/selection_results.php` | Shared matching-scalar value-result admission and conversions |
+| `semantics/matches.php` | Strict constant-label match preparation and per-arm facts |
 | `semantics/capabilities.php` | Dependency-aware capability queries and owned-copy admission |
 | `semantics/types.php`, `literals.php` | Canonical type resolution, storage identity checks and exact literal facts |
 | `data/structures.php` | Facts, invocation contexts and lookup observations |
@@ -87,11 +89,23 @@ For initialization uses statement preparation, with expressions for tests/update
 Existing expression-effect restrictions still apply.
 
 `Conditional_Expression_Preparation` uses the same truthiness owner, prepares both
-branches, and joins matching scalar types with explicit conditional-branch conversion
-facts. Shorthand reuses its condition's prepared type as the true result type.
+branches, and uses `Selection_Result_Preparation` to join matching scalar types with
+explicit conditional-branch conversion facts. Shorthand reuses its condition's
+prepared type as the true result type.
 Results are non-addressable values; nested writes cannot introduce bindings. Eager
 parents inspect every conditional child for effects. Emission uses typed lazy returns
 and a single saved left value for shorthand; wrappers/mixed joins remain deferred.
+
+`Match_Preparation` uses the same result-admission worker, but strict integer label
+selection rather than truthiness. `Integer_Constants::label` serves both switch and
+match. Every arm is prepared, including unselected results, preserving dependency
+tracking and diagnostics. Arm facts own normalized decimal labels and result
+conversions. Repeated labels select the first result; duplicate defaults reject.
+An omitted default is valid and unmatched runtime selection throws. Empty match is
+deferred until non-returning expression typing exists. Match does not modify scope or
+transfer targets; nested assignments cannot establish bindings. Eager parents check
+selector/result effects; admitted labels are constants. Broader selectors and result
+joins remain deferred.
 
 `local_environment` is transient, with parent-linked membership referencing attached
 storage facts. Blocks allocate children and restore the enclosing environment even

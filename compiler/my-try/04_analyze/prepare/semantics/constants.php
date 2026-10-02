@@ -5,6 +5,16 @@ namespace scpp\compiler;
 
 final class Integer_Constants
 {
+	/** Switch and match share canonical integer admission and exact label resolution. */
+	public static function label(expression_node $syntax, preparation_context $context, string $role): string
+	{
+		$prepared = Expression_Preparation::prepare($syntax, $context);
+		if (!$prepared->type->matches($context->integer)) {
+			throw new \RuntimeException('S2S ' . $role . ' requires canonical int');
+		}
+		return $syntax->integer_constant();
+	}
+
 	public static function reference(prepared_constant_reference $facts): string
 	{
 		if (!($facts->definition instanceof integer_constant_definition)) {

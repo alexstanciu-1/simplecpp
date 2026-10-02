@@ -47,6 +47,8 @@ enum node_kind
 	case constant_reference;
 	case cast_expression;
 	case conditional_expression;
+	case match_expression;
+	case match_arm;
 	case compound_assignment_expression;
 	case mutation_expression;
 	case unary_expression;

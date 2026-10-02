@@ -88,7 +88,13 @@ $expected_text = ['1', '<', '<', '2', '>', '>', '1', ';', '1', '<', '<', '2', ';
 foreach ($scan->tokens as $index => $token) {
 	token_check($token->text() === $expected_text[$index]);
 }
-foreach (['$', '$0', '12a', '1.e+', '1..', '=>', "\0", "\xc3\xa9"] as $invalid)
+$tokens = token_scan('1=>2; 3>=2; 1===1;')->tokens;
+$expected_text = ['1', '=>', '2', ';', '3', '>=', '2', ';', '1', '===', '1', ';'];
+token_check(count($tokens) === count($expected_text));
+foreach ($tokens as $index => $token) {
+	token_check($token->text() === $expected_text[$index]);
+}
+foreach (['$', '$0', '12a', '1.e+', '1..', "\0", "\xc3\xa9"] as $invalid)
 {
 	$failed = false;
 	try {

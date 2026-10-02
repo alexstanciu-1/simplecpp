@@ -54,11 +54,7 @@ final class Switch_Preparation
 			return $facts;
 		}
 		$value /** expression_node */ = $syntax->value;
-		$prepared = Expression_Preparation::prepare($value, $context);
-		if (!$prepared->type->matches($context->integer)) {
-			throw new \RuntimeException('S2S switch case requires canonical int');
-		}
-		$facts->decimal = $value->integer_constant();
+		$facts->decimal = Integer_Constants::label($value, $context, 'switch case');
 		return $facts;
 	}
 }

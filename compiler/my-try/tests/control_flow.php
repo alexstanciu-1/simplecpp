@@ -42,6 +42,29 @@ $path = $directory . '/main.phs';
 try
 {
 	$cases = [
+		'match_first' => ['return match (1) { 1 => 3, 2 => 4, default => 5 };', 3],
+		'match_grouped' => ['return match (2) { 1, 2 => 7, default => 0, };', 7],
+		'match_no_default' => ['return match (3) { 1, 2 => 7, 3 => 8 };', 8],
+		'match_default_first' => ['return match (2) { default => 0, 1 => 3, 2 => 8 };', 8],
+		'match_default_middle' => ['return match (3) { 1 => 3, default => 0, 3 => 8 };', 8],
+		'match_default_fallback' => ['return match (4) { 1 => 3, default => 9, 3 => 8 };', 9],
+		'match_default_only' => ['return match (2) { default => 6 };', 6],
+		'match_bool_result' => ['$x = match (2) { 1 => false, 2 => true }; if ($x) { return 5; } return 0;', 5],
+		'match_float_result' => ['$x = match (2) { 1 => 1.5, 2 => 2.5 }; return (int) $x;', 2],
+		'match_string_result' => ['$x = match (2) { 1 => "1", 2 => "4" }; return (int) $x;', 4],
+		'match_once' => ['$n = 1; $x = match ($n++) { 1 => 4, default => 9 }; return $n * 10 + $x;', 24],
+		'match_calls' => ['function probe(int &$n, int $x): int { $n++; return $x; } $n = 0; $x = match (probe($n, 2)) { default => probe($n, 0), 1 => probe($n, 1), 2 => probe($n, 5) }; return $n * 10 + $x;', 25],
+		'match_lazy_error' => ['return match (2) { default => (1 / 0), 1 => (1 / 0), 2 => 7 };', 7],
+		'match_signed' => ['return match (-2) { -1, -(+2) => 6, default => 0 };', 6],
+		'match_negative_maximum' => ['return match (-PHP_INT_MAX) { -9223372036854775807 => 7, default => 0 };', 7],
+		'match_maximum' => ['return match (PHP_INT_MAX) { 9223372036854775807 => 8, default => 0 };', 8],
+		'match_duplicate_first' => ['return match (1) { 1 => 4, +1 => 9 };', 4],
+		'match_nested' => ['return match (match (1) { 1 => 2 }) { 2 => match (3) { 3 => 8 }, default => 0 };', 8],
+		'match_ternary' => ['return true ? match (0) { 0 => (0 ?: 9) } : 1;', 9],
+		'match_eager_pure' => ['return 2 + match (1) { 1 => 3, default => 4 };', 5],
+		'match_lazy_logical' => ['$n = 0; $x = false && match (1) { 1 => (bool) ($n = 1) }; return $n;', 0],
+		'match_existing_write' => ['$n = 0; $x = match (1) { 1 => ($n = 3), default => ($n = 8) }; return $n + $x;', 6],
+		'match_value_copy' => ['$a = 1; $b = 2; $x = match (1) { 1 => $a, default => $b }; $x = 8; return $a + $b;', 3],
 		'ternary_true' => ['return true ? 3 : 4;', 3],
 		'ternary_false' => ['return false ? 3 : 4;', 4],
 		'ternary_assignment' => ['$a = false ? 3 : 4; return $a;', 4],
@@ -183,7 +206,38 @@ try
 		$executions[] = ['path' => $output, 'exit_code' => 0];
 	}
 
+	// No default is valid; an unmatched selection must throw in-process, not invent a value.
+	$compiler = control_program($path, 'return match (2) { 1 => 7 };');
+	$compiler->prepare();
+	$compiler->cpp();
+	$match_text = str_replace('int main()', 'int match_probe()', Model::$cpp_files[0]->text);
+	$match_text .= "\n#include <string>\nint main() { try { match_probe(); } catch (const std::runtime_error& error) { return std::string(error.what()) == \"Unhandled match expression\" ? 0 : 2; } return 1; }\n";
+	if (isset($argv[1])) {
+		$output = $argv[1] . '/match_unhandled.cpp';
+		file_put_contents($output, $match_text);
+		$executions[] = ['path' => $output, 'exit_code' => 0];
+	}
+
 	foreach ([
+		['return match (true) { 1 => 2 };', 'match selector requires canonical int'],
+		['return match (1.0) { 1 => 2 };', 'match selector requires canonical int'],
+		['return match ("1") { 1 => 2 };', 'match selector requires canonical int'],
+		['return match (1) { true => 2 };', 'match label requires canonical int'],
+		['return match (1) { "1" => 2 };', 'match label requires canonical int'],
+		['$x = 1; return match (1) { $x => 2 };', 'supported constant integer expression'],
+		['return match (1) { 1 + 0 => 2 };', 'supported constant integer expression'],
+		['return match (1) { default => 2, default => 3 };', 'duplicate default arms'],
+		['return match (1) {};', 'at least one result arm'],
+		['return match (1) { 1 => 2, 2 => 2.0 };', 'match branches require matching scalar types'],
+		['return match (1) { 1 => 2, default => false };', 'match branches require matching scalar types'],
+		['return match (1) { 1 => 2, 2 => $missing };', 'established local declaration'],
+		['return match (1) { 1 => ($new = 2) };', 'established local declaration'],
+		['return match ($new = 1) { 1 => 2 };', 'established local declaration'],
+		['struct Box {} $a Box; $x = match (1) { 1 => $a };', 'match branches require supported scalar value types'],
+		['function f(): void {} $x = match (1) { 1 => f() };', 'match branches require supported scalar value types'],
+		['$n = 0; return match (1) { 1 => ($n = 1) } + $n;', 'order-independent operands'],
+		['$n = 0; return match ($n++) { 0 => 1 } + $n;', 'order-independent operands'],
+		['function f(int &$x): void {} $a = 1; f(match (1) { 1 => $a });', 'reference arguments require stable storage'],
 		['switch (true) {}', 'selector requires canonical int'],
 		['return true ? 1 : 1.0;', 'conditional branches require matching scalar types'],
 		['return true ?: 1;', 'conditional branches require matching scalar types'],
@@ -250,6 +304,9 @@ try
 
 	// The bounded grammar requires braces and does not admit declarations in branch bodies.
 	foreach (['switch (1) { $x = 2; case 1: break; }', 'switch (1) { case 1: return 1;',
+		'return match (1) { 1 => 2;', 'return match (1) { 1 2 };',
+		'return match (1) { default, 1 => 2 };', 'return match (1) { 1 => { return 2; } };',
+		'(match (1) { 1 => 2 }) = 3;',
 		'return true ? 1 : false ? 2 : 3;', 'return true ? 1;',
 		'$a = 1; $b = 2; (true ? $a : $b) = 3;',
 		'switch (1) { default: function local(): int { return 1; } }',
@@ -268,6 +325,58 @@ try
 		control_check($rejected, 'Unsupported or incomplete branch grammar was accepted');
 		control_check(Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Parse failure published output');
 	}
+
+	// Match owns grouped expression labels and one result, with source-order inspection.
+	$match_source = 'function f(): int { return match (2) { default => 0, 1, 2 => 8 }; } return f();';
+	$compiler = control_program($path, $match_source);
+	$compiler->prepare();
+	$match_body = Model::$global_scope->functions_named('f')[0]->syntax()->body;
+	$selection = $match_body->statements[0]->expression;
+	control_check($selection instanceof match_expression_node, 'Missing dedicated match expression');
+	control_check(iterator_to_array($selection->children()) === [$selection->selector, $selection->arms[0], $selection->arms[1]], 'Match inspection reordered arms');
+	$default_arm = $selection->arms[0];
+	$grouped_arm = $selection->arms[1];
+	control_check($default_arm->labels->is_empty(), 'Default owns labels');
+	control_check(iterator_to_array($default_arm->children()) === [$default_arm->result], 'Default result edge');
+	control_check(iterator_to_array($grouped_arm->children()) === [$grouped_arm->labels[0], $grouped_arm->labels[1], $grouped_arm->result], 'Match grouped edges');
+	control_check($grouped_arm->require_preparation()->decimals === ['1', '2'], 'Match exact label facts');
+	control_check($grouped_arm->require_preparation()->conversion->context === conversion_context::conditional_branch, 'Missing match result conversion');
+	control_check(!$selection->require_preparation()->addressable, 'Match result is addressable');
+	$compiler->cpp();
+	$match_original = Model::$cpp_files[0]->text;
+	file_put_contents($path, "\n\n" . $match_source);
+	$compiler->update_cpp([$path]);
+	control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $match_body, 'Moved match body lost identity');
+	control_check(Model::$cpp_files[0]->text === $match_original, 'Moved match changed output');
+
+	// Unselected arms still register dependencies and survive failed retries and repair.
+	$match_valid = 'function branch(): int { return 2; } function f(): int { return match (1) { 1 => 8, 2 => branch() }; } function stable(): int { return 9; } return f();';
+	$compiler = control_program($path, $match_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	$match_original = Model::$cpp_files[0]->text;
+	$match_stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+	$match_version = $match_stable->version;
+	foreach ([
+		str_replace('branch(): int { return 2;', 'branch(): float { return 2.0;', $match_valid) => 'match branches require matching scalar types',
+		str_replace('2 => branch()', '2 => $missing', $match_valid) => 'established local declaration',
+		str_replace('2 => branch()', 'true => branch()', $match_valid) => 'match label requires canonical int',
+	] as $invalid => $diagnostic)
+	{
+		file_put_contents($path, $invalid);
+		$compiler->sync([$path]);
+		control_reject($compiler, $diagnostic);
+		$compiler->sync([]);
+		control_reject($compiler, $diagnostic);
+		control_check($match_stable->version === $match_version, 'Match failure rebuilt independent body');
+		file_put_contents($path, $match_valid);
+		$compiler->update_cpp([$path]);
+		control_check(Model::$cpp_files[0]->text === $match_original, 'Match repair changed output');
+	}
+	$compiler = control_program($path, $match_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	control_check(Model::$cpp_files[0]->text === $match_original, 'Clean/incremental match mismatch');
 
 	// Conditional shape owns two or three distinct children and always produces a value.
 	$conditional_source = 'function f(): int { $a = true ? 1 : 2; return $a ?: 3; } return f();';

@@ -264,6 +264,48 @@ dependency invalidation and failure/retry/repair. Generated programs compile wit
 `-Werror=return-type`. This is PHP-host and generated-program proof, not a native
 compiler rebuild.
 
+## Agreed match-expression slice — 2026-10-02
+
+`match_expression_node` owns a selector and ordered `Storage<match_arm_node>`.
+Each arm owns expression labels and one result expression; empty labels mean default,
+without an extra flag. There is no statement body, break target or fallthrough.
+The selector is evaluated once; the first strictly matching label selects its lazy
+result. Default is considered only after all labels, irrespective of source position.
+Repeated integer labels retain first-match behavior, unlike switch's duplicate check.
+
+The agreed first pass accepts canonical int selectors and constant int labels using
+the shared exact integer resolver. Grouped labels and trailing arm commas are supported.
+Results must share one supported scalar type and are nonaddressable values, using
+the same result-admission worker as ternary. Preparation checks every arm, records
+normalized label decimals and explicit result conversions, and rejects new bindings
+inside expressions. Multiple defaults reject. An empty match is deferred because it
+needs a non-returning expression type rather than an invented scalar result.
+
+Default is optional by explicit user agreement. An unmatched expression without it
+throws `std::runtime_error("Unhandled match expression")`, matching the legacy failure
+spelling; no implicit result is manufactured. The imported catalog's mandatory-default
+rule is a recorded contract discrepancy, not the agreed v0.2 behavior.
+
+Legacy `renderMatchExpr` and `tests/php/control_flow/level_02/control_flow_012_match_basic.phs`
+were reviewed. The legacy emitter saves its selector but emits default at its source
+position; this slice deliberately defers fallback until all ordinary labels fail.
+C++ lowering uses a typed immediately invoked lambda, one native integer snapshot,
+and ordered native comparisons against prepared constants. Within the admitted
+canonical-int domain these implement strict equality without coercion. Typed lazy
+returns avoid C++ result deduction and preserve value semantics. No new runtime helper,
+dependency family or shared syntax superclass is needed. Compilation-cost benchmarking,
+other selector types, runtime labels, broader result joins, exception syntax and LLVM
+remain outside this slice.
+
+Dated evidence: `tests/control_flow.py` passed 12 PHP suites and 132 generated-C++
+programs on 2026-10-02 (`/tmp/my-try-match-20261002-second`). Match proofs cover grouped
+and repeated labels, defaults at different positions, omitted default (successful
+selection and a caught unmatched runtime error), scalar results, single evaluation,
+lazy alternatives, exact signed constants, value-only results, retained AST identity,
+and invalid-edit/retry/repair with unselected-arm dependency invalidation. Existing
+ternary, switch, loop and truthiness controls also pass. This is PHP-host and
+generated-program proof, not a native compiler rebuild.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -276,7 +318,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CTRL-WHILE-001](#ctrl-while-001) | agreed | `while ($a) { $b++; }` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [EXPR-TERNARY-001](#expr-ternary-001) | agreed | `$a = $b ? $c : $d;` | proved | proved | deferred | [Matching-scalar slice](#agreed-conditional-expression-slice--2026-10-02), control_flow.php |
 | [CTRL-SWITCH-001](#ctrl-switch-001) | agreed | `switch ($a) { case 1: break; default: break; }` | proved | proved | deferred | [Switch slice](#agreed-switch-slice--2026-10-02), control_flow.php |
-| [CTRL-MATCH-001](#ctrl-match-001) | pending-discussion | `$a = match ($b) { 1 => 10, default => 0 };` | unverified | unverified | deferred | — |
+| [CTRL-MATCH-001](#ctrl-match-001) | agreed | `$a = match ($b) { 1 => 10, default => 0 };` | proved | proved | deferred | [Integer-label slice](#agreed-match-expression-slice--2026-10-02), control_flow.php |
 | [CTRL-DOWHILE-001](#ctrl-dowhile-001) | agreed | `do { $b++; } while ($a);` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [CTRL-FOR-001](#ctrl-for-001) | agreed | `for ($i = 0; $i < 10; $i++) { }` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
 | [CTRL-BREAK-001](#ctrl-break-001) | agreed | `break;` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
@@ -504,7 +546,11 @@ switch (a) { case static_cast<int_t>(1): break; default: break; }
 
 ## CTRL-MATCH-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed integer-label slice](#agreed-match-expression-slice--2026-10-02).
+Default is optional by explicit agreement; unmatched selection throws. A typed lambda
+saves the selector once and returns one lazily selected same-scalar value. The imported
+mandatory-default rule and abbreviated lowering below are historical evidence, not
+this slice's implementation contract.
 
 ### Imported version 1
 

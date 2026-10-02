@@ -300,6 +300,19 @@ final class Operator_Preparation
 			}
 			return;
 		}
+		if ($node instanceof match_expression_node)
+		{
+			if (!$sequenced)
+			{
+				$match_expression = object_cast($node, match_expression_node::class);
+				self::require_operand($match_expression->selector, false);
+				$arms /** Storage<match_arm_node> */ = $match_expression->arms;
+				foreach ($arms as $arm) {
+					self::require_operand($arm->result, false);
+				}
+			}
+			return;
+		}
 		if ($node instanceof conditional_expression_node) {
 			if (!$sequenced) {
 				$selection = object_cast($node, conditional_expression_node::class);

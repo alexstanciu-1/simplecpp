@@ -21,16 +21,9 @@ final class Conditional_Expression_Preparation
 				$selected = Expression_Preparation::prepare($branch, $context);
 			}
 			$fallback = Expression_Preparation::prepare($syntax->fallback, $context);
-			if (!Conversion_Preparation::is_scalar($selected->type) || !Conversion_Preparation::is_scalar($fallback->type)) {
-				throw new \RuntimeException('S2S conditional branches require supported scalar value types');
-			}
-			if (!$selected->type->matches($fallback->type)) {
-				throw new \RuntimeException('S2S conditional branches require matching scalar types');
-			}
-			$facts->type = $selected->type;
-			Capability_Preparation::require_copy($facts->type, $context);
-			$facts->true_conversion = Conversion_Preparation::decide($selected->type, $facts->type, conversion_context::conditional_branch);
-			$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
+			$facts->type = Selection_Result_Preparation::begin($selected->type, $context, 'conditional');
+			$facts->true_conversion = Selection_Result_Preparation::branch($selected->type, $facts->type, 'conditional');
+			$facts->fallback_conversion = Selection_Result_Preparation::branch($fallback->type, $facts->type, 'conditional');
 			return $facts;
 		}
 		finally { $context->statement_assignment = $statement_assignment; }
