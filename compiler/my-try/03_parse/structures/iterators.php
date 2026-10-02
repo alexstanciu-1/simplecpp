@@ -13,6 +13,7 @@ interface child_iterator_i extends \Iterator
 	public function valid(): bool;
 }
 
+
 /** Shared forward-only cursor protocol; concrete cursors supply only the next child. */
 abstract class children_iterator implements child_iterator_i
 {
@@ -65,6 +66,38 @@ abstract class children_iterator implements child_iterator_i
 			$this->started = true;
 		}
 		return $this->current_child !== null;
+	}
+}
+
+/** Inspect a conditional through its named owning edges without copying children. */
+final class if_children_iterator extends children_iterator
+{
+	private if_node $source;
+	private int $next_field = 0;
+
+	public function __construct(if_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** An absent condition is valid only for the final else arm. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_field === 0) {
+			$this->next_field = 1;
+			if ($this->source->condition !== null) {
+				return $this->source->condition;
+			}
+		}
+		if ($this->next_field === 1) {
+			$this->next_field = 2;
+			return $this->source->body;
+		}
+		if ($this->next_field === 2) {
+			$this->next_field = 3;
+			return $this->source->next_arm;
+		}
+		return null;
 	}
 }
 

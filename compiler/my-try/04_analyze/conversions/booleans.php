@@ -1,6 +1,6 @@
 <?php
 
-/* Select explicit conversions whose requested result is canonical boolean. */
+/* Own boolean conversion policy, including implicit condition admission. */
 namespace scpp\compiler;
 
 final class Boolean_Conversions
@@ -8,6 +8,9 @@ final class Boolean_Conversions
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
+		if ($context === conversion_context::condition) {
+			throw new \RuntimeException('S2S condition requires canonical bool; use an explicit boolean cast');
+		}
 		if (($context === conversion_context::explicit_cast)
 			&& Conversion_Preparation::is_scalar($source)) {
 			return Conversion_Preparation::operation(

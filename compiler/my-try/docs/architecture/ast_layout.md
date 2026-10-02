@@ -1,15 +1,32 @@
 # Specialized AST nodes
 Doc Status: supporting
 
-The active PHP model uses a property-free `ast_node` abstract base and concrete
-syntax nodes. Each node owns its named syntax fields, source span and applicable
-facts. There is no outer node/payload pair, mutable kind/payload agreement, sibling
+The active PHP model uses a property-free `ast_node` abstract base and specialized
+syntax nodes. Named syntax fields, source spans and applicable facts belong to
+their semantic node family; `statement_body_node` shares ordered body storage and
+behavior between functions and blocks. There is no outer node/payload pair, mutable kind/payload agreement, generic sibling
 chain or parallel child list. The completed migration retired its frozen review
 proposal; see the [migration audit](../archive/specialized_ast_migration_audit.md)
 for implemented differences and the bounded native iterator checkpoint. Git history
 retains the former `03_parse/proposal/` snapshots when historical comparison is needed.
 
 ## Typed ownership
+
+`statement_body_node` is an abstract statement owning `Storage<statement_node>`
+and its source span. It shares construction, inspection, maintenance and block
+preparation/generation dispatch. `block_node` is an empty final subclass;
+`function_body_node` adds only executable-unit scope/work state and overrides root
+preparation and generation dispatch. Shared workers accept the abstract body type.
+Algorithms remain worker-owned. This body abstraction is a named language concept,
+not a generic AST child/payload container.
+
+`if_node` owns a block body, an explicit arm kind, an optional condition and an
+optional `next_arm`. Conditions are required on if/elseif and absent on else;
+else has no successor. Only the initial arm enters the enclosing statements.
+`next_arm` is a conditional-specific owning syntax edge. Inspection and maintenance
+visit condition, body and next arm in order; preparation and emission each own their
+typed traversal. Branches and standalone nested braces share the same block node.
+No nested block introduces a separate preparation work item or parser scope owner.
 
 `function_node` owns parameters, a `type_node` return type and a
 `function_body_node`. `struct_node` owns fields. `file_node` owns file declarations

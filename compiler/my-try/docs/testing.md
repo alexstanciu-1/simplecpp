@@ -17,6 +17,16 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+Run the focused branch/body slice, its related PHP controls and generated C++ programs:
+
+```bash
+python3 compiler/my-try/tests/control_flow.py --results /tmp/FRESH_CONTROL_FLOW_RESULTS
+```
+
+This uses the same 12-slot FPM/OPcache pool, with CLI fallback. The ordinary full
+runner also consumes the control-flow execution manifest. This does not rebuild
+the compiler itself natively.
+
 Run all PHP suites with retained evidence:
 
 ```bash

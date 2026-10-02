@@ -179,7 +179,7 @@ final class Expression_Preparation
 	public static function prepare_reference(variable_reference_node $node, preparation_context $context): prepared_variable_reference
 	{
 		$entry = $node->occurrence();
-		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
+		$locals = $context->locals;
 		$targets /** vector<prepared_storage> */ = $locals->named($entry->name);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs an established local declaration for ' . $entry->name);

@@ -20,7 +20,9 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 Model owns modules and global/language scopes. Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable
-scopes. Concrete nodes own named children; there is no payload or parent/sibling graph.
+scopes. Specialized node families own named children; the abstract statement body
+owns its ordered statements. Conditional arms own their block and successor arm;
+there is no payload or generic parent/sibling graph.
 
 Functions own signature scopes; structs own member scopes. File/body scopes observe
 owners retained by the parsed file. Occurrences observe syntax, collection and scope;

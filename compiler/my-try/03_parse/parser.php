@@ -289,6 +289,12 @@ final class Parser_Run
 	/** Select a statement from its leading syntax; names are never looked up here. */
 	private function statement(): ast_node
 	{
+		if ($this->text() === 'if') {
+			return $this->conditional_arm(if_arm_kind::initial);
+		}
+		if ($this->text() === '{') {
+			return $this->statement_block();
+		}
 		if ($this->text() === 'struct') {
 			return $this->struct_declaration();
 		}
@@ -307,6 +313,49 @@ final class Parser_Run
 			return $this->expression_statement();
 		}
 		return $this->expression_statement();
+	}
+
+	/** Parse an ordinary braced statement body without inventing an executable work owner. */
+	private function statement_block(): block_node
+	{
+		$start = $this->expect('{');
+		$body = new block_node();
+		$statements /** Storage<statement_node> */ = $body->statements;
+		while (($this->text() !== '}') && ($this->text() !== ''))
+		{
+			if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'template')) {
+				throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
+			}
+			$statement = $this->statement();
+			$statements->append(object_cast($statement, statement_node::class));
+		}
+		$this->expect('}');
+		$this->finish_node($body, $start);
+		return $body;
+	}
+
+	/** Preserve arm roles and brace bodies; only the initial arm enters the parent sequence. */
+	private function conditional_arm(if_arm_kind $kind): if_node
+	{
+		$start = $this->position++;
+		$arm = new if_node($kind);
+		if ($kind !== if_arm_kind::else_arm) {
+			$this->expect('(');
+			$arm->condition = $this->expression();
+			$this->expect(')');
+		}
+		$arm->body = $this->statement_block();
+		if ($kind !== if_arm_kind::else_arm)
+		{
+			if ($this->text() === 'elseif') {
+				$arm->next_arm = $this->conditional_arm(if_arm_kind::elseif_arm);
+			}
+			elseif ($this->text() === 'else') {
+				$arm->next_arm = $this->conditional_arm(if_arm_kind::else_arm);
+			}
+		}
+		$this->finish_node($arm, $start);
+		return $arm;
 	}
 
 	/** Register the record immediately, then reconcile fields within its retained member scope. */

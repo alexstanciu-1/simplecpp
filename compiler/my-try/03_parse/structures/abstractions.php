@@ -95,6 +95,61 @@ abstract class assignable_expression_node extends expression_node
 /** Executable-body items: explicit local declarations, expression statements, returns and blocks. */
 abstract class statement_node extends ast_node
 {
+	/** Ordinary statements complete normally after their semantic work succeeds. */
+	public function prepare_completion(preparation_context $context): statement_completion
+	{
+		$this->prepare($context);
+		return new statement_completion(true);
+	}
+}
+
+/** Shared ordered code body; concrete functions add only executable-unit state. */
+abstract class statement_body_node extends statement_node
+{
+	use Node_Source_Span;
+
+	/** @storage.owner */
+	public Storage $statements /** Storage<statement_node> */;
+
+	public function __construct()
+	{
+		$this->statements = new Storage /** Storage<statement_node> */();
+	}
+
+	public function kind(): node_kind
+	{
+		return node_kind::block;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->statements));
+	}
+
+	public function prepare(preparation_context $context): void
+	{
+		$this->prepare_completion($context);
+	}
+
+	public function prepare_completion(preparation_context $context): statement_completion
+	{
+		return Body_Preparation::prepare_block($this, $context);
+	}
+
+	/** Expose owning statements once; maintenance workers choose whether to recurse. */
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$items /** Storage<statement_node> */ = $this->statements;
+		foreach ($items as $child) {
+			$worker->edge($this, $child);
+		}
+	}
+
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_block($this);
+	}
 }
 
 /** File-level declarations only in the current grammar: functions and structs. */
@@ -222,7 +277,8 @@ interface cpp_generation_worker_i
 {
 	public function generate_file(file_node $node): string;
 	public function generate_function_body(function_body_node $node): string;
-	public function generate_block(block_node $node): string;
+	public function generate_block(statement_body_node $node): string;
+	public function generate_if(if_node $node): string;
 	public function generate_integer_literal(integer_literal_node $node): string;
 	public function generate_float_literal(float_literal_node $node): string;
 	public function generate_boolean_literal(boolean_literal_node $node): string;

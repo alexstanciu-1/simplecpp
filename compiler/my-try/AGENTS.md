@@ -57,7 +57,8 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
 - Structures may initialize data, preserve local representation invariants, expose
   typed access/query helpers, clear their facts, and dispatch/traverse typed
   operations. Workers retain algorithms, scheduling and publication policy.
-- Concrete AST nodes own named fields. Do not recreate node/payload registries,
+- Specialized AST node families own named fields; the shared abstract statement
+  body owns its statements and common traversal. Do not recreate node/payload registries,
   generic child lists or inspection parents. `children()` is lazy inspection;
   compiler operations use typed fields/hooks. Every operation has one traversal owner.
 - Keep stable identity and collection positions. Do not sort syntax membership or

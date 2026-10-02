@@ -196,7 +196,7 @@ final class CPP_Generator
 	}
 
 	/** The worker visits executable children once; declaration hooks collect separate output sections. */
-	public static function generate_statements(function_body_node $body, cpp_generation_context $context): string
+	public static function generate_statements(statement_body_node $body, cpp_generation_context $context): string
 	{
 		$text = '';
 		$statements /** Storage<statement_node> */ = $body->statements;

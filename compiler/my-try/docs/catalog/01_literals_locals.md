@@ -1572,7 +1572,7 @@ C++ output, the precise implicit-read diagnostic, no failed output publication a
 source purity. Existing collection coverage also proves that a file local is not
 published into the global variable index. The native checkpoint compiles and executes
 `function_locals` after verifying byte-identical PHP/native emission. The parent row
-remains in progress because `NOTE-033.b` still waits for control-flow block scopes.
+is now complemented by the chapter 03 block proof under `NOTE-033.b` below.
 
 ### NOTE-033.b — nested statement blocks
 
@@ -1580,8 +1580,11 @@ The legacy S2S edge cases remain applicable design input: a child block may assi
 already-visible outer local; a local first introduced inside a child block does not
 escape it; and an explicit outer declaration can establish storage for assignments
 from multiple child blocks. These rules require real child-block local environments,
-not case branches in assignment preparation. They remain pending discussion and proof
-until the control-flow catalog introduces `if` and loop bodies.
+not case branches in assignment preparation. The
+[chapter 03 first slice](03_control_flow.md#agreed-first-slice--2026-10-02) now
+implements and proves them for ordinary nested braces and if/elseif/else bodies,
+including typed shadowing and self-initialization rejection. Loop-specific scope
+and control-transfer rules remain with the later loop slices.
 
 Namespace executable scopes belong to chapter 08. They are not local-variable
 environments implicitly completed by this note. LLVM remains deferred.

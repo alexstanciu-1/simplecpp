@@ -189,7 +189,7 @@ final class preparation_context
 	public preparation_owner $owner;
 	public collected_file $collection;
 	/** Invocation-local lookup of attached binding/parameter facts; does not mutate source scopes. */
-	public Key_Storage_List $locals /** Key_Storage_List<prepared_storage> */;
+	public local_environment $locals;
 	/** Null identifies the entry body; function bodies retain their declared return type. */
 	public ?canonical_type_use $return_type = null;
 	/** Only a statement-root assignment and its direct RHS chain may introduce locals. */
@@ -198,6 +198,67 @@ final class preparation_context
 	public canonical_type_use $boolean;
 	public canonical_type_use $floating;
 	public canonical_type_use $string_type;
+}
+
+/** Transient completion summary; describes normal exit, independently of return requirements. */
+final class statement_completion
+{
+	public bool $can_fall_through;
+
+	public function __construct(bool $can_fall_through)
+	{
+		$this->can_fall_through = $can_fall_through;
+	}
+}
+
+/** Condition consumers retain the central conversion decision, including identity. */
+final class prepared_condition
+{
+	public conversion_decision $conversion;
+}
+
+/** Invocation-local lexical membership; entries alias facts owned by syntax/signatures. */
+final class local_environment
+{
+	public ?local_environment $parent;
+	public Key_Storage_List $bindings /** Key_Storage_List<prepared_storage> */;
+	/** A typed declaration reserves its name while preparing its initializer. */
+	public ?string $initializing_name = null;
+
+	public function __construct(?local_environment $parent)
+	{
+		$this->parent = $parent;
+		$this->bindings = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
+	}
+
+	public function local_named(string $name): array /** vector<prepared_storage> */
+	{
+		$bindings /** Key_Storage_List<prepared_storage> */ = $this->bindings;
+		return $bindings->named($name);
+	}
+
+	/** Nearest membership wins; a reserved declaration hides its outer names immediately. */
+	public function named(string $name): array /** vector<prepared_storage> */
+	{
+		if ($this->initializing_name === $name) {
+			throw new \RuntimeException('S2S local ' . $name . ' cannot read or write itself in its initializer');
+		}
+		$result /** vector<prepared_storage> */ = $this->local_named($name);
+		if (q_count($result) !== 0) {
+			return $result;
+		}
+		if ($this->parent !== null) {
+			$parent /** local_environment */ = $this->parent;
+			return $parent->named($name);
+		}
+		return $result;
+	}
+
+	public function add(string $name, prepared_storage $storage): void
+	{
+		$bindings /** Key_Storage_List<prepared_storage> */ = $this->bindings;
+		$bindings->add($name, $storage);
+	}
 }
 
 /** Name-pool observation also represents absent or ambiguous lookup results. */

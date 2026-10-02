@@ -5,34 +5,70 @@ namespace scpp\compiler;
 
 final class Body_Preparation
 {
-	/** Prepare every statement; report whether the supported straight-line sequence can reach its end. */
-	public static function prepare_statements(Storage $nodes /** Storage<statement_node> */,
-		preparation_context $context): bool
+	/** Prepare all syntax, including unreachable statements; compose only reachable normal exits. */
+	public static function prepare_statements(statement_body_node $body,
+			preparation_context $context): statement_completion
 	{
 		$can_fall_through = true;
+		$nodes /** Storage<statement_node> */ = $body->statements;
 		foreach ($nodes as $node)
 		{
-			$statement_falls_through = true;
-			if ($node instanceof block_node) {
-				// Existing internal blocks compose sequences through this same traversal owner.
-				$block = object_cast($node, block_node::class);
-				$statement_falls_through = self::prepare_statements($block->statements, $context);
-			}
-			else {
-				$node->prepare($context);
-				$statement_falls_through = !($node instanceof return_node);
-			}
-			$can_fall_through = $can_fall_through && $statement_falls_through;
+			$completion = $node->prepare_completion($context);
+			$can_fall_through = $can_fall_through && $completion->can_fall_through;
 		}
-		return $can_fall_through;
+		return new statement_completion($can_fall_through);
+	}
+
+	/** A block borrows the body context and restores its enclosing environment on every exit. */
+	public static function prepare_block(statement_body_node $body, preparation_context $context): statement_completion
+	{
+		$enclosing = $context->locals;
+		$context->locals = new local_environment($enclosing);
+		try {
+			return self::prepare_statements($body, $context);
+		}
+		finally {
+			$context->locals = $enclosing;
+		}
+	}
+
+	/** Validate every arm, while modelling the unmatched path of a chain without else. */
+	public static function prepare_if(if_node $syntax, preparation_context $context): statement_completion
+	{
+		if ($syntax->arm_kind === if_arm_kind::else_arm)
+		{
+			if (($syntax->condition !== null) || ($syntax->next_arm !== null)) {
+				throw new \LogicException('Else arm must have neither condition nor successor');
+			}
+			return $syntax->body->prepare_completion($context);
+		}
+		if ($syntax->condition === null) {
+			throw new \LogicException('Conditional arm requires a condition');
+		}
+		$condition /** expression_node */ = $syntax->condition;
+		$value = Expression_Preparation::prepare($condition, $context);
+		$facts = new prepared_condition();
+		$facts->conversion = Conversion_Preparation::decide($value->type, $context->boolean, conversion_context::condition);
+		$syntax->set_preparation($facts);
+		$taken = $syntax->body->prepare_completion($context);
+		$unmatched = new statement_completion(true);
+		if ($syntax->next_arm !== null)
+		{
+			$next /** if_node */ = $syntax->next_arm;
+			if ($next->arm_kind === if_arm_kind::initial) {
+				throw new \LogicException('Conditional successor must be elseif or else');
+			}
+			$unmatched = $next->prepare_completion($context);
+		}
+		return new statement_completion($taken->can_fall_through || $unmatched->can_fall_through);
 	}
 
 	/** Establish source-order local storage before publishing it to later statements. */
 	public static function prepare_local_storage(collected_name $entry, ?type_node $type_syntax, ?expression_node $initializer, preparation_context $context): prepared_binding
 	{
 		$binding = new prepared_binding();
-		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
-		$before_initializer /** vector<prepared_storage> */ = $locals->named($entry->name);
+		$locals = $context->locals;
+		$before_initializer /** vector<prepared_storage> */ = $locals->local_named($entry->name);
 		if (($type_syntax !== null) && (q_count($before_initializer) !== 0)) {
 			throw new \RuntimeException('S2S local ' . $entry->name . ' is already declared in this scope');
 		}
@@ -43,9 +79,18 @@ final class Body_Preparation
 
 		// Inferred assignment expressions evaluate inner writes before classifying the outer target.
 		$value /** nullable<prepared_expression> */ = null;
-		if ($initializer !== null) {
-			$value_node /** expression_node */ = $initializer;
-			$value = Expression_Preparation::prepare($value_node, $context);
+		$previous_initializing /** nullable<string> */ = $locals->initializing_name;
+		if ($type_syntax !== null) {
+			$locals->initializing_name = $entry->name;
+		}
+		try {
+			if ($initializer !== null) {
+				$value_node /** expression_node */ = $initializer;
+				$value = Expression_Preparation::prepare($value_node, $context);
+			}
+		}
+		finally {
+			$locals->initializing_name = $previous_initializing;
 		}
 
 		$previous /** vector<prepared_storage> */ = $type_syntax === null
@@ -137,15 +182,15 @@ final class Body_Preparation
 	{
 		$signature = $syntax->require_preparation();
 		$context->return_type = $signature->return_type;
-		$locals /** Key_Storage_List<prepared_storage> */ = $context->locals;
+		$locals = $context->locals;
 		$parameters /** Storage<prepared_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {
 			$entry = object_cast(weakref_get($parameter->declaration), collected_name::class);
 			$locals->add($entry->name, $parameter);
 		}
 
-		$can_fall_through = self::prepare_statements($syntax->body->statements, $context);
-		if ($can_fall_through && (Type_Preparation::canonical($signature->return_type)->family() !== type_family::no_value)) {
+		$completion = $syntax->body->prepare_completion($context);
+		if ($completion->can_fall_through && (Type_Preparation::canonical($signature->return_type)->family() !== type_family::no_value)) {
 			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
 		}
 	}

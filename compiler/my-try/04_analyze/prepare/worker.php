@@ -543,7 +543,7 @@ final class Preparation_Worker
 	private function file_body(file_node $root, preparation_context $context): void
 	{
 		Preparation_Cleanup::tree($root->body);
-		Body_Preparation::prepare_statements($root->body->statements, $context);
+		$root->body->prepare_completion($context);
 	}
 
 	/** Context is transient and always uses the selected owner's source token generation. */
@@ -553,7 +553,7 @@ final class Preparation_Worker
 		$context->worker = $this;
 		$context->owner = $owner;
 		$context->collection = $owner->source;
-		$context->locals = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
+		$context->locals = new local_environment(null);
 		$context->integer = Language_Types::integer($this->language);
 		$context->boolean = Language_Types::boolean($this->language);
 		$context->floating = Language_Types::floating($this->language);

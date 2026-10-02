@@ -40,8 +40,10 @@ Unchanged bodies retain nodes, scopes, occurrences and facts.
 
 ## AST and scopes
 
-The property-free `ast_node` base supplies operation contracts; concrete nodes own
-typed syntax fields and uint32 spans. There are no payload objects, sibling chains
+The property-free `ast_node` base supplies operation contracts; specialized node
+families own typed syntax fields and uint32 spans. `statement_body_node` shares
+ordered body storage/traversal between executable roots and nested blocks.
+Conditional arms own explicit body/next-arm edges. There are no payload objects, generic sibling chains
 or inspection parents. [AST layout](ast_layout.md) owns detailed traversal rules.
 
 Parsed files retain file/executable scopes. Functions own signature scopes; structs

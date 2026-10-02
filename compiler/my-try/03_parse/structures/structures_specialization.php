@@ -74,11 +74,8 @@ final class file_node extends ast_node
  * members of statements. Parameters and fields likewise belong to their own owners.
  * Future local declaration support must extend this contract explicitly.
  */
-final class function_body_node extends ast_node
+final class function_body_node extends statement_body_node
 {
-	use Node_Source_Span;
-
-	public Storage $statements /** Storage<statement_node> */;
 	/**
 	 * Required observer; the parser retains this scope in parsed_file.scopes.
 	 * @storage.reference parsed_file.scopes
@@ -102,8 +99,8 @@ final class function_body_node extends ast_node
 
 	public function __construct(scope $local_scope)
 	{
+		parent::__construct();
 		$this->local_scope_reference = $local_scope;
-		$this->statements = new Storage /** Storage<statement_node> */();
 	}
 
 	/** Required lexical context, independent of syntax ownership. */
@@ -144,28 +141,10 @@ final class function_body_node extends ast_node
 		return node_kind::function_body;
 	}
 
-	/**
-	 * Retain only the collection in an independent cursor; do not copy membership.
-	 */
-	public function children(): child_iterator_i
+	/** The executable root uses the environment already seeded with its parameters. */
+	public function prepare_completion(preparation_context $context): statement_completion
 	{
-		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->statements));
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Body_Preparation::prepare_statements($this->statements, $context);
-	}
-
-	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
-	public function maintain(node_maintenance_worker_i $worker): void
-	{
-		$worker->enter($this);
-		$items /** Storage<statement_node> */ = $this->statements;
-		foreach ($items as $child) {
-			$worker->edge($this, $child);
-		}
+		return Body_Preparation::prepare_statements($this, $context);
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
@@ -176,51 +155,73 @@ final class function_body_node extends ast_node
 }
 
 /** Nested grouping only; it does not own an independent preparation work item. */
-final class block_node extends statement_node
+final class block_node extends statement_body_node
+{
+}
+
+/** One owned arm in a conditional chain; only its initial arm is a sequence member. */
+final class if_node extends statement_node
 {
 	use Node_Source_Span;
+	use Preparation_Facts;
 
-	public Storage $statements /** Storage<statement_node> */;
+	public if_arm_kind $arm_kind;
+	public ?expression_node $condition = null;
+	/** @ownership owner */
+	public block_node $body;
+	/** @ownership owner */
+	public ?if_node $next_arm = null;
+	private ?prepared_condition $prepared_facts = null;
 
-	/** Allocate only the concrete node's ordered syntax collections. */
-	public function __construct()
+	public function __construct(if_arm_kind $arm_kind)
 	{
-		$this->statements = new Storage /** Storage<statement_node> */();
+		$this->arm_kind = $arm_kind;
 	}
 
 	public function kind(): node_kind
 	{
-		return node_kind::block;
+		return node_kind::conditional;
 	}
 
-	/**
-	 * Retain only the collection in an independent cursor; do not copy membership.
-	 */
+	/** Inspect named conditional edges lazily, preserving their grammar order. */
 	public function children(): child_iterator_i
 	{
-		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->statements));
+		return new if_children_iterator($this);
 	}
 
 	/** Forward this specialized node and its active context to the owning preparation algorithm. */
 	public function prepare(preparation_context $context): void
 	{
-		Body_Preparation::prepare_statements($this->statements, $context);
+		$this->prepare_completion($context);
+	}
+
+	public function prepare_completion(preparation_context $context): statement_completion
+	{
+		return Body_Preparation::prepare_if($this, $context);
+	}
+
+	public function require_preparation(): prepared_condition
+	{
+		return $this->prepared_facts;
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$items /** Storage<statement_node> */ = $this->statements;
-		foreach ($items as $child) {
-			$worker->edge($this, $child);
+		if ($this->condition !== null) {
+			$worker->edge($this, $this->condition);
+		}
+		$worker->edge($this, $this->body);
+		if ($this->next_arm !== null) {
+			$worker->edge($this, $this->next_arm);
 		}
 	}
 
 	/** The generation worker reads attached facts and owns rendering and child traversal. */
 	public function generate_cpp(cpp_generation_worker_i $worker): string
 	{
-		return $worker->generate_block($this);
+		return $worker->generate_if($this);
 	}
 }
 
@@ -1348,6 +1349,12 @@ final class return_node extends statement_node
 	public function prepare(preparation_context $context): void
 	{
 		$this->set_preparation(Body_Preparation::prepare_return($this, $context));
+	}
+
+	public function prepare_completion(preparation_context $context): statement_completion
+	{
+		$this->prepare($context);
+		return new statement_completion(false);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */

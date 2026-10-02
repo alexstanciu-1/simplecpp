@@ -7,6 +7,12 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Later source changes — evidence boundary
 
+The chapter 03 shared statement-body/conditional slice has focused PHP and generated
+C++ proofs in `tests/control_flow.py`, including local environments, shadowing,
+completion and incremental recovery. It has not received a native compiler rebuild.
+Its abstract body and tagged arm representations therefore have no new native
+portability claim. See the [agreed slice](../catalog/03_control_flow.md#agreed-first-slice--2026-10-02).
+
 Chapter 02's positive pass concludes at implementation revision
 `d3cedb46aee4b35dcd76763179535c0eef25dc2d`. After the native checkpoint below:
 

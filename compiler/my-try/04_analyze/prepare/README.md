@@ -57,12 +57,25 @@ Consumers register both selected declarations and visited scope/name pools, incl
 missing/ambiguous candidates. Effective signature/layout changes notify consumers;
 body-only edits do not invalidate callers. Required record completion detects cycles;
 recursive function calls remain valid. Return-type checks are per-body context.
-The statement traversal also reports whether its straight-line sequence can reach
-its end, composing existing internal blocks and validated unconditional returns.
+Statements report transient `statement_completion` through typed dispatch. The
+body worker composes sequence fallthrough and conditional alternatives, with an
+unmatched fallthrough path when a chain lacks else. Nested blocks share this path.
 Non-void function bodies reject fallthrough before their work settles; void functions
 and program entry may fall through. All statements are still prepared after a return.
-Completion is a successful-body invariant, not a duplicate retained flag. Branches,
-loops, exceptions and non-returning calls need explicit completion rules when enabled.
+Completion is a successful-body invariant, not a duplicate retained flag. Loops,
+exceptions and non-returning calls need explicit completion rules when enabled.
+Conditions retain central conversion decisions with the `condition` context;
+only canonical bool is admitted implicitly. The emitter consumes these decisions
+and emits native lazy branches. Existing expression-effect restrictions still apply.
+
+`local_environment` is transient, with parent-linked membership referencing attached
+storage facts. Blocks allocate children and restore the enclosing environment even
+on failure. Reads/plain writes use nearest-visible membership; typed declarations
+belong to the current block, permit outer shadowing and reject local duplicates.
+A typed name is reserved during its initializer, rejecting self-access rather than
+falling back to an outer binding. Sibling/child locals never escape or merge. Root
+parameters and locals share an environment. This does not add definite-assignment
+analysis or constant-condition reachability.
 Duplicate fields, parameters and non-overloaded function declarations remain
 [PE-03 deferred debt](../../docs/planning/preparation_emission_audit.md#pe-03--duplicate-declarations-can-reach-c).
 Prepared records retain field-derived storage/copy capabilities. Capability consumers

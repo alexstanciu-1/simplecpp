@@ -49,15 +49,75 @@ contracts. Reopen only dependencies of the selected slice. Check the
 [portability status](../portability/conversion_review.md): the latest chapter 02
 repairs have PHP/generated-C++ proof, not a new native compiler checkpoint.
 
+## Agreed first slice — 2026-10-02
+
+CTRL-IF-001/002/003 and SCOPE-VAR-001 share one implementation slice, including
+ordinary nested braced blocks. Conditions use the existing conversion owner with
+`conversion_context::condition`: canonical bool is accepted; other supported
+scalars need an explicit bool cast. Conditions execute once when reached, later
+arms are lazy, and every arm is semantically prepared, including unreachable syntax.
+
+`statement_body_node` is the shared abstract statement-body owner. It owns ordered
+statements, spans and common traversal/dispatch. `block_node` is an empty final
+subclass. `function_body_node` adds executable-unit scope/work identity and its
+specialized dispatch. An `if_node` owns a required block body, an arm-kind enum,
+an optional condition (absent only for else), and an optional owning `next_arm`
+edge (absent for else). Only the initial arm belongs to the enclosing sequence.
+This is a construct-specific syntax chain, not a general sibling list or CFG.
+
+Preparation uses transient parent-linked local environments. Reads and untyped
+writes resolve the nearest visible declaration; an untyped first write introduces
+a local only if none is visible. Typed declarations belong to the current block,
+reject current-block duplicates and may shadow outer locals. Their names hide outer
+bindings during initialization; self-reads/writes reject. Branch-local names never
+escape or merge at joins. Function parameters share the function's root environment.
+The existing lexical-resolution contract and proof in
+`specs/portability/lexical_resolution.md` and `compiler/tests/lexical_resolution/`
+establish the explicit declaration/self-initialization behavior.
+
+Statements report a transient `statement_completion` through typed dispatch.
+Sequences compose normal fallthrough; conditional chains combine arm outcomes,
+including an unmatched fallthrough path when else is absent. Non-void functions
+reject normal exit. Each return uses the enclosing return-type contract. No
+signature-dependent flag/backlink is retained on nested blocks. Constant-condition
+reachability, definite-assignment analysis and branch value merging are deferred.
+
+Target C++ is direct `if / else if / else`, braced bodies, and the prepared bool's
+native value. Existing storage/conversion lowering handles all branch statements.
+No extra runtime helper, condition temporary or lambda is needed for arm selection.
+This straightforward form introduces no new compilation dependency family; output
+partitioning and compilation benchmarks remain separate work.
+
+Legacy review: `Generator::renderIfStatement` and `renderNestedStatements` already
+emit lazy C++ branches and restore local visibility after each body. The retained
+control-flow fixtures and `variables_003_inner_scope_shadow_basic` prove outer
+assignment (despite that fixture's historical name). Legacy annotation/declaration
+handling does not establish explicit typed-shadowing semantics for my-try; the
+lexical-resolution evidence above does. Legacy condition truthiness/hints are not
+imported into this bool-only slice.
+
+Non-goals: loops, switch/match, ternary, unbraced and colon/endif syntax, CFG, LLVM,
+general effect analysis and the unrelated PE-03 duplicate-declaration debt.
+
+Proof: [focused suite](../../tests/control_flow.php) and
+[shared-pool runner](../../tests/control_flow.py). The PHP suites cover prepared
+binding identity, condition facts, non-escape, duplicates/self-initialization,
+return/fallthrough, unreachable checking, unchanged-body dependencies, no-edit
+retries and clean/incremental recovery. Generated C++ programs prove branch choices,
+side effects, condition evaluation count/laziness, shadowing and function returns
+with `-Werror=return-type`. Final evidence: `/tmp/my-try-control-flow-20261002-final/`
+(10 PHP suites and 24 generated programs passed).
+This is PHP-host/compiler and generated-program proof, not a native compiler rebuild.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CTRL-IF-001](#ctrl-if-001) | pending-discussion | `if ($a) { $b = 1; }` | unverified | unverified | deferred | — |
-| [CTRL-IF-002](#ctrl-if-002) | pending-discussion | `if ($a) { $b = 1; } else { $b = 2; }` | unverified | unverified | deferred | — |
-| [CTRL-IF-003](#ctrl-if-003) | pending-discussion | `if ($a) { } elseif ($b) { } else { }` | unverified | unverified | deferred | — |
+| [CTRL-IF-001](#ctrl-if-001) | agreed | `$a bool = true; if ($a) { $b = 1; }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
+| [CTRL-IF-002](#ctrl-if-002) | agreed | `$a bool = false; if ($a) { $b = 1; } else { $b = 2; }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
+| [CTRL-IF-003](#ctrl-if-003) | agreed | `if (false) { } elseif (true) { } else { }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
 | [CTRL-WHILE-001](#ctrl-while-001) | pending-discussion | `while ($a) { $b++; }` | unverified | unverified | deferred | — |
 | [EXPR-TERNARY-001](#expr-ternary-001) | pending-discussion | `$a = $b ? $c : $d;` | unverified | unverified | deferred | — |
 | [CTRL-SWITCH-001](#ctrl-switch-001) | pending-discussion | `switch ($a) { case 1: break; default: break; }` | unverified | unverified | deferred | — |
@@ -66,11 +126,11 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CTRL-FOR-001](#ctrl-for-001) | pending-discussion | `for ($i = 0; $i < 10; $i++) { }` | unverified | unverified | deferred | — |
 | [CTRL-BREAK-001](#ctrl-break-001) | pending-discussion | `break;` | unverified | unverified | deferred | — |
 | [CTRL-CONTINUE-001](#ctrl-continue-001) | pending-discussion | `continue;` | unverified | unverified | deferred | — |
-| [SCOPE-VAR-001](#scope-var-001) | pending-discussion | `$x = 1; if (true) { $x = 2; } echo $x;` | unverified | unverified | deferred | — |
+| [SCOPE-VAR-001](#scope-var-001) | agreed | `$x = 1; if (true) { $x = 2; } return $x;` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php; output 2 |
 | [NOTE-017](#note-017) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## CTRL-IF-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed first slice](#agreed-first-slice--2026-10-02).
 
 ### Imported version 1
 
@@ -107,7 +167,7 @@ if (a) { auto b = static_cast<int_t>(1); }
 
 ## CTRL-IF-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed first slice](#agreed-first-slice--2026-10-02).
 
 ### Imported version 1
 
@@ -142,7 +202,7 @@ if (a) { auto b = static_cast<int_t>(1); } else { auto b = static_cast<int_t>(2)
 
 ## CTRL-IF-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed first slice](#agreed-first-slice--2026-10-02).
 
 ### Imported version 1
 
@@ -465,7 +525,7 @@ continue;
 
 ## SCOPE-VAR-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Agreed first slice](#agreed-first-slice--2026-10-02).
 
 ### Imported version 1
 

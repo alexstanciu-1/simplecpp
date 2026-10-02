@@ -18,6 +18,7 @@ enum node_kind
 	case function_declaration;
 	case parameter_declaration;
 	case block;
+	case conditional;
 	case function_body;
 	case named_type;
 	case template_application_type;
@@ -60,6 +61,12 @@ enum binding_kind {
 	case unresolved;
 	case declaration;
 	case assignment;
+}
+
+enum if_arm_kind {
+	case initial;
+	case elseif_arm;
+	case else_arm;
 }
 
 enum passing_mode {

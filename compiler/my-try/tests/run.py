@@ -15,7 +15,7 @@ def verify_php(root, output, runner, jobs):
     """Run PHP suites independently, each with private temporary files and logs."""
     def suite(source):
         command = ['php', str(source)]
-        if source.stem in ('calls', 'llvm', 's2s'):
+        if source.stem in ('calls', 'llvm', 's2s', 'control_flow'):
             directory = output / source.stem
             directory.mkdir()
             command.append(str(directory))
@@ -55,7 +55,7 @@ def verify_programs(root, output, runner, jobs):
         runner.run(name + '-compile', command)
         runner.run(name + '-execute', [executable], expected=fixture['exit_code'])
 
-    for suite in ('llvm', 's2s'):
+    for suite in ('llvm', 's2s', 'control_flow'):
         fixtures = json.loads((output / suite / 'executions.json').read_text())
         counts[suite + '_executions'] = len(fixtures)
         tasks.extend(Task(suite + '-' + Path(fixture['path']).stem,

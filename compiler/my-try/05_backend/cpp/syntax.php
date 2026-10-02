@@ -22,14 +22,27 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_statements($node, $this->context);
 	}
 
-	public function generate_block(block_node $node): string
+	public function generate_block(statement_body_node $node): string
 	{
-		$text = "{\n";
-		$statements /** Storage<statement_node> */ = $node->statements;
-		foreach ($statements as $statement) {
-			$text .= $statement->generate_cpp($this);
+		return "{\n" . CPP_Generator::generate_statements($node, $this->context) . "}\n";
+	}
+
+	/** C++ native branches preserve lazy arm selection; conversion is already decided. */
+	public function generate_if(if_node $node): string
+	{
+		if ($node->arm_kind === if_arm_kind::else_arm) {
+			return 'else ' . $node->body->generate_cpp($this);
 		}
-		return $text . "}\n";
+		$condition /** expression_node */ = $node->condition;
+		$value = $condition->generate_cpp($this);
+		$value = CPP_Declarations::conversion($value, $node->require_preparation()->conversion, $this->context);
+		$prefix = $node->arm_kind === if_arm_kind::initial ? 'if' : 'else if';
+		$text = $prefix . ' ((' . $value . ').native_value()) ' . $node->body->generate_cpp($this);
+		if ($node->next_arm !== null) {
+			$next /** if_node */ = $node->next_arm;
+			$text .= $next->generate_cpp($this);
+		}
+		return $text;
 	}
 
 	public function generate_integer_literal(integer_literal_node $node): string
