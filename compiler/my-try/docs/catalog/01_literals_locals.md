@@ -1695,9 +1695,10 @@ exercise a bounded form. This note does not mark those later entries complete.
 
 ### NOTE-035.b — condition conversion
 
-Deferred to the control-flow and dynamic-boundary chapters. Condition conversion is
+Scalar conditions are implemented in [Chapter 03](03_control_flow.md#scalar-truthiness-update--2026-10-02);
+broader dynamic boundaries remain deferred. Condition interpretation is
 not literal normalization: first the contained expression receives its ordinary
-prepared type and lowering, then the condition boundary applies the conversion
+prepared type and lowering, then the condition boundary applies the truthiness rule
 allowed for that type. The legacy S2S selected between direct boolean conversion and
 `condition_truthy(...)` through an emitter-local `exprProducesBool()` check. v0.2
 must instead consume prepared type/conversion facts and diagnose disallowed condition

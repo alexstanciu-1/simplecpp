@@ -27,7 +27,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return "{\n" . CPP_Generator::generate_statements($node, $this->context) . "}\n";
 	}
 
-	/** C++ native branches preserve lazy arm selection; conversion is already decided. */
+	/** C++ native branches preserve lazy arm selection; truthiness is already decided. */
 	public function generate_if(if_node $node): string
 	{
 		if ($node->arm_kind === if_arm_kind::else_arm) {
@@ -46,8 +46,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 
 	private function native_condition(expression_node $expression, prepared_condition $facts): string
 	{
-		$value = CPP_Declarations::conversion($expression->generate_cpp($this), $facts->conversion, $this->context);
-		return '(' . $value . ').native_value()';
+		return CPP_Declarations::truthiness($expression->generate_cpp($this), $facts->truthiness, $this->context);
 	}
 
 	/** Native switch preserves single selection, source-order fallthrough and loop continue. */

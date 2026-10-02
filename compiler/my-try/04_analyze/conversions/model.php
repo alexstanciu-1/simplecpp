@@ -11,7 +11,6 @@ enum conversion_context
 	case explicit_cast;
 	case operator_operand;
 	case interpolation;
-	case condition;
 }
 
 enum conversion_operation
@@ -34,4 +33,17 @@ final class conversion_decision
 	{
 		return $this->operation !== conversion_operation::identity;
 	}
+}
+
+/** Condition interpretation is not a value conversion or an explicit bool cast. */
+enum truthiness_operation
+{
+	case boolean_identity;
+	case scalar_condition;
+}
+
+final class truthiness_decision
+{
+	public canonical_type_use $source_type;
+	public truthiness_operation $operation;
 }

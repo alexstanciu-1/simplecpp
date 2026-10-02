@@ -77,8 +77,10 @@ Selectors require canonical int. Labels retain normalized exact decimal facts fr
 bounded integer-constant resolution; duplicate values/defaults reject before output.
 The constant worker supports literals, resolved integer definitions and unary signs;
 general folding, other selector types and runtime labels remain deferred.
-Conditions retain central conversion decisions with the `condition` context;
-only canonical bool is admitted implicitly. The emitter consumes these decisions
+Conditions retain separate truthiness decisions from `Condition_Truthiness` in
+`conversions/truthiness.php`: bool, integers, float and string use the established
+runtime condition contract. Explicit boolean conversion remains a distinct operation.
+The emitter consumes these decisions
 and emits native lazy branches and loops. Loop header scope and transfer targets are
 worker-local, restored on success and failure; facts retain a weak selected target.
 For initialization uses statement preparation, with expressions for tests/updates.

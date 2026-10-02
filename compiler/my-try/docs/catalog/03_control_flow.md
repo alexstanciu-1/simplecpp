@@ -52,9 +52,9 @@ repairs have PHP/generated-C++ proof, not a new native compiler checkpoint.
 ## Agreed first slice — 2026-10-02
 
 CTRL-IF-001/002/003 and SCOPE-VAR-001 share one implementation slice, including
-ordinary nested braced blocks. Conditions use the existing conversion owner with
-`conversion_context::condition`: canonical bool is accepted; other supported
-scalars need an explicit bool cast. Conditions execute once when reached, later
+ordinary nested braced blocks. Conditions now use the shared scalar truthiness owner
+(see the truthiness slice below), replacing the original bool-only admission.
+Conditions execute once when reached, later
 arms are lazy, and every arm is semantically prepared, including unreachable syntax.
 
 `statement_body_node` is the shared abstract statement-body owner. It owns ordered
@@ -93,8 +93,8 @@ emit lazy C++ branches and restore local visibility after each body. The retaine
 control-flow fixtures and `variables_003_inner_scope_shadow_basic` prove outer
 assignment (despite that fixture's historical name). Legacy annotation/declaration
 handling does not establish explicit typed-shadowing semantics for my-try; the
-lexical-resolution evidence above does. Legacy condition truthiness/hints are not
-imported into this bool-only slice.
+lexical-resolution evidence above does. Condition hints are not imported; the later
+truthiness slice follows the established language/runtime contract explicitly.
 
 First-slice non-goals: loops, switch/match, ternary, unbraced and colon/endif syntax, CFG, LLVM,
 general effect analysis and the unrelated PE-03 duplicate-declaration debt.
@@ -123,7 +123,7 @@ targets, then restores both on every exit. Body blocks have their own child envi
 For initialization supports ordinary first writes and explicit typed declarations,
 including ordered comma lists; bindings do not escape the loop. Conditions/updates
 cannot introduce locals or see body-local declarations. The final condition expression
-uses the existing `condition` boolean conversion; earlier expressions are evaluated
+uses shared condition truthiness; earlier expressions are evaluated
 and discarded in order. An omitted for condition is unconditional. Braces are required.
 
 `Completion_Preparation` composes normal fallthrough, return, break and continue.
@@ -143,8 +143,8 @@ Breakable and continuable targets stay distinct for future switch support.
 Legacy review: renderWhileStatement, renderDoWhileStatement, renderForStatement and
 their clause helpers already use native loops and last-expression tests; one-level
 break/continue fixtures establish their target behavior. This slice retains the shared
-preparation boundary, canonical-bool policy and lexical binding rules, not legacy
-truthiness inference or its separate declaration-rendering shortcuts.
+preparation boundary and lexical binding rules, not emitter-local truthiness
+inference or its separate declaration-rendering shortcuts.
 
 Non-goals: executable foreach, switch, numbered transfers, unbraced loops, CFG,
 constant reachability, LLVM and new expression capabilities. Foreach continuation and
@@ -201,6 +201,37 @@ incremental recovery (including malformed syntax). Final evidence:
 `/tmp/my-try-switch-20261002-reviewed/` — 10 focused PHP suites through the shared
 FPM pool and 65 generated-C++ executions passed with `-Werror=return-type`.
 This does not prove a native compiler rebuild; that checkpoint remains on demand.
+
+## Scalar truthiness update — 2026-10-02
+
+All implemented condition consumers (`if`, `elseif`, `while`, `do-while`, and the
+final for test) share `Condition_Truthiness` in `04_analyze/conversions/truthiness.php`.
+It admits bool, integer, float and string values, retaining a `truthiness_decision`
+on `prepared_condition`. Boolean identity and scalar runtime interpretation are
+explicit operations. Conditions are no longer value conversions; Boolean_Conversions
+continues to own explicit/typed boolean boundaries without condition-specific policy.
+
+The existing normative [conditional contract](../../../../specs/conditional_expression_matrix.md)
+and runtime `condition_truthy` own meaning: zero numeric values are false (including
+negative floating zero); strings are false only for empty text and exactly `"0"`.
+Thus `"false"` and `"yes"` are truthy, while explicit `(bool) "false"` is false and
+`(bool) "yes"` rejects. Emission uses the existing shared helper, not copied rules.
+Legacy S2S uses that helper for non-bool conditions; my-try selects the operation
+in preparation rather than inferring condition semantics during emission.
+
+Switch matching, logical-operator admission and explicit casts are unchanged.
+Wrappers/mixed/object handles, ternary syntax and branch-result typing remain later
+slices. Ternary/Elvis must consume this same condition decision when implemented;
+single evaluation and lazy branch selection remain mandatory. No new runtime helper
+or compiler-native rebuild is needed for this frontend/C++ slice.
+
+Proof: `tests/control_flow.php` compares all five condition consumers across scalar
+values, proves single evaluation/lazy arms, and checks that explicit `(bool) "yes"`
+still raises the documented runtime error. Unsupported-record and void conditions
+reject before emission. Incremental scalar signature changes refresh facts and
+headers without replacing consumer syntax; failure/retry/recovery controls remain.
+Evidence: `/tmp/my-try-truthiness-20261002-reviewed/` — 10 focused PHP suites and
+83 generated-C++ programs passed. Compiler-native portability was not rerun.
 
 ## Progress
 

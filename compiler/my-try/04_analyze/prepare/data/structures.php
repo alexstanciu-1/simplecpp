@@ -237,10 +237,10 @@ final class prepared_control_transfer
 	public breakable_node $target /** weak<breakable_node> */;
 }
 
-/** Condition consumers retain the central conversion decision, including identity. */
+/** All condition consumers retain the same truthiness decision, distinct from casts. */
 final class prepared_condition
 {
-	public conversion_decision $conversion;
+	public truthiness_decision $truthiness;
 }
 
 /** Invocation-local lexical membership; entries alias facts owned by syntax/signatures. */

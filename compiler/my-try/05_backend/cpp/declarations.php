@@ -33,6 +33,19 @@ final class CPP_Declarations
 		throw new \RuntimeException('C++ conversion operation is not implemented');
 	}
 
+	/** Render the prepared condition operation using the established runtime authority. */
+	public static function truthiness(string $expression, truthiness_decision $decision, cpp_generation_context $context): string
+	{
+		if ($decision->operation === truthiness_operation::boolean_identity) {
+			return '(' . $expression . ').native_value()';
+		}
+		if ($decision->operation === truthiness_operation::scalar_condition) {
+			$context->headers['lang/php/operators/conditional/condition_truthiness.hpp'] = true;
+			return 'scpp::php::condition_truthy(' . $expression . ').native_value()';
+		}
+		throw new \LogicException('C++ truthiness operation is not implemented');
+	}
+
 	/** All signatures precede all bodies, including mutually recursive declarations. */
 	public static function signature(function_node $syntax, cpp_generation_context $context): string
 	{

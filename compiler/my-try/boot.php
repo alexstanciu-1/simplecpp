@@ -55,6 +55,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/types.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/capabilities.php';
 require_once __DIR__ . '/04_analyze/conversions/strings.php';
 require_once __DIR__ . '/04_analyze/conversions/booleans.php';
+require_once __DIR__ . '/04_analyze/conversions/truthiness.php';
 require_once __DIR__ . '/04_analyze/conversions/integers.php';
 require_once __DIR__ . '/04_analyze/conversions/floating_points.php';
 require_once __DIR__ . '/04_analyze/conversions/preparation.php';

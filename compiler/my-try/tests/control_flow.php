@@ -42,6 +42,9 @@ $path = $directory . '/main.phs';
 try
 {
 	$cases = [
+		'truth_string_cast_distinct' => ['$n = 0; if ("false") { $n++; } if ((bool) "false") { $n += 10; } return $n;', 1],
+		'truth_once' => ['function probe(int &$n): string { $n++; return "yes"; } $n = 0; if (probe($n)) { $n += 2; } elseif (probe($n)) { $n += 20; } return $n;', 3],
+		'truth_while_once' => ['function probe(int &$n): int { $n--; return $n; } $n = 3; $count = 0; while (probe($n)) { $count++; } return $count;', 2],
 		'switch_basic' => ['$x = 2; switch ($x) { case 1: return 1; case 2: return 2; default: return 3; }', 2],
 		'switch_fallthrough' => ['$x = 0; switch (1) { case 1: $x += 2; case 2: $x += 3; default: $x += 4; } return $x;', 9],
 		'switch_group' => ['switch (2) { case 1: case 2: return 7; default: return 1; }', 7],
@@ -108,6 +111,24 @@ try
 		'lazy_body' => ['$n = 0; if (true) { $n = 7; } else { $n = 1 / 0; } return $n;', 7],
 		'logical_condition' => ['$n = 0; if (false && true) { $n = 9; } return $n;', 0],
 	];
+	// One independent expected result across every implemented condition consumer.
+	foreach ([
+		['bool_false', 'false', false], ['bool_true', 'true', true],
+		['int_zero', '0', false], ['int_negative', '-2', true],
+		['float_zero', '0.0', false], ['float_negative_zero', '(float) "-0.0"', false],
+		['float_fraction', '0.5', true], ['float_negative', '(float) "-0.5"', true],
+		['string_empty', '""', false], ['string_zero', '"0"', false],
+		['string_double_zero', '"00"', true], ['string_false', '"false"', true],
+		['string_yes', '"yes"', true], ['string_space', '" "', true],
+	] as [$name, $literal, $truthy]) {
+		$source = '$a = ' . $literal . '; $score = 0; '
+			. 'if ($a) { $score += 1; } else { $score += 2; } '
+			. 'if (false) {} elseif ($a) { $score += 4; } '
+			. 'while ($a) { $score += 8; break; } '
+			. '$n = 0; do { $n++; if ($n === 2) { break; } } while ($a); $score += $n * 16; '
+			. 'for (; $a;) { $score += 64; break; } return $score;';
+		$cases['truth_' . $name] = [$source, $truthy ? 109 : 18];
+	}
 	$executions = [];
 	foreach ($cases as $name => [$source, $expected])
 	{
@@ -122,6 +143,18 @@ try
 			file_put_contents($output, $first);
 			$executions[] = ['path' => $output, 'exit_code' => $expected];
 		}
+	}
+
+	// Explicit casts keep their distinct runtime rejection; the wrapper is test-only C++.
+	$compiler = control_program($path, 'return (bool) "yes";');
+	$compiler->prepare();
+	$compiler->cpp();
+	$cast_text = str_replace('int main()', 'int cast_probe()', Model::$cpp_files[0]->text);
+	$cast_text .= "\nint main() { try { cast_probe(); } catch (const scpp::runtime_error& error) { return error.code() == \"invalid_cast_string_literal\" ? 0 : 2; } return 1; }\n";
+	if (isset($argv[1])) {
+		$output = $argv[1] . '/truth_explicit_cast_reject.cpp';
+		file_put_contents($output, $cast_text);
+		$executions[] = ['path' => $output, 'exit_code' => 0];
 	}
 
 	foreach ([
@@ -141,9 +174,9 @@ try
 		['function f(int $x): int { switch ($x) { case 1: break; default: return 1; } }', 'can reach the end'],
 		['function f(int $x): int { switch ($x) { default: return 1; case 2: } }', 'can reach the end'],
 		['function f(): int { do { switch (1) { default: continue; } return 1; } while (false); }', 'can reach the end'],
-		['while (1) {}', 'condition requires canonical bool'],
-		['do {} while (1);', 'condition requires canonical bool'],
-		['for (; 1;) {}', 'condition requires canonical bool'],
+		['struct Box {} $a Box; while ($a) {}', 'condition truthiness requires a supported scalar type'],
+		['struct Box {} $a Box; do {} while ($a);', 'condition truthiness requires a supported scalar type'],
+		['struct Box {} $a Box; for (; $a;) {}', 'condition truthiness requires a supported scalar type'],
 		['break;', 'enclosing legal target'],
 		['continue;', 'enclosing legal target'],
 		['while (false) {} break;', 'enclosing legal target'],
@@ -158,8 +191,8 @@ try
 		['function f(): int { do { continue; } while (false); }', 'can reach the end'],
 		['function f(): int { for (;;) { break; } }', 'can reach the end'],
 		['function f(): int { do { return 1; } while ($missing); }', 'established local declaration'],
-		['if (1) {}', 'condition requires canonical bool'],
-		['if (false) {} elseif ("x") {}', 'condition requires canonical bool'],
+		['struct Box {} $a Box; if ($a) {}', 'condition truthiness requires a supported scalar type'],
+		['struct Box {} $a Box; if (false) {} elseif ($a) {}', 'condition truthiness requires a supported scalar type'],
 		['if (true) { $x = 1; } return $x;', 'established local declaration'],
 		['if (true) { $x = 1; } else { return $x; }', 'established local declaration'],
 		['{ $x int = 1; } return $x;', 'established local declaration'],
@@ -294,7 +327,7 @@ try
 	$stable_loop = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$stable_version = $stable_loop->version;
 	foreach ([
-		str_replace('predicate(): bool { return false;', 'predicate(): int { return 0;', $valid_loop) => 'condition requires canonical bool',
+		str_replace('predicate(): bool { return false;', 'predicate(): void { return;', $valid_loop) => 'condition truthiness requires a supported scalar type',
 		str_replace('do { return 7; }', 'do { break; }', $valid_loop) => 'can reach the end',
 		str_replace('do { return 7; } while (predicate());', 'break; return 7;', $valid_loop) => 'enclosing legal target',
 	] as $invalid => $diagnostic)
@@ -314,6 +347,28 @@ try
 	$compiler->cpp();
 	control_check(Model::$cpp_files[0]->text === $original_loop, 'Clean/incremental loop mismatch');
 
+	// A supported scalar signature change must replace the condition fact and required headers.
+	$truth_valid = 'function predicate(): bool { return true; } function f(): int { if (predicate()) { return 7; } else { return 8; } } return f();';
+	$compiler = control_program($path, $truth_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	$truth_body = Model::$global_scope->functions_named('f')[0]->syntax()->body;
+	foreach ([['int', '1'], ['float', '0.5'], ['string', '"yes"'], ['bool', 'true']] as [$type, $value]) {
+		$changed = str_replace('predicate(): bool { return true;', 'predicate(): ' . $type . ' { return ' . $value . ';', $truth_valid);
+		file_put_contents($path, $changed);
+		$compiler->update_cpp([$path]);
+		control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $truth_body, 'Scalar signature edit replaced unchanged consumer syntax');
+		$decision = $truth_body->statements[0]->require_preparation()->truthiness;
+		control_check($decision->operation === ($type === 'bool' ? truthiness_operation::boolean_identity : truthiness_operation::scalar_condition), 'Scalar signature edit kept stale truthiness facts');
+		$text = Model::$cpp_files[0]->text;
+		control_check(str_contains($text, 'condition_truthiness.hpp') === ($type !== 'bool'), 'Scalar signature edit kept stale truthiness headers');
+	}
+	$truth_incremental = Model::$cpp_files[0]->text;
+	$compiler = control_program($path, $truth_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	control_check(Model::$cpp_files[0]->text === $truth_incremental, 'Clean/incremental truthiness mismatch');
+
 	// Prepared storage identities distinguish outer assignments from typed shadows.
 	$compiler = control_program($path, '$x int = 1; if (true) { $x = 2; $x int = 3; $x = 4; } return $x;');
 	$compiler->prepare();
@@ -327,7 +382,7 @@ try
 	control_check($shadow->declaration !== $outer->declaration, 'Shadow reused outer identity');
 	control_check($inner[2]->expression->require_preparation()->binding->declaration === $shadow->declaration, 'Inner assignment lost shadow');
 	control_check($statements[2]->expression->require_preparation()->declaration === $outer->declaration, 'Shadow escaped');
-	control_check($arm->require_preparation()->conversion->context === conversion_context::condition, 'Missing condition decision');
+	control_check($arm->require_preparation()->truthiness->operation === truthiness_operation::boolean_identity, 'Missing truthiness decision');
 	$children = iterator_to_array($arm->children());
 	control_check($children === [$arm->condition, $arm->body], 'Conditional inspection order');
 	$compiler->cpp();
@@ -345,7 +400,7 @@ try
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	foreach ([
-		str_replace('predicate(): bool { return true;', 'predicate(): int { return 1;', $valid) => 'condition requires canonical bool',
+		str_replace('predicate(): bool { return true;', 'predicate(): void { return;', $valid) => 'condition truthiness requires a supported scalar type',
 		str_replace('else { return 8; }', 'else {}', $valid) => 'can reach the end',
 	] as $invalid => $diagnostic)
 	{

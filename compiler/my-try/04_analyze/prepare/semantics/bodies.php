@@ -61,12 +61,12 @@ final class Body_Preparation
 		return Completion_Preparation::alternatives($taken, $unmatched);
 	}
 
-	/** All structured tests share the same boolean conversion boundary. */
+	/** All structured tests share condition truthiness, never explicit bool conversion. */
 	public static function prepare_condition(expression_node $condition, preparation_context $context): prepared_condition
 	{
 		$value = Expression_Preparation::prepare($condition, $context);
 		$facts = new prepared_condition();
-		$facts->conversion = Conversion_Preparation::decide($value->type, $context->boolean, conversion_context::condition);
+		$facts->truthiness = Condition_Truthiness::decide($value->type);
 		return $facts;
 	}
 
