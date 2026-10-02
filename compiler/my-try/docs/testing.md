@@ -90,3 +90,10 @@ outcomes = run_tasks([
 using synchronization events, stable result ordering, aggregated failures, command
 isolation, expected nonzero exits, launch-failure evidence and child-process timeout
 cleanup.
+
+## PHP host performance
+
+The [CLI/FPM comparison](portability/php_cli_fpm.md) records the measured PHP-only
+benefit, controls and limits. `tools/benchmark_php.py` reproduces that comparison
+using this same pool. The test runners continue using CLI; no FPM integration is
+implicitly enabled by the benchmark.
