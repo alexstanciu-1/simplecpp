@@ -224,6 +224,10 @@ for grammar, literal limits and proof.
 
 The subsequent mutation slice uses a dedicated target-owning node and
 `Mutation_Preparation`. It supports established integer locals/parameters and
-old/new value snapshots through the existing operator decision. Compound assignment,
-fields/indexes and mutations inside binary expressions remain future work; see the
+old/new value snapshots through the existing operator decision. Fields/indexes and mutations inside binary expressions remain future work; see the
 [mutation contract](../s2s_scalar_operators.md#increment-and-decrement).
+
+Arithmetic/string compound updates now use their agreed dedicated node, the shared
+mutation target validator, the existing binary computation decision and an explicit
+write-back conversion. The [compound contract](../s2s_scalar_operators.md#compound-assignment)
+records proof and the remaining bitwise/shift, target and effect restrictions.

@@ -186,10 +186,63 @@ self-assignment, grouped targets, value/reference parameters, argument sequencin
 and exact minimum/maximum representable results. Native execution of the compiler
 was not rerun; LLVM remains deferred.
 
+## Compound assignment
+
+Added 2026-10-02 with the agreed `compound_assignment_expression_node`. It owns the
+target, operator token and RHS. Attached facts retain the existing binary
+`operator_decision` plus a `conversion_decision` in assignment context for write-back.
+The result type is the target type; the result is a non-addressable value snapshot.
+
+`+=`, `-=`, `*=`, `/=` and `%=` require canonical `int` on both sides. `.=` requires
+canonical `string` on both sides; other scalar values need an explicit `(string)`
+cast. Targets are existing locals or parameters. Target validation is shared with
+increment/decrement through `Mutation_Preparation::prepare_target`; neither form
+implicitly declares storage. Fields, indexes, calls/casts as targets, mixed widths
+and implicit string coercion remain rejected.
+
+The parser recognizes the six compound tokens with longest matching and places
+compound assignment below supported binary precedence. It retains nested syntax
+right-to-left, but preparation rejects effectful RHS expressions, including another
+assignment, compound update, mutation or call. Pure nested binary/unary expressions
+and explicit casts retain their existing permissions. A compound update itself
+remains excluded from binary operands. Assignment initializers, returns and existing
+sequenced value-argument handling can consume its snapshot; reference arguments cannot.
+
+Preparation normalizes the compound token to its base binary kind, then uses the
+same exact operand policy as ordinary computation. The backend's shared
+`render_binary_decision` consumes operand conversions for both forms; it does not
+rediscover source semantics. Compound emission binds the target once to a local
+reference in an immediately invoked lambda, computes the result once, applies the
+retained write-back conversion, assigns it, and returns a copy using the explicit
+result type. RHS text appears once. Failed computation occurs before the store.
+
+This gives `$x /= 0` and `$x %= 0` the existing runtime error codes while leaving
+`$x` unchanged. Native integer truncation, signed remainder and overflow limitations
+are inherited from the ordinary binary operators. String self-concatenation computes
+before assignment, and a captured concatenation result remains independent of later
+updates. No runtime helper was added. The local lambda introduces a target reference
+but no heap allocation; compile-time cost is unbenchmarked.
+
+Legacy emission uses direct arithmetic compound operators and expands concatenation
+into assignment plus string addition. This slice instead shares prepared computation
+and write-back uniformly, and requires explicit non-string conversion. It does not
+inherit the legacy generator's broad coercion permissions.
+
+[Compound tests](../tests/compound_assignments.php) prove target restrictions,
+selected operations, operand/write-back conversions, result non-addressability,
+child order, cleanup, rejection-before-publication and incremental/fresh equivalence.
+[Tokenizer tests](../tests/tokenizer.php) cover all six tokens. PHP-host S2S generation
+and syntax-purity checks pass; 26 generated Clang C++20 programs/probes cover all
+seven catalog rows, precedence, updated-value snapshots, self-use, signed arithmetic,
+value/reference parameters, argument sequencing, exact strings and zero-divisor
+errors with unchanged caller storage. Existing generated fixtures retain identical
+C++ after factoring the shared renderer. Native compiler execution was not rerun;
+LLVM remains deferred.
+
 ## Remaining decisions
 
-- Compound assignment and broader mutation targets still need their target evaluation
-  and write-back contracts; mutation inside binary expressions remains deferred.
+- Bitwise/shift compound assignment requires its underlying binary operator contracts.
+  Broader mutation targets and mutation inside binary expressions remain deferred.
 - Word `and` / `or` / `xor` interact with assignment precedence; the imported examples
   cannot be implemented truthfully by merely aliasing the symbolic operators.
 - Exponentiation references an unavailable `scpp::pow` helper. Result type, negative

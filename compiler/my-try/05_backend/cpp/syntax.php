@@ -67,6 +67,11 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_cast($node, $this->context);
 	}
 
+	public function generate_compound_assignment_expression(compound_assignment_expression_node $node): string
+	{
+		return CPP_Generator::generate_compound_assignment($node, $this->context);
+	}
+
 	public function generate_mutation_expression(mutation_expression_node $node): string
 	{
 		return CPP_Generator::generate_mutation($node, $this->context);

@@ -35,7 +35,8 @@ final class Operator_Preparation
 	public static function prepare_binary(binary_expression_node $syntax,
 		preparation_context $context): prepared_binary_expression
 	{
-		$source_operator = self::binary_kind($syntax, $context);
+		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
+		$source_operator = self::binary_kind($text);
 		self::require_order_independent_operand($syntax->left);
 		self::require_order_independent_operand($syntax->right);
 
@@ -151,10 +152,8 @@ final class Operator_Preparation
 	}
 
 	/** Normalize token spelling before candidate discovery; backends never inspect it. */
-	private static function binary_kind(binary_expression_node $syntax,
-		preparation_context $context): operator_kind
+	public static function binary_kind(string $operator_text): operator_kind
 	{
-		$operator_text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		if ($operator_text === '<=>') {
 			return operator_kind::three_way;
 		}
@@ -210,7 +209,7 @@ final class Operator_Preparation
 	}
 
 	/** Keep C++ operand-order freedom harmless until general effect facts are available. */
-	private static function require_order_independent_operand(expression_node $node): void
+	public static function require_order_independent_operand(expression_node $node): void
 	{
 		if ($node instanceof unary_expression_node) {
 			$unary = object_cast($node, unary_expression_node::class);

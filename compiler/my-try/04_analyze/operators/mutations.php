@@ -1,6 +1,6 @@
 <?php
 
-/* Prepare updates to established storage and select old/new integer value snapshots. */
+/* Prepare updates to established storage and retain computation and result-value contracts. */
 namespace scpp\compiler;
 
 final class Mutation_Preparation
@@ -9,13 +9,7 @@ final class Mutation_Preparation
 	public static function prepare(mutation_expression_node $syntax,
 		preparation_context $context): prepared_mutation_expression
 	{
-		if (!($syntax->target instanceof variable_reference_node)) {
-			throw new \RuntimeException('S2S mutation requires an existing local or parameter target');
-		}
-		$target = Expression_Preparation::prepare($syntax->target, $context);
-		if (!$target->addressable) {
-			throw new \RuntimeException('S2S mutation requires writable storage');
-		}
+		$target = self::prepare_target($syntax->target, $context);
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		$source_operator = operator_kind::pre_increment;
 		if ($text === '++') {
@@ -31,6 +25,38 @@ final class Mutation_Preparation
 		$facts->decision = Operator_Preparation::decide(
 			$source_operator, [$target->type], operator_context::expression, $context);
 		$facts->type = $facts->decision->result_type;
+		return $facts;
+	}
+
+	/** Share existing-storage validation between unary mutation and compound updates. */
+	public static function prepare_target(expression_node $syntax,
+		preparation_context $context): prepared_expression
+	{
+		if (!($syntax instanceof variable_reference_node)) {
+			throw new \RuntimeException('S2S mutation requires an existing local or parameter target');
+		}
+		$target = Expression_Preparation::prepare($syntax, $context);
+		if (!$target->addressable) {
+			throw new \RuntimeException('S2S mutation requires writable storage');
+		}
+		return $target;
+	}
+
+	/** Compute through the ordinary binary candidate, then retain the explicit write-back boundary. */
+	public static function prepare_compound(compound_assignment_expression_node $syntax,
+		preparation_context $context): prepared_compound_assignment_expression
+	{
+		$target = self::prepare_target($syntax->target, $context);
+		Operator_Preparation::require_order_independent_operand($syntax->value);
+		$value = Expression_Preparation::prepare($syntax->value, $context);
+		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
+		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, 1));
+		$facts = new prepared_compound_assignment_expression();
+		$facts->decision = Operator_Preparation::decide(
+			$source_operator, [$target->type, $value->type], operator_context::expression, $context);
+		$facts->write_back = Conversion_Preparation::decide(
+			$facts->decision->result_type, $target->type, conversion_context::assignment);
+		$facts->type = $target->type;
 		return $facts;
 	}
 

@@ -342,6 +342,22 @@ final class CPP_Generator
 		return self::generate_integer_value($integer->type, $integer->decimal, $context);
 	}
 
+	/** Bind the target once, compute before writing, and return a copy of the updated value. */
+	public static function generate_compound_assignment(compound_assignment_expression_node $syntax,
+		cpp_generation_context $context): string
+	{
+		$facts = $syntax->require_compound_assignment_preparation();
+		$target = $syntax->target->generate_cpp(new CPP_Syntax($context));
+		$place = 'target_' . $context->next_temporary;
+		$context->next_temporary++;
+		$right = $syntax->value->generate_cpp(new CPP_Syntax($context));
+		$value = self::render_binary_decision($facts->decision, $place, $right, $context);
+		$value = CPP_Declarations::conversion($value, $facts->write_back, $context);
+		$result_type = CPP_Declarations::type($facts->type, $context);
+		return '([&]() -> ' . $result_type . ' { auto& ' . $place . ' = ' . $target
+			. '; ' . $place . ' = ' . $value . '; return ' . $place . '; }())';
+	}
+
 	/** Mutate the resolved place once and copy the selected old/new result into a value. */
 	public static function generate_mutation(mutation_expression_node $syntax, cpp_generation_context $context): string
 	{
@@ -400,6 +416,16 @@ final class CPP_Generator
 	public static function generate_binary(binary_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_binary_preparation()->decision;
+		$worker = new CPP_Syntax($context);
+		$left = $syntax->left->generate_cpp($worker);
+		$right = $syntax->right->generate_cpp($worker);
+		return self::render_binary_decision($decision, $left, $right, $context);
+	}
+
+	/** Both value-only binaries and compound updates consume the same selected computation. */
+	private static function render_binary_decision(operator_decision $decision,
+		string $left, string $right, cpp_generation_context $context): string
+	{
 		$spelling = '';
 		if ($decision->operation === operator_operation::boolean_and) {
 			$spelling = '&&';
@@ -457,11 +483,8 @@ final class CPP_Generator
 			throw new \LogicException('C++ binary operation requires two prepared operands');
 		}
 
-		$worker = new CPP_Syntax($context);
-		$left = CPP_Declarations::conversion(
-			$syntax->left->generate_cpp($worker), $decision->operands[0], $context);
-		$right = CPP_Declarations::conversion(
-			$syntax->right->generate_cpp($worker), $decision->operands[1], $context);
+		$left = CPP_Declarations::conversion($left, $decision->operands[0], $context);
+		$right = CPP_Declarations::conversion($right, $decision->operands[1], $context);
 		if ($decision->operation === operator_operation::integer_three_way)
 		{
 			$context->headers['scpp/generated/operators.hpp'] = true;

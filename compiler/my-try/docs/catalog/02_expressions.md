@@ -50,13 +50,13 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [EXPR-PREDEC-001](#expr-predec-001) | agreed | `$b = 3; $a = --$b;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [EXPR-POSTDEC-001](#expr-postdec-001) | agreed | `$b = 3; $a = $b--;` | proved | proved | deferred | [Mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement) |
 | [STMT-EXPR-001](#stmt-expr-001) | agreed | `$a = 1; $a + 1;` | proved | proved | deferred | [Bounded scalar decisions and PHP-host/generated-C++ proof](../s2s_scalar_operators.md) |
-| [STMT-ASSIGNOP-001](#stmt-assignop-001) | pending-discussion | `$a += 1;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-002](#stmt-assignop-002) | pending-discussion | `$a -= 1;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-003](#stmt-assignop-003) | pending-discussion | `$a *= 2;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-004](#stmt-assignop-004) | pending-discussion | `$a /= 2;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-005](#stmt-assignop-005) | pending-discussion | `$a .= "x";` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-006](#stmt-assignop-006) | pending-discussion | `$a = 1; $a += 1;` | unverified | unverified | deferred | — |
-| [STMT-ASSIGNOP-007](#stmt-assignop-007) | pending-discussion | `$a %= 2;` | unverified | unverified | deferred | — |
+| [STMT-ASSIGNOP-001](#stmt-assignop-001) | agreed | `$a = 3; $a += 1;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
+| [STMT-ASSIGNOP-002](#stmt-assignop-002) | agreed | `$a = 3; $a -= 1;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
+| [STMT-ASSIGNOP-003](#stmt-assignop-003) | agreed | `$a = 3; $a *= 2;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
+| [STMT-ASSIGNOP-004](#stmt-assignop-004) | agreed | `$a = 3; $a /= 2;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
+| [STMT-ASSIGNOP-005](#stmt-assignop-005) | agreed | `$a = "a"; $a .= "x";` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
+| [STMT-ASSIGNOP-006](#stmt-assignop-006) | agreed | `$a = 1; $a += 1;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
+| [STMT-ASSIGNOP-007](#stmt-assignop-007) | agreed | `$a = 3; $a %= 2;` | proved | proved | deferred | [Compound assignment contracts and proof](../s2s_scalar_operators.md#compound-assignment) |
 | [STMT-ASSIGNOP-008](#stmt-assignop-008) | pending-discussion | `$a &= 3;` | unverified | unverified | deferred | — |
 | [STMT-ASSIGNOP-009](#stmt-assignop-009) | pending-discussion | `$a \|= 3;` | unverified | unverified | deferred | — |
 | [STMT-ASSIGNOP-010](#stmt-assignop-010) | pending-discussion | `$a ^= 3;` | unverified | unverified | deferred | — |
@@ -1619,7 +1619,12 @@ a + static_cast<int_t>(1);
 
 ## STMT-ASSIGNOP-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
+`int` locals/parameters, or canonical `string` for `.=`. The dedicated compound
+node retains target and RHS. Preparation reuses the binary decision and records
+the write-back conversion; C++ binds the target once and returns an updated-value
+snapshot. See [contracts, limits and proof](../s2s_scalar_operators.md#compound-assignment).
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1654,7 +1659,12 @@ a += static_cast<int_t>(1);
 
 ## STMT-ASSIGNOP-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
+`int` locals/parameters, or canonical `string` for `.=`. The dedicated compound
+node retains target and RHS. Preparation reuses the binary decision and records
+the write-back conversion; C++ binds the target once and returns an updated-value
+snapshot. See [contracts, limits and proof](../s2s_scalar_operators.md#compound-assignment).
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1689,7 +1699,12 @@ a -= static_cast<int_t>(1);
 
 ## STMT-ASSIGNOP-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
+`int` locals/parameters, or canonical `string` for `.=`. The dedicated compound
+node retains target and RHS. Preparation reuses the binary decision and records
+the write-back conversion; C++ binds the target once and returns an updated-value
+snapshot. See [contracts, limits and proof](../s2s_scalar_operators.md#compound-assignment).
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1724,7 +1739,12 @@ a *= static_cast<int_t>(2);
 
 ## STMT-ASSIGNOP-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
+`int` locals/parameters, or canonical `string` for `.=`. The dedicated compound
+node retains target and RHS. Preparation reuses the binary decision and records
+the write-back conversion; C++ binds the target once and returns an updated-value
+snapshot. See [contracts, limits and proof](../s2s_scalar_operators.md#compound-assignment).
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1761,7 +1781,12 @@ a /= static_cast<int_t>(2);
 
 ## STMT-ASSIGNOP-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
+`int` locals/parameters, or canonical `string` for `.=`. The dedicated compound
+node retains target and RHS. Preparation reuses the binary decision and records
+the write-back conversion; C++ binds the target once and returns an updated-value
+snapshot. See [contracts, limits and proof](../s2s_scalar_operators.md#compound-assignment).
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1796,7 +1821,12 @@ a += string_t("x");
 
 ## STMT-ASSIGNOP-006
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
+`int` locals/parameters, or canonical `string` for `.=`. The dedicated compound
+node retains target and RHS. Preparation reuses the binary decision and records
+the write-back conversion; C++ binds the target once and returns an updated-value
+snapshot. See [contracts, limits and proof](../s2s_scalar_operators.md#compound-assignment).
+Native compiler execution was not rerun.
 
 ### Imported version 1
 
@@ -1831,7 +1861,12 @@ auto a = static_cast<int_t>(1); a += static_cast<int_t>(1);
 
 ## STMT-ASSIGNOP-007
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
+`int` locals/parameters, or canonical `string` for `.=`. The dedicated compound
+node retains target and RHS. Preparation reuses the binary decision and records
+the write-back conversion; C++ binds the target once and returns an updated-value
+snapshot. See [contracts, limits and proof](../s2s_scalar_operators.md#compound-assignment).
+Native compiler execution was not rerun.
 
 ### Imported version 1
 

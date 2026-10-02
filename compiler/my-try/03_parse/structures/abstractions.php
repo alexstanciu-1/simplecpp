@@ -230,6 +230,7 @@ interface cpp_generation_worker_i
 	public function generate_variable_reference(variable_reference_node $node): string;
 	public function generate_constant_reference(constant_reference_node $node): string;
 	public function generate_cast_expression(cast_expression_node $node): string;
+	public function generate_compound_assignment_expression(compound_assignment_expression_node $node): string;
 	public function generate_mutation_expression(mutation_expression_node $node): string;
 	public function generate_unary_expression(unary_expression_node $node): string;
 	public function generate_binary_expression(binary_expression_node $node): string;

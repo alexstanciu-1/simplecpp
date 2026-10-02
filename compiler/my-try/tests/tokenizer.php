@@ -62,6 +62,14 @@ token_check(count($tokens) === count($expected_text));
 foreach ($tokens as $index => $token) {
 	token_check($token->text() === $expected_text[$index]);
 }
+// Compound tokens stay distinct from arrows, increment and decimal/exponent spelling.
+$tokens = token_scan('$x+=1;$x-=2;$x*=3;$x/=4;$x%=5;$x.="a";')->tokens;
+$expected_text = ['$x', '+=', '1', ';', '$x', '-=', '2', ';', '$x', '*=', '3', ';',
+	'$x', '/=', '4', ';', '$x', '%=', '5', ';', '$x', '.=', '"a"', ';'];
+token_check(count($tokens) === count($expected_text));
+foreach ($tokens as $index => $token) {
+	token_check($token->text() === $expected_text[$index]);
+}
 foreach (['$', '$0', '12a', '1.e+', '1..', '=>', "\0", "\xc3\xa9"] as $invalid)
 {
 	$failed = false;

@@ -812,6 +812,62 @@ final class parameter_node extends ast_node
 	}
 }
 
+final class compound_assignment_expression_node extends expression_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_compound_assignment_expression $prepared_facts = null;
+
+	public expression_node $target;
+	public int $operator_token_index;
+	public expression_node $value;
+
+	public function kind(): node_kind
+	{
+		return node_kind::compound_assignment_expression;
+	}
+
+	/**
+	 * Create an independent iterator retaining this node for lazy inspection.
+	 */
+	public function children(): child_iterator_i
+	{
+		return new compound_assignment_expression_children_iterator($this);
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_compound_assignment_preparation();
+	}
+
+	public function require_compound_assignment_preparation(): prepared_compound_assignment_expression
+	{
+		return $this->prepared_facts;
+	}
+
+	/** Forward operand typing and operation selection to semantic preparation. */
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Mutation_Preparation::prepare_compound($this, $context));
+	}
+
+	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$this->operator_token_index = $worker->token_index($this->operator_token_index);
+		$worker->enter($this);
+		$worker->edge($this, $this->target);
+		$worker->edge($this, $this->value);
+	}
+
+	/** The generation worker consumes the prepared operation, never token spelling. */
+	public function generate_cpp(cpp_generation_worker_i $worker): string
+	{
+		return $worker->generate_compound_assignment_expression($this);
+	}
+}
+
 final class mutation_expression_node extends expression_node
 {
 	use Node_Source_Span;

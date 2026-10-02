@@ -51,6 +51,12 @@ final class prepared_cast_expression extends prepared_expression
 	public conversion_decision $conversion;
 }
 
+/** Compound updates retain computation and the conversion back into resolved storage. */
+final class prepared_compound_assignment_expression extends prepared_expression {
+	public operator_decision $decision;
+	public conversion_decision $write_back;
+}
+
 /** Mutation returns a value snapshot; target syntax retains its resolved storage identity. */
 final class prepared_mutation_expression extends prepared_expression {
 	public operator_decision $decision;

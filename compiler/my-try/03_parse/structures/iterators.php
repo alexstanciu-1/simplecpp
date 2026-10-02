@@ -654,3 +654,30 @@ final class mutation_expression_children_iterator extends children_iterator
 		return $this->source->target;
 	}
 }
+
+/** Inspect the compound target and RHS in source order. */
+final class compound_assignment_expression_children_iterator extends children_iterator
+{
+	private compound_assignment_expression_node $source;
+	private int $next_field = 0;
+
+	public function __construct(compound_assignment_expression_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** Read the next named field only when requested. */
+	protected function read_next(): ?ast_node
+	{
+		switch ($this->next_field)
+		{
+			case 0:
+				$this->next_field = 1;
+				return $this->source->target;
+			case 1:
+				$this->next_field = 2;
+				return $this->source->value;
+		}
+		return null;
+	}
+}

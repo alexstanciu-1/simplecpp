@@ -51,6 +51,27 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'compound_add' => ['$a = 3; $a += 2; return $a;', 5],
+	'compound_add_initialized' => ['$a = 1; $a += 1; return $a;', 2],
+	'compound_sub' => ['$a = 3; $a -= 2; return $a;', 1],
+	'compound_mul' => ['$a = 3; $a *= 2; return $a;', 6],
+	'compound_div' => ['$a = 7; $a /= 3; return $a;', 2],
+	'compound_mod' => ['$a = 7; $a %= 3; return $a;', 1],
+	'compound_concat' => ['$a = "a"; $a .= "b";', 0],
+	'compound_concat_cast' => ['$a = "a"; $a .= (string)(1 + 2);', 0],
+	'compound_concat_self' => ['$a = "a"; $a .= $a;', 0],
+	'compound_concat_snapshot' => ['$b = "a"; $a = ($b .= "b"); $b .= "c";', 0],
+	'compound_snapshot' => ['$b = 3; $a = ($b += 2); $b++; return $a * 10 + $b;', 56],
+	'compound_precedence' => ['$a = 3; $a += 2 * 4; return $a;', 11],
+	'compound_self' => ['$a = 3; $a += $a; return $a;', 6],
+	'compound_negative_div' => ['$a = -7; $a /= 3; return $a + 2;', 0],
+	'compound_negative_mod' => ['$a = -7; $a %= 3; return $a + 1;', 0],
+	'compound_value_parameter' => ['function update(int $x): int { return $x += 2; } $b = 3; $a = update($b); return $a * 10 + $b;', 53],
+	'compound_reference_parameter' => ['function update(int &$x): int { return $x += 2; } $b = 3; $a = update($b); return $a * 10 + $b;', 55],
+	'compound_argument_order' => ['function pair(int $a, int $b): int { return $a * 10 + $b; } $x = 1; return pair($x += 1, $x += 1);', 23],
+	'compound_div_zero' => ['function fail(int &$x): int { return $x /= 0; } return 0;', 0],
+	'compound_mod_zero' => ['function fail(int &$x): int { return $x %= 0; } return 0;', 0],
+
 	'mutation_preinc' => ['$b = 3; $a = ++$b; return $a * 10 + $b;', 44],
 	'mutation_postinc' => ['$b = 3; $a = $b++; return $a * 10 + $b;', 34],
 	'mutation_predec' => ['$b = 3; $a = --$b; return $a * 10 + $b;', 22],
@@ -646,7 +667,8 @@ foreach ($cases as $name => [$source, $exit])
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 
-	$concatenation_values = ['concat_literals' => 'ab', 'concat_left' => 'bx',
+	$concatenation_values = ['compound_concat' => 'ab', 'compound_concat_cast' => 'a3',
+		'compound_concat_self' => 'aa', 'compound_concat_snapshot' => 'ab', 'concat_literals' => 'ab', 'concat_left' => 'bx',
 		'concat_right' => 'xb', 'concat_cast' => 'x14', 'concat_grouped' => 'abc', 'concat_empty' => 'x'];
 	if (isset($concatenation_values[$name]))
 	{
@@ -654,6 +676,18 @@ foreach ($cases as $name => [$source, $exit])
 		$probe .= '	if (local_a.native_value() != "' . $concatenation_values[$name] . '") { return 91; }' . "\n";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text));
+		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
+	}
+
+	// A failed compound computation must preserve the original caller-owned target.
+	if (($name === 'compound_div_zero') || ($name === 'compound_mod_zero'))
+	{
+		$error_code = $name === 'compound_div_zero' ? 'division_by_zero' : 'modulo_by_zero';
+		$probe = "\nint main() { scpp::int_t<> target(7); try { (void)function_fail(target); }"
+			. ' catch (const scpp::runtime_error& error) { return error.code() == "' . $error_code
+			. '" && target.native_value() == 7 ? 0 : 91; } return 92; }';
+		$probe_path = $directory . '/' . $name . '_throw.cpp';
+		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', Model::$cpp_files[0]->text) . $probe);
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 

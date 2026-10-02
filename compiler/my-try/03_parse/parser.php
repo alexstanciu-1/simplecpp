@@ -645,9 +645,23 @@ final class Parser_Run
 		return $statement;
 	}
 
+	/** Compound assignment binds below binary operators and retains its own target/RHS shape. */
 	private function expression(bool $allow_assignment = false): expression_node
 	{
-		return $this->binary_expression(1, $allow_assignment);
+		$start = $this->position;
+		$target = $this->binary_expression(1, $allow_assignment);
+		$text = $this->text();
+		if (($text === '+=') || ($text === '-=') || ($text === '*=')
+			|| ($text === '/=') || ($text === '%=') || ($text === '.='))
+		{
+			$compound = new compound_assignment_expression_node();
+			$compound->target = $target;
+			$compound->operator_token_index = $this->position++;
+			$compound->value = $this->expression(true);
+			$this->finish_node($compound, $start);
+			return $compound;
+		}
+		return $target;
 	}
 
 	/** Climb supported precedence levels; a tighter RHS preserves left associativity. */
