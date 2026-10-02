@@ -115,7 +115,7 @@ on effectful operands remains in force, including beneath nested unary expressio
 
 Prefix operators nest right-to-left and bind above the supported binary levels.
 Grouping controls their operand: `-2 * 3` differs from `-(2 * 3)`. `++` and `--`
-are distinct reserved tokens and remain rejected; repeated unary signs require
+are distinct mutation tokens; repeated unary signs require
 separation, as in `- -3`. Strict comparisons and arrow tokens retain longest matching.
 
 The grammar keeps `(NAME) + expression` and `(NAME) - expression` as grouped-name
@@ -139,10 +139,57 @@ fresh-output equivalence after token compaction. PHP-host S2S generation/purity 
 and exact signed integer limits. Native compiler execution remains unverified for
 this extension; LLVM is deferred.
 
+## Increment and decrement
+
+Added 2026-10-02 after agreement on a dedicated `mutation_expression_node`. It owns
+one target expression, the operator token location and a postfix flag. A separate
+prepared mutation record reuses `operator_decision`, with one identity operand
+conversion and canonical `int` result. The target's existing prepared variable
+reference owns resolved storage identity; mutation facts do not duplicate it.
+
+`Mutation_Preparation` accepts only established canonical `int` locals or parameters.
+It resolves the target through the normal read path, requires addressability, and
+selects one of four integer operations through the shared operator decision entry.
+Unlike plain assignment, mutation never introduces a declaration. Constants, literal
+values, calls, cast targets, other numeric types, fields and indexes are rejected.
+Grouping a variable does not change its target identity.
+
+Prefix increment/decrement returns a snapshot of the updated value; postfix returns
+a snapshot of the previous value. Results are not addressable or valid reference
+arguments. Expression statements reuse these expressions and discard their results.
+Postfix syntax binds tighter than prefix syntax; repeated mutations such as
+`++$x++` are rejected because their target is another value-producing mutation.
+
+C++ lowering uses the existing runtime `++`/`--` operators and explicitly copies
+the result into the prepared integer result type, for example
+`static_cast<scpp::int_t<>>(++local_x)`. The target occurs exactly once. This avoids
+leaking the runtime prefix operator's reference result into the source value
+contract. No mutation-specific lambda, runtime helper or semantic lookup in the
+backend is needed. This refines legacy direct operator emission with an explicit
+snapshot boundary. Runtime native signed overflow behavior remains unchanged;
+proofs stay inside representable bounds.
+
+Assignments and returns consume the snapshot normally. Existing call emission
+already evaluates value arguments into temporaries left-to-right, so multiple
+mutation arguments retain their individual values. Value parameters mutate only
+the local copy; reference parameters update caller storage. Binary operators retain
+their existing effect restriction, including mutations hidden under casts, and
+value-only unary operators also continue to reject effectful operands.
+
+[Mutation tests](../tests/mutations.php) verify selected operations/conversions,
+non-addressability, spans, single-child inspection, cleanup, rejected targets/types,
+reference-argument rejection, prefix/postfix incremental edits, token compaction and
+fresh/incremental equivalence. The PHP-host [S2S suite](../tests/s2s.php) verifies
+syntax purity and generates 20 mutation programs/probes for Clang C++20 execution:
+all eight catalog forms, independent old/new values, later-update snapshots,
+self-assignment, grouped targets, value/reference parameters, argument sequencing
+and exact minimum/maximum representable results. Native execution of the compiler
+was not rerun; LLVM remains deferred.
+
 ## Remaining decisions
 
-- Prefix/postfix mutation and compound assignment need target identity, evaluation
-  count and old/new result policy; they are not ordinary value-only binary operators.
+- Compound assignment and broader mutation targets still need their target evaluation
+  and write-back contracts; mutation inside binary expressions remains deferred.
 - Word `and` / `or` / `xor` interact with assignment precedence; the imported examples
   cannot be implemented truthfully by merely aliasing the symbolic operators.
 - Exponentiation references an unavailable `scpp::pow` helper. Result type, negative

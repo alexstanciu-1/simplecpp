@@ -57,6 +57,10 @@ final class Operator_Preparation
 		if ($operator_context !== operator_context::expression) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
 		}
+		if (($source_operator === operator_kind::pre_increment) || ($source_operator === operator_kind::post_increment)
+			|| ($source_operator === operator_kind::pre_decrement) || ($source_operator === operator_kind::post_decrement)) {
+			return Mutation_Preparation::decide($source_operator, $operands, $context);
+		}
 		if (($source_operator === operator_kind::unary_plus) || ($source_operator === operator_kind::unary_minus)
 			|| ($source_operator === operator_kind::bitwise_not) || ($source_operator === operator_kind::logical_not)) {
 			return self::decide_unary($source_operator, $operands, $context);

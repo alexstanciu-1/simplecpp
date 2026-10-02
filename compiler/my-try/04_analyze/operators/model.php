@@ -8,6 +8,10 @@ enum operator_context {
 }
 
 enum operator_kind {
+	case pre_increment;
+	case post_increment;
+	case pre_decrement;
+	case post_decrement;
 	case unary_plus;
 	case unary_minus;
 	case bitwise_not;
@@ -32,6 +36,10 @@ enum operator_kind {
 }
 
 enum operator_operation {
+	case integer_pre_increment;
+	case integer_post_increment;
+	case integer_pre_decrement;
+	case integer_post_decrement;
 	case integer_positive;
 	case integer_negative;
 	case integer_complement;

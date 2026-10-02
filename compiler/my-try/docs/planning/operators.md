@@ -220,4 +220,10 @@ predates grouping and these operator extensions; it does not certify the current
 The 2026-10-02 unary slice adds the agreed unary syntax and its attached fact record,
 reusing `operator_decision` with one operand conversion. It covers integer `+`, `-`,
 `~` and boolean `!`; see the [unary contract](../s2s_scalar_operators.md#unary-operators)
-for grammar, literal limits and proof. Mutation remains separate.
+for grammar, literal limits and proof.
+
+The subsequent mutation slice uses a dedicated target-owning node and
+`Mutation_Preparation`. It supports established integer locals/parameters and
+old/new value snapshots through the existing operator decision. Compound assignment,
+fields/indexes and mutations inside binary expressions remain future work; see the
+[mutation contract](../s2s_scalar_operators.md#increment-and-decrement).

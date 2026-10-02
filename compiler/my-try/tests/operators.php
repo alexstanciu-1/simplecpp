@@ -264,7 +264,6 @@ $rejections = [
 	'unary oversized magnitude' => ['return -9223372036854775808;', 'exceeds signed 64-bit'],
 	'unary call' => ['function value(): int { return 1; } return -value();', 'order-independent operands'],
 	'nested unary call' => ['function value(): int { return 1; } return 2 + -value();', 'order-independent operands'],
-	'prefix mutation' => ['$x = 1; return ++$x;', 'Expected scalar literal'],
 
 	'boolean operand' => ['$value = 1 + true;', 'integer binary operation requires canonical int operands'],
 	'narrow operand' => ['$left uint8 = 1; $value = $left + 2;', 'integer binary operation requires canonical int operands'],
@@ -275,7 +274,6 @@ $rejections = [
 	'subtraction width' => ['$left uint8 = 3; $value = $left - 1;', 'integer binary operation requires canonical int operands'],
 	'subtraction call' => ['function value(): int { return 1; } $result = 2 - value();', 'binary operation requires order-independent operands'],
 	'nested subtraction call' => ['function value(): int { return 1; } $result = 2 + (3 - value());', 'binary operation requires order-independent operands'],
-	'decrement' => ['$value = 1; $value--;', "Expected ';'"],
 	'compound subtraction' => ['$value = 1; $value -= 1;', 'Expected scalar literal or variable reference'],
 	'multiplication boolean' => ['$value = true * 2;', 'integer binary operation requires canonical int operands'],
 	'multiplication float' => ['$value = 2 * 3.5;', 'integer binary operation requires canonical int operands'],

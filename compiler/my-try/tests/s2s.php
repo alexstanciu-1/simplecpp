@@ -51,6 +51,25 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'mutation_preinc' => ['$b = 3; $a = ++$b; return $a * 10 + $b;', 44],
+	'mutation_postinc' => ['$b = 3; $a = $b++; return $a * 10 + $b;', 34],
+	'mutation_predec' => ['$b = 3; $a = --$b; return $a * 10 + $b;', 22],
+	'mutation_postdec' => ['$b = 3; $a = $b--; return $a * 10 + $b;', 32],
+	'mutation_stmt_preinc' => ['$b = 3; ++$b; return $b;', 4],
+	'mutation_stmt_postinc' => ['$b = 3; $b++; return $b;', 4],
+	'mutation_stmt_predec' => ['$b = 3; --$b; return $b;', 2],
+	'mutation_stmt_postdec' => ['$b = 3; $b--; return $b;', 2],
+	'mutation_snapshot' => ['$b = 3; $a = ++$b; $b++; return $a * 10 + $b;', 45],
+	'mutation_self_post' => ['$b = 3; $b = $b++; return $b;', 3],
+	'mutation_self_pre' => ['$b = 3; $b = ++$b; return $b;', 4],
+	'mutation_grouped' => ['$b = 3; $a = ($b)++; return $a * 10 + $b;', 34],
+	'mutation_value_parameter' => ['function value(int $x): int { return ++$x; } $b = 3; $a = value($b); return $a * 10 + $b;', 43],
+	'mutation_reference_parameter' => ['function value(int &$x): int { return $x--; } $b = 3; $a = value($b); return $a * 10 + $b;', 32],
+	'mutation_argument_order' => ['function pair(int $a, int $b): int { return $a * 10 + $b; } $x = 3; $a = pair($x++, $x++); return $a + $x;', 39],
+	'mutation_prefix_arguments' => ['function pair(int $a, int $b): int { return $a * 10 + $b; } $x = 3; return pair(++$x, ++$x);', 45],
+	'mutation_maximum' => ['$x = PHP_INT_MAX - 1; $a = ++$x; return 0;', 0],
+	'mutation_minimum' => ['$x = -PHP_INT_MAX; $a = --$x; return 0;', 0],
+
 	'unary_negative' => ['$b = 3; $a = -$b; return $a + 3;', 0],
 	'unary_positive' => ['$b = 3; $a = +$b; return $a;', 3],
 	'unary_complement' => ['$b = 3; $a = ~$b; return $a + 4;', 0],
@@ -609,7 +628,8 @@ foreach ($cases as $name => [$source, $exit])
 	}
 
 	// Verify signed values directly; process exit codes alone lose sign and high bits.
-	$arithmetic_values = ['unary_negative' => '-3LL', 'unary_complement' => '-4LL',
+	$arithmetic_values = ['mutation_maximum' => '9223372036854775807LL',
+		'mutation_minimum' => '(-9223372036854775807LL - 1LL)', 'unary_negative' => '-3LL', 'unary_complement' => '-4LL',
 		'unary_minimum' => '(-9223372036854775807LL - 1LL)',
 		'unary_complement_limit' => '(-9223372036854775807LL - 1LL)', 'sub_catalog' => '-1LL',
 		'sub_minimum' => '(-9223372036854775807LL - 1LL)', 'sub_maximum' => '9223372036854775807LL',
@@ -620,7 +640,7 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
 		$probe .= "\tif (local_a.native_value() != " . $arithmetic_values[$name] . ") { return 91; }\n";
 		$text = Model::$cpp_files[0]->text;
-		$site = (($name === 'sub_maximum') || ($name === 'mul_wide') || ($name === 'unary_minimum') || ($name === 'unary_complement_limit')) ? "\treturn 0;" : "\treturn static_cast<int>";
+		$site = (($name === 'sub_maximum') || ($name === 'mul_wide') || ($name === 'unary_minimum') || ($name === 'unary_complement_limit') || ($name === 'mutation_maximum') || ($name === 'mutation_minimum')) ? "\treturn 0;" : "\treturn static_cast<int>";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace($site, $probe . $site, $text));
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];

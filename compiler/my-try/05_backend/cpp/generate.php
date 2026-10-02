@@ -342,6 +342,33 @@ final class CPP_Generator
 		return self::generate_integer_value($integer->type, $integer->decimal, $context);
 	}
 
+	/** Mutate the resolved place once and copy the selected old/new result into a value. */
+	public static function generate_mutation(mutation_expression_node $syntax, cpp_generation_context $context): string
+	{
+		$decision = $syntax->require_mutation_preparation()->decision;
+		$prefix = '';
+		$suffix = '';
+		if ($decision->operation === operator_operation::integer_pre_increment) {
+			$prefix = '++';
+		}
+		elseif ($decision->operation === operator_operation::integer_pre_decrement) {
+			$prefix = '--';
+		}
+		elseif ($decision->operation === operator_operation::integer_post_increment) {
+			$suffix = '++';
+		}
+		elseif ($decision->operation === operator_operation::integer_post_decrement) {
+			$suffix = '--';
+		}
+		else {
+			throw new \LogicException('Unsupported prepared mutation operation');
+		}
+		$target = $syntax->target->generate_cpp(new CPP_Syntax($context));
+		$result_type = CPP_Declarations::type($decision->result_type, $context);
+		$context->headers['scpp/generated/operators.hpp'] = true;
+		return 'static_cast<' . $result_type . '>(' . $prefix . $target . $suffix . ')';
+	}
+
 	/** Render the prepared operation recursively; token spelling has no backend authority. */
 	public static function generate_unary(unary_expression_node $syntax, cpp_generation_context $context): string
 	{

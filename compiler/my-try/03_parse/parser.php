@@ -704,8 +704,17 @@ final class Parser_Run
 	private function unary_expression(bool $allow_assignment): expression_node
 	{
 		$text = $this->text();
+		if (($text === '++') || ($text === '--'))
+		{
+			$start = $this->position++;
+			$mutation = new mutation_expression_node();
+			$mutation->operator_token_index = $start;
+			$mutation->target = $this->unary_expression(false);
+			$this->finish_node($mutation, $start);
+			return $mutation;
+		}
 		if (($text !== '+') && ($text !== '-') && ($text !== '~') && ($text !== '!')) {
-			return $this->primary_expression($allow_assignment);
+			return $this->postfix_expression($allow_assignment);
 		}
 		$start = $this->position++;
 		$unary = new unary_expression_node();
@@ -713,6 +722,23 @@ final class Parser_Run
 		$unary->operand = $this->unary_expression(false);
 		$this->finish_node($unary, $start);
 		return $unary;
+	}
+
+	/** Postfix mutation binds to the complete primary/access expression, before prefix operators. */
+	private function postfix_expression(bool $allow_assignment): expression_node
+	{
+		$start = $this->position;
+		$target = $this->primary_expression($allow_assignment);
+		while (($this->text() === '++') || ($this->text() === '--'))
+		{
+			$mutation = new mutation_expression_node();
+			$mutation->target = $target;
+			$mutation->operator_token_index = $this->position++;
+			$mutation->postfix = true;
+			$this->finish_node($mutation, $start);
+			$target = $mutation;
+		}
+		return $target;
 	}
 
 	/** Parse literals, calls, variables and right-associative assignment expressions. */

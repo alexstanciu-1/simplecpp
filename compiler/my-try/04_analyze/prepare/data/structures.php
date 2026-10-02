@@ -51,6 +51,11 @@ final class prepared_cast_expression extends prepared_expression
 	public conversion_decision $conversion;
 }
 
+/** Mutation returns a value snapshot; target syntax retains its resolved storage identity. */
+final class prepared_mutation_expression extends prepared_expression {
+	public operator_decision $decision;
+}
+
 /** Unary syntax retains the common selected operator decision. */
 final class prepared_unary_expression extends prepared_expression {
 	public operator_decision $decision;

@@ -632,3 +632,25 @@ final class unary_expression_children_iterator extends children_iterator
 		return $this->source->operand;
 	}
 }
+
+/** Inspect the one owned mutation target lazily. */
+final class mutation_expression_children_iterator extends children_iterator
+{
+	private mutation_expression_node $source;
+	private bool $consumed = false;
+
+	public function __construct(mutation_expression_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** Read the next named field only when requested. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) {
+			return null;
+		}
+		$this->consumed = true;
+		return $this->source->target;
+	}
+}
