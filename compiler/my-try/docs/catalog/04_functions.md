@@ -26,6 +26,25 @@ rows unverified until their agreed examples are checked. This handoff adds no te
 The omitted-type examples FUNC-DECL-001/005 need explicit contract discussion, not
 assumed PHP inference. Defaults, variadics and overload selection remain later decisions.
 
+### Opening verification batch
+
+Chapter 03's [CF-01–CF-09 debt register](03_control_flow.md#remaining-debt-and-scope-boundaries)
+is deferred, not a prerequisite queue for this chapter. Start with the following
+bounded examples using the existing function/signature/body/call owners:
+
+| Entry | Working proof to establish |
+| --- | --- |
+| FUNC-DECL-004 | Pass an int and a string to a typed function; observe the string's value in the result |
+| FUNC-RETURN-003 | Return an arithmetic expression from a typed function and check its value |
+| FUNC-CALL-003 | Pass several scalar arguments and check their positions and values; retain existing left-to-right argument snapshot proofs |
+| FUNC-RECURSION-001 | Execute recursion with an explicit base case and check the result, rather than merely compiling mutually recursive signatures |
+
+No new retained structure or semantic extension is proposed for this batch. If a proof
+reveals a missing capability, identify its owner and discuss any semantic expansion
+before implementing it. Keep defaults, variadics, overloads and omitted-type policies
+out of this reconciliation batch. Progress rows remain unverified until the corresponding
+focused proof is recorded.
+
 ## Ordinary-function foundation (2026-09-27)
 
 Implemented through shared signature/body preparation and specialization-attached

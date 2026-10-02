@@ -30,22 +30,29 @@ for exact source/harness identity and portability adaptations; LLVM/STAN remain 
 
 ### Remaining debt and scope boundaries
 
-- Syntax: unbraced/alternative statement syntax and numbered transfers are not enabled.
-  Full ternary nesting and fallback assignments retain the documented parentheses rules.
-- Selection: broader switch/match selector types, runtime labels and general constant
-  folding are deferred. Ternary/Elvis/match admit matching scalar results only; broader
-  joins remain future work. Empty match needs non-returning expression typing.
-- Analysis: no CFG, general constant reachability, definite-assignment/branch merging
-  or general effect analysis. Existing conservative completion and eager-effect checks
-  remain in force; exceptions/non-returning calls need their own completion rules.
-- Iteration: executable foreach belongs to Chapter 06, retaining the reserved shared
-  loop specialization and its TODO. Reference iteration additionally needs lifetime rules.
-- Inherited debt: PE-03 duplicate declarations, conditional runtime-template copyability,
-  bracket overload/lowering, and output partitioning remain with their existing owners.
-  LLVM and compilation-cost benchmarking remain deferred. Native validation is an
-  explicit checkpoint, not an automatic requirement for each new feature slice.
+Explicitly flagged as **deferred debt** by user agreement. These entries include
+intentional first-pass limits, not only defects. They are not implementation approval
+or a requirement to support every PHP spelling; confirm the owning language contract
+when reopening one. None blocks Chapter 04.
 
-Reopen these only when an agreed slice needs them; none blocks the function discussion.
+| Debt ID | Deferred item | Owner / reopening condition |
+| --- | --- | --- |
+| CF-01 | Unbraced/alternative statement syntax; numbered break/continue | Chapter 03 parser and transfer preparation; agree the additional syntax first |
+| CF-02 | Ternary grammar limits, including required parentheses around fallback assignments | Chapter 03 expression parser; preserve the documented precedence and nesting contract |
+| CF-03 | Broader switch/match selector types, runtime labels and general constant folding | Selection and constant preparation; agree each new type/label domain |
+| CF-04 | Broader ternary/Elvis/match result joins beyond matching scalars | Shared result preparation; coordinate wrapper/mixed work with Chapter 05 and object types with later chapters |
+| CF-05 | Empty match and completion rules for exceptions/non-returning calls | Expression typing and completion preparation; coordinate with Chapter 13 |
+| CF-06 | Constant reachability, definite assignment/branch merging and general effect analysis | Shared semantic preparation; conservative current checks remain in force; no CFG work is authorized |
+| CF-07 | Executable foreach, including reference-iteration lifetime rules | Chapter 06 / Chapter 07; keep the reserved loop specialization and TODO |
+| CF-08 | Native compilation-cost benchmarking | Backend/performance work when measurements justify it; no speedup claim for current lowering |
+| CF-09 | LLVM adaptation to shared control-flow facts | Parked backend; only reopen on explicit request |
+
+Inherited debt stays with its existing owner rather than becoming a second Chapter 03
+implementation queue: PE-03 duplicate declarations, conditional runtime-template
+copyability, bracket overload/lowering, and output partitioning. The portability
+blockers found at closeout are **resolved**, with the native checkpoint linked above.
+Future native validation remains an explicitly requested checkpoint, not an automatic
+requirement for every feature slice.
 
 ### Handoff to Chapter 04
 
