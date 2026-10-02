@@ -7,7 +7,7 @@ final class Operator_Preparation
 {
 	/** Prepare one binary syntax shape and attach only its selected semantic decision. */
 	public static function prepare_binary(binary_expression_node $syntax,
-	preparation_context $context): prepared_binary_expression
+		preparation_context $context): prepared_binary_expression
 	{
 		$source_operator = self::binary_kind($syntax, $context);
 		self::require_order_independent_operand($syntax->left);
@@ -25,8 +25,8 @@ final class Operator_Preparation
 
 	/** Select from hard-coded language candidates; later providers join at this boundary. */
 	public static function decide(operator_kind $source_operator,
-	array $operands /** vector<canonical_type_use> */, operator_context $operator_context,
-	preparation_context $context): operator_decision
+		array $operands /** vector<canonical_type_use> */, operator_context $operator_context,
+		preparation_context $context): operator_decision
 	{
 		if ($operator_context !== operator_context::expression) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
@@ -42,7 +42,7 @@ final class Operator_Preparation
 
 	/** The bounded string candidate requires explicit casts at non-string source boundaries. */
 	private static function decide_concatenation(array $operands /** vector<canonical_type_use> */,
-	preparation_context $context): operator_decision
+		preparation_context $context): operator_decision
 	{
 		if (q_count($operands) !== 2) {
 			throw new \LogicException('Concatenation requires two operands');
@@ -64,7 +64,7 @@ final class Operator_Preparation
 
 	/** Selected boolean operations require lazy RHS lowering, not overloaded C++ logical calls. */
 	private static function decide_logical(operator_kind $source_operator,
-	array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
+		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
 		if (q_count($operands) !== 2) {
 			throw new \LogicException('Logical operation requires two operands');
@@ -87,7 +87,7 @@ final class Operator_Preparation
 
 	/** Normalize token spelling before candidate discovery; backends never inspect it. */
 	private static function binary_kind(binary_expression_node $syntax,
-	preparation_context $context): operator_kind
+		preparation_context $context): operator_kind
 	{
 		$operator_text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		if ($operator_text === '<=>') {
@@ -153,9 +153,9 @@ final class Operator_Preparation
 			return;
 		}
 		if (($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
-		($node instanceof boolean_literal_node) || ($node instanceof string_literal_node) ||
-		($node instanceof variable_reference_node) || ($node instanceof constant_reference_node) ||
-		($node instanceof binary_expression_node)) {
+			($node instanceof boolean_literal_node) || ($node instanceof string_literal_node) ||
+			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node) ||
+			($node instanceof binary_expression_node)) {
 			return;
 		}
 		throw new \RuntimeException('S2S binary operation requires order-independent operands');

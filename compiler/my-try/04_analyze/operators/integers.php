@@ -7,8 +7,8 @@ final class Integer_Operators
 {
 	/** Select canonical-int binary operations through one exact operand/conversion policy. */
 	public static function decide_binary(operator_kind $source_operator,
-	array $operands /** vector<canonical_type_use> */,
-	preparation_context $context): operator_decision
+		array $operands /** vector<canonical_type_use> */,
+		preparation_context $context): operator_decision
 	{
 		if (q_count($operands) !== 2) {
 			throw new \LogicException('Integer binary operation requires two operands');
@@ -71,9 +71,9 @@ final class Integer_Operators
 			}
 		}
 		$decision->operands[] = Conversion_Preparation::decide(
-		$operands[0], $integer, conversion_context::operator_operand);
+			$operands[0], $integer, conversion_context::operator_operand);
 		$decision->operands[] = Conversion_Preparation::decide(
-		$operands[1], $integer, conversion_context::operator_operand);
+			$operands[1], $integer, conversion_context::operator_operand);
 		return $decision;
 	}
 }

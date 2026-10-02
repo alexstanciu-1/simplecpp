@@ -49,6 +49,10 @@ null or an incompatible object must be rejected; annotations alone do not check 
 For now, retain narrowing casts even inside matching `instanceof` or `kind` branches;
 removing their repeated checks is [debt for the new S2S generator](architecture/ast_layout.md#deferred-narrowing-after-a-type-or-kind-check).
 
+For statements and declarations split across multiple lines, indent continuation
+lines at least one extra tab beyond the first line. This includes parameter lists,
+call arguments and multiline conditions.
+
 Use tabs for block indentation, matching the active compiler sources. Keep required
 conversion annotations next to their declarations. Formatting must not rewrite
 strings, embedded sample programs or other executable content.
