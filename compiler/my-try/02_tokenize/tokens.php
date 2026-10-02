@@ -96,7 +96,7 @@ final class Tokenizer
 				return $offset + $operator_length;
 			}
 		}
-		$punctuation = ';(){}:,&[]<>+-*/%.!~|^';
+		$punctuation = ';(){}?:,&[]<>+-*/%.!~|^';
 		for ($index = 0; $index < string_byte_len($punctuation); $index++) {
 			if ($byte === string_byte_at($punctuation, $index)) {
 				return $offset + 1;

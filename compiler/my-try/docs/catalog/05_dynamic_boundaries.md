@@ -19,7 +19,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-ISSET-001](#var-isset-001) | pending-discussion | `$a = isset($b);` | unverified | unverified | deferred | — |
 | [VAR-EMPTY-001](#var-empty-001) | pending-discussion | `$a = empty($b);` | unverified | unverified | deferred | — |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | pending-discussion | `$a = $b ?? $c;` | unverified | unverified | deferred | — |
-| [EXPR-ELVIS-001](#expr-elvis-001) | pending-discussion | `$a = $b ?: $c;` | unverified | unverified | deferred | — |
+| [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | [Matching-scalar slice](03_control_flow.md#agreed-conditional-expression-slice--2026-10-02); wrappers/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
@@ -182,7 +182,13 @@ auto a = php::coalesce_eval([&]() -> decltype(auto) { return b; }, [&]() -> decl
 
 ## EXPR-ELVIS-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** The matching-scalar subset shares
+`conditional_expression_node` with full ternary; its true branch is absent.
+A typed lambda saves the left value once, tests shared scalar truthiness, and returns
+that snapshot or lazily evaluates fallback. Results are values, not references.
+See the [Chapter 03 slice](03_control_flow.md#agreed-conditional-expression-slice--2026-10-02)
+for proof and parser bounds. Wrapper/mixed joins remain deferred; this does not close
+the wider dynamic-boundary work. Imported lowering below is historical evidence.
 
 ### Imported version 1
 

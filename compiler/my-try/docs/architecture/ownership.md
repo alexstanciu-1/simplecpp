@@ -30,6 +30,10 @@ or switch. Switches own ordered case groups, groups own labels and an ordinary b
 body, and value labels own their constant expression. No group adds a parser scope
 or independent preparation-work owner; its lexical environment is transient.
 
+Conditional expressions own two or three expression children. Shorthand owns its
+condition once; the evaluated-value snapshot is an emission-local temporary, not
+another syntax edge or retained variable. Result facts are non-addressable values.
+
 Functions own signature scopes; structs own member scopes. File/body scopes observe
 owners retained by the parsed file. Occurrences observe syntax, collection and scope;
 name-bearing nodes observe their canonical occurrence. Scope indexes reference

@@ -220,8 +220,8 @@ Legacy S2S uses that helper for non-bool conditions; my-try selects the operatio
 in preparation rather than inferring condition semantics during emission.
 
 Switch matching, logical-operator admission and explicit casts are unchanged.
-Wrappers/mixed/object handles, ternary syntax and branch-result typing remain later
-slices. Ternary/Elvis must consume this same condition decision when implemented;
+Wrappers/mixed/object handles remain later slices. Ternary/Elvis consume this same
+condition decision in the conditional-expression slice below;
 single evaluation and lazy branch selection remain mandatory. No new runtime helper
 or compiler-native rebuild is needed for this frontend/C++ slice.
 
@@ -233,6 +233,37 @@ headers without replacing consumer syntax; failure/retry/recovery controls remai
 Evidence: `/tmp/my-try-truthiness-20261002-reviewed/` — 10 focused PHP suites and
 83 generated-C++ programs passed. Compiler-native portability was not rerun.
 
+## Agreed conditional-expression slice — 2026-10-02
+
+Full ternary and Elvis share `conditional_expression_node`: required condition and
+fallback, optional true branch (absent for shorthand), without a redundant kind flag.
+Preparation uses `Condition_Truthiness`, prepares both branches, and accepts matching
+scalar branch types under the existing conditional-expression matrix. Facts retain
+the result type, truthiness and branch conversions. The result is a value, never
+an assignable reference. Conditional writes cannot introduce branch-local bindings.
+
+Emission uses a typed immediately invoked lambda: test once, return only the selected
+branch by value. Shorthand first saves its left value in a uniquely named temporary,
+then tests and returns that snapshot or evaluates fallback. This reproduces the
+legacy `renderConditionalExpr`/`ternary_eval` single-evaluation and lazy-selection rules,
+while shared preparation owns the now-known same-scalar result type. It introduces
+no runtime helper or new semantic dependency family. Compilation benchmarking is
+deferred; no performance claim is made for lambda spelling.
+
+Conditional precedence is below logical OR and above assignment/keyword logic.
+Full ternary nesting requires explicit parentheses outside the middle operand;
+Elvis chains associate left. Parenthesize assignments in fallback operands in this
+bounded parser slice. Eager surrounding operators still reject effectful subtrees.
+Wrappers, mixed, non-scalar joins, general effect analysis and LLVM remain deferred.
+
+Dated evidence: `tests/control_flow.py` passed 12 PHP suites and 108 generated-C++
+programs on 2026-10-02 (`/tmp/my-try-ternary-20261002-final`). Focused checks cover
+lazy alternatives, shorthand single evaluation, scalar condition consistency,
+precedence, value-only results, distinct child edges, retained body identity,
+dependency invalidation and failure/retry/repair. Generated programs compile with
+`-Werror=return-type`. This is PHP-host and generated-program proof, not a native
+compiler rebuild.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -243,7 +274,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CTRL-IF-002](#ctrl-if-002) | agreed | `$a bool = false; if ($a) { $b = 1; } else { $b = 2; }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
 | [CTRL-IF-003](#ctrl-if-003) | agreed | `if (false) { } elseif (true) { } else { }` | proved | proved | deferred | [First slice](#agreed-first-slice--2026-10-02), control_flow.php |
 | [CTRL-WHILE-001](#ctrl-while-001) | agreed | `while ($a) { $b++; }` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
-| [EXPR-TERNARY-001](#expr-ternary-001) | pending-discussion | `$a = $b ? $c : $d;` | unverified | unverified | deferred | — |
+| [EXPR-TERNARY-001](#expr-ternary-001) | agreed | `$a = $b ? $c : $d;` | proved | proved | deferred | [Matching-scalar slice](#agreed-conditional-expression-slice--2026-10-02), control_flow.php |
 | [CTRL-SWITCH-001](#ctrl-switch-001) | agreed | `switch ($a) { case 1: break; default: break; }` | proved | proved | deferred | [Switch slice](#agreed-switch-slice--2026-10-02), control_flow.php |
 | [CTRL-MATCH-001](#ctrl-match-001) | pending-discussion | `$a = match ($b) { 1 => 10, default => 0 };` | unverified | unverified | deferred | — |
 | [CTRL-DOWHILE-001](#ctrl-dowhile-001) | agreed | `do { $b++; } while ($a);` | proved | proved | deferred | [Loop slice](#agreed-loop-slice--2026-10-02), control_flow.php |
@@ -396,7 +427,10 @@ while (a) { b++; }
 
 ## EXPR-TERNARY-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Matching scalar branches use the shared conditional
+node and a typed value-returning lambda; conditions use shared scalar truthiness.
+See the [bounded slice](#agreed-conditional-expression-slice--2026-10-02) for grammar
+limits and deferred joins. Imported lowering below remains historical evidence.
 
 ### Imported version 1
 

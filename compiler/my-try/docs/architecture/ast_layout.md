@@ -28,6 +28,12 @@ visit condition, body and next arm in order; preparation and emission each own t
 typed traversal. Branches and standalone nested braces share the same block node.
 No nested block introduces a separate preparation work item or parser scope owner.
 
+`conditional_expression_node` owns a condition, optional true branch and required
+fallback. An absent true branch means shorthand; no kind flag or duplicated condition
+edge is retained. Inspection and maintenance visit the present fields in that order.
+Preparation attaches truthiness, result type and branch conversions; emission owns
+the shorthand snapshot temporary. Both spellings produce nonaddressable values.
+
 `loop_node extends breakable_node` owns one block body and common preparation/facts.
 While/do-while own a condition and inspect it before/after the body respectively.
 For owns three ordered typed collections (initialization statements, conditions,

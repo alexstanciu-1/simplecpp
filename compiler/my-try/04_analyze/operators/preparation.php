@@ -300,6 +300,18 @@ final class Operator_Preparation
 			}
 			return;
 		}
+		if ($node instanceof conditional_expression_node) {
+			if (!$sequenced) {
+				$selection = object_cast($node, conditional_expression_node::class);
+				self::require_operand($selection->condition, false);
+				if ($selection->true_branch !== null) {
+					$branch /** expression_node */ = $selection->true_branch;
+					self::require_operand($branch, false);
+				}
+				self::require_operand($selection->fallback, false);
+			}
+			return;
+		}
 		if ($node instanceof unary_expression_node) {
 			$unary = object_cast($node, unary_expression_node::class);
 			self::require_operand($unary->operand, $sequenced);

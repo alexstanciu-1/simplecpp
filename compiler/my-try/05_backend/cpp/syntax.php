@@ -150,6 +150,32 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_integer($node->require_integer_literal_preparation(), $this->context);
 	}
 
+	/** Typed returns force value results; runtime evaluation occurs only in the selected arm. */
+	public function generate_conditional_expression(conditional_expression_node $node): string
+	{
+		$facts = $node->require_conditional_preparation();
+		$result_type = CPP_Declarations::type($facts->type, $this->context);
+		$condition = $node->condition->generate_cpp($this);
+		$prefix = '';
+		$selected = '';
+		if ($node->true_branch === null) {
+			$temporary = 'conditional_' . $this->context->next_temporary;
+			$this->context->next_temporary++;
+			$prefix = $result_type . ' ' . $temporary . ' = ' . $condition . '; ';
+			$condition = $temporary;
+			$selected = $temporary;
+		}
+		else {
+			$branch /** expression_node */ = $node->true_branch;
+			$selected = $branch->generate_cpp($this);
+		}
+		$test = CPP_Declarations::truthiness($condition, $facts->truthiness, $this->context);
+		$selected = CPP_Declarations::conversion($selected, $facts->true_conversion, $this->context);
+		$fallback = CPP_Declarations::conversion($node->fallback->generate_cpp($this), $facts->fallback_conversion, $this->context);
+		return '([&]() -> ' . $result_type . ' { ' . $prefix . 'if (' . $test . ') { return '
+			. $selected . '; } return ' . $fallback . '; }())';
+	}
+
 	public function generate_float_literal(float_literal_node $node): string
 	{
 		return CPP_Generator::generate_float($node->require_float_literal_preparation(), $this->context);

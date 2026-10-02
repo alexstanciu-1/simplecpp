@@ -86,6 +86,13 @@ worker-local, restored on success and failure; facts retain a weak selected targ
 For initialization uses statement preparation, with expressions for tests/updates.
 Existing expression-effect restrictions still apply.
 
+`Conditional_Expression_Preparation` uses the same truthiness owner, prepares both
+branches, and joins matching scalar types with explicit conditional-branch conversion
+facts. Shorthand reuses its condition's prepared type as the true result type.
+Results are non-addressable values; nested writes cannot introduce bindings. Eager
+parents inspect every conditional child for effects. Emission uses typed lazy returns
+and a single saved left value for shorthand; wrappers/mixed joins remain deferred.
+
 `local_environment` is transient, with parent-linked membership referencing attached
 storage facts. Blocks allocate children and restore the enclosing environment even
 on failure. Reads/plain writes use nearest-visible membership; typed declarations

@@ -11,6 +11,7 @@ enum conversion_context
 	case explicit_cast;
 	case operator_operand;
 	case interpolation;
+	case conditional_branch;
 }
 
 enum conversion_operation

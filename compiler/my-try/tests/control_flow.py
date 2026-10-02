@@ -22,7 +22,7 @@ def main():
                        journals=[output / 'commands.json']) as runner:
         suites = ['control_flow', 'fallthrough', 'preparation_dispatch', 'preparation_recovery',
                   'ast', 'ast_invariants', 'incremental_cpp', 'token_generations',
-                  'conversions', 'specialization_dispatch']
+                  'conversions', 'specialization_dispatch', 'operators', 'tokenizer']
 
         def suite(name):
             command = ['php', ROOT / 'tests' / (name + '.php')]

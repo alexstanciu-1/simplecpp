@@ -819,11 +819,31 @@ final class Parser_Run
 	{
 		$start = $this->position;
 		$left = $this->unary_expression();
+		$conditional_seen = false;
+		$previous_shorthand = false;
 		while (true)
 		{
 			$precedence = $this->binary_precedence();
 			if ($precedence < $minimum_precedence) {
 				break;
+			}
+			if ($this->text() === '?')
+			{
+				$this->position++;
+				$shorthand = $this->text() === ':';
+				if ($conditional_seen && (!$previous_shorthand || !$shorthand)) {
+					throw new \RuntimeException($this->error_message('Nested full ternary requires parentheses'));
+				}
+				$selection = new conditional_expression_node();
+				$selection->condition = $left;
+				if (!$shorthand) { $selection->true_branch = $this->expression(); }
+				$this->expect(':');
+				$selection->fallback = $this->binary_expression($precedence + 1);
+				$this->finish_node($selection, $start);
+				$left = $selection;
+				$conditional_seen = true;
+				$previous_shorthand = $shorthand;
+				continue;
 			}
 			$operator_text = $this->tokens->operator_text_at($this->position);
 			$operator_token_index = $this->position++;
@@ -884,38 +904,41 @@ final class Parser_Run
 			|| ($text === '<<=') || ($text === '>>=')) {
 			return 4;
 		}
-		if ($text === '||') {
+		if ($text === '?') {
 			return 5;
 		}
-		if ($text === '&&') {
+		if ($text === '||') {
 			return 6;
 		}
-		if ($text === '|') {
+		if ($text === '&&') {
 			return 7;
 		}
-		if ($text === '^') {
+		if ($text === '|') {
 			return 8;
 		}
-		if ($text === '&') {
+		if ($text === '^') {
 			return 9;
 		}
-		if (($text === '==') || ($text === '!=') || ($text === '===') || ($text === '!==') || ($text === '<=>')) {
+		if ($text === '&') {
 			return 10;
 		}
-		if (($text === '<') || ($text === '<=') || ($text === '>') || ($text === '>=')) {
+		if (($text === '==') || ($text === '!=') || ($text === '===') || ($text === '!==') || ($text === '<=>')) {
 			return 11;
 		}
-		if ($text === '.') {
+		if (($text === '<') || ($text === '<=') || ($text === '>') || ($text === '>=')) {
 			return 12;
 		}
-		if (($text === '<<') || ($text === '>>')) {
+		if ($text === '.') {
 			return 13;
 		}
-		if (($text === '+') || ($text === '-')) {
+		if (($text === '<<') || ($text === '>>')) {
 			return 14;
 		}
-		if (($text === '*') || ($text === '/') || ($text === '%')) {
+		if (($text === '+') || ($text === '-')) {
 			return 15;
+		}
+		if (($text === '*') || ($text === '/') || ($text === '%')) {
+			return 16;
 		}
 		return 0;
 	}

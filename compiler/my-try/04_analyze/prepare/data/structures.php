@@ -54,6 +54,14 @@ final class prepared_constant_reference extends prepared_expression {
 	public constant_definition $definition;
 }
 
+/** Both spellings share condition interpretation and an explicit value-result join. */
+final class prepared_conditional_expression extends prepared_expression
+{
+	public truthiness_decision $truthiness;
+	public conversion_decision $true_conversion;
+	public conversion_decision $fallback_conversion;
+}
+
 /** Explicit source cast retains the central conversion decision and its result type. */
 final class prepared_cast_expression extends prepared_expression
 {

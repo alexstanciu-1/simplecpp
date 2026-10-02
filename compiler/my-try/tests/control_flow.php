@@ -42,6 +42,31 @@ $path = $directory . '/main.phs';
 try
 {
 	$cases = [
+		'ternary_true' => ['return true ? 3 : 4;', 3],
+		'ternary_false' => ['return false ? 3 : 4;', 4],
+		'ternary_assignment' => ['$a = false ? 3 : 4; return $a;', 4],
+		'ternary_bool' => ['$a = true ? false : true; if ($a) { return 1; } return 2;', 2],
+		'ternary_float' => ['$a = false ? 1.5 : 2.5; return (int) $a;', 2],
+		'ternary_string' => ['$a = "0" ? "1" : "3"; return (int) $a;', 3],
+		'ternary_calls' => ['function probe(int &$n, int $x): int { $n++; return $x; } $n = 0; $x = probe($n, 0) ? probe($n, 4) : probe($n, 5); return $n * 10 + $x;', 25],
+		'ternary_lazy_error' => ['return true ? 7 : (1 / 0);', 7],
+		'ternary_nested' => ['return false ? 1 : (true ? 8 : 2);', 8],
+		'ternary_middle_nested' => ['return true ? false ? 1 : 8 : 2;', 8],
+		'ternary_parenthesized_condition' => ['return (false ? 1 : 2) ? 8 : 3;', 8],
+		'ternary_precedence' => ['return false || true ? 2 + 3 * 4 : 1;', 14],
+		'ternary_keyword' => ['$x = false; $x = true ? true : false and false; if ($x) { return 3; } return 1;', 3],
+		'ternary_eager_pure' => ['return (true ? 3 : 4) + 2;', 5],
+		'ternary_lazy_logical' => ['$n = 0; $x = false && (true ? (bool) ($n = 1) : (bool) ($n = 2)); return $n;', 0],
+		'ternary_existing_writes' => ['$n = 0; $x = false ? ($n = 2) : ($n = 3); return $x + $n;', 6],
+		'ternary_value_copy' => ['$a = 1; $b = 2; $x = true ? $a : $b; $x = 9; return $a + $b;', 3],
+		'elvis_truthy' => ['return 3 ?: 4;', 3],
+		'elvis_fallback' => ['return 0 ?: 4;', 4],
+		'elvis_once' => ['$n = 1; $x = $n++ ?: 7; return $x * 10 + $n;', 12],
+		'elvis_false_write' => ['$n = 0; $x = $n++ ?: ($n = 4); return $x * 10 + $n;', 44],
+		'elvis_lazy_error' => ['return 3 ?: (1 / 0);', 3],
+		'elvis_chain' => ['return 0 ?: 0 ?: 5;', 5],
+		'elvis_nested' => ['return (0 ?: 2) ?: (0 ?: 3);', 2],
+		'elvis_string' => ['$a = "0" ?: "4"; return (int) $a;', 4],
 		'truth_string_cast_distinct' => ['$n = 0; if ("false") { $n++; } if ((bool) "false") { $n += 10; } return $n;', 1],
 		'truth_once' => ['function probe(int &$n): string { $n++; return "yes"; } $n = 0; if (probe($n)) { $n += 2; } elseif (probe($n)) { $n += 20; } return $n;', 3],
 		'truth_while_once' => ['function probe(int &$n): int { $n--; return $n; } $n = 3; $count = 0; while (probe($n)) { $count++; } return $count;', 2],
@@ -126,8 +151,9 @@ try
 			. 'if (false) {} elseif ($a) { $score += 4; } '
 			. 'while ($a) { $score += 8; break; } '
 			. '$n = 0; do { $n++; if ($n === 2) { break; } } while ($a); $score += $n * 16; '
-			. 'for (; $a;) { $score += 64; break; } return $score;';
-		$cases['truth_' . $name] = [$source, $truthy ? 109 : 18];
+			. 'for (; $a;) { $score += 64; break; } '
+			. '$score += ($a ? 1 : 2); $b = $a ?: $a; if ($b) { $score += 128; } return $score;';
+		$cases['truth_' . $name] = [$source, $truthy ? 238 : 20];
 	}
 	$executions = [];
 	foreach ($cases as $name => [$source, $expected])
@@ -159,6 +185,15 @@ try
 
 	foreach ([
 		['switch (true) {}', 'selector requires canonical int'],
+		['return true ? 1 : 1.0;', 'conditional branches require matching scalar types'],
+		['return true ?: 1;', 'conditional branches require matching scalar types'],
+		['return true ? 1 : $missing;', 'established local declaration'],
+		['$x = true ? ($new = 1) : 2;', 'established local declaration'],
+		['struct Box {} $a Box; $x = true ? $a : $a;', 'conditional branches require supported scalar value types'],
+		['struct Box {} $a Box; return $a ? 1 : 2;', 'condition truthiness requires a supported scalar type'],
+		['function f(): void {} $x = true ? f() : f();', 'conditional branches require supported scalar value types'],
+		['$n = 0; return (true ? ($n = 1) : 2) + $n;', 'order-independent operands'],
+		['function f(int &$x): void {} $a = 1; $b = 2; f(true ? $a : $b);', 'reference arguments require stable storage'],
 		['switch ("1") {}', 'selector requires canonical int'],
 		['switch (1) { case true: break; }', 'case requires canonical int'],
 		['$x = 1; switch (1) { case $x: break; }', 'supported constant integer expression'],
@@ -215,6 +250,8 @@ try
 
 	// The bounded grammar requires braces and does not admit declarations in branch bodies.
 	foreach (['switch (1) { $x = 2; case 1: break; }', 'switch (1) { case 1: return 1;',
+		'return true ? 1 : false ? 2 : 3;', 'return true ? 1;',
+		'$a = 1; $b = 2; (true ? $a : $b) = 3;',
 		'switch (1) { default: function local(): int { return 1; } }',
 		'while (true) break;', 'do {} while (true)', 'for (;;) { break 2; }',
 		'for (;;) { continue 2; }', 'foreach ($items as $item) {}',
@@ -231,6 +268,54 @@ try
 		control_check($rejected, 'Unsupported or incomplete branch grammar was accepted');
 		control_check(Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Parse failure published output');
 	}
+
+	// Conditional shape owns two or three distinct children and always produces a value.
+	$conditional_source = 'function f(): int { $a = true ? 1 : 2; return $a ?: 3; } return f();';
+	$compiler = control_program($path, $conditional_source);
+	$compiler->prepare();
+	$conditional_body = Model::$global_scope->functions_named('f')[0]->syntax()->body;
+	$full = $conditional_body->statements[0]->expression->value;
+	$short = $conditional_body->statements[1]->expression;
+	control_check($full instanceof conditional_expression_node && $short instanceof conditional_expression_node, 'Conditional forms do not share their node');
+	control_check($full->true_branch !== null && $short->true_branch === null, 'Conditional shorthand shape is wrong');
+	control_check(iterator_to_array($full->children()) === [$full->condition, $full->true_branch, $full->fallback], 'Full conditional inspection order');
+	control_check(iterator_to_array($short->children()) === [$short->condition, $short->fallback], 'Shorthand duplicated its condition edge');
+	control_check(!$full->require_preparation()->addressable && !$short->require_preparation()->addressable, 'Conditional result became an lvalue');
+	control_check($full->require_conditional_preparation()->true_conversion->context === conversion_context::conditional_branch, 'Missing conditional join decision');
+	$compiler->cpp();
+	$conditional_original = Model::$cpp_files[0]->text;
+	file_put_contents($path, "\n\n" . $conditional_source);
+	$compiler->update_cpp([$path]);
+	control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $conditional_body, 'Moved conditional body lost identity');
+	control_check(Model::$cpp_files[0]->text === $conditional_original, 'Moved conditional changed output');
+
+	// Branch-signature changes invalidate unchanged conditional consumers; retry then repair.
+	$conditional_valid = 'function branch(): int { return 2; } function f(): int { return true ? 1 : branch(); } function stable(): int { return 8; } return f();';
+	$compiler = control_program($path, $conditional_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	$conditional_original = Model::$cpp_files[0]->text;
+	$conditional_stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+	$conditional_version = $conditional_stable->version;
+	foreach ([
+		str_replace('branch(): int { return 2;', 'branch(): float { return 2.0;', $conditional_valid) => 'conditional branches require matching scalar types',
+		str_replace('true ? 1 : branch()', 'true ? 1 : $missing', $conditional_valid) => 'established local declaration',
+		str_replace('true ? 1 : branch()', 'branch() ?: false', $conditional_valid) => 'conditional branches require matching scalar types',
+	] as $invalid => $diagnostic) {
+		file_put_contents($path, $invalid);
+		$compiler->sync([$path]);
+		control_reject($compiler, $diagnostic);
+		$compiler->sync([]);
+		control_reject($compiler, $diagnostic);
+		control_check($conditional_stable->version === $conditional_version, 'Conditional failure rebuilt independent body');
+		file_put_contents($path, $conditional_valid);
+		$compiler->update_cpp([$path]);
+		control_check(Model::$cpp_files[0]->text === $conditional_original, 'Conditional repair changed output');
+	}
+	$compiler = control_program($path, $conditional_valid);
+	$compiler->prepare();
+	$compiler->cpp();
+	control_check(Model::$cpp_files[0]->text === $conditional_original, 'Clean/incremental conditional mismatch');
 
 	// Case grouping, named inspection edges and distinct break/continue targets.
 	$switch_source = 'function f(): int { for ($i = 0; $i < 2; $i++) { switch ($i) { case 0: case +1: break; default: continue; } } return 4; } return f();';

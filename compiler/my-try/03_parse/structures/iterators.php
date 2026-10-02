@@ -244,6 +244,35 @@ final class switch_label_children_iterator extends children_iterator
 	}
 }
 
+/** Inspect the two or three owning expressions without duplicating shorthand's left. */
+final class conditional_expression_children_iterator extends children_iterator
+{
+	private conditional_expression_node $source;
+	private int $next_field = 0;
+
+	public function __construct(conditional_expression_node $source)
+	{
+		$this->source = $source;
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_field === 0) {
+			$this->next_field = 1;
+			return $this->source->condition;
+		}
+		if ($this->next_field === 1) {
+			$this->next_field = 2;
+			if ($this->source->true_branch !== null) { return $this->source->true_branch; }
+		}
+		if ($this->next_field === 2) {
+			$this->next_field = 3;
+			return $this->source->fallback;
+		}
+		return null;
+	}
+}
+
 /** Leaves need no source owner and have no cursor state. */
 final class empty_children_iterator implements child_iterator_i
 {
