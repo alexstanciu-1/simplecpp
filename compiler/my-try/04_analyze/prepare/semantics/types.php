@@ -11,7 +11,8 @@ final class Type_Preparation
 		$definition = object_cast(Model::$type_catalog->definition('vector'), template_type_definition::class);
 		$registry = Model::$type_catalog->registry();
 		try {
-			$application = $registry->intern_application($definition, [$element], new Capability_Preparation($context));
+			$arguments /** vector<canonical_type_use> */ = [$element];
+			$application = $registry->intern_application($definition, $arguments, new Capability_Preparation($context));
 			return $registry->use($application->type_id());
 		}
 		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }

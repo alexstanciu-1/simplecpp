@@ -272,9 +272,13 @@ explicit debt, not silently completed functionality.
 Latest focused evidence is the variadic checkpoint at implementation revision
 `10c51f9bbe5cfa6782dc0bc9fd679ec09b843655`: 12 PHP suites and 77 generated C++
 programs/probes in `/tmp/my-try-function-variadics-20261002-2/summary.json`.
-This closeout changes documentation only and adds no test run. Generated-program
-execution is not a native compiler rebuild. The last native compiler checkpoint
-predates Chapter 04; a new checkpoint remains pending an explicit request.
+The subsequent requested native checkpoint passes conversion, native compiler
+construction, 528 PHP/native source comparisons/executions, 90 supplementary/error
+probes, 170 rejection/recovery cases and the final incremental build. It includes
+the bounded Chapter 04 fixtures. The portability recheck also passes the 12 PHP
+suites and 77 function programs/probes. See the exact tested overlay and evidence
+in [native status](../portability/conversion_review.md). LLVM/STAN remain skipped;
+native compilation is not warning-clean.
 
 ### Remaining debt and scope boundaries
 
@@ -288,7 +292,7 @@ predates Chapter 04; a new checkpoint remains pending an explicit request.
 | FN-06 | Source vector reads/writes/iteration, including useful variadic-body iteration; container-specific copy behavior | Chapter 06; reuse ordinary vector storage, not pack-only operations |
 | FN-07 | Legacy annotation conflicts and syntax compatibility | Legacy-specific catalog work; not strict signature inference |
 | FN-08 | Duplicate struct fields (remaining PE-03), function templates and other broader declaration forms | Respective declaration/type chapters; function/parameter duplicates are already checked |
-| FN-09 | Native compiler validation of Chapter 04; parked LLVM adaptation | Explicit checkpoint request; LLVM only on request |
+| FN-09 | Parked LLVM adaptation; native compiler checkpoint completed 2026-10-02 | LLVM only on request |
 
 No-overloading, explicit types, and no implicit capture are agreed rules, not missing
 features. Deep recursion limits and tail-call optimization remain outside the bounded

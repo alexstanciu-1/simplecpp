@@ -13,24 +13,33 @@ abstract class prepared_expression {
 	public bool $addressable = false;
 }
 
+/** Literal identity is its canonical type and local value key, not source position. */
+abstract class prepared_literal extends prepared_expression {
+	public abstract function literal_key(): string;
+}
+
 /** Exact normalized decimal value; C++ spelling belongs to the backend. */
-final class prepared_integer_literal extends prepared_expression {
+final class prepared_integer_literal extends prepared_literal {
 	public string $decimal;
+	public function literal_key(): string { return $this->decimal; }
 }
 
 /** Exact decimal floating spelling; rounding belongs to the target representation. */
-final class prepared_float_literal extends prepared_expression {
+final class prepared_float_literal extends prepared_literal {
 	public string $decimal;
+	public function literal_key(): string { return $this->decimal; }
 }
 
 /** Normalized boolean value shared by backends. */
-final class prepared_boolean_literal extends prepared_expression {
+final class prepared_boolean_literal extends prepared_literal {
 	public bool $value;
+	public function literal_key(): string { return $this->value ? '1' : '0'; }
 }
 
 /** Decoded binary-safe bytes; source quoting and C++ escaping are not semantic facts. */
-final class prepared_string_literal extends prepared_expression {
+final class prepared_string_literal extends prepared_literal {
 	public string $value;
+	public function literal_key(): string { return $this->value; }
 }
 
 /** Parts own their facts; the enclosing interpolation produces a non-addressable string. */
@@ -124,7 +133,7 @@ final class prepared_parameter extends prepared_storage {
 
 /** Normalized scalar literal snapshot; never retains mutable default syntax. */
 final class prepared_parameter_default {
-	public prepared_expression $value;
+	public prepared_literal $value;
 	public conversion_decision $conversion;
 }
 

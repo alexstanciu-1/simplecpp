@@ -64,6 +64,11 @@ Parameters own optional default expressions. Signature preparation admits traili
 by-value scalar literal defaults, normalizes a single numeric sign without general
 expression folding, and retains the literal value plus argument conversion. These
 snapshots participate in signature equivalence, including absent/present changes.
+The snapshot is a `prepared_literal`, not an arbitrary prepared expression. Its
+typed family exposes a local `literal_key()`; equivalence compares canonical type
+and key, preserving exact floating spelling. Default preparation obtains concrete
+facts through the syntax's typed accessors. Native narrowing is confined to this
+polymorphic literal family rather than imposed on every expression fact.
 Calls retain only explicit argument facts; their count and the prepared signature
 identify the validated defaulted suffix. Defaults are checked even without callers.
 Typed variadic parameters retain an element type separately from their canonical

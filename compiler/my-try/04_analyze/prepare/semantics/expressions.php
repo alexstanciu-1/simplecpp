@@ -255,7 +255,8 @@ final class Expression_Preparation
 		foreach ($arguments as $index => $argument)
 		{
 			$value = Expression_Preparation::prepare($argument, $context);
-			$parameter_index = $index < $facts->fixed_count ? $index : $facts->fixed_count;
+			$parameter_index /** int */ = $facts->fixed_count;
+			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
 			$argument_type = $parameter->element_type ?? $parameter->type;
 			$prepared_argument = new prepared_call_argument();

@@ -3,14 +3,45 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-That checkpoint predates Chapter 04's implementation changes; it does not certify
-the current checkout. Chapter 04 through `10c51f9b` has focused PHP compiler and
-generated-program evidence (12 PHP suites, 77 function programs/probes), but its
-native compiler rebuild/parity checkpoint is pending an explicit request. See the
+The latest checkpoint covers Chapter 04 plus the source adaptations below. See the
 [Chapter 04 closeout](../catalog/04_functions.md#positive-pass-conclusion--2026-10-02).
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Latest native checkpoint — 2026-10-02 control-flow closeout
+## Latest native checkpoint — 2026-10-02 function closeout
+
+The worktree based on `f0aca78d42ef7e1baa5c1fd70823bd6bedb108f8`, with this
+checkpoint's five authored-PHP adaptations, passes conversion, native compiler
+construction, PHP/native C++ byte parity and generated-program execution. Source
+and harness hashes identify the tested overlay, not the base revision alone:
+all 97 compiler/proof source hashes (excluding the generated driver) and five
+harness hashes matched the checkout after testing.
+
+The **12-job** run passes 528 source comparisons/executions (398 S2S and 130
+control-flow fixtures), 88 supplementary probes plus two control-flow error probes,
+170 rejection/recovery cases, and 15 floating-spelling assertions. Separate
+emission/type proofs, the control-flow incremental proof, repeated compilation and
+recovery, and the final incremental native build pass. The focused Chapter 04
+recheck also passes all 12 PHP suites and 77 function programs/probes.
+
+Attempt 1 converted successfully but failed native compilation. One corrective
+cycle introduced a truthful `prepared_literal` family for default snapshots and
+local value-key access, obtained literal facts through typed syntax accessors,
+typed the vector type-argument local, and replaced two index-selection ternaries
+with explicit assignment/branching. The latter avoids a target ternary value-category
+limitation. No generated output, generator/runtime behavior or language semantics
+were changed. Attempt 2 passed in **394.79 seconds**, reusing build objects; this
+is an observed run, not a performance benchmark.
+
+Evidence: `/tmp/my-try-ch04-native-20261002/summary.json`, `source_hashes.json`,
+`harness_hashes.json`, `candidate.json`, command journals and `logs`/`logs-2`.
+Focused evidence: `/tmp/my-try-ch04-portable-functions-20261002/summary.json`.
+Reproduce with the standard native command and `--no-stan --types-only --jobs 12`.
+LLVM and legacy STAN remain skipped. Native compilation still emits missing-override,
+return-path, switch and unused-result warnings: this is not a warning-clean proof.
+Default/variadic-specific incremental edit scenarios remain PHP-suite evidence;
+the native incremental proof is the separately named control-flow/recovery scope.
+
+## Earlier native checkpoint — 2026-10-02 control-flow closeout
 
 The worktree based on `5c813f7de3cb1e17fdc252cb2785057ed1d8c6fc`, with the portable
 source adaptations and harness extensions below, passes conversion, native compiler

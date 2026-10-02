@@ -14,9 +14,10 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 [Chapter 04's bounded first pass is complete](04_functions.md#positive-pass-conclusion--2026-10-02).
 Reuse explicit signature preparation, parameter storage, argument/return conversions,
 value/reference boundaries and default ownership. Nullable syntax/values and wrapper
-boundaries are not implied by successful scalar or variadic tests. Chapter 04's native
-compiler checkpoint remains pending; its latest proof uses the PHP compiler plus
-generated C++ execution.
+boundaries are not implied by successful scalar or variadic tests. Chapter 04's
+[native compiler checkpoint](../portability/conversion_review.md) now passes,
+including PHP/native C++ parity and generated-program execution. LLVM and legacy
+STAN remain excluded; broader nullable/wrapper behavior is not certified.
 
 Proposed discussion groups (not implementation approval or new semantic decisions):
 

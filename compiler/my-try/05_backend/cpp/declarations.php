@@ -159,7 +159,8 @@ final class CPP_Declarations
 		$packed_separator = '';
 		foreach ($arguments as $index => $argument)
 		{
-			$parameter_index = $index < $facts->fixed_count ? $index : $facts->fixed_count;
+			$parameter_index /** int */ = $facts->fixed_count;
+			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
 			$argument_type = $parameter->element_type ?? $parameter->type;
 			// Generate nested calls before assigning the outer temporary name.

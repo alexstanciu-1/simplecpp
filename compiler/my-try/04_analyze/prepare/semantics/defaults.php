@@ -24,7 +24,7 @@ final class Parameter_Defaults
 	}
 
 	/** An optional single sign belongs to the literal domain, not general unary evaluation. */
-	private static function literal(expression_node $syntax, preparation_context $context): prepared_expression
+	private static function literal(expression_node $syntax, preparation_context $context): prepared_literal
 	{
 		$literal = $syntax;
 		$sign = '';
@@ -41,7 +41,17 @@ final class Parameter_Defaults
 			($literal instanceof boolean_literal_node) || ($literal instanceof string_literal_node))) {
 			throw new \RuntimeException('S2S parameter defaults require scalar literals');
 		}
-		$value = Expression_Preparation::prepare($literal, $context);
+		$literal->prepare($context);
+		$value /** prepared_literal */;
+		if ($literal instanceof integer_literal_node) {
+			$value = object_cast($literal, integer_literal_node::class)->require_integer_literal_preparation();
+		} elseif ($literal instanceof float_literal_node) {
+			$value = object_cast($literal, float_literal_node::class)->require_float_literal_preparation();
+		} elseif ($literal instanceof boolean_literal_node) {
+			$value = object_cast($literal, boolean_literal_node::class)->require_boolean_literal_preparation();
+		} else {
+			$value = object_cast($literal, string_literal_node::class)->require_string_literal_preparation();
+		}
 		if ($sign === '-') {
 			if ($value instanceof prepared_integer_literal) {
 				$integer = new prepared_integer_literal();
@@ -66,18 +76,6 @@ final class Parameter_Defaults
 		$left = $before->value;
 		$right = $after->value;
 		if (!$left->type->matches($right->type)) { return false; }
-		if (($left instanceof prepared_integer_literal) && ($right instanceof prepared_integer_literal)) {
-			return object_cast($left, prepared_integer_literal::class)->decimal === object_cast($right, prepared_integer_literal::class)->decimal;
-		}
-		if (($left instanceof prepared_float_literal) && ($right instanceof prepared_float_literal)) {
-			return object_cast($left, prepared_float_literal::class)->decimal === object_cast($right, prepared_float_literal::class)->decimal;
-		}
-		if (($left instanceof prepared_boolean_literal) && ($right instanceof prepared_boolean_literal)) {
-			return object_cast($left, prepared_boolean_literal::class)->value === object_cast($right, prepared_boolean_literal::class)->value;
-		}
-		if (($left instanceof prepared_string_literal) && ($right instanceof prepared_string_literal)) {
-			return object_cast($left, prepared_string_literal::class)->value === object_cast($right, prepared_string_literal::class)->value;
-		}
-		throw new \LogicException('Prepared parameter default is not a scalar literal');
+		return $left->literal_key() === $right->literal_key();
 	}
 }
