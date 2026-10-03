@@ -84,7 +84,7 @@ Focused checkpoint: nine PHP suites and 33 generated programs/probes pass in
 `/tmp/my-try-nullable-values-20261003-final/` (12 tasks, CLI fallback because sandbox
 FPM socket creation was unavailable).
 
-Debt/non-goals: cross-payload lifting/conversion, nullable Elvis and wrapper-valued fallback,
+Debt/non-goals: cross-payload lifting/conversion and wrapper-valued coalescing fallback,
 `isset`/`empty`, nullable parameter defaults, flow narrowing, mixed and object/container
 payload operations. Existing generic type formation does not imply those operations.
 The runtime generic identity helper currently fails to instantiate nullable/null
@@ -120,7 +120,29 @@ Checkpoint: ten focused PHP suites and 62 generated C++ programs/probes pass in
 fallback after sandbox FPM startup failed. This is not a native compiler rebuild.
 
 Still deferred: nullable fallback operands, cross-type joins, bare-null coalescing,
-mixed/other wrapper families, `??=`, `isset`/`empty` and nullable Elvis result joins.
+mixed/other wrapper families, `??=` and `isset`/`empty`.
+
+## Nullable conditional results — 2026-10-03
+
+Full ternary and Elvis share the existing conditional node and prepared branch
+conversions. Conditional preparation joins both alternatives symmetrically: `T/T`
+stays `T`; `nullable<T>/T`, `T/nullable<T>` and `nullable<T>/nullable<T>` yield
+`nullable<T>` for exact supported scalar payloads. Selected scalar values are wrapped;
+selected nullable values are copied with their presence intact. Empty selected results
+do not throw until consumed at a required-value boundary.
+
+Elvis captures the original condition type once, tests its truthiness, and converts
+only the selected branch. This also covers scalar-left/nullable-fallback expressions.
+All results are owned values, not references. `match` and `??` admission remain
+unchanged. Bare-null branches, cross-payload joins and other wrappers/mixed remain debt.
+
+Proofs in `tests/nullable.php` and `tests/s2s.php` cover both branch orders, exact result
+types, independent copies, empty results, wrapping, scalar-left Elvis, lazy exceptions,
+effect counts, downstream required extraction and incremental join failure/recovery.
+
+Checkpoint: ten focused PHP suites and 81 generated C++ programs/probes pass in
+`/tmp/my-try-nullable-joins-20261003-final/` using the shared 12-slot runner (CLI
+fallback after sandbox FPM startup failed). The compiler was not rebuilt natively.
 
 ## Progress
 
@@ -132,7 +154,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-ISSET-001](#var-isset-001) | pending-discussion | `$a = isset($b);` | unverified | unverified | deferred | — |
 | [VAR-EMPTY-001](#var-empty-001) | pending-discussion | `$a = empty($b);` | unverified | unverified | deferred | — |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Exact scalar `T` or `nullable<T>` left; required scalar `T` fallback |
-| [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | [Matching-scalar slice](03_control_flow.md#agreed-conditional-expression-slice--2026-10-02); wrappers/mixed deferred |
+| [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Matching scalar and nullable-scalar joins; other wrappers/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
@@ -298,12 +320,12 @@ auto a = php::coalesce_eval([&]() -> decltype(auto) { return b; }, [&]() -> decl
 
 ## EXPR-ELVIS-001
 
-**v0.2 decision / target C++:** The matching-scalar subset shares
+**v0.2 decision / target C++:** The matching scalar/nullable-scalar subset shares
 `conditional_expression_node` with full ternary; its true branch is absent.
-A typed lambda saves the left value once, tests shared scalar truthiness, and returns
-that snapshot or lazily evaluates fallback. Results are values, not references.
+A typed lambda saves the original left value once, tests shared truthiness, and
+converts only the selected branch to the joined result type. Results are owned values.
 See the [Chapter 03 slice](03_control_flow.md#agreed-conditional-expression-slice--2026-10-02)
-for proof and parser bounds. Wrapper/mixed joins remain deferred; this does not close
+for parser bounds. Other wrapper/mixed joins remain deferred; this does not close
 the wider dynamic-boundary work. Imported lowering below is historical evidence.
 
 ### Imported version 1

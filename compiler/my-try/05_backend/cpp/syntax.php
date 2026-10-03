@@ -229,7 +229,8 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		if ($node->true_branch === null) {
 			$temporary = 'conditional_' . $this->context->next_temporary;
 			$this->context->next_temporary++;
-			$prefix = $result_type . ' ' . $temporary . ' = ' . $condition . '; ';
+			$condition_type = CPP_Declarations::type($facts->truthiness->source_type, $this->context);
+			$prefix = $condition_type . ' ' . $temporary . ' = ' . $condition . '; ';
 			$condition = $temporary;
 			$selected = $temporary;
 		}

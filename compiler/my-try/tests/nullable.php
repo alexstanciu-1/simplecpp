@@ -15,7 +15,9 @@ $path = $directory . '/main.phs';
 try {
 	$valid = 'function source(): ?int { return 3; } function read(): int { return source(); } '
 		. 'function fallback(): int { return 7; } function stable(): int { return 9; } '
-		. '$a ?int = null; $b nullable<int> = $a; $c int = $a ?? $b ?? fallback(); return read();';
+		. 'function option(): ?int { return 2; } '
+		. '$a ?int = null; $b nullable<int> = $a; $c int = $a ?? $b ?? fallback(); '
+		. '$d ?int = true ? option() : 3; $e ?int = true ? 3 : option(); return read();';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler();
@@ -40,6 +42,11 @@ try {
 	nullable_check($coalesce_children === [$coalesce->left, $coalesce->fallback], 'Coalesce inspection order changed');
 	nullable_check($coalesce->require_preparation()->type->matches($statements[2]->type_syntax->require_preparation()),
 		'Coalesce result retained the nullable carrier');
+	foreach ([3, 4] as $position) {
+		$join = $statements[$position]->initializer->require_preparation();
+		nullable_check($join->type->matches($a->type_syntax->require_preparation()), 'Conditional join depends on branch order');
+		nullable_check(!$join->addressable, 'Conditional join exposed a borrowed result');
+	}
 	$invalid = str_replace('source(): ?int { return 3;', 'source(): ?float { return 3.5;', $valid);
 	file_put_contents($path, $invalid);
 	foreach ([[$path], []] as $changed) {
@@ -65,6 +72,18 @@ try {
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
 	nullable_check(Model::$cpp_files[0]->text === $original, 'Coalesce repair changed output');
+	file_put_contents($path, str_replace('option(): ?int { return 2;', 'option(): ?float { return 2.5;', $valid));
+	foreach ([[$path], []] as $changed) {
+		$compiler->sync($changed);
+		$failed = false;
+		try { $compiler->prepare(); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'conditional branches require matching'); }
+		nullable_check($failed && Model::$cpp_files->is_empty(), 'Conditional join failed to invalidate');
+		nullable_check($stable->version === $version, 'Conditional change rebuilt independent body');
+	}
+	file_put_contents($path, $valid);
+	$compiler->update_cpp([$path]);
+	nullable_check(Model::$cpp_files[0]->text === $original, 'Conditional repair changed output');
 	Compiler_Lifecycle::reset();
 	$clean = new Compiler();
 	$clean->init([$directory]);

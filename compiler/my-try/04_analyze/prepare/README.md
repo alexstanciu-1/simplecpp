@@ -109,14 +109,16 @@ For initialization uses statement preparation, with expressions for tests/update
 Existing expression-effect restrictions still apply.
 
 `Conditional_Expression_Preparation` uses the same truthiness owner, prepares both
-branches, and uses `Selection_Result_Preparation` to join matching scalar types with
-explicit conditional-branch conversion facts. Shorthand reuses its condition's
-prepared type as the true result type.
+branches, and owns a symmetric conditional join: matching scalar payloads yield a
+nullable result when either branch is nullable. Explicit branch conversions wrap
+scalar alternatives or copy nullable values; no extraction happens inside the join.
+Shorthand reuses its condition's prepared value as its true branch.
 Results are non-addressable values; nested writes cannot introduce bindings. Eager
 parents inspect every conditional child for effects. Emission uses typed lazy returns
-and a single saved left value for shorthand; wrappers/mixed joins remain deferred.
+and a single saved left value of the original condition type for shorthand. Bare-null
+branches, cross-payload joins and other wrappers/mixed remain deferred.
 
-`Match_Preparation` uses the same result-admission worker, but strict integer label
+`Match_Preparation` retains scalar-only `Selection_Result_Preparation` and strict integer label
 selection rather than truthiness. `Integer_Constants::label` serves both switch and
 match. Every arm is prepared, including unselected results, preserving dependency
 tracking and diagnostics. Arm facts own normalized decimal labels and result
