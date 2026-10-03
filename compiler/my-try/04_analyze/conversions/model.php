@@ -19,6 +19,9 @@ enum conversion_operation
 	case identity;
 	case integer_value_cast;
 	case explicit_runtime_cast;
+	case nullable_empty;
+	case nullable_wrap;
+	case nullable_extract;
 }
 
 /** Retained semantic result of comparing one produced value with its consumer. */

@@ -158,6 +158,15 @@ escaping exceptions request a full rebuild. The full policy is in
 
 ## Current language boundary
 
+Nullable scalar boundaries use `conversions/nullable.php`: typed null construction,
+exact-payload wrapping/copying and checked required-value extraction. Explicit casts
+remain distinct (notably the empty nullable-string exception). `operators/nullable.php`
+selects strict null presence comparisons. Null literals carry a non-storable sentinel;
+`?T` resolves to the registered nullable semantic definition and shared application
+interning. No source spelling test grants a nullable role. C++ consumes these decisions;
+it does not infer payload conversions. See [Chapter 05](../../docs/catalog/05_dynamic_boundaries.md)
+for deferred truthiness, fallback, cross-payload operations and defaults.
+
 The S2S path currently supports one source file, scalar integer/bool/float literals,
 single-quoted string literals and locals, ordinary functions and value structs.
 Forward declarations/calls are prepared before bodies. Function signatures use

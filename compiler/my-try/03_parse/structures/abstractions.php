@@ -372,6 +372,7 @@ interface cpp_generation_worker_i
 	public function generate_for(for_node $node): string;
 	public function generate_control_transfer(control_transfer_node $node): string;
 	public function generate_integer_literal(integer_literal_node $node): string;
+	public function generate_null_literal(null_literal_node $node): string;
 	public function generate_float_literal(float_literal_node $node): string;
 	public function generate_boolean_literal(boolean_literal_node $node): string;
 	public function generate_string_literal(string_literal_node $node): string;

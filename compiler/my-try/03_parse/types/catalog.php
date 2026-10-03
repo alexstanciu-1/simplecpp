@@ -330,15 +330,20 @@ final class registered_type_catalog
 	private Source_Type_Exposures $source_exposures;
 	private Runtime_Type_Providers $runtime_providers;
 	private Source_Type_Declarations $source_declaration_index;
+	private canonical_type_use $null_literal_type;
 
 	public function __construct(Type_Registry $registry, Source_Type_Exposures $source,
-		Runtime_Type_Providers $providers)
+		Runtime_Type_Providers $providers, canonical_type_use $null_literal_type)
 	{
 		$this->type_registry = $registry;
 		$this->source_exposures = $source;
 		$this->runtime_providers = $providers;
 		$this->source_declaration_index = new Source_Type_Declarations();
+		$this->null_literal_type = $null_literal_type;
 	}
+
+	/** Internal sentinel has no source type exposure or storage binding. */
+	public function null_type(): canonical_type_use { return $this->null_literal_type; }
 
 	public function registry(): Type_Registry
 	{

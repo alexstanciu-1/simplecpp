@@ -85,6 +85,13 @@ final class Expression_Preparation
 		return $value;
 	}
 
+	public static function prepare_null(): prepared_null_literal
+	{
+		$facts = new prepared_null_literal();
+		$facts->type = Model::$type_catalog->null_type();
+		return $facts;
+	}
+
 	/** Retain source spelling so the target, rather than host PHP, performs rounding. */
 	public static function prepare_float(float_literal_node $node, preparation_context $context): prepared_float_literal
 	{

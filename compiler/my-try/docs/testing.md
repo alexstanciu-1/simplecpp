@@ -38,6 +38,16 @@ and executes its `function_*` programs through the shared 12-slot pool. The full
 S2S and requested native runners also consume these fixtures. It does not rebuild
 the compiler natively.
 
+For nullable construction, copying, required extraction and null comparisons:
+
+```bash
+python3 compiler/my-try/tests/nullable.py --results /tmp/FRESH_NULLABLE_RESULTS
+```
+
+This runs related PHP suites and compiles/executes `nullable_*` S2S exports, including
+checked-failure probes, through the same 12-slot pool. It does not rebuild the compiler
+natively. The S2S manifest also makes these programs available to requested native runs.
+
 Run all PHP suites with retained evidence:
 
 ```bash

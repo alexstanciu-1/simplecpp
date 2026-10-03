@@ -39,8 +39,13 @@ final class Operator_Preparation
 		$source_operator = self::binary_kind($text);
 		$sequenced = ($source_operator === operator_kind::logical_and)
 			|| ($source_operator === operator_kind::logical_or) || ($source_operator === operator_kind::logical_xor);
-		self::require_operand($syntax->left, $sequenced);
-		self::require_operand($syntax->right, $sequenced);
+		// One null literal has no effects; the other operand may be evaluated once without order ambiguity.
+		$null_comparison = (($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical))
+			&& (($syntax->left instanceof null_literal_node) || ($syntax->right instanceof null_literal_node));
+		if (!$null_comparison) {
+			self::require_operand($syntax->left, $sequenced);
+			self::require_operand($syntax->right, $sequenced);
+		}
 
 		$left = Expression_Preparation::prepare($syntax->left, $context);
 		$right = Expression_Preparation::prepare($syntax->right, $context);
@@ -80,6 +85,11 @@ final class Operator_Preparation
 	{
 		if ($operator_context !== operator_context::expression) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
+		}
+		if (q_count($operands) === 2) {
+			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {
+				return Nullable_Operators::decide_null_comparison($source_operator, $operands, $context);
+			}
 		}
 		if ($source_operator === operator_kind::index) {
 			return self::decide_index($operands);
@@ -335,7 +345,7 @@ final class Operator_Preparation
 			self::require_operand($cast->operand, $sequenced);
 			return;
 		}
-		if (($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
+		if (($node instanceof null_literal_node) || ($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
 			($node instanceof boolean_literal_node) || ($node instanceof string_literal_node) ||
 			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node)) {
 			return;

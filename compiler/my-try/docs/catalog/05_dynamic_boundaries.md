@@ -55,8 +55,41 @@ Evidence: `/tmp/my-try-nullable-model-20261003/` and
 The portable proof is retained for future explicitly requested native checkpoints;
 the compiler itself has not been rebuilt natively for this refactor.
 
-No new `?T` syntax, null literals, conversions, null comparisons, conditions or
-fallback semantics are enabled. The expression rows below remain pending discussion.
+That checkpoint was model-only; the following slice adds value operations.
+
+## Nullable value boundaries — 2026-10-03
+
+The agreed first pass supports scalar payloads (`bool`, integer families, `float`,
+`string`). `?T` and `nullable<T>` resolve to the same canonical application.
+An internal, non-storable null sentinel supplies literal identity; it has no source
+type exposure or storage binding. `$x = null` still rejects without a destination.
+
+- Typed empty construction/reset and exact-payload wrapping use destination conversions.
+- Same-payload copying preserves presence and independent value state.
+- Required assignment/argument/return extraction checks presence and throws
+  `invalid_nullable_unwrap_empty`; failed assignment preserves its target.
+- Explicit same-payload casts retain the runtime contract, including empty nullable
+  string to `""`. Required string extraction still throws on absence.
+- `=== null` / `!== null` work in either order, evaluate the nullable operand once,
+  and test presence rather than payload truthiness. Reference parameters retain
+  exact-storage rules; extraction never manufactures a reference.
+
+Owners: `conversions/nullable.php`, `operators/nullable.php`, shared type/expression
+preparation and prepared decisions consumed by C++ emission. Tests: `tests/nullable.py`
+and the `nullable_*` exports in `tests/s2s.php`; incremental recovery and syntax/fact
+cleanup are covered by `tests/nullable.php`. This is PHP-hosted compiler plus generated
+C++ execution evidence, not a native compiler rebuild.
+
+Focused checkpoint: nine PHP suites and 33 generated programs/probes pass in
+`/tmp/my-try-nullable-values-20261003-final/` (12 tasks, CLI fallback because sandbox
+FPM socket creation was unavailable).
+
+Debt/non-goals: cross-payload lifting/conversion, nullable truthiness and fallback,
+`isset`/`empty`, nullable parameter defaults, flow narrowing, mixed and object/container
+payload operations. Existing generic type formation does not imply those operations.
+The runtime generic identity helper currently fails to instantiate nullable/null
+comparison (its fallback attempts `null_t == null_t`). This slice emits the equivalent
+prepared presence test; runtime-helper repair belongs to a separate owner/task.
 
 ## Progress
 
@@ -64,7 +97,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [LIT-NULL-001](#lit-null-001) | pending-discussion | `$a = null;` | unverified | unverified | deferred | — |
+| [LIT-NULL-001](#lit-null-001) | agreed | `$a = null;` | proved | proved | deferred | Untyped null rejects; typed nullable destination works |
 | [VAR-ISSET-001](#var-isset-001) | pending-discussion | `$a = isset($b);` | unverified | unverified | deferred | — |
 | [VAR-EMPTY-001](#var-empty-001) | pending-discussion | `$a = empty($b);` | unverified | unverified | deferred | — |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | pending-discussion | `$a = $b ?? $c;` | unverified | unverified | deferred | — |
@@ -74,10 +107,10 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-STRING-001](#cast-string-001) | agreed | `$a = (string)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-OBJECT-001](#cast-object-001) | pending-discussion | `$a = (object)$b;` | unverified | unverified | deferred | — |
-| [FUNC-NULLABLE-001](#func-nullable-001) | pending-discussion | `function f(?int $a): ?int { return $a; }` | unverified | unverified | deferred | — |
-| [TYPE-VAR-002](#type-var-002) | pending-discussion | `$x ?string = null;` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [NULL-CHECK-001](#null-check-001) | pending-discussion | `$x === null` | unverified | unverified | deferred | — |
-| [NULL-CHECK-002](#null-check-002) | pending-discussion | `$x !== null` | unverified | unverified | deferred | — |
+| [FUNC-NULLABLE-001](#func-nullable-001) | agreed | `function f(?int $a): ?int { return $a; }` | proved | proved | deferred | Same scalar payload; nullable defaults deferred |
+| [TYPE-VAR-002](#type-var-002) | agreed | `$x ?string = null;` | proved | proved | deferred | Scalar nullable value boundary slice |
+| [NULL-CHECK-001](#null-check-001) | agreed | `$x === null` | proved | proved | deferred | Both orders; single evaluation and presence |
+| [NULL-CHECK-002](#null-check-002) | agreed | `$x !== null` | proved | proved | deferred | Both orders; false/zero/empty-string remain present |
 | [TYPE-VAR-006B](#type-var-006b) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [NOTE-005](#note-005) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-010](#note-010) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
@@ -89,7 +122,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-063](#note-063) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## LIT-NULL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Non-storable null sentinel; an explicit scalar nullable
+destination constructs an empty value. Untyped direct null assignment rejects.
 
 ### Imported version 1
 
@@ -493,7 +527,8 @@ ERROR
 
 ## FUNC-NULLABLE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit nullable scalar parameters/returns use the
+shared exact-payload conversion path. Required extraction is checked; defaults deferred.
 
 ### Imported version 1
 
@@ -532,9 +567,11 @@ nullable<int_t> f(nullable<int_t> a) { return a; }
 
 **Strict-mode PHP input example:** `$x ?string = null;`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This spelling is proved for scalar payloads and is canonically equivalent to
+`nullable<string>`. Imported examples below remain reference material.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit nullable scalar storage with destination-typed
+empty construction, exact-payload wrapping and value copying.
 
 ### Imported version 1
 
@@ -571,7 +608,8 @@ nullable<string_t> x = null;
 
 ## NULL-CHECK-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Prepared nullable presence test, negated for `=== null`;
+either operand order evaluates the nullable expression once.
 
 ### Imported version 1
 
@@ -608,7 +646,8 @@ php::is_null(x)
 
 ## NULL-CHECK-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Prepared nullable presence test for `!== null`;
+present false/zero/empty-string payloads are not null.
 
 ### Imported version 1
 

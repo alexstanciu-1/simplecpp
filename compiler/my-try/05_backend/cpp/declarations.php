@@ -20,6 +20,16 @@ final class CPP_Declarations
 		if ($decision->operation === conversion_operation::identity) {
 			return $expression;
 		}
+		if ($decision->operation === conversion_operation::nullable_empty) {
+			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+		}
+		if ($decision->operation === conversion_operation::nullable_wrap) {
+			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+		}
+		if ($decision->operation === conversion_operation::nullable_extract) {
+			return self::type($decision->target_type, $context) . '((' . $expression
+				. ').require_value("nullable required-value extraction"))';
+		}
 		if ($decision->operation === conversion_operation::integer_value_cast) {
 			return 'static_cast<' . self::type($decision->target_type, $context)
 				. '>((' . $expression . ').native_value())';

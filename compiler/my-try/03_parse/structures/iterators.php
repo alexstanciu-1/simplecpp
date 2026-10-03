@@ -69,6 +69,18 @@ abstract class children_iterator implements child_iterator_i
 	}
 }
 
+final class nullable_type_children_iterator extends children_iterator
+{
+	private bool $consumed = false;
+	public function __construct(private nullable_type_node $source) {}
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) { return null; }
+		$this->consumed = true;
+		return $this->source->payload;
+	}
+}
+
 /** Inspect a conditional through its named owning edges without copying children. */
 final class if_children_iterator extends children_iterator
 {

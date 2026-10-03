@@ -314,7 +314,7 @@ final class Parser_Run
 		if (string_byte_starts_with($this->text(), '$'))
 		{
 			$next = $this->text_at_offset(1);
-			if (Source_Text::identifier($next) && ($next !== 'and') && ($next !== 'or') && ($next !== 'xor')) {
+			if ($this->nullable_declaration_ahead() || (Source_Text::identifier($next) && ($next !== 'and') && ($next !== 'or') && ($next !== 'xor'))) {
 				return $this->variable_declaration();
 			}
 			return $this->expression_statement();
@@ -405,8 +405,8 @@ final class Parser_Run
 		while ($this->text() !== ';')
 		{
 			$next = $this->text_at_offset(1);
-			if (string_byte_starts_with($this->text(), '$') && Source_Text::identifier($next)
-				&& ($next !== 'and') && ($next !== 'or') && ($next !== 'xor')) {
+			if (string_byte_starts_with($this->text(), '$') && ($this->nullable_declaration_ahead() || (Source_Text::identifier($next)
+				&& ($next !== 'and') && ($next !== 'or') && ($next !== 'xor')))) {
 				$initialization->append($this->variable_declaration(false));
 			}
 			else {
@@ -543,7 +543,7 @@ final class Parser_Run
 		if ($this->text() === 'public') {
 			$this->position++;
 		}
-		if (!$this->identifier()) {
+		if (!$this->identifier() && ($this->text() !== '?')) {
 			throw new \RuntimeException($this->error_message('Expected field type'));
 		}
 		$type = $this->type_syntax($scope);
@@ -674,7 +674,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Function requires an explicit return type, including void'));
 		}
 		$this->expect(':');
-		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return'))) {
+		if ((!$this->identifier() && ($this->text() !== '?')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected return type name'));
 		}
 
@@ -715,7 +715,7 @@ final class Parser_Run
 	private function parameter(scope $scope): parameter_node
 	{
 		$start = $this->position;
-		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return'))) {
+		if ((!$this->identifier() && ($this->text() !== '?')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected parameter type'));
 		}
 		$type = $this->type_syntax($scope);
@@ -1014,6 +1014,12 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->text() === 'null') {
+			$start = $this->position++;
+			$literal = new null_literal_node();
+			$this->finish_node($literal, $start);
+			return $literal;
+		}
 		if ($this->text() === 'match') {
 			return $this->match_expression();
 		}
@@ -1419,6 +1425,13 @@ final class Parser_Run
 	/** Parse one named type, template application or registered type-use modifier. */
 	private function type_syntax(scope $lookup_scope): type_node
 	{
+		if ($this->text() === '?') {
+			$start = $this->position++;
+			$optional = new nullable_type_node();
+			$optional->payload = $this->type_syntax($lookup_scope);
+			$this->finish_node($optional, $start);
+			return $optional;
+		}
 		if (!$this->identifier()) {
 			throw new \RuntimeException($this->error_message('Expected type name'));
 		}
@@ -1460,6 +1473,28 @@ final class Parser_Run
 		$this->expect('>');
 		$this->finish_node($application, $start);
 		return $application;
+	}
+
+	/** Distinguish a nullable local declaration from a ternary expression statement. */
+	private function nullable_declaration_ahead(): bool
+	{
+		if ($this->text_at_offset(1) !== '?') { return false; }
+		$offset = 2;
+		while ($this->text_at_offset($offset) === '?') { $offset++; }
+		if (!Source_Text::identifier($this->text_at_offset($offset))) { return false; }
+		$offset++;
+		if ($this->text_at_offset($offset) === '<') {
+			$depth = 1;
+			$offset++;
+			while ($depth > 0) {
+				$text = $this->text_at_offset($offset++);
+				if ($text === '<') { $depth++; }
+				elseif ($text === '>') { $depth -= 1; }
+				elseif (($text !== '?') && ($text !== ',') && !Source_Text::identifier($text)) { return false; }
+			}
+		}
+		$following = $this->text_at_offset($offset);
+		return ($following === '=') || ($following === ';');
 	}
 
 	/** A variable occurrence is classified as a read or write by its parser context. */

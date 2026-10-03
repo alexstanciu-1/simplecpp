@@ -444,6 +444,21 @@ final class CPP_Generator
 	private static function render_binary_decision(operator_decision $decision,
 		string $left, string $right, cpp_generation_context $context): string
 	{
+		if (($decision->operation === operator_operation::nullable_is_null)
+			|| ($decision->operation === operator_operation::nullable_not_null)) {
+			// Preparation admits exactly one nullable and one non-storable null sentinel.
+			// Presence is independent of payload identity and evaluates the value once.
+			$value = $left;
+			if (Type_Preparation::canonical($decision->operands[0]->source_type)->family() === type_family::null_sentinel) {
+				$value = $right;
+			}
+			$presence = '(' . $value . ').has_value()';
+			if ($decision->operation === operator_operation::nullable_is_null) {
+				$context->headers['scpp/generated/operators.hpp'] = true;
+				return '(!' . $presence . ')';
+			}
+			return $presence;
+		}
 		$spelling = '';
 		if ($decision->operation === operator_operation::boolean_and) {
 			$spelling = '&&';

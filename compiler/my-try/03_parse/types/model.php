@@ -14,6 +14,7 @@ enum type_family: int
 	case floating = 3;
 	case nominal = 4;
 	case no_value = 5;
+	case null_sentinel = 6;
 }
 
 enum type_definition_kind: int
@@ -24,6 +25,7 @@ enum type_definition_kind: int
 	case nominal = 4;
 	case template = 5;
 	case no_value = 6;
+	case null_sentinel = 7;
 }
 
 enum type_definition_origin: int
@@ -495,6 +497,16 @@ final class nullable_type_definition extends abstract_template_type_definition i
 	}
 }
 
+/** Internal literal identity, never a source storage type or optional payload. */
+final class null_type_definition extends semantic_type_definition implements concrete_type_definition_i
+{
+	public function kind(): type_definition_kind { return type_definition_kind::null_sentinel; }
+	public function create_canonical_type(int $type_id): canonical_type_i
+	{
+		return new null_type($type_id, $this);
+	}
+}
+
 interface canonical_type_i
 {
 	public function type_id(): int;
@@ -519,6 +531,16 @@ abstract class canonical_type implements canonical_type_i
 	}
 
 	abstract public function definition(): type_definition_i;
+}
+
+final class null_type extends canonical_type
+{
+	public function __construct(int $identity, private null_type_definition $null_definition)
+	{
+		parent::__construct($identity);
+	}
+	public function family(): type_family { return type_family::null_sentinel; }
+	public function definition(): type_definition_i { return $this->null_definition; }
 }
 
 final class boolean_type extends canonical_type
@@ -789,6 +811,15 @@ final class Type_Registry implements type_capability_query
 		array $capabilities /** vector<generic_contract> */): boolean_type_definition
 	{
 		$definition = new boolean_type_definition($this->allocate_definition_id(), $name, $origin, $capabilities);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
+	public function define_null(): null_type_definition
+	{
+		$capabilities /** vector<generic_contract> */ = [];
+		$definition = new null_type_definition($this->allocate_definition_id(), 'null',
+			type_definition_origin::language, $capabilities);
 		$this->register_definition($definition);
 		return $definition;
 	}

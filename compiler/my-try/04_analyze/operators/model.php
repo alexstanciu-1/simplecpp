@@ -44,6 +44,8 @@ enum operator_kind {
 }
 
 enum operator_operation {
+	case nullable_is_null;
+	case nullable_not_null;
 	case integer_bitwise_and;
 	case integer_bitwise_or;
 	case integer_bitwise_xor;

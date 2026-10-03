@@ -18,6 +18,10 @@ abstract class prepared_literal extends prepared_expression {
 	public abstract function literal_key(): string;
 }
 
+final class prepared_null_literal extends prepared_literal {
+	public function literal_key(): string { return 'null'; }
+}
+
 /** Exact normalized decimal value; C++ spelling belongs to the backend. */
 final class prepared_integer_literal extends prepared_literal {
 	public string $decimal;

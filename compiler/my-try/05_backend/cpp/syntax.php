@@ -192,6 +192,13 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_integer($node->require_integer_literal_preparation(), $this->context);
 	}
 
+	public function generate_null_literal(null_literal_node $node): string
+	{
+		$node->require_null_preparation();
+		$this->context->headers['scpp/null_t.hpp'] = true;
+		return 'scpp::null';
+	}
+
 	/** Typed returns force value results; runtime evaluation occurs only in the selected arm. */
 	public function generate_conditional_expression(conditional_expression_node $node): string
 	{

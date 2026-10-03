@@ -29,6 +29,19 @@ final class Type_Preparation
 		throw new \RuntimeException('S2S fixed array types are not supported yet');
 	}
 
+	public static function prepare_nullable_type(nullable_type_node $node, preparation_context $context): void
+	{
+		$payload = self::type($node->payload, $context);
+		$definition = object_cast(Model::$type_catalog->definition('nullable'), abstract_template_type_definition::class);
+		$arguments /** vector<canonical_type_use> */ = [$payload];
+		try {
+			$registry = Model::$type_catalog->registry();
+			$application = $registry->intern_application($definition, $arguments, new Capability_Preparation($context));
+			$node->set_preparation($registry->use($application->type_id()));
+		}
+		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }
+	}
+
 	/** Resolve a source modifier through registry storage policy without inventing a type identity. */
 	public static function prepare_type_use_modifier(type_use_modifier_node $node, preparation_context $context): void
 	{
@@ -123,6 +136,9 @@ final class Type_Preparation
 
 	public static function require_value_type(canonical_type_use $type): void
 	{
+		if (self::canonical($type)->family() === type_family::null_sentinel) {
+			throw new \RuntimeException('S2S null requires an explicit nullable destination');
+		}
 		if (self::canonical($type)->family() === type_family::no_value) {
 			throw new \RuntimeException('S2S void is not a storage type');
 		}

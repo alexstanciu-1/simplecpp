@@ -299,6 +299,42 @@ final class comment_node extends trivia_node
 	}
 }
 
+final class nullable_type_node extends type_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+	private ?canonical_type_use $prepared_facts = null;
+	public type_node $payload;
+	public function kind(): node_kind { return node_kind::nullable_type; }
+	public function require_preparation(): canonical_type_use { return $this->prepared_facts; }
+	public function prepare(preparation_context $context): void
+	{
+		Type_Preparation::prepare_nullable_type($this, $context);
+	}
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->payload);
+	}
+	public function children(): child_iterator_i { return new nullable_type_children_iterator($this); }
+}
+
+final class null_literal_node extends expression_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+	private ?prepared_null_literal $prepared_facts = null;
+	public function kind(): node_kind { return node_kind::null_literal; }
+	public function require_preparation(): prepared_expression { return $this->require_null_preparation(); }
+	public function require_null_preparation(): prepared_null_literal { return $this->prepared_facts; }
+	public function prepare(preparation_context $context): void
+	{
+		$this->set_preparation(Expression_Preparation::prepare_null());
+	}
+	public function maintain(node_maintenance_worker_i $worker): void { $worker->enter($this); }
+	public function generate_cpp(cpp_generation_worker_i $worker): string { return $worker->generate_null_literal($this); }
+}
+
 final class integer_literal_node extends expression_node
 {
 	public function integer_constant(): string

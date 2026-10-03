@@ -51,6 +51,34 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'nullable_empty' => ['$x ?int = null; return $x === null;', 1],
+	'nullable_default_empty' => ['$x nullable<int>; return null === $x;', 1],
+	'nullable_present' => ['$x ?int = 7; $y int = $x; return $y;', 7],
+	'nullable_reset' => ['$x ?int = 7; $x = null; return $x === null;', 1],
+	'nullable_reassign' => ['$x ?int = null; $x = 8; $y int = $x; return $y;', 8],
+	'nullable_copy' => ['$x ?int = 4; $y nullable<int> = $x; $x = null; $z int = $y; return $z;', 4],
+	'nullable_copy_empty' => ['$x ?int = null; $y = $x; $x = 3; return $y === null;', 1],
+	'nullable_false_present' => ['$x ?bool = false; if ($x === null) { return 9; } $y bool = $x; return $y;', 0],
+	'nullable_zero_present' => ['$x ?int = 0; return null !== $x;', 1],
+	'nullable_float' => ['$x ?float = 3.5; $y float = $x; return $y;', 3],
+	'nullable_string_empty_present' => ['$x ?string = ""; return $x !== null;', 1],
+	'nullable_string_copy' => ['$x ?string = "7"; $y ?string = $x; $x = "8"; $z string = $y; return (int) $z;', 7],
+	'nullable_alias' => ['$v byte = 258; $x ?byte = $v; $y nullable<uint8> = $x; $z uint8 = $y; return $z;', 2],
+	'nullable_calls' => ['function carry(?int $x): nullable<int> { return $x; } function read(?int $x): int { return $x; } return read(carry(6));', 6],
+	'nullable_return_null' => ['function none(): ?int { return null; } return none() === null;', 1],
+	'nullable_return_value' => ['function some(): ?int { return 5; } $x int = some(); return $x;', 5],
+	'nullable_argument_extract' => ['function read(int $x): int { return $x; } $x ?int = 8; return read($x);', 8],
+	'nullable_null_argument' => ['function empty_value(?int $x): bool { return $x === null; } return empty_value(null);', 1],
+	'nullable_compare_once' => ['function probe(int &$n): ?int { $n++; return null; } $n = 0; $x = null === probe($n); return $n;', 1],
+	'nullable_extract_once' => ['function probe(int &$n): ?int { $n++; return 7; } $n = 0; $x int = probe($n); return $x + $n;', 8],
+	'nullable_store_error' => ['function fail(int &$target): void { $x ?int = null; $target = $x; } return 0;', 0],
+	'nullable_reference' => ['function clear(?int &$x): void { $x = null; } $x ?int = 3; clear($x); return $x === null;', 1],
+	'nullable_for' => ['for ($x ?int = null; $x === null; $x = 2) {} return 1;', 1],
+	'nullable_ternary_statement' => ['$x = true; $x ? PHP_INT_MAX : 2; return 0;', 0],
+	'nullable_empty_extract' => ['function fail(): int { $x ?int = null; return $x; } return 0;', 0],
+	'nullable_empty_string_extract' => ['function fail(): string { $x ?string = null; return $x; } return 0;', 0],
+	'nullable_empty_argument' => ['function read(int $x): int { return $x; } function fail(): int { $x ?int = null; return read($x); } return 0;', 0],
+	'nullable_explicit_string' => ['$x ?string = null; $y = (string) $x; return 0;', 0],
 	'value_entry' => ['$a value<int> = 7; return $a;', 7],
 	'value_interchange' => ['function carry(value<int> $x): int { return $x; } function plain(int $x): value<int> { return $x; } $a value<int> = 2; $b int = $a; $a = $b + 1; $c = carry($a); $d = plain($b); return $c + $d;', 5],
 	'value_reference' => ['function bump(value<int> &$x): void { ++$x; } function plain(int &$x): void { ++$x; } $a int = 1; $b value<int> = 2; bump($a); plain($b); return $a + $b;', 5],
@@ -508,6 +536,12 @@ foreach ($cases as $name => [$source, $exit])
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
+	if ($name === 'nullable_explicit_string') {
+		$probe_path = $directory . '/' . $name . '_value.cpp';
+		file_put_contents($probe_path, str_replace("\treturn static_cast<int>",
+			"\tif (!local_y.native_value().empty()) { return 91; }\n\treturn static_cast<int>", Model::$cpp_files[0]->text));
+		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
+	}
 	if (isset($variadic_probes[$name])) {
 		$probe = "\tif (!(" . $variadic_probes[$name] . ")) { return 201; }\n";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
@@ -919,11 +953,14 @@ foreach ($cases as $name => [$source, $exit])
 
 	// A failed assignment RHS or compound computation preserves the caller-owned target.
 	if (($name === 'compound_div_zero') || ($name === 'compound_mod_zero') || ($name === 'logic_assignment_throw')
-		|| ($name === 'power_store_error'))
+		|| ($name === 'power_store_error') || ($name === 'nullable_store_error'))
 	{
 		$error_code = $name === 'compound_mod_zero' ? 'modulo_by_zero' : 'division_by_zero';
 		if ($name === 'power_store_error') {
 			$error_code = 'power_overflow';
+		}
+		if ($name === 'nullable_store_error') {
+			$error_code = 'invalid_nullable_unwrap_empty';
 		}
 		$probe = "\nint main() { scpp::int_t<> target(7); try { (void)function_fail(target); }"
 			. ' catch (const scpp::runtime_error& error) { return error.code() == "' . $error_code
@@ -935,6 +972,9 @@ foreach ($cases as $name => [$source, $exit])
 
 	// Observe runtime exceptions in-process without introducing source try/catch support.
 	$runtime_error_codes = ['div_zero_guard' => 'division_by_zero', 'mod_zero_guard' => 'modulo_by_zero',
+		'nullable_empty_extract' => 'invalid_nullable_unwrap_empty',
+		'nullable_empty_string_extract' => 'invalid_nullable_unwrap_empty',
+		'nullable_empty_argument' => 'invalid_nullable_unwrap_empty',
 		'logical_and_guard' => 'division_by_zero', 'logical_or_guard' => 'modulo_by_zero',
 		'logic_xor_throw' => 'division_by_zero', 'power_negative_error' => 'power_negative_exponent',
 		'power_signed_exponent_error' => 'power_negative_exponent', 'power_overflow_error' => 'power_overflow'];
@@ -976,6 +1016,19 @@ foreach ($scope_isolation_rejections as $source => $diagnostic)
 }
 
 $rejections = ['function f(int &$x): void {} f(1);',
+	'$x = null;',
+	'$x int = null;',
+	'$x ?int = 1; $y ?float = $x;',
+	'$x ?int = 1; $y float = $x;',
+	'$x ?int = true;',
+	'$x ?int = 1; if ($x) { return 1; }',
+	'$x ?int = 1; return $x == null;',
+	'$x ?int = 1; return $x < null;',
+	'$x ?int = 1; return $x + 1;',
+	'function f(?void $x): void {}',
+	'function f(int &$x): void {} $x ?int = 1; f($x);',
+	'function f(?int &$x): void {} f(null);',
+	'$x ?vector<int> = null;',
 	'function f(int ...$items, int $last): void {}',
 	'function f(int ...$items, int ...$more): void {}',
 	'function f(int &...$items): void {}',

@@ -22,7 +22,8 @@ final class Type_Definition_Registration
 		self::install_runtime_templates($registry, $source, $providers);
 		$source->expose_modifier('value', type_use_modifier_kind::by_value);
 		$providers->register_modifier(type_use_modifier_kind::by_value, self::runtime_provider(), 'value');
-		return new registered_type_catalog($registry, $source, $providers);
+		$null_type = $registry->canonical($registry->define_null());
+		return new registered_type_catalog($registry, $source, $providers, $registry->use($null_type->type_id()));
 	}
 
 	/** Install each current scalar/string identity and its source exposure. */

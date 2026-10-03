@@ -131,10 +131,10 @@ final class Body_Preparation
 					$value->type, $binding->type, conversion_context::assignment);
 			}
 		}
+		Type_Preparation::require_value_type($binding->type);
 		if ($value !== null) {
 			Capability_Preparation::require_copy($binding->type, $context);
 		}
-		Type_Preparation::require_value_type($binding->type);
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$locals->add($entry->name, $binding);
 		}

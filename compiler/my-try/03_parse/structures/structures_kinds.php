@@ -29,6 +29,7 @@ enum node_kind
 	case continue_statement;
 	case function_body;
 	case named_type;
+	case nullable_type;
 	case template_application_type;
 	case type_use_modifier;
 	case punctuation;
@@ -37,6 +38,7 @@ enum node_kind
 	case array_literal;
 	case index_expression;
 	case integer_literal;
+	case null_literal;
 	case boolean_literal;
 	case float_literal;
 	case string_literal;
