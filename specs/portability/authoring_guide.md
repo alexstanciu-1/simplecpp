@@ -311,6 +311,19 @@ For empty-container assignment through an object field, declare an explicitly ty
 empty local first and assign it. Bare `[]` at that target loses container type in
 the current type-blind lowering; see [snapshot acceptance](compiler_snapshot_join_slice.md).
 
+The same explicit boundary matters for nonempty literals passed to remote methods:
+use `$arguments /** vector<canonical_type_use> */ = [$element];`, then pass
+`$arguments`. The callee's parameter type does not supply local array-element
+inference. Chapter 04's native vector-type construction proves this adaptation;
+it does not extend the prefix annotation for empty expressions to nonempty ones.
+
+On the Chapter 04 candidate, a ternary selecting a `foreach` index versus an integer
+property failed in generated `decltype(auto)` branch returns despite matching value
+types. Assign an explicitly typed result in the common scope using `if` branches.
+This is a target value-category limitation, not a prohibition of scalar ternaries
+or a language-rule change. Retire this adaptation only after the exact form has a
+native lowering proof; see the [checkpoint](../../compiler/my-try/docs/portability/conversion_review.md#latest-native-checkpoint--2026-10-02-function-closeout).
+
 Reject absent nullable objects in a separate guard before dereferencing them. The
 selected target failed the compound null-check/dereference proof in
 [snapshot acceptance](compiler_snapshot_join_slice.md); PHP short-circuit behavior
@@ -363,8 +376,9 @@ iteration rules matter: PHP map aliasing is not native hash value semantics.
 
 For interface-held compiler records, use [checked shared-object access](object_casts.md).
 Literal instanceof tests do not change the static type of a handle; payload accessors
-perform explicit object_cast calls. PHP and generated-C++ inspection are proved;
-native compilation remains pending.
+perform explicit object_cast calls. Native narrowing requires a polymorphic base;
+an abstract PHP declaration alone is insufficient. The linked guide distinguishes
+focused native evidence from broader unproved RTTI/failure behavior.
 
 For native-only non-retaining links, see [weak object fields](weak_fields.md).
 PHP keeps ordinary references; use explicit `weakref_get` acquisition in portable

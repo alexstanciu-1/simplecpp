@@ -41,6 +41,35 @@ return-path, switch and unused-result warnings: this is not a warning-clean proo
 Default/variadic-specific incremental edit scenarios remain PHP-suite evidence;
 the native incremental proof is the separately named control-flow/recovery scope.
 
+## Size experiment — 2026-10-03, not a new full checkpoint
+
+At `e33a2754`, source hashes still matched the Chapter 04 native snapshot. The
+validated compiler used **Clang 18.1.3, `-O0 -g`**, x86-64 ELF PIE, mold and no LTO.
+A copy of its build directory rebuilt all 104 Ninja steps at `-O2 -g`, changing only
+application `cxxflags`; the shared runtime was held constant. Original binaries were
+preserved, with separate `strip --strip-all` copies for measurement.
+
+| Compiler executable | With debug/symbols (bytes) | MiB | Stripped (bytes) | MiB |
+| --- | ---: | ---: | ---: | ---: |
+| `-O0 -g` | 46,045,824 | 43.91 | 6,353,952 | 6.06 |
+| `-O2 -g` | 58,096,480 | 55.41 | 3,781,752 | 3.61 |
+
+The optimized stripped executable is 40.48% smaller, while the debug-bearing file
+is larger. Both ran the S2S smoke and control-flow incremental proof with identical
+1,080-byte C++ output. No full `-O2` regression sweep or runtime performance benchmark
+was performed; neither optimization defaults nor warning debt changed.
+
+For context, the installed stripped Clang 18 driver is 140,592 bytes, but depends on
+`libclang-cpp.so.18.1` (64,796,088 bytes) and `libLLVM.so.18.1` (123,215,144 bytes):
+179.44 MiB combined. Our `-O2` stripped executable plus the same runtime stripped
+to 1,926,712 bytes totals 5.44 MiB. This is an installation-specific disk-footprint
+comparison, not equivalent functionality: it excludes general system libraries,
+headers, and our external C++ compilation/linking toolchain.
+
+Evidence: `/tmp/my-try-size-20261003/README.md`, stripped copies and smoke outputs;
+`/tmp/my-try-ch04-native-20261002/o2-build.log` and `phpp/.prism/build-o2/build.ninja`.
+These temporary artifacts may expire; the measured values and scope are retained here.
+
 ## Earlier native checkpoint — 2026-10-02 control-flow closeout
 
 The worktree based on `5c813f7de3cb1e17fdc252cb2785057ed1d8c6fc`, with the portable

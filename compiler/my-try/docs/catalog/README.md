@@ -24,8 +24,10 @@ This is a prioritization and authoring decision, not blanket rejection of legacy
 inputs or a claim that every imported example has passed a strict-mode audit.
 Validate library names and other inherited source assumptions per selected example.
 
-Use one example at a time: discuss its behavior and C++ solution, split it if it
-combines several concepts, agree the general rule, implement it, and record proof.
+Group related examples when they share a semantic owner or representation: discuss
+the common contract and C++ solution, agree a bounded vertical slice, implement it,
+and record proof. Split unrelated concepts or work that needs a deferred prerequisite;
+neither one-card-at-a-time work nor whole-chapter implementation is mandatory.
 The original sequence began with [integer literals and local variables](01_literals_locals.md#lit-int-001).
 When resuming, inspect the relevant chapters' progress tables and agree the next
 unfinished slice, respecting its dependencies and deferred decisions. Existing
@@ -81,9 +83,11 @@ Chapter 02 is [concluded as a positive pass](02_expressions.md#positive-pass-con
 working bounded functionality with sound model/ownership/process paths. Deferred
 features and hardening remain explicit and reopen when an agreed feature needs them.
 The [2026-10-02 preparation/emission audit](../planning/preparation_emission_audit.md)
-is complete. Duplicate-declaration admission (PE-03) is explicitly deferred debt.
-Non-void fallthrough now rejects during preparation for supported straight-line bodies;
-branch/loop completion rules remain a chapter 03 gate.
+is complete. Chapters 03 and 04 have completed their bounded positive passes and
+native checkpoints; next is the [Chapter 05 discussion](05_dynamic_boundaries.md#handoff-from-chapter-04--2026-10-02).
+Duplicate function/parameter admission is checked; duplicate struct fields remain
+PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
+body/branch/loop/switch completion model, without a CFG.
 Bounded copy admission now uses prepared source-record capabilities; conditional
 runtime-template capabilities remain debt. The entry-return carrier mismatch is
 resolved by registry normalization of redundant `value<T>` requests. The existing

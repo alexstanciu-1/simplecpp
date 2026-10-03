@@ -37,6 +37,9 @@ when historical context is needed; their former plans are not current instructio
   bounded functionality work through sound structures, ownership and reusable paths.
   Keep focused behavioral/recovery proofs; record peripheral hardening and deferred
   extensions as debt rather than expanding the slice to exhaust them.
+- Group related catalog cards around a shared contract/owner before implementing;
+  keep deferred prerequisites and each group's proof boundary explicit. Chapter
+  closeout should update the catalog handoff and documentation index together.
 - Discuss new retained structures and semantic/ownership changes before implementing
   them. Once a batch is agreed, carry analogous cases through without requesting
   confirmation for each one. Stop for a newly discovered cross-owner redesign.

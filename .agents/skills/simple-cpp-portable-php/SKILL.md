@@ -54,6 +54,9 @@ instead of combining differently typed containers in a ternary. Keep checked cas
 at actual base-to-derived boundaries; `instanceof` does not change the native
 handle's static type, and a type annotation is not a checked downcast. Do not narrow
 heterogeneous storage merely because one consumer uses only a subset of its roles.
+For narrowing, a PHP abstract class is not necessarily a polymorphic native base.
+Preserve concrete facts through typed accessors or use a truthful narrower family;
+see [checked object access](../../../specs/portability/object_casts.md#contract-and-placement).
 
 Read the [authoring guide](../../../specs/portability/authoring_guide.md) before
 editing. Follow its feature links as needed. The [function policy](../../../tools/php_portability/function_map.php)

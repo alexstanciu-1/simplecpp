@@ -33,6 +33,15 @@ object layout. Generated interfaces now have a virtual destructor, including emp
 interfaces such as node_specialization. This adds normal polymorphic-object overhead to
 implementations; no compact AST layout claim is made.
 
+PHP `abstract class` alone does not guarantee a polymorphic native base. Preserve
+the known concrete type through named accessors instead of widening facts and
+casting them back. If consumers genuinely share a narrower family, give that family
+a meaningful operation contract rather than adding dummy virtual behavior to an
+unrelated root. Chapter 04's `prepared_literal` owns `literal_key()` and default
+snapshots; workers still own normalization and equivalence algorithms. Its
+[native checkpoint](../../compiler/my-try/docs/portability/conversion_review.md#latest-native-checkpoint--2026-10-02-function-closeout)
+proves this bounded use without making all `prepared_expression` facts polymorphic.
+
 ## Common-base ternary branches
 
 The [conditional-expression contract](../conditional_expression_matrix.md) determines

@@ -79,6 +79,22 @@ Native evidence includes compiler source hashes, target toolchain hashes and
 When testing uncommitted adaptations, these hashes identify the tested overlay;
 the candidate base revision alone is not the full tested source identity.
 
+## Optimization and size measurements
+
+Record the actual compiler command/build manifest, not an assumed optimization
+default. The Chapter 04 native checkpoint used Clang 18 with `-O0 -g`; its later
+`-O2 -g` size experiment is only a build plus smoke/parity proof, not a full optimized
+regression checkpoint. Generated fixture flags are separate from compiler-build flags.
+
+For comparisons, preserve the validated binary and use an isolated build directory
+with the same sources, toolchain, runtime and flags except the intended variable.
+Report exact bytes and MiB, debug/stripping status, LTO and shared-library boundaries.
+Strip copies, not the proof binary. Shared-library compiler drivers can be tiny:
+compare required compiler libraries as well, while distinguishing general system
+dependencies and any external toolchain needed to finish source-to-native compilation.
+Measured evidence belongs in the [portability review](portability/conversion_review.md),
+not in a new default optimization policy or a performance claim.
+
 ## Isolation and evidence
 
 Each native fixture writes `request.txt` in its own working directory. The single
