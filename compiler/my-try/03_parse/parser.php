@@ -1024,6 +1024,17 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if (($this->text() === 'isset') || ($this->text() === 'empty')) {
+			$start = $this->position;
+			$probe = new value_probe_node();
+			$probe->probe_kind = $this->text() === 'isset' ? value_probe_kind::isset : value_probe_kind::empty;
+			$this->position++;
+			$this->expect('(');
+			$probe->operand = $this->expression();
+			$this->expect(')');
+			$this->finish_node($probe, $start);
+			return $probe;
+		}
 		if ($this->text() === 'null') {
 			$start = $this->position++;
 			$literal = new null_literal_node();

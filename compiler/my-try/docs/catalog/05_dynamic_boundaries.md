@@ -85,7 +85,7 @@ Focused checkpoint: nine PHP suites and 33 generated programs/probes pass in
 FPM socket creation was unavailable).
 
 Debt/non-goals: cross-payload lifting/conversion and wrapper-valued coalescing fallback,
-`isset`/`empty`, nullable parameter defaults, flow narrowing, mixed and object/container
+keyed/property-path probes, nullable parameter defaults, flow narrowing, mixed and object/container
 payload operations. Existing generic type formation does not imply those operations.
 The runtime generic identity helper currently fails to instantiate nullable/null
 comparison (its fallback attempts `null_t == null_t`). This slice emits the equivalent
@@ -120,7 +120,7 @@ Checkpoint: ten focused PHP suites and 62 generated C++ programs/probes pass in
 fallback after sandbox FPM startup failed. This is not a native compiler rebuild.
 
 Still deferred: nullable fallback operands, cross-type joins, bare-null coalescing,
-mixed/other wrapper families, `??=` and `isset`/`empty`.
+mixed/other wrapper families and `??=`.
 
 ## Nullable conditional results — 2026-10-03
 
@@ -144,6 +144,32 @@ Checkpoint: ten focused PHP suites and 81 generated C++ programs/probes pass in
 `/tmp/my-try-nullable-joins-20261003-final/` using the shared 12-slot runner (CLI
 fallback after sandbox FPM startup failed). The compiler was not rebuilt natively.
 
+## Single-value probes — 2026-10-03
+
+`value_probe_node` owns one operand and an `isset`/`empty` kind; these are language
+expressions, not ordinary function-name lookups. `Value_Probe_Preparation` admits
+supported scalar values, nullable scalars and literal null, retaining the selected
+operation and boolean result. C++ calls the corresponding PHP runtime probe helper.
+
+`isset` is false for null/empty nullable and true for present scalar values, including
+false, zero and empty strings. `empty` is true for null/empty nullable, false, numeric
+zero and `""`; **`empty("0")` is false**, the documented Simple C++ deviation from PHP.
+Present nullable payloads use those same emptiness rules, never negated truthiness.
+The operand is evaluated once; probes introduce no mutation, but explicit operand
+side effects and exceptions retain normal expression behavior. No blanket exception
+catching or implicit extraction is added.
+
+Zero/multiple arguments and undeclared names reject. Direct keyed/property-path
+operands, containers, mixed and other wrappers remain deferred; ordinary value
+expressions do not acquire missing-path suppression. Supporting those families later
+must follow the normative non-mutating probe contract, not ordinary required reads.
+Tests cover the scalar matrix, sentinel states, one evaluation, non-mutation, runtime
+error propagation, arity, syntax traversal/cleanup and incremental admission recovery.
+
+Checkpoint: eleven focused PHP suites and 99 generated C++ programs/probes pass in
+`/tmp/my-try-probes-20261003-final/` (shared 12-slot runner, CLI fallback after sandbox
+FPM startup failed). No native compiler rebuild was performed.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -151,8 +177,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [LIT-NULL-001](#lit-null-001) | agreed | `$a = null;` | proved | proved | deferred | Untyped null rejects; typed nullable destination works |
-| [VAR-ISSET-001](#var-isset-001) | pending-discussion | `$a = isset($b);` | unverified | unverified | deferred | — |
-| [VAR-EMPTY-001](#var-empty-001) | pending-discussion | `$a = empty($b);` | unverified | unverified | deferred | — |
+| [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/null value; path probes deferred |
+| [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/null value; `"0"` is not empty |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Exact scalar `T` or `nullable<T>` left; required scalar `T` fallback |
 | [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Matching scalar and nullable-scalar joins; other wrappers/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
@@ -211,7 +237,8 @@ $a = null;
 
 ## VAR-ISSET-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** One-value probe node; prepared scalar/nullable/null
+admission and runtime `php::isset` semantics. Missing-name/path behavior is not added.
 
 ### Imported version 1
 
@@ -246,7 +273,8 @@ auto a = php::isset(b);
 
 ## VAR-EMPTY-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** One-value probe node; prepared scalar/nullable/null
+admission and runtime `php::empty` semantics. `empty("0")` is false, unlike PHP.
 
 ### Imported version 1
 

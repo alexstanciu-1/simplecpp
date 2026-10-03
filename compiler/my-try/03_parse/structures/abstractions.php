@@ -384,6 +384,7 @@ interface cpp_generation_worker_i
 	public function generate_cast_expression(cast_expression_node $node): string;
 	public function generate_conditional_expression(conditional_expression_node $node): string;
 	public function generate_coalesce_expression(coalesce_expression_node $node): string;
+	public function generate_value_probe(value_probe_node $node): string;
 	public function generate_match_expression(match_expression_node $node): string;
 	public function generate_compound_assignment_expression(compound_assignment_expression_node $node): string;
 	public function generate_mutation_expression(mutation_expression_node $node): string;

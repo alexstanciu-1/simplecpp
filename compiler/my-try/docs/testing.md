@@ -38,7 +38,7 @@ and executes its `function_*` programs through the shared 12-slot pool. The full
 S2S and requested native runners also consume these fixtures. It does not rebuild
 the compiler natively.
 
-For nullable construction, copying, extraction, null comparisons, conditions and `??`:
+For nullable values, conditional/coalescing results and single-value `isset`/`empty` probes:
 
 ```bash
 python3 compiler/my-try/tests/nullable.py --results /tmp/FRESH_NULLABLE_RESULTS

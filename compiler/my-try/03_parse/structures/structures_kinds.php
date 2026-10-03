@@ -50,6 +50,7 @@ enum node_kind
 	case cast_expression;
 	case conditional_expression;
 	case coalesce_expression;
+	case value_probe;
 	case match_expression;
 	case match_arm;
 	case compound_assignment_expression;

@@ -160,6 +160,13 @@ escaping exceptions request a full rebuild. The full policy is in
 
 ## Current language boundary
 
+`Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
+boolean operation facts on `value_probe_node`. Scalars, nullable scalars and literal
+null are supported; direct path probes and broader carriers are deferred. Emission
+uses separate runtime probe helpers, not condition truthiness: `empty("0")` is false.
+Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
+is introduced, and probes cannot establish new locals through nested assignment.
+
 Nullable scalar boundaries use `conversions/nullable.php`: typed null construction,
 exact-payload wrapping/copying and checked required-value extraction. Explicit casts
 remain distinct (notably the empty nullable-string exception). `operators/nullable.php`

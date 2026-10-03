@@ -67,6 +67,12 @@ final class prepared_constant_reference extends prepared_expression {
 	public constant_definition $definition;
 }
 
+/** Admitted one-value query; distinct helper semantics are retained for emission. */
+final class prepared_value_probe extends prepared_expression
+{
+	public value_probe_kind $operation;
+}
+
 /** Required selected-value domain; a nullable left is extracted only after presence. */
 final class prepared_coalesce_expression extends prepared_expression
 {

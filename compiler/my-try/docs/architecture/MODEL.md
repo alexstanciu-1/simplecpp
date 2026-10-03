@@ -56,6 +56,9 @@ their prepared enclosing target; transient completion composes four exit possibi
 without a CFG. Conditional expressions own condition, optional true branch and
 fallback; absence of the true branch represents shorthand without duplicating the
 condition edge. Prepared facts retain truthiness and the value-result join.
+`value_probe_node` owns one operand and an `isset`/`empty` enum kind. Prepared probe
+facts retain the admitted operation and boolean value type; workers own admission
+and the runtime helpers own the distinct presence/emptiness semantics.
 Match expressions own a selector and ordered arms; each arm owns expression labels
 and one result. Empty arm labels mean default. Arm facts retain exact integer labels
 and a result conversion. Match retains scalar-only admission; conditional preparation

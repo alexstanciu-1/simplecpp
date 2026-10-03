@@ -51,6 +51,23 @@ function s2s_parse(string $text): parsed_file
 S2S_Proof::run();
 $directory = $argv[1];
 $cases = [
+	'nullable_probe_null_isset' => ['return isset(null);', 0],
+	'nullable_probe_null_empty' => ['return empty(null);', 1],
+	'nullable_probe_absent' => ['$x ?int = null; return empty($x) && !isset($x);', 1],
+	'nullable_probe_zero' => ['$x ?int = 0; return empty($x) && isset($x);', 1],
+	'nullable_probe_false' => ['$x ?bool = false; return empty($x) && isset($x);', 1],
+	'nullable_probe_float' => ['$x ?float = 0.0; return empty($x) && isset($x);', 1],
+	'nullable_probe_string_empty' => ['$x ?string = ""; return empty($x) && isset($x);', 1],
+	'nullable_probe_string_zero' => ['$x ?string = "0"; return !empty($x) && isset($x);', 1],
+	'nullable_probe_present' => ['$x ?int = 7; return !empty($x) && isset($x);', 1],
+	'nullable_probe_plain_false' => ['return empty(false) && isset(false);', 1],
+	'nullable_probe_plain_zero' => ['return empty(0) && isset(0);', 1],
+	'nullable_probe_plain_float' => ['return empty(0.0) && isset(0.0);', 1],
+	'nullable_probe_plain_string' => ['return empty("") && !empty("0") && isset("");', 1],
+	'nullable_probe_once' => ['function probe(int &$n): ?int { $n++; return null; } $n = 0; $v = empty(probe($n)); return $v ? $n : 9;', 1],
+	'nullable_probe_isset_once' => ['function probe(int &$n): int { $n++; return 0; } $n = 0; $v = isset(probe($n)); return $v ? $n : 9;', 1],
+	'nullable_probe_nonmutating' => ['$x ?int = null; $a = isset($x); $b = empty($x); return $x === null;', 1],
+	'nullable_probe_throw' => ['function fail(): bool { return empty(1 / 0); } return 0;', 0],
 	'nullable_elvis_empty' => ['$x ?int = null; $y = $x ?: 7; return $y ?? 9;', 7],
 	'nullable_elvis_zero' => ['$x ?int = 0; $y = $x ?: 7; return $y ?? 9;', 7],
 	'nullable_elvis_present' => ['$x ?int = 3; $y = $x ?: (1 / 0); return $y ?? 9;', 3],
@@ -1018,6 +1035,7 @@ foreach ($cases as $name => [$source, $exit])
 
 	// Observe runtime exceptions in-process without introducing source try/catch support.
 	$runtime_error_codes = ['div_zero_guard' => 'division_by_zero', 'mod_zero_guard' => 'modulo_by_zero',
+		'nullable_probe_throw' => 'division_by_zero',
 		'nullable_ternary_required_empty' => 'invalid_nullable_unwrap_empty',
 		'nullable_coalesce_throw' => 'division_by_zero',
 		'nullable_empty_extract' => 'invalid_nullable_unwrap_empty',
@@ -1064,6 +1082,13 @@ foreach ($scope_isolation_rejections as $source => $diagnostic)
 }
 
 $rejections = ['function f(int &$x): void {} f(1);',
+	'return isset($missing);',
+	'return empty($missing);',
+	'return empty([1, 2]);',
+	'return isset([1, 2]);',
+	'$x = [1, 2]; return isset($x[0]);',
+	'function f(): void {} return empty(f());',
+	'isset($new = 1);',
 	'$x = null;',
 	'$x int = null;',
 	'$x ?int = 1; $y ?float = $x;',

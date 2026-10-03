@@ -199,6 +199,15 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return 'scpp::null';
 	}
 
+	/** Probes use their own runtime semantics and evaluate the operand exactly once. */
+	public function generate_value_probe(value_probe_node $node): string
+	{
+		$facts = $node->require_probe_preparation();
+		$name = $facts->operation === value_probe_kind::isset ? 'isset' : 'empty';
+		$this->context->headers['lang/php/operators/' . $name . '/' . $name . '.hpp'] = true;
+		return 'scpp::php::' . $name . '(' . $node->operand->generate_cpp($this) . ')';
+	}
+
 	/** Typed returns force value results; runtime evaluation occurs only in the selected arm. */
 	public function generate_coalesce_expression(coalesce_expression_node $node): string
 	{

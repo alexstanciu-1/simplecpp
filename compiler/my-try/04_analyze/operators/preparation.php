@@ -348,6 +348,11 @@ final class Operator_Preparation
 			self::require_operand($unary->operand, $sequenced);
 			return;
 		}
+		if ($node instanceof value_probe_node) {
+			$probe = object_cast($node, value_probe_node::class);
+			self::require_operand($probe->operand, $sequenced);
+			return;
+		}
 		if ($node instanceof cast_expression_node) {
 			$cast = object_cast($node, cast_expression_node::class);
 			self::require_operand($cast->operand, $sequenced);
