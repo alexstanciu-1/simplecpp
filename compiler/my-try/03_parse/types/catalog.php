@@ -331,19 +331,30 @@ final class registered_type_catalog
 	private Runtime_Type_Providers $runtime_providers;
 	private Source_Type_Declarations $source_declaration_index;
 	private canonical_type_use $null_literal_type;
+	private canonical_type_use $false_marker_type;
+	private canonical_type_use $true_marker_type;
 
 	public function __construct(Type_Registry $registry, Source_Type_Exposures $source,
-		Runtime_Type_Providers $providers, canonical_type_use $null_literal_type)
+		Runtime_Type_Providers $providers, canonical_type_use $null_literal_type,
+		canonical_type_use $false_marker_type, canonical_type_use $true_marker_type)
 	{
 		$this->type_registry = $registry;
 		$this->source_exposures = $source;
 		$this->runtime_providers = $providers;
 		$this->source_declaration_index = new Source_Type_Declarations();
 		$this->null_literal_type = $null_literal_type;
+		$this->false_marker_type = $false_marker_type;
+		$this->true_marker_type = $true_marker_type;
 	}
 
 	/** Internal sentinel has no source type exposure or storage binding. */
 	public function null_type(): canonical_type_use { return $this->null_literal_type; }
+
+	/** Runtime tag identities are distinct from bool payloads and have no source storage spelling. */
+	public function boolean_sentinel_type(bool $value): canonical_type_use
+	{
+		return $value ? $this->true_marker_type : $this->false_marker_type;
+	}
 
 	public function registry(): Type_Registry
 	{

@@ -194,12 +194,69 @@ the three C++ spellings/headers. Six focused PHP suites pass through the shared
 12-slot runner in `/tmp/my-try-result-model-20261003-2/` (CLI fallback). No native
 compiler rebuild or Result runtime execution is claimed.
 
+## Result construction — 2026-10-03
+
+The next bounded slice enables all three registered Result families in the source
+type scope. `conversions/results.php` owns exact scalar payload construction and
+same-family/same-payload copying at declaration, assignment, argument and return
+boundaries. Boolean, integer families, float and string are admitted. Copies preserve
+the active state; value parameters remain independent and explicit reference
+parameters retain exact-storage rules.
+
+Legacy non-value construction uses explicit `false_sentinel`, `true_sentinel`
+(only `result_or_bool`) and `null`/`nullopt` (false state). Bare bool values are
+payloads for bool specializations, never implicitly rewritten into sentinel states.
+Non-bool payload specializations currently require explicit sentinel forms; the
+legacy generator's destination-sensitive literal-false rewrite is not reproduced.
+
+The two boolean markers have distinct canonical runtime nominal tag identities,
+no source storage-type exposure, no storage capabilities and no storage C++ binding.
+Existing constant-reference syntax/lookup carries singleton sentinel definitions;
+`nullopt` uses the existing null semantic identity. No new AST node, Result application
+class, or type-definition subclass is needed. Construction facts select wrap/false/true
+operations; emission constructs the target wrapper explicitly with the prepared
+operand (`scpp::result_or_bool<scpp::bool_t>{scpp::true_sentinel}`, for example).
+Exact copies use ordinary value initialization/assignment. Narrow runtime headers
+are recorded by the existing type/constant emitters; no umbrella-header expansion or
+new runtime helper is needed. Compilation-cost tuning is outside this slice.
+
+Tests: `tests/results.php`, `tests/fixtures/result_construction.php` exported by
+`tests/s2s.php`, and the shared-pool `tests/results.py` runner. Native state probes
+inspect payloads and sentinel states without pretending source extraction is enabled.
+One C++-supplied error value tests copying through a generated source function;
+it does not enable source error construction. Preparation facts, syntax/emission
+purity, single evaluation, copy independence, failures and incremental repair have
+focused coverage.
+
+Checkpoint: nine focused PHP suites and 30 generated programs/state probes pass
+with PCH in `/tmp/my-try-result-construction-20261003-final3/` and without PCH in
+`/tmp/my-try-result-construction-20261003-final2/`, using the shared 12-slot pool
+with CLI fallback after sandbox FPM startup failed. A supplementary `model.php`
+invocation passed the updated type-root checks, then reproduced the already recorded
+[parked LLVM recovery failure](../portability/conversion_review.md); it is not counted
+as a passing suite. No native compiler rebuild was performed.
+
+Debt/non-goals:
+
+- **RSL-ERROR-01:** structured `error` registration, construction and getters belong
+  to [chapter 13](13_errors.md#structured-error-value-debt-from-chapter-05).
+  `error -> result<T>` failure construction is blocked on that prerequisite. Use a
+  reusable runtime-type construction/member-call path, not an error-specific AST.
+  Do not fabricate an empty error to bypass this dependency.
+- Extraction, `take`, truthiness, probes, operators, selection/coalescing joins and
+  profile-availability changes remain follow-up work.
+- Implicit default construction, cross-payload/family conversion, non-scalar/nested
+  payload operations (including `result<error>`), and legacy implicit bool-sentinel
+  admission remain deferred. Current Result locals require an explicit initializer.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| RSL-CONSTRUCT-001 | agreed | `$a result<int> = 7; $b result<int> = $a;` | proved | proved | deferred | Exact scalar construction/copy; `tests/results.py`; structured failure: RSL-ERROR-01 |
+| RSL-SENTINEL-001 | agreed | `$a result_or_bool<bool> = false; $b result_or_bool<bool> = true_sentinel;` | proved | proved | deferred | Explicit sentinel states stay distinct from bool payloads; `tests/results.py` |
 | [LIT-NULL-001](#lit-null-001) | agreed | `$a = null;` | proved | proved | deferred | Untyped null rejects; typed nullable destination works |
 | [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/null value; path probes deferred |
 | [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/null value; `"0"` is not empty |

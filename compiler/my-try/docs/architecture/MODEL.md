@@ -92,7 +92,12 @@ structured errors, false sentinels and boolean sentinels. `result_family()` expo
 that immutable family; inherited `result_kind()` still classifies template output
 as class/struct. Separate registered definitions and backend bindings preserve each
 family's canonical identity. Payload access validates the owning application.
-Result value operations and profile availability remain separate follow-up work.
+Result construction decisions now live in `conversions/results.php`; extraction,
+other operators and profile availability remain separate follow-up work. Explicit
+boolean sentinel constants use ordinary internal runtime nominal tag identities
+with no storage capabilities/exposure; singleton constant definitions carry those
+identities through existing lookup. They are not boolean payload values. `nullopt`
+uses the existing null identity. No additional AST or template class is introduced.
 Conversion/comparison/truthiness policy remains worker-owned.
 `coalesce_expression_node` owns left/fallback syntax and receives selected scalar
 result/conversion facts; it is distinct from truthiness-based conditional syntax.

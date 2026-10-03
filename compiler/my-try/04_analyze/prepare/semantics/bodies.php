@@ -132,6 +132,12 @@ final class Body_Preparation
 			}
 		}
 		Type_Preparation::require_value_type($binding->type);
+		if ($value === null)
+		{
+			if (Result_Conversions::role($binding->type) !== null) {
+				throw new \RuntimeException('S2S Result construction requires an explicit initializer');
+			}
+		}
 		if ($value !== null) {
 			Capability_Preparation::require_copy($binding->type, $context);
 		}

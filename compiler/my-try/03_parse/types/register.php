@@ -23,7 +23,13 @@ final class Type_Definition_Registration
 		$source->expose_modifier('value', type_use_modifier_kind::by_value);
 		$providers->register_modifier(type_use_modifier_kind::by_value, self::runtime_provider(), 'value');
 		$null_type = $registry->canonical($registry->define_null());
-		return new registered_type_catalog($registry, $source, $providers, $registry->use($null_type->type_id()));
+		$no_capabilities /** vector<generic_contract> */ = [];
+		$false_marker = $registry->canonical($registry->define_nominal('false_sentinel',
+			type_definition_origin::runtime, nominal_type_kind::structure, $no_capabilities));
+		$true_marker = $registry->canonical($registry->define_nominal('true_sentinel',
+			type_definition_origin::runtime, nominal_type_kind::structure, $no_capabilities));
+		return new registered_type_catalog($registry, $source, $providers, $registry->use($null_type->type_id()),
+			$registry->use($false_marker->type_id()), $registry->use($true_marker->type_id()));
 	}
 
 	/** Install each current scalar/string identity and its source exposure. */

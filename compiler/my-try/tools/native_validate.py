@@ -97,6 +97,7 @@ def validate(args, target, results, logs, started, runner):
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
     harness_paths = [Path(__file__), APP / 'tests/control_flow.php', APP / 'tests/s2s.php',
+                     APP / 'tests/fixtures/result_construction.php',
                      APP / 'tests/native_driver.php.in', APP / 'tests/s2s_proof.php']
     (results / 'harness_hashes.json').write_text(json.dumps({
         str(path.relative_to(APP)): hashlib.sha256(path.read_bytes()).hexdigest()

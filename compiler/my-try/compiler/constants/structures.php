@@ -15,3 +15,8 @@ final class integer_constant_definition extends constant_definition
 {
 	public string $decimal;
 }
+
+/** A singleton runtime tag: its canonical type uniquely identifies its value. */
+final class sentinel_constant_definition extends constant_definition
+{
+}

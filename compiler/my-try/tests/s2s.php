@@ -587,6 +587,10 @@ $ownership_parameters = [
 	'function_ownership_return_local' => '',
 	'function_ownership_readonly_alias' => 'scpp::string_t, scpp::string_t&',
 ];
+$result_fixtures = require __DIR__ . '/fixtures/result_construction.php';
+foreach ($result_fixtures as $name => [$source, $predicate]) {
+	$cases[$name] = [$source, 0];
+}
 $executions = [];
 foreach ($cases as $name => [$source, $exit])
 {
@@ -599,6 +603,13 @@ foreach ($cases as $name => [$source, $exit])
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
+	if (isset($result_fixtures[$name]))
+	{
+		$probe = "\tif (!(" . $result_fixtures[$name][1] . ")) { return 91; }\n";
+		$probe_path = $directory . '/' . $name . '_state.cpp';
+		file_put_contents($probe_path, str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text));
+		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
+	}
 	if ($name === 'nullable_explicit_string') {
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace("\treturn static_cast<int>",

@@ -9,12 +9,33 @@ Requires calls, control flow and lifetime. Discuss throw/catch before finally an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Structured error value debt from chapter 05
+
+**RSL-ERROR-01 — deferred by agreement, 2026-10-03.** Chapter 05 implements Result
+success construction, exact wrapper copying and explicit legacy sentinel construction.
+Structured failure construction (`error -> result<T>`) waits here for its prerequisite.
+
+Register the source-facing `error` as a runtime-owned nominal value backed by
+`scpp::error_t`. Follow the Simple C++ contract for message, line and file and the
+`get_message()`, `get_line()`, `get_file()` inspection surface. Establish source
+construction signatures through a reusable runtime-type construction path and
+prepare member calls through their proper owner, not an error-specific AST or emitter
+spelling checks. The runtime constructor currently offers message plus optional line
+and file; confirm source admission against the owning specs when implementing.
+
+An `error` payload is an in-band value, not a thrown exception. Do not merge this
+work with Throwable/throw/catch semantics or require all exception handling first.
+Once the value support exists, complete chapter 05's structured Result failure
+conversion and its source-to-native proof. Keep `result<error>` disambiguation,
+the bare runtime error sentinel and broader Result operations separately scoped.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| RSL-ERROR-01 | deferred | Structured `error` value and `error -> result<T>` | blocked | blocked | deferred | [Chapter 05 construction debt](05_dynamic_boundaries.md#result-construction--2026-10-03); runtime-type construction/member-call prerequisite |
 | [ERR-THROW-001](#err-throw-001) | pending-discussion | `throw new Exception("x");` | unverified | unverified | deferred | — |
 | [ERR-TRY-001](#err-try-001) | pending-discussion | `try { f(); } catch (Exception $e) { }` | unverified | unverified | deferred | — |
 | [ERR-FINALLY-001](#err-finally-001) | pending-discussion | `try { return 1; } finally { g(); }` | unverified | unverified | deferred | — |

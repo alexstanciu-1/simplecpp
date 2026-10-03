@@ -22,6 +22,9 @@ enum conversion_operation
 	case nullable_empty;
 	case nullable_wrap;
 	case nullable_extract;
+	case result_wrap;
+	case result_false;
+	case result_true;
 }
 
 /** Retained semantic result of comparing one produced value with its consumer. */

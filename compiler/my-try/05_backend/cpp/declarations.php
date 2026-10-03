@@ -26,6 +26,11 @@ final class CPP_Declarations
 		if ($decision->operation === conversion_operation::nullable_wrap) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
+		if (($decision->operation === conversion_operation::result_wrap)
+			|| ($decision->operation === conversion_operation::result_false)
+			|| ($decision->operation === conversion_operation::result_true)) {
+			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+		}
 		if ($decision->operation === conversion_operation::nullable_extract) {
 			return self::type($decision->target_type, $context) . '((' . $expression
 				. ').require_value("nullable required-value extraction"))';

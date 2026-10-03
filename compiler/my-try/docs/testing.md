@@ -48,6 +48,17 @@ This runs related PHP suites and compiles/executes `nullable_*` S2S exports, inc
 checked-failure probes, through the same 12-slot pool. It does not rebuild the compiler
 natively. The S2S manifest also makes these programs available to requested native runs.
 
+For Result construction and state-preserving copies:
+
+```bash
+python3 compiler/my-try/tests/results.py --results /tmp/FRESH_RESULT_RESULTS
+```
+
+This runs focused PHP suites and compiles/executes the `result_*` S2S exports,
+including independent native state probes, using the shared pool and optional PCH.
+Structured error input in one native probe tests copying only; source construction
+of error values remains deferred. This does not rebuild the compiler natively.
+
 Run all PHP suites with retained evidence:
 
 ```bash
@@ -128,7 +139,7 @@ hashes and a success summary as described in the [portability review](portabilit
 
 ## Generated C++ precompiled headers
 
-`tests/run.py`, `tests/nullable.py`, `tests/functions.py` and `tests/control_flow.py`
+`tests/run.py`, `tests/nullable.py`, `tests/results.py`, `tests/functions.py` and `tests/control_flow.py`
 use `tools/cpp_fixture.py` to build one runtime PCH before scheduling generated C++
 programs. The PCH lives in the fresh results directory under `cpp-pch/`; its build
 uses the same compiler and flags as the fixtures and is recorded as `cpp-pch-build`

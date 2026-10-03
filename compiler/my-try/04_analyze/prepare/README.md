@@ -160,6 +160,14 @@ escaping exceptions request a full rebuild. The full policy is in
 
 ## Current language boundary
 
+`Result_Conversions` in `conversions/results.php` selects exact scalar payload wrapping,
+same-type copies and explicit legacy false/true state construction. The three Result
+families retain distinct identities. Boolean payloads are not sentinels; canonical
+singleton constant types distinguish `false_sentinel`/`true_sentinel`, while `nullopt`
+uses the null identity. Source locals require an initializer in this slice. Extraction
+and other Result operations remain deferred; structured error construction depends on
+chapter 13's runtime-owned error value and reusable construction/member-call paths.
+
 `Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
 boolean operation facts on `value_probe_node`. Scalars, nullable scalars and literal
 null are supported; direct path probes and broader carriers are deferred. Emission

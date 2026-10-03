@@ -353,6 +353,22 @@ final class CPP_Generator
 	public static function generate_constant(prepared_constant_reference $reference, cpp_generation_context $context): string
 	{
 		$definition = $reference->definition;
+		if ($definition instanceof sentinel_constant_definition)
+		{
+			if ($definition->type->matches(Model::$type_catalog->null_type())) {
+				$context->headers['scpp/null_t.hpp'] = true;
+				return 'scpp::null';
+			}
+			if ($definition->type->matches(Model::$type_catalog->boolean_sentinel_type(false))) {
+				$context->headers['scpp/false_sentinel_t.hpp'] = true;
+				return 'scpp::false_sentinel';
+			}
+			if ($definition->type->matches(Model::$type_catalog->boolean_sentinel_type(true))) {
+				$context->headers['scpp/true_sentinel_t.hpp'] = true;
+				return 'scpp::true_sentinel';
+			}
+			throw new \LogicException('Unknown canonical sentinel constant');
+		}
 		if (!($definition instanceof integer_constant_definition)) {
 			throw new \RuntimeException('C++ constant emission is not implemented for this definition');
 		}

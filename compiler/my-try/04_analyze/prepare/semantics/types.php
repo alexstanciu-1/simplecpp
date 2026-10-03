@@ -134,10 +134,18 @@ final class Type_Preparation
 			&& ($left_definition->signed() === $right_definition->signed());
 	}
 
+	/** Admit storage separately from internal sentinel identities and generic type formation. */
 	public static function require_value_type(canonical_type_use $type): void
 	{
+		if (Result_Conversions::is_boolean_sentinel($type)) {
+			throw new \RuntimeException('S2S boolean sentinel requires an explicit Result destination');
+		}
+		$result_role = Result_Conversions::role($type);
+		if ($result_role !== null) {
+			Result_Conversions::require_scalar_payload($type, $result_role);
+		}
 		if (self::canonical($type)->family() === type_family::null_sentinel) {
-			throw new \RuntimeException('S2S null requires an explicit nullable destination');
+			throw new \RuntimeException('S2S null requires an explicit nullable or legacy Result destination');
 		}
 		if (self::canonical($type)->family() === type_family::no_value) {
 			throw new \RuntimeException('S2S void is not a storage type');

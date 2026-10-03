@@ -16,6 +16,9 @@ final class Conversion_Preparation
 		if (($context === conversion_context::explicit_cast) && !self::is_scalar($target)) {
 			throw new \RuntimeException('S2S explicit cast target is not supported');
 		}
+		if ((Result_Conversions::role($source) !== null) || (Result_Conversions::role($target) !== null)) {
+			return Result_Conversions::decide($source, $target, $context);
+		}
 		if ((Nullable_Conversions::payload($source) !== null) || (Nullable_Conversions::payload($target) !== null)
 			|| Nullable_Conversions::is_null($source)) {
 			return Nullable_Conversions::decide($source, $target, $context);

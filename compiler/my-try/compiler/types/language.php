@@ -10,7 +10,7 @@ final class Language_Types
 	{
 		foreach (['void', 'bool', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
 			'int64', 'uint64', 'byte', 'int', 'float', 'string', 'vector', 'hash', 'nullable',
-			'shared', 'weak', 'unique'] as $name) {
+			'shared', 'weak', 'unique', 'result', 'result_or_false', 'result_or_bool'] as $name) {
 			$language_scope->register_type_as($name, Model::$type_catalog->definition($name));
 		}
 	}
