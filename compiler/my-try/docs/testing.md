@@ -126,6 +126,21 @@ The full runner writes `summary.json` even on failure and `php-summary.json` for
 suite outcomes. Native validation retains per-attempt command logs, source/toolchain
 hashes and a success summary as described in the [portability review](portability/conversion_review.md).
 
+## Generated C++ precompiled headers
+
+`tests/run.py`, `tests/nullable.py`, `tests/functions.py` and `tests/control_flow.py`
+use `tools/cpp_fixture.py` to build one runtime PCH before scheduling generated C++
+programs. The PCH lives in the fresh results directory under `cpp-pch/`; its build
+uses the same compiler and flags as the fixtures and is recorded as `cpp-pch-build`
+in the command journal. A failed PCH build stops the phase. There is no persistent
+cache or silent uncached retry. Workers share the completed artifact read-only.
+
+Pass `--no-pch` to any of these runners to compile with the original header visibility.
+Use that mode when validating emitted include completeness: preloading runtime headers
+can hide missing includes or affect overload visibility. The summary records `cpp_pch`.
+PHP-only runs do not prepare a PCH. LLVM, native compiler construction, PHP suites'
+internal native commands and `tools/native_validate.py` are unchanged.
+
 ## Reusing the runner
 
 Import from `tools/test_runner.py`; the scheduler is independent of test language:

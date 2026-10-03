@@ -9,6 +9,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from test_runner import CommandRunner, DEFAULT_JOBS, Task, TaskFailures, positive_jobs, run_tasks
+from cpp_fixture import CppFixtureCompiler
 
 
 def verify_php(root, output, runner, jobs):
@@ -39,7 +40,8 @@ def verify_php(root, output, runner, jobs):
             (output / 'php-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
 
 
-def verify_programs(root, output, runner, jobs):
+def verify_programs(root, output, runner, jobs, pch=True):
+    compiler = CppFixtureCompiler(runner, root.parents[1], output, pch=pch)
     clang = json.loads((root / '06_native/toolchain.json').read_text())['clang']
     tasks = []
     counts = {}
@@ -49,10 +51,9 @@ def verify_programs(root, output, runner, jobs):
         name = suite + '-' + source.stem
         if suite == 'llvm':
             command = [clang, '-Wno-override-module', '-x', 'ir', source, '-o', executable]
+            runner.run(name + '-compile', command)
         else:
-            command = ['clang++', '-std=c++20', '-I', root.parents[1] / 'runtime/include',
-                       source, '-o', executable]
-        runner.run(name + '-compile', command)
+            compiler.compile(name + '-compile', source, executable)
         runner.run(name + '-execute', [executable], expected=fixture['exit_code'])
 
     for suite in ('llvm', 's2s', 'control_flow'):
@@ -88,11 +89,11 @@ def verify_cli(root, output, runner):
         raise RuntimeError('Sample did not compile and execute with its expected exit code 9')
 
 
-def verify(root, output, jobs=DEFAULT_JOBS, php_only=False, skip_style=False, php_executor='auto'):
+def verify(root, output, jobs=DEFAULT_JOBS, php_only=False, skip_style=False, php_executor='auto', pch=True):
     started = time.monotonic()
     runner = CommandRunner(output / 'logs', root.parents[1], journals=[output / 'commands.json'],
                            jobs=jobs, php_executor=php_executor)
-    summary = dict(jobs=jobs, passed=False)
+    summary = dict(jobs=jobs, passed=False, cpp_pch=pch and not php_only)
     try:
         if not php_only:
             php_files = sorted(p for p in root.rglob('*.php') if 'build' not in p.relative_to(root).parts)
@@ -108,7 +109,7 @@ def verify(root, output, jobs=DEFAULT_JOBS, php_only=False, skip_style=False, ph
             summary['php_lint_files'] = len(php_files)
         verify_php(root, output, runner, jobs)
         if not php_only:
-            summary.update(verify_programs(root, output, runner, jobs))
+            summary.update(verify_programs(root, output, runner, jobs, pch))
             verify_cli(root, output, runner)
             summary['sample_exit'] = 9
             summary['call_executions'] = (runner.logs / 'php-calls.stdout').read_text().count('dependencies verified, native exit')
@@ -130,12 +131,13 @@ if __name__ == '__main__':
                         help='PHP backend: auto prefers FPM with CLI fallback (default)')
     parser.add_argument('--php-only', action='store_true', help='Run PHP suites without lint/style/native fixture sweep')
     parser.add_argument('--skip-style', action='store_true', help='Explicitly skip repository style gate; record in summary')
+    parser.add_argument('--no-pch', action='store_true', help='Compile without shared precompiled runtime headers')
     arguments = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     if arguments.results:
         output = arguments.results.resolve()
         output.mkdir(parents=True, exist_ok=False)
-        verify(root, output, arguments.jobs, arguments.php_only, arguments.skip_style, arguments.php_executor)
+        verify(root, output, arguments.jobs, arguments.php_only, arguments.skip_style, arguments.php_executor, not arguments.no_pch)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-my-try-proof-') as directory:
-            verify(root, Path(directory), arguments.jobs, arguments.php_only, arguments.skip_style, arguments.php_executor)
+            verify(root, Path(directory), arguments.jobs, arguments.php_only, arguments.skip_style, arguments.php_executor, not arguments.no_pch)

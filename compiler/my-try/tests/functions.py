@@ -8,11 +8,13 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
+from cpp_fixture import CppFixtureCompiler
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', type=Path, required=True)
+    parser.add_argument('--no-pch', action='store_true', help='Compile without shared precompiled runtime headers')
     args = parser.parse_args()
     output = args.results.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -37,17 +39,19 @@ def main():
         if not fixtures:
             raise RuntimeError('No ordinary-function fixtures were exported')
 
+        compiler = CppFixtureCompiler(runner, ROOT.parents[1], output,
+                                      pch=not args.no_pch, return_type_errors=True)
+
         def execute(fixture):
             source = Path(fixture['path'])
             executable = source.with_suffix('.program')
-            runner.run(source.stem + '-compile', ['clang++', '-std=c++20', '-Werror=return-type',
-                       '-I', ROOT.parents[1] / 'runtime/include', source, '-o', executable])
+            compiler.compile(source.stem + '-compile', source, executable)
             runner.run(source.stem + '-execute', [executable], expected=fixture['exit_code'])
 
         run_tasks([Task(Path(fixture['path']).stem, lambda fixture=fixture: execute(fixture))
                    for fixture in fixtures], jobs=12)
         (output / 'summary.json').write_text(json.dumps(
-            dict(passed=True, php_suites=len(suites), generated_programs=len(fixtures)), indent=2) + '\n')
+            dict(passed=True, cpp_pch=not args.no_pch, php_suites=len(suites), generated_programs=len(fixtures)), indent=2) + '\n')
 
 
 if __name__ == '__main__':
