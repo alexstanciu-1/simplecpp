@@ -141,6 +141,9 @@ can hide missing includes or affect overload visibility. The summary records `cp
 PHP-only runs do not prepare a PCH. LLVM, native compiler construction, PHP suites'
 internal native commands and `tools/native_validate.py` are unchanged.
 
+Reducing cold compilation cost through compiler-selected runtime headers remains
+[explicit dependency debt](planning/incremental_strategy.md#debt-precise-runtime-includes-for-faster-c-compilation).
+
 ## Reusing the runner
 
 Import from `tools/test_runner.py`; the scheduler is independent of test language:

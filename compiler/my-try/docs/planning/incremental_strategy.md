@@ -143,6 +143,42 @@ Deferred after the backend review (2026-09-29):
    dependency links do not replace output-unit dependencies. Partitioning and the
    disk writer are later implementation, not part of the current cache.
 
+## Debt: precise runtime includes for faster C++ compilation
+
+Recorded 2026-10-03 after the test-runner PCH work. PCH amortizes repeated runtime
+header processing; it does not reduce the dependencies or cold compile cost of an
+individual generated program. The compiler should select the runtime surface each
+output unit actually needs instead of routinely including broad runtime umbrellas.
+
+Ownership and direction:
+
+- C++ emission owns header selection from prepared types, selected operations,
+  conversions and helper requirements. Extend the existing header collection path;
+  do not infer language semantics again from source spelling or rendered C++ text.
+- Runtime family owners and the runtime generator must provide narrow, self-contained
+  public headers with explicit transitive dependencies. Selecting fewer top-level
+  includes is ineffective if they still pull in the same broad umbrellas.
+- Start by examining `scpp/generated/operators.hpp`, `scpp/cast.hpp` and condition
+  truthiness's dependency on `lang/php/support/php_common.hpp`. Expose reusable
+  family surfaces rather than copying runtime behavior into compiler output or
+  growing per-fixture include exceptions. Preserve the language/runtime layering.
+- Keep dependencies deterministic and attached to the existing C++ fragment/output
+  ownership. Removing or changing an operation must remove obsolete requirements;
+  future output partitioning must carry the requirements per output unit.
+
+Proof required: compile and execute representative scalar, nullable, cast, string,
+container and checked-failure fixtures with `--no-pch`; verify emitted include
+completeness, independent header usability and unchanged behavior/diagnostics.
+Exercise incremental edits that add and remove a runtime requirement. Compare
+uncached compile times, preprocessed size and compiler frontend traces with the same
+compiler, flags and worker count; distinguish isolated latency from suite throughput.
+PCH timings alone cannot close this debt.
+
+This is a future compiler/runtime dependency slice, not authorization for a broad
+runtime reorganization now. Agree the cross-owner boundary before implementation.
+Non-goals: language semantic changes, duplicating runtime checks, LLVM work, or
+requiring output partitioning or a persistent PCH cache as prerequisites.
+
 ## Agreed debts
 
 - Keep general validation/STAN and reserved-name enforcement in the later pass.
