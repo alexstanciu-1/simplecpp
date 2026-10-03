@@ -497,6 +497,51 @@ final class nullable_type_definition extends abstract_template_type_definition i
 	}
 }
 
+/** Result family identity, not the active state of a runtime value. */
+enum result_kind
+{
+	case structured_error;
+	case false_sentinel;
+	case boolean_sentinels;
+}
+
+interface result_semantics
+{
+	public function result_family(): result_kind;
+	public function payload_type(applied_template_type $application): canonical_type_use;
+}
+
+/** All result families share a recipe shape; workers own their distinct operation policies. */
+final class result_type_definition extends abstract_template_type_definition implements result_semantics
+{
+	private result_kind $family_kind;
+
+	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
+		nominal_type_kind $result_type_kind, array $parameters /** vector<template_type_parameter> */,
+		array $capabilities /** vector<generic_contract> */, result_kind $family_kind)
+	{
+		parent::__construct($identity, $source_name, $origin, $result_type_kind, $parameters, $capabilities);
+		if (($this->arity() !== 1) || ($this->required_arity() !== 1)) {
+			throw new \InvalidArgumentException('Result definition requires exactly one required payload parameter');
+		}
+		$this->family_kind = $family_kind;
+	}
+
+	public function result_family(): result_kind { return $this->family_kind; }
+
+	public function payload_type(applied_template_type $application): canonical_type_use
+	{
+		if ($application->template_definition() !== $this) {
+			throw new \InvalidArgumentException('Result payload requires an application of this definition');
+		}
+		$arguments /** vector<canonical_type_use> */ = $application->arguments();
+		if (q_count($arguments) !== 1) {
+			throw new \InvalidArgumentException('Result application requires one payload type');
+		}
+		return $arguments[0];
+	}
+}
+
 /** Internal literal identity, never a source storage type or optional payload. */
 final class null_type_definition extends semantic_type_definition implements concrete_type_definition_i
 {
@@ -877,6 +922,17 @@ final class Type_Registry implements type_capability_query
 	{
 		$definition = new nullable_type_definition($this->allocate_definition_id(), $name, $origin,
 			$result_kind, $parameters, $capabilities);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
+	/** Register a distinct result definition while sharing its family implementation. */
+	public function define_result(string $name, type_definition_origin $origin,
+		nominal_type_kind $result_type_kind, array $parameters /** vector<template_type_parameter> */,
+		array $capabilities /** vector<generic_contract> */, result_kind $family_kind): result_type_definition
+	{
+		$definition = new result_type_definition($this->allocate_definition_id(), $name, $origin,
+			$result_type_kind, $parameters, $capabilities, $family_kind);
 		$this->register_definition($definition);
 		return $definition;
 	}

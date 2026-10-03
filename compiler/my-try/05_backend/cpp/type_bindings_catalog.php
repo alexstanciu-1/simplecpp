@@ -152,6 +152,9 @@ final class CPP_Type_Binding_Registration
 		$bindings->bind_definition($types->definition('vector'), 'scpp::vector_t', 'scpp/vector_t.hpp');
 		$bindings->bind_definition($types->definition('hash'), 'scpp::hash_t', 'scpp/hash_t.hpp');
 		$bindings->bind_definition($types->definition('nullable'), 'scpp::nullable', 'scpp/nullable.hpp');
+		$bindings->bind_definition($types->definition('result'), 'scpp::result', 'scpp/result.hpp');
+		$bindings->bind_definition($types->definition('result_or_false'), 'scpp::result_or_false', 'scpp/result_or_false.hpp');
+		$bindings->bind_definition($types->definition('result_or_bool'), 'scpp::result_or_bool', 'scpp/result_or_bool.hpp');
 		$bindings->bind_definition($types->definition('shared'), 'scpp::shared_p', 'scpp/shared_p.hpp');
 		$bindings->bind_definition($types->definition('weak'), 'scpp::weak_p', 'scpp/weak_p.hpp');
 		$bindings->bind_definition($types->definition('unique'), 'scpp::unique_p', 'scpp/unique_p.hpp');

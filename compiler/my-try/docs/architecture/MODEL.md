@@ -86,7 +86,14 @@ its final sibling `nullable_type_definition` implements `nullable_semantics` wit
 typed payload access for an application of that exact definition. Applications and
 registry validation/interning depend on the abstract base. The interface identifies
 language interpretation without a role flag, spelling checks or a second application
-hierarchy; conversion/comparison/truthiness policy remains worker-owned.
+hierarchy. Result wrappers similarly share one final `result_type_definition`
+implementing `result_semantics`, with constructor-set `result_kind` distinguishing
+structured errors, false sentinels and boolean sentinels. `result_family()` exposes
+that immutable family; inherited `result_kind()` still classifies template output
+as class/struct. Separate registered definitions and backend bindings preserve each
+family's canonical identity. Payload access validates the owning application.
+Result value operations and profile availability remain separate follow-up work.
+Conversion/comparison/truthiness policy remains worker-owned.
 `coalesce_expression_node` owns left/fallback syntax and receives selected scalar
 result/conversion facts; it is distinct from truthiness-based conditional syntax.
 `null_type_definition` / `null_type` give null literals a canonical,

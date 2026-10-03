@@ -28,8 +28,10 @@ when historical context is needed; their former plans are not current instructio
   PHP checks do not prove native portability.
 - Bypass legacy v0.1 STAN for this compiler work (`--no-stan` on requested native
   runs). Its repair catalog is parked; resume STAN work only on explicit request.
-- On `feature/scpp-native-portability-fixes`, push completed commits to the existing
-  remote branch and provide a GitHub commit link. This is standing authorization.
+- Active development is on `v0.2/develop`. The former local
+  `feature/scpp-native-portability-fixes` branch was fast-forwarded into it and deleted
+  on 2026-10-03. Do not recreate or switch to that retired branch for ongoing work;
+  its previous branch-specific push instruction no longer applies.
 - An explicitly requested partial refactor may temporarily break later stages;
   discuss cross-owner repairs instead of silently introducing compatibility code.
 

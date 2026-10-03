@@ -97,6 +97,20 @@ final class Type_Definition_Registration
 			$copyable_storage);
 		self::install_template($source, $providers, $nullable, 'nullable');
 
+		$result_families /** hash<result_kind> */ = [
+			'result' => result_kind::structured_error,
+			'result_or_false' => result_kind::false_sentinel,
+			'result_or_bool' => result_kind::boolean_sentinels,
+		];
+		foreach ($result_families as $name => $family_kind) {
+			$result_parameters /** vector<template_type_parameter> */ = [
+				new template_type_parameter('Value', $value_storable),
+			];
+			$result_definition = $registry->define_result($name, type_definition_origin::runtime,
+				nominal_type_kind::class_type, $result_parameters, $copyable_storage, $family_kind);
+			self::install_template($source, $providers, $result_definition, $name);
+		}
+
 		$ownership_names /** vector<string> */ = ['shared', 'weak', 'unique'];
 		foreach ($ownership_names as $name)
 		{

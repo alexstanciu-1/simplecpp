@@ -170,6 +170,30 @@ Checkpoint: eleven focused PHP suites and 99 generated C++ programs/probes pass 
 `/tmp/my-try-probes-20261003-final/` (shared 12-slot runner, CLI fallback after sandbox
 FPM startup failed). No native compiler rebuild was performed.
 
+## Result-wrapper model checkpoint — 2026-10-03
+
+One final `result_type_definition` extends the shared template abstract and implements
+`result_semantics`. Its immutable constructor-set `result_kind` distinguishes
+`structured_error`, `false_sentinel` and `boolean_sentinels`. The accessor is
+`result_family()` because inherited `result_kind()` already means class/struct output.
+Each registered source family (`result`, `result_or_false`, `result_or_bool`) retains
+its own definition identity, application interning and runtime C++ binding.
+Payload queries reject applications belonging to other definitions, even of the same
+family. The initial recipe requires one value-storable payload, like nullable;
+`void` specializations and broader payload contracts are not added by this checkpoint.
+
+This is model/registration work only: no family-specific construction, extraction,
+operators, probe/condition policy, `take`, structured-error model or profile gates.
+Existing generic type infrastructure is reused; registered shape is not a claim of
+completed Result expression support. The strict guide currently also mentions the
+compatibility wrappers; deciding profile availability remains separate.
+
+`tests/result_model.php` proves family/definition separation, repeated application
+identity, boolean payload identity, arity/default and wrong-owner rejection, and
+the three C++ spellings/headers. Six focused PHP suites pass through the shared
+12-slot runner in `/tmp/my-try-result-model-20261003-2/` (CLI fallback). No native
+compiler rebuild or Result runtime execution is claimed.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
