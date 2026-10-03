@@ -143,6 +143,15 @@ Deferred after the backend review (2026-09-29):
    dependency links do not replace output-unit dependencies. Partitioning and the
    disk writer are later implementation, not part of the current cache.
 
+## @TODO mandatory: compilation performance after operational milestone
+
+Once the compiler is operational for the agreed v0.2 application workflow, perform
+[the mandatory compilation-performance task](compile_performance.md). Address runtime
+include selection, persistent/chained PCH validity and incremental output/object reuse;
+also investigate Clang-generated LLVM IR/bitcode and the future direct LLVM generation
+perspective. Record measured improvements or reviewed blockers. This task is required,
+not optional cleanup; it does not resume the parked LLVM backend now.
+
 ## Debt: precise runtime includes for faster C++ compilation
 
 Recorded 2026-10-03 after the test-runner PCH work. PCH amortizes repeated runtime
