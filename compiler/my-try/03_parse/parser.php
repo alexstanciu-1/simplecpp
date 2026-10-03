@@ -825,7 +825,7 @@ final class Parser_Run
 		return $this->binary_expression(1);
 	}
 
-	/** Assignments recurse at the same precedence; other binary operators associate left. */
+	/** Assignments and coalescing associate right; ordinary binary operators associate left. */
 	private function binary_expression(int $minimum_precedence): expression_node
 	{
 		$start = $this->position;
@@ -837,6 +837,15 @@ final class Parser_Run
 			$precedence = $this->binary_precedence();
 			if ($precedence < $minimum_precedence) {
 				break;
+			}
+			if ($this->text() === '??') {
+				$this->position++;
+				$coalesce = new coalesce_expression_node();
+				$coalesce->left = $left;
+				$coalesce->fallback = $this->binary_expression($precedence);
+				$this->finish_node($coalesce, $start);
+				$left = $coalesce;
+				continue;
 			}
 			if ($this->text() === '?')
 			{
@@ -918,38 +927,39 @@ final class Parser_Run
 		if ($text === '?') {
 			return 5;
 		}
+		if ($text === '??') { return 6; }
 		if ($text === '||') {
-			return 6;
-		}
-		if ($text === '&&') {
 			return 7;
 		}
-		if ($text === '|') {
+		if ($text === '&&') {
 			return 8;
 		}
-		if ($text === '^') {
+		if ($text === '|') {
 			return 9;
 		}
-		if ($text === '&') {
+		if ($text === '^') {
 			return 10;
 		}
-		if (($text === '==') || ($text === '!=') || ($text === '===') || ($text === '!==') || ($text === '<=>')) {
+		if ($text === '&') {
 			return 11;
 		}
-		if (($text === '<') || ($text === '<=') || ($text === '>') || ($text === '>=')) {
+		if (($text === '==') || ($text === '!=') || ($text === '===') || ($text === '!==') || ($text === '<=>')) {
 			return 12;
 		}
-		if ($text === '.') {
+		if (($text === '<') || ($text === '<=') || ($text === '>') || ($text === '>=')) {
 			return 13;
 		}
-		if (($text === '<<') || ($text === '>>')) {
+		if ($text === '.') {
 			return 14;
 		}
-		if (($text === '+') || ($text === '-')) {
+		if (($text === '<<') || ($text === '>>')) {
 			return 15;
 		}
-		if (($text === '*') || ($text === '/') || ($text === '%')) {
+		if (($text === '+') || ($text === '-')) {
 			return 16;
+		}
+		if (($text === '*') || ($text === '/') || ($text === '%')) {
+			return 17;
 		}
 		return 0;
 	}

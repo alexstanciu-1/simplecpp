@@ -82,8 +82,10 @@ its final sibling `nullable_type_definition` implements `nullable_semantics` wit
 typed payload access for an application of that exact definition. Applications and
 registry validation/interning depend on the abstract base. The interface identifies
 language interpretation without a role flag, spelling checks or a second application
-hierarchy; conversion/comparison policy remains worker-owned. Nullable truthiness
-is deferred. `null_type_definition` / `null_type` give null literals a canonical,
+hierarchy; conversion/comparison/truthiness policy remains worker-owned.
+`coalesce_expression_node` owns left/fallback syntax and receives selected scalar
+result/conversion facts; it is distinct from truthiness-based conditional syntax.
+`null_type_definition` / `null_type` give null literals a canonical,
 non-storable sentinel identity, without source exposure or a storage backend binding.
 `nullable_type_node` owns `?T` syntax and resolves through shared application interning;
 `null_literal_node` carries the sentinel fact until a typed destination conversion.

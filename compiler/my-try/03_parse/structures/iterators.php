@@ -256,6 +256,19 @@ final class switch_label_children_iterator extends children_iterator
 	}
 }
 
+/** Inspect presence selection in source order without allocating child lists. */
+final class coalesce_expression_children_iterator extends children_iterator
+{
+	private int $next_field = 0;
+	public function __construct(private coalesce_expression_node $source) {}
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_field === 0) { $this->next_field++; return $this->source->left; }
+		if ($this->next_field === 1) { $this->next_field++; return $this->source->fallback; }
+		return null;
+	}
+}
+
 /** Inspect the two or three owning expressions without duplicating shorthand's left. */
 final class conditional_expression_children_iterator extends children_iterator
 {

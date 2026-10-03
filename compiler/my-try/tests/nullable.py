@@ -20,7 +20,7 @@ def main():
     programs.mkdir()
     suites = ['s2s', 'type_catalog', 'constructed_type', 'conversions',
               'incremental_cpp', 'preparation_recovery', 'ast_invariants',
-              'specialization_dispatch', 'nullable']
+              'specialization_dispatch', 'nullable', 'control_flow']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
         def suite(name):
             command = ['php', APP / 'tests' / (name + '.php')]

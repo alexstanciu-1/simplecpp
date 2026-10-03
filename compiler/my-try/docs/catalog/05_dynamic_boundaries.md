@@ -84,12 +84,43 @@ Focused checkpoint: nine PHP suites and 33 generated programs/probes pass in
 `/tmp/my-try-nullable-values-20261003-final/` (12 tasks, CLI fallback because sandbox
 FPM socket creation was unavailable).
 
-Debt/non-goals: cross-payload lifting/conversion, nullable truthiness and fallback,
+Debt/non-goals: cross-payload lifting/conversion, nullable Elvis and wrapper-valued fallback,
 `isset`/`empty`, nullable parameter defaults, flow narrowing, mixed and object/container
 payload operations. Existing generic type formation does not imply those operations.
 The runtime generic identity helper currently fails to instantiate nullable/null
 comparison (its fallback attempts `null_t == null_t`). This slice emits the equivalent
 prepared presence test; runtime-helper repair belongs to a separate owner/task.
+
+## Nullable truthiness and coalescing — 2026-10-03
+
+`Condition_Truthiness` now admits nullable scalar values for every existing condition
+consumer: empty is false, otherwise the runtime applies payload truthiness. Thus
+present false, zero, `""` and `"0"` are falsey without being absent. Explicit boolean
+casts and required extraction are unchanged; there is no flow narrowing or new
+nullable arithmetic/logical-operator admission.
+
+Dedicated `coalesce_expression_node` syntax owns `left` and `fallback`. Shared
+`Coalesce_Expression_Preparation` selects exact scalar result/conversion facts:
+`nullable<T> ?? T -> T` and `T ?? T -> T`. The expression is an owned value, not a
+reference. Parsing is right-associative, stronger than ternary and weaker than `||`.
+Both operands are prepared and validated; execution evaluates the left once and
+evaluates fallback only when the nullable left is absent. Present falsey payloads
+are selected, never replaced. `$a ?? $b ?? 7` works when the inner expression yields
+the required nonnullable scalar fallback.
+
+The C++ backend renders explicit lazy control flow from these facts and reuses
+checked extraction. Nullable conditions reuse the runtime condition helper with
+its cast-header dependency. No runtime or legacy-generator changes are required.
+Focused proofs live in `tests/nullable.php`, `tests/s2s.php` and `tests/nullable.py`:
+condition consumers, falsey values, effect counts, lazy failures, precedence,
+owned results, rejected fallback types, cleanup and incremental fallback changes.
+
+Checkpoint: ten focused PHP suites and 62 generated C++ programs/probes pass in
+`/tmp/my-try-coalesce-fourth-20261003/`, using the shared 12-slot runner with CLI
+fallback after sandbox FPM startup failed. This is not a native compiler rebuild.
+
+Still deferred: nullable fallback operands, cross-type joins, bare-null coalescing,
+mixed/other wrapper families, `??=`, `isset`/`empty` and nullable Elvis result joins.
 
 ## Progress
 
@@ -100,7 +131,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-NULL-001](#lit-null-001) | agreed | `$a = null;` | proved | proved | deferred | Untyped null rejects; typed nullable destination works |
 | [VAR-ISSET-001](#var-isset-001) | pending-discussion | `$a = isset($b);` | unverified | unverified | deferred | — |
 | [VAR-EMPTY-001](#var-empty-001) | pending-discussion | `$a = empty($b);` | unverified | unverified | deferred | — |
-| [EXPR-COALESCE-001](#expr-coalesce-001) | pending-discussion | `$a = $b ?? $c;` | unverified | unverified | deferred | — |
+| [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Exact scalar `T` or `nullable<T>` left; required scalar `T` fallback |
 | [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | [Matching-scalar slice](03_control_flow.md#agreed-conditional-expression-slice--2026-10-02); wrappers/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
@@ -228,7 +259,9 @@ auto a = php::empty(b);
 
 ## EXPR-COALESCE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Dedicated lazy expression with prepared exact scalar
+result/conversions: `nullable<T> ?? T` and `T ?? T` yield owned `T`. Broader imported
+wrapper/mixed combinations remain deferred.
 
 ### Imported version 1
 

@@ -49,7 +49,11 @@ final class CPP_Declarations
 		if ($decision->operation === truthiness_operation::boolean_identity) {
 			return '(' . $expression . ').native_value()';
 		}
-		if ($decision->operation === truthiness_operation::scalar_condition) {
+		if (($decision->operation === truthiness_operation::scalar_condition)
+			|| ($decision->operation === truthiness_operation::nullable_condition)) {
+			if ($decision->operation === truthiness_operation::nullable_condition) {
+				$context->headers['scpp/cast.hpp'] = true;
+			}
 			$context->headers['lang/php/operators/conditional/condition_truthiness.hpp'] = true;
 			return 'scpp::php::condition_truthy(' . $expression . ').native_value()';
 		}

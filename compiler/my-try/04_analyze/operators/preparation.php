@@ -335,6 +335,14 @@ final class Operator_Preparation
 			}
 			return;
 		}
+		if ($node instanceof coalesce_expression_node) {
+			if (!$sequenced) {
+				$coalesce = object_cast($node, coalesce_expression_node::class);
+				self::require_operand($coalesce->left, false);
+				self::require_operand($coalesce->fallback, false);
+			}
+			return;
+		}
 		if ($node instanceof unary_expression_node) {
 			$unary = object_cast($node, unary_expression_node::class);
 			self::require_operand($unary->operand, $sequenced);

@@ -67,7 +67,14 @@ final class prepared_constant_reference extends prepared_expression {
 	public constant_definition $definition;
 }
 
-/** Both spellings share condition interpretation and an explicit value-result join. */
+/** Required selected-value domain; a nullable left is extracted only after presence. */
+final class prepared_coalesce_expression extends prepared_expression
+{
+	public conversion_decision $left_conversion;
+	public conversion_decision $fallback_conversion;
+}
+
+/** Both ternary spellings share condition interpretation and an explicit value-result join. */
 final class prepared_conditional_expression extends prepared_expression
 {
 	public truthiness_decision $truthiness;

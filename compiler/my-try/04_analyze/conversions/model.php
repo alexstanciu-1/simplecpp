@@ -44,6 +44,7 @@ enum truthiness_operation
 {
 	case boolean_identity;
 	case scalar_condition;
+	case nullable_condition;
 }
 
 final class truthiness_decision

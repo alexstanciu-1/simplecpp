@@ -200,6 +200,25 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	}
 
 	/** Typed returns force value results; runtime evaluation occurs only in the selected arm. */
+	public function generate_coalesce_expression(coalesce_expression_node $node): string
+	{
+		$facts = $node->require_coalesce_preparation();
+		$result_type = CPP_Declarations::type($facts->type, $this->context);
+		$left = $node->left->generate_cpp($this);
+		$fallback = CPP_Declarations::conversion($node->fallback->generate_cpp($this), $facts->fallback_conversion, $this->context);
+		if ($facts->left_conversion->operation === conversion_operation::identity) {
+			return '([&]() -> ' . $result_type . ' { return ' . $left . '; }())';
+		}
+		$temporary = 'coalesce_' . $this->context->next_temporary;
+		$this->context->next_temporary++;
+		$source_type = CPP_Declarations::type($facts->left_conversion->source_type, $this->context);
+		$selected = CPP_Declarations::conversion($temporary, $facts->left_conversion, $this->context);
+		return '([&]() -> ' . $result_type . ' { ' . $source_type . ' ' . $temporary . ' = ' . $left
+			. '; if (' . $temporary . '.has_value().native_value()) { return ' . $selected
+			. '; } return ' . $fallback . '; }())';
+	}
+
+	/** Full ternary and Elvis use truthiness, not the coalescing presence rule. */
 	public function generate_conditional_expression(conditional_expression_node $node): string
 	{
 		$facts = $node->require_conditional_preparation();

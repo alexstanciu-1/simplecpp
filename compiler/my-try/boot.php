@@ -77,6 +77,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/switches.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/constants.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/expressions.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/conditional_expressions.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/coalesce_expressions.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/selection_results.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/matches.php';
 require_once __DIR__ . '/04_analyze/prepare/file.php';

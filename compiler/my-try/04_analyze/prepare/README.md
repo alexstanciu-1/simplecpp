@@ -165,7 +165,12 @@ selects strict null presence comparisons. Null literals carry a non-storable sen
 `?T` resolves to the registered nullable semantic definition and shared application
 interning. No source spelling test grants a nullable role. C++ consumes these decisions;
 it does not infer payload conversions. See [Chapter 05](../../docs/catalog/05_dynamic_boundaries.md)
-for deferred truthiness, fallback, cross-payload operations and defaults.
+for the bounded truthiness/coalescing slice and deferred broader operations/defaults.
+`Condition_Truthiness` admits nullable scalars through payload truthiness, with empty
+false. `Coalesce_Expression_Preparation` separately selects a required scalar value
+domain and exact conversions; its dedicated syntax/facts preserve lazy fallback and
+single evaluation without reusing truthiness as presence. Both operands are validated
+even when the scalar-left form never needs its fallback at runtime.
 
 The S2S path currently supports one source file, scalar integer/bool/float literals,
 single-quoted string literals and locals, ordinary functions and value structs.
