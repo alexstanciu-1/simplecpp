@@ -91,7 +91,7 @@ final class Type_Definition_Registration
 		$nullable_parameters /** vector<template_type_parameter> */ = [
 			new template_type_parameter('Value', $value_storable),
 		];
-		$nullable = $registry->define_template('nullable', type_definition_origin::runtime,
+		$nullable = $registry->define_nullable('nullable', type_definition_origin::runtime,
 			nominal_type_kind::class_type, $nullable_parameters,
 			$copyable_storage);
 		self::install_template($source, $providers, $nullable, 'nullable');
@@ -121,7 +121,7 @@ final class Type_Definition_Registration
 	}
 
 	private static function install_template(Source_Type_Exposures $source, Runtime_Type_Providers $providers,
-		template_type_definition $definition, string $runtime_family): void
+		abstract_template_type_definition $definition, string $runtime_family): void
 	{
 		$source->expose_type($definition->name(), $definition);
 		$providers->register($definition, self::runtime_provider(), $runtime_family);

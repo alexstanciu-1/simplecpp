@@ -37,6 +37,27 @@ Start discussion with group 1. The imported `$a = null` example is not an instru
 to infer a nullable type from an untyped null. No Chapter 05 code or new support claim
 is introduced by this handoff.
 
+## Nullable model foundation — 2026-10-03
+
+Implemented the agreed model-only slice: `abstract_template_type_definition` owns
+the shared recipe; final `template_type_definition` remains the ordinary case and
+final `nullable_type_definition` implements `nullable_semantics`. Its payload query
+requires an application of that same definition. Registration, template preparation,
+arity/capability validation and canonical application interning share the abstract
+path. Source spelling alone grants no nullable role; backend bindings are unchanged.
+
+The five focused PHP suites (`type_catalog`, `constructed_type`, `conversions`,
+`incremental_cpp`, `preparation_recovery`) and the portable type proof pass; the
+proof's emitted C++ also compiles and executes successfully. Checks use
+the shared runner with CLI fallback after sandbox FPM socket startup failed.
+Evidence: `/tmp/my-try-nullable-model-20261003/` and
+`/tmp/my-try-nullable-model-proof-20261003/`.
+The portable proof is retained for future explicitly requested native checkpoints;
+the compiler itself has not been rebuilt natively for this refactor.
+
+No new `?T` syntax, null literals, conversions, null comparisons, conditions or
+fallback semantics are enabled. The expression rows below remain pending discussion.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

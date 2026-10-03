@@ -155,4 +155,48 @@ foreach (['bool', 'int', 'uint8', 'byte', 'float'] as $name) {
 		'Registered scalar modifier was not a semantic no-op');
 }
 
+$nullable_definition = $catalog->definition('nullable');
+type_catalog_check($nullable_definition instanceof nullable_semantics,
+	'Nullable registration lost its semantic interface');
+type_catalog_check(!($vector instanceof nullable_semantics), 'Ordinary template acquired nullable semantics');
+$nullable = object_cast($nullable_definition, abstract_template_type_definition::class);
+$nullable_role = object_cast($nullable_definition, nullable_semantics::class);
+$payload = $registry->use($integer->type_id());
+$nullable_int = $registry->intern_application($nullable, [$payload]);
+type_catalog_check($registry->intern_application($nullable, [$payload]) === $nullable_int,
+	'Nullable bypassed common application interning');
+type_catalog_check($nullable_role->payload_type($nullable_int) === $payload,
+	'Nullable payload accessor copied or changed its canonical use');
+type_catalog_check($nullable_int->family() === type_family::nominal
+	&& $nullable->kind() === type_definition_kind::template,
+	'Nullable role replaced structural classification');
+type_catalog_check($bindings->definition($nullable->definition_id())->name() === 'scpp::nullable',
+	'Nullable backend binding changed');
+foreach ([[], [$payload, $payload], [$registry->use($catalog->canonical('void')->type_id())]] as $arguments) {
+	$before_count = $registry->application_count();
+	$rejected = false;
+	try { $registry->intern_application($nullable, $arguments); }
+	catch (\InvalidArgumentException $error) { $rejected = true; }
+	type_catalog_check($rejected && $registry->application_count() === $before_count,
+		'Nullable bypassed shared arity/capability validation');
+}
+$rejected = false;
+try { $nullable_role->payload_type($vector_int); }
+catch (\InvalidArgumentException $error) { $rejected = true; }
+type_catalog_check($rejected, 'Nullable accepted a foreign template application');
+$ordinary_named_nullable = $custom_registry->define_template('nullable', type_definition_origin::source,
+	nominal_type_kind::class_type, [new template_type_parameter('T')], []);
+type_catalog_check(!($ordinary_named_nullable instanceof nullable_semantics),
+	'Nullable semantics were inferred from source spelling');
+foreach ([[], [new template_type_parameter('A'), new template_type_parameter('B')],
+	[new template_type_parameter('T', [], $payload)]] as $parameters) {
+	$before_count = $registry->definition_count();
+	$rejected = false;
+	try { $registry->define_nullable('invalid_nullable', type_definition_origin::runtime,
+		nominal_type_kind::class_type, $parameters, []); }
+	catch (\InvalidArgumentException $error) { $rejected = true; }
+	type_catalog_check($rejected && $registry->definition_count() === $before_count,
+		'Malformed nullable definition was published');
+}
+
 echo "Type catalog: definitions, contracts, identity separation and demand-only reuse passed\n";

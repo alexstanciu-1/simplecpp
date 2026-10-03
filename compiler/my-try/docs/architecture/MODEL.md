@@ -76,6 +76,14 @@ definition identity rather than copying semantic values. New runtime-library JSO
 intake, source constant declarations and broader constructed types remain future
 work. Reserved-name validation is deferred; ordinary parent lookup currently applies.
 
+Template definitions share `abstract_template_type_definition` for ordered parameters,
+arity/defaults and result kind. The ordinary `template_type_definition` remains final;
+its final sibling `nullable_type_definition` implements `nullable_semantics` with
+typed payload access for an application of that exact definition. Applications and
+registry validation/interning depend on the abstract base. The interface identifies
+language interpretation without a role flag, spelling checks or a second application
+hierarchy; conversion/comparison/truthiness policy remains worker-owned and deferred.
+
 ## Structure and processing boundary
 
 Structures may initialize data, enforce local invariants, expose typed access,

@@ -377,7 +377,7 @@ final class template_type_parameter
 }
 
 /** A template is a definition recipe and never a concrete type by itself. */
-final class template_type_definition extends semantic_type_definition
+abstract class abstract_template_type_definition extends semantic_type_definition
 {
 	private nominal_type_kind $result_kind_data;
 	private array $ordered_parameters /** vector<template_type_parameter> */;
@@ -456,6 +456,42 @@ final class template_type_definition extends semantic_type_definition
 	public function required_arity(): int
 	{
 		return (int)$this->minimum_arity;
+	}
+}
+
+/** Ordinary templates add no language-specific interpretation. */
+final class template_type_definition extends abstract_template_type_definition
+{
+}
+
+/** Definition-owned nullable interpretation; operation policy belongs to semantic workers. */
+interface nullable_semantics
+{
+	public function payload_type(applied_template_type $application): canonical_type_use;
+}
+
+final class nullable_type_definition extends abstract_template_type_definition implements nullable_semantics
+{
+	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
+		nominal_type_kind $result_kind, array $parameters /** vector<template_type_parameter> */,
+		array $capabilities /** vector<generic_contract> */)
+	{
+		parent::__construct($identity, $source_name, $origin, $result_kind, $parameters, $capabilities);
+		if (($this->arity() !== 1) || ($this->required_arity() !== 1)) {
+			throw new \InvalidArgumentException('Nullable definition requires exactly one required payload parameter');
+		}
+	}
+
+	public function payload_type(applied_template_type $application): canonical_type_use
+	{
+		if ($application->template_definition() !== $this) {
+			throw new \InvalidArgumentException('Nullable payload requires an application of this definition');
+		}
+		$arguments /** vector<canonical_type_use> */ = $application->arguments();
+		if (q_count($arguments) !== 1) {
+			throw new \InvalidArgumentException('Nullable application requires one payload type');
+		}
+		return $arguments[0];
 	}
 }
 
@@ -618,10 +654,10 @@ final class no_value_type extends canonical_type
 /** One canonical specialization of a template definition and exact ordered type arguments. */
 final class applied_template_type extends canonical_type
 {
-	private template_type_definition $template_definition_data;
+	private abstract_template_type_definition $template_definition_data;
 	private array $argument_types /** vector<canonical_type_use> */;
 
-	public function __construct(int $identity, template_type_definition $definition,
+	public function __construct(int $identity, abstract_template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */)
 	{
 		parent::__construct($identity);
@@ -639,7 +675,7 @@ final class applied_template_type extends canonical_type
 		return object_cast($this->template_definition_data, type_definition_i::class);
 	}
 
-	public function template_definition(): template_type_definition
+	public function template_definition(): abstract_template_type_definition
 	{
 		return $this->template_definition_data;
 	}
@@ -804,6 +840,16 @@ final class Type_Registry implements type_capability_query
 		return $definition;
 	}
 
+	public function define_nullable(string $name, type_definition_origin $origin,
+		nominal_type_kind $result_kind, array $parameters /** vector<template_type_parameter> */,
+		array $capabilities /** vector<generic_contract> */): nullable_type_definition
+	{
+		$definition = new nullable_type_definition($this->allocate_definition_id(), $name, $origin,
+			$result_kind, $parameters, $capabilities);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
 	/** Reuse the sole concrete type belonging to a non-template definition. */
 	public function canonical(concrete_type_definition_i $definition): canonical_type_i
 	{
@@ -821,7 +867,7 @@ final class Type_Registry implements type_capability_query
 	}
 
 	/** Intern exactly one canonical type for a definition and ordered canonical arguments. */
-	public function intern_application(template_type_definition $definition,
+	public function intern_application(abstract_template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */, ?type_capability_query $capabilities = null): applied_template_type
 	{
 		$complete_arguments = $this->validate_application($definition, $arguments, $capabilities);
@@ -883,8 +929,8 @@ final class Type_Registry implements type_capability_query
 			$nominal = object_cast($definition, nominal_type_definition::class);
 			return $nominal->nominal_kind() === nominal_type_kind::structure;
 		}
-		if ($definition instanceof template_type_definition) {
-			$template_definition = object_cast($definition, template_type_definition::class);
+		if ($definition instanceof abstract_template_type_definition) {
+			$template_definition = object_cast($definition, abstract_template_type_definition::class);
 			return $template_definition->result_kind() === nominal_type_kind::structure;
 		}
 		return false;
@@ -943,7 +989,7 @@ final class Type_Registry implements type_capability_query
 	}
 
 	/** Validate supplied arguments and append the definition's trailing defaults. */
-	public function complete_application_arguments(template_type_definition $definition,
+	public function complete_application_arguments(abstract_template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */): array /** vector<canonical_type_use> */
 	{
 		$count = q_count($arguments);
@@ -974,7 +1020,7 @@ final class Type_Registry implements type_capability_query
 	}
 
 	/** Validate one complete application from declared facts before interning any identity. */
-	public function validate_application(template_type_definition $definition,
+	public function validate_application(abstract_template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */, ?type_capability_query $capabilities = null): array /** vector<canonical_type_use> */
 	{
 		$complete = $this->complete_application_arguments($definition, $arguments);
@@ -999,7 +1045,7 @@ final class Type_Registry implements type_capability_query
 	}
 
 	/** Reject an impossible argument list before preparing any nested application. */
-	public function validate_application_arity(template_type_definition $definition, int $argument_count): void
+	public function validate_application_arity(abstract_template_type_definition $definition, int $argument_count): void
 	{
 		$this->require_registered_definition($definition);
 		if (($argument_count < $definition->required_arity()) || ($argument_count > $definition->arity())) {

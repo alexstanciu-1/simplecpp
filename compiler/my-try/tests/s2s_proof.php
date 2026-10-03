@@ -119,6 +119,18 @@ final class S2S_Proof
 		if (($vector_int->definition() !== $vector) || ($registry->application_count() !== 8)) {
 			throw new \LogicException('Demand-created runtime applications changed');
 		}
+		$nullable_definition = $catalog->definition('nullable');
+		if (!($nullable_definition instanceof nullable_semantics) || ($vector instanceof nullable_semantics)) {
+			throw new \LogicException('Template structure and nullable semantics were conflated');
+		}
+		$nullable = object_cast($nullable_definition, abstract_template_type_definition::class);
+		$nullable_role = object_cast($nullable_definition, nullable_semantics::class);
+		$payload_arguments /** vector<canonical_type_use> */ = [$string_use];
+		$nullable_application = $registry->intern_application($nullable, $payload_arguments);
+		if (($registry->intern_application($nullable, $payload_arguments) !== $nullable_application)
+			|| (!$nullable_role->payload_type($nullable_application)->matches($string_use))) {
+			throw new \LogicException('Nullable lost shared interning or payload identity');
+		}
 		$by_value = object_cast($statements[7], variable_declaration_node::class);
 		$by_value_use = $by_value->type_syntax->require_preparation();
 		$nested_value = object_cast($statements[8], variable_declaration_node::class);

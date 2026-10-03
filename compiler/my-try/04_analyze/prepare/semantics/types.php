@@ -8,7 +8,7 @@ final class Type_Preparation
 	/** Implicit packs use the canonical runtime vector, independently of source shadowing. */
 	public static function vector_of(canonical_type_use $element, preparation_context $context): canonical_type_use
 	{
-		$definition = object_cast(Model::$type_catalog->definition('vector'), template_type_definition::class);
+		$definition = object_cast(Model::$type_catalog->definition('vector'), abstract_template_type_definition::class);
 		$registry = Model::$type_catalog->registry();
 		try {
 			$arguments /** vector<canonical_type_use> */ = [$element];
@@ -55,10 +55,10 @@ final class Type_Preparation
 			throw new \RuntimeException('S2S needs one resolved template type for ' . $entry->name);
 		}
 		$definition = $definitions[0];
-		if (!($definition instanceof template_type_definition)) {
+		if (!($definition instanceof abstract_template_type_definition)) {
 			throw new \RuntimeException('S2S type arguments require a template definition');
 		}
-		$template_definition = object_cast($definition, template_type_definition::class);
+		$template_definition = object_cast($definition, abstract_template_type_definition::class);
 		$arguments /** vector<canonical_type_use> */ = [];
 		$type_arguments /** Storage<type_node> */ = $node->arguments;
 		$registry = Model::$type_catalog->registry();
