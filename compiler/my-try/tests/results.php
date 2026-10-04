@@ -72,6 +72,14 @@ try
 	result_check($root->body->statements[1]->initializer->preparation() === null,
 		'Cleanup retained sentinel reference facts');
 
+	result_source($path, '$r result<int> = 7; $v int = $r;');
+	$extraction = Model::syntax_files()[0]->root->body->statements[1];
+	result_check($extraction->require_preparation()->conversion->operation === conversion_operation::result_extract,
+		'Required value boundary lost its checked extraction decision');
+	Preparation_Cleanup::tree(Model::syntax_files()[0]->root);
+	result_check($extraction->preparation() === null && $extraction->initializer->preparation() === null,
+		'Cleanup retained extraction facts');
+
 	$rejections = [
 		['$x = null;', 'explicit nullable or legacy Result destination'],
 		['$x = nullopt;', 'explicit nullable or legacy Result destination'],
@@ -85,9 +93,11 @@ try
 		['$a result<int> = 1; $b result_or_false<int> = $a;', 'Result construction requires an exact payload'],
 		['$a result<int> = 1; $b result<float> = $a;', 'Result construction requires an exact payload'],
 		['$a ?int = 1; $b result<int> = $a;', 'Result construction requires an exact payload'],
-		['$a result<int> = 1; $b int = $a;', 'Result extraction is deferred'],
-		['$a result<int> = 1; $b = (int) $a;', 'Result extraction is deferred'],
-		['$a result<int> = 1; $b ?int = $a;', 'Result extraction is deferred'],
+		['$a result<int> = 1; $b float = $a;', 'Result extraction requires the exact scalar payload type'],
+		['$a result<int> = 1; $b int32 = $a;', 'Result extraction requires the exact scalar payload type'],
+		['$a result<int> = 1; $b = (int) $a;', 'Result extraction supports only required'],
+		['$a result<int> = 1; $b ?int = $a;', 'Result extraction requires the exact scalar payload type'],
+		['function ref(int &$v): void {} $a result<int> = 1; ref($a);', 'reference'],
 		['$a result<int> = 1; if ($a) {}', 'condition truthiness requires a supported scalar'],
 		['$a result<int> = 1; $b = $a ?? 2;', 'coalesce branches require supported scalar'],
 		['$a result<int> = 1; $b = isset($a);', 'value probes require a scalar'],
@@ -137,6 +147,32 @@ try
 	result_check(Model::$cpp_files[0]->text === $original, 'Result repair changed output');
 	result_source($path, $valid);
 	result_check(Model::$cpp_files[0]->text === $original, 'Clean and incremental Result output differ');
+
+	$valid = 'function source(): result<int> { return 3; } function read(): int { return source(); } '
+		. 'function stable(): int { return 9; } $v = read();';
+	$compiler = result_source($path, $valid);
+	$original = Model::$cpp_files[0]->text;
+	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+	$version = $stable->version;
+	file_put_contents($path, str_replace('result<int> { return 3;', 'result<float> { return 3.5;', $valid));
+	foreach ([[$path], []] as $changed)
+	{
+		$compiler->sync($changed);
+		$failed = false;
+		try {
+			$compiler->prepare();
+		}
+		catch (\RuntimeException $error) {
+			$failed = str_contains($error->getMessage(), 'Result extraction requires the exact scalar payload type');
+		}
+		result_check($failed && Model::$cpp_files->is_empty(), 'Extraction type change published stale output');
+		result_check($stable->version === $version, 'Extraction type change rebuilt an independent body');
+	}
+	file_put_contents($path, $valid);
+	$compiler->update_cpp([$path]);
+	result_check(Model::$cpp_files[0]->text === $original, 'Extraction repair changed output');
+	result_source($path, $valid);
+	result_check(Model::$cpp_files[0]->text === $original, 'Clean and incremental extraction output differ');
 	echo "Results: construction facts, sentinel identity, rejections, cleanup and incremental recovery passed\n";
 }
 finally {

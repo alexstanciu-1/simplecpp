@@ -1,6 +1,6 @@
 <?php
 
-/* Result construction policy; canonical roles and identities, never source spelling. */
+/* Result value boundaries; canonical roles and identities, never source spelling. */
 namespace scpp\compiler;
 
 final class Result_Conversions
@@ -32,13 +32,13 @@ final class Result_Conversions
 		return $payload;
 	}
 
-	/** Copy exact wrappers, wrap exact payloads, or select an explicitly requested legacy state. */
+	/** Route required extraction separately from wrapper construction and same-type copies. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
 		$target_role = self::role($target);
 		if ($target_role === null) {
-			throw new \RuntimeException('S2S Result extraction is deferred');
+			return self::extract($source, $target, $context);
 		}
 		$role /** result_semantics */ = $target_role;
 		$payload = self::require_scalar_payload($target, $role);
@@ -62,5 +62,24 @@ final class Result_Conversions
 			}
 		}
 		throw new \RuntimeException('S2S Result construction requires an exact payload, same wrapper type or supported explicit sentinel');
+	}
+
+	/** Required-value consumers copy a checked payload; casts and other contexts remain separate. */
+	private static function extract(canonical_type_use $source, canonical_type_use $target,
+		conversion_context $context): conversion_decision
+	{
+		if (($context !== conversion_context::assignment) && ($context !== conversion_context::argument)
+			&& ($context !== conversion_context::return_value)) {
+			throw new \RuntimeException('S2S Result extraction supports only required assignment, argument and return boundaries');
+		}
+		$source_role = self::role($source);
+		if ($source_role === null) {
+			throw new \LogicException('Result extraction requires a Result source');
+		}
+		$payload = self::require_scalar_payload($source, $source_role);
+		if (!$payload->matches($target)) {
+			throw new \RuntimeException('S2S Result extraction requires the exact scalar payload type');
+		}
+		return Conversion_Preparation::operation($source, $target, $context, conversion_operation::result_extract);
 	}
 }

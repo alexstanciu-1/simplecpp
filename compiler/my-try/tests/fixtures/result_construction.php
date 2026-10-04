@@ -1,6 +1,6 @@
 <?php
 
-/* Source fixtures plus independent native state observations; no source extraction feature implied. */
+/* Source Result boundaries plus independent native value/state observations. */
 $fixtures = [];
 foreach (['result', 'result_or_false', 'result_or_bool'] as $family)
 {
@@ -70,5 +70,61 @@ $fixtures['result_error_copy_bridge'] = [
 	'function pass(result<int> $v): result<int> { return $v; }',
 	'function_pass(scpp::result<scpp::int_t<>>{scpp::error_t{scpp::string_t("failure")}})'
 		. '.error()->get_message().native_value() == "failure"',
+];
+$payloads = [
+	'int' => ['0', 'scpp::int_t<>', '0LL', '9LL'],
+	'bool' => ['false', 'scpp::bool_t', 'false', 'true'],
+	'float' => ['0.0', 'scpp::float_t', '0.0', '9.5'],
+	'string' => ['""', 'scpp::string_t', '""', '"unchanged"'],
+];
+foreach (['result', 'result_or_false', 'result_or_bool'] as $family)
+{
+	foreach ($payloads as $payload => [$literal, $cpp_type, $native_value, $initial])
+	{
+		$wrapper = $family . '<' . $payload . '>';
+		$functions = 'function read(' . $wrapper . ' $r): ' . $payload . ' { return $r; } '
+			. 'function initialize(' . $wrapper . ' $r): ' . $payload . ' { $x ' . $payload . ' = $r; return $x; } '
+			. 'function consume(' . $payload . ' $v, int &$calls): ' . $payload . ' { $calls++; return $v; } '
+			. 'function argument(' . $wrapper . ' $r, int &$calls): ' . $payload . ' { return consume($r, $calls); } '
+			. 'function once(' . $wrapper . ' $r, int &$n): ' . $wrapper . ' { $n++; return $r; } '
+			. 'function store(' . $wrapper . ' $r, ' . $payload . ' &$out, int &$n): void { $out = once($r, $n); } ';
+		$fixtures['result_extract_' . $family . '_' . $payload] = [
+			$functions . '$r ' . $wrapper . ' = ' . $literal . '; $n = 0; $calls = 0; '
+				. '$a ' . $payload . ' = once($r, $n); $b = read(once($r, $n)); '
+				. '$c = argument(once($r, $n), $calls); $d = initialize($r); store($r, $d, $n);',
+			'local_n.native_value() == 4 && local_calls.native_value() == 1'
+				. ' && local_a.native_value() == ' . $native_value . ' && local_b.native_value() == ' . $native_value
+				. ' && local_c.native_value() == ' . $native_value . ' && local_d.native_value() == ' . $native_value
+				. ' && local_r.has_value().native_value()',
+		];
+		$states = $family === 'result'
+			? ['error' => 'scpp::error_t{scpp::string_t("failure")}']
+			: ['false' => 'scpp::false_sentinel'];
+		if ($family === 'result_or_bool') {
+			$states['true'] = 'scpp::true_sentinel';
+		}
+		foreach ($states as $state => $sentinel)
+		{
+			// The native bridge supplies non-value input; source error construction stays deferred.
+			$probe = '([&]() { scpp::' . $family . '<' . $cpp_type . '> bad{' . $sentinel . '}; '
+				. $cpp_type . ' out{' . $initial . '}; scpp::int_t<> n{0LL}, calls{0LL}; int caught = 0; '
+				. 'try { (void)function_read(bad); } catch (const std::runtime_error& e) { '
+				. 'if (std::string(e.what()).find("requires a present value") == std::string::npos) return false; ++caught; } '
+				. 'try { (void)function_initialize(bad); } catch (const std::runtime_error&) { ++caught; } '
+				. 'try { (void)function_argument(bad, calls); } catch (const std::runtime_error&) { ++caught; } '
+				. 'try { function_store(bad, out, n); } catch (const std::runtime_error&) { ++caught; } '
+				. 'return caught == 4 && out.native_value() == ' . $initial
+				. ' && n.native_value() == 1 && calls.native_value() == 0 && !bad.has_value().native_value(); }())';
+			$fixtures['result_extract_failure_' . $family . '_' . $payload . '_' . $state] = [$functions, $probe];
+		}
+	}
+}
+$fixtures['result_extract_owned_string'] = [
+	'$r result<string> = "old"; $s string = $r; $r = "new";',
+	'local_s.native_value() == "old" && local_r.value().native_value() == "new"',
+];
+$fixtures['result_extract_alias'] = [
+	'$n uint8 = 7; $r result<byte> = $n; $v uint8 = $r;',
+	'local_v.native_value() == 7',
 ];
 return $fixtures;

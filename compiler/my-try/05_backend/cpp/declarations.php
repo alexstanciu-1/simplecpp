@@ -35,6 +35,10 @@ final class CPP_Declarations
 			return self::type($decision->target_type, $context) . '((' . $expression
 				. ').require_value("nullable required-value extraction"))';
 		}
+		if ($decision->operation === conversion_operation::result_extract) {
+			return self::type($decision->target_type, $context) . '((' . $expression
+				. ').require_value("Result required-value extraction"))';
+		}
 		if ($decision->operation === conversion_operation::integer_value_cast) {
 			return 'static_cast<' . self::type($decision->target_type, $context)
 				. '>((' . $expression . ').native_value())';

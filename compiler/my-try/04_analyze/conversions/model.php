@@ -25,6 +25,7 @@ enum conversion_operation
 	case result_wrap;
 	case result_false;
 	case result_true;
+	case result_extract;
 }
 
 /** Retained semantic result of comparing one produced value with its consumer. */

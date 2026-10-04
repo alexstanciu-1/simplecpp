@@ -222,7 +222,8 @@ new runtime helper is needed. Compilation-cost tuning is outside this slice.
 
 Tests: `tests/results.php`, `tests/fixtures/result_construction.php` exported by
 `tests/s2s.php`, and the shared-pool `tests/results.py` runner. Native state probes
-inspect payloads and sentinel states without pretending source extraction is enabled.
+at this construction checkpoint inspect payloads and sentinel states independently
+of source extraction.
 One C++-supplied error value tests copying through a generated source function;
 it does not enable source error construction. Preparation facts, syntax/emission
 purity, single evaluation, copy independence, failures and incremental repair have
@@ -243,11 +244,44 @@ Debt/non-goals:
   `error -> result<T>` failure construction is blocked on that prerequisite. Use a
   reusable runtime-type construction/member-call path, not an error-specific AST.
   Do not fabricate an empty error to bypass this dependency.
-- Extraction, `take`, truthiness, probes, operators, selection/coalescing joins and
+- Explicit casts, `take`, truthiness, probes, operators, selection/coalescing joins and
   profile-availability changes remain follow-up work.
 - Implicit default construction, cross-payload/family conversion, non-scalar/nested
   payload operations (including `result<error>`), and legacy implicit bool-sentinel
   admission remain deferred. Current Result locals require an explicit initializer.
+
+## Checked Result extraction — 2026-10-04
+
+All three Result families now support exact scalar payload extraction at required
+assignment (including initialization), by-value argument and return boundaries.
+`Result_Conversions` records `result_extract`; C++ copies the checked payload with
+`T((expression).require_value("Result required-value extraction"))`. This extends the
+existing conversion owner and adds no AST, runtime helper or new header dependency.
+The legacy runtime's guarded typed bridge is reused explicitly; implicit C++ casts
+do not decide source admission. No compile-cost tuning is part of this slice.
+
+Success values include false, zero and empty string. Error, false-sentinel and
+true-sentinel states all throw through the runtime guard, including true/false
+sentinels in bool-payload specializations. Required string extraction also throws;
+there is no empty-string fallback. Sources evaluate once, values are copied rather
+than borrowed, and failed stores leave their targets unchanged. An argument failure
+prevents the called function from running. Reference parameters still require exact
+storage compatibility and never extract a payload implicitly.
+
+Explicit casts, cross-payload conversion, wrapper-to-nullable conversion, `take`,
+conditions/operators and broader payloads remain deferred. Structured error values
+are supplied only by the native proof bridge; RSL-ERROR-01 remains owned by chapter 13.
+`tests/results.php` covers attached decisions, exclusion diagnostics, cleanup and
+incremental payload-change failure/retry/repair. The shared Result fixture export
+covers success and failure at every boundary, scalar types, independent copies and
+single evaluation through generated C++ execution.
+
+Checkpoint: nine focused PHP suites and 90 generated programs/state probes pass in
+`/tmp/my-try-result-extraction-20261004-final/` with PCH disabled, through the shared
+12-slot runner (CLI fallback after sandbox FPM startup failed). The first PCH-backed
+run also passed its 88 programs, before adding the byte/uint8 alias fixture.
+This proves the PHP-hosted compiler and generated C++ behavior, not a native compiler
+rebuild. LLVM and source error construction remain deferred.
 
 ## Progress
 
@@ -257,6 +291,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | RSL-CONSTRUCT-001 | agreed | `$a result<int> = 7; $b result<int> = $a;` | proved | proved | deferred | Exact scalar construction/copy; `tests/results.py`; structured failure: RSL-ERROR-01 |
 | RSL-SENTINEL-001 | agreed | `$a result_or_bool<bool> = false; $b result_or_bool<bool> = true_sentinel;` | proved | proved | deferred | Explicit sentinel states stay distinct from bool payloads; `tests/results.py` |
+| RSL-EXTRACT-001 | agreed | `$r result<int> = 7; $v int = $r;` | proved | proved | deferred | Exact scalar required boundaries; checked non-value failures; `tests/results.py` |
 | [LIT-NULL-001](#lit-null-001) | agreed | `$a = null;` | proved | proved | deferred | Untyped null rejects; typed nullable destination works |
 | [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/null value; path probes deferred |
 | [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/null value; `"0"` is not empty |

@@ -48,7 +48,7 @@ This runs related PHP suites and compiles/executes `nullable_*` S2S exports, inc
 checked-failure probes, through the same 12-slot pool. It does not rebuild the compiler
 natively. The S2S manifest also makes these programs available to requested native runs.
 
-For Result construction and state-preserving copies:
+For Result construction, state-preserving copies and checked scalar extraction:
 
 ```bash
 python3 compiler/my-try/tests/results.py --results /tmp/FRESH_RESULT_RESULTS
@@ -56,8 +56,10 @@ python3 compiler/my-try/tests/results.py --results /tmp/FRESH_RESULT_RESULTS
 
 This runs focused PHP suites and compiles/executes the `result_*` S2S exports,
 including independent native state probes, using the shared pool and optional PCH.
-Structured error input in one native probe tests copying only; source construction
-of error values remains deferred. This does not rebuild the compiler natively.
+Native bridge inputs test copying/extraction of structured failures; source construction
+of error values remains deferred. Extraction probes cover all scalar payloads, error
+and legacy sentinel states, single evaluation and unchanged targets on failure.
+This does not rebuild the compiler natively.
 
 Run all PHP suites with retained evidence:
 

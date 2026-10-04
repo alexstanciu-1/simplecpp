@@ -164,9 +164,12 @@ escaping exceptions request a full rebuild. The full policy is in
 same-type copies and explicit legacy false/true state construction. The three Result
 families retain distinct identities. Boolean payloads are not sentinels; canonical
 singleton constant types distinguish `false_sentinel`/`true_sentinel`, while `nullopt`
-uses the null identity. Source locals require an initializer in this slice. Extraction
-and other Result operations remain deferred; structured error construction depends on
-chapter 13's runtime-owned error value and reusable construction/member-call paths.
+uses the null identity. Source locals require an initializer in this slice. Exact
+scalar required-value extraction at assignment/argument/return boundaries records
+`result_extract`; the backend copies the guarded payload. Non-value states throw,
+failed stores preserve targets and reference arguments never implicitly extract.
+Explicit casts and other Result operations remain deferred; structured error construction
+depends on chapter 13's runtime-owned error value and reusable construction/member-call paths.
 
 `Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
 boolean operation facts on `value_probe_node`. Scalars, nullable scalars and literal
