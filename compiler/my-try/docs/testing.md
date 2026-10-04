@@ -63,6 +63,8 @@ Take probes cover both spellings, every wrapper state, error truthiness/reset, o
 outputs, lazy skipping, source exceptions and incremental rejection/recovery.
 Result condition/probe fixtures distinguish falsey successful payloads from sentinels,
 include string `"0"`, and check every condition consumer plus single evaluation.
+Conditional Result fixtures cover symmetric wrapper/scalar joins, state-preserving
+copies, falsey Elvis payloads, true sentinels, lazy alternatives and owned results.
 The runner also executes the focused wrapper-state and take runtime tests. `--no-pch`
 checks generated include completeness without precompiled-header assistance.
 This does not rebuild the compiler natively.

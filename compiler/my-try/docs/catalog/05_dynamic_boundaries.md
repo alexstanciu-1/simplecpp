@@ -244,7 +244,7 @@ Debt/non-goals:
   `error -> result<T>` failure construction is blocked on that prerequisite. Use a
   reusable runtime-type construction/member-call path, not an error-specific AST.
   Do not fabricate an empty error to bypass this dependency.
-- Explicit casts, logical/arithmetic operators, selection/coalescing joins and
+- Explicit casts, logical/arithmetic operators, broader selection/coalescing joins and
   profile-availability changes remain follow-up work.
 - Implicit default construction, cross-payload/family conversion, non-scalar/nested
   payload operations (including `result<error>`), and legacy implicit bool-sentinel
@@ -337,7 +337,8 @@ payload; a failed Result is falsey while its contained real error is truthy.
 The [probe state table](../../../../specs/count_empty_isset_contract.md#result-wrapper-states)
 is explicit. These rules must not be collapsed into a generic success flag.
 
-Next: matching Result/scalar ternary and Elvis joins, then approved Result coalescing.
+The following slice adds matching Result/scalar ternary and Elvis joins; approved
+Result coalescing remains next.
 Wrapper logical operators (`!`, `&&`, `||`) remain separate contract work; do not
 silently replace their documented guarded-unwrap semantics with condition truthiness.
 Aggregate/nested payloads, path probes and profile availability remain deferred.
@@ -352,12 +353,40 @@ all Result families with bool/int/float/string payloads, non-value states, strin
 role-based admission, prepared facts/cleanup, exclusions and incremental invalidation,
 retry and clean-build agreement. No native compiler rebuild or LLVM work is claimed.
 
+## Result-valued ternary and Elvis joins — 2026-10-04
+
+`Conditional_Expression_Preparation` now admits `W<T>/W<T>`, `W<T>/T` and `T/W<T>`
+as `W<T>` for each Result family independently, with an exact supported scalar payload.
+The join preserves canonical wrapper identity and uses existing copy/wrap conversions.
+No AST, runtime or emitter changes were needed. Match retains its separate scalar-only
+admission; no cross-family, cross-payload or nullable/Result join is inferred.
+
+Full ternary preserves the selected wrapper's state, including structured errors and
+legacy sentinels. Scalar false stays a value payload, not a false sentinel. Elvis saves
+its left operand once and selects fallback for falsey successful payloads (`false`,
+zero, empty string and `"0"`); true sentinels remain selected without creating payloads.
+Only the selected branch executes; both branches are validated during preparation.
+Results are copied owned values, never conditional references into the source.
+
+Bare-null/sentinel branches, aggregate payloads, mixed and broader joins remain debt.
+Next discussion: approved Result `??` with a required same-payload scalar fallback.
+
+Proof: `/tmp/my-try-result-joins-20261004-final/` passed 11 PHP suites, 148 generated
+C++ programs/state checks and two runtime tests without PCH. The earlier PCH run
+also passed before the numeric join fixtures were added. Shared 12-slot execution
+used CLI fallback after sandbox FPM socket denial. Tests cover both join orders,
+all four scalar categories, preserved error/sentinel states, false-payload wrapping,
+single Elvis evaluation, lazy alternatives, independent copies, prepared conversions,
+cleanup and incremental payload-change failure/retry/repair. This is PHP-hosted
+compiler/generated-C++ evidence, not a native compiler rebuild.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| RSL-JOIN-001 | agreed | `$a = $condition ? $r : 7; $b = $r ?: 7;` | proved | proved | deferred | Exact Result/scalar and same-wrapper joins; owned state-preserving lazy selection; `tests/results.py` |
 | RSL-PROBES-001 | agreed | `if ($r) {} $p = isset($r); $e = empty($r);` | proved | proved | deferred | Scalar payloads across all three Result families; state/payload distinction and single evaluation; `tests/results.py` |
 | RSL-TAKE-001 | agreed | `take($value, $error) = source();` | proved | proved | deferred | Existing exact scalar outputs; all four wrapper families; `tests/take.php` and `tests/results.py` |
 | RSL-NO-ERROR-001 | agreed | `$e error = error::$no_error; if (!$e) {}` | proved | proved | deferred | Explicit presence, success clears error, invalid Result failures reject; full authoring: RSL-ERROR-01 |
@@ -368,7 +397,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; path probes deferred |
 | [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; `"0"` is not empty |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Exact scalar `T` or `nullable<T>` left; required scalar `T` fallback |
-| [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Matching scalar and nullable-scalar joins; other wrappers/mixed deferred |
+| [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Matching scalar, nullable/scalar and Result/scalar joins; cross-family/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
@@ -541,7 +570,8 @@ auto a = php::coalesce_eval([&]() -> decltype(auto) { return b; }, [&]() -> decl
 A typed lambda saves the original left value once, tests shared truthiness, and
 converts only the selected branch to the joined result type. Results are owned values.
 See the [Chapter 03 slice](03_control_flow.md#agreed-conditional-expression-slice--2026-10-02)
-for parser bounds. Other wrapper/mixed joins remain deferred; this does not close
+for parser bounds. Matching Result/scalar joins are now included by the Result join
+slice above. Cross-family/mixed joins remain deferred; this does not close
 the wider dynamic-boundary work. Imported lowering below is historical evidence.
 
 ### Imported version 1

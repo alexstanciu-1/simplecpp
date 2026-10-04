@@ -221,4 +221,62 @@ $fixtures['result_condition_consumers'] = [
 	'local_n.native_value() == 3 && local_selected.native_value() == 7 && local_ok.native_value()'
 		. ' && local_v.native_value() == 0 && local_present.native_value() && local_vacant.native_value()',
 ];
+foreach (['result', 'result_or_false', 'result_or_bool'] as $family)
+{
+	$wrapper = $family . '<string>';
+	$cpp_wrapper = 'scpp::' . $family . '<scpp::string_t>';
+	$source = 'function once(' . $wrapper . ' $r, int &$n): ' . $wrapper . ' { $n++; return $r; } '
+		. 'function fallback(int &$n): string { $n++; return "fallback"; } '
+		. 'function elvis(' . $wrapper . ' $r, int &$left, int &$right): ' . $wrapper
+		. ' { return once($r, $left) ?: fallback($right); } '
+		. 'function choose(bool $c, ' . $wrapper . ' $r, int &$n): ' . $wrapper
+		. ' { return $c ? once($r, $n) : "other"; } '
+		. 'function reverse(bool $c, ' . $wrapper . ' $r, int &$n): ' . $wrapper
+		. ' { return $c ? "other" : once($r, $n); } '
+		. 'function pair(bool $c, ' . $wrapper . ' $a, ' . $wrapper . ' $b): ' . $wrapper
+		. ' { return $c ? $a : $b; } '
+		. '$r ' . $wrapper . ' = "old"; $a = true ? $r : "other"; '
+		. '$b = false ? "other" : $r; $c = $r ?: "other"; $r = "new";';
+	$failure = $family === 'result' ? 'scpp::error_t{scpp::string_t("failure")}' : 'scpp::false_sentinel';
+	$state_check = $family === 'result' ? 'has_error()' : 'is_false()';
+	$probe = '([&]() { static_assert(std::is_same_v<decltype(local_a), ' . $cpp_wrapper . '>); '
+		. 'static_assert(std::is_same_v<decltype(local_b), ' . $cpp_wrapper . '>); '
+		. 'static_assert(std::is_same_v<decltype(local_c), ' . $cpp_wrapper . '>); '
+		. 'if (local_a.value().native_value() != "old" || local_b.value().native_value() != "old"'
+		. ' || local_c.value().native_value() != "old") return false; '
+		. 'scpp::int_t<> left{0LL}, right{0LL}, n{0LL}; '
+		. $cpp_wrapper . ' bad{' . $failure . '}, good{scpp::string_t("yes")}; '
+		. 'for (const auto& r : {' . $cpp_wrapper . '{scpp::string_t("")}, '
+		. $cpp_wrapper . '{scpp::string_t("0")}, bad}) { '
+		. 'if (function_elvis(r, left, right).value().native_value() != "fallback") return false; } '
+		. 'if (function_elvis(good, left, right).value().native_value() != "yes"'
+		. ' || left.native_value() != 4 || right.native_value() != 3) return false; '
+		. 'if (!function_choose(scpp::bool_t(true), bad, n).' . $state_check . '.native_value()'
+		. ' || !function_reverse(scpp::bool_t(false), bad, n).' . $state_check . '.native_value()'
+		. ' || !function_pair(scpp::bool_t(true), bad, good).' . $state_check . '.native_value()'
+		. ' || !function_pair(scpp::bool_t(false), good, bad).' . $state_check . '.native_value()) return false; '
+		. 'if (function_choose(scpp::bool_t(false), bad, n).value().native_value() != "other"'
+		. ' || function_reverse(scpp::bool_t(true), bad, n).value().native_value() != "other"'
+		. ' || n.native_value() != 2) return false; ';
+	if ($family === 'result_or_bool') {
+		$probe .= $cpp_wrapper . ' yes{scpp::true_sentinel}; '
+			. 'if (!function_elvis(yes, left, right).is_true().native_value()'
+			. ' || left.native_value() != 5 || right.native_value() != 3) return false; ';
+	}
+	$fixtures['result_conditional_' . $family] = [$source, $probe . 'return true; }())'];
+	$fixtures['result_conditional_bool_' . $family] = [
+		'$r ' . $family . '<bool> = true; $a = false ? $r : false; '
+			. '$b = true ? false : $r; $r = false; $c = $r ?: true;',
+		'local_a.has_value().native_value() && !local_a.value().native_value()'
+			. ' && local_b.has_value().native_value() && !local_b.value().native_value()'
+			. ' && local_c.has_value().native_value() && local_c.value().native_value()',
+	];
+	$fixtures['result_conditional_numeric_' . $family] = [
+		'$i ' . $family . '<int> = 0; $f ' . $family . '<float> = 0.0; '
+			. '$a = $i ?: 7; $b = $f ?: 1.5; $c = true ? $f : 2.5; '
+			. '$d = false ? 8 : $i;',
+		'local_a.value().native_value() == 7 && local_b.value().native_value() == 1.5'
+			. ' && local_c.value().native_value() == 0.0 && local_d.value().native_value() == 0',
+	];
+}
 return $fixtures;

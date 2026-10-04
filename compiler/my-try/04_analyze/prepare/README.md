@@ -116,7 +116,11 @@ Shorthand reuses its condition's prepared value as its true branch.
 Results are non-addressable values; nested writes cannot introduce bindings. Eager
 parents inspect every conditional child for effects. Emission uses typed lazy returns
 and a single saved left value of the original condition type for shorthand. Bare-null
-branches, cross-payload joins and other wrappers/mixed remain deferred.
+branches, cross-payload joins and mixed remain deferred. Result-led joins preserve
+one exact Result identity: same-wrapper pairs copy the selected state, and exact
+scalar alternatives wrap as value payloads. Nullable/Result and cross-family pairs
+reject. Both branch conversions and copy capabilities are prepared before emission;
+the existing lazy emitter and saved Elvis left value are reused unchanged.
 
 `Match_Preparation` retains scalar-only `Selection_Result_Preparation` and strict integer label
 selection rather than truthiness. `Integer_Constants::label` serves both switch and
@@ -171,7 +175,7 @@ failed stores preserve targets and reference arguments never implicitly extract.
 Result conditions and probes admit the same scalar payload domain through the existing
 semantic role. `result_condition` facts use the shared runtime truthiness helper for
 all condition consumers, while probes keep their independent runtime authorities.
-Logical operators, Result-valued conditional joins, coalescing and explicit casts
+Logical operators, Result coalescing and explicit casts
 remain deferred; structured error construction
 depends on chapter 13's reusable runtime construction/member-call paths. The runtime-owned
 `error` type is now registered with default/copy semantics and a readonly no-error constant.

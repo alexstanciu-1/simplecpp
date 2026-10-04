@@ -102,7 +102,11 @@ try
 		['function ref(int &$v): void {} $a result<int> = 1; ref($a);', 'reference'],
 		['$a result<int> = 1; $b = $a ?? 2;', 'coalesce branches require supported scalar'],
 		['$a result<int> = 1; $b = !$a;', 'unary operation requires'],
-		['$a result<int> = 1; $b = $a ?: 2;', 'conditional branches require'],
+		['$a result<int> = 1; $b = $a ?: 2.0;', 'conditional Result branches require'],
+		['$a result<int> = 1; $b result_or_false<int> = 2; $c = true ? $a : $b;', 'conditional Result branches require'],
+		['$a result<int> = 1; $b ?int = 2; $c = true ? $a : $b;', 'conditional Result branches require'],
+		['$a result<int> = 1; $b = true ? null : $a;', 'conditional Result branches require'],
+		['$a result_or_bool<int> = 1; $b = true ? $a : true_sentinel;', 'conditional Result branches require'],
 		['function f(result<vector<int>> $r): bool { return isset($r); }', 'unmodified scalar payload'],
 		['function f(result<vector<int>> $r): bool { if ($r) { return true; } return false; }', 'unmodified scalar payload'],
 		['$x = false_sentinel;', 'sentinel requires an explicit Result destination'],
@@ -210,7 +214,42 @@ try
 	Preparation_Cleanup::tree($probe_root);
 	result_check($presence_node->preparation() === null && $presence_node->operand->preparation() === null
 		&& $empty_node->preparation() === null, 'Result probes retained stale facts');
-	echo "Results: value boundaries, conditions/probes, rejections, cleanup and incremental recovery passed\n";
+	result_source($path, '$r result<int> = 1; $a result<int> = true ? $r : 2; '
+		. '$b result<int> = false ? 2 : $r; $c result<int> = $r ?: 3;');
+	$join_root = Model::syntax_files()[0]->root;
+	foreach ([1, 2, 3] as $index) {
+		$join_node = $join_root->body->statements[$index]->initializer;
+		$join_facts = $join_node->require_conditional_preparation();
+		result_check(!$join_facts->addressable, 'Conditional wrapper became an alias');
+		result_check($join_facts->true_conversion->operation === ($index === 2
+			? conversion_operation::result_wrap : conversion_operation::identity), 'Wrong true branch conversion');
+		result_check($join_facts->fallback_conversion->operation === ($index === 2
+			? conversion_operation::identity : conversion_operation::result_wrap), 'Wrong fallback conversion');
+	}
+	Preparation_Cleanup::tree($join_root);
+	result_check($join_node->preparation() === null && $join_node->condition->preparation() === null
+		&& $join_node->fallback->preparation() === null, 'Conditional wrapper retained facts');
+	$valid = 'function source(): result<int> { return 1; } function read(): result<int> { return source() ?: 2; } '
+		. 'function stable(): int { return 9; } $r = read();';
+	$compiler = result_source($path, $valid);
+	$original = Model::$cpp_files[0]->text;
+	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+	$version = $stable->version;
+	file_put_contents($path, str_replace('source(): result<int> { return 1;', 'source(): result<float> { return 1.5;', $valid));
+	foreach ([[$path], []] as $changed) {
+		$compiler->sync($changed);
+		$failed = false;
+		try { $compiler->prepare(); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'conditional Result branches'); }
+		result_check($failed && Model::$cpp_files->is_empty(), 'Conditional payload edit published stale output');
+		result_check($stable->version === $version, 'Conditional edit rebuilt independent body');
+	}
+	file_put_contents($path, $valid);
+	$compiler->update_cpp([$path]);
+	result_check(Model::$cpp_files[0]->text === $original, 'Conditional repair changed output');
+	result_source($path, $valid);
+	result_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental conditional output differs');
+	echo "Results: value boundaries, conditions/probes/joins, rejections, cleanup and incremental recovery passed\n";
 }
 finally {
 	unlink($path);

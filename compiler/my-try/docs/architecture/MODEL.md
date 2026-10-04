@@ -67,7 +67,9 @@ The runtime helper owns selected-output behavior, including clearing error on su
 Match expressions own a selector and ordered arms; each arm owns expression labels
 and one result. Empty arm labels mean default. Arm facts retain exact integer labels
 and a result conversion. Match retains scalar-only admission; conditional preparation
-owns the symmetric scalar/nullable-scalar join and records both branch conversions.
+owns symmetric scalar/nullable-scalar and matching Result/scalar joins and records
+both branch conversions. Result joins preserve a single exact wrapper identity;
+they neither extract a selected payload nor merge wrapper families.
 Switches own selectors and ordered label groups; each group owns
 labels and one ordinary block body. Exact case values are attached to labels after
 bounded constant resolution, before duplicate checking. There are no payload objects, generic sibling chains

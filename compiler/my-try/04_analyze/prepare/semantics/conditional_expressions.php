@@ -33,6 +33,13 @@ final class Conditional_Expression_Preparation
 	private static function join(canonical_type_use $selected, canonical_type_use $fallback,
 		preparation_context $context): canonical_type_use
 	{
+		$selected_role = Result_Conversions::role($selected);
+		$fallback_role = Result_Conversions::role($fallback);
+		if (($selected_role !== null) || ($fallback_role !== null)) {
+			$result_wrapper = $selected_role !== null ? $selected : $fallback;
+			$other = $selected_role !== null ? $fallback : $selected;
+			return self::result_join($result_wrapper, $other, $context);
+		}
 		$selected_domain = self::scalar_domain($selected);
 		$fallback_domain = self::scalar_domain($fallback);
 		if (!$selected_domain->matches($fallback_domain)) {
@@ -44,6 +51,20 @@ final class Conditional_Expression_Preparation
 		Capability_Preparation::require_copy($fallback, $context);
 		Capability_Preparation::require_copy($result, $context);
 		return $result;
+	}
+
+	/** A Result-led join preserves one exact wrapper identity, never mixes families. */
+	private static function result_join(canonical_type_use $wrapper, canonical_type_use $other,
+		preparation_context $context): canonical_type_use
+	{
+		$role /** result_semantics */ = Result_Conversions::role($wrapper);
+		$payload = Result_Conversions::require_scalar_payload($wrapper, $role);
+		if (!$other->matches($wrapper) && !$other->matches($payload)) {
+			throw new \RuntimeException('S2S conditional Result branches require the same wrapper or exact scalar payload');
+		}
+		Capability_Preparation::require_copy($wrapper, $context);
+		Capability_Preparation::require_copy($other, $context);
+		return $wrapper;
 	}
 
 	/** Bare null and broader carriers do not establish a conditional result domain. */
