@@ -580,9 +580,12 @@ abstract class canonical_type implements canonical_type_i
 
 final class null_type extends canonical_type
 {
-	public function __construct(int $identity, private null_type_definition $null_definition)
+	private null_type_definition $null_definition;
+
+	public function __construct(int $identity, null_type_definition $null_definition)
 	{
 		parent::__construct($identity);
+		$this->null_definition = $null_definition;
 	}
 	public function family(): type_family { return type_family::null_sentinel; }
 	public function definition(): type_definition_i { return $this->null_definition; }

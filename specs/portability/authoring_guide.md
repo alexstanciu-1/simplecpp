@@ -84,6 +84,14 @@ conversion, normal STAN, native compilation and PHP/native execution (`10:2`).
 It checks base initialization, parent method dispatch, shared argument identity and
 single argument evaluation. No runtime extension was needed.
 
+When a derived constructor calls `parent::__construct`, use explicit fields rather
+than promoted parameters if promotion would insert assignments before that call.
+The current converter expands promotion at the start of the body, preventing the
+downstream leading-parent-call rule from recognizing the base initializer. Keep
+`parent::__construct(...)` first, then assign the fields. The my-try Chapter 05
+native validation exposed this combination in `null_type`; this is an authoring
+adaptation, not a change to constructor semantics.
+
 ## Additive compound assignments
 
 The converter preserves `+=` and `-=` directly, as it already does `.=`; it must
@@ -95,6 +103,9 @@ not admit the other compound operators or model PHP dynamic numeric coercion.
 `uint32` deltas. Keep offset arithmetic in its declared compact domain; validate
 wide source lengths before narrowing. Mixed-width compound runtime overloads are
 not added by this converter feature.
+
+Use `$count -= 1` for a decrement statement. The current portability converter
+rejects postfix `--`; ordinary PHP acceptance is not evidence of native support.
 
 ## Supported forms and their limits
 

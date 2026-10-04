@@ -1051,7 +1051,7 @@ final class Parser_Run
 			if (($count < 2) || ($count > 3)) {
 				throw new \RuntimeException($this->error_message('take helper requires outputs followed by a source'));
 			}
-			$count--;
+			$count -= 1;
 			$node->source = $arguments[$count];
 		}
 		$node->value_binding = $arguments[0];

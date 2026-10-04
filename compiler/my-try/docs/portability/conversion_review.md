@@ -3,13 +3,45 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers Chapter 04 plus the source adaptations below. The
-subsequent Chapter 05 nullable-definition model refactor has focused PHP and
-generated-program evidence, not a new native compiler checkpoint. See the
-[Chapter 04 closeout](../catalog/04_functions.md#positive-pass-conclusion--2026-10-02).
+The latest checkpoint covers the implemented Chapter 05 nullable and Result slices
+through Result coalescing, plus the source adaptations below. It is not a Chapter 05
+closeout: mixed and the remaining catalog debt are still deferred.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Latest native checkpoint — 2026-10-02 function closeout
+## Latest native checkpoint — 2026-10-04 nullable and Result slices
+
+The worktree based on `917bcb0252b84db4203d1706d2e516ff1588883e`, with two
+authored-PHP portability repairs, passes conversion, native compiler construction,
+PHP/native C++ byte parity and generated-program execution. All 105 compiler/proof
+source hashes (excluding the generated driver) and six harness hashes matched the
+checkout after testing; these identify the tested overlay, not the base alone.
+
+The **12-job** run passes 702 source comparisons/executions (572 S2S and 130
+control-flow fixtures), 179 supplementary probes plus two control-flow error probes,
+198 rejection/recovery cases, and 15 floating-spelling assertions. Separate
+emission/type proofs, the control-flow incremental proof, repeated compilation and
+recovery, and the final incremental native build pass. Nine focused PHP suites also
+pass: results, take, nullable, result_model, type_catalog, constructed_type,
+conversions, incremental_cpp and preparation_recovery.
+
+Attempt 1 stopped at unsupported postfix decrement in the take parser; use `-= 1`.
+Attempt 2 converted all 106 source/driver files but failed native construction:
+promoted `null_type` fields were assigned before `parent::__construct`, preventing
+recognition of the C++ base initializer. An explicit field and assignment after the
+parent call preserve the existing model. No generated output, generator/runtime
+behavior or language semantics were changed. Attempt 3 passed in **471.222 seconds**,
+reusing build objects; this is an observed run, not a performance benchmark.
+
+Evidence: `/tmp/my-try-ch05-native-20261004/summary.json`, `source_hashes.json`,
+`harness_hashes.json`, `candidate.json`, command journals and `logs` through `logs-3`.
+Focused PHP evidence: `/tmp/my-try-ch05-portability-php-20261004/logs/`.
+Reproduce with the standard native command and `--no-stan --types-only --jobs 12`.
+The shared runner used CLI fallback after sandbox FPM socket denial. LLVM and legacy
+STAN remain skipped; native build warnings remain, so this is not a warning-clean
+proof. Chapter 05-specific incremental negative scenarios retain their PHP-suite
+evidence; the native incremental proof remains the separate control-flow scope.
+
+## Earlier native checkpoint — 2026-10-02 function closeout
 
 The worktree based on `f0aca78d42ef7e1baa5c1fd70823bd6bedb108f8`, with this
 checkpoint's five authored-PHP adaptations, passes conversion, native compiler

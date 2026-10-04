@@ -413,6 +413,24 @@ owned unwrapped results, unchanged sources, early boolable rejection and increme
 family-change failure/retry/repair. Shared 12-slot execution used CLI fallback after
 sandbox FPM denial. No native compiler rebuild or LLVM work was performed.
 
+## Native portability checkpoint — 2026-10-04
+
+The implemented nullable and Result slices through coalescing now have a passing
+[native compiler checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-04-nullable-and-result-slices).
+Two authored-source repairs were required: portable decrement in the take parser
+and explicit `null_type` field initialization after its parent constructor. Neither
+changes language semantics or expands the agreed chapter scope.
+
+The run passes 702 PHP/native source comparisons and generated-program executions,
+179 supplementary probes, two control-flow error probes, 198 rejection/recovery
+cases and 15 float-spelling assertions, plus the separate type/emission and
+control-flow incremental proofs. Nine focused PHP suites also pass. Evidence:
+`/tmp/my-try-ch05-native-20261004/` and
+`/tmp/my-try-ch05-portability-php-20261004/`.
+Earlier slice notes describe their original PHP-hosted checkpoints; this checkpoint
+adds native coverage. LLVM, legacy STAN and warning cleanup remain excluded.
+Mixed and the remaining chapter debt are unchanged; this is not chapter closeout.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
