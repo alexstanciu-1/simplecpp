@@ -194,7 +194,7 @@ if (($decision->source_operator !== operator_kind::concatenation)
 }
 foreach ($decision->operands as $operand) {
 	if (($operand->operation !== conversion_operation::identity)
-	|| ($operand->context !== conversion_context::operator_operand)
+	|| ($operand->context !== conversion_context::concatenation)
 	|| (!$operand->target_type->matches($string_type))) {
 		throw new \LogicException('Concatenation lost its string operand boundary');
 	}
@@ -304,8 +304,8 @@ $rejections = [
 	'comparison float' => ['return 1 < 2.0;', 'integer binary operation requires canonical int operands'],
 	'comparison call' => ['function value(): int { return 1; } return value() < 2;', 'binary operation requires order-independent operands'],
 	'relational chain' => ['return 1 < 2 < 3;', 'integer binary operation requires canonical int operands'],
-	'implicit concatenation' => ['$a = "x" . 1;', 'concatenation requires string operands'],
-	'constant concatenation' => ['$a = (PHP_INT_MAX) . "x";', 'concatenation requires string operands'],
+	'wrapper concatenation' => ['$n ?int = 1; $a = "x" . $n;', 'concatenation requires mixed'],
+	'dynamic concatenation' => ['$d dynamic; $a = $d . "x";', 'concatenation requires mixed'],
 	'concatenation call' => ['function value(): string { return "a"; } $a = "x" . value();', 'binary operation requires order-independent operands'],
 	'logical non-bool' => ['return false && 1;', 'logical operation requires canonical bool operands'],
 	'logical skipped unknown' => ['return false && $missing;', 'established local declaration for missing'],

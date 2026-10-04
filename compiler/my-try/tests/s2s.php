@@ -595,7 +595,8 @@ $mixed_fixtures = array_merge(require __DIR__ . '/fixtures/mixed_boundaries.php'
 	require __DIR__ . '/fixtures/mixed_arithmetic.php',
 	require __DIR__ . '/fixtures/mixed_comparisons.php',
 	require __DIR__ . '/fixtures/mixed_updates.php',
-	require __DIR__ . '/fixtures/mixed_logical.php');
+	require __DIR__ . '/fixtures/mixed_logical.php',
+	require __DIR__ . '/fixtures/mixed_concat.php');
 $value_fixtures = array_merge($result_fixtures, $mixed_fixtures);
 foreach ($value_fixtures as $name => [$source, $predicate]) {
 	$cases[$name] = [$source, 0];

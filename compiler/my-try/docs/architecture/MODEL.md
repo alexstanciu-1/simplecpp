@@ -120,6 +120,9 @@ with no storage capabilities/exposure; singleton constant definitions carry thos
 identities through existing lookup. They are not boolean payload values. `nullopt`
 uses the existing null identity. No additional AST or template class is introduced.
 Conversion/comparison/truthiness policy remains worker-owned.
+Concatenation retains ordinary operand conversion decisions with a dedicated text
+context and `text_conversion` operation; no new AST or conversion-chain structure
+is needed. Text normalization is distinct from explicit casts and required extraction.
 Compound preparation retains computation, conversion and `compound_write_back` mode:
 converted native assignment versus mixed stored-kind validation. The latter needs
 the destination's current runtime kind, so it is not an ordinary source/target type

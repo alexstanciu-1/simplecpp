@@ -15,7 +15,7 @@ activate additional operand types or coercions.
 | `==`, `!=`, `<`, `<=`, `>`, `>=` | canonical `int`, `int` | canonical `bool` | Existing runtime wrapper comparisons |
 | `===`, `!==` | canonical `int`, `int` | canonical `bool` | `scpp::php::identical` / `not_identical` |
 | `<=>` | canonical `int`, `int` | canonical `int`, exactly -1/0/1 | Snapshot each operand once, compare with `<` and `>` |
-| `.` | canonical `string`, `string` | canonical `string` | Existing string-wrapper `+` |
+| `.` | mixed, ordinary scalar or literal null | canonical `string` | Prepared text conversion then string-wrapper `+` |
 | `&&`, `\|\|`, `and`, `or` | canonical `bool`, `bool` | canonical `bool` | Convert each operand explicitly to native bool around native lazy operators, wrap result |
 | `xor` | canonical `bool`, `bool` | canonical `bool` | Snapshot native bools left-to-right, compare with `!=`, wrap result |
 
@@ -25,8 +25,11 @@ This follows [runtime arithmetic semantics](../../../runtime/specs/spec.md), not
 standard PHP's division result type. Signed overflow and minimum-int divided by -1
 retain the runtime's native C++ limitations; no wrapping or checked arithmetic is promised.
 
-Concatenation requires an explicit `(string)` cast for a non-string operand. The
-legacy catalog's broad coercion wording is not implemented. Strict comparison
+Concatenation now uses a separate text context for mixed, ordinary scalar and null
+operands; wrappers, direct dynamic and fixed-width peers remain deferred. It reuses
+`php::to_string`, not explicit casts or checked string extraction. `.=` remains
+string/string only. See [chapter 05](catalog/05_dynamic_boundaries.md#mixed-and-scalar-text-concatenation--2026-10-04).
+Strict comparison
 helpers preserve the distinction from ordinary comparison, even though the current
 exact same-type integer slice produces the same truth values. No cross-type equality
 or implicit numeric promotion is admitted.

@@ -58,6 +58,11 @@ final class Mutation_Preparation
 		}
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
+		if ($source_operator === operator_kind::concatenation) {
+			if (!String_Conversions::is_string($target->type) || !String_Conversions::is_string($value->type)) {
+				throw new \RuntimeException('S2S compound concatenation requires string operands; text write-back is deferred');
+			}
+		}
 		$facts = new prepared_compound_assignment_expression();
 		$facts->write_back_mode = Mixed_Conversions::is_mixed($target->type)
 			? compound_write_back::mixed_stored_kind : compound_write_back::converted_assignment;

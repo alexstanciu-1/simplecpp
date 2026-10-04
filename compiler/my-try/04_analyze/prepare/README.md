@@ -167,6 +167,14 @@ escaping exceptions request a full rebuild. The full policy is in
 
 ## Current language boundary
 
+`String_Conversions::decide_text` owns the bounded concatenation context: mixed,
+ordinary scalar and literal-null operands normalize to string using identity or
+`text_conversion`. This dispatch precedes wrapper/null conversion routing, without
+granting general assignment, cast or wrapper-unwrapping permissions. Binary `.`
+retains ordered conversion decisions and an owned string result. `.=` keeps its
+explicit string/string gate pending a separate text write-back slice. Eager
+operand-order checks and interpolation behavior remain unchanged.
+
 `Mixed_Conversions` owns scalar/null boxing and checked required scalar extraction
 at assignment, by-value argument and return boundaries. It recognizes `mixed_semantics`
 and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the

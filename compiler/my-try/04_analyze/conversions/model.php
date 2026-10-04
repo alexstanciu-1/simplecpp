@@ -11,6 +11,7 @@ enum conversion_context
 	case explicit_cast;
 	case operator_operand;
 	case interpolation;
+	case concatenation;
 	case conditional_branch;
 	case coalesce_value;
 }
@@ -20,6 +21,7 @@ enum conversion_operation
 	case identity;
 	case integer_value_cast;
 	case explicit_runtime_cast;
+	case text_conversion;
 	case nullable_empty;
 	case nullable_wrap;
 	case nullable_extract;

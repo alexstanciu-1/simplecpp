@@ -20,6 +20,10 @@ final class CPP_Declarations
 		if ($decision->operation === conversion_operation::identity) {
 			return $expression;
 		}
+		if ($decision->operation === conversion_operation::text_conversion) {
+			$context->headers['lang/php/support/php_string.hpp'] = true;
+			return 'scpp::php::to_string(' . $expression . ')';
+		}
 		if ($decision->operation === conversion_operation::nullable_empty) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}

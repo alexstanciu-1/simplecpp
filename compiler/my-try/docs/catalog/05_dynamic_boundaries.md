@@ -9,6 +9,41 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Mixed and scalar text concatenation — 2026-10-04
+
+Implemented binary `.` for mixed, ordinary bool/int/float/string and literal null,
+in either order. `String_Conversions` owns text-context admission through the named
+`concatenation` context; retained `text_conversion` decisions call the existing
+`scpp::php::to_string` helper. String operands retain identity conversion. The
+existing binary node and primitive string concatenation operation are reused.
+
+Important consequences:
+
+- The result is an owned string, even for mixed/mixed operands. A mixed destination
+  separately boxes that result; inputs are not changed.
+- This is neither required string extraction nor an explicit string cast. Null and
+  false stringify to empty text, true to `"1"`; boxed tables stringify to `"Array"`
+  and boxed dynamic objects to `"Object"`. Existing helper formatting owns numbers.
+- Known wrappers, direct dynamic handles, fixed-width peers and storage modifiers
+  reject in preparation. Boxed runtime kinds are interpreted by the text helper.
+- Existing eager operand-order restrictions remain: calls/mutations in binary
+  concatenation must first be stabilized in separate statements.
+- `.=` retains its previously supported string/string boundary. New mixed/scalar
+  write-back needs a separate slice; numeric stored-kind validation must not be
+  reused accidentally. Interpolation and explicit casts are unchanged.
+
+Proof owners: `tests/mixed.php`, `tests/fixtures/mixed_concat.php`, operator and
+compound-assignment suites. Legacy concatenation lowering was reviewed; v0.2 keeps
+semantic admission in preparation instead of asking the emitter to infer types.
+
+Verification: 15 PHP suites and 308 generated programs pass in
+`/tmp/my-try-mixed-concat-20261004-2`. All 18 new programs pass without PCH in
+`/tmp/my-try-mixed-concat-20261004-no-pch-2`. The first PHP attempt exposed a stale
+compound-context assertion; the first no-PCH attempt exposed a missing `scpp/cast.hpp`
+dependency in `php_string.hpp`, now explicit. The header-first runtime regression
+is `tests/runtime/native/test_php_text_header.cpp`; its supplementary proof also
+covers owned/shared/weak tables. Native compiler rebuilding remains on demand.
+
 ## Mixed short-circuit logical operators — 2026-10-04
 
 Implemented `&&` / `||` and their `and` / `or` spellings when at least one operand

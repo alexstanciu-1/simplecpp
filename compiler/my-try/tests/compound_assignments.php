@@ -50,7 +50,7 @@ foreach ([['&=', '7', '3', operator_operation::integer_bitwise_and],
 		throw new \LogicException('Compound update lost computation, write-back or value-result facts');
 	}
 	foreach ($facts->decision->operands as $operand) {
-		if (($operand->context !== conversion_context::operator_operand)
+		if (($operand->context !== ($symbol === '.=' ? conversion_context::concatenation : conversion_context::operator_operand))
 			|| ($operand->operation !== conversion_operation::identity)) {
 			throw new \LogicException('Compound update bypassed operand conversion preparation');
 		}

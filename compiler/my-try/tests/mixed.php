@@ -63,6 +63,8 @@ try
 	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
 	$arithmetic = Mixed_Operators::decide(operator_kind::addition, [$integer, $box]);
+	$text = Conversion_Preparation::decide($box, Language_Types::string_type(Model::$language_scope), conversion_context::concatenation);
+	mixed_check($text->operation === conversion_operation::text_conversion, 'Text conversion depended on mixed spelling');
 	$logical = Mixed_Operators::decide_logical(operator_kind::logical_and, [$integer, $box]);
 	mixed_check($logical->operation === operator_operation::condition_and
 		&& $logical->result_type->matches(Language_Types::boolean(Model::$language_scope))
@@ -103,6 +105,18 @@ try
 		'Logical facts lost truthiness or added boolean conversions');
 	Preparation_Cleanup::tree($logical_root);
 	mixed_check($logical_node->preparation() === null, 'Logical operand facts survived cleanup');
+	mixed_source($path, '$v mixed = 7; $text string = "x" . $v; $boxed mixed = $v . null;');
+	$text_root = Model::syntax_files()[0]->root;
+	$text_node = $text_root->body->statements[1]->initializer;
+	$text_facts = $text_node->require_binary_preparation();
+	mixed_check($text_facts->decision->operation === operator_operation::string_concatenation
+		&& $text_facts->decision->operands[1]->operation === conversion_operation::text_conversion
+		&& String_Conversions::is_string($text_facts->type) && !$text_facts->addressable,
+		'Concatenation lost its text conversion or owned string result');
+	mixed_check($text_root->body->statements[2]->require_preparation()->conversion->operation
+		=== conversion_operation::mixed_box, 'Mixed destination changed concatenation result type');
+	Preparation_Cleanup::tree($text_root);
+	mixed_check($text_node->preparation() === null, 'Text conversion survived cleanup');
 	mixed_source($path, '$v mixed = 7; $after mixed = ($v += 1); $before mixed = $v++;');
 	$update_root = Model::syntax_files()[0]->root;
 	$compound_node = $update_root->body->statements[1]->initializer;
@@ -194,6 +208,10 @@ try
 		['$x mixed = 7; $x += true;', 'mixed arithmetic requires'],
 		['$x mixed = 7; $n int = 1; $n += $x;', 'mixed compound assignment into native storage is deferred'],
 		['$x mixed = 7; $x &= 1;', 'mixed operator is outside'],
+		['$x mixed = 7; $x .= "x";', 'compound concatenation requires string'],
+		['$x mixed = 7; $n result<int> = 1; $y = $x . $n;', 'concatenation requires mixed'],
+		['$x mixed = 7; $n uint8 = 1; $y = $x . $n;', 'concatenation requires mixed'],
+		['$x mixed = 7; $y = $x++ . "x";', 'order-independent operands'],
 		['$x mixed = 7; $x %= 1.5;', 'mixed remainder requires'],
 		['$x mixed = 7; $y = $x++ + $x;', 'order-independent operands'],
 		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'mixed arithmetic requires'],
@@ -276,7 +294,7 @@ try
 		'$v mixed = source(); return $v + 1;', 'return -source();',
 		'$v = source(); return $v == 1 ? 1 : 0;', '$v = source(); return $v < 1 ? 1 : 0;',
 		'return source() === null ? 1 : 0;', '$v = source(); $v += 1; return (int)$v;',
-		'$v = source(); return ++$v;'] as $consumer)
+		'$v = source(); return ++$v;', '$v = source(); return (int)($v . "0");'] as $consumer)
 	{
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';

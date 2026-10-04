@@ -1,5 +1,6 @@
 #pragma once
 
+#include "scpp/cast.hpp"
 #include "lang/php/support/php_common.hpp"
 #include "modules/strings/strings.hpp"
 #include "scpp/stable_hash.hpp"

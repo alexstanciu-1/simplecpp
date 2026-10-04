@@ -93,6 +93,9 @@ final class Operator_Preparation
 		if ($operator_context !== operator_context::expression) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
 		}
+		if ($source_operator === operator_kind::concatenation) {
+			return self::decide_concatenation($operands, $context);
+		}
 		if (q_count($operands) === 2) {
 			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {
 				if (Mixed_Conversions::is_mixed($operands[0]) || Mixed_Conversions::is_mixed($operands[1])) {
@@ -111,9 +114,6 @@ final class Operator_Preparation
 		if (($source_operator === operator_kind::unary_plus) || ($source_operator === operator_kind::unary_minus)
 			|| ($source_operator === operator_kind::bitwise_not) || ($source_operator === operator_kind::logical_not)) {
 			return self::decide_unary($source_operator, $operands, $context);
-		}
-		if ($source_operator === operator_kind::concatenation) {
-			return self::decide_concatenation($operands, $context);
 		}
 		if (($source_operator === operator_kind::logical_and) || ($source_operator === operator_kind::logical_or)
 			|| ($source_operator === operator_kind::logical_xor)) {
@@ -189,7 +189,7 @@ final class Operator_Preparation
 		return $decision;
 	}
 
-	/** The bounded string candidate requires explicit casts at non-string source boundaries. */
+	/** Normalize each operand to text before primitive string concatenation. */
 	private static function decide_concatenation(array $operands /** vector<canonical_type_use> */,
 		preparation_context $context): operator_decision
 	{
@@ -197,17 +197,14 @@ final class Operator_Preparation
 			throw new \LogicException('Concatenation requires two operands');
 		}
 		$string_type = $context->string_type;
-		if ((!$operands[0]->matches($string_type)) || (!$operands[1]->matches($string_type))) {
-			throw new \RuntimeException('S2S concatenation requires string operands; use an explicit string cast');
-		}
 		$decision = new operator_decision();
 		$decision->source_operator = operator_kind::concatenation;
 		$decision->operation = operator_operation::string_concatenation;
 		$decision->result_type = $string_type;
 		$decision->operands[] = Conversion_Preparation::decide(
-			$operands[0], $string_type, conversion_context::operator_operand);
+			$operands[0], $string_type, conversion_context::concatenation);
 		$decision->operands[] = Conversion_Preparation::decide(
-			$operands[1], $string_type, conversion_context::operator_operand);
+			$operands[1], $string_type, conversion_context::concatenation);
 		return $decision;
 	}
 

@@ -10,6 +10,9 @@ final class Conversion_Preparation
 		conversion_context $context): conversion_decision
 	{
 		Type_Preparation::require_value_type($target);
+		if ($context === conversion_context::concatenation) {
+			return String_Conversions::decide_text($source, $target, $context);
+		}
 		if (($context === conversion_context::explicit_cast) && $target->by_value()) {
 			throw new \RuntimeException('S2S explicit cast target cannot use a type-use modifier');
 		}
