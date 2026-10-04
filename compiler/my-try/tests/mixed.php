@@ -63,6 +63,11 @@ try
 	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
 	$arithmetic = Mixed_Operators::decide(operator_kind::addition, [$integer, $box]);
+	$comparison = Mixed_Operators::decide(operator_kind::identical, [$integer, $box]);
+	mixed_check($comparison->operation === operator_operation::mixed_identical
+		&& $comparison->result_type->matches(Language_Types::boolean(Model::$language_scope))
+		&& $comparison->operands[0]->operation === conversion_operation::identity,
+		'Mixed comparison depended on spelling or boxed strict identity operands');
 	mixed_check($arithmetic->operation === operator_operation::mixed_addition
 		&& $arithmetic->result_type->matches($box)
 		&& $arithmetic->operands[0]->operation === conversion_operation::mixed_box
@@ -82,6 +87,28 @@ try
 	Preparation_Cleanup::tree($arithmetic_root);
 	mixed_check($sum_node->preparation() === null && $negative_node->preparation() === null,
 		'Mixed arithmetic retained stale facts');
+	mixed_source($path, '$v mixed = null; $a bool = $v === null; $b bool = null !== $v; '
+		. '$c bool = $v == null; $d bool = $v < 1.0;');
+	$comparison_root = Model::syntax_files()[0]->root;
+	foreach ([1, 2, 3, 4] as $position)
+	{
+		$comparison_node = $comparison_root->body->statements[$position]->initializer;
+		$decision = $comparison_node->require_binary_preparation()->decision;
+		mixed_check($decision->result_type->matches(Language_Types::boolean(Model::$language_scope))
+			&& !$comparison_node->require_preparation()->addressable, 'Comparison lost its owned bool result');
+		if ($position < 3) {
+			$null_operand = $decision->operands[$position === 1 ? 1 : 0];
+			mixed_check($null_operand->operation === conversion_operation::identity
+				&& Nullable_Conversions::is_null($null_operand->target_type), 'Strict identity boxed literal null');
+		}
+		else {
+			mixed_check($decision->operands[1]->operation === conversion_operation::mixed_box,
+				'Ordinary comparison did not normalize its peer');
+		}
+	}
+	Preparation_Cleanup::tree($comparison_root);
+	mixed_check($comparison_root->body->statements[1]->initializer->preparation() === null,
+		'Mixed comparison retained stale facts');
 	mixed_source($path, '$d dynamic; $m mixed = (mixed)$d; $again dynamic = (dynamic)$m;');
 	$bridge_root = Model::syntax_files()[0]->root;
 	mixed_check($bridge_root->body->statements[1]->initializer->require_cast_preparation()->conversion->operation
@@ -125,7 +152,12 @@ try
 		['$x mixed = 7; $y = $x % 1.5;', 'mixed remainder requires'],
 		['$x mixed = 7; $y = 1.5 % $x;', 'mixed remainder requires'],
 		['$x mixed = 7; $y = $x ** 2;', 'mixed operator is outside'],
-		['$x mixed = 7; $y = $x == 2;', 'mixed operator is outside'],
+		['$x mixed = 7; $y = $x <=> 2;', 'mixed operator is outside'],
+		['$x mixed = 7; $y = $x < "2";', 'mixed ordering requires'],
+		['$x mixed = 7; $y = $x > null;', 'mixed ordering requires'],
+		['$x mixed = 7; $n uint8 = 2; $y = $x === $n;', 'mixed equality requires'],
+		['$x mixed = 7; $n ?int = 2; $y = $x == $n;', 'mixed equality requires'],
+		['$x mixed = 7; $d dynamic; $y = $x === $d;', 'mixed equality requires'],
 		['$x mixed = 7; $y = ~$x;', 'mixed operator is outside'],
 		['$x mixed = 7; $x += 1;', 'mixed compound assignment is deferred'],
 		['$x mixed = 7; $n int = 1; $n += $x;', 'mixed compound assignment is deferred'],
@@ -202,7 +234,9 @@ try
 		'return empty(source()) ? 1 : 0;', 'return source() ?? 1;',
 		'return source() ?: 1;', 'return true ? source() : 1;',
 		'return (int)(mixed)(dynamic)source();',
-		'$v mixed = source(); return $v + 1;', 'return -source();'] as $consumer)
+		'$v mixed = source(); return $v + 1;', 'return -source();',
+		'$v = source(); return $v == 1 ? 1 : 0;', '$v = source(); return $v < 1 ? 1 : 0;',
+		'return source() === null ? 1 : 0;'] as $consumer)
 	{
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';

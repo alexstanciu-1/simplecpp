@@ -500,6 +500,9 @@ Policy flexibility is allowed only through configuration/version changes, not th
 	- `result_or_bool<T>` normalizes to PHP `false`, PHP `true`, or wrapped `T`
 	- `result<T>` compares success payloads by wrapped-value identity and error states by structured `error_t` payload equality
 	- `mixed_t` compares by active runtime kind first, then by the exact payload of that kind
+	- for matching boxed table/shared-table/dynamic kinds, absent backing handles compare
+	  equal only to another absent handle; a present table (even with no entries) is
+	  distinct from an absent handle. Nonempty backing handles retain content comparison.
 - `null_t`, `nullopt_t`, and `nullptr_t` all normalize to PHP `null`
 - `shared_p<T> === shared_p<U>` compares managed object identity when either pointer type
   implicitly converts to the other (same type or accessible, unambiguous base view).

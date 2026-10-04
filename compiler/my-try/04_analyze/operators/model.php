@@ -67,6 +67,14 @@ enum operator_operation {
 	case mixed_multiplication;
 	case mixed_division;
 	case mixed_remainder;
+	case mixed_equal;
+	case mixed_not_equal;
+	case mixed_identical;
+	case mixed_not_identical;
+	case mixed_less;
+	case mixed_less_equal;
+	case mixed_greater;
+	case mixed_greater_equal;
 	case integer_three_way;
 	case boolean_xor;
 	case boolean_and;

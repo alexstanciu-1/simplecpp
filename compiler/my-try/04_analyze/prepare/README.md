@@ -172,7 +172,7 @@ at assignment, by-value argument and return boundaries. It recognizes `mixed_sem
 and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the
 existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
 is the only boxed integer admitted in this slice; fixed widths, implicit cross-carrier
-bridges, wrapper boxing and nonnumeric operator contexts remain deferred. Selection contexts admit only
+bridges, wrapper boxing and further operator families remain deferred. Selection contexts admit only
 identity mixed copies and ordinary scalar boxing, never extraction or bare-null branches.
 Explicit bool/int/float/string
 casts record `explicit_runtime_cast` and call `cast<T>`, not `required_cast<T>`.
@@ -188,13 +188,22 @@ eager parents still inspect its subtree for operand-order hazards. Runtime paylo
 is not preparation failure. Reference arguments retain exact stable-storage rules.
 
 `Mixed_Operators` selects unary signs and binary numeric arithmetic on existing
-operator decisions. Operator-operand conversions admit matching mixed identity or
-ordinary int/float boxing, with no extraction. `%` rejects statically known float
+operator decisions. Arithmetic admission allows matching mixed or ordinary int/float
+peers, with no extraction. `%` rejects statically known float
 peers; unknown mixed payloads are checked by runtime dispatch. Results stay mixed,
 so typed consumers still apply their independent boundary checks. Mutation preparation
 explicitly defers mixed compound updates even though it shares binary selection.
 Direct dynamic handles are nonnumeric; future mixed-valued property reads reuse this
 owner without adding a dynamic-object arithmetic family.
+
+Mixed comparisons reuse that owner and return bool. Equality admits scalar/null
+peers; ordering remains numeric. Operator admission owns those domains, while
+`Mixed_Conversions` normalizes admitted scalar/null peers into mixed without
+extraction. Strict identity instead retains each operand's original type and uses
+the shared runtime helper; literal null must not be boxed because empty-handle
+normalization differs from mixed/mixed kind comparison. Nullable null comparisons
+keep their separate presence-check path. Runtime table/weak-carrier comparison
+limits and the approved empty-carrier repair are recorded in chapter 05.
 
 `Result_Conversions` in `conversions/results.php` selects exact scalar payload wrapping,
 same-type copies and explicit legacy false/true state construction. The three Result

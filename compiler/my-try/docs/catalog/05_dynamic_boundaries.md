@@ -9,6 +9,63 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Mixed comparisons and empty-carrier repair — 2026-10-04
+
+Implemented `==`, `!=`, `===`, `!==`, `<`, `<=`, `>` and `>=` through the existing
+binary AST and `Mixed_Operators`. All return owned bool values. Equality/identity
+admit matching mixed or mixed with bool, ordinary int, float, string and literal
+null in either order. Ordering admits mixed/mixed and mixed with ordinary numeric
+peers. Known invalid peer types reject during preparation; invalid boxed payloads
+remain runtime failures. Fixed widths, wrappers, `<=>` and direct dynamic-handle
+comparisons remain deferred.
+
+Important consequences:
+
+- Ordinary equality boxes scalar/null peers and uses existing mixed dispatch.
+  Strict identity preserves operand types, including literal null, and calls the
+  shared identity helper. Neither path extracts a scalar from mixed first.
+- Boxed int `1` and float `1.0` compare equal but not strictly identical. Numeric
+  string equality follows the runtime equality contract; strict identity does not
+  perform numeric-string conversion.
+- Literal-null identity normalizes empty handles. Two mixed operands compare their
+  runtime kinds first: an empty boxed dynamic can be identical to literal null but
+  not to a mixed containing null. Do not replace this with a raw tag test or box
+  literal null before strict identity.
+- Existing table behavior is operation-specific: ordinary dynamic/shared equality
+  compares target identity, while same-kind boxed table strict identity compares
+  contents. Different boxed kinds remain non-identical. Owned-table ordinary
+  equality and table ordering throw; this slice does not introduce deep equality.
+- The runtime strict-identity helper previously dereferenced null table pointers.
+  With user approval, its same-kind table branch now compares absent handles before
+  dereferencing: both absent is true; exactly one absent is false. Nonempty content
+  comparison is unchanged. An allocated empty table is not an absent handle.
+- The identity header now includes the operator declarations used by its scalar
+  helper instantiations. Those dependencies previously arrived indirectly through
+  umbrella headers/PCH; standalone mixed/scalar identity exposed the missing include.
+- Eager binary operand-order restrictions remain. Strict literal-null comparisons
+  retain the existing once-only effectful-operand allowance. Failed comparisons
+  leave their destination unchanged.
+
+The original empty-dynamic repro and expanded
+`tests/runtime/native/test_strict_identity_null_dynamic.cpp` pass with UBSan in
+`/tmp/my-try-mixed-comparison-runtime-20261004`. Compiler proof owners are
+`tests/mixed.php` and `tests/fixtures/mixed_comparisons.php`. This is a focused
+runtime repair and generated-program proof, not a native compiler rebuild.
+
+Final verification: 14 PHP suites and 254 generated programs pass in
+`/tmp/my-try-mixed-comparisons-20261004-2`. The 20 comparison programs plus the
+empty-handle regression, shared-identity regression and original failure probe pass
+without PCH and with UBSan on their translation units/inline helpers in
+`/tmp/my-try-mixed-comparisons-20261004-no-pch-2`. The shared snippet runtime object
+is not sanitizer-instrumented. First PHP checks passed; the first generated pass
+exposed test-only name-mangling expectations and the missing identity-header
+dependency. Both were corrected before the final passing runs.
+
+**MIXED-COMPARE-001 debt:** reconcile the normative weak-table equality wording
+(both `==`/`!=` described as false on expiration) with the existing runtime's
+`!=` implementation as the negation of `==`. Weak-carrier semantics are not changed
+by this slice. Recursive/cyclic table content-comparison hardening is also deferred.
+
 ## Mixed numeric arithmetic — 2026-10-04
 
 Implemented binary `+`, `-`, `*`, `/`, `%` and unary `+`/`-` for mixed values.

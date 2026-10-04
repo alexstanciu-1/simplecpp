@@ -41,12 +41,12 @@ final class Mixed_Conversions
 				if ($source->matches($target)) {
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
 				}
-				if ($source->matches(Language_Types::integer(Model::$language_scope))
-					|| $source->matches(Language_Types::floating(Model::$language_scope))) {
+				// The operator owner validates its numeric/equality domain before normalization.
+				if (self::is_scalar_payload($source) || Nullable_Conversions::is_null($source)) {
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::mixed_box);
 				}
 			}
-			throw new \RuntimeException('S2S mixed arithmetic requires matching mixed, ordinary int or float operands');
+			throw new \RuntimeException('S2S mixed operator normalization requires matching mixed, scalar or null operands');
 		}
 		if (($context === conversion_context::conditional_branch) || ($context === conversion_context::coalesce_value))
 		{

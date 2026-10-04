@@ -535,28 +535,36 @@ final class CPP_Generator
 		elseif ($decision->operation === operator_operation::integer_shift_right) {
 			$spelling = '>>';
 		}
-		elseif ($decision->operation === operator_operation::integer_equal) {
+		elseif (($decision->operation === operator_operation::integer_equal)
+			|| ($decision->operation === operator_operation::mixed_equal)) {
 			$spelling = '==';
 		}
-		elseif ($decision->operation === operator_operation::integer_not_equal) {
+		elseif (($decision->operation === operator_operation::integer_not_equal)
+			|| ($decision->operation === operator_operation::mixed_not_equal)) {
 			$spelling = '!=';
 		}
-		elseif ($decision->operation === operator_operation::integer_identical) {
+		elseif (($decision->operation === operator_operation::integer_identical)
+			|| ($decision->operation === operator_operation::mixed_identical)) {
 			$spelling = 'scpp::php::identical';
 		}
-		elseif ($decision->operation === operator_operation::integer_not_identical) {
+		elseif (($decision->operation === operator_operation::integer_not_identical)
+			|| ($decision->operation === operator_operation::mixed_not_identical)) {
 			$spelling = 'scpp::php::not_identical';
 		}
-		elseif ($decision->operation === operator_operation::integer_less) {
+		elseif (($decision->operation === operator_operation::integer_less)
+			|| ($decision->operation === operator_operation::mixed_less)) {
 			$spelling = '<';
 		}
-		elseif ($decision->operation === operator_operation::integer_less_equal) {
+		elseif (($decision->operation === operator_operation::integer_less_equal)
+			|| ($decision->operation === operator_operation::mixed_less_equal)) {
 			$spelling = '<=';
 		}
-		elseif ($decision->operation === operator_operation::integer_greater) {
+		elseif (($decision->operation === operator_operation::integer_greater)
+			|| ($decision->operation === operator_operation::mixed_greater)) {
 			$spelling = '>';
 		}
-		elseif ($decision->operation === operator_operation::integer_greater_equal) {
+		elseif (($decision->operation === operator_operation::integer_greater_equal)
+			|| ($decision->operation === operator_operation::mixed_greater_equal)) {
 			$spelling = '>=';
 		}
 		elseif ($decision->operation === operator_operation::integer_three_way) {
@@ -605,7 +613,9 @@ final class CPP_Generator
 				. ' static_cast<bool>(' . $right . '))';
 		}
 		if (($decision->operation === operator_operation::integer_identical)
-			|| ($decision->operation === operator_operation::integer_not_identical)) {
+			|| ($decision->operation === operator_operation::integer_not_identical)
+			|| ($decision->operation === operator_operation::mixed_identical)
+			|| ($decision->operation === operator_operation::mixed_not_identical)) {
 			$context->headers['lang/php/operators/identity/strict_identity.hpp'] = true;
 			return $spelling . '(' . $left . ', ' . $right . ')';
 		}

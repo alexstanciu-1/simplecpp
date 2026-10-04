@@ -95,6 +95,9 @@ final class Operator_Preparation
 		}
 		if (q_count($operands) === 2) {
 			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {
+				if (Mixed_Conversions::is_mixed($operands[0]) || Mixed_Conversions::is_mixed($operands[1])) {
+					return Mixed_Operators::decide($source_operator, $operands);
+				}
 				return Nullable_Operators::decide_null_comparison($source_operator, $operands, $context);
 			}
 		}

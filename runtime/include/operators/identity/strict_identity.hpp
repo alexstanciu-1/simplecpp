@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lang/php/support/php_common.hpp"
+#include "scpp/generated/operators.hpp"
 
 namespace scpp {
 
@@ -193,8 +194,15 @@ inline bool_t identical_same_kind_mixed(const mixed_t &left, const mixed_t &righ
 			return bool_t(left.get_string().native_value() == right.get_string().native_value());
 		case mixed_t::kind_t::table_v:
 		case mixed_t::kind_t::shared_table_v:
-		case mixed_t::kind_t::dynamic_v:
-			return identical_hash_contents(*left.table_if(), *right.table_if());
+		case mixed_t::kind_t::dynamic_v: {
+			const auto *left_table = left.table_if();
+			const auto *right_table = right.table_if();
+			// Empty handles have no contents to dereference; an allocated empty table is distinct.
+			if (left_table == nullptr || right_table == nullptr) {
+				return bool_t(left_table == right_table);
+			}
+			return identical_hash_contents(*left_table, *right_table);
+		}
 		case mixed_t::kind_t::weak_table_v:
 			return left == right;
 	}
