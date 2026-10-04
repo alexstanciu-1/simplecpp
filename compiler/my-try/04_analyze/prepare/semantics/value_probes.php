@@ -17,7 +17,12 @@ final class Value_Probe_Preparation
 			$type = $operand->type;
 			$payload = Nullable_Conversions::payload($type);
 			$result_role = Result_Conversions::role($type);
-			if ($result_role !== null) {
+			if (Mixed_Conversions::is_mixed($type)) {
+				if ($type->by_value()) {
+					throw new \RuntimeException('S2S mixed probes do not support effective storage modifiers');
+				}
+			}
+			elseif ($result_role !== null) {
 				Result_Conversions::require_scalar_payload($type, $result_role);
 			}
 			elseif ($payload !== null) {
@@ -25,7 +30,7 @@ final class Value_Probe_Preparation
 				if ($type->by_value()) { throw new \RuntimeException('S2S nullable probes do not support storage modifiers'); }
 			}
 			elseif (!Conversion_Preparation::is_scalar($type) && !Nullable_Conversions::is_null($type)) {
-				throw new \RuntimeException('S2S value probes require a scalar, nullable scalar or null');
+				throw new \RuntimeException('S2S value probes require a scalar, nullable scalar, Result scalar, mixed or null');
 			}
 			$facts = new prepared_value_probe();
 			$facts->type = $context->boolean;

@@ -54,6 +54,7 @@ enum truthiness_operation
 	case nullable_condition;
 	case result_condition;
 	case error_condition;
+	case mixed_condition;
 }
 
 final class truthiness_decision

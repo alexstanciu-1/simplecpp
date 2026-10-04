@@ -23,12 +23,19 @@ final class Operator_Preparation
 		elseif ($text !== '+') {
 			throw new \RuntimeException('S2S unary operator is not supported');
 		}
-		self::require_order_independent_operand($syntax->operand);
-		$operand = Expression_Preparation::prepare($syntax->operand, $context);
-		$facts = new prepared_unary_expression();
-		$facts->decision = self::decide($source_operator, [$operand->type], operator_context::expression, $context);
-		$facts->type = $facts->decision->result_type;
-		return $facts;
+		// One operand has no sibling ordering ambiguity. Its eager parent still checks the subtree.
+		$statement_assignment = $context->statement_assignment;
+		$context->statement_assignment = false;
+		try {
+			$operand = Expression_Preparation::prepare($syntax->operand, $context);
+			$facts = new prepared_unary_expression();
+			$facts->decision = self::decide($source_operator, [$operand->type], operator_context::expression, $context);
+			$facts->type = $facts->decision->result_type;
+			return $facts;
+		}
+		finally {
+			$context->statement_assignment = $statement_assignment;
+		}
 	}
 
 	/** Prepare one binary syntax shape and attach only its selected semantic decision. */
@@ -127,7 +134,7 @@ final class Operator_Preparation
 			. ' argument(s) overload resolution is deferred');
 	}
 
-	/** One exact candidate per prefix operator; no implicit truthiness or numeric promotion. */
+	/** Exact numeric/bool candidates plus explicit condition-negation roles; no numeric promotion. */
 	private static function decide_unary(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
@@ -137,7 +144,8 @@ final class Operator_Preparation
 		$expected = $context->integer;
 		if ($source_operator === operator_kind::logical_not)
 		{
-			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope)))
+			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope))
+				|| Mixed_Conversions::is_mixed($operands[0]))
 			{
 				$decision = new operator_decision();
 				$decision->source_operator = $source_operator;

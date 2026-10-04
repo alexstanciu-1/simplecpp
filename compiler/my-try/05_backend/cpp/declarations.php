@@ -65,6 +65,7 @@ final class CPP_Declarations
 			return '(' . $expression . ').native_value()';
 		}
 		if (($decision->operation === truthiness_operation::scalar_condition)
+			|| ($decision->operation === truthiness_operation::mixed_condition)
 			|| ($decision->operation === truthiness_operation::error_condition)
 			|| ($decision->operation === truthiness_operation::result_condition)
 			|| ($decision->operation === truthiness_operation::nullable_condition)) {

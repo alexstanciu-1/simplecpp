@@ -169,7 +169,13 @@ at assignment, by-value argument and return boundaries. It recognizes `mixed_sem
 and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the
 existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
 is the only boxed integer admitted in this slice; fixed widths, cross-carrier/wrapper
-bridges, explicit casts and operator contexts remain deferred. Runtime payload failure
+bridges and general operator contexts remain deferred. Explicit bool/int/float/string
+casts record `explicit_runtime_cast` and call `cast<T>`, not `required_cast<T>`.
+`Condition_Truthiness` admits mixed through `mixed_condition`; all condition consumers
+and mixed `!` reuse runtime kind dispatch, not explicit boolean conversion. Boxed
+table/object conditions currently throw at runtime; broader kind truthiness is debt.
+Unary preparation permits one effectful operand, without introducing new bindings;
+eager parents still inspect its subtree for operand-order hazards. Runtime payload failure
 is not preparation failure. Reference arguments retain exact stable-storage rules.
 
 `Result_Conversions` in `conversions/results.php` selects exact scalar payload wrapping,
@@ -198,7 +204,7 @@ logical negation records that decision instead of introducing a second error-sta
 
 `Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
 boolean operation facts on `value_probe_node`. Scalars, nullable scalars, Result
-scalars and literal null are supported; direct path probes and broader carriers are deferred. Emission
+scalars, mixed and literal null are supported; direct path probes and other carriers are deferred. Emission
 uses separate runtime probe helpers, not condition truthiness: `empty("0")` is false.
 Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
 is introduced, and probes cannot establish new locals through nested assignment.

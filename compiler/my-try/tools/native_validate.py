@@ -99,6 +99,7 @@ def validate(args, target, results, logs, started, runner):
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
     harness_paths = [Path(__file__), APP / 'tests/control_flow.php', APP / 'tests/s2s.php',
                      APP / 'tests/fixtures/result_construction.php', APP / 'tests/fixtures/mixed_boundaries.php',
+                     APP / 'tests/fixtures/mixed_operations.php',
                      APP / 'tools/cpp_fixture.py',
                      APP / 'tests/native_driver.php.in', APP / 'tests/s2s_proof.php']
     (results / 'harness_hashes.json').write_text(json.dumps({

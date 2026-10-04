@@ -1,6 +1,6 @@
 <?php
 
-/* Scalar boxing and required mixed extraction; payload checks remain runtime-owned. */
+/* Mixed value boundaries and explicit casts; payload checks remain runtime-owned. */
 namespace scpp\compiler;
 
 final class Mixed_Conversions
@@ -26,6 +26,12 @@ final class Mixed_Conversions
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
+		if ($context === conversion_context::explicit_cast) {
+			if ($source->by_value() || !self::is_scalar_payload($target)) {
+				throw new \RuntimeException('S2S explicit mixed casts require bool, ordinary int, float or string without storage modifiers');
+			}
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::explicit_runtime_cast);
+		}
 		if (($context !== conversion_context::assignment) && ($context !== conversion_context::argument)
 			&& ($context !== conversion_context::return_value)) {
 			throw new \RuntimeException('S2S mixed conversion currently supports only assignment, argument and return value boundaries');

@@ -51,6 +51,26 @@ try
 		=== conversion_operation::mixed_box, 'Mixed boxing depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $integer, conversion_context::return_value)->operation
 		=== conversion_operation::mixed_extract, 'Mixed extraction depended on source spelling');
+	mixed_check(Conversion_Preparation::decide($box, $integer, conversion_context::explicit_cast)->operation
+		=== conversion_operation::explicit_runtime_cast, 'Explicit mixed cast reused required extraction');
+	mixed_check(Condition_Truthiness::decide($box)->operation === truthiness_operation::mixed_condition,
+		'Mixed truthiness depended on source spelling');
+
+	mixed_source($path, '$v mixed = "false"; if ($v) {} $n int = (int)$v; '
+		. '$b bool = !$v; $p bool = isset($v); $e bool = empty($v);');
+	$probe_root = Model::syntax_files()[0]->root;
+	mixed_check($probe_root->body->statements[1]->require_preparation()->truthiness->operation
+		=== truthiness_operation::mixed_condition, 'Missing mixed condition fact');
+	mixed_check(str_contains(Model::$cpp_files[0]->text, 'scpp::cast<scpp::int_t<>>'),
+		'Explicit mixed cast did not use its runtime owner');
+	$probe_nodes = [];
+	foreach ([2, 3, 4, 5] as $position) {
+		$probe_nodes[] = $probe_root->body->statements[$position]->initializer;
+	}
+	Preparation_Cleanup::tree($probe_root);
+	foreach ($probe_nodes as $probe_node) {
+		mixed_check($probe_node->preparation() === null, 'Mixed operation retained stale facts');
+	}
 
 	$rejections = [
 		['$n uint8 = 7; $x mixed = $n;', 'mixed boxing currently supports'],
@@ -61,7 +81,18 @@ try
 		['$x mixed = 7; $v result<int> = $x;', 'mixed extraction currently supports'],
 		['$d dynamic; $x mixed = $d;', 'mixed boxing currently supports'],
 		['$x mixed = 7; $d dynamic = $x;', 'mixed extraction currently supports'],
-		['$x mixed = 7; $y = (int)$x;', 'mixed conversion currently supports'],
+		['$x mixed = 7; $y = (uint8)$x;', 'explicit mixed casts require'],
+		['$x mixed = 7; $y = $x + 1;', 'S2S'],
+		['$x mixed = 7; $y = $x && true;', 'S2S'],
+		['$x mixed = 7; $y = $x ?: 1;', 'S2S'],
+		['$x mixed = 7; $y = $x ?? 1;', 'S2S'],
+		['$x mixed = 7; $y = isset($x[0]);', 'keyed/property-path probes'],
+		['$x mixed = 7; $y = empty($x->field);', 'keyed/property-path probes'],
+		['$y = isset($missing);', 'S2S'],
+		['$d dynamic; if ($d) {}', 'condition truthiness'],
+		['$d dynamic; $y = empty($d);', 'value probes require'],
+		['function source(): mixed { return 1; } $y = !source() === false;', 'order-independent operands'],
+		['!($new = true);', 'S2S'],
 		['function change(int &$x): void {} $x mixed = 7; change($x);', 'reference'],
 		['function change(mixed &$x): void {} $x = 7; change($x);', 'reference'],
 	];
@@ -106,7 +137,34 @@ try
 	mixed_check(Model::$cpp_files[0]->text === $original, 'Mixed boundary repair changed output');
 	mixed_source($path, $valid);
 	mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed output differs');
-	echo "Mixed boundaries: prepared decisions, deferred cases and incremental recovery passed\n";
+	foreach (['return (int)source();', 'if (source()) { return 1; } return 0;',
+		'return !source() ? 1 : 0;', 'return isset(source()) ? 1 : 0;',
+		'return empty(source()) ? 1 : 0;'] as $consumer)
+	{
+		$valid = 'function source(): mixed { return 3; } function read(): int { '
+			. $consumer . ' } function stable(): int { return 9; } $v = read();';
+		$compiler = mixed_source($path, $valid);
+		$original = Model::$cpp_files[0]->text;
+		$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+		$version = $stable->version;
+		file_put_contents($path, str_replace('source(): mixed { return 3;',
+			'source(): dynamic { $d dynamic; return $d;', $valid));
+		foreach ([[$path], []] as $changed)
+		{
+			$compiler->sync($changed);
+			$failed = false;
+			try { $compiler->prepare(); }
+			catch (\RuntimeException $error) { $failed = true; }
+			mixed_check($failed && Model::$cpp_files->is_empty(), 'Mixed operation published stale output');
+			mixed_check($stable->version === $version, 'Mixed operation rebuilt unrelated body');
+		}
+		file_put_contents($path, $valid);
+		$compiler->update_cpp([$path]);
+		mixed_check(Model::$cpp_files[0]->text === $original, 'Mixed operation repair changed output');
+		mixed_source($path, $valid);
+		mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed operation differs');
+	}
+	echo "Mixed: boundaries, casts, conditions/probes, deferred cases and incremental recovery passed\n";
 }
 finally
 {

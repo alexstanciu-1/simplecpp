@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused mixed scalar boundaries, linked to the current checkout's snippet runtime."""
+"""Mixed boundaries, explicit casts and conditions/probes using the current snippet runtime."""
 import argparse
 import json
 from pathlib import Path
@@ -21,7 +21,8 @@ def main():
     programs = output / 'programs'
     programs.mkdir()
     suites = ['s2s', 'mixed', 'dynamic_model', 'type_catalog', 'constructed_type',
-              'conversions', 'results', 'nullable', 'incremental_cpp', 'preparation_recovery']
+              'conversions', 'results', 'nullable', 'incremental_cpp', 'preparation_recovery',
+              'operators', 'mutations', 'take', 'control_flow']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
         def suite(name):
             command = ['php', APP / 'tests' / (name + '.php')]

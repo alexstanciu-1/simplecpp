@@ -259,6 +259,12 @@ if (!($unary instanceof unary_expression_node) || !($unary->operand instanceof b
 	throw new \LogicException('Unary operand lost grouping');
 }
 
+$syntax = operator_test_source('function value(): int { return 1; } return -value();');
+$unary = $syntax->root->body->statements[0]->expression;
+if ($unary->require_unary_preparation()->decision->operation !== operator_operation::integer_negative) {
+	throw new \LogicException('Single-operand call lost unary preparation');
+}
+
 $rejections = [
 	'bitwise float' => ['return 1 & 2.0;', 'canonical int operands'],
 	'bitwise string' => ['return "a" | "b";', 'canonical int operands'],
@@ -275,7 +281,6 @@ $rejections = [
 	'unary not int' => ['return !1;', 'unary operation requires'],
 	'unary narrow' => ['$x uint8 = 1; return -$x;', 'unary operation requires'],
 	'unary oversized magnitude' => ['return -9223372036854775808;', 'exceeds signed 64-bit'],
-	'unary call' => ['function value(): int { return 1; } return -value();', 'order-independent operands'],
 	'nested unary call' => ['function value(): int { return 1; } return 2 + -value();', 'order-independent operands'],
 
 	'boolean operand' => ['$value = 1 + true;', 'integer binary operation requires canonical int operands'],

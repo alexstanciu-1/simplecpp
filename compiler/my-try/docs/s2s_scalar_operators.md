@@ -189,8 +189,10 @@ Assignments and returns consume the snapshot normally. Existing call emission
 already evaluates value arguments into temporaries left-to-right, so multiple
 mutation arguments retain their individual values. Value parameters mutate only
 the local copy; reference parameters update caller storage. Binary operators retain
-their existing effect restriction, including mutations hidden under casts, and
-value-only unary operators also continue to reject effectful operands.
+their existing effect restriction, including mutations hidden under casts or unary
+expressions. Unary preparation now admits its single effectful operand (Chapter 05
+mixed-operation slice); it has no sibling evaluation-order ambiguity. This does not
+permit unary expressions to introduce new bindings or bypass an eager parent's checks.
 
 [Mutation tests](../tests/mutations.php) verify selected operations/conversions,
 non-addressability, spans, single-child inspection, cleanup, rejected targets/types,

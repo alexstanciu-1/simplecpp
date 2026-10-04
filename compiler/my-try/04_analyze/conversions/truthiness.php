@@ -8,6 +8,16 @@ final class Condition_Truthiness
 	/** Wrapper conditions use their state/payload contract, never explicit bool casts. */
 	public static function decide(canonical_type_use $source): truthiness_decision
 	{
+		if (Mixed_Conversions::is_mixed($source))
+		{
+			if ($source->by_value()) {
+				throw new \RuntimeException('S2S mixed conditions do not support effective storage modifiers');
+			}
+			$decision = new truthiness_decision();
+			$decision->source_type = $source;
+			$decision->operation = truthiness_operation::mixed_condition;
+			return $decision;
+		}
 		if ($source->matches(Language_Types::error_type(Model::$language_scope)))
 		{
 			$decision = new truthiness_decision();

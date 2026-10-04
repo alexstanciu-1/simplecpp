@@ -464,7 +464,7 @@ must handle admitted value-dependent operations; uncertainty alone must not trig
 preparation rejection. By-reference normalization remains prohibited. Existing
 default declaration and identity paths do not imply completed dynamic operations.
 
-Deferred: indexing, operators, conditions/probes, iteration (Chapter 06), and dynamic
+Deferred at the model checkpoint: indexing, operators, conditions/probes, iteration (Chapter 06), and dynamic
 `->`. Discuss fixed-name property reads/writes, computed property names and method
 calls separately; current Phase 1 uses `[]` and does not promise method dispatch.
 The following slice supplies normal snippet-runtime linkage for mixed execution
@@ -484,7 +484,7 @@ configured scalar conversion rules after rejecting null: boolean strings are the
 documented five literals, numeric strings require valid full parses, and string
 destinations use the existing text rules. Runtime-incompatible kinds throw; the
 compiler does not reject a valid boundary merely because its payload may fail.
-Explicit mixed casts remain deferred and do not share this required-boundary path.
+Explicit mixed casts use a separate path in the subsequent operation slice below.
 
 Scalar/string copies preserve independent values; boxed dynamic handles and direct
 dynamic copies preserve shared identity. Native bridge fixtures supply dynamic/table
@@ -512,13 +512,80 @@ validation uses the same helper for its source/probe sweep and records the new
 fixture/helper hashes. No expired `/tmp` library dependency is required.
 
 Remaining debt/non-goals: fixed-width boxing/extraction, mixed/dynamic cross-carrier
-bridges, explicit mixed casts, nullable/Result lifting, operators, conditions/probes,
+bridges, nullable/Result lifting, general operators,
 conditional joins, indexing and iteration. Dynamic `->` remains a separate property
 versus method-dispatch discussion. Older config/implicit runtime bridge descriptions
 do not fully distinguish required int extraction from explicit conversion; follow
 `dynamic_types.md` and the explicit required helper, not those broader fallbacks.
-Next discussion: explicit scalar casts and mixed truthiness/probes, or the separately
-scoped mixed/dynamic bridge; neither is included here.
+The following slice adds explicit scalar casts and mixed truthiness/probes.
+
+## Mixed casts, conditions and probes — 2026-10-04
+
+Agreed scope follows [dynamic typed extraction](../../../../specs/dynamic_types.md#explicit-typed-extraction),
+the [condition matrix](../../../../specs/conditional_expression_matrix.md) and
+the [probe contract](../../../../specs/count_empty_isset_contract.md). No runtime
+semantic changes, new AST nodes or payload inference are needed.
+
+- `Mixed_Conversions` admits explicit bool/ordinary-int/float/string casts using
+  the existing `explicit_runtime_cast` fact and `scpp::cast<T>` lowering. Required
+  typed boundaries still use `required_cast<T>`. Explicit int accepts configured
+  string/float conversions; explicit string accepts null as an empty string.
+  Failed value-dependent casts throw at runtime, not during preparation.
+- `Condition_Truthiness` records `mixed_condition`. If/elseif, while/do/for and
+  ternary conditions reuse the shared runtime helper. Mixed unary `!` records
+  `condition_not` with that same truthiness decision, not a boolean cast.
+  Null and scalar kinds follow current rules: `"false"` is truthy although its
+  explicit boolean cast is false; `"hello"` is truthy although its bool cast fails.
+- `Value_Probe_Preparation` admits mixed on existing `value_probe_node` syntax.
+  The existing separate runtime helpers preserve null-sensitive presence and
+  countable/scalar emptiness, including `empty("0") === false`. These queries do
+  not mutate or create containers. Single-value operand exceptions propagate.
+
+Legacy review: `Generator::renderGeneratedCast`, `renderRequiredTypedBoundaryCast`,
+`renderConditionExpr` and AST_ISSET/AST_EMPTY lowering already separate these
+authorities. Runtime condition-truthiness and scalar-empty regression examples
+confirm the string distinctions. The compiler reuses those helpers but performs
+static type/structure admission in shared preparation; it does not copy the legacy
+generator's type-blind policy. Generated code adds only the helper calls and narrow
+headers already owned by these paths; no new runtime template framework is introduced.
+
+The single-operand preparation owner no longer applies a binary order-independence
+gate to unary operands. Calls such as `!produce()` evaluate once; nested assignment
+still cannot introduce a binding. Eager binary parents retain their subtree checks,
+so this is not general effect-order support or broader binary operator admission.
+
+**MIXED-TRUTH-001 debt:** the normative condition matrix explicitly tracks partial
+mixed kind support. Boxed table/shared-table/dynamic/weak-table conditions currently
+throw through the runtime helper. Admitting a mixed expression does not promise
+every payload succeeds. Broader truthiness needs its own runtime/contract slice;
+do not reject mixed statically or silently substitute handle-presence semantics.
+Direct dynamic conditions/probes are not added here.
+
+Other non-goals: mixed-valued ternary/Elvis/coalescing joins, binary mixed operators,
+fixed-width casts, mixed/dynamic bridges, wrapper lifting, count, keyed/property
+probes, indexing/iteration and dynamic `->` dispatch. These remain separate slices.
+
+Proof owners: `tests/mixed.php` covers prepared facts, role-based admission,
+rejections, cleanup and incremental failure/retry/repair with clean-output parity.
+`tests/fixtures/mixed_operations.php` adds generated-program/state checks for
+scalar casts/probes, every condition consumer, source exceptions, single evaluation,
+unchanged targets after failed casts and non-mutating native table/object bridges.
+The shared `tests/mixed.py` runner exports these into ordinary and requested native
+sweeps; generated-program execution is not a native compiler rebuild.
+
+Verified: ten focused PHP suites and all 144 generated programs/state probes pass
+without PCH in `/tmp/my-try-mixed-operations-20261004-verified/`. Four additional
+operator/mutation/take/control-flow PHP suites pass in
+`/tmp/my-try-mixed-operations-20261004-controls-final/` and are now retained in the
+focused runner. Both use the shared 12-slot pool with CLI fallback after sandbox
+FPM denial. The first attempt exposed the unary operand gate; subsequent attempts
+corrected a test expectation for empty boxed dynamic tables (countable emptiness),
+stale unary rejection expectations, a test AST index and a reference fixture whose
+ordinary function name collided with the newer `take` syntax. Runtime semantics
+were not changed to accommodate those tests. No native compiler rebuild was run.
+
+Next discussion: mixed-valued conditional and coalescing joins, using the existing
+selection owners and authoritative matrix; mixed/dynamic bridges remain distinct.
 
 ## Progress
 
@@ -526,6 +593,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| MIXED-OPS-001 | agreed | `$v mixed = "false"; $b = (bool)$v; if ($v) {} $e = empty($v);` | proved | proved | deferred | Explicit scalar casts, shared truthiness/negation and one-value probes; `tests/mixed.py`; broader runtime kinds tracked as MIXED-TRUTH-001 |
 | MIXED-BOUNDARY-001 | agreed | `$v mixed = 7; $n int = $v;` | proved | proved | deferred | Scalar/null boxing, copying and checked required scalar boundaries; `tests/mixed.py` |
 | RSL-JOIN-001 | agreed | `$a = $condition ? $r : 7; $b = $r ?: 7;` | proved | proved | deferred | Exact Result/scalar and same-wrapper joins; owned state-preserving lazy selection; `tests/results.py` |
 | RSL-PROBES-001 | agreed | `if ($r) {} $p = isset($r); $e = empty($r);` | proved | proved | deferred | Scalar payloads across all three Result families; state/payload distinction and single evaluation; `tests/results.py` |

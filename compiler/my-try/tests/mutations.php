@@ -57,6 +57,12 @@ foreach ([['++$x', operator_operation::integer_pre_increment, false],
 	}
 }
 
+$syntax = mutation_test_source('$x = 1; return -$x++;');
+$unary = $syntax->root->body->statements[1]->expression;
+if ($unary->require_unary_preparation()->decision->operation !== operator_operation::integer_negative) {
+	throw new \LogicException('Single mutation operand lost unary preparation');
+}
+
 $rejections = [
 	['++$missing;', 'established local declaration'],
 	['$missing++;', 'established local declaration'],
@@ -75,8 +81,8 @@ $rejections = [
 	['$x = 1; ++$x[0];', 'operator[] with 1 argument(s) overload resolution is deferred'],
 	['$x = 1; return $x++ + $x;', 'order-independent operands'],
 	['$x = 1; return 1 + (int)$x++;', 'order-independent operands'],
-	['$x = 1; return -$x++;', 'order-independent operands'],
-	['function take(int &$a): int { return $a; } $x = 1; return take(++$x);', 'reference arguments require stable storage'],
+	['$x = 1; return 2 + -$x++;', 'order-independent operands'],
+	['function consume(int &$a): int { return $a; } $x = 1; return consume(++$x);', 'reference arguments require stable storage'],
 ];
 foreach ($rejections as [$source, $diagnostic])
 {

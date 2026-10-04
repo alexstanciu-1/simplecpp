@@ -72,19 +72,23 @@ The runner also executes the focused wrapper-state and take runtime tests. `--no
 checks generated include completeness without precompiled-header assistance.
 This does not rebuild the compiler natively.
 
-For mixed scalar boxing, copies and checked required-value boundaries:
+For mixed scalar boundaries, explicit casts, conditions and single-value probes:
 
 ```bash
 python3 compiler/my-try/tests/mixed.py --results /tmp/FRESH_MIXED_RESULTS
 ```
 
-This runs ten focused PHP suites and the `mixed_*` generated source/state fixtures.
+This runs fourteen focused PHP suites and the `mixed_*` generated source/state fixtures.
 It compiles the existing snippet runtime (`runtime/include/core/runtime.cpp`) once
 per run and links it into each fixture; mixed is not header-only. `--no-pch` verifies
 include completeness. PCH and fixture compilation share PHP-target and thread flags.
 Native bridge probes supply shared dynamic/table inputs to verify copy identity and
 wrong-kind failures without enabling source cross-carrier construction. The ordinary
 full runner and requested native source/probe sweep use the same runtime-object helper.
+Operation fixtures distinguish explicit casts from required extraction and condition
+truthiness from `empty`/`isset`, including `"false"`, `"0"` and null. They cover condition
+consumers, single evaluation, unchanged targets on failed casts, propagated source
+exceptions, non-mutating table/object probes and runtime-rejected boxed conditions.
 This builds generated programs, not the native compiler.
 
 Run all PHP suites with retained evidence:
