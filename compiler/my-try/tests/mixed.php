@@ -84,8 +84,19 @@ try
 		['$x mixed = 7; $y = (uint8)$x;', 'explicit mixed casts require'],
 		['$x mixed = 7; $y = $x + 1;', 'S2S'],
 		['$x mixed = 7; $y = $x && true;', 'S2S'],
-		['$x mixed = 7; $y = $x ?: 1;', 'S2S'],
-		['$x mixed = 7; $y = $x ?? 1;', 'S2S'],
+		['$x mixed = 7; $y = $x ?: null;', 'mixed selection requires'],
+		['$x mixed = 7; $y = null ?? $x;', 'mixed selection requires'],
+		['$x mixed = 7; $y = $x ?? null;', 'mixed selection requires'],
+		['$x mixed = 7; $y = true ? null : $x;', 'mixed selection requires'],
+		['$x mixed = 7; $n uint8 = 1; $y = true ? $x : $n;', 'mixed selection requires'],
+		['$x mixed = 7; $n ?int = 1; $y = $n ?? $x;', 'mixed selection requires'],
+		['$x mixed = 7; $n result<int> = 1; $y = $x ?? $n;', 'mixed selection requires'],
+		['$x mixed = 7; $n result<int> = 1; $y = $n ?? $x;', 'mixed selection requires'],
+		['$x mixed = 7; $n result<int> = 1; $y = true ? $x : $n;', 'mixed selection requires'],
+		['$x mixed = 7; $n result_or_bool<int> = 1; $y = $x ?? $n;', 'does not permit result_or_bool'],
+		['$x mixed = 7; $n result_or_bool<int> = 1; $y = $n ?? $x;', 'does not permit result_or_bool'],
+		['$x mixed = 7; $y = true ? $x : $missing;', 'S2S'],
+		['function consume(mixed &$v): void {} $x mixed = 7; consume($x ?? 1);', 'reference'],
 		['$x mixed = 7; $y = isset($x[0]);', 'keyed/property-path probes'],
 		['$x mixed = 7; $y = empty($x->field);', 'keyed/property-path probes'],
 		['$y = isset($missing);', 'S2S'],
@@ -139,7 +150,8 @@ try
 	mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed output differs');
 	foreach (['return (int)source();', 'if (source()) { return 1; } return 0;',
 		'return !source() ? 1 : 0;', 'return isset(source()) ? 1 : 0;',
-		'return empty(source()) ? 1 : 0;'] as $consumer)
+		'return empty(source()) ? 1 : 0;', 'return source() ?? 1;',
+		'return source() ?: 1;', 'return true ? source() : 1;'] as $consumer)
 	{
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';
@@ -164,7 +176,30 @@ try
 		mixed_source($path, $valid);
 		mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed operation differs');
 	}
-	echo "Mixed: boundaries, casts, conditions/probes, deferred cases and incremental recovery passed\n";
+	mixed_source($path, '$v mixed = null; $a mixed = true ? $v : 1; '
+		. '$b mixed = $v ?: 2; $c mixed = $v ?? 3; $d mixed = 4 ?? $v;');
+	$selection_root = Model::syntax_files()[0]->root;
+	foreach ([1, 2, 3, 4] as $position)
+	{
+		$selection_node = $selection_root->body->statements[$position]->initializer;
+		$facts = $selection_node->require_preparation();
+		mixed_check(Mixed_Conversions::is_mixed($facts->type) && !$facts->addressable,
+			'Selection lost its owned mixed result');
+		if ($position < 3) {
+			mixed_check($facts->true_conversion->operation === conversion_operation::identity
+				&& $facts->fallback_conversion->operation === conversion_operation::mixed_box, 'Incorrect conditional normalization');
+		}
+		else {
+			mixed_check($facts->presence === ($position === 3 ? coalesce_presence::mixed_nonnull : coalesce_presence::always),
+				'Coalesce presence was inferred from conversion identity');
+		}
+	}
+	Preparation_Cleanup::tree($selection_root);
+	foreach ([1, 2, 3, 4] as $position) {
+		$selection_node = $selection_root->body->statements[$position]->initializer;
+		mixed_check($selection_node->preparation() === null, 'Selection retained stale facts');
+	}
+	echo "Mixed: boundaries, casts, conditions/probes/joins, deferred cases and incremental recovery passed\n";
 }
 finally
 {

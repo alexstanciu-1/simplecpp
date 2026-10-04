@@ -26,6 +26,19 @@ final class Mixed_Conversions
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
+		if (($context === conversion_context::conditional_branch) || ($context === conversion_context::coalesce_value))
+		{
+			if (!$source->by_value() && !$target->by_value() && self::is_mixed($target))
+			{
+				if ($source->matches($target)) {
+					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
+				}
+				if (self::is_scalar_payload($source)) {
+					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::mixed_box);
+				}
+			}
+			throw new \RuntimeException('S2S mixed selection requires matching mixed or supported scalar branches');
+		}
 		if ($context === conversion_context::explicit_cast) {
 			if ($source->by_value() || !self::is_scalar_payload($target)) {
 				throw new \RuntimeException('S2S explicit mixed casts require bool, ordinary int, float or string without storage modifiers');

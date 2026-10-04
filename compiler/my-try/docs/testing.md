@@ -89,6 +89,9 @@ Operation fixtures distinguish explicit casts from required extraction and condi
 truthiness from `empty`/`isset`, including `"false"`, `"0"` and null. They cover condition
 consumers, single evaluation, unchanged targets on failed casts, propagated source
 exceptions, non-mutating table/object probes and runtime-rejected boxed conditions.
+Selection fixtures cover mixed/mixed and mixed/scalar ternary, Elvis and coalescing
+joins, including owned results, falsey presence, selected null fallback, lazy errors,
+table-handle identity and deferred wrapper/bare-null admission.
 This builds generated programs, not the native compiler.
 
 Run all PHP suites with retained evidence:

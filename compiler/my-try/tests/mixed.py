@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mixed boundaries, explicit casts and conditions/probes using the current snippet runtime."""
+"""Mixed boundaries, casts, conditions/probes and selection joins using the snippet runtime."""
 import argparse
 import json
 from pathlib import Path

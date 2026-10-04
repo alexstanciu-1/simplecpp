@@ -121,7 +121,11 @@ The nominal runtime `error` is a storable value; its no-error state is a registe
 `no_error_constant_definition`, not a singleton type (the same type holds real errors).
 Its qualified source name uses the existing constant lookup and prepared identity path.
 `coalesce_expression_node` owns left/fallback syntax and receives selected scalar
-result/conversion facts; it is distinct from truthiness-based conditional syntax.
+or mixed result/conversion facts; it is distinct from truthiness-based conditional syntax.
+Prepared `coalesce_presence` separates always-present values, wrapper value states
+and mixed non-null testing from conversion identity. Direct mixed/scalar selections
+share bounded join admission, preserve the mixed carrier and copy the selected value;
+they do not add wrapper/mixed joins or alter scalar-only match.
 `null_type_definition` / `null_type` give null literals a canonical,
 non-storable sentinel identity, without source exposure or a storage backend binding.
 `nullable_type_node` owns `?T` syntax and resolves through shared application interning;

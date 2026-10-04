@@ -231,15 +231,26 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		$result_type = CPP_Declarations::type($facts->type, $this->context);
 		$left = $node->left->generate_cpp($this);
 		$fallback = CPP_Declarations::conversion($node->fallback->generate_cpp($this), $facts->fallback_conversion, $this->context);
-		if ($facts->left_conversion->operation === conversion_operation::identity) {
-			return '([&]() -> ' . $result_type . ' { return ' . $left . '; }())';
+		if ($facts->presence === coalesce_presence::always) {
+			$selected = CPP_Declarations::conversion($left, $facts->left_conversion, $this->context);
+			return '([&]() -> ' . $result_type . ' { return ' . $selected . '; }())';
 		}
 		$temporary = 'coalesce_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$source_type = CPP_Declarations::type($facts->left_conversion->source_type, $this->context);
 		$selected = CPP_Declarations::conversion($temporary, $facts->left_conversion, $this->context);
+		$presence = '';
+		if ($facts->presence === coalesce_presence::wrapper_value) {
+			$presence = $temporary . '.has_value().native_value()';
+		}
+		elseif ($facts->presence === coalesce_presence::mixed_nonnull) {
+			$presence = '!' . $temporary . '.is_null().native_value()';
+		}
+		else {
+			throw new \LogicException('Unsupported prepared coalesce presence');
+		}
 		return '([&]() -> ' . $result_type . ' { ' . $source_type . ' ' . $temporary . ' = ' . $left
-			. '; if (' . $temporary . '.has_value().native_value()) { return ' . $selected
+			. '; if (' . $presence . ') { return ' . $selected
 			. '; } return ' . $fallback . '; }())';
 	}
 

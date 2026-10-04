@@ -7,7 +7,8 @@ The latest checkpoint covers the implemented Chapter 05 nullable and Result slic
 through Result coalescing, plus the source adaptations below. It is not a Chapter 05
 closeout: mixed and the remaining catalog debt are still deferred.
 The subsequent mixed/dynamic model, [scalar boundaries](../catalog/05_dynamic_boundaries.md#mixed-scalar-value-boundaries--2026-10-04)
-and [casts/conditions/probes](../catalog/05_dynamic_boundaries.md#mixed-casts-conditions-and-probes--2026-10-04)
+[casts/conditions/probes](../catalog/05_dynamic_boundaries.md#mixed-casts-conditions-and-probes--2026-10-04)
+and [direct selection joins](../catalog/05_dynamic_boundaries.md#direct-mixed-selection-joins--2026-10-04)
 have PHP and generated-program evidence only; they are not included in that native
 compiler snapshot.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.

@@ -116,7 +116,10 @@ Shorthand reuses its condition's prepared value as its true branch.
 Results are non-addressable values; nested writes cannot introduce bindings. Eager
 parents inspect every conditional child for effects. Emission uses typed lazy returns
 and a single saved left value of the original condition type for shorthand. Bare-null
-branches, cross-payload joins and mixed remain deferred. Result-led joins preserve
+branches and cross-payload nullable joins remain deferred. Direct mixed/mixed and
+mixed/scalar joins in either order preserve mixed identity and box only the selected
+scalar. `Selection_Result_Preparation::mixed_join` supplies this bounded domain for
+conditional and coalesce workers without widening scalar-only match. Result-led joins preserve
 one exact Result identity: same-wrapper pairs copy the selected state, and exact
 scalar alternatives wrap as value payloads. Nullable/Result and cross-family pairs
 reject. Both branch conversions and copy capabilities are prepared before emission;
@@ -169,7 +172,9 @@ at assignment, by-value argument and return boundaries. It recognizes `mixed_sem
 and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the
 existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
 is the only boxed integer admitted in this slice; fixed widths, cross-carrier/wrapper
-bridges and general operator contexts remain deferred. Explicit bool/int/float/string
+bridges and general operator contexts remain deferred. Selection contexts admit only
+identity mixed copies and ordinary scalar boxing, never extraction or bare-null branches.
+Explicit bool/int/float/string
 casts record `explicit_runtime_cast` and call `cast<T>`, not `required_cast<T>`.
 `Condition_Truthiness` admits mixed through `mixed_condition`; all condition consumers
 and mixed `!` reuse runtime kind dispatch, not explicit boolean conversion. Boxed
@@ -222,6 +227,11 @@ false. `Coalesce_Expression_Preparation` separately selects a required scalar va
 domain and exact conversions; its dedicated syntax/facts preserve lazy fallback and
 single evaluation without reusing truthiness as presence. Both operands are validated
 even when the scalar-left form never needs its fallback at runtime.
+`prepared_coalesce_expression::presence` explicitly selects always-present scalar,
+wrapper value-state or mixed non-null testing; emission must not infer this from
+conversion identity. Direct mixed/scalar joins return owned mixed values in either
+order. A selected mixed fallback containing null is valid. Wrapper/mixed joins remain
+deferred, and mixed truthiness is not involved in coalescing.
 Result coalescing extends that same owner with exact scalar payload domains for
 `result<T>` and `result_or_false<T>`. `coalesce_value` identifies the selected left
 extraction boundary without granting general conditional-branch extraction. Existing

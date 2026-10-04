@@ -80,9 +80,18 @@ final class prepared_value_probe extends prepared_expression
 	public value_probe_kind $operation;
 }
 
-/** Required selected-value domain; a nullable left is extracted only after presence. */
+/** Presence interpretation is independent of the selected branch conversion. */
+enum coalesce_presence
+{
+	case always;
+	case wrapper_value;
+	case mixed_nonnull;
+}
+
+/** Owned selected-value domain; wrapper extraction occurs only after presence. */
 final class prepared_coalesce_expression extends prepared_expression
 {
+	public coalesce_presence $presence;
 	public conversion_decision $left_conversion;
 	public conversion_decision $fallback_conversion;
 }

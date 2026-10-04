@@ -561,7 +561,8 @@ every payload succeeds. Broader truthiness needs its own runtime/contract slice;
 do not reject mixed statically or silently substitute handle-presence semantics.
 Direct dynamic conditions/probes are not added here.
 
-Other non-goals: mixed-valued ternary/Elvis/coalescing joins, binary mixed operators,
+Non-goals of that operation slice (direct joins follow below): mixed-valued
+ternary/Elvis/coalescing joins, binary mixed operators,
 fixed-width casts, mixed/dynamic bridges, wrapper lifting, count, keyed/property
 probes, indexing/iteration and dynamic `->` dispatch. These remain separate slices.
 
@@ -584,8 +585,70 @@ stale unary rejection expectations, a test AST index and a reference fixture who
 ordinary function name collided with the newer `take` syntax. Runtime semantics
 were not changed to accommodate those tests. No native compiler rebuild was run.
 
-Next discussion: mixed-valued conditional and coalescing joins, using the existing
-selection owners and authoritative matrix; mixed/dynamic bridges remain distinct.
+The next slice implements the direct mixed-valued selection rows below.
+
+## Direct mixed selection joins — 2026-10-04
+
+Agreed and implemented: `mixed`/`mixed`, `mixed`/`T` and `T`/`mixed` branch pairs
+for ternary, Elvis and coalescing, with `T` limited to bool, ordinary int, float and
+string. The result is owned `mixed`; payload kinds are not statically inferred or
+converted to match the other branch. Selected scalars box; selected mixed values
+copy, preserving scalar/string independence and shared table/object identity.
+
+The [authoritative conditional matrix](../../../../specs/conditional_expression_matrix.md)
+keeps condition truthiness separate from presence. Elvis saves its left value once
+and uses shared truthiness. Coalescing retains false, zero, empty string and `"0"`,
+and falls back only for the mixed null kind. A selected fallback that is itself
+`mixed(null)` is a valid mixed result, not a missing-wrapper error. Full ternary and
+coalescing can select boxed tables/objects without testing their truthiness; Elvis
+still throws for those kinds under MIXED-TRUTH-001.
+
+Ownership/target: the existing conditional/coalesce nodes, workers and lazy typed
+lambda emitter remain in place. `Selection_Result_Preparation::mixed_join` admits
+the bounded shared result domain and copy capabilities without widening scalar-only
+match. `Mixed_Conversions` admits identity/scalar-box conversions at selection sites,
+not required-value extraction or bare-null construction. `prepared_coalesce_expression`
+now records `coalesce_presence` independently of conversions: always present,
+wrapper value-state, or mixed non-null. This replaces the emitter's old assumption
+that identity conversion implies presence. Existing scalar/nullable/Result rows keep
+their prior emitted behavior; a scalar selected into mixed is boxed even though its
+fallback can never execute.
+
+Legacy review: `renderConditionalExpr` and `renderCoalesceExpr` use lazy runtime
+helpers; the helper's mixed-presence rule tests only the null kind and normalization
+permits a selected mixed null. v0.2 preserves those rules with prepared types,
+conversions and presence rather than C++ helper deduction. No new runtime helpers,
+AST classes or runtime semantic changes are needed. Target code reuses one typed
+lambda and at most one saved left value; no compilation-speed claim is made.
+
+Both branches are prepared, even when statically unselected. Bad type/structure
+combinations reject before emission; source exceptions and invalid runtime condition
+kinds still propagate at evaluation. Tests cover single evaluation, lazy fallback,
+unchanged assignment targets on failure, scalar/string result ownership, table-handle
+identity, prepared result/presence facts, cleanup and incremental invalidation/retry/
+repair with clean-output parity.
+
+Deferred: bare-null branches, fixed-width scalar boxing, direct dynamic bridges,
+mixed-valued match, wrapper/mixed joins and general mixed operators. In particular,
+`nullable<T> ?? mixed`, `result<T> ?? mixed` and `result_or_false<T> ?? mixed` are
+valid language rows reserved for the next sub-slice; their deferral is not a language
+prohibition. `result_or_bool` remains invalid on either side of `??` and rejects
+during preparation, including an unselected fallback.
+
+Proof owners: `tests/mixed.php`, `tests/fixtures/mixed_selections.php` and the shared
+`tests/mixed.py` runner. The requested native sweep exports the same source/probe
+cases and records the added fixture hash. Native compiler rebuilding remains separate.
+
+Verified on the `f741c7f4` base plus this slice: all 14 focused PHP suites and 180
+mixed generated programs/state probes pass in `/tmp/my-try-mixed-selections-20261004-1/`.
+A fresh export plus all 36 new selection programs/probes and 34 existing nullable/
+Result coalescing programs pass without PCH (70 total) in
+`/tmp/my-try-mixed-selections-20261004-no-pch/`. Both runs passed on their first
+attempt using the shared 12-slot runner with CLI fallback after sandbox FPM denial.
+This is PHP-hosted compiler and generated-program evidence, not a native compiler
+rebuild or a compilation-performance measurement.
+
+Next discussion: the three approved wrapper-left/mixed-fallback coalescing rows.
 
 ## Progress
 
@@ -593,6 +656,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| MIXED-JOIN-001 | agreed | `$a = $condition ? $m : 7; $b = $m ?: 7; $c = $m ?? 7;` | proved | proved | deferred | Direct mixed/mixed and mixed/scalar joins in either order; `tests/mixed.py`; wrapper/mixed and bare-null branches deferred |
 | MIXED-OPS-001 | agreed | `$v mixed = "false"; $b = (bool)$v; if ($v) {} $e = empty($v);` | proved | proved | deferred | Explicit scalar casts, shared truthiness/negation and one-value probes; `tests/mixed.py`; broader runtime kinds tracked as MIXED-TRUTH-001 |
 | MIXED-BOUNDARY-001 | agreed | `$v mixed = 7; $n int = $v;` | proved | proved | deferred | Scalar/null boxing, copying and checked required scalar boundaries; `tests/mixed.py` |
 | RSL-JOIN-001 | agreed | `$a = $condition ? $r : 7; $b = $r ?: 7;` | proved | proved | deferred | Exact Result/scalar and same-wrapper joins; owned state-preserving lazy selection; `tests/results.py` |
@@ -606,7 +670,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; path probes deferred |
 | [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; `"0"` is not empty |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Scalar/nullable/result/falseable left, exact scalar fallback; boolable rejects in preparation |
-| [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Matching scalar, nullable/scalar and Result/scalar joins; cross-family/mixed deferred |
+| [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Scalar, nullable/scalar, Result/scalar and direct mixed/scalar joins; wrapper/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
@@ -738,7 +802,9 @@ auto a = php::empty(b);
 **v0.2 decision / target C++:** Dedicated lazy expression with prepared exact scalar
 result/conversions: `nullable<T> ?? T`, `result<T> ?? T`, `result_or_false<T> ?? T`
 and `T ?? T` yield owned `T`. Boolable operands reject in preparation on either side.
-Wrapper-valued fallback and mixed combinations remain deferred.
+Direct mixed/mixed and mixed/scalar pairs in either order yield owned mixed, with
+prepared null-kind presence testing rather than truthiness. Wrapper-valued fallback
+and wrapper/mixed combinations remain deferred.
 
 ### Imported version 1
 
@@ -781,7 +847,8 @@ A typed lambda saves the original left value once, tests shared truthiness, and
 converts only the selected branch to the joined result type. Results are owned values.
 See the [Chapter 03 slice](03_control_flow.md#agreed-conditional-expression-slice--2026-10-02)
 for parser bounds. Matching Result/scalar joins are now included by the Result join
-slice above. Cross-family/mixed joins remain deferred; this does not close
+slice above. Direct mixed/mixed and mixed/scalar joins are included by MIXED-JOIN-001.
+Wrapper/mixed joins remain deferred; this does not close
 the wider dynamic-boundary work. Imported lowering below is historical evidence.
 
 ### Imported version 1
