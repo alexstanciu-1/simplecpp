@@ -9,7 +9,26 @@ Requires values, expressions and basic calls. Establish reads versus writes befo
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
-## Implementation prerequisites
+## Handoff from chapter 05 — 2026-10-04
+
+Chapter 05's [bounded positive pass](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04)
+is complete with named debt. Nullable/Result/mixed conversions, conditions, value
+probes and explicit mixed/dynamic bridges are available; aggregate payload operations
+are not implied. Reuse canonical template applications, prepared conversions and
+the existing `index_node`; do not add separate dynamic ASTs for ordinary indexing.
+
+Discussion groups: (1) typed vector/hash construction and reads, (2) writes/appends
+and typed boundaries, (3) dynamic construction/access and keyed probes, (4) value
+iteration, then separately gated reference iteration. Group 3 owns CH05-DYN-01,
+including `(object)[...]`/supported object construction; unrestricted `(object)$value`
+is not implied. Dynamic `->` remains a separate requested language discussion.
+For mixed/dynamic iteration, distinguish valid static admission from runtime checks
+of the actual iterable kind; do not reject all mixed simply for being dynamic.
+
+CH05-OWN-01 remains with chapter 07; CH05-VAL-01 and CH05-TAKE-01 remain explicit
+follow-ups, not container prerequisites unless a selected slice needs them.
+
+## Existing foundations
 
 Chapter 04 now packs typed trailing variadics into the existing canonical `vector<T>`
 storage type. Pack values can be returned or passed to ordinary vector parameters;

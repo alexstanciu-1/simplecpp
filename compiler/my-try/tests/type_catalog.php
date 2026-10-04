@@ -193,6 +193,15 @@ $ordinary_named_nullable = $custom_registry->define_template('nullable', type_de
 	nominal_type_kind::class_type, [new template_type_parameter('T')], []);
 type_catalog_check(!($ordinary_named_nullable instanceof nullable_semantics),
 	'Nullable semantics were inferred from source spelling');
+
+// Type formation is not operation admission; ownership restrictions must not ban all nesting.
+$result_definition = object_cast($catalog->definition('result'), abstract_template_type_definition::class);
+$result_int = $registry->intern_application($result_definition, [$payload]);
+$nullable_result = $registry->intern_application($nullable, [$registry->use($result_int->type_id())]);
+$result_nullable = $registry->intern_application($result_definition, [$registry->use($nullable_int->type_id())]);
+type_catalog_check($nullable_result !== $result_nullable
+	&& $nullable_role->payload_type($nullable_result)->type_id() === $result_int->type_id(),
+	'Value-wrapper nesting lost canonical structure or acquired a blanket nesting ban');
 foreach ([[], [new template_type_parameter('A'), new template_type_parameter('B')],
 	[new template_type_parameter('T', [], $payload)]] as $parameters) {
 	$before_count = $registry->definition_count();

@@ -9,6 +9,85 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Positive-pass conclusion — 2026-10-04
+
+The bounded chapter 05 pass is complete, with explicit debt below. This is not full
+wrapper/ownership/container support. Current facts cover nullable and Result scalar
+boundaries, take/no-error handling, conditions/probes, selection/coalescing joins,
+mixed scalar boundaries and operators, explicit mixed/dynamic bridges, and text
+conversion/write-back. Dated sections below are checkpoints, not cumulative promises
+that every earlier non-goal remains unimplemented.
+
+The closeout audit adds proofs, not new language behavior. Unknown explicit types
+reject at local, parameter, return and field sites; invalid template arity/payload
+contracts reject without publishing output. No fallback to mixed/auto is permitted.
+Existing type preparation, registry contracts and conversion workers own these rules.
+
+### Reconciled imported notes
+
+| Cards | Current disposition | Proof / remaining owner |
+| --- | --- | --- |
+| TYPE-VAR-006B | Strict explicit intent: `$p weird<int>;` rejects | `tests/constructed_type.php`; legacy annotations remain separate |
+| NOTE-005, NOTE-052 nesting | Split: redundant value modifiers normalize; effective repeats reject; ownership nesting is debt | `specs/type_use_modifiers.md`, type/constructed tests; CH05-OWN-01 below |
+| NOTE-010, NOTE-037 | Scalar mappings, typed signatures and canonical runtime-template formation covered | Chapters 01/04 and type tests; object handles, closures, references and container operations belong to 06/07/10/12 |
+| NOTE-015 | Scalar explicit casts use prepared conversion decisions | `tests/conversions.php`; no constructor fallback; `(object)` dependency below |
+| NOTE-036 | Typed predeclarations, nullable spelling, null returns and untyped-null rejection covered | `tests/nullable.php`, constructed types; callable locals/default expansion deferred |
+| NOTE-045 | Bounded nullable/Result/mixed conditional matrices implemented | Nullable/Result/mixed suites; remaining joins are CH05-VAL-01 |
+| NOTE-052 interpolation | Simple scalar variable interpolation already covered | Chapter 02 interpolation; paths/calls require their own owners |
+| NOTE-063 | Explicit Result identity, sentinel distinctions and existing-output take covered | `tests/results.php`, `tests/take.php`; structured errors remain chapter 13; output declarations below |
+| CAST-OBJECT-001 | Deferred with dynamic/container construction, not unrestricted casting | Chapter 06 handoff; existing `(mixed)`/`(dynamic)` bridges are distinct |
+
+### Consolidated remaining debt
+
+- **CH05-OWN-01 — ownership classification and nesting (chapter 07).** `shared`,
+  `weak` and `unique` are ordinary registered templates with no semantic ownership
+  role. Nested ownership applications and `value<shared<T>>` are not comprehensively
+  rejected in preparation. Before adding those checks, agree a definition-identity/
+  semantic-role-based policy across template arguments and effective modifiers;
+  do not patch source-name tests into the registry or emitter. This is an open
+  validation gap, not supported ownership behavior. `value<value<int>>` is valid
+  normalization under the newer v0.2 contract; `value<value<string>>` still rejects.
+  Nullable/Result template formation must not acquire a blanket nesting ban.
+- **CH05-VAL-01 — broader value boundaries.** Nullable defaults; cross-payload
+  conversions; non-scalar/nested wrapper operations and conditional template
+  capabilities; remaining wrapper/mixed joins, bare-null branches and wrapper
+  operator families; fixed-width mixed boxing/extraction/peers and additional
+  mixed operator families. Existing runtime support does not imply compiler admission.
+- **CH05-DYN-01 — dynamic/container integration (chapter 06).** Construction via
+  supported object forms, index reads/writes, keyed probes, count and iteration.
+  Runtime kinds must decide value-dependent failures, including non-iterable mixed
+  values. Dynamic `->` requires a separate language discussion; current Phase 1
+  source contract uses `[]`. Native references into dynamic interiors stay forbidden.
+- **CH05-TAKE-01 — take binding expansion.** Current take uses established output
+  variables. Output declarations/typed output bindings and branch-sensitive
+  availability remain deferred; tuple-assignment syntax remains postponed.
+- **CH05-PROFILE-01 — legacy availability.** The Result kind model preserves all
+  three families, but strict-vs-legacy availability enforcement remains deferred.
+- **RSL-ERROR-01** stays in [chapter 13](13_errors.md#structured-error-value-debt-from-chapter-05).
+  Error construction/members are not invented by take or Result preparation.
+- **MIXED-TRUTH-001 / MIXED-COMPARE-001** remain runtime-contract reconciliation:
+  broader table/object truthiness, weak equality wording versus implementation,
+  and recursive/cyclic table comparison hardening. Nullable/null generic identity
+  helper repair also remains separate; compiled nullable checks use presence tests.
+
+### Verification and next chapter
+
+Latest generated-program checkpoint: 15 PHP suites and 322 programs, plus 14 new
+no-PCH text-update cases, in the preceding text write-back slice. The last native
+compiler checkpoint predates the mixed slices; no new native portability claim is
+made. The closeout type audit is PHP-hosted preparation/model evidence only.
+Its 10 focused suites pass in `/tmp/my-try-ch05-audit-20261004` (type catalog,
+constructed types, conversions, nullable, Result, mixed, take, capabilities,
+preparation recovery and incremental C++). A separate read-only probe confirms the
+two ownership-admission gaps in `/tmp/my-try-ch05-ownership-audit-20261004`; it is
+evidence of debt, not a regression test enshrining that behavior. No compiler/runtime
+behavior changed in closeout, and no native rebuild or broad generated sweep was run.
+
+Next: [chapter 06 grouped discussion](06_containers.md#handoff-from-chapter-05--2026-10-04),
+starting with typed container construction and reads. Reuse the existing canonical
+templates and index AST; establish read/write and lifetime contracts before mutation
+and foreach. Chapter closeout does not authorize an ownership-model redesign.
+
 ## Text concatenation write-back — 2026-10-04
 
 Implemented `.=` for established string or mixed locals/parameters. Right operands
@@ -675,8 +754,8 @@ on either side reject during preparation, even behind an always-present scalar l
 This is a language-invalid family, unlike deferred wrapper-valued fallbacks, nested
 payloads, mixed, bare-null and cross-payload joins. Logical operators remain separate.
 
-Next discussion: bounded mixed value/boundary support, or chapter debt reconciliation
-before selecting that larger group. No new mixed/object/profile semantics are implied.
+At this checkpoint mixed support was next; the subsequent mixed slices and the
+positive-pass conclusion above now own that status. Profile/object expansion remains deferred.
 
 Proof: `/tmp/my-try-result-coalesce-20261004-final/` passed 11 PHP suites, 166 generated
 C++ programs/state checks and two runtime tests with PCH. The initial no-PCH run
@@ -999,20 +1078,20 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-STRING-001](#cast-string-001) | agreed | `$a = (string)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
-| [CAST-OBJECT-001](#cast-object-001) | pending-discussion | `$a = (object)$b;` | unverified | unverified | deferred | — |
+| [CAST-OBJECT-001](#cast-object-001) | deferred-dependency | `$a = (object)$b;` | deferred | deferred | deferred | CH05-DYN-01 / chapter 06; no unrestricted object cast |
 | [FUNC-NULLABLE-001](#func-nullable-001) | agreed | `function f(?int $a): ?int { return $a; }` | proved | proved | deferred | Same scalar payload; nullable defaults deferred |
 | [TYPE-VAR-002](#type-var-002) | agreed | `$x ?string = null;` | proved | proved | deferred | Scalar nullable value boundary slice |
 | [NULL-CHECK-001](#null-check-001) | agreed | `$x === null` | proved | proved | deferred | Both orders; single evaluation and presence |
 | [NULL-CHECK-002](#null-check-002) | agreed | `$x !== null` | proved | proved | deferred | Both orders; false/zero/empty-string remain present |
-| [TYPE-VAR-006B](#type-var-006b) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [NOTE-005](#note-005) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-010](#note-010) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-015](#note-015) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-036](#note-036) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-037](#note-037) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-045](#note-045) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-052](#note-052) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-063](#note-063) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [TYPE-VAR-006B](#type-var-006b) | agreed | `$p weird<int>;` rejects | proved | output withheld | deferred | `tests/constructed_type.php`; no mixed/auto fallback |
+| [NOTE-005](#note-005) | split/debt | `value<value<int>>` normalizes | bounded proof | bounded proof | deferred | CH05-OWN-01; newer value-modifier contract supersedes blanket prose |
+| [NOTE-010](#note-010) | reconciled/debt | Typed scalar/wrapper signatures | bounded proof | bounded proof | deferred | Object/reference/closure subrules assigned to chapters 07/10/12 |
+| [NOTE-015](#note-015) | reconciled | `(string)$value` | proved subset | proved subset | deferred | Prepared cast matrix; object forms deferred |
+| [NOTE-036](#note-036) | reconciled/debt | `$x ?int;` | proved subset | proved subset | deferred | Nullable/null rules; callable/default expansion deferred |
+| [NOTE-037](#note-037) | reconciled/debt | `$x vector<int>;` | formation proved | representation proved | deferred | Source container operations belong to 06 |
+| [NOTE-045](#note-045) | reconciled/debt | `$nullable ?? $mixed` | proved subset | proved subset | deferred | CH05-VAL-01 for remaining joins; boolable coalesce rejects early |
+| [NOTE-052](#note-052) | split/debt | `"value=$v"` | bounded proof | bounded proof | deferred | Scalar interpolation covered; ownership CH05-OWN-01; path interpolation deferred |
+| [NOTE-063](#note-063) | reconciled/debt | `take($v, $e) = source();` | proved subset | proved subset | deferred | Existing outputs; CH05-TAKE-01, CH05-PROFILE-01 and RSL-ERROR-01 |
 ## LIT-NULL-001
 
 **v0.2 decision / target C++:** Non-storable null sentinel; an explicit scalar nullable
@@ -1395,7 +1474,9 @@ auto a = cast<string_t>(b);
 
 ## CAST-OBJECT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred with CH05-DYN-01 to chapter 06. Supported
+object construction forms need container/runtime-construction preparation first;
+this is not permission for unrestricted object casting.
 
 ### Imported version 1
 
@@ -1587,9 +1668,13 @@ php::not_null(x)
 
 ## TYPE-VAR-006B
 
-**Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
+**Strict-first scope:** `$p weird<int>;` and equivalent unknown explicit parameter,
+return and field types reject during preparation. Legacy annotations below are reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit intent either resolves through the canonical
+type model or rejects without output; it never degrades to mixed/auto. Proved by
+`tests/constructed_type.php`. Ownership nesting remains CH05-OWN-01, not covered by
+this unknown-type rejection.
 
 ### Imported version 1
 
@@ -1626,7 +1711,10 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules_catalog.md:369](../../../../generators/php/specs/rules_catalog.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Split under CH05-OWN-01. Redundant `value<value<int>>`
+normalizes per `specs/type_use_modifiers.md`; repeated effective modifiers reject.
+Ownership nesting needs semantic classification in chapter 07. Imported blanket
+wording below does not override the newer v0.2 modifier contract.
 
 > ## Wrapper nesting constraints
 >
@@ -1636,7 +1724,11 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules.md:58](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Reconciled by owning area. Typed functions and scalar/
+nullable/Result/mixed boundaries are covered; container operations, references,
+objects and closures belong to chapters 06/07/10/12. Legacy annotation placement
+and ownership shortcuts are not part of this strict-first closeout. See the closeout
+table and named debt above; imported C++ spellings are not v0.2 lowering requirements.
 
 > ## 2. Type System
 >
@@ -1737,7 +1829,10 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules.md:225](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Prepared scalar cast matrix is proved by conversions
+and generated programs. Use semantic conversion decisions, not the imported
+constructor fallback. Object construction remains CH05-DYN-01; explicit casts and
+text-context conversion remain distinct.
 
 > ## 7. Casting
 >
@@ -1752,7 +1847,10 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules.md:708](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Typed predeclarations, nullable mapping, typed null,
+nullable null returns and untyped-null rejection are covered. Nullable defaults
+remain CH05-VAL-01; callable/closure expansion belongs to chapter 12. Imported
+comment-annotation placement remains outside the strict-first proof.
 
 > ## 7. Null and nullable rules
 >
@@ -1809,7 +1907,9 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules.md:759](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Scalar identities and canonical runtime-template
+formation/rendering are covered. Vector/hash source operations belong to chapter 06;
+type formation does not certify indexing, mutation or iteration.
 
 > ## 8. Type mapping
 >
@@ -1827,7 +1927,10 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules.md:997](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Bounded conditional/coalesce matrices are implemented
+through dedicated nodes, prepared decisions and lazy evaluation. Boolable coalesce
+rejects in preparation, even when unselected. Remaining joins/payloads are CH05-VAL-01;
+imported helper spellings do not override the preparation/emission boundary.
 
 > ## 16. Null coalescing and ternary-family lowering
 >
@@ -1891,7 +1994,9 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules.md:1196](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Split: ownership nesting is CH05-OWN-01, subject to
+the newer modifier contract. Simple scalar variable interpolation is implemented in
+chapter 02; indexed/property/call interpolation needs the corresponding access owners.
 
 > ## Wrapper nesting constraints
 >
@@ -1919,7 +2024,12 @@ generator diagnostic
 
 **Source:** [generators/php/specs/rules.md:1317](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Explicit Result family identities, scalar payload/sentinel
+distinctions and existing-output take are covered. Main v0.2 syntax is
+`take($value, $error) = source();`; helper spelling shares its node. Output declaration
+and profile availability remain CH05-TAKE-01/CH05-PROFILE-01. General error members/
+construction remain RSL-ERROR-01 in chapter 13; imported member examples are not
+current my-try support claims.
 
 > ## Explicit result_or_false<T> and result<T> type intent
 >

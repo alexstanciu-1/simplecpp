@@ -32,6 +32,8 @@ function constructed_rejects(string $path, string $source, string $message): voi
 	constructed_check($failed, 'Invalid constructed type did not report its owning validation: ' . $observed);
 	constructed_check(Model::$type_catalog->registry()->application_count() === 0,
 		'Rejected constructed type published a canonical application');
+	constructed_check(Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(),
+		'Invalid explicit type published a preparation/generation handoff');
 }
 
 $directory = sys_get_temp_dir() . '/scpp_constructed_type_' . bin2hex(random_bytes(6));
@@ -173,6 +175,25 @@ PHS;
 		'needs one resolved template type for vector_t');
 	constructed_rejects($path, '$bad vector; return 0;',
 		'template type requires explicit arguments');
+	foreach (['$bad weird<int>;', 'function bad(weird<int> $x): void {}',
+		'function bad(): weird<int> { return 1; }', 'struct Bad { weird<int> $item; }'] as $invalid_site) {
+		constructed_rejects($path, $invalid_site, 'needs one resolved template type for weird');
+	}
+	constructed_rejects($path, '$bad Unknown;', 'needs one resolved type for Unknown');
+	constructed_rejects($path, '$bad mixed<int>;', 'type arguments require a template definition');
+	constructed_rejects($path, '$bad nullable<int, string>;', 'Template type argument count does not match definition arity');
+	constructed_rejects($path, '$bad result<void>;', 'does not declare required capability value_storable');
+
+	// The v0.2 modifier contract supersedes the imported blanket value-wrapper ban.
+	file_put_contents($path, '$v value<value<int>> = 3; return $v;');
+	Compiler_Lifecycle::reset();
+	$compiler = new Compiler();
+	$compiler->init([$directory]);
+	$compiler->exec_cpp();
+	$normalized = Model::syntax_files()[0]->root->body->statements[0]->type_syntax->require_preparation();
+	constructed_check($normalized->matches(Language_Types::integer(Model::$language_scope))
+		&& !str_contains(Model::$cpp_files[0]->text, 'value_p'),
+		'Redundant nested value modifiers stopped normalizing to int');
 
 	echo "Constructed type: runtime families, contracts, nesting, value modifiers, exact reuse and recursive C++ bindings passed\n";
 }

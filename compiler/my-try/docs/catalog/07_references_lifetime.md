@@ -9,6 +9,21 @@ Requires storage places and calls. Discuss aliasing and lifetime before enabling
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Ownership-type validation debt from chapter 05
+
+**CH05-OWN-01:** ownership templates currently register as ordinary template
+definitions. Complete the semantic ownership classification before enforcing nested
+`shared`/`unique`/`weak` and effective `value` restrictions. Registration, template
+argument validation and modifier validation need one truthful policy, not source-name
+checks or a generic ban on nested templates. Known gaps include `shared<shared<int>>`
+and `value<shared<int>>`; type formation/emission must not be advertised as approved
+ownership behavior. Agree the model before implementing this extension.
+
+The normative [v0.2 modifier contract](../../../../specs/type_use_modifiers.md)
+allows redundant `value<value<int>>` to normalize to int; repeated effective class-like
+modifiers remain rejected. Nullable/Result nesting is a separate value contract:
+canonical formation alone does not establish nested payload operations.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

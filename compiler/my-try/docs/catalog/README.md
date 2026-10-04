@@ -84,7 +84,9 @@ working bounded functionality with sound model/ownership/process paths. Deferred
 features and hardening remain explicit and reopen when an agreed feature needs them.
 The [2026-10-02 preparation/emission audit](../planning/preparation_emission_audit.md)
 is complete. Chapters 03 and 04 have completed their bounded positive passes and
-native checkpoints; next is the [Chapter 05 discussion](05_dynamic_boundaries.md#handoff-from-chapter-04--2026-10-02).
+native checkpoints. Chapter 05 has completed its [bounded positive pass with debt](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04);
+its latest mixed slices have generated-program proofs, not a new native compiler checkpoint.
+Next is the [Chapter 06 grouped discussion](06_containers.md#handoff-from-chapter-05--2026-10-04).
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.
