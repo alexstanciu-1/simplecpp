@@ -87,6 +87,16 @@ definition identity rather than copying semantic values. New runtime-library JSO
 intake, source constant declarations and broader constructed types remain future
 work. Reserved-name validation is deferred; ordinary parent lookup currently applies.
 
+Concrete nominal definitions share `abstract_nominal_type_definition`; the ordinary
+`nominal_type_definition` remains final. Final siblings `mixed_type_definition` and
+`dynamic_type_definition` implement separate marker interfaces `mixed_semantics` and
+`dynamic_semantics`. Both reuse `nominal_type` identity and registry interning, without
+source-name tests or new top-level families. Mixed has value-box storage; dynamic is
+the shared object/table form. Neither role is an unknown compiler type or a blanket
+operation capability. Registered copy/storage contracts do not claim deep copying,
+hashability, comparison, iteration or member dispatch. Runtime payload tags and
+value-dependent validation remain runtime-owned; backend bindings are independent.
+
 Template definitions share `abstract_template_type_definition` for ordered parameters,
 arity/defaults and result kind. The ordinary `template_type_definition` remains final;
 its final sibling `nullable_type_definition` implements `nullable_semantics` with

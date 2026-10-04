@@ -151,6 +151,8 @@ final class CPP_Type_Binding_Registration
 		registered_type_catalog $types): void
 	{
 		$bindings->bind_definition($types->definition('vector'), 'scpp::vector_t', 'scpp/vector_t.hpp');
+		$bindings->bind_definition($types->definition('mixed'), 'scpp::mixed_t', 'scpp/mixed_t.hpp');
+		$bindings->bind_definition($types->definition('dynamic'), 'scpp::dynamic_t<>', 'scpp/dynamic_t.hpp');
 		$bindings->bind_definition($types->definition('hash'), 'scpp::hash_t', 'scpp/hash_t.hpp');
 		$bindings->bind_definition($types->definition('nullable'), 'scpp::nullable', 'scpp/nullable.hpp');
 		$bindings->bind_definition($types->definition('result'), 'scpp::result', 'scpp/result.hpp');

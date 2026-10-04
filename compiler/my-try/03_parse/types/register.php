@@ -69,6 +69,13 @@ final class Type_Definition_Registration
 		$error = $registry->define_nominal('error', type_definition_origin::runtime,
 			nominal_type_kind::structure, $error_capabilities);
 		self::install_concrete($registry, $source, $error);
+
+		$copyable_storage /** vector<generic_contract> */ = [generic_contract::copyable_value,
+			generic_contract::value_storable];
+		$mixed = $registry->define_mixed('mixed', type_definition_origin::language, $copyable_storage);
+		self::install_concrete($registry, $source, $mixed);
+		$dynamic = $registry->define_dynamic('dynamic', type_definition_origin::language, $copyable_storage);
+		self::install_concrete($registry, $source, $dynamic);
 	}
 
 	/** Install runtime recipes and their known formation contracts without applying them. */

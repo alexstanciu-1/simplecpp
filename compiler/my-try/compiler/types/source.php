@@ -9,6 +9,6 @@ final class Source_Types
 	public static function definition(collected_struct $entry): nominal_type_definition
 	{
 		$type = Model::$type_catalog->define_source_structure($entry->name, $entry);
-		return $type->nominal_definition();
+		return object_cast($type->nominal_definition(), nominal_type_definition::class);
 	}
 }

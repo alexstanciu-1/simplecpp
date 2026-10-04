@@ -87,6 +87,15 @@ final class S2S_Proof
 
 		$catalog = Model::$type_catalog;
 		$registry = $catalog->registry();
+		$mixed_type = $catalog->canonical('mixed');
+		$dynamic_type = $catalog->canonical('dynamic');
+		if (!($mixed_type->definition() instanceof mixed_semantics)
+			|| !($dynamic_type->definition() instanceof dynamic_semantics)
+			|| ($mixed_type->type_id() === $dynamic_type->type_id())
+			|| !$registry->is_value_type($mixed_type->type_id())
+			|| $registry->is_value_type($dynamic_type->type_id())) {
+			throw new \LogicException('Dynamic carrier roles, identities or storage changed');
+		}
 		if (($catalog->canonical('byte') !== $catalog->canonical('uint8'))
 			|| ($catalog->definition('byte')->name() !== 'uint8')) {
 			throw new \LogicException('byte did not reuse the stable uint8 identity');

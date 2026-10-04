@@ -431,6 +431,46 @@ Earlier slice notes describe their original PHP-hosted checkpoints; this checkpo
 adds native coverage. LLVM, legacy STAN and warning cleanup remain excluded.
 Mixed and the remaining chapter debt are unchanged; this is not chapter closeout.
 
+## Mixed and dynamic model foundation — 2026-10-04
+
+Implemented the agreed model-only slice following
+[`dynamic_types.md`](../../../../specs/dynamic_types.md). `mixed` is a broad boxed
+value; `dynamic` is shared object/table storage whose ordinary copies preserve
+identity. Neither is an unknown/unresolved compiler type, and they are not aliases.
+
+`abstract_nominal_type_definition` now owns the common nominal code, with final
+ordinary, mixed and dynamic definitions. Separate `mixed_semantics` and
+`dynamic_semantics` marker interfaces identify language roles without replacing
+nominal classification. The existing canonical nominal type, source exposure,
+language scope and backend binding paths are reused. Mixed uses value storage;
+dynamic uses class-like shared storage. Both register copyable/storable contracts;
+broader operation capabilities are not promised. C++ bindings are `scpp::mixed_t`
+and the concrete `scpp::dynamic_t<>` spelling; no source template parameters are
+introduced for dynamic.
+
+Eight focused PHP suites pass, including `tests/dynamic_model.php`, plus the shared
+portable type proof and its generated C++ execution. The dynamic declaration sample
+compiles without PCH, links against the runtime library from the preceding native
+checkpoint and executes successfully. Evidence:
+`/tmp/my-try-dynamic-model-20261004-verified/` (shared 12-slot runner, CLI fallback).
+This is PHP-hosted compiler/model and generated-program evidence, not a rebuild of
+the native compiler. The first end-to-end attempt exposed missing language-scope
+publication; the next exposed the header-only fixture's missing runtime linkage.
+Both are accounted for in the final proof.
+
+Next: discuss boxing, same-carrier copying and checked typed value boundaries.
+Required extraction must remain distinct from explicit casts. Runtime-kind dispatch
+must handle admitted value-dependent operations; uncertainty alone must not trigger
+preparation rejection. By-reference normalization remains prohibited. Existing
+default declaration and identity paths do not imply completed dynamic operations.
+
+Deferred: indexing, operators, conditions/probes, iteration (Chapter 06), and dynamic
+`->`. Discuss fixed-name property reads/writes, computed property names and method
+calls separately; current Phase 1 uses `[]` and does not promise method dispatch.
+Before adding mixed execution fixtures to the general/native runners, provide their
+normal runtime-library linkage: current header-only compile commands cannot link
+mixed constructors/destructors. Do not solve this by changing generated semantics.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

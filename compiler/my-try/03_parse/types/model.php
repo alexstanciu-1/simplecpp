@@ -278,7 +278,7 @@ final class floating_type_definition extends semantic_type_definition implements
 }
 
 /** A source or predefined structure/class definition; its members retain their existing owners. */
-final class nominal_type_definition extends semantic_type_definition implements concrete_type_definition_i
+abstract class abstract_nominal_type_definition extends semantic_type_definition implements concrete_type_definition_i
 {
 	private nominal_type_kind $nominal_kind_data;
 
@@ -302,6 +302,38 @@ final class nominal_type_definition extends semantic_type_definition implements 
 	public function create_canonical_type(int $type_id): canonical_type_i
 	{
 		return new nominal_type($type_id, $this);
+	}
+}
+
+final class nominal_type_definition extends abstract_nominal_type_definition
+{
+}
+
+/** Broad boxed-value semantics; operation admission remains preparation-owned. */
+interface mixed_semantics
+{
+}
+
+/** Shared property-bag semantics, not arbitrary scalar boxing or method dispatch. */
+interface dynamic_semantics
+{
+}
+
+final class mixed_type_definition extends abstract_nominal_type_definition implements mixed_semantics
+{
+	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */)
+	{
+		parent::__construct($identity, $source_name, $origin, nominal_type_kind::structure, $capabilities);
+	}
+}
+
+final class dynamic_type_definition extends abstract_nominal_type_definition implements dynamic_semantics
+{
+	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */)
+	{
+		parent::__construct($identity, $source_name, $origin, nominal_type_kind::class_type, $capabilities);
 	}
 }
 
@@ -671,9 +703,9 @@ final class floating_type extends canonical_type
 
 final class nominal_type extends canonical_type
 {
-	private nominal_type_definition $nominal_definition_data;
+	private abstract_nominal_type_definition $nominal_definition_data;
 
-	public function __construct(int $identity, nominal_type_definition $definition)
+	public function __construct(int $identity, abstract_nominal_type_definition $definition)
 	{
 		parent::__construct($identity);
 		$this->nominal_definition_data = $definition;
@@ -689,7 +721,7 @@ final class nominal_type extends canonical_type
 		return object_cast($this->nominal_definition_data, type_definition_i::class);
 	}
 
-	public function nominal_definition(): nominal_type_definition
+	public function nominal_definition(): abstract_nominal_type_definition
 	{
 		return $this->nominal_definition_data;
 	}
@@ -900,6 +932,22 @@ final class Type_Registry implements type_capability_query
 		return $definition;
 	}
 
+	public function define_mixed(string $name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */): mixed_type_definition
+	{
+		$definition = new mixed_type_definition($this->allocate_definition_id(), $name, $origin, $capabilities);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
+	public function define_dynamic(string $name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */): dynamic_type_definition
+	{
+		$definition = new dynamic_type_definition($this->allocate_definition_id(), $name, $origin, $capabilities);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
 	public function define_no_value(string $name, type_definition_origin $origin): no_value_type_definition
 	{
 		$no_capabilities /** vector<generic_contract> */ = [];
@@ -1015,8 +1063,8 @@ final class Type_Registry implements type_capability_query
 			return true;
 		}
 		$definition = $type->definition();
-		if ($definition instanceof nominal_type_definition) {
-			$nominal = object_cast($definition, nominal_type_definition::class);
+		if ($definition instanceof abstract_nominal_type_definition) {
+			$nominal = object_cast($definition, abstract_nominal_type_definition::class);
 			return $nominal->nominal_kind() === nominal_type_kind::structure;
 		}
 		if ($definition instanceof abstract_template_type_definition) {
