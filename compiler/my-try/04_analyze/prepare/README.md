@@ -171,11 +171,15 @@ escaping exceptions request a full rebuild. The full policy is in
 at assignment, by-value argument and return boundaries. It recognizes `mixed_semantics`
 and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the
 existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
-is the only boxed integer admitted in this slice; fixed widths, cross-carrier/wrapper
-bridges and general operator contexts remain deferred. Selection contexts admit only
+is the only boxed integer admitted in this slice; fixed widths, implicit cross-carrier
+bridges, wrapper boxing and general operator contexts remain deferred. Selection contexts admit only
 identity mixed copies and ordinary scalar boxing, never extraction or bare-null branches.
 Explicit bool/int/float/string
 casts record `explicit_runtime_cast` and call `cast<T>`, not `required_cast<T>`.
+Explicit `mixed`/`dynamic` bridges use semantic roles: `mixed_dynamic_box` retains the
+dynamic tag and shared identity; reverse extraction uses `explicit_runtime_cast`.
+Null extracts to an empty handle, whose reboxing remains tagged dynamic rather than
+null. Actual payload rejection belongs to the runtime; implicit bridges remain rejected.
 `Condition_Truthiness` admits mixed through `mixed_condition`; all condition consumers
 and mixed `!` reuse runtime kind dispatch, not explicit boolean conversion. Boxed
 table/object conditions currently throw at runtime; broader kind truthiness is debt.

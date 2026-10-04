@@ -9,6 +9,35 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Explicit mixed/dynamic bridges — 2026-10-04
+
+Implemented `(mixed)$dynamic` and `(dynamic)$mixed` using the existing cast AST
+and role-based conversion preparation. `Mixed_Conversions` owns bridge permission;
+the retained `mixed_dynamic_box` operation preserves the dynamic carrier tag, while
+extraction uses the existing explicit runtime-cast operation.
+
+Important consequences, following [the source contract](../../../../specs/dynamic_types.md#phase-1-first-class-source-dynamic):
+
+- Boxing preserves shared identity and `dynamic_v`, including an empty handle.
+  An empty boxed dynamic is not a null mixed value.
+- Extraction accepts null (an empty handle), shared-table and dynamic payloads.
+  Scalar, owned-table and weak-table payloads fail at runtime; they are not cloned
+  or promoted. Source values are not consumed.
+- Cast operands execute once. Failed extraction does not overwrite the destination.
+- Assignment, argument and return boundaries do not gain automatic bridges.
+  Scalar-to-dynamic and arbitrary nominal casts remain preparation errors.
+- Object construction, `(object)`, indexing, `->`, containers and iteration remain
+  separate slices. No new AST or semantic type definition was needed.
+
+Proofs: `tests/mixed.php` covers role-based decisions, facts/cleanup and rejected
+implicit bridges; `tests/fixtures/mixed_dynamic_casts.php` covers generated-C++
+identity, null/empty tags, runtime rejection and once-only evaluation. This is not
+a native compiler rebuild checkpoint. Focused verification passed 14 PHP suites
+and 218 generated programs in `/tmp/my-try-mixed-dynamic-casts-20261004-2`;
+the 8 new programs also passed without PCH, with updated incremental PHP checks,
+in `/tmp/my-try-mixed-dynamic-casts-20261004-no-pch`. The first PHP attempt required
+one test-only AST-field correction; generated-C++ verification passed first attempt.
+
 ## Handoff from chapter 04 — 2026-10-02
 
 [Chapter 04's bounded first pass is complete](04_functions.md#positive-pass-conclusion--2026-10-02).

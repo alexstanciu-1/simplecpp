@@ -5,6 +5,14 @@ namespace scpp\compiler;
 
 final class Mixed_Conversions
 {
+	/** Explicit shared-handle bridges are distinct from ordinary scalar boxing. */
+	public static function is_dynamic_bridge(canonical_type_use $source, canonical_type_use $target): bool
+	{
+		$source_dynamic = Type_Preparation::canonical($source)->definition() instanceof dynamic_semantics;
+		$target_dynamic = Type_Preparation::canonical($target)->definition() instanceof dynamic_semantics;
+		return (self::is_mixed($source) && $target_dynamic) || ($source_dynamic && self::is_mixed($target));
+	}
+
 	public static function is_mixed(canonical_type_use $type): bool
 	{
 		return Type_Preparation::canonical($type)->definition() instanceof mixed_semantics;
@@ -40,6 +48,10 @@ final class Mixed_Conversions
 			throw new \RuntimeException('S2S mixed selection requires matching mixed or supported scalar branches');
 		}
 		if ($context === conversion_context::explicit_cast) {
+			if (!$source->by_value() && !$target->by_value() && self::is_dynamic_bridge($source, $target)) {
+				return Conversion_Preparation::operation($source, $target, $context,
+					self::is_mixed($target) ? conversion_operation::mixed_dynamic_box : conversion_operation::explicit_runtime_cast);
+			}
 			if ($source->by_value() || !self::is_scalar_payload($target)) {
 				throw new \RuntimeException('S2S explicit mixed casts require bool, ordinary int, float or string without storage modifiers');
 			}

@@ -55,6 +55,20 @@ try
 		=== conversion_operation::explicit_runtime_cast, 'Explicit mixed cast reused required extraction');
 	mixed_check(Condition_Truthiness::decide($box)->operation === truthiness_operation::mixed_condition,
 		'Mixed truthiness depended on source spelling');
+	$renamed_dynamic = $registry->define_dynamic('OtherHandle', type_definition_origin::runtime,
+		[generic_contract::value_storable, generic_contract::copyable_value]);
+	$handle = $registry->use($registry->canonical($renamed_dynamic)->type_id());
+	mixed_check(Conversion_Preparation::decide($handle, $box, conversion_context::explicit_cast)->operation
+		=== conversion_operation::mixed_dynamic_box, 'Dynamic boxing depended on source spelling');
+	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
+		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
+	mixed_source($path, '$d dynamic; $m mixed = (mixed)$d; $again dynamic = (dynamic)$m;');
+	$bridge_root = Model::syntax_files()[0]->root;
+	mixed_check($bridge_root->body->statements[1]->initializer->require_cast_preparation()->conversion->operation
+		=== conversion_operation::mixed_dynamic_box, 'Missing dynamic boxing cast fact');
+	Preparation_Cleanup::tree($bridge_root);
+	mixed_check($bridge_root->body->statements[1]->initializer->preparation() === null,
+		'Dynamic cast retained stale facts');
 
 	mixed_source($path, '$v mixed = "false"; if ($v) {} $n int = (int)$v; '
 		. '$b bool = !$v; $p bool = isset($v); $e bool = empty($v);');
@@ -73,6 +87,8 @@ try
 	}
 
 	$rejections = [
+		['$v int = 7; $x = (dynamic)$v;', 'explicit cast target is not supported'],
+		['$v int = 7; $x = (mixed)$v;', 'explicit cast target is not supported'],
 		['$n uint8 = 7; $x mixed = $n;', 'mixed boxing currently supports'],
 		['$x mixed = 7; $n uint8 = $x;', 'mixed extraction currently supports'],
 		['$v ?int = 7; $x mixed = $v;', 'mixed boxing currently supports'],
@@ -151,7 +167,8 @@ try
 	foreach (['return (int)source();', 'if (source()) { return 1; } return 0;',
 		'return !source() ? 1 : 0;', 'return isset(source()) ? 1 : 0;',
 		'return empty(source()) ? 1 : 0;', 'return source() ?? 1;',
-		'return source() ?: 1;', 'return true ? source() : 1;'] as $consumer)
+		'return source() ?: 1;', 'return true ? source() : 1;',
+		'return (int)(mixed)(dynamic)source();'] as $consumer)
 	{
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';
