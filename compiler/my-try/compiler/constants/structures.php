@@ -20,3 +20,8 @@ final class integer_constant_definition extends constant_definition
 final class sentinel_constant_definition extends constant_definition
 {
 }
+
+/** Immutable published no-error value; ordinary error locals remain assignable. */
+final class no_error_constant_definition extends constant_definition
+{
+}

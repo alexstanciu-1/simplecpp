@@ -1021,9 +1021,53 @@ final class Parser_Run
 		return $target;
 	}
 
+	/** Both take spellings normalize to the same conditional binding operation. */
+	private function take_expression(): expression_node
+	{
+		$start = $this->position++;
+		$this->expect('(');
+		$arguments /** Storage<expression_node> */ = new Storage();
+		if ($this->text() !== ')')
+		{
+			$arguments->append($this->expression());
+			while ($this->text() === ',') {
+				$this->position++;
+				$arguments->append($this->expression());
+			}
+		}
+		$this->expect(')');
+		$count = $arguments->count();
+		$node = new take_expression_node();
+		if ($this->text() === '=')
+		{
+			if (($count < 1) || ($count > 2)) {
+				throw new \RuntimeException($this->error_message('take assignment requires one or two outputs'));
+			}
+			$this->position++;
+			$node->source = $this->binary_expression(4);
+		}
+		else
+		{
+			if (($count < 2) || ($count > 3)) {
+				throw new \RuntimeException($this->error_message('take helper requires outputs followed by a source'));
+			}
+			$count--;
+			$node->source = $arguments[$count];
+		}
+		$node->value_binding = $arguments[0];
+		if ($count === 2) {
+			$node->alternative_binding = $arguments[1];
+		}
+		$this->finish_node($node, $start);
+		return $node;
+	}
+
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->text() === 'take') {
+			return $this->take_expression();
+		}
 		if (($this->text() === 'isset') || ($this->text() === 'empty')) {
 			$start = $this->position;
 			$probe = new value_probe_node();
@@ -1066,6 +1110,21 @@ final class Parser_Run
 			return $this->array_literal();
 		}
 		if ($this->identifier()) {
+			if ($this->text_at_offset(1) === '::')
+			{
+				$start = $this->position;
+				$name = $this->text();
+				$this->position += 2;
+				if (!string_byte_starts_with($this->text(), '$')) {
+					throw new \RuntimeException($this->error_message('Expected a registered readonly static value'));
+				}
+				$constant = new constant_reference_node();
+				$constant->name = $name . '::' . $this->text();
+				$this->position++;
+				$this->finish_node($constant, $start);
+				$constant->collect($this->collector, $this->current_scope, $start);
+				return $constant;
+			}
 			if ($this->call_ahead()) {
 				return $this->call_expression();
 			}

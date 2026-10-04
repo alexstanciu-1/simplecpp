@@ -25,6 +25,7 @@ experiment retained for regressions, not a second semantic development path.
 | Active type-model discussion | [Type model direction](planning/types.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
 | Current scalar operators | [Bounded contracts, lowering and proof](s2s_scalar_operators.md) |
+| Conditional wrapper extraction and error state | [Take checkpoint](catalog/05_dynamic_boundaries.md#conditional-take-and-no-error-values--2026-10-04), [language contract](../../../specs/error_values_and_take.md) |
 | Active operator discussion | [Operator preparation and resolution](planning/operators.md) |
 | Next language feature | [Catalog](catalog/README.md), [chapter 05 handoff](catalog/05_dynamic_boundaries.md#handoff-from-chapter-04--2026-10-02) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |

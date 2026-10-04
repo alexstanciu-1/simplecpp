@@ -169,7 +169,16 @@ scalar required-value extraction at assignment/argument/return boundaries record
 `result_extract`; the backend copies the guarded payload. Non-value states throw,
 failed stores preserve targets and reference arguments never implicitly extract.
 Explicit casts and other Result operations remain deferred; structured error construction
-depends on chapter 13's runtime-owned error value and reusable construction/member-call paths.
+depends on chapter 13's reusable runtime construction/member-call paths. The runtime-owned
+`error` type is now registered with default/copy semantics and a readonly no-error constant.
+
+`Take_Preparation` owns wrapper-directed output binding: source snapshot copy capability,
+exact scalar payload/alternative types, existing locals/parameters and output distinctness.
+Both take spellings retain one `take_expression_node` with named source/value/alternative
+edges and attached `prepared_take` family facts. Emission consumes those facts and calls
+the existing runtime helper inside a single-evaluation lambda. Eager operand sequencing
+restrictions also cover take. `Condition_Truthiness` owns error presence tests; unary
+logical negation records that decision instead of introducing a second error-state rule.
 
 `Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
 boolean operation facts on `value_probe_node`. Scalars, nullable scalars and literal

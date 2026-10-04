@@ -59,6 +59,7 @@ final class CPP_Declarations
 			return '(' . $expression . ').native_value()';
 		}
 		if (($decision->operation === truthiness_operation::scalar_condition)
+			|| ($decision->operation === truthiness_operation::error_condition)
 			|| ($decision->operation === truthiness_operation::nullable_condition)) {
 			if ($decision->operation === truthiness_operation::nullable_condition) {
 				$context->headers['scpp/cast.hpp'] = true;

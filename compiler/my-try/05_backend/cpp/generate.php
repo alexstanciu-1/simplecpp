@@ -353,6 +353,9 @@ final class CPP_Generator
 	public static function generate_constant(prepared_constant_reference $reference, cpp_generation_context $context): string
 	{
 		$definition = $reference->definition;
+		if ($definition instanceof no_error_constant_definition) {
+			return CPP_Declarations::type($definition->type, $context) . '::no_error';
+		}
 		if ($definition instanceof sentinel_constant_definition)
 		{
 			if ($definition->type->matches(Model::$type_catalog->null_type())) {
@@ -423,6 +426,12 @@ final class CPP_Generator
 	public static function generate_unary(unary_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_unary_preparation()->decision;
+		if ($decision->operation === operator_operation::condition_not)
+		{
+			$truthiness /** truthiness_decision */ = $decision->truthiness;
+			$operand = $syntax->operand->generate_cpp(new CPP_Syntax($context));
+			return 'scpp::bool_t(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
+		}
 		$spelling = '';
 		if ($decision->operation === operator_operation::integer_positive) {
 			$spelling = '+';

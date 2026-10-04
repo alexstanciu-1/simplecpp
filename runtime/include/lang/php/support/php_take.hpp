@@ -34,11 +34,12 @@ template <typename T>
 }
 
 // Unified guarded-value extraction helper for result<T>.
-// Success assigns the wrapped value and returns true; error state assigns the error output and returns false.
+// Success assigns the value, clears the error and returns true; failure assigns only the error.
 template <typename T>
 [[nodiscard]] inline bool_t take(T &out_value, error_t &out_error, const result<T> &source) {
 	if (source.has_value().native_value()) {
 		out_value = source.require_value("php::take(result)");
+		out_error = error_t::no_error;
 		return bool_t(true);
 	}
 

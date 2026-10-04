@@ -24,6 +24,12 @@ enum class result_state : std::uint8_t {
 template <typename T, bool AllowError, bool AllowTrue>
 class result_core {
 private:
+	static void require_real_error(const error_t &value) {
+		if (!value.has_error().native_value()) {
+			throw std::invalid_argument("result: no_error cannot construct a failure");
+		}
+	}
+
 	std::variant<T, error_t, std::monostate> storage_;
 	result_state state_;
 
@@ -64,14 +70,16 @@ protected:
 
 	result_core(const error_t &error_value) requires AllowError
 		: storage_(error_value), state_(result_state::error) {
+		require_real_error(error_value);
 	}
 
-	result_core(error_t &&error_value) noexcept(std::is_nothrow_move_constructible_v<error_t>) requires AllowError
+	result_core(error_t &&error_value) requires AllowError
 		: storage_(std::move(error_value)), state_(result_state::error) {
+		require_real_error(std::get<error_t>(storage_));
 	}
 
 	result_core(error_sentinel_t) requires AllowError
-		: storage_(error_t{}), state_(result_state::error) {
+		: storage_(error_t{string_t("")}), state_(result_state::error) {
 	}
 
 	result_core(false_sentinel_t) requires (!AllowError)
@@ -111,19 +119,21 @@ protected:
 	}
 
 	result_core &assign_error(const error_t &error_value) requires AllowError {
+		require_real_error(error_value);
 		storage_ = error_value;
 		state_ = result_state::error;
 		return *this;
 	}
 
-	result_core &assign_error(error_t &&error_value) noexcept(std::is_nothrow_move_assignable_v<error_t>) requires AllowError {
+	result_core &assign_error(error_t &&error_value) requires AllowError {
+		require_real_error(error_value);
 		storage_ = std::move(error_value);
 		state_ = result_state::error;
 		return *this;
 	}
 
 	result_core &assign_error(error_sentinel_t) requires AllowError {
-		storage_ = error_t{};
+		storage_ = error_t{string_t("")};
 		state_ = result_state::error;
 		return *this;
 	}
@@ -276,7 +286,7 @@ public:
 		return require_value("end_entries() const").end_entries();
 	}
 
-	error_t &require_error(const char *context) requires AllowError {
+	const error_t &require_error(const char *context) requires AllowError {
 		if (state_ != result_state::error) {
 			throw_error_access(context, type_name());
 		}
@@ -290,7 +300,7 @@ public:
 		return std::get<error_t>(storage_);
 	}
 
-	error_t *error() requires AllowError { return &require_error("error()"); }
+	const error_t *error() requires AllowError { return &require_error("error()"); }
 	const error_t *error() const requires AllowError { return &require_error("error() const"); }
 
 	auto operator->() requires (!detail::has_arrow_operator_v<T>) { return &require_value("operator->()"); }

@@ -2,6 +2,7 @@
 
 #include "lang/php/support/php_common.hpp"
 #include "scpp/runtime_error.hpp"
+#include "scpp/error_t.hpp"
 
 namespace scpp::detail {
 
@@ -65,6 +66,8 @@ inline bool_t condition_truthy_impl(Value &&value, const char *component, const 
 	using value_t = std::remove_cvref_t<Value>;
 	if constexpr (std::is_same_v<value_t, bool_t>) {
 		return value;
+	} else if constexpr (std::is_same_v<value_t, error_t>) {
+		return value.has_error();
 	} else if constexpr (::scpp::detail::is_int_t_v<value_t>) {
 		return bool_t(value.native_value() != 0);
 	} else if constexpr (std::is_same_v<value_t, float_t>) {

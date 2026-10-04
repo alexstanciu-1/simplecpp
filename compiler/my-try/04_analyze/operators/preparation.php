@@ -135,6 +135,18 @@ final class Operator_Preparation
 			throw new \LogicException('Unary operation requires one operand');
 		}
 		$expected = $context->integer;
+		if ($source_operator === operator_kind::logical_not)
+		{
+			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope)))
+			{
+				$decision = new operator_decision();
+				$decision->source_operator = $source_operator;
+				$decision->operation = operator_operation::condition_not;
+				$decision->result_type = $context->boolean;
+				$decision->truthiness = Condition_Truthiness::decide($operands[0]);
+				return $decision;
+			}
+		}
 		$operation = operator_operation::integer_positive;
 		if ($source_operator === operator_kind::logical_not) {
 			$expected = $context->boolean;
@@ -293,6 +305,13 @@ final class Operator_Preparation
 	/** Sequenced logical operands admit writes; eager parents inspect the entire subtree. */
 	private static function require_operand(expression_node $node, bool $sequenced): void
 	{
+		if ($node instanceof take_expression_node)
+		{
+			if ($sequenced) {
+				return;
+			}
+			throw new \RuntimeException('S2S take requires a sequenced expression context');
+		}
 		if ($node instanceof interpolated_string_node) {
 			// The admitted grammar contains only literal parts and ordinary variable reads.
 			return;

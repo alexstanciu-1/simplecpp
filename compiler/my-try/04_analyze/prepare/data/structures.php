@@ -13,6 +13,13 @@ abstract class prepared_expression {
 	public bool $addressable = false;
 }
 
+enum take_operation { case nullable_value; case false_result; case error_result; case boolean_result; }
+
+final class prepared_take extends prepared_expression
+{
+	public take_operation $operation;
+}
+
 /** Literal identity is its canonical type and local value key, not source position. */
 abstract class prepared_literal extends prepared_expression {
 	public abstract function literal_key(): string;

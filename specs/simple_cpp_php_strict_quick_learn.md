@@ -831,7 +831,7 @@ Rule of thumb:
 
 - `take($out, nullable<T>)` writes the present value and returns `true`
 - `take($out, result_or_false<T>)` writes the success value and returns `true`
-- `take($out, $err, result<T>)` writes either the success value or the `error`
+- `take($out, $err, result<T>)` writes the success value and clears `$err`, or writes the real `error` on failure while preserving `$out`
 - `take($out, $flag, result_or_bool<T>)` keeps the bool sentinel branch separate
 
 For PHP++ / PHS code, that is the main mental model you need. You usually do not need to think about the generated C++ lowering to use it correctly.
@@ -1104,6 +1104,13 @@ The goal is to place them where the shape assumption is intentional and easy to 
 ## `error` In Practice
 
 `error` is the source-facing structured error payload used by `result<T>`-style wrappers.
+
+Default initialization means no error. A no-error value is false in conditions;
+real errors are true, even with an empty message. Structured `take` clears a previous
+error on success, so `if (!$err)` is a valid follow-up check. The v0.2 compiler also
+exposes readonly `error::$no_error` and the primary `take($out, $err) = source()`
+spelling; older generator examples here retain the helper spelling. See the
+[error/take contract](error_values_and_take.md) for semantics and implementation limits.
 
 - `Guaranteed`: it can carry error information such as message, line, and file
 - `Preferred`: in quick strict code, treat it as a payload you capture when `take(..., $err, ...)` fails

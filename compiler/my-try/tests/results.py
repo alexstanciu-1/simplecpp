@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused Result construction proofs; PHP compiler plus generated C++ execution."""
+"""Focused Result/extraction/take proofs; PHP compiler and generated/runtime C++."""
 import argparse
 import json
 from pathlib import Path
@@ -20,7 +20,7 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     programs = output / 'programs'
     programs.mkdir()
-    suites = ['s2s', 'results', 'result_model', 'type_catalog', 'constructed_type',
+    suites = ['s2s', 'results', 'take', 'tokenizer', 'result_model', 'type_catalog', 'constructed_type',
               'conversions', 'nullable', 'incremental_cpp', 'preparation_recovery']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
         def suite(name):
@@ -36,6 +36,7 @@ def main():
             raise RuntimeError('No Result fixtures exported')
         compiler = CppFixtureCompiler(runner, APP.parents[1], output,
                                       pch=not args.no_pch, return_type_errors=True)
+        compiler.flags.extend(['-I', APP.parents[1]])
 
         def execute(item):
             source = Path(item['path'])
@@ -43,11 +44,19 @@ def main():
             compiler.compile(source.stem + '-compile', source, executable)
             runner.run(source.stem + '-execute', [executable], expected=item['exit_code'])
 
-        run_tasks([Task(Path(item['path']).stem, lambda item=item: execute(item))
-                   for item in fixtures], jobs=12)
+        def runtime_proof(name):
+            source = APP.parents[1] / 'tests/runtime/wrappers/level_01' / (name + '.cpp')
+            executable = output / name
+            compiler.compile(name + '-compile', source, executable)
+            runner.run(name + '-execute', [executable])
+
+        tasks = [Task(Path(item['path']).stem, lambda item=item: execute(item)) for item in fixtures]
+        runtime_names = ['runtime_wrappers_001_result_wrapper_states', 'runtime_wrappers_003_take_helper']
+        tasks.extend(Task(name, lambda name=name: runtime_proof(name)) for name in runtime_names)
+        run_tasks(tasks, jobs=12)
     (output / 'summary.json').write_text(json.dumps(dict(
         passed=True, cpp_pch=not args.no_pch, php_suites=len(suites),
-        generated_programs=len(fixtures)), indent=2) + '\n')
+        generated_programs=len(fixtures), runtime_programs=len(runtime_names)), indent=2) + '\n')
 
 
 if __name__ == '__main__':

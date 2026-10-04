@@ -127,4 +127,58 @@ $fixtures['result_extract_alias'] = [
 	'$n uint8 = 7; $r result<byte> = $n; $v uint8 = $r;',
 	'local_v.native_value() == 7',
 ];
+foreach (['?int', 'result_or_false<int>'] as $index => $family)
+{
+	$fixtures['result_take_optional_' . $index] = [
+		'function source(int &$n): ' . $family . ' { $n++; return 0; } '
+			. '$n = 0; $v = 9; $yes = take($v) = source($n); $present = $v; '
+			. '$r ' . $family . ' = null; $v = 7; $no = take($v, $r); '
+			. '$skipped = false && (take($v) = source($n));',
+		'local_n.native_value() == 1 && local_yes.native_value() && local_present.native_value() == 0'
+			. ' && !local_no.native_value() && local_v.native_value() == 7 && !local_skipped.native_value()',
+	];
+}
+$fixtures['result_take_bool_states'] = [
+	'$v = true; $flag = true; $r result_or_bool<bool> = false; '
+		. '$a = take($v, $flag) = $r; $payload = $v; $unchanged = $flag; '
+		. '$r = false_sentinel; $b = take($v, $flag, $r); $off = $flag; '
+		. '$r = true_sentinel; $c = take($v, $flag) = $r;',
+	'local_a.native_value() && !local_payload.native_value() && local_unchanged.native_value()'
+		. ' && !local_b.native_value() && !local_off.native_value() && local_c.native_value()'
+		. ' && local_flag.native_value() && !local_v.native_value()',
+];
+$fixtures['result_take_error_states'] = [
+	'function extract(result<int> $r, int &$v, error &$e): bool { return take($v, $e) = $r; } '
+		. 'function usable(error $e): bool { return !$e; } '
+		. 'function failed(error $e): bool { if ($e) { return true; } return false; } '
+		. '$e error = error::$no_error; $fresh error; $r result<int> = 0; $v = 9; '
+		. 'if (take($v, $e) = $r) { $v = $v + 1; } $clean = !$e;',
+	'local_v.native_value() == 1 && local_clean.native_value() && !local_fresh.has_error().native_value()'
+		. ' && ([&]() { scpp::int_t<> out{9LL}; scpp::error_t error; '
+		. 'scpp::result<scpp::int_t<>> bad{scpp::error_t{scpp::string_t("")}}; '
+		. 'if (function_extract(bad, out, error).native_value() || out.native_value() != 9'
+		. ' || !function_failed(error).native_value() || function_usable(error).native_value()) return false; '
+		. 'scpp::result<scpp::int_t<>> good{scpp::int_t<>{0LL}}; '
+		. 'return function_extract(good, out, error).native_value() && out.native_value() == 0'
+		. ' && function_usable(error).native_value() && !function_failed(error).native_value(); }())',
+];
+$fixtures['result_take_source_before_output'] = [
+	'function source(int &$v): ?int { $v = 12; return null; } '
+		. '$v = 7; $ok = take($v) = source($v);',
+	'!local_ok.native_value() && local_v.native_value() == 12',
+];
+$fixtures['result_take_owned_string'] = [
+	'$r result<string> = ""; $v = "old"; $e error; $a = take($v, $e) = $r; '
+		. '$r = "new"; $n ?float = 0.0; $f = 1.5; $b = take($f) = $n;',
+	'local_a.native_value() && local_v.native_value().empty() && !local_e.has_error().native_value()'
+		. ' && local_r.value().native_value() == "new" && local_b.native_value() && local_f.native_value() == 0.0',
+];
+$fixtures['result_take_exception_propagates'] = [
+	'function source(result<int> $r, int &$n): ?int { $n++; $v int = $r; return $v; } '
+		. 'function extract(result<int> $r, int &$v, int &$n): bool { return take($v) = source($r, $n); }',
+	'([&]() { scpp::result<scpp::int_t<>> bad{scpp::error_t{scpp::string_t("bad")}}; '
+		. 'scpp::int_t<> out{7LL}, n{0LL}; try { (void)function_extract(bad, out, n); } '
+		. 'catch (const std::runtime_error&) { return out.native_value() == 7 && n.native_value() == 1; } '
+		. 'return false; }())',
+];
 return $fixtures;

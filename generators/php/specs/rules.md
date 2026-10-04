@@ -1324,6 +1324,7 @@ If a symbol is not present in the registry, the generator will **not** rewrite i
 - `take(...)` is a reserved runtime helper name in the PHP-facing source subset. It lowers to `php::take(...)` when no user-defined function named `take` is resolved.
 - `take($value, $source)` is valid only for source expressions typed as `nullable<T>` or `result_or_false<T>`.
 - `take($value, $error, $source)` is valid only for source expressions typed as `result<T>`.
+- Structured take success assigns `$value` and clears `$error` to its explicit no-error state; failure assigns the real error and preserves `$value`. See [error/take contract](../../../specs/error_values_and_take.md). The assignment spelling is a v0.2 compiler feature, not a parser extension to this generator.
 - `take($value, $bool, $source)` is valid only for source expressions typed as `result_or_bool<T>`.
 - `take(...)` output arguments must be simple local variables in v1. Wrong arity, wrong output type, or a non-wrapper source is a compile-time generator error when the source or output type is known.
 - `take(...)` evaluates its source expression exactly once and returns `bool_t`; for `result_or_bool<T>`, the helper returns `true` for both wrapped-value and bool-true states so mysqli-style APIs remain representable.

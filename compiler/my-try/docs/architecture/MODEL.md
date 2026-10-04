@@ -59,6 +59,11 @@ condition edge. Prepared facts retain truthiness and the value-result join.
 `value_probe_node` owns one operand and an `isset`/`empty` enum kind. Prepared probe
 facts retain the admitted operation and boolean value type; workers own admission
 and the runtime helpers own the distinct presence/emptiness semantics.
+`take_expression_node` owns source, value binding and optional alternative binding.
+Assignment and helper spellings share this node. `prepared_take` records the admitted
+wrapper operation; preparation validates existing output places and copy capability.
+Its named edges participate in normal cleanup, traversal and incremental maintenance.
+The runtime helper owns selected-output behavior, including clearing error on success.
 Match expressions own a selector and ordered arms; each arm owns expression labels
 and one result. Empty arm labels mean default. Arm facts retain exact integer labels
 and a result conversion. Match retains scalar-only admission; conditional preparation
@@ -100,6 +105,9 @@ with no storage capabilities/exposure; singleton constant definitions carry thos
 identities through existing lookup. They are not boolean payload values. `nullopt`
 uses the existing null identity. No additional AST or template class is introduced.
 Conversion/comparison/truthiness policy remains worker-owned.
+The nominal runtime `error` is a storable value; its no-error state is a registered
+`no_error_constant_definition`, not a singleton type (the same type holds real errors).
+Its qualified source name uses the existing constant lookup and prepared identity path.
 `coalesce_expression_node` owns left/fallback syntax and receives selected scalar
 result/conversion facts; it is distinct from truthiness-based conditional syntax.
 `null_type_definition` / `null_type` give null literals a canonical,

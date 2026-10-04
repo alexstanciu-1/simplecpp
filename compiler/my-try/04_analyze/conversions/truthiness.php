@@ -8,6 +8,13 @@ final class Condition_Truthiness
 	/** Nullable conditions delegate to their scalar payload, never to explicit bool casts. */
 	public static function decide(canonical_type_use $source): truthiness_decision
 	{
+		if ($source->matches(Language_Types::error_type(Model::$language_scope)))
+		{
+			$decision = new truthiness_decision();
+			$decision->source_type = $source;
+			$decision->operation = truthiness_operation::error_condition;
+			return $decision;
+		}
 		$payload = Nullable_Conversions::payload($source);
 		if ($payload !== null) {
 			Nullable_Conversions::require_scalar_payload($payload);

@@ -192,6 +192,22 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		return CPP_Generator::generate_integer($node->require_integer_literal_preparation(), $this->context);
 	}
 
+	/** Snapshot the source before any output write, then delegate branch behavior to the runtime. */
+	public function generate_take_expression(take_expression_node $node): string
+	{
+		$node->require_take_preparation();
+		$this->context->headers['lang/php/support/php_take.hpp'] = true;
+		$source = $node->source->generate_cpp($this);
+		$name = 'take_source_' . $this->context->next_temporary;
+		$this->context->next_temporary++;
+		$outputs = $node->value_binding->generate_cpp($this);
+		if ($node->alternative_binding !== null) {
+			$outputs .= ', ' . $node->alternative_binding->generate_cpp($this);
+		}
+		return '([&]() -> scpp::bool_t { auto ' . $name . ' = ' . $source
+			. '; return scpp::php::take(' . $outputs . ', ' . $name . '); }())';
+	}
+
 	public function generate_null_literal(null_literal_node $node): string
 	{
 		$node->require_null_preparation();

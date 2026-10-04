@@ -385,7 +385,8 @@ inline bool_t identical(const Left &left, const result_or_bool<T> &right) {
 
 inline bool_t identical(const error_t &left, const error_t &right) {
 	return bool_t(
-		left.get_message().native_value() == right.get_message().native_value()
+		left.has_error().native_value() == right.has_error().native_value()
+		&& left.get_message().native_value() == right.get_message().native_value()
 		&& left.get_line().native_value() == right.get_line().native_value()
 		&& left.get_file().native_value() == right.get_file().native_value()
 	);

@@ -143,6 +143,7 @@ final class CPP_Type_Binding_Registration
 		$bindings->bind_definition($types->definition('int'), 'scpp::int_t<>', 'scpp/int_t.hpp');
 		$bindings->bind_definition($types->definition('float'), 'scpp::float_t', 'scpp/float_t.hpp');
 		$bindings->bind_definition($types->definition('string'), 'scpp::string_t', 'scpp/string_t.hpp');
+		$bindings->bind_definition($types->definition('error'), 'scpp::error_t', 'scpp/error_t.hpp');
 	}
 
 	/** Bind runtime semantic families without adding their backend names to source lookup. */

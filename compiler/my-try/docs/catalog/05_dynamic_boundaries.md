@@ -239,12 +239,12 @@ as a passing suite. No native compiler rebuild was performed.
 
 Debt/non-goals:
 
-- **RSL-ERROR-01:** structured `error` registration, construction and getters belong
+- **RSL-ERROR-01:** structured `error` construction and getters belong
   to [chapter 13](13_errors.md#structured-error-value-debt-from-chapter-05).
   `error -> result<T>` failure construction is blocked on that prerequisite. Use a
   reusable runtime-type construction/member-call path, not an error-specific AST.
   Do not fabricate an empty error to bypass this dependency.
-- Explicit casts, `take`, truthiness, probes, operators, selection/coalescing joins and
+- Explicit casts, wrapper truthiness, probes, operators, selection/coalescing joins and
   profile-availability changes remain follow-up work.
 - Implicit default construction, cross-payload/family conversion, non-scalar/nested
   payload operations (including `result<error>`), and legacy implicit bool-sentinel
@@ -268,9 +268,10 @@ than borrowed, and failed stores leave their targets unchanged. An argument fail
 prevents the called function from running. Reference parameters still require exact
 storage compatibility and never extract a payload implicitly.
 
-Explicit casts, cross-payload conversion, wrapper-to-nullable conversion, `take`,
-conditions/operators and broader payloads remain deferred. Structured error values
+Explicit casts, cross-payload conversion, wrapper-to-nullable conversion,
+conditions/operators and broader payloads remain deferred. Real structured error values
 are supplied only by the native proof bridge; RSL-ERROR-01 remains owned by chapter 13.
+Take and minimal no-error support are implemented in the next section.
 `tests/results.php` covers attached decisions, exclusion diagnostics, cleanup and
 incremental payload-change failure/retry/repair. The shared Result fixture export
 covers success and failure at every boundary, scalar types, independent copies and
@@ -283,12 +284,51 @@ run also passed its 88 programs, before adding the byte/uint8 alias fixture.
 This proves the PHP-hosted compiler and generated C++ behavior, not a native compiler
 rebuild. LLVM and source error construction remain deferred.
 
+## Conditional take and no-error values — 2026-10-04
+
+Contract: [error values and take](../../../../specs/error_values_and_take.md).
+Primary `take($value[, $alternative]) = source` and compatibility helper spelling
+normalize to one dedicated node. `Take_Preparation` validates wrapper role, exact
+scalar payload/output types, existing locals/parameters and source copy capability.
+Named AST edges support cleanup and incremental work; C++ snapshots the source once
+before calling the existing runtime extraction helper. Take returns bool and preserves
+the existing restrictions on effects inside eager operator operands.
+
+Nullable/falseable missing states preserve the value output. Structured Result success
+copies the value and clears the nonnullable error output; failure copies the error and
+preserves the value. Boolable value states preserve the flag, while sentinel states
+write/return the flag and preserve the value. False/zero/empty payloads are successes.
+Source exceptions propagate, not turn into false.
+
+The registered nominal `error` has default/copy semantics and readonly
+`error::$no_error`. Conditions and `!$error` use explicit presence. A real empty-message
+error stays true. Runtime Result failure construction/assignment rejects no-error;
+const inspection prevents bypassing that invariant. Source constructors/getters and
+`error -> result<T>` remain chapter 13 debt. Qualified constant lookup is not general
+static-member support.
+
+Deferred: inline typed/inferred take declarations and their branch availability/scope,
+tuple spelling, aggregate payloads, fields/index outputs, reference-alias analysis and
+reserved intrinsic declaration validation. The parser currently reserves take use;
+it does not inherit the older generator's user-function override behavior. No LLVM,
+profile gate or native compiler rebuild is included.
+
+Proof: `/tmp/my-try-take-20261004-final/` passed 11 PHP suites, 104 generated C++
+programs/state checks and two runtime tests with PCH disabled, using the shared
+12-slot runner (CLI fallback after sandbox FPM socket denial). The earlier PCH run
+passed before the final string/float and exception probes were added. Coverage includes
+all wrapper states, both spellings, error reset/truthiness, single evaluation, lazy
+skipping, unchanged outputs, cleanup and incremental failure/retry/repair. The v0.3
+auxiliary-data idea is recorded only in top-level `docs/v0.3/result_auxiliary_data.md`.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| RSL-TAKE-001 | agreed | `take($value, $error) = source();` | proved | proved | deferred | Existing exact scalar outputs; all four wrapper families; `tests/take.php` and `tests/results.py` |
+| RSL-NO-ERROR-001 | agreed | `$e error = error::$no_error; if (!$e) {}` | proved | proved | deferred | Explicit presence, success clears error, invalid Result failures reject; full authoring: RSL-ERROR-01 |
 | RSL-CONSTRUCT-001 | agreed | `$a result<int> = 7; $b result<int> = $a;` | proved | proved | deferred | Exact scalar construction/copy; `tests/results.py`; structured failure: RSL-ERROR-01 |
 | RSL-SENTINEL-001 | agreed | `$a result_or_bool<bool> = false; $b result_or_bool<bool> = true_sentinel;` | proved | proved | deferred | Explicit sentinel states stay distinct from bool payloads; `tests/results.py` |
 | RSL-EXTRACT-001 | agreed | `$r result<int> = 7; $v int = $r;` | proved | proved | deferred | Exact scalar required boundaries; checked non-value failures; `tests/results.py` |

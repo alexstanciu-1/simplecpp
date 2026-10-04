@@ -59,6 +59,7 @@ enum operator_operation {
 	case integer_negative;
 	case integer_complement;
 	case boolean_not;
+	case condition_not;
 	case integer_three_way;
 	case boolean_xor;
 	case boolean_and;
@@ -82,6 +83,7 @@ enum operator_operation {
 
 /** One selected operator shape with ordered operand conversions and result type. */
 final class operator_decision {
+	public ?truthiness_decision $truthiness = null;
 	public operator_kind $source_operator;
 	public operator_operation $operation;
 	public array $operands /** vector<conversion_decision> */ = [];

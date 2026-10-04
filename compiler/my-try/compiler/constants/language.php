@@ -13,6 +13,10 @@ final class Language_Constants
 		$maximum->type = Language_Types::integer($language_scope);
 		$maximum->decimal = '9223372036854775807';
 		$language_scope->register_constant($maximum);
+		$no_error = new no_error_constant_definition();
+		$no_error->name = 'error::$no_error';
+		$no_error->type = Language_Types::error_type($language_scope);
+		$language_scope->register_constant($no_error);
 
 		$markers /** hash<canonical_type_use> */ = [
 			'false_sentinel' => Model::$type_catalog->boolean_sentinel_type(false),

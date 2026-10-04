@@ -32,13 +32,13 @@ $registry = new Type_Registry();
 $catalog = Type_Definition_Registration::install($registry);
 $bindings = CPP_Type_Binding_Registration::install($catalog);
 
-type_catalog_check($registry->definition_count() === 25, 'Unexpected semantic definition count');
-type_catalog_check($registry->type_count() === 16, 'Concrete built-in type count changed');
+type_catalog_check($registry->definition_count() === 26, 'Unexpected semantic definition count');
+type_catalog_check($registry->type_count() === 17, 'Concrete built-in type count changed');
 type_catalog_check($registry->application_count() === 0, 'Registration eagerly materialized a template application');
-type_catalog_check($catalog->source()->type_count() === 23, 'Source exposure count changed');
+type_catalog_check($catalog->source()->type_count() === 24, 'Source exposure count changed');
 type_catalog_check($catalog->source()->modifier_count() === 1, 'Source modifier count changed');
 type_catalog_check($catalog->providers()->count() === 10, 'Runtime provider count changed');
-type_catalog_check($bindings->definition_count() === 22, 'C++ binding count changed');
+type_catalog_check($bindings->definition_count() === 23, 'C++ binding count changed');
 type_catalog_check($registry->type($catalog->null_type()->type_id())->family() === type_family::null_sentinel,
 	'Null literal lost its distinct sentinel identity');
 type_catalog_rejects(fn() => $catalog->definition('null'));

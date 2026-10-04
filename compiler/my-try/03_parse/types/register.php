@@ -65,6 +65,10 @@ final class Type_Definition_Registration
 		$string = $registry->define_nominal('string', type_definition_origin::language,
 			nominal_type_kind::class_type, $scalar_capabilities);
 		self::install_concrete($registry, $source, $string);
+		$error_capabilities /** vector<generic_contract> */ = [generic_contract::copyable_value, generic_contract::value_storable];
+		$error = $registry->define_nominal('error', type_definition_origin::runtime,
+			nominal_type_kind::structure, $error_capabilities);
+		self::install_concrete($registry, $source, $error);
 	}
 
 	/** Install runtime recipes and their known formation contracts without applying them. */
