@@ -116,6 +116,11 @@ final class Operator_Preparation
 			|| ($source_operator === operator_kind::logical_xor)) {
 			return self::decide_logical($source_operator, $operands, $context);
 		}
+		foreach ($operands as $operand) {
+			if (Mixed_Conversions::is_mixed($operand)) {
+				return Mixed_Operators::decide($source_operator, $operands);
+			}
+		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
 	}
 
@@ -156,6 +161,9 @@ final class Operator_Preparation
 			}
 		}
 		$operation = operator_operation::integer_positive;
+		if (Mixed_Conversions::is_mixed($operands[0])) {
+			return Mixed_Operators::decide($source_operator, $operands);
+		}
 		if ($source_operator === operator_kind::logical_not) {
 			$expected = $context->boolean;
 			$operation = operator_operation::boolean_not;

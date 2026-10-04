@@ -62,6 +62,26 @@ try
 		=== conversion_operation::mixed_dynamic_box, 'Dynamic boxing depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
+	$arithmetic = Mixed_Operators::decide(operator_kind::addition, [$integer, $box]);
+	mixed_check($arithmetic->operation === operator_operation::mixed_addition
+		&& $arithmetic->result_type->matches($box)
+		&& $arithmetic->operands[0]->operation === conversion_operation::mixed_box
+		&& $arithmetic->operands[1]->operation === conversion_operation::identity,
+		'Mixed arithmetic depended on spelling or extracted its operands');
+	mixed_source($path, '$v mixed = 7; $sum mixed = $v + 2; $negative mixed = -$v; $typed int = $v * 3;');
+	$arithmetic_root = Model::syntax_files()[0]->root;
+	$sum_node = $arithmetic_root->body->statements[1]->initializer;
+	$negative_node = $arithmetic_root->body->statements[2]->initializer;
+	mixed_check($sum_node->require_binary_preparation()->decision->operation === operator_operation::mixed_addition
+		&& Mixed_Conversions::is_mixed($sum_node->require_preparation()->type)
+		&& !$sum_node->require_preparation()->addressable, 'Mixed arithmetic lost its owned result');
+	mixed_check($negative_node->require_unary_preparation()->decision->operation === operator_operation::mixed_negative,
+		'Mixed unary operation lost its runtime dispatch');
+	mixed_check($arithmetic_root->body->statements[3]->require_preparation()->conversion->operation
+		=== conversion_operation::mixed_extract, 'Typed destination changed arithmetic dispatch');
+	Preparation_Cleanup::tree($arithmetic_root);
+	mixed_check($sum_node->preparation() === null && $negative_node->preparation() === null,
+		'Mixed arithmetic retained stale facts');
 	mixed_source($path, '$d dynamic; $m mixed = (mixed)$d; $again dynamic = (dynamic)$m;');
 	$bridge_root = Model::syntax_files()[0]->root;
 	mixed_check($bridge_root->body->statements[1]->initializer->require_cast_preparation()->conversion->operation
@@ -98,7 +118,20 @@ try
 		['$d dynamic; $x mixed = $d;', 'mixed boxing currently supports'],
 		['$x mixed = 7; $d dynamic = $x;', 'mixed extraction currently supports'],
 		['$x mixed = 7; $y = (uint8)$x;', 'explicit mixed casts require'],
-		['$x mixed = 7; $y = $x + 1;', 'S2S'],
+		['$x mixed = 7; $y = $x + true;', 'mixed arithmetic requires'],
+		['$x mixed = 7; $y = $x + "1";', 'mixed arithmetic requires'],
+		['$x mixed = 7; $n uint8 = 1; $y = $x + $n;', 'mixed arithmetic requires'],
+		['$x mixed = 7; $n ?int = 1; $y = $x + $n;', 'mixed arithmetic requires'],
+		['$x mixed = 7; $y = $x % 1.5;', 'mixed remainder requires'],
+		['$x mixed = 7; $y = 1.5 % $x;', 'mixed remainder requires'],
+		['$x mixed = 7; $y = $x ** 2;', 'mixed operator is outside'],
+		['$x mixed = 7; $y = $x == 2;', 'mixed operator is outside'],
+		['$x mixed = 7; $y = ~$x;', 'mixed operator is outside'],
+		['$x mixed = 7; $x += 1;', 'mixed compound assignment is deferred'],
+		['$x mixed = 7; $n int = 1; $n += $x;', 'mixed compound assignment is deferred'],
+		['$x mixed = 7; $x++;', 'mutation requires canonical int'],
+		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'mixed arithmetic requires'],
+		['$d dynamic; $y = $d + 1;', 'requires canonical int'],
 		['$x mixed = 7; $y = $x && true;', 'S2S'],
 		['$x mixed = 7; $y = $x ?: null;', 'mixed selection requires'],
 		['$x mixed = 7; $y = null ?? $x;', 'mixed selection requires'],
@@ -168,7 +201,8 @@ try
 		'return !source() ? 1 : 0;', 'return isset(source()) ? 1 : 0;',
 		'return empty(source()) ? 1 : 0;', 'return source() ?? 1;',
 		'return source() ?: 1;', 'return true ? source() : 1;',
-		'return (int)(mixed)(dynamic)source();'] as $consumer)
+		'return (int)(mixed)(dynamic)source();',
+		'$v mixed = source(); return $v + 1;', 'return -source();'] as $consumer)
 	{
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';

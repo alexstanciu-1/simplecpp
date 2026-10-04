@@ -9,6 +9,46 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Mixed numeric arithmetic — 2026-10-04
+
+Implemented binary `+`, `-`, `*`, `/`, `%` and unary `+`/`-` for mixed values.
+`Mixed_Operators` owns candidate selection on existing expression nodes; retained
+operator decisions distinguish mixed runtime dispatch from native integer operations.
+Operand conversion keeps matching mixed unchanged and boxes ordinary int/float peers.
+No operand is implicitly extracted to a scalar and the result remains an owned mixed.
+
+Important consequences from the [runtime operator contract](../../../../specs/dynamic_types.md#23-operator-matrix-runtime):
+
+- `+`, `-`, `*`, `/` accept mixed/mixed and mixed with ordinary int/float in either
+  order. `%` admits mixed/mixed or mixed with ordinary int; known float peers reject
+  during preparation because no runtime payload could make that pairing valid.
+- Actual numeric payloads follow existing numeric runtime rules: int/int division
+  keeps an integer payload; a float participant in the other numeric combinations
+  produces a float payload. No PHP numeric-string, bool or null coercion is added.
+- Nonnumeric boxed payloads, float payloads for `%`, and zero divisors throw at
+  runtime. Merely having a mixed static type is not a reason for rejection.
+- Typed destinations use the existing checked boundary after arithmetic. A float
+  result assigned to required int fails even when numerically integral. Failed
+  computation/conversion leaves the destination unchanged.
+- Direct dynamic handles remain nonnumeric. Future reads of dynamic properties
+  that produce mixed values will reuse this path; property access is not enabled.
+- Existing eager binary operand-order restrictions remain. Unary calls evaluate
+  once. Comparisons, bitwise/logical expansion, power, compound updates, increment/
+  decrement and fixed-width peers are deferred; compound updates have an explicit
+  gate so shared binary candidate selection cannot enable unchecked write-back.
+
+Legacy/runtime review: numeric operator overloads already dispatch mixed kinds and
+delegate to native numeric rules; runtime mixed unary/compound and zero-divisor
+tests corroborate that behavior. No runtime changes are required for this slice.
+Proof owners: `tests/mixed.php` (facts, cleanup, rejections and incremental recovery),
+`tests/fixtures/mixed_arithmetic.php` (generated runtime behavior). This does not
+establish a new native compiler checkpoint.
+
+Verification passed first attempt: 14 PHP suites and 234 generated programs in
+`/tmp/my-try-mixed-arithmetic-20261004-1`; the 16 new arithmetic programs also passed
+without PCH in `/tmp/my-try-mixed-arithmetic-20261004-no-pch`. Existing scalar,
+wrapper, conversion and mixed behavior remains covered by the focused runner.
+
 ## Explicit mixed/dynamic bridges — 2026-10-04
 
 Implemented `(mixed)$dynamic` and `(dynamic)$mixed` using the existing cast AST

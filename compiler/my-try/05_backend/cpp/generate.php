@@ -433,10 +433,12 @@ final class CPP_Generator
 			return 'scpp::bool_t(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
 		}
 		$spelling = '';
-		if ($decision->operation === operator_operation::integer_positive) {
+		if (($decision->operation === operator_operation::integer_positive)
+			|| ($decision->operation === operator_operation::mixed_positive)) {
 			$spelling = '+';
 		}
-		elseif ($decision->operation === operator_operation::integer_negative) {
+		elseif (($decision->operation === operator_operation::integer_negative)
+			|| ($decision->operation === operator_operation::mixed_negative)) {
 			$spelling = '-';
 		}
 		elseif ($decision->operation === operator_operation::integer_complement) {
@@ -495,22 +497,27 @@ final class CPP_Generator
 			$spelling = '!=';
 		}
 		elseif (($decision->operation === operator_operation::integer_addition)
+			|| ($decision->operation === operator_operation::mixed_addition)
 			|| ($decision->operation === operator_operation::string_concatenation)) {
 			$spelling = '+';
 		}
-		elseif ($decision->operation === operator_operation::integer_subtraction) {
+		elseif (($decision->operation === operator_operation::integer_subtraction)
+			|| ($decision->operation === operator_operation::mixed_subtraction)) {
 			$spelling = '-';
 		}
 		elseif ($decision->operation === operator_operation::integer_power) {
 			$spelling = 'scpp::pow';
 		}
-		elseif ($decision->operation === operator_operation::integer_multiplication) {
+		elseif (($decision->operation === operator_operation::integer_multiplication)
+			|| ($decision->operation === operator_operation::mixed_multiplication)) {
 			$spelling = '*';
 		}
-		elseif ($decision->operation === operator_operation::integer_division) {
+		elseif (($decision->operation === operator_operation::integer_division)
+			|| ($decision->operation === operator_operation::mixed_division)) {
 			$spelling = '/';
 		}
-		elseif ($decision->operation === operator_operation::integer_remainder) {
+		elseif (($decision->operation === operator_operation::integer_remainder)
+			|| ($decision->operation === operator_operation::mixed_remainder)) {
 			$spelling = '%';
 		}
 		elseif ($decision->operation === operator_operation::integer_bitwise_and) {

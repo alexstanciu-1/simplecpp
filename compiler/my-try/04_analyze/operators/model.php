@@ -60,6 +60,13 @@ enum operator_operation {
 	case integer_complement;
 	case boolean_not;
 	case condition_not;
+	case mixed_positive;
+	case mixed_negative;
+	case mixed_addition;
+	case mixed_subtraction;
+	case mixed_multiplication;
+	case mixed_division;
+	case mixed_remainder;
 	case integer_three_way;
 	case boolean_xor;
 	case boolean_and;

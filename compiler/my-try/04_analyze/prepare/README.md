@@ -172,7 +172,7 @@ at assignment, by-value argument and return boundaries. It recognizes `mixed_sem
 and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the
 existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
 is the only boxed integer admitted in this slice; fixed widths, implicit cross-carrier
-bridges, wrapper boxing and general operator contexts remain deferred. Selection contexts admit only
+bridges, wrapper boxing and nonnumeric operator contexts remain deferred. Selection contexts admit only
 identity mixed copies and ordinary scalar boxing, never extraction or bare-null branches.
 Explicit bool/int/float/string
 casts record `explicit_runtime_cast` and call `cast<T>`, not `required_cast<T>`.
@@ -186,6 +186,15 @@ table/object conditions currently throw at runtime; broader kind truthiness is d
 Unary preparation permits one effectful operand, without introducing new bindings;
 eager parents still inspect its subtree for operand-order hazards. Runtime payload failure
 is not preparation failure. Reference arguments retain exact stable-storage rules.
+
+`Mixed_Operators` selects unary signs and binary numeric arithmetic on existing
+operator decisions. Operator-operand conversions admit matching mixed identity or
+ordinary int/float boxing, with no extraction. `%` rejects statically known float
+peers; unknown mixed payloads are checked by runtime dispatch. Results stay mixed,
+so typed consumers still apply their independent boundary checks. Mutation preparation
+explicitly defers mixed compound updates even though it shares binary selection.
+Direct dynamic handles are nonnumeric; future mixed-valued property reads reuse this
+owner without adding a dynamic-object arithmetic family.
 
 `Result_Conversions` in `conversions/results.php` selects exact scalar payload wrapping,
 same-type copies and explicit legacy false/true state construction. The three Result

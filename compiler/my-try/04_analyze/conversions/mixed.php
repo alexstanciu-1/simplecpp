@@ -34,6 +34,20 @@ final class Mixed_Conversions
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
+		if ($context === conversion_context::operator_operand)
+		{
+			if (!$source->by_value() && !$target->by_value() && self::is_mixed($target))
+			{
+				if ($source->matches($target)) {
+					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
+				}
+				if ($source->matches(Language_Types::integer(Model::$language_scope))
+					|| $source->matches(Language_Types::floating(Model::$language_scope))) {
+					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::mixed_box);
+				}
+			}
+			throw new \RuntimeException('S2S mixed arithmetic requires matching mixed, ordinary int or float operands');
+		}
 		if (($context === conversion_context::conditional_branch) || ($context === conversion_context::coalesce_value))
 		{
 			if (!$source->by_value() && !$target->by_value() && self::is_mixed($target))

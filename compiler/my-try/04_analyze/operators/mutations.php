@@ -53,6 +53,9 @@ final class Mutation_Preparation
 		$target = self::prepare_target($syntax->target, $context);
 		Operator_Preparation::require_order_independent_operand($syntax->value);
 		$value = Expression_Preparation::prepare($syntax->value, $context);
+		if (Mixed_Conversions::is_mixed($target->type) || Mixed_Conversions::is_mixed($value->type)) {
+			throw new \RuntimeException('S2S mixed compound assignment is deferred');
+		}
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
 		$facts = new prepared_compound_assignment_expression();
