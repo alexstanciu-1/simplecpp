@@ -244,7 +244,7 @@ Debt/non-goals:
   `error -> result<T>` failure construction is blocked on that prerequisite. Use a
   reusable runtime-type construction/member-call path, not an error-specific AST.
   Do not fabricate an empty error to bypass this dependency.
-- Explicit casts, wrapper truthiness, probes, operators, selection/coalescing joins and
+- Explicit casts, logical/arithmetic operators, selection/coalescing joins and
   profile-availability changes remain follow-up work.
 - Implicit default construction, cross-payload/family conversion, non-scalar/nested
   payload operations (including `result<error>`), and legacy implicit bool-sentinel
@@ -269,7 +269,7 @@ prevents the called function from running. Reference parameters still require ex
 storage compatibility and never extract a payload implicitly.
 
 Explicit casts, cross-payload conversion, wrapper-to-nullable conversion,
-conditions/operators and broader payloads remain deferred. Real structured error values
+logical/arithmetic operators and broader payloads remain deferred. Real structured error values
 are supplied only by the native proof bridge; RSL-ERROR-01 remains owned by chapter 13.
 Take and minimal no-error support are implemented in the next section.
 `tests/results.php` covers attached decisions, exclusion diagnostics, cleanup and
@@ -321,20 +321,52 @@ all wrapper states, both spellings, error reset/truthiness, single evaluation, l
 skipping, unchanged outputs, cleanup and incremental failure/retry/repair. The v0.3
 auxiliary-data idea is recorded only in top-level `docs/v0.3/result_auxiliary_data.md`.
 
+## Result conditions and value probes — 2026-10-04
+
+All three Result families now admit supported scalar payloads in ordinary conditions
+(`if`/`elseif`, loops and full ternary conditions) and single-value `isset`/`empty`.
+`Condition_Truthiness` records `result_condition`; emission calls the existing shared
+runtime authority. `Value_Probe_Preparation` admits the same role/payload domain and
+keeps the existing distinct presence and emptiness helpers. No new AST or runtime
+semantics are introduced, and no source-name check grants Result behavior.
+
+The [documented consequences](../../../../specs/conditional_expression_matrix.md#result-truthiness-is-not-success-or-presence)
+are preserved: falsey successful payloads remain present and extractable; string
+`"0"` is falsey but not empty; a true sentinel is truthy/present without carrying a
+payload; a failed Result is falsey while its contained real error is truthy.
+The [probe state table](../../../../specs/count_empty_isset_contract.md#result-wrapper-states)
+is explicit. These rules must not be collapsed into a generic success flag.
+
+Next: matching Result/scalar ternary and Elvis joins, then approved Result coalescing.
+Wrapper logical operators (`!`, `&&`, `||`) remain separate contract work; do not
+silently replace their documented guarded-unwrap semantics with condition truthiness.
+Aggregate/nested payloads, path probes and profile availability remain deferred.
+Full ternary with a Result condition and already-supported scalar branches works;
+Result-valued branch joins and shorthand Result Elvis are not added in this slice.
+
+Proof: `/tmp/my-try-result-probes-20261004-1/` passed 11 PHP suites, 130 generated
+C++ programs/state checks and two runtime tests with PCH disabled. The shared
+12-slot runner used CLI fallback after sandbox FPM socket denial. New probes cover
+all Result families with bool/int/float/string payloads, non-value states, string
+`"0"`, single evaluation and all existing condition consumers. PHP checks cover
+role-based admission, prepared facts/cleanup, exclusions and incremental invalidation,
+retry and clean-build agreement. No native compiler rebuild or LLVM work is claimed.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| RSL-PROBES-001 | agreed | `if ($r) {} $p = isset($r); $e = empty($r);` | proved | proved | deferred | Scalar payloads across all three Result families; state/payload distinction and single evaluation; `tests/results.py` |
 | RSL-TAKE-001 | agreed | `take($value, $error) = source();` | proved | proved | deferred | Existing exact scalar outputs; all four wrapper families; `tests/take.php` and `tests/results.py` |
 | RSL-NO-ERROR-001 | agreed | `$e error = error::$no_error; if (!$e) {}` | proved | proved | deferred | Explicit presence, success clears error, invalid Result failures reject; full authoring: RSL-ERROR-01 |
 | RSL-CONSTRUCT-001 | agreed | `$a result<int> = 7; $b result<int> = $a;` | proved | proved | deferred | Exact scalar construction/copy; `tests/results.py`; structured failure: RSL-ERROR-01 |
 | RSL-SENTINEL-001 | agreed | `$a result_or_bool<bool> = false; $b result_or_bool<bool> = true_sentinel;` | proved | proved | deferred | Explicit sentinel states stay distinct from bool payloads; `tests/results.py` |
 | RSL-EXTRACT-001 | agreed | `$r result<int> = 7; $v int = $r;` | proved | proved | deferred | Exact scalar required boundaries; checked non-value failures; `tests/results.py` |
 | [LIT-NULL-001](#lit-null-001) | agreed | `$a = null;` | proved | proved | deferred | Untyped null rejects; typed nullable destination works |
-| [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/null value; path probes deferred |
-| [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/null value; `"0"` is not empty |
+| [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; path probes deferred |
+| [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; `"0"` is not empty |
 | [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Exact scalar `T` or `nullable<T>` left; required scalar `T` fallback |
 | [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Matching scalar and nullable-scalar joins; other wrappers/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |

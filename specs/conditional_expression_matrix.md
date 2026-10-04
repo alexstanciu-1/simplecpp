@@ -121,6 +121,28 @@ Current supported condition path:
 - `result_or_bool<T>` reuses the carried `T` on success; its sentinel `true` / `false` states evaluate as boolean success/failure states
 - `mixed_t` currently delegates only for the approved implemented runtime kinds; broader delegation remains a tracked follow-up task
 
+## Result truthiness is not success or presence
+
+For a Result carrying a supported scalar, these distinctions are intentional:
+
+- A successful payload `false`, `0`, `0.0`, or `""` is falsey in a condition, while
+  `isset($result)` and successful `take(...)` return true. It is still a value state.
+- A successful payload `"0"` is also falsey, but `empty($result)` is false. The
+  project's documented string-zero emptiness exception applies through wrappers.
+- A `result_or_bool<T>` true sentinel is truthy and present under probe semantics,
+  but it contains no `T` payload. Take writes its boolean output, not its value output.
+- A structured failure is falsey; its contained real `error` is truthy. These tests
+  ask different questions and must not be conflated.
+- `??` preserves a successful zero/false/empty-string payload; `?:` instead selects
+  its fallback for those falsey payloads. Coalescing unwraps its approved wrappers,
+  while the documented ternary/Elvis joins preserve their wrapper result type.
+
+See [probe semantics](count_empty_isset_contract.md) and
+[take semantics](error_values_and_take.md). Neither successful extraction nor
+`isset` can be implemented as a condition-truthiness shortcut. Logical operator
+admission is separate; the condition rules alone do not redefine wrapper `!`, `&&`
+or `||` support or guarded-unwrapping behavior.
+
 ## Elvis rule
 
 `$x ?: $y` lowers through a temporary plus `php::ternary_eval(...)` so `$x` is evaluated exactly once.

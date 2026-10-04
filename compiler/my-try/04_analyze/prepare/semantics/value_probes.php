@@ -16,7 +16,11 @@ final class Value_Probe_Preparation
 			$operand = Expression_Preparation::prepare($syntax->operand, $context);
 			$type = $operand->type;
 			$payload = Nullable_Conversions::payload($type);
-			if ($payload !== null) {
+			$result_role = Result_Conversions::role($type);
+			if ($result_role !== null) {
+				Result_Conversions::require_scalar_payload($type, $result_role);
+			}
+			elseif ($payload !== null) {
 				Nullable_Conversions::require_scalar_payload($payload);
 				if ($type->by_value()) { throw new \RuntimeException('S2S nullable probes do not support storage modifiers'); }
 			}

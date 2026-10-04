@@ -59,6 +59,8 @@ try
 		nominal_type_kind::class_type, $parameters, [generic_contract::value_storable], result_kind::boolean_sentinels);
 	$application = $registry->intern_application($renamed, [$bool_type]);
 	$target = $registry->use($application->type_id());
+	result_check(Condition_Truthiness::decide($target)->operation === truthiness_operation::result_condition,
+		'Result condition admission depends on spelling');
 	result_check(Conversion_Preparation::decide($bool_type, $target, conversion_context::assignment)->operation
 		=== conversion_operation::result_wrap, 'Construction policy depends on Result spelling');
 	result_check(Conversion_Preparation::decide($catalog->boolean_sentinel_type(true), $target,
@@ -98,10 +100,11 @@ try
 		['$a result<int> = 1; $b = (int) $a;', 'Result extraction supports only required'],
 		['$a result<int> = 1; $b ?int = $a;', 'Result extraction requires the exact scalar payload type'],
 		['function ref(int &$v): void {} $a result<int> = 1; ref($a);', 'reference'],
-		['$a result<int> = 1; if ($a) {}', 'condition truthiness requires a supported scalar'],
 		['$a result<int> = 1; $b = $a ?? 2;', 'coalesce branches require supported scalar'],
-		['$a result<int> = 1; $b = isset($a);', 'value probes require a scalar'],
-		['$a result<int> = 1; $b = empty($a);', 'value probes require a scalar'],
+		['$a result<int> = 1; $b = !$a;', 'unary operation requires'],
+		['$a result<int> = 1; $b = $a ?: 2;', 'conditional branches require'],
+		['function f(result<vector<int>> $r): bool { return isset($r); }', 'unmodified scalar payload'],
+		['function f(result<vector<int>> $r): bool { if ($r) { return true; } return false; }', 'unmodified scalar payload'],
 		['$x = false_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x = true_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x result<int>;', 'Result construction requires an explicit initializer'],
@@ -173,7 +176,41 @@ try
 	result_check(Model::$cpp_files[0]->text === $original, 'Extraction repair changed output');
 	result_source($path, $valid);
 	result_check(Model::$cpp_files[0]->text === $original, 'Clean and incremental extraction output differ');
-	echo "Results: construction facts, sentinel identity, rejections, cleanup and incremental recovery passed\n";
+	foreach (['if (source()) { return true; } return false;',
+		'return isset(source());', 'return empty(source());'] as $consumer)
+	{
+		$valid = 'function source(): result<int> { return 0; } function read(): bool { '
+			. $consumer . ' } function stable(): int { return 9; } $ok = read();';
+		$compiler = result_source($path, $valid);
+		$original = Model::$cpp_files[0]->text;
+		$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+		$version = $stable->version;
+		file_put_contents($path, str_replace('result<int> { return 0;', 'void { return;', $valid));
+		foreach ([[$path], []] as $changed)
+		{
+			$compiler->sync($changed);
+			$failed = false;
+			try { $compiler->prepare(); }
+			catch (\RuntimeException $error) { $failed = true; }
+			result_check($failed && Model::$cpp_files->is_empty(), 'Result probe/condition published stale output');
+			result_check($stable->version === $version, 'Result probe/condition rebuilt independent body');
+		}
+		file_put_contents($path, $valid);
+		$compiler->update_cpp([$path]);
+		result_check(Model::$cpp_files[0]->text === $original, 'Result probe/condition repair changed output');
+		result_source($path, $valid);
+		result_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental Result probe/condition differ');
+	}
+	result_source($path, '$r result<int> = 0; if ($r) {} $p bool = isset($r); $e bool = empty($r);');
+	$probe_root = Model::syntax_files()[0]->root;
+	result_check($probe_root->body->statements[1]->require_preparation()->truthiness->operation
+		=== truthiness_operation::result_condition, 'Missing Result condition fact');
+	$presence_node = $probe_root->body->statements[2]->initializer;
+	$empty_node = $probe_root->body->statements[3]->initializer;
+	Preparation_Cleanup::tree($probe_root);
+	result_check($presence_node->preparation() === null && $presence_node->operand->preparation() === null
+		&& $empty_node->preparation() === null, 'Result probes retained stale facts');
+	echo "Results: value boundaries, conditions/probes, rejections, cleanup and incremental recovery passed\n";
 }
 finally {
 	unlink($path);

@@ -168,7 +168,11 @@ uses the null identity. Source locals require an initializer in this slice. Exac
 scalar required-value extraction at assignment/argument/return boundaries records
 `result_extract`; the backend copies the guarded payload. Non-value states throw,
 failed stores preserve targets and reference arguments never implicitly extract.
-Explicit casts and other Result operations remain deferred; structured error construction
+Result conditions and probes admit the same scalar payload domain through the existing
+semantic role. `result_condition` facts use the shared runtime truthiness helper for
+all condition consumers, while probes keep their independent runtime authorities.
+Logical operators, Result-valued conditional joins, coalescing and explicit casts
+remain deferred; structured error construction
 depends on chapter 13's reusable runtime construction/member-call paths. The runtime-owned
 `error` type is now registered with default/copy semantics and a readonly no-error constant.
 
@@ -181,8 +185,8 @@ restrictions also cover take. `Condition_Truthiness` owns error presence tests; 
 logical negation records that decision instead of introducing a second error-state rule.
 
 `Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
-boolean operation facts on `value_probe_node`. Scalars, nullable scalars and literal
-null are supported; direct path probes and broader carriers are deferred. Emission
+boolean operation facts on `value_probe_node`. Scalars, nullable scalars, Result
+scalars and literal null are supported; direct path probes and broader carriers are deferred. Emission
 uses separate runtime probe helpers, not condition truthiness: `empty("0")` is false.
 Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
 is introduced, and probes cannot establish new locals through nested assignment.

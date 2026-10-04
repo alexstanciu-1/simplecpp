@@ -181,4 +181,44 @@ $fixtures['result_take_exception_propagates'] = [
 		. 'catch (const std::runtime_error&) { return out.native_value() == 7 && n.native_value() == 1; } '
 		. 'return false; }())',
 ];
+foreach (['result', 'result_or_false', 'result_or_bool'] as $family)
+{
+	foreach ([
+		'int' => ['scpp::int_t<>', ['0LL' => 6, '7LL' => 3]],
+		'bool' => ['scpp::bool_t', ['false' => 6, 'true' => 3]],
+		'float' => ['scpp::float_t', ['0.0' => 6, '1.5' => 3]],
+		'string' => ['scpp::string_t', ['""' => 6, '"0"' => 2, '"yes"' => 3]],
+	] as $payload => [$cpp_type, $states])
+	{
+		$wrapper = $family . '<' . $payload . '>';
+		$source = 'function once(' . $wrapper . ' $r, int &$n): ' . $wrapper . ' { $n++; return $r; } '
+			. 'function inspect(' . $wrapper . ' $r, int &$n): int { $bits = 0; '
+			. 'if (once($r, $n)) { $bits = $bits + 1; } '
+			. 'if (isset(once($r, $n))) { $bits = $bits + 2; } '
+			. 'if (empty(once($r, $n))) { $bits = $bits + 4; } return $bits; }';
+		$probe = '([&]() { scpp::int_t<> n{0LL}; ';
+		foreach ($states as $literal => $bits) {
+			$probe .= 'if (function_inspect(scpp::' . $family . '<' . $cpp_type . '>{'
+				. $cpp_type . '{' . $literal . '}}, n).native_value() != ' . $bits . ') return false; ';
+		}
+		$nonvalues = $family === 'result' ? ['scpp::error_t{scpp::string_t("")}' => 4]
+			: ['scpp::false_sentinel' => 4];
+		if ($family === 'result_or_bool') { $nonvalues['scpp::true_sentinel'] = 3; }
+		foreach ($nonvalues as $literal => $bits) {
+			$probe .= 'if (function_inspect(scpp::' . $family . '<' . $cpp_type . '>{'
+				. $literal . '}, n).native_value() != ' . $bits . ') return false; ';
+		}
+		$probe .= 'return n.native_value() == ' . (3 * (count($states) + count($nonvalues))) . '; }())';
+		$fixtures['result_probes_' . $family . '_' . $payload] = [$source, $probe];
+	}
+}
+$fixtures['result_condition_consumers'] = [
+	'$r result<int> = 0; $n = 0; if ($r) { $n = 99; } elseif ($r) { $n = 99; } else { $n++; } '
+		. 'while ($r) { $n = 99; break; } do { $n++; } while ($r); '
+		. 'for (; $r;) { $n = 99; break; } $selected = $r ? 99 : 7; '
+		. '$r = 1; while ($r) { $n++; $r = 0; } '
+		. '$v = 9; $e error; $ok = take($v, $e) = $r; $present = isset($r); $vacant = empty($r);',
+	'local_n.native_value() == 3 && local_selected.native_value() == 7 && local_ok.native_value()'
+		. ' && local_v.native_value() == 0 && local_present.native_value() && local_vacant.native_value()',
+];
 return $fixtures;

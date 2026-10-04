@@ -106,6 +106,24 @@ Examples:
 - `$a["k"] = null; isset($a["k"])` -> `false`
 - `$a["k"] = 1; isset($a["k"])` -> `true`
 
+### Result wrapper states
+
+For supported scalar payloads, probes follow this state table. They do not throw
+merely because a Result is in a non-value state, and do not extract that absent payload.
+
+| State | `isset` | `empty` |
+| --- | --- | --- |
+| Value payload in any Result family | true | Payload emptiness |
+| `result<T>` failure | false | true |
+| `result_or_false<T>` false sentinel | false | true |
+| `result_or_bool<T>` false sentinel | false | true |
+| `result_or_bool<T>` true sentinel | true | false |
+
+A wrapped boolean-false **payload** is therefore present, unlike the false sentinel.
+A wrapped `"0"` is present and not empty, even though it is falsey in a condition.
+See [the condition/presence/extraction distinctions](conditional_expression_matrix.md#result-truthiness-is-not-success-or-presence).
+Ordinary exceptions evaluating the probe operand still propagate.
+
 ## 6. Non-mutating lookup rule
 
 `isset(...)` and `empty(...)` must never:
