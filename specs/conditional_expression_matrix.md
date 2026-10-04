@@ -40,6 +40,11 @@ Current v1 notes:
 - `result_or_bool<T>` is rejected in the runtime helper path on either side of `??`
 - the current generator does not resolve these rows statically, so some profile-specific invalid rows are runtime-rejected in v1 rather than generator- or compile-time rejected
 
+v0.2 semantic-compiler rule: reject a statically known `result_or_bool<T>` operand
+on either side during preparation, even if that branch would not execute. This is
+earlier diagnosis of the same invalid combination, not a change to usable-value
+semantics. See [v0.2 diagnostic policy](v0_2_preparation_diagnostics.md).
+
 ## Usable selected value vs selected mixed null
 
 The following states must not be conflated:

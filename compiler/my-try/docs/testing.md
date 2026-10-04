@@ -65,6 +65,9 @@ Result condition/probe fixtures distinguish falsey successful payloads from sent
 include string `"0"`, and check every condition consumer plus single evaluation.
 Conditional Result fixtures cover symmetric wrapper/scalar joins, state-preserving
 copies, falsey Elvis payloads, true sentinels, lazy alternatives and owned results.
+Result coalescing checks unwrapped scalar result types, retained falsey successes,
+lazy fallback and exception propagation, unchanged sources, boolable rejection on
+both sides, and incremental invalidation/recovery after a family change.
 The runner also executes the focused wrapper-state and take runtime tests. `--no-pch`
 checks generated include completeness without precompiled-header assistance.
 This does not rebuild the compiler natively.

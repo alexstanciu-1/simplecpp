@@ -175,7 +175,7 @@ failed stores preserve targets and reference arguments never implicitly extract.
 Result conditions and probes admit the same scalar payload domain through the existing
 semantic role. `result_condition` facts use the shared runtime truthiness helper for
 all condition consumers, while probes keep their independent runtime authorities.
-Logical operators, Result coalescing and explicit casts
+Logical operators and explicit casts
 remain deferred; structured error construction
 depends on chapter 13's reusable runtime construction/member-call paths. The runtime-owned
 `error` type is now registered with default/copy semantics and a readonly no-error constant.
@@ -208,6 +208,13 @@ false. `Coalesce_Expression_Preparation` separately selects a required scalar va
 domain and exact conversions; its dedicated syntax/facts preserve lazy fallback and
 single evaluation without reusing truthiness as presence. Both operands are validated
 even when the scalar-left form never needs its fallback at runtime.
+Result coalescing extends that same owner with exact scalar payload domains for
+`result<T>` and `result_or_false<T>`. `coalesce_value` identifies the selected left
+extraction boundary without granting general conditional-branch extraction. Existing
+emission snapshots the source and tests `has_value()` before extracting; fallback
+remains a required matching scalar. Boolable operands on either side reject during
+preparation under the [v0.2 diagnostic policy](../../../../specs/v0_2_preparation_diagnostics.md),
+including statically unselected alternatives. Runtime value-dependent errors still propagate.
 
 The S2S path currently supports one source file, scalar integer/bool/float literals,
 single-quoted string literals and locals, ordinary functions and value structs.

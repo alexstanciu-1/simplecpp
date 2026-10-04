@@ -279,4 +279,50 @@ foreach (['result', 'result_or_false', 'result_or_bool'] as $family)
 			. ' && local_c.value().native_value() == 0.0 && local_d.value().native_value() == 0',
 	];
 }
+foreach (['result', 'result_or_false'] as $family)
+{
+	foreach ([
+		'int' => ['scpp::int_t<>', '0', '0LL', '7', '7LL'],
+		'float' => ['scpp::float_t', '0.0', '0.0', '1.5', '1.5'],
+		'bool' => ['scpp::bool_t', 'false', 'false', 'true', 'true'],
+		'string' => ['scpp::string_t', '""', '""', '"fallback"', '"fallback"'],
+	] as $payload => [$cpp_type, $initial, $native_initial, $fallback, $native_fallback])
+	{
+		$wrapper = $family . '<' . $payload . '>';
+		$cpp_wrapper = 'scpp::' . $family . '<' . $cpp_type . '>';
+		$source = 'function once(' . $wrapper . ' $r, int &$n): ' . $wrapper . ' { $n++; return $r; } '
+			. 'function fallback(int &$n): ' . $payload . ' { $n++; return ' . $fallback . '; } '
+			. 'function choose(' . $wrapper . ' $r, int &$left, int &$right): ' . $payload
+			. ' { return once($r, $left) ?? fallback($right); } '
+			. '$r ' . $wrapper . ' = ' . $initial . '; $a = $r ?? ' . $fallback . '; $r = ' . $fallback . ';';
+		$failure = $family === 'result' ? 'scpp::error_t{scpp::string_t("failure")}' : 'scpp::false_sentinel';
+		$probe = '([&]() { static_assert(std::is_same_v<decltype(local_a), ' . $cpp_type . '>); '
+			. 'if (local_a.native_value() != ' . $native_initial . ') return false; '
+			. 'scpp::int_t<> left{0LL}, right{0LL}; '
+			. $cpp_wrapper . ' good{' . $cpp_type . '{' . $native_initial . '}}, bad{' . $failure . '}; '
+			. 'if (function_choose(good, left, right).native_value() != ' . $native_initial
+			. ' || left.native_value() != 1 || right.native_value() != 0) return false; '
+			. 'if (function_choose(bad, left, right).native_value() != ' . $native_fallback
+			. ' || left.native_value() != 2 || right.native_value() != 1) return false; '
+			. 'if (!good.has_value().native_value() || good.value().native_value() != ' . $native_initial
+			. ' || bad.has_value().native_value()) return false; ';
+		if ($payload === 'string') {
+			$probe .= $cpp_wrapper . ' zero{scpp::string_t("0")}; '
+				. 'if (function_choose(zero, left, right).native_value() != "0"'
+				. ' || left.native_value() != 3 || right.native_value() != 1) return false; ';
+		}
+		$fixtures['result_coalesce_' . $family . '_' . $payload] = [$source, $probe . 'return true; }())'];
+	}
+}
+$fixtures['result_coalesce_lazy_exception'] = [
+	'function required(result<int> $r, int &$n): int { $n++; return $r; } '
+		. 'function choose(result<int> $a, result<int> $b, int &$n): int { return $a ?? required($b, $n); } '
+		. 'function source(result<int> $r, int &$n): result<int> { $n++; $v int = $r; return $v; } '
+		. 'function left_failure(result<int> $r, int &$n): int { return source($r, $n) ?? 7; }',
+	'([&]() { scpp::result<scpp::int_t<>> good{scpp::int_t<>{0LL}}, bad{scpp::error_t{scpp::string_t("bad")}}; '
+		. 'scpp::int_t<> n{0LL}; if (function_choose(good, bad, n).native_value() != 0 || n.native_value() != 0) return false; '
+		. 'int caught = 0; try { (void)function_choose(bad, bad, n); } catch (const std::runtime_error&) { ++caught; } '
+		. 'try { (void)function_leftU_failure(bad, n); } catch (const std::runtime_error&) { ++caught; } '
+		. 'return caught == 2 && n.native_value() == 2; }())',
+];
 return $fixtures;

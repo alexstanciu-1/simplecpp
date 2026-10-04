@@ -100,7 +100,12 @@ try
 		['$a result<int> = 1; $b = (int) $a;', 'Result extraction supports only required'],
 		['$a result<int> = 1; $b ?int = $a;', 'Result extraction requires the exact scalar payload type'],
 		['function ref(int &$v): void {} $a result<int> = 1; ref($a);', 'reference'],
-		['$a result<int> = 1; $b = $a ?? 2;', 'coalesce branches require supported scalar'],
+		['$a result<int> = 1; $b = $a ?? 2.0;', 'coalesce branches require matching scalar'],
+		['$a result<int> = 1; $b = $a ?? $a;', 'coalesce branches require supported scalar'],
+		['$a result<int> = 1; $b = $a ?? null;', 'coalesce branches require supported scalar'],
+		['$a result_or_bool<int> = 1; $b = $a ?? 2;', 'coalesce does not permit result_or_bool'],
+		['$a result_or_bool<int> = 1; $b = 2 ?? $a;', 'coalesce does not permit result_or_bool'],
+		['$a result<int> = 1; $b result_or_bool<int> = 2; $c = $a ?? $b;', 'coalesce does not permit result_or_bool'],
 		['$a result<int> = 1; $b = !$a;', 'unary operation requires'],
 		['$a result<int> = 1; $b = $a ?: 2.0;', 'conditional Result branches require'],
 		['$a result<int> = 1; $b result_or_false<int> = 2; $c = true ? $a : $b;', 'conditional Result branches require'],
@@ -249,7 +254,39 @@ try
 	result_check(Model::$cpp_files[0]->text === $original, 'Conditional repair changed output');
 	result_source($path, $valid);
 	result_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental conditional output differs');
-	echo "Results: value boundaries, conditions/probes/joins, rejections, cleanup and incremental recovery passed\n";
+	result_source($path, '$r result<int> = 0; $v int = $r ?? 2;');
+	$coalesce_root = Model::syntax_files()[0]->root;
+	$coalesce_node = $coalesce_root->body->statements[1]->initializer;
+	$coalesce_facts = $coalesce_node->require_coalesce_preparation();
+	result_check($coalesce_facts->left_conversion->operation === conversion_operation::result_extract
+		&& $coalesce_facts->left_conversion->context === conversion_context::coalesce_value,
+		'Coalesce lost its selected extraction context');
+	result_check($coalesce_facts->type->matches(Language_Types::integer(Model::$language_scope))
+		&& !$coalesce_facts->addressable, 'Coalesce did not produce an owned payload');
+	Preparation_Cleanup::tree($coalesce_root);
+	result_check($coalesce_node->preparation() === null && $coalesce_node->left->preparation() === null
+		&& $coalesce_node->fallback->preparation() === null, 'Coalesce retained stale facts');
+	$valid = 'function source(): result<int> { return 1; } function read(): int { return source() ?? 2; } '
+		. 'function stable(): int { return 9; } $r = read();';
+	$compiler = result_source($path, $valid);
+	$original = Model::$cpp_files[0]->text;
+	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+	$version = $stable->version;
+	file_put_contents($path, str_replace('source(): result<int>', 'source(): result_or_bool<int>', $valid));
+	foreach ([[$path], []] as $changed) {
+		$compiler->sync($changed);
+		$failed = false;
+		try { $compiler->prepare(); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'coalesce does not permit result_or_bool'); }
+		result_check($failed && Model::$cpp_files->is_empty(), 'Boolable edit published stale coalesce output');
+		result_check($stable->version === $version, 'Coalesce edit rebuilt independent body');
+	}
+	file_put_contents($path, $valid);
+	$compiler->update_cpp([$path]);
+	result_check(Model::$cpp_files[0]->text === $original, 'Coalesce repair changed output');
+	result_source($path, $valid);
+	result_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental coalesce output differs');
+	echo "Results: value boundaries, conditions/probes/joins/coalescing, rejections and recovery passed\n";
 }
 finally {
 	unlink($path);

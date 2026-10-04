@@ -22,6 +22,9 @@ when historical context is needed; their former plans are not current instructio
 - Catalog work targets strict PHS first. Review the corresponding legacy S2S
   implementation, tests and edge cases before each slice. Legacy examples are
   evidence, not semantic authority. Follow the [catalog workflow](docs/catalog/README.md#per-example-workflow).
+- Reject statically invalid type/structure combinations during shared preparation,
+  even where v0.1 needed runtime rejection. Preserve guards for valid operations
+  with value-dependent failures; see [v0.2 diagnostic policy](../../specs/v0_2_preparation_diagnostics.md).
 - Implement the agreed ownership area, review the code, run relevant focused tests,
   then commit. Style/lint runs, broad regressions, conversion and native compilation
   are on demand. In particular, do not run `tools/native_validate.py` automatically.

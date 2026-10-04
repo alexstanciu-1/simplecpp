@@ -64,13 +64,13 @@ final class Result_Conversions
 		throw new \RuntimeException('S2S Result construction requires an exact payload, same wrapper type or supported explicit sentinel');
 	}
 
-	/** Required-value consumers copy a checked payload; casts and other contexts remain separate. */
+	/** Required and selected coalescing values copy a checked payload; casts stay separate. */
 	private static function extract(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
 		if (($context !== conversion_context::assignment) && ($context !== conversion_context::argument)
-			&& ($context !== conversion_context::return_value)) {
-			throw new \RuntimeException('S2S Result extraction supports only required assignment, argument and return boundaries');
+			&& ($context !== conversion_context::return_value) && ($context !== conversion_context::coalesce_value)) {
+			throw new \RuntimeException('S2S Result extraction supports only required assignment, argument and return boundaries or selected coalesce values');
 		}
 		$source_role = self::role($source);
 		if ($source_role === null) {

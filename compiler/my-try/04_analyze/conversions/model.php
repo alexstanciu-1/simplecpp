@@ -12,6 +12,7 @@ enum conversion_context
 	case operator_operand;
 	case interpolation;
 	case conditional_branch;
+	case coalesce_value;
 }
 
 enum conversion_operation

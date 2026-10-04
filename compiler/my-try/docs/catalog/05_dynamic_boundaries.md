@@ -338,7 +338,7 @@ The [probe state table](../../../../specs/count_empty_isset_contract.md#result-w
 is explicit. These rules must not be collapsed into a generic success flag.
 
 The following slice adds matching Result/scalar ternary and Elvis joins; approved
-Result coalescing remains next.
+Result coalescing is implemented in its checkpoint below.
 Wrapper logical operators (`!`, `&&`, `||`) remain separate contract work; do not
 silently replace their documented guarded-unwrap semantics with condition truthiness.
 Aggregate/nested payloads, path probes and profile availability remain deferred.
@@ -369,7 +369,7 @@ Only the selected branch executes; both branches are validated during preparatio
 Results are copied owned values, never conditional references into the source.
 
 Bare-null/sentinel branches, aggregate payloads, mixed and broader joins remain debt.
-Next discussion: approved Result `??` with a required same-payload scalar fallback.
+Approved Result `??` with a required same-payload scalar fallback follows below.
 
 Proof: `/tmp/my-try-result-joins-20261004-final/` passed 11 PHP suites, 148 generated
 C++ programs/state checks and two runtime tests without PCH. The earlier PCH run
@@ -379,6 +379,39 @@ all four scalar categories, preserved error/sentinel states, false-payload wrapp
 single Elvis evaluation, lazy alternatives, independent copies, prepared conversions,
 cleanup and incremental payload-change failure/retry/repair. This is PHP-hosted
 compiler/generated-C++ evidence, not a native compiler rebuild.
+
+## Result coalescing and early diagnostics — 2026-10-04
+
+The [v0.2 diagnostic policy](../../../../specs/v0_2_preparation_diagnostics.md) now
+requires preparation-time rejection when resolved types/structure prove an operation
+invalid, even if the v0.1 type-blind generator needed runtime rejection. Valid
+operations with value-dependent failures retain their runtime guards.
+
+`result<T> ?? T` and `result_or_false<T> ?? T` now produce an owned scalar `T` for
+exact supported payload types. Success preserves falsey values (false, numeric zero,
+empty string and `"0"`); error/false-sentinel selects the lazy fallback. Source
+evaluation occurs once, sources are not modified, and ordinary exceptions evaluating
+either selected expression propagate. Both operands are prepared before emission.
+
+`Coalesce_Expression_Preparation` owns admission and records selected left extraction
+with `coalesce_value`; `Result_Conversions` reuses checked payload extraction. The
+existing AST, presence-based lazy emitter and runtime are unchanged. Boolable operands
+on either side reject during preparation, even behind an always-present scalar left.
+This is a language-invalid family, unlike deferred wrapper-valued fallbacks, nested
+payloads, mixed, bare-null and cross-payload joins. Logical operators remain separate.
+
+Next discussion: bounded mixed value/boundary support, or chapter debt reconciliation
+before selecting that larger group. No new mixed/object/profile semantics are implied.
+
+Proof: `/tmp/my-try-result-coalesce-20261004-final/` passed 11 PHP suites, 166 generated
+C++ programs/state checks and two runtime tests with PCH. The initial no-PCH run
+passed all except a probe whose handwritten bridge used an unmangled function name;
+that probe was corrected and passed without PCH in
+`/tmp/my-try-result-coalesce-20261004-supplement/`, together with the final PHP Result
+suite. Coverage includes all scalar categories, falsey successes, lazy exceptions,
+owned unwrapped results, unchanged sources, early boolable rejection and incremental
+family-change failure/retry/repair. Shared 12-slot execution used CLI fallback after
+sandbox FPM denial. No native compiler rebuild or LLVM work was performed.
 
 ## Progress
 
@@ -396,7 +429,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [LIT-NULL-001](#lit-null-001) | agreed | `$a = null;` | proved | proved | deferred | Untyped null rejects; typed nullable destination works |
 | [VAR-ISSET-001](#var-isset-001) | agreed | `$a = isset($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; path probes deferred |
 | [VAR-EMPTY-001](#var-empty-001) | agreed | `$a = empty($b);` | proved | proved | deferred | Single scalar/nullable/Result/null value; `"0"` is not empty |
-| [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Exact scalar `T` or `nullable<T>` left; required scalar `T` fallback |
+| [EXPR-COALESCE-001](#expr-coalesce-001) | agreed | `$a = $b ?? $c;` | proved | proved | deferred | Scalar/nullable/result/falseable left, exact scalar fallback; boolable rejects in preparation |
 | [EXPR-ELVIS-001](#expr-elvis-001) | agreed | `$a = $b ?: $c;` | proved | proved | deferred | Matching scalar, nullable/scalar and Result/scalar joins; cross-family/mixed deferred |
 | [CAST-INT-001](#cast-int-001) | agreed | `$a = (int)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-FLOAT-001](#cast-float-001) | agreed | `$a = (float)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
@@ -527,8 +560,9 @@ auto a = php::empty(b);
 ## EXPR-COALESCE-001
 
 **v0.2 decision / target C++:** Dedicated lazy expression with prepared exact scalar
-result/conversions: `nullable<T> ?? T` and `T ?? T` yield owned `T`. Broader imported
-wrapper/mixed combinations remain deferred.
+result/conversions: `nullable<T> ?? T`, `result<T> ?? T`, `result_or_false<T> ?? T`
+and `T ?? T` yield owned `T`. Boolable operands reject in preparation on either side.
+Wrapper-valued fallback and mixed combinations remain deferred.
 
 ### Imported version 1
 
