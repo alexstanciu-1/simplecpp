@@ -7,6 +7,12 @@ enum operator_context {
 	case expression;
 }
 
+/** Ordinary converted stores and updates preserving a runtime payload kind differ. */
+enum compound_write_back {
+	case converted_assignment;
+	case mixed_stored_kind;
+}
+
 enum operator_kind {
 	case index;
 	case bitwise_and;
@@ -55,6 +61,10 @@ enum operator_operation {
 	case integer_post_increment;
 	case integer_pre_decrement;
 	case integer_post_decrement;
+	case mixed_pre_increment;
+	case mixed_post_increment;
+	case mixed_pre_decrement;
+	case mixed_post_decrement;
 	case integer_positive;
 	case integer_negative;
 	case integer_complement;

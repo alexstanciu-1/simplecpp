@@ -238,6 +238,11 @@ Global rules:
 - stable explicit typed destinations include typed container element writes and typed append targets
 - operator resolution must **not** use implicit `mixed` extraction to manufacture extra overload candidates
 - compound assignment is valid only when the delegated native binary op exists **and** assignment back into the stored lhs kind also remains valid
+- Under the current numeric assignment policy, a mixed int payload cannot accept
+  a float result through compound assignment, even if that result is integral.
+  For example, mixed int `1 += 0.5` throws and preserves the int payload; mixed
+  float `1.0 += 1` succeeds with a float payload. Ordinary mixed assignment may
+  replace the kind: `$value = $value + 0.5` is a different operation from `$value += 0.5`.
 - table carriers are excluded from arithmetic dispatch
 - direct table comparison supports only `==` and `!=`, with identity-only semantics
 

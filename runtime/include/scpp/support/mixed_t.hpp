@@ -195,6 +195,8 @@ public:
 	operator weak_p<hash_t<mixed_t>>() const;
 
 	// Compound Assignments
+	// Store a computed numeric update only when it remains assignable to the active kind.
+	mixed_t &assign_compound_result(mixed_t result);
 	mixed_t &operator++();
 	mixed_t operator++(int);
 	mixed_t &operator--();

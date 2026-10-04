@@ -192,7 +192,12 @@ operator decisions. Arithmetic admission allows matching mixed or ordinary int/f
 peers, with no extraction. `%` rejects statically known float
 peers; unknown mixed payloads are checked by runtime dispatch. Results stay mixed,
 so typed consumers still apply their independent boundary checks. Mutation preparation
-explicitly defers mixed compound updates even though it shares binary selection.
+admits numeric mixed compound updates and prefix/postfix increment/decrement on
+existing locals/parameters. `compound_write_back` separates converted native stores
+from runtime stored-kind validation. Both direct runtime operators and generated
+compound updates use `mixed_t::assign_compound_result` after computing the value;
+ordinary mixed assignment remains free to replace the payload kind. Mixed bitwise
+updates and native targets with mixed right operands remain deferred.
 Direct dynamic handles are nonnumeric; future mixed-valued property reads reuse this
 owner without adding a dynamic-object arithmetic family.
 

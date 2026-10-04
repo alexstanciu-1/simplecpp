@@ -87,6 +87,22 @@ try
 	Preparation_Cleanup::tree($arithmetic_root);
 	mixed_check($sum_node->preparation() === null && $negative_node->preparation() === null,
 		'Mixed arithmetic retained stale facts');
+	mixed_source($path, '$v mixed = 7; $after mixed = ($v += 1); $before mixed = $v++;');
+	$update_root = Model::syntax_files()[0]->root;
+	$compound_node = $update_root->body->statements[1]->initializer;
+	$mutation_node = $update_root->body->statements[2]->initializer;
+	$update_facts = $compound_node->require_compound_assignment_preparation();
+	mixed_check($update_facts->write_back_mode === compound_write_back::mixed_stored_kind
+		&& $update_facts->decision->operation === operator_operation::mixed_addition
+		&& $update_facts->write_back->operation === conversion_operation::identity
+		&& !$update_facts->addressable, 'Mixed update lost its guarded storage write-back or owned snapshot');
+	mixed_check($mutation_node->require_mutation_preparation()->decision->operation === operator_operation::mixed_post_increment
+		&& !$mutation_node->require_preparation()->addressable, 'Mixed postfix mutation lost its old-value snapshot');
+	mixed_check(str_contains(Model::$cpp_files[0]->text, '.assign_compound_result('),
+		'Mixed compound emission bypassed stored-kind validation');
+	Preparation_Cleanup::tree($update_root);
+	mixed_check($compound_node->preparation() === null && $mutation_node->preparation() === null,
+		'Mixed update retained stale facts');
 	mixed_source($path, '$v mixed = null; $a bool = $v === null; $b bool = null !== $v; '
 		. '$c bool = $v == null; $d bool = $v < 1.0;');
 	$comparison_root = Model::syntax_files()[0]->root;
@@ -159,9 +175,11 @@ try
 		['$x mixed = 7; $n ?int = 2; $y = $x == $n;', 'mixed equality requires'],
 		['$x mixed = 7; $d dynamic; $y = $x === $d;', 'mixed equality requires'],
 		['$x mixed = 7; $y = ~$x;', 'mixed operator is outside'],
-		['$x mixed = 7; $x += 1;', 'mixed compound assignment is deferred'],
-		['$x mixed = 7; $n int = 1; $n += $x;', 'mixed compound assignment is deferred'],
-		['$x mixed = 7; $x++;', 'mutation requires canonical int'],
+		['$x mixed = 7; $x += true;', 'mixed arithmetic requires'],
+		['$x mixed = 7; $n int = 1; $n += $x;', 'mixed compound assignment into native storage is deferred'],
+		['$x mixed = 7; $x &= 1;', 'mixed operator is outside'],
+		['$x mixed = 7; $x %= 1.5;', 'mixed remainder requires'],
+		['$x mixed = 7; $y = $x++ + $x;', 'order-independent operands'],
 		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'mixed arithmetic requires'],
 		['$d dynamic; $y = $d + 1;', 'requires canonical int'],
 		['$x mixed = 7; $y = $x && true;', 'S2S'],
@@ -236,7 +254,8 @@ try
 		'return (int)(mixed)(dynamic)source();',
 		'$v mixed = source(); return $v + 1;', 'return -source();',
 		'$v = source(); return $v == 1 ? 1 : 0;', '$v = source(); return $v < 1 ? 1 : 0;',
-		'return source() === null ? 1 : 0;'] as $consumer)
+		'return source() === null ? 1 : 0;', '$v = source(); $v += 1; return (int)$v;',
+		'$v = source(); return ++$v;'] as $consumer)
 	{
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';

@@ -117,6 +117,11 @@ with no storage capabilities/exposure; singleton constant definitions carry thos
 identities through existing lookup. They are not boolean payload values. `nullopt`
 uses the existing null identity. No additional AST or template class is introduced.
 Conversion/comparison/truthiness policy remains worker-owned.
+Compound preparation retains computation, conversion and `compound_write_back` mode:
+converted native assignment versus mixed stored-kind validation. The latter needs
+the destination's current runtime kind, so it is not an ordinary source/target type
+conversion. Prefix/postfix mutations retain their selected operation and return an
+owned old/new snapshot, not an addressable reference into the target.
 The nominal runtime `error` is a storable value; its no-error state is a registered
 `no_error_constant_definition`, not a singleton type (the same type holds real errors).
 Its qualified source name uses the existing constant lookup and prepared identity path.

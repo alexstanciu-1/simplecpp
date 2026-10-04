@@ -210,9 +210,11 @@ static void test_value_t_assignment_and_increment() {
 	f1 += scpp::mixed_t(scpp::int_t<>(2));
 	assert(f1.float_value().native_value() == 7.5);
 	scpp::mixed_t widening(scpp::int_t<>(4));
-	widening += scpp::mixed_t(scpp::float_t(1.5));
-	assert(widening.kind() == scpp::mixed_t::kind_t::float_v);
-	assert(widening.float_value().native_value() == 5.5);
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		widening += scpp::mixed_t(scpp::float_t(1.5));
+	});
+	assert(widening.kind() == scpp::mixed_t::kind_t::int_v);
+	assert(widening.int_value().native_value() == 4);
 	f1 -= scpp::mixed_t(scpp::float_t(0.5));
 	assert(f1.float_value().native_value() == 7.0);
 	f1 *= scpp::mixed_t(scpp::int_t<>(2));

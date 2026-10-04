@@ -45,6 +45,7 @@ foreach ([['&=', '7', '3', operator_operation::integer_bitwise_and],
 		|| $facts->addressable || (count($facts->decision->operands) !== 2)
 		|| ($facts->write_back->context !== conversion_context::assignment)
 		|| ($facts->write_back->operation !== conversion_operation::identity)
+		|| ($facts->write_back_mode !== compound_write_back::converted_assignment)
 		|| !$facts->write_back->target_type->matches($expected)) {
 		throw new \LogicException('Compound update lost computation, write-back or value-result facts');
 	}
@@ -83,7 +84,7 @@ $rejections = [
 	['$x = 1; $x += 1 + $x++;', 'order-independent operands'],
 	['$x = 1; $x += ($x += 1);', 'order-independent operands'],
 	['$x = 1; return ($x += 1) + $x;', 'order-independent operands'],
-	['function take(int &$x): int { return $x; } $x = 1; return take($x += 1);', 'reference arguments require stable storage'],
+	['function consume(int &$x): int { return $x; } $x = 1; return consume($x += 1);', 'reference arguments require stable storage'],
 ];
 foreach ($rejections as [$source, $diagnostic])
 {

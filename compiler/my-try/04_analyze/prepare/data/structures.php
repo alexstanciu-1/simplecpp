@@ -128,6 +128,7 @@ final class prepared_cast_expression extends prepared_expression
 final class prepared_compound_assignment_expression extends prepared_expression {
 	public operator_decision $decision;
 	public conversion_decision $write_back;
+	public compound_write_back $write_back_mode;
 }
 
 /** Mutation returns a value snapshot; target syntax retains its resolved storage identity. */

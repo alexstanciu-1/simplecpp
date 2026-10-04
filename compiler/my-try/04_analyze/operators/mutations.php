@@ -53,12 +53,14 @@ final class Mutation_Preparation
 		$target = self::prepare_target($syntax->target, $context);
 		Operator_Preparation::require_order_independent_operand($syntax->value);
 		$value = Expression_Preparation::prepare($syntax->value, $context);
-		if (Mixed_Conversions::is_mixed($target->type) || Mixed_Conversions::is_mixed($value->type)) {
-			throw new \RuntimeException('S2S mixed compound assignment is deferred');
+		if (!Mixed_Conversions::is_mixed($target->type) && Mixed_Conversions::is_mixed($value->type)) {
+			throw new \RuntimeException('S2S mixed compound assignment into native storage is deferred');
 		}
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
 		$facts = new prepared_compound_assignment_expression();
+		$facts->write_back_mode = Mixed_Conversions::is_mixed($target->type)
+			? compound_write_back::mixed_stored_kind : compound_write_back::converted_assignment;
 		$operands /** vector<canonical_type_use> */ = [$target->type, $value->type];
 		$facts->decision = Operator_Preparation::decide(
 			$source_operator, $operands, operator_context::expression, $context);
@@ -68,7 +70,7 @@ final class Mutation_Preparation
 		return $facts;
 	}
 
-	/** The selected conversion must preserve the target's canonical integer storage type. */
+	/** Mutate established integer or mixed storage; mixed payload validity remains runtime-owned. */
 	public static function decide(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
@@ -76,29 +78,30 @@ final class Mutation_Preparation
 			throw new \LogicException('Mutation requires one target');
 		}
 		$integer = $context->integer;
-		if (!$operands[0]->matches($integer)) {
-			throw new \RuntimeException('S2S mutation requires canonical int storage');
+		$mixed = Mixed_Conversions::is_mixed($operands[0]) && !$operands[0]->by_value();
+		if (!$operands[0]->matches($integer) && !$mixed) {
+			throw new \RuntimeException('S2S mutation requires canonical int or mixed storage');
 		}
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
-		$decision->result_type = $integer;
+		$decision->result_type = $mixed ? $operands[0] : $integer;
 		if ($source_operator === operator_kind::pre_increment) {
-			$decision->operation = operator_operation::integer_pre_increment;
+			$decision->operation = $mixed ? operator_operation::mixed_pre_increment : operator_operation::integer_pre_increment;
 		}
 		elseif ($source_operator === operator_kind::post_increment) {
-			$decision->operation = operator_operation::integer_post_increment;
+			$decision->operation = $mixed ? operator_operation::mixed_post_increment : operator_operation::integer_post_increment;
 		}
 		elseif ($source_operator === operator_kind::pre_decrement) {
-			$decision->operation = operator_operation::integer_pre_decrement;
+			$decision->operation = $mixed ? operator_operation::mixed_pre_decrement : operator_operation::integer_pre_decrement;
 		}
 		elseif ($source_operator === operator_kind::post_decrement) {
-			$decision->operation = operator_operation::integer_post_decrement;
+			$decision->operation = $mixed ? operator_operation::mixed_post_decrement : operator_operation::integer_post_decrement;
 		}
 		else {
 			throw new \LogicException('Unsupported mutation operator');
 		}
 		$decision->operands[] = Conversion_Preparation::decide(
-			$operands[0], $integer, conversion_context::operator_operand);
+			$operands[0], $decision->result_type, conversion_context::operator_operand);
 		return $decision;
 	}
 }

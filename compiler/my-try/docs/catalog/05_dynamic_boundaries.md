@@ -9,6 +9,54 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Mixed numeric updates — 2026-10-04
+
+Implemented `+=`, `-=`, `*=`, `/=`, `%=` and prefix/postfix `++`/`--` for established
+mixed locals and parameters. Compound right operands reuse numeric arithmetic
+admission (matching mixed, ordinary int/float; no statically known float for `%=`).
+No new AST node is needed. `Mutation_Preparation` owns storage validation and
+records a `compound_write_back` mode alongside computation/conversion facts.
+The backend binds the target once, computes once, then commits through the shared
+runtime stored-kind guard. Prefix/postfix return owned updated/previous snapshots.
+
+Important consequences:
+
+- The top-level contract and runtime config require assignment to the original
+  stored kind. Current numeric assignments are int-to-int and float-to-float.
+  Mixed int `+=` float therefore throws, including an integral float result;
+  mixed float `+=` int succeeds because the binary result is float.
+- Runtime compound operators previously replaced the kind unconditionally. Both
+  those operators and generated compiler updates now use `assign_compound_result`.
+  This repair intentionally changes that behavior to follow the agreed contract.
+  Ordinary assignment, including `$v = $v + 0.5`, can still change the mixed kind.
+- Invalid numeric payloads, zero divisors and invalid stored-kind write-back fail
+  before changing the target. Postfix validates the numeric kind before cloning,
+  avoiding access to absent table payloads on an operation that must reject anyway.
+- A later consumer conversion is a separate step: `return ++$v` from an int-returning
+  function may update a mixed float successfully and then fail the required-int
+  return conversion. Likewise a compound result's failed outer conversion does not
+  roll back the already committed update.
+- Value parameters keep their existing copy semantics; reference parameters update
+  the caller. Result snapshots do not alias subsequent target changes. Eager binary
+  operand-order restrictions and stable-reference requirements remain unchanged.
+
+Non-goals: property/index targets, direct dynamic-handle mutation, mixed bitwise or
+concatenation updates, power updates, fixed-width peers and native-typed targets
+with mixed right operands. Weak comparison debt remains separate.
+
+Proof owners: `tests/mixed.php`, `tests/fixtures/mixed_updates.php`, existing mutation/
+compound suites, and the runtime's `runtime_mixed_t_003_compound_unary_logical.cpp`.
+The focused runner now includes `compound_assignments.php`. This does not establish
+a new native compiler checkpoint.
+
+Verification: 15 PHP suites and 274 generated programs pass in
+`/tmp/my-try-mixed-updates-20261004-2`. All 20 new update programs plus the focused
+runtime regression pass without PCH in `/tmp/my-try-mixed-updates-20261004-no-pch`.
+Generated-C++ checks passed first attempt; the initial PHP run exposed a stale
+compound-suite helper named `take`, corrected to an ordinary function name before
+the final run. The older monolithic native mixed test's widening expectation was
+updated, but that whole historical smoke test is not part of this focused proof.
+
 ## Mixed comparisons and empty-carrier repair — 2026-10-04
 
 Implemented `==`, `!=`, `===`, `!==`, `<`, `<=`, `>` and `>=` through the existing

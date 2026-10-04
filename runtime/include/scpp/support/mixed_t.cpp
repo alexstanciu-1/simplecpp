@@ -134,8 +134,7 @@ namespace {
 			"Requirement: use one of the supported operators +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>="
 		);
 	}
-	left = std::move(result);
-	return left;
+	return left.assign_compound_result(std::move(result));
 }
 
 [[nodiscard]] bool_t compare_with_null_eq(const mixed_t &value) {
@@ -651,7 +650,12 @@ mixed_t &mixed_t::operator++() {
 		default: throw runtime_error_unary("++", *this);
 	}
 }
-mixed_t mixed_t::operator++(int) { mixed_t snap = clone(); ++(*this); return snap; }
+mixed_t mixed_t::operator++(int) {
+	if (type_ != kind_t::int_v && type_ != kind_t::float_v) throw runtime_error_unary("++", *this);
+	mixed_t snap = clone();
+	++(*this);
+	return snap;
+}
 
 mixed_t &mixed_t::operator--() {
 	switch (type_) {
@@ -660,19 +664,30 @@ mixed_t &mixed_t::operator--() {
 		default: throw runtime_error_unary("--", *this);
 	}
 }
-mixed_t mixed_t::operator--(int) { mixed_t snap = clone(); --(*this); return snap; }
+mixed_t mixed_t::operator--(int) {
+	if (type_ != kind_t::int_v && type_ != kind_t::float_v) throw runtime_error_unary("--", *this);
+	mixed_t snap = clone();
+	--(*this);
+	return snap;
+}
 
 // ============================================================
 // Compound assignment operators
 // ============================================================
 //
-// Contract: compound assignment follows the derived rule
-//
-// 	lhs op= rhs  <=>  lhs = lhs op rhs
-//
-// for mixed_t. The binary operator establishes legality and result kind. Assignment back then
-// stores the resulting mixed_t value. This keeps compound assignment behavior aligned with the
-// corresponding binary operator instead of maintaining a second independent dispatch matrix.
+// Contract: derive the computation from the binary operator, then check stored-kind assignment.
+// The binary operator establishes legality and result kind. Assignment back then
+// validates assignment to the original stored kind before committing. Ordinary mixed assignment
+// may replace the kind; compound write-back must obey the configured native assignment rules.
+
+mixed_t &mixed_t::assign_compound_result(mixed_t result) {
+	// Configured numeric assignments are int->int and float->float, without narrowing.
+	if ((type_ != kind_t::int_v && type_ != kind_t::float_v) || result.kind() != type_) {
+		throw runtime_error_binary("compound write-back", *this, result);
+	}
+	*this = std::move(result);
+	return *this;
+}
 
 mixed_t &mixed_t::operator+=(const mixed_t &right) { return apply_compound_assignment(*this, right, "+="); }
 mixed_t &mixed_t::operator-=(const mixed_t &right) { return apply_compound_assignment(*this, right, "-="); }

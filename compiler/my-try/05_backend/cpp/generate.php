@@ -391,6 +391,10 @@ final class CPP_Generator
 		$value = self::render_binary_decision($facts->decision, $place, $right, $context);
 		$value = CPP_Declarations::conversion($value, $facts->write_back, $context);
 		$result_type = CPP_Declarations::type($facts->type, $context);
+		if ($facts->write_back_mode === compound_write_back::mixed_stored_kind) {
+			return '([&]() -> ' . $result_type . ' { auto& ' . $place . ' = ' . $target
+				. '; ' . $place . '.assign_compound_result(' . $value . '); return ' . $place . '; }())';
+		}
 		return '([&]() -> ' . $result_type . ' { auto& ' . $place . ' = ' . $target
 			. '; ' . $place . ' = ' . $value . '; return ' . $place . '; }())';
 	}
@@ -401,16 +405,20 @@ final class CPP_Generator
 		$decision = $syntax->require_mutation_preparation()->decision;
 		$prefix = '';
 		$suffix = '';
-		if ($decision->operation === operator_operation::integer_pre_increment) {
+		if (($decision->operation === operator_operation::integer_pre_increment)
+			|| ($decision->operation === operator_operation::mixed_pre_increment)) {
 			$prefix = '++';
 		}
-		elseif ($decision->operation === operator_operation::integer_pre_decrement) {
+		elseif (($decision->operation === operator_operation::integer_pre_decrement)
+			|| ($decision->operation === operator_operation::mixed_pre_decrement)) {
 			$prefix = '--';
 		}
-		elseif ($decision->operation === operator_operation::integer_post_increment) {
+		elseif (($decision->operation === operator_operation::integer_post_increment)
+			|| ($decision->operation === operator_operation::mixed_post_increment)) {
 			$suffix = '++';
 		}
-		elseif ($decision->operation === operator_operation::integer_post_decrement) {
+		elseif (($decision->operation === operator_operation::integer_post_decrement)
+			|| ($decision->operation === operator_operation::mixed_post_decrement)) {
 			$suffix = '--';
 		}
 		else {
