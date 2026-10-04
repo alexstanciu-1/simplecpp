@@ -171,8 +171,10 @@ escaping exceptions request a full rebuild. The full policy is in
 ordinary scalar and literal-null operands normalize to string using identity or
 `text_conversion`. This dispatch precedes wrapper/null conversion routing, without
 granting general assignment, cast or wrapper-unwrapping permissions. Binary `.`
-retains ordered conversion decisions and an owned string result. `.=` keeps its
-explicit string/string gate pending a separate text write-back slice. Eager
+retains ordered conversion decisions and an owned string result. `.=` admits string
+or mixed local/parameter targets and reuses that operand domain. Its converted
+assignment write-back keeps string storage or boxes the result into mixed, replacing
+the previous payload kind. Numeric stored-kind validation is separate. Eager
 operand-order checks and interpolation behavior remain unchanged.
 
 `Mixed_Conversions` owns scalar/null boxing and checked required scalar extraction

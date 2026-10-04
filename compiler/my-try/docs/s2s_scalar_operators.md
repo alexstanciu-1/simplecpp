@@ -27,8 +27,8 @@ retain the runtime's native C++ limitations; no wrapping or checked arithmetic i
 
 Concatenation now uses a separate text context for mixed, ordinary scalar and null
 operands; wrappers, direct dynamic and fixed-width peers remain deferred. It reuses
-`php::to_string`, not explicit casts or checked string extraction. `.=` remains
-string/string only. See [chapter 05](catalog/05_dynamic_boundaries.md#mixed-and-scalar-text-concatenation--2026-10-04).
+`php::to_string`, not explicit casts or checked string extraction. `.=` uses the same
+text domain with string/mixed targets. See [chapter 05](catalog/05_dynamic_boundaries.md#text-concatenation-write-back--2026-10-04).
 Strict comparison
 helpers preserve the distinction from ordinary comparison, even though the current
 exact same-type integer slice produces the same truth values. No cross-type equality
@@ -214,12 +214,13 @@ target, operator token and RHS. Attached facts retain the existing binary
 `operator_decision` plus a `conversion_decision` in assignment context for write-back.
 The result type is the target type; the result is a non-addressable value snapshot.
 
-`+=`, `-=`, `*=`, `/=` and `%=` require canonical `int` on both sides. `.=` requires
-canonical `string` on both sides; other scalar values need an explicit `(string)`
-cast. Targets are existing locals or parameters. Target validation is shared with
+The original `+=`, `-=`, `*=`, `/=` and `%=` slice requires canonical `int` on both
+sides; chapter 05 adds mixed numeric stored-kind updates. `.=` accepts string/mixed
+targets and mixed, ordinary scalar or null right operands through text conversion.
+Targets are existing locals or parameters. Target validation is shared with
 increment/decrement through `Mutation_Preparation::prepare_target`; neither form
 implicitly declares storage. Fields, indexes, calls/casts as targets, mixed widths
-and implicit string coercion remain rejected.
+remain rejected. Text write-back can replace a mixed payload kind with string.
 
 The parser recognizes the six compound tokens with longest matching and places
 compound assignment below symbolic binary precedence and above keyword logic. It retains nested syntax

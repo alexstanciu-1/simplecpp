@@ -117,6 +117,20 @@ try
 		=== conversion_operation::mixed_box, 'Mixed destination changed concatenation result type');
 	Preparation_Cleanup::tree($text_root);
 	mixed_check($text_node->preparation() === null, 'Text conversion survived cleanup');
+	mixed_source($path, '$v mixed = 42; $out mixed = ($v .= "!"); $s string = "x"; $copy string = ($s .= $v);');
+	$append_root = Model::syntax_files()[0]->root;
+	foreach ([1 => conversion_operation::mixed_box, 3 => conversion_operation::identity] as $position => $write_back)
+	{
+		$append_node = $append_root->body->statements[$position]->initializer;
+		$append_facts = $append_node->require_compound_assignment_preparation();
+		mixed_check($append_facts->write_back_mode === compound_write_back::converted_assignment
+			&& $append_facts->write_back->operation === $write_back
+			&& String_Conversions::is_string($append_facts->decision->result_type)
+			&& !$append_facts->addressable, 'Text update lost replacement semantics or owned snapshot');
+	}
+	Preparation_Cleanup::tree($append_root);
+	mixed_check($append_root->body->statements[1]->initializer->preparation() === null,
+		'Text update facts survived cleanup');
 	mixed_source($path, '$v mixed = 7; $after mixed = ($v += 1); $before mixed = $v++;');
 	$update_root = Model::syntax_files()[0]->root;
 	$compound_node = $update_root->body->statements[1]->initializer;
@@ -208,7 +222,11 @@ try
 		['$x mixed = 7; $x += true;', 'mixed arithmetic requires'],
 		['$x mixed = 7; $n int = 1; $n += $x;', 'mixed compound assignment into native storage is deferred'],
 		['$x mixed = 7; $x &= 1;', 'mixed operator is outside'],
-		['$x mixed = 7; $x .= "x";', 'compound concatenation requires string'],
+		['$x mixed = 7; $n result<int> = 1; $x .= $n;', 'concatenation requires mixed'],
+		['$x mixed = 7; $d dynamic; $x .= $d;', 'concatenation requires mixed'],
+		['$x = false; $x .= "x";', 'compound concatenation requires string or mixed storage'],
+		['$x = 1.5; $x .= "x";', 'compound concatenation requires string or mixed storage'],
+		['$x mixed = 7; $x .= $x++;', 'order-independent operands'],
 		['$x mixed = 7; $n result<int> = 1; $y = $x . $n;', 'concatenation requires mixed'],
 		['$x mixed = 7; $n uint8 = 1; $y = $x . $n;', 'concatenation requires mixed'],
 		['$x mixed = 7; $y = $x++ . "x";', 'order-independent operands'],
@@ -294,7 +312,8 @@ try
 		'$v mixed = source(); return $v + 1;', 'return -source();',
 		'$v = source(); return $v == 1 ? 1 : 0;', '$v = source(); return $v < 1 ? 1 : 0;',
 		'return source() === null ? 1 : 0;', '$v = source(); $v += 1; return (int)$v;',
-		'$v = source(); return ++$v;', '$v = source(); return (int)($v . "0");'] as $consumer)
+		'$v = source(); return ++$v;', '$v = source(); return (int)($v . "0");',
+		'$v = source(); $v .= "0"; return (int)$v;', '$v = source(); $s = "1"; $s .= $v; return (int)$s;'] as $consumer)
 	{
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';

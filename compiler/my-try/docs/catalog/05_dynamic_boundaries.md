@@ -9,6 +9,40 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Text concatenation write-back — 2026-10-04
+
+Implemented `.=` for established string or mixed locals/parameters. Right operands
+reuse binary concatenation admission: mixed, ordinary bool/int/float/string or
+literal null. Preparation selects `converted_assignment` write-back, with string
+identity or mixed boxing, rather than numeric `mixed_stored_kind` validation.
+The existing compound AST and C++ target-binding/computation/write-back path are
+unchanged; no runtime helper or retained structure was added.
+
+Important consequences:
+
+- A mixed int `42` followed by `.="!"` becomes a mixed string `"42!"`. Table/object
+  payloads similarly become `"Array!"`/`"Object!"`; shared table contents are not
+  mutated. Numeric `+=` and related stored-kind restrictions remain unchanged.
+- The target is bound once; both original values are converted before assignment.
+  Self-concatenation and aliased reference parameters use the original value twice.
+  Computation failure leaves the target unchanged.
+- The expression returns an owned updated-target snapshot: string for string
+  storage, mixed containing string for mixed storage. Later writes do not alter it.
+  A failed outer typed conversion does not roll back a completed update.
+- Known int/bool/float targets, wrappers, direct dynamic handles, fixed-width peers,
+  property/index targets and effectful RHS expressions remain preparation errors.
+  No implicit declaration is introduced. Logical short circuit may skip the whole
+  update; existing eager-parent effect checks remain.
+
+Proof owners: `tests/mixed.php`, `tests/compound_assignments.php` and
+`tests/fixtures/mixed_concat_updates.php`, including facts, cleanup, incremental
+failure/recovery, source aliasing, snapshot ownership and runtime failures.
+
+Verification passed first attempt: 15 PHP suites and 322 generated programs in
+`/tmp/my-try-mixed-append-20261004-1`; all 14 new programs also pass without PCH in
+`/tmp/my-try-mixed-append-20261004-no-pch`. This is generated-program evidence,
+not a native compiler rebuild. Numeric update regressions remain in the same run.
+
 ## Mixed and scalar text concatenation — 2026-10-04
 
 Implemented binary `.` for mixed, ordinary bool/int/float/string and literal null,
@@ -28,9 +62,8 @@ Important consequences:
   reject in preparation. Boxed runtime kinds are interpreted by the text helper.
 - Existing eager operand-order restrictions remain: calls/mutations in binary
   concatenation must first be stabilized in separate statements.
-- `.=` retains its previously supported string/string boundary. New mixed/scalar
-  write-back needs a separate slice; numeric stored-kind validation must not be
-  reused accidentally. Interpolation and explicit casts are unchanged.
+- This binary-only checkpoint retained string/string `.=`; the text write-back
+  slice above supersedes that limit. Interpolation and explicit casts are unchanged.
 
 Proof owners: `tests/mixed.php`, `tests/fixtures/mixed_concat.php`, operator and
 compound-assignment suites. Legacy concatenation lowering was reviewed; v0.2 keeps

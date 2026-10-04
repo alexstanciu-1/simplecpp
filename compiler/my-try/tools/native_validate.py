@@ -108,6 +108,7 @@ def validate(args, target, results, logs, started, runner):
                      APP / 'tests/fixtures/mixed_updates.php',
                      APP / 'tests/fixtures/mixed_logical.php',
                      APP / 'tests/fixtures/mixed_concat.php',
+                     APP / 'tests/fixtures/mixed_concat_updates.php',
                      APP / 'tools/cpp_fixture.py',
                      APP / 'tests/native_driver.php.in', APP / 'tests/s2s_proof.php']
     (results / 'harness_hashes.json').write_text(json.dumps({

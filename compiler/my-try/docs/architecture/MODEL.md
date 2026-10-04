@@ -124,7 +124,7 @@ Concatenation retains ordinary operand conversion decisions with a dedicated tex
 context and `text_conversion` operation; no new AST or conversion-chain structure
 is needed. Text normalization is distinct from explicit casts and required extraction.
 Compound preparation retains computation, conversion and `compound_write_back` mode:
-converted native assignment versus mixed stored-kind validation. The latter needs
+converted assignment (including boxed text replacement) versus mixed stored-kind validation. The latter needs
 the destination's current runtime kind, so it is not an ordinary source/target type
 conversion. Prefix/postfix mutations retain their selected operation and return an
 owned old/new snapshot, not an addressable reference into the target.
