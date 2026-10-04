@@ -89,9 +89,9 @@ try
 		['$x mixed = 7; $y = $x ?? null;', 'mixed selection requires'],
 		['$x mixed = 7; $y = true ? null : $x;', 'mixed selection requires'],
 		['$x mixed = 7; $n uint8 = 1; $y = true ? $x : $n;', 'mixed selection requires'],
-		['$x mixed = 7; $n ?int = 1; $y = $n ?? $x;', 'mixed selection requires'],
+		['$x mixed = 7; $small uint8 = 1; $n ?uint8 = $small; $y = $n ?? $x;', 'mixed selection requires'],
 		['$x mixed = 7; $n result<int> = 1; $y = $x ?? $n;', 'mixed selection requires'],
-		['$x mixed = 7; $n result<int> = 1; $y = $n ?? $x;', 'mixed selection requires'],
+		['$x mixed = 7; $n result<int> = 1; $y = $n ?: $x;', 'mixed selection requires'],
 		['$x mixed = 7; $n result<int> = 1; $y = true ? $x : $n;', 'mixed selection requires'],
 		['$x mixed = 7; $n result_or_bool<int> = 1; $y = $x ?? $n;', 'does not permit result_or_bool'],
 		['$x mixed = 7; $n result_or_bool<int> = 1; $y = $n ?? $x;', 'does not permit result_or_bool'],
@@ -198,6 +198,46 @@ try
 	foreach ([1, 2, 3, 4] as $position) {
 		$selection_node = $selection_root->body->statements[$position]->initializer;
 		mixed_check($selection_node->preparation() === null, 'Selection retained stale facts');
+	}
+	foreach (['?int', 'result<int>', 'result_or_false<int>'] as $wrapper)
+	{
+		mixed_source($path, '$v ' . $wrapper . ' = 0; $fallback mixed = null; $out mixed = $v ?? $fallback;');
+		$wrapper_root = Model::syntax_files()[0]->root;
+		$coalesce = $wrapper_root->body->statements[2]->initializer;
+		$facts = $coalesce->require_coalesce_preparation();
+		mixed_check($facts->presence === coalesce_presence::wrapper_value
+			&& $facts->left_extraction->operation === ($wrapper === '?int' ? conversion_operation::nullable_extract : conversion_operation::result_extract)
+			&& $facts->left_conversion->operation === conversion_operation::mixed_box
+			&& $facts->fallback_conversion->operation === conversion_operation::identity,
+			'Wrapper coalescing did not separate extraction from normalization');
+		mixed_check($facts->left_extraction->target_type->matches($facts->left_conversion->source_type)
+			&& Mixed_Conversions::is_mixed($facts->type) && !$facts->addressable, 'Invalid selected-value composition');
+		Preparation_Cleanup::tree($wrapper_root);
+		mixed_check($coalesce->preparation() === null && $coalesce->left->preparation() === null
+			&& $coalesce->fallback->preparation() === null, 'Wrapper coalesce facts survived cleanup');
+
+		$valid = 'function source(): ' . $wrapper . ' { return 3; } '
+			. 'function read(): mixed { $fallback mixed = null; return source() ?? $fallback; } '
+			. 'function stable(): int { return 9; } $v = read();';
+		$compiler = mixed_source($path, $valid);
+		$original = Model::$cpp_files[0]->text;
+		$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+		$version = $stable->version;
+		file_put_contents($path, str_replace('source(): ' . $wrapper, 'source(): result_or_bool<int>', $valid));
+		foreach ([[$path], []] as $changed)
+		{
+			$compiler->sync($changed);
+			$failed = false;
+			try { $compiler->prepare(); }
+			catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'does not permit result_or_bool'); }
+			mixed_check($failed && Model::$cpp_files->is_empty(), 'Wrapper join published stale output');
+			mixed_check($stable->version === $version, 'Wrapper join rebuilt unrelated body');
+		}
+		file_put_contents($path, $valid);
+		$compiler->update_cpp([$path]);
+		mixed_check(Model::$cpp_files[0]->text === $original, 'Wrapper join repair changed output');
+		mixed_source($path, $valid);
+		mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental wrapper join differs');
 	}
 	echo "Mixed: boundaries, casts, conditions/probes/joins, deferred cases and incremental recovery passed\n";
 }

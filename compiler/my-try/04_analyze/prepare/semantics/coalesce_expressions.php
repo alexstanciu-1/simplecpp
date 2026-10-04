@@ -17,31 +17,30 @@ final class Coalesce_Expression_Preparation
 			self::require_admitted_family($left->type);
 			self::require_admitted_family($fallback->type);
 			$facts = new prepared_coalesce_expression();
-			if (Mixed_Conversions::is_mixed($left->type) || Mixed_Conversions::is_mixed($fallback->type))
-			{
-				$facts->type = Selection_Result_Preparation::mixed_join($left->type, $fallback->type, $context);
-				$facts->presence = Mixed_Conversions::is_mixed($left->type)
-					? coalesce_presence::mixed_nonnull : coalesce_presence::always;
-				$facts->left_conversion = Conversion_Preparation::decide($left->type, $facts->type, conversion_context::coalesce_value);
-				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
-				return $facts;
-			}
-			$result = $left->type;
-			$facts->presence = coalesce_presence::always;
-			$payload = Nullable_Conversions::payload($result);
+			$selected_type = $left->type;
+			$facts->presence = Mixed_Conversions::is_mixed($left->type)
+				? coalesce_presence::mixed_nonnull : coalesce_presence::always;
+			$payload = Nullable_Conversions::payload($selected_type);
 			if ($payload !== null) {
-				$result = $payload;
+				$selected_type = $payload;
 				$facts->presence = coalesce_presence::wrapper_value;
 			}
 			$role = Result_Conversions::role($left->type);
 			if ($role !== null) {
-				$result = Result_Conversions::require_scalar_payload($left->type, $role);
+				$selected_type = Result_Conversions::require_scalar_payload($left->type, $role);
 				$facts->presence = coalesce_presence::wrapper_value;
-				Capability_Preparation::require_copy($left->type, $context);
 			}
-			$facts->type = Selection_Result_Preparation::begin($result, $context, 'coalesce');
-			$facts->fallback_conversion = Selection_Result_Preparation::branch($fallback->type, $result, 'coalesce');
-			$facts->left_conversion = Conversion_Preparation::decide($left->type, $result, conversion_context::coalesce_value);
+			if (Mixed_Conversions::is_mixed($selected_type) || Mixed_Conversions::is_mixed($fallback->type)) {
+				$facts->type = Selection_Result_Preparation::mixed_join($selected_type, $fallback->type, $context);
+				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
+			}
+			else {
+				$facts->type = Selection_Result_Preparation::begin($selected_type, $context, 'coalesce');
+				$facts->fallback_conversion = Selection_Result_Preparation::branch($fallback->type, $facts->type, 'coalesce');
+			}
+			Capability_Preparation::require_copy($left->type, $context);
+			$facts->left_extraction = Conversion_Preparation::decide($left->type, $selected_type, conversion_context::coalesce_value);
+			$facts->left_conversion = Conversion_Preparation::decide($selected_type, $facts->type, conversion_context::coalesce_value);
 			return $facts;
 		}
 		finally { $context->statement_assignment = $statement_assignment; }

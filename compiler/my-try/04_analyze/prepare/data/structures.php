@@ -92,6 +92,9 @@ enum coalesce_presence
 final class prepared_coalesce_expression extends prepared_expression
 {
 	public coalesce_presence $presence;
+	/** Source to selected-value domain; identity for direct scalar/mixed inputs. */
+	public conversion_decision $left_extraction;
+	/** Selected-value domain to the joined result; independent of extraction. */
 	public conversion_decision $left_conversion;
 	public conversion_decision $fallback_conversion;
 }

@@ -125,7 +125,11 @@ or mixed result/conversion facts; it is distinct from truthiness-based condition
 Prepared `coalesce_presence` separates always-present values, wrapper value states
 and mixed non-null testing from conversion identity. Direct mixed/scalar selections
 share bounded join admission, preserve the mixed carrier and copy the selected value;
-they do not add wrapper/mixed joins or alter scalar-only match.
+they do not alter scalar-only match. Coalescing facts separate `left_extraction`
+(source to selected payload, identity for direct values) from `left_conversion`
+(selected value to result). Approved wrapper-left/mixed-fallback joins compose
+existing extraction and boxing decisions, without a general conversion chain model
+or implicit wrapper-to-mixed boundary rights.
 `null_type_definition` / `null_type` give null literals a canonical,
 non-storable sentinel identity, without source exposure or a storage backend binding.
 `nullable_type_node` owns `?T` syntax and resolves through shared application interning;

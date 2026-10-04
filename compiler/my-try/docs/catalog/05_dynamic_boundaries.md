@@ -628,11 +628,11 @@ unchanged assignment targets on failure, scalar/string result ownership, table-h
 identity, prepared result/presence facts, cleanup and incremental invalidation/retry/
 repair with clean-output parity.
 
-Deferred: bare-null branches, fixed-width scalar boxing, direct dynamic bridges,
-mixed-valued match, wrapper/mixed joins and general mixed operators. In particular,
-`nullable<T> ?? mixed`, `result<T> ?? mixed` and `result_or_false<T> ?? mixed` are
-valid language rows reserved for the next sub-slice; their deferral is not a language
-prohibition. `result_or_bool` remains invalid on either side of `??` and rejects
+Deferred at that checkpoint: bare-null branches, fixed-width scalar boxing, direct
+dynamic bridges, mixed-valued match, wrapper/mixed joins and general mixed operators.
+The following slice implements the valid language rows `nullable<T> ?? mixed`,
+`result<T> ?? mixed` and `result_or_false<T> ?? mixed`.
+`result_or_bool` remains invalid on either side of `??` and rejects
 during preparation, including an unselected fallback.
 
 Proof owners: `tests/mixed.php`, `tests/fixtures/mixed_selections.php` and the shared
@@ -648,7 +648,55 @@ attempt using the shared 12-slot runner with CLI fallback after sandbox FPM deni
 This is PHP-hosted compiler and generated-program evidence, not a native compiler
 rebuild or a compilation-performance measurement.
 
-Next discussion: the three approved wrapper-left/mixed-fallback coalescing rows.
+The next agreed slice supplies those wrapper-left/mixed-fallback rows.
+
+## Wrapper-left mixed coalescing — 2026-10-04
+
+Agreed scope: `nullable<T> ?? mixed`, `result<T> ?? mixed` and
+`result_or_false<T> ?? mixed` yield owned mixed, with `T` limited to bool, ordinary
+int, float and string. This follows the authoritative conditional matrix, not a new
+general wrapper-to-mixed conversion right.
+
+### Important consequences
+
+- Successful false, zero, empty string and `"0"` payloads are retained and boxed.
+- An empty nullable, failed Result or false sentinel selects the mixed fallback.
+- A selected mixed fallback containing null is valid.
+- A failed Result does not box or propagate its error as the result value; `??`
+  selects the fallback. This does not suppress exceptions evaluating either operand.
+- The source evaluates once; the fallback evaluates only when needed.
+- The result is owned. Neither source is consumed or modified; scalar/string
+  values copy independently, while selected boxed object/table handles preserve identity.
+
+Implemented preparation first selects the left value domain and presence rule, then the result
+domain. Retained facts separate exact payload extraction from result normalization,
+reusing the existing conversion decisions. The emitter composes these two prepared
+steps only inside the present branch. No new AST node, presence mode, runtime helper,
+or combined wrapper-to-mixed operation is needed. This local preparation refactor
+also serves existing direct/scalar coalescing rows. Legacy `normalize_coalesce_branch`
+already unwraps before boxing; v0.2 makes those steps explicit before emission.
+
+Non-goals: reverse `mixed ?? wrapper`, wrapper/mixed ternary or Elvis, bare-null
+branches, fixed-width boxing, nested/container payloads and general wrapper-to-mixed
+assignments, arguments or returns. Boolable remains rejected on either side during
+preparation, including an unselected branch.
+
+Proof owners: `tests/mixed.php` checks the two prepared steps, owned-result typing,
+cleanup, deferred boundaries and incremental invalidation/retry/repair when the
+producer changes to boolable. `tests/fixtures/mixed_wrapper_coalesce.php` supplies
+all four scalar payloads for all three wrapper families, falsey successes, native
+failure states, null/string/object fallbacks, unchanged inputs and failed assignment
+targets, single source evaluation and lazy fallback/source exceptions. The shared
+mixed runner and requested native source/probe sweep include these fixtures.
+
+Verified on base `893858be` plus this slice: 14 PHP suites and all 210 mixed
+generated programs/state probes pass in `/tmp/my-try-wrapper-mixed-coalesce-20261004-1/`.
+All 30 new wrapper/mixed programs/probes plus 34 existing nullable/Result coalescing
+programs pass without PCH (64 total) in
+`/tmp/my-try-wrapper-mixed-coalesce-20261004-no-pch/`. Both passed on the first
+attempt. Tests use the shared 12-slot pool; PHP fell back to CLI after sandbox FPM
+denial. No native compiler rebuild, runtime semantic changes or native-compiler
+portability claim is included.
 
 ## Progress
 
@@ -656,6 +704,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| MIXED-WRAPPER-COALESCE-001 | agreed | `$v ?int = 0; $f mixed = null; $out = $v ?? $f;` | proved | proved | deferred | Nullable/result/falseable left, mixed fallback; separate extraction and normalization; `tests/mixed.py` |
 | MIXED-JOIN-001 | agreed | `$a = $condition ? $m : 7; $b = $m ?: 7; $c = $m ?? 7;` | proved | proved | deferred | Direct mixed/mixed and mixed/scalar joins in either order; `tests/mixed.py`; wrapper/mixed and bare-null branches deferred |
 | MIXED-OPS-001 | agreed | `$v mixed = "false"; $b = (bool)$v; if ($v) {} $e = empty($v);` | proved | proved | deferred | Explicit scalar casts, shared truthiness/negation and one-value probes; `tests/mixed.py`; broader runtime kinds tracked as MIXED-TRUTH-001 |
 | MIXED-BOUNDARY-001 | agreed | `$v mixed = 7; $n int = $v;` | proved | proved | deferred | Scalar/null boxing, copying and checked required scalar boundaries; `tests/mixed.py` |
@@ -803,8 +852,9 @@ auto a = php::empty(b);
 result/conversions: `nullable<T> ?? T`, `result<T> ?? T`, `result_or_false<T> ?? T`
 and `T ?? T` yield owned `T`. Boolable operands reject in preparation on either side.
 Direct mixed/mixed and mixed/scalar pairs in either order yield owned mixed, with
-prepared null-kind presence testing rather than truthiness. Wrapper-valued fallback
-and wrapper/mixed combinations remain deferred.
+prepared null-kind presence testing rather than truthiness. Approved nullable/result/
+falseable left with mixed fallback unwraps the selected scalar and boxes it.
+Wrapper-valued fallback and reverse mixed/wrapper combinations remain deferred.
 
 ### Imported version 1
 

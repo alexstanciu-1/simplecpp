@@ -589,7 +589,8 @@ $ownership_parameters = [
 ];
 $result_fixtures = require __DIR__ . '/fixtures/result_construction.php';
 $mixed_fixtures = array_merge(require __DIR__ . '/fixtures/mixed_boundaries.php',
-	require __DIR__ . '/fixtures/mixed_operations.php', require __DIR__ . '/fixtures/mixed_selections.php');
+	require __DIR__ . '/fixtures/mixed_operations.php', require __DIR__ . '/fixtures/mixed_selections.php',
+	require __DIR__ . '/fixtures/mixed_wrapper_coalesce.php');
 $value_fixtures = array_merge($result_fixtures, $mixed_fixtures);
 foreach ($value_fixtures as $name => [$source, $predicate]) {
 	$cases[$name] = [$source, 0];

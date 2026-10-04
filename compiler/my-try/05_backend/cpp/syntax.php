@@ -232,13 +232,15 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		$left = $node->left->generate_cpp($this);
 		$fallback = CPP_Declarations::conversion($node->fallback->generate_cpp($this), $facts->fallback_conversion, $this->context);
 		if ($facts->presence === coalesce_presence::always) {
-			$selected = CPP_Declarations::conversion($left, $facts->left_conversion, $this->context);
+			$extracted = CPP_Declarations::conversion($left, $facts->left_extraction, $this->context);
+			$selected = CPP_Declarations::conversion($extracted, $facts->left_conversion, $this->context);
 			return '([&]() -> ' . $result_type . ' { return ' . $selected . '; }())';
 		}
 		$temporary = 'coalesce_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
-		$source_type = CPP_Declarations::type($facts->left_conversion->source_type, $this->context);
-		$selected = CPP_Declarations::conversion($temporary, $facts->left_conversion, $this->context);
+		$source_type = CPP_Declarations::type($facts->left_extraction->source_type, $this->context);
+		$extracted = CPP_Declarations::conversion($temporary, $facts->left_extraction, $this->context);
+		$selected = CPP_Declarations::conversion($extracted, $facts->left_conversion, $this->context);
 		$presence = '';
 		if ($facts->presence === coalesce_presence::wrapper_value) {
 			$presence = $temporary . '.has_value().native_value()';

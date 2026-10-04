@@ -258,8 +258,9 @@ try
 	$coalesce_root = Model::syntax_files()[0]->root;
 	$coalesce_node = $coalesce_root->body->statements[1]->initializer;
 	$coalesce_facts = $coalesce_node->require_coalesce_preparation();
-	result_check($coalesce_facts->left_conversion->operation === conversion_operation::result_extract
-		&& $coalesce_facts->left_conversion->context === conversion_context::coalesce_value,
+	result_check($coalesce_facts->left_extraction->operation === conversion_operation::result_extract
+		&& $coalesce_facts->left_extraction->context === conversion_context::coalesce_value
+		&& $coalesce_facts->left_conversion->operation === conversion_operation::identity,
 		'Coalesce lost its selected extraction context');
 	result_check($coalesce_facts->type->matches(Language_Types::integer(Model::$language_scope))
 		&& !$coalesce_facts->addressable, 'Coalesce did not produce an owned payload');

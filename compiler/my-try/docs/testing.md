@@ -91,7 +91,10 @@ consumers, single evaluation, unchanged targets on failed casts, propagated sour
 exceptions, non-mutating table/object probes and runtime-rejected boxed conditions.
 Selection fixtures cover mixed/mixed and mixed/scalar ternary, Elvis and coalescing
 joins, including owned results, falsey presence, selected null fallback, lazy errors,
-table-handle identity and deferred wrapper/bare-null admission.
+table-handle identity and deferred bare-null admission. Wrapper-left/mixed-fallback
+coalescing fixtures cover nullable, structured Result and falseable success/absence,
+all four scalar payloads, falsey successes, mixed-null/object fallback, lazy source/
+fallback failures and the separate prepared extraction/normalization steps.
 This builds generated programs, not the native compiler.
 
 Run all PHP suites with retained evidence:
