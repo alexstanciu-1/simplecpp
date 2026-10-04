@@ -6,8 +6,8 @@ execution are separate claims. The current bounded native checkpoint passes all 
 The latest checkpoint covers the implemented Chapter 05 nullable and Result slices
 through Result coalescing, plus the source adaptations below. It is not a Chapter 05
 closeout: mixed and the remaining catalog debt are still deferred.
-The subsequent [mixed/dynamic model slice](../catalog/05_dynamic_boundaries.md#mixed-and-dynamic-model-foundation--2026-10-04)
-has PHP and generated-program evidence only; it is not included in that native
+The subsequent mixed/dynamic model and [scalar-boundary slice](../catalog/05_dynamic_boundaries.md#mixed-scalar-value-boundaries--2026-10-04)
+have PHP and generated-program evidence only; they are not included in that native
 compiler snapshot.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 

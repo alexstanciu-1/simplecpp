@@ -588,7 +588,9 @@ $ownership_parameters = [
 	'function_ownership_readonly_alias' => 'scpp::string_t, scpp::string_t&',
 ];
 $result_fixtures = require __DIR__ . '/fixtures/result_construction.php';
-foreach ($result_fixtures as $name => [$source, $predicate]) {
+$mixed_fixtures = require __DIR__ . '/fixtures/mixed_boundaries.php';
+$value_fixtures = array_merge($result_fixtures, $mixed_fixtures);
+foreach ($value_fixtures as $name => [$source, $predicate]) {
 	$cases[$name] = [$source, 0];
 }
 $executions = [];
@@ -603,11 +605,16 @@ foreach ($cases as $name => [$source, $exit])
 	$path = $directory . '/' . $name . '.cpp';
 	file_put_contents($path, Model::$cpp_files[0]->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
-	if (isset($result_fixtures[$name]))
+	if (isset($value_fixtures[$name]))
 	{
-		$probe = "\tif (!(" . $result_fixtures[$name][1] . ")) { return 91; }\n";
+		$probe = "\tif (!(" . $value_fixtures[$name][1] . ")) { return 91; }\n";
 		$probe_path = $directory . '/' . $name . '_state.cpp';
-		file_put_contents($probe_path, str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text));
+		$probe_text = str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text);
+		if (isset($mixed_fixtures[$name])) {
+			// Native bridge inputs need their own headers, independently of generated declarations.
+			$probe_text = "#include \"scpp/memory.hpp\"\n#include \"scpp/hash_t.hpp\"\n" . $probe_text;
+		}
+		file_put_contents($probe_path, $probe_text);
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 	if ($name === 'nullable_explicit_string') {

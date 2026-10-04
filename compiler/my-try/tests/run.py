@@ -41,7 +41,7 @@ def verify_php(root, output, runner, jobs):
 
 
 def verify_programs(root, output, runner, jobs, pch=True):
-    compiler = CppFixtureCompiler(runner, root.parents[1], output, pch=pch)
+    compiler = CppFixtureCompiler(runner, root.parents[1], output, pch=pch, runtime=True)
     clang = json.loads((root / '06_native/toolchain.json').read_text())['clang']
     tasks = []
     counts = {}

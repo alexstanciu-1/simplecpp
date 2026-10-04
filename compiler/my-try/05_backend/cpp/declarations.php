@@ -23,7 +23,8 @@ final class CPP_Declarations
 		if ($decision->operation === conversion_operation::nullable_empty) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
-		if ($decision->operation === conversion_operation::nullable_wrap) {
+		if (($decision->operation === conversion_operation::nullable_wrap)
+			|| ($decision->operation === conversion_operation::mixed_box)) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
 		if (($decision->operation === conversion_operation::result_wrap)
@@ -42,6 +43,11 @@ final class CPP_Declarations
 		if ($decision->operation === conversion_operation::integer_value_cast) {
 			return 'static_cast<' . self::type($decision->target_type, $context)
 				. '>((' . $expression . ').native_value())';
+		}
+		if ($decision->operation === conversion_operation::mixed_extract) {
+			$context->headers['scpp/cast.hpp'] = true;
+			return 'scpp::required_cast<' . self::type($decision->target_type, $context)
+				. '>(' . $expression . ')';
 		}
 		if ($decision->operation === conversion_operation::explicit_runtime_cast) {
 			$context->headers['scpp/cast.hpp'] = true;

@@ -164,6 +164,14 @@ escaping exceptions request a full rebuild. The full policy is in
 
 ## Current language boundary
 
+`Mixed_Conversions` owns scalar/null boxing and checked required scalar extraction
+at assignment, by-value argument and return boundaries. It recognizes `mixed_semantics`
+and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the
+existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
+is the only boxed integer admitted in this slice; fixed widths, cross-carrier/wrapper
+bridges, explicit casts and operator contexts remain deferred. Runtime payload failure
+is not preparation failure. Reference arguments retain exact stable-storage rules.
+
 `Result_Conversions` in `conversions/results.php` selects exact scalar payload wrapping,
 same-type copies and explicit legacy false/true state construction. The three Result
 families retain distinct identities. Boolean payloads are not sentinels; canonical

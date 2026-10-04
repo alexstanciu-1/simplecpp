@@ -458,7 +458,7 @@ the native compiler. The first end-to-end attempt exposed missing language-scope
 publication; the next exposed the header-only fixture's missing runtime linkage.
 Both are accounted for in the final proof.
 
-Next: discuss boxing, same-carrier copying and checked typed value boundaries.
+The next slice below implements scalar boxing, copying and checked typed boundaries.
 Required extraction must remain distinct from explicit casts. Runtime-kind dispatch
 must handle admitted value-dependent operations; uncertainty alone must not trigger
 preparation rejection. By-reference normalization remains prohibited. Existing
@@ -467,9 +467,58 @@ default declaration and identity paths do not imply completed dynamic operations
 Deferred: indexing, operators, conditions/probes, iteration (Chapter 06), and dynamic
 `->`. Discuss fixed-name property reads/writes, computed property names and method
 calls separately; current Phase 1 uses `[]` and does not promise method dispatch.
-Before adding mixed execution fixtures to the general/native runners, provide their
-normal runtime-library linkage: current header-only compile commands cannot link
-mixed constructors/destructors. Do not solve this by changing generated semantics.
+The following slice supplies normal snippet-runtime linkage for mixed execution
+fixtures; generated semantics do not change to work around missing linkage.
+
+## Mixed scalar value boundaries — 2026-10-04
+
+`Mixed_Conversions` owns role-based admission through the existing conversion path.
+`mixed_box` constructs a box from null, bool, ordinary int, float or string;
+`mixed_extract` emits `scpp::required_cast<T>` at typed assignment, by-value argument
+and return boundaries. Same-type copies reuse identity conversions and existing
+copy-capability checks. No new AST, runtime tag model, runtime semantic change or
+backend type inference is introduced. Untyped copies retain mixed identity.
+
+Required int accepts only integer payloads. Required bool/float/string use their
+configured scalar conversion rules after rejecting null: boolean strings are the
+documented five literals, numeric strings require valid full parses, and string
+destinations use the existing text rules. Runtime-incompatible kinds throw; the
+compiler does not reject a valid boundary merely because its payload may fail.
+Explicit mixed casts remain deferred and do not share this required-boundary path.
+
+Scalar/string copies preserve independent values; boxed dynamic handles and direct
+dynamic copies preserve shared identity. Native bridge fixtures supply dynamic/table
+inputs without enabling source cross-carrier construction. Failed extraction and
+source exceptions preserve the destination; source evaluation occurs once, arguments
+are sequenced through existing snapshots, and failing arguments do not enter the
+callee. This is not a blanket strong exception guarantee for allocation failures.
+Actual mixed locals can bind to mixed reference parameters; implicit reference
+boxing/extraction and interior references remain prohibited.
+
+The focused `tests/mixed.py` checkpoint passes ten PHP suites and 84 generated
+programs/state probes with PCH. Six selected probes also pass without PCH, and four
+fixture-compiler tests cover runtime/PCH setup. Evidence:
+`/tmp/my-try-mixed-boundaries-20261004-verified/` and
+`/tmp/my-try-mixed-boundaries-20261004-no-pch/`.
+Earlier attempts exposed a test's inferred-statement inspection mistake, missing
+headers in a native-only bridge probe and inconsistent PCH thread flags; these were
+test setup issues, not changed language rules. PHP uses the shared 12-slot runner
+with CLI fallback after sandbox FPM denial. The compiler itself was not rebuilt
+natively; incremental rejection/retry/repair and cleanup evidence is PHP-hosted.
+
+The focused and general fixture compilers build `runtime/include/core/runtime.cpp`
+once per run, then link that object into generated programs. Requested native
+validation uses the same helper for its source/probe sweep and records the new
+fixture/helper hashes. No expired `/tmp` library dependency is required.
+
+Remaining debt/non-goals: fixed-width boxing/extraction, mixed/dynamic cross-carrier
+bridges, explicit mixed casts, nullable/Result lifting, operators, conditions/probes,
+conditional joins, indexing and iteration. Dynamic `->` remains a separate property
+versus method-dispatch discussion. Older config/implicit runtime bridge descriptions
+do not fully distinguish required int extraction from explicit conversion; follow
+`dynamic_types.md` and the explicit required helper, not those broader fallbacks.
+Next discussion: explicit scalar casts and mixed truthiness/probes, or the separately
+scoped mixed/dynamic bridge; neither is included here.
 
 ## Progress
 
@@ -477,6 +526,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| MIXED-BOUNDARY-001 | agreed | `$v mixed = 7; $n int = $v;` | proved | proved | deferred | Scalar/null boxing, copying and checked required scalar boundaries; `tests/mixed.py` |
 | RSL-JOIN-001 | agreed | `$a = $condition ? $r : 7; $b = $r ?: 7;` | proved | proved | deferred | Exact Result/scalar and same-wrapper joins; owned state-preserving lazy selection; `tests/results.py` |
 | RSL-PROBES-001 | agreed | `if ($r) {} $p = isset($r); $e = empty($r);` | proved | proved | deferred | Scalar payloads across all three Result families; state/payload distinction and single evaluation; `tests/results.py` |
 | RSL-TAKE-001 | agreed | `take($value, $error) = source();` | proved | proved | deferred | Existing exact scalar outputs; all four wrapper families; `tests/take.php` and `tests/results.py` |

@@ -13,6 +13,7 @@ import shutil
 import time
 
 from test_runner import CommandRunner, DEFAULT_JOBS, Task, positive_jobs, run_tasks
+from cpp_fixture import build_runtime_object
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
@@ -97,7 +98,8 @@ def validate(args, target, results, logs, started, runner):
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
     harness_paths = [Path(__file__), APP / 'tests/control_flow.php', APP / 'tests/s2s.php',
-                     APP / 'tests/fixtures/result_construction.php',
+                     APP / 'tests/fixtures/result_construction.php', APP / 'tests/fixtures/mixed_boundaries.php',
+                     APP / 'tools/cpp_fixture.py',
                      APP / 'tests/native_driver.php.in', APP / 'tests/s2s_proof.php']
     (results / 'harness_hashes.json').write_text(json.dumps({
         str(path.relative_to(APP)): hashlib.sha256(path.read_bytes()).hexdigest()
@@ -196,6 +198,8 @@ def validate(args, target, results, logs, started, runner):
                     for name, (text, code) in control_programs['valid'].items()]
     declaration_case_count = sum(name.startswith(('function_', 'struct_', 'integer_', 'field_'))
                                  for name, _, _ in valid_cases)
+    fixture_runtime = build_runtime_object(runner, ROOT, results, cxx='clang++-18')
+
     def validate_source(name, text, code):
         folder = results / 's2s-programs' / name
         folder.mkdir(parents=True, exist_ok=args.resume)
@@ -226,7 +230,8 @@ def validate(args, target, results, logs, started, runner):
             generated = generated_with_probe
         (folder / 'main.cpp').write_text(generated)
         run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-Werror=return-type', '-I', ROOT / 'runtime/include',
-                                 folder / 'main.cpp', '-o', folder / 'program'])
+                                 '-DSCPP_LANGUAGE_TARGET_PHP=1', folder / 'main.cpp', fixture_runtime,
+                                 '-pthread', '-o', folder / 'program'])
         run(name + '-s2s-execute', [folder / 'program'], expected=code)
         return generated.encode(), code
 
@@ -242,7 +247,8 @@ def validate(args, target, results, logs, started, runner):
         name = probe_source.stem
         executable_probe = results / ('probe-' + name)
         run(name + '-probe-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
-                                  probe_source, '-o', executable_probe])
+                                  '-DSCPP_LANGUAGE_TARGET_PHP=1', probe_source, fixture_runtime,
+                                  '-pthread', '-o', executable_probe])
         run(name + '-probe-execute', [executable_probe], expected=item['exit_code'])
 
     probe_cases = [item for item in json.loads((s2s_fixtures / 'executions.json').read_text())

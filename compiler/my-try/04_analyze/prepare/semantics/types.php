@@ -145,7 +145,7 @@ final class Type_Preparation
 			Result_Conversions::require_scalar_payload($type, $result_role);
 		}
 		if (self::canonical($type)->family() === type_family::null_sentinel) {
-			throw new \RuntimeException('S2S null requires an explicit nullable or legacy Result destination');
+			throw new \RuntimeException('S2S null requires an explicit nullable, mixed or legacy Result destination');
 		}
 		if (self::canonical($type)->family() === type_family::no_value) {
 			throw new \RuntimeException('S2S void is not a storage type');

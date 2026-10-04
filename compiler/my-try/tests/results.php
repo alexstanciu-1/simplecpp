@@ -83,8 +83,8 @@ try
 		'Cleanup retained extraction facts');
 
 	$rejections = [
-		['$x = null;', 'explicit nullable or legacy Result destination'],
-		['$x = nullopt;', 'explicit nullable or legacy Result destination'],
+		['$x = null;', 'explicit nullable, mixed or legacy Result destination'],
+		['$x = nullopt;', 'explicit nullable, mixed or legacy Result destination'],
 		['$x result<int> = null;', 'Result construction requires an exact payload'],
 		['$x result<int> = false_sentinel;', 'Result construction requires an exact payload'],
 		['$x result<int> = true_sentinel;', 'Result construction requires an exact payload'],

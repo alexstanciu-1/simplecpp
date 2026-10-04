@@ -53,6 +53,38 @@ class CppFixtureTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'PCH build failed'):
                 CppFixtureCompiler(BrokenRunner(), root, root)
 
+    def test_runtime_is_built_once_and_pch_flags_match(self):
+        class RecordingRunner:
+            def __init__(self):
+                self.commands = []
+
+            def run(self, name, command, **options):
+                self.commands.append((name, command))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            runner = RecordingRunner()
+            compiler = CppFixtureCompiler(runner, root, root, runtime=True)
+            compiler.compile('first', root / 'first.cpp', root / 'first')
+            compiler.compile('second', root / 'second.cpp', root / 'second')
+            self.assertEqual([name for name, _ in runner.commands],
+                             ['cpp-runtime-build', 'cpp-pch-build', 'first', 'second'])
+            for _, command in runner.commands:
+                self.assertIn('-pthread', command)
+                self.assertIn('-DSCPP_LANGUAGE_TARGET_PHP=1', command)
+            for _, command in runner.commands[2:]:
+                self.assertIn(root / 'fixture-runtime.o', command)
+
+    def test_runtime_failure_stops_setup(self):
+        class BrokenRunner:
+            def run(self, name, command, **options):
+                raise RuntimeError('Runtime build failed')
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, 'Runtime build failed'):
+                CppFixtureCompiler(BrokenRunner(), root, root, runtime=True)
+
 
 if __name__ == '__main__':
     unittest.main()
