@@ -9,6 +9,39 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Mixed short-circuit logical operators — 2026-10-04
+
+Implemented `&&` / `||` and their `and` / `or` spellings when at least one operand
+is mixed. Peers may be mixed, bool, ordinary int or float, in either order. The
+result is bool. `Mixed_Operators` owns admission; each operand retains a separate
+`Condition_Truthiness` decision on the existing binary operator facts. Emission
+uses native-bool C++ short circuit, never overloaded runtime logical operators.
+
+Important consequences:
+
+- Evaluation is left-to-right, once per selected operand. Skipped RHS calls,
+  assignments, mutations and runtime failures remain skipped. Sequenced boolean
+  logical expressions also admit these effects; eager parents still reject unsafe
+  operand-order combinations.
+- Mixed strings follow condition truthiness: `""` and `"0"` are false, `"false"`
+  is true. This is not explicit boolean conversion.
+- Boxed table/object kinds still throw if evaluated (MIXED-TRUTH-001); short circuit
+  can bypass an invalid RHS. Both source operands still undergo preparation.
+- Directly typed string peers, fixed-width peers, literal-null peers, direct dynamic
+  handles, mixed `xor` and wrapper logical operands remain outside this slice.
+  In particular, wrapper logical operations require their own guarded-unwrapping
+  contract, not automatic admission through condition truthiness.
+
+Proof owners: `tests/mixed.php` (facts, admission, cleanup, incremental recovery)
+and `tests/fixtures/mixed_logical.php` (truth tables, spellings, effects, runtime
+errors and scalar peers). No native compiler rebuild is implied.
+
+Verification: 15 PHP suites and 290 generated programs pass in
+`/tmp/my-try-mixed-logical-20261004-3`; all 16 new programs also pass without PCH in
+`/tmp/my-try-mixed-logical-20261004-no-pch`. Initial PHP attempts exposed the existing
+sequenced-call restriction and stale rejection expectations; these were repaired
+before the first generated-program run, which passed.
+
 ## Mixed numeric updates — 2026-10-04
 
 Implemented `+=`, `-=`, `*=`, `/=`, `%=` and prefix/postfix `++`/`--` for established

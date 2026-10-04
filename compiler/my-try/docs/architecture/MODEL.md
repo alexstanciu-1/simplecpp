@@ -56,6 +56,9 @@ their prepared enclosing target; transient completion composes four exit possibi
 without a CFG. Conditional expressions own condition, optional true branch and
 fallback; absence of the true branch represents shorthand without duplicating the
 condition edge. Prepared facts retain truthiness and the value-result join.
+Binary logical expressions retain ordered `operand_truthiness` decisions on
+`operator_decision` for condition-based AND/OR. These replace operand conversions
+for that operation family; the emitter consumes the decisions without type discovery.
 `value_probe_node` owns one operand and an `isset`/`empty` enum kind. Prepared probe
 facts retain the admitted operation and boolean value type; workers own admission
 and the runtime helpers own the distinct presence/emptiness semantics.

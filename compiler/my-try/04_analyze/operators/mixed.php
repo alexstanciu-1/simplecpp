@@ -5,6 +5,32 @@ namespace scpp\compiler;
 
 final class Mixed_Operators
 {
+	/** Admission is narrower than condition truthiness; wrappers have their own logical contract. */
+	public static function decide_logical(operator_kind $source_operator,
+		array $operands /** vector<canonical_type_use> */): operator_decision
+	{
+		if (q_count($operands) !== 2) {
+			throw new \LogicException('Mixed logical operation requires two operands');
+		}
+		if (($source_operator !== operator_kind::logical_and) && ($source_operator !== operator_kind::logical_or)) {
+			throw new \RuntimeException('S2S mixed logical operation supports only AND and OR');
+		}
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->operation = $source_operator === operator_kind::logical_and
+			? operator_operation::condition_and : operator_operation::condition_or;
+		$decision->result_type = Language_Types::boolean(Model::$language_scope);
+		foreach ($operands as $operand)
+		{
+			if ($operand->by_value() || (!self::is_numeric_operand($operand)
+				&& !$operand->matches($decision->result_type))) {
+				throw new \RuntimeException('S2S mixed logical operands require mixed, bool, ordinary int or float');
+			}
+			$decision->operand_truthiness[] = Condition_Truthiness::decide($operand);
+		}
+		return $decision;
+	}
+
 	/** Numeric payload kinds are checked at runtime; known nonnumeric peers reject here. */
 	public static function decide(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */): operator_decision

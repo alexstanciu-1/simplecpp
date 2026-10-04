@@ -219,6 +219,9 @@ final class Operator_Preparation
 			throw new \LogicException('Logical operation requires two operands');
 		}
 		$boolean = $context->boolean;
+		if (Mixed_Conversions::is_mixed($operands[0]) || Mixed_Conversions::is_mixed($operands[1])) {
+			return Mixed_Operators::decide_logical($source_operator, $operands);
+		}
 		if ((!$operands[0]->matches($boolean)) || (!$operands[1]->matches($boolean))) {
 			throw new \RuntimeException('S2S logical operation requires canonical bool operands');
 		}
@@ -324,6 +327,12 @@ final class Operator_Preparation
 	/** Sequenced logical operands admit writes; eager parents inspect the entire subtree. */
 	private static function require_operand(expression_node $node, bool $sequenced): void
 	{
+		if ($sequenced) {
+			if (($node instanceof call_node) || ($node instanceof mutation_expression_node)
+				|| ($node instanceof compound_assignment_expression_node)) {
+				return;
+			}
+		}
 		if ($node instanceof take_expression_node)
 		{
 			if ($sequenced) {

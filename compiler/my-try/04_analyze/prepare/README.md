@@ -183,6 +183,11 @@ null. Actual payload rejection belongs to the runtime; implicit bridges remain r
 `Condition_Truthiness` admits mixed through `mixed_condition`; all condition consumers
 and mixed `!` reuse runtime kind dispatch, not explicit boolean conversion. Boxed
 table/object conditions currently throw at runtime; broader kind truthiness is debt.
+Mixed AND/OR admission belongs to `Mixed_Operators`, separately from general condition
+admission: peers are mixed/bool/ordinary int/float, not strings or wrappers. Ordered
+operand truthiness facts drive native-bool short circuit. Logical contexts admit
+calls, mutations and compound assignments, while eager parents retain recursive
+effect checks. Mixed xor and wrapper logical contracts remain deferred.
 Unary preparation permits one effectful operand, without introducing new bindings;
 eager parents still inspect its subtree for operand-order hazards. Runtime payload failure
 is not preparation failure. Reference arguments retain exact stable-storage rules.

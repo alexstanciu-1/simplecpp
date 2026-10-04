@@ -308,7 +308,7 @@ try
 		['function f(): int { return 1; if (false) { return $missing; } }', 'established local declaration'],
 		['if (true) {} else { return $missing; }', 'established local declaration'],
 		['if (($x = true)) {}', 'established local declaration'],
-		['function probe(int &$n): bool { $n++; return true; } $n = 0; if (false && probe($n)) {}', 'order-independent operands'],
+		['function probe(int &$n): bool { $n++; return true; } $n = 0; if (false == probe($n)) {}', 'order-independent operands'],
 	] as [$source, $diagnostic]) {
 		$rejected_sources[] = $source;
 		$compiler = control_program($path, $source);

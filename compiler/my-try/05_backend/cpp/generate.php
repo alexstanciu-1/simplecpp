@@ -479,6 +479,15 @@ final class CPP_Generator
 	private static function render_binary_decision(operator_decision $decision,
 		string $left, string $right, cpp_generation_context $context): string
 	{
+		if (($decision->operation === operator_operation::condition_and)
+			|| ($decision->operation === operator_operation::condition_or)) {
+			$logical_spelling = $decision->operation === operator_operation::condition_and ? '&&' : '||';
+			$logical_left = CPP_Declarations::truthiness($left, $decision->operand_truthiness[0], $context);
+			$logical_right = CPP_Declarations::truthiness($right, $decision->operand_truthiness[1], $context);
+			$context->headers['scpp/bool_t.hpp'] = true;
+			// Both operands are native bool: C++ must skip the RHS when the left decides the result.
+			return 'scpp::bool_t((' . $logical_left . ') ' . $logical_spelling . ' (' . $logical_right . '))';
+		}
 		if (($decision->operation === operator_operation::nullable_is_null)
 			|| ($decision->operation === operator_operation::nullable_not_null)) {
 			// Preparation admits exactly one nullable and one non-storable null sentinel.

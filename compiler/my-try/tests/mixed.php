@@ -63,6 +63,12 @@ try
 	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
 	$arithmetic = Mixed_Operators::decide(operator_kind::addition, [$integer, $box]);
+	$logical = Mixed_Operators::decide_logical(operator_kind::logical_and, [$integer, $box]);
+	mixed_check($logical->operation === operator_operation::condition_and
+		&& $logical->result_type->matches(Language_Types::boolean(Model::$language_scope))
+		&& $logical->operand_truthiness[0]->operation === truthiness_operation::scalar_condition
+		&& $logical->operand_truthiness[1]->operation === truthiness_operation::mixed_condition,
+		'Mixed logical normalization lost operand truthiness or depended on spelling');
 	$comparison = Mixed_Operators::decide(operator_kind::identical, [$integer, $box]);
 	mixed_check($comparison->operation === operator_operation::mixed_identical
 		&& $comparison->result_type->matches(Language_Types::boolean(Model::$language_scope))
@@ -87,6 +93,16 @@ try
 	Preparation_Cleanup::tree($arithmetic_root);
 	mixed_check($sum_node->preparation() === null && $negative_node->preparation() === null,
 		'Mixed arithmetic retained stale facts');
+	mixed_source($path, '$v mixed = "0"; $answer bool = $v || 2;');
+	$logical_root = Model::syntax_files()[0]->root;
+	$logical_node = $logical_root->body->statements[1]->initializer;
+	$logical_facts = $logical_node->require_binary_preparation();
+	mixed_check($logical_facts->decision->operation === operator_operation::condition_or
+		&& count($logical_facts->decision->operand_truthiness) === 2
+		&& count($logical_facts->decision->operands) === 0 && !$logical_facts->addressable,
+		'Logical facts lost truthiness or added boolean conversions');
+	Preparation_Cleanup::tree($logical_root);
+	mixed_check($logical_node->preparation() === null, 'Logical operand facts survived cleanup');
 	mixed_source($path, '$v mixed = 7; $after mixed = ($v += 1); $before mixed = $v++;');
 	$update_root = Model::syntax_files()[0]->root;
 	$compound_node = $update_root->body->statements[1]->initializer;
@@ -182,7 +198,11 @@ try
 		['$x mixed = 7; $y = $x++ + $x;', 'order-independent operands'],
 		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'mixed arithmetic requires'],
 		['$d dynamic; $y = $d + 1;', 'requires canonical int'],
-		['$x mixed = 7; $y = $x && true;', 'S2S'],
+		['$x mixed = 7; $y = ($x xor true);', 'supports only AND and OR'],
+		['$x mixed = 7; $y = $x && "yes";', 'mixed logical operands require'],
+		['$x mixed = 7; $n ?int = 1; $y = $n || $x;', 'mixed logical operands require'],
+		['$x mixed = 7; $n result<int> = 1; $y = $x && $n;', 'mixed logical operands require'],
+		['$x mixed = 7; $d dynamic; $y = $d || $x;', 'mixed logical operands require'],
 		['$x mixed = 7; $y = $x ?: null;', 'mixed selection requires'],
 		['$x mixed = 7; $y = null ?? $x;', 'mixed selection requires'],
 		['$x mixed = 7; $y = $x ?? null;', 'mixed selection requires'],
@@ -249,6 +269,7 @@ try
 	mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed output differs');
 	foreach (['return (int)source();', 'if (source()) { return 1; } return 0;',
 		'return !source() ? 1 : 0;', 'return isset(source()) ? 1 : 0;',
+		'return (source() && true) ? 1 : 0;', 'return (false || source()) ? 1 : 0;',
 		'return empty(source()) ? 1 : 0;', 'return source() ?? 1;',
 		'return source() ?: 1;', 'return true ? source() : 1;',
 		'return (int)(mixed)(dynamic)source();',

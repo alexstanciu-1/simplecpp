@@ -89,6 +89,8 @@ enum operator_operation {
 	case boolean_xor;
 	case boolean_and;
 	case boolean_or;
+	case condition_and;
+	case condition_or;
 	case string_concatenation;
 	case integer_addition;
 	case integer_subtraction;
@@ -106,9 +108,10 @@ enum operator_operation {
 	case integer_greater_equal;
 }
 
-/** One selected operator shape with ordered operand conversions and result type. */
+/** Selected operation, result type and ordered conversions or condition truthiness. */
 final class operator_decision {
 	public ?truthiness_decision $truthiness = null;
+	public array $operand_truthiness /** vector<truthiness_decision> */ = [];
 	public operator_kind $source_operator;
 	public operator_operation $operation;
 	public array $operands /** vector<conversion_decision> */ = [];
