@@ -36,7 +36,11 @@ Function-valued entries are documented for later implementation. Compiler litera
 pre-preparation belongs to the [v0.3 plan](../../../../docs/v0.3/literal_construction_preparation.md).
 
 Before coding: settle interface/input declarations and built-in empty/duplicate/key
-policies. Do not mark imported untyped literal examples supported using v0.1 fallback
+policies. The subsequently adopted [hybrid input/lowering direction](../planning/data_initialization.md)
+uses call-scoped read-only inputs rather than retainable owning sequences; enforcing
+non-escape is a prerequisite. Its general-stage versus C++ boundary needs the
+clarification recorded there before implementation. Do not mark imported untyped
+literal examples supported using v0.1 fallback
 typing. CH05-DYN-01 is spread across the common operation groups, not a second dynamic
 pass. Existing `(object)` bridges remain separate from direct typed construction;
 unrestricted casts, dynamic `->` and native interior references are not introduced.
