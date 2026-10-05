@@ -72,7 +72,7 @@ final class Boxed_Conversions
 		}
 		if ($context === conversion_context::operator_operand)
 		{
-			if (!$source->by_value() && !$target->by_value() && self::is_mixed($target))
+			if (!$source->by_value() && !$target->by_value() && self::is_boxed($target))
 			{
 				if ($source->matches($target)) {
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
@@ -82,7 +82,7 @@ final class Boxed_Conversions
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::boxed_wrap);
 				}
 			}
-			throw new \RuntimeException('S2S mixed operator normalization requires matching mixed, scalar or null operands');
+			throw new \RuntimeException('S2S boxed operator normalization requires matching boxed family, scalar or null operands');
 		}
 		if (($context === conversion_context::conditional_branch) || ($context === conversion_context::coalesce_value))
 		{

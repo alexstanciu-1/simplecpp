@@ -257,63 +257,71 @@ inline bool_t identical(Left, const mixed_t &right) {
 	return detail::php_is_null_value(right);
 }
 
-template <typename LeftMixed>
-requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
-inline bool_t identical(const LeftMixed &left, const bool_t &right) {
-	if (left.kind() != mixed_t::kind_t::bool_v) {
+template <typename LeftBox>
+requires (std::is_same_v<std::remove_cvref_t<LeftBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<LeftBox>, detail::dynamic_value>)
+inline bool_t identical(const LeftBox &left, const bool_t &right) {
+	if (left.kind() != LeftBox::kind_t::bool_v) {
 		return bool_t(false);
 	}
-	return identical(left.bool_value(), right);
+	return identical(left.get_bool(), right);
 }
 
-template <typename RightMixed>
-requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
-inline bool_t identical(const bool_t &left, const RightMixed &right) {
+template <typename RightBox>
+requires (std::is_same_v<std::remove_cvref_t<RightBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<RightBox>, detail::dynamic_value>)
+inline bool_t identical(const bool_t &left, const RightBox &right) {
 	return identical(right, left);
 }
 
-template <typename LeftMixed>
-requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
-inline bool_t identical(const LeftMixed &left, const int_t<> &right) {
-	if (left.kind() != mixed_t::kind_t::int_v) {
+template <typename LeftBox>
+requires (std::is_same_v<std::remove_cvref_t<LeftBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<LeftBox>, detail::dynamic_value>)
+inline bool_t identical(const LeftBox &left, const int_t<> &right) {
+	if (left.kind() != LeftBox::kind_t::int_v) {
 		return bool_t(false);
 	}
-	return identical(left.int_value(), right);
+	return identical(left.get_int(), right);
 }
 
-template <typename RightMixed>
-requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
-inline bool_t identical(const int_t<> &left, const RightMixed &right) {
+template <typename RightBox>
+requires (std::is_same_v<std::remove_cvref_t<RightBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<RightBox>, detail::dynamic_value>)
+inline bool_t identical(const int_t<> &left, const RightBox &right) {
 	return identical(right, left);
 }
 
-template <typename LeftMixed>
-requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
-inline bool_t identical(const LeftMixed &left, const float_t &right) {
-	if (left.kind() != mixed_t::kind_t::float_v) {
+template <typename LeftBox>
+requires (std::is_same_v<std::remove_cvref_t<LeftBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<LeftBox>, detail::dynamic_value>)
+inline bool_t identical(const LeftBox &left, const float_t &right) {
+	if (left.kind() != LeftBox::kind_t::float_v) {
 		return bool_t(false);
 	}
-	return identical(left.float_value(), right);
+	return identical(left.get_float(), right);
 }
 
-template <typename RightMixed>
-requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
-inline bool_t identical(const float_t &left, const RightMixed &right) {
+template <typename RightBox>
+requires (std::is_same_v<std::remove_cvref_t<RightBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<RightBox>, detail::dynamic_value>)
+inline bool_t identical(const float_t &left, const RightBox &right) {
 	return identical(right, left);
 }
 
-template <typename LeftMixed>
-requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
-inline bool_t identical(const LeftMixed &left, const string_t &right) {
-	if (left.kind() != mixed_t::kind_t::string_v) {
+template <typename LeftBox>
+requires (std::is_same_v<std::remove_cvref_t<LeftBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<LeftBox>, detail::dynamic_value>)
+inline bool_t identical(const LeftBox &left, const string_t &right) {
+	if (left.kind() != LeftBox::kind_t::string_v) {
 		return bool_t(false);
 	}
-	return identical(*left.string_if(), right);
+	return identical(left.get_string(), right);
 }
 
-template <typename RightMixed>
-requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
-inline bool_t identical(const string_t &left, const RightMixed &right) {
+template <typename RightBox>
+requires (std::is_same_v<std::remove_cvref_t<RightBox>, mixed_t>
+	|| std::is_same_v<std::remove_cvref_t<RightBox>, detail::dynamic_value>)
+inline bool_t identical(const string_t &left, const RightBox &right) {
 	return identical(right, left);
 }
 

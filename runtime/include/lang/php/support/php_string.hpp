@@ -399,27 +399,31 @@ inline string_t to_string(nullptr_t) {
 	return string_t("");
 }
 
-// Converts one dynamic table value into its PHP echo/string representation.
-// How: scalar branches delegate to the existing overloads; missing-like branches stringify to empty string.
-inline string_t to_string(const mixed_t &value) {
+// Shared scalar text conversion; each family retains its own container label.
+template <typename Box>
+requires (std::is_same_v<Box, mixed_t> || std::is_same_v<Box, scpp::detail::dynamic_value>)
+inline string_t to_string(const Box &value) {
+	using kind = typename Box::kind_t;
 	switch (value.kind()) {
-		case mixed_t::kind_t::null_v:
+		case kind::null_v:
 			return string_t("");
-		case mixed_t::kind_t::bool_v:
-			return to_string(value.bool_value());
-		case mixed_t::kind_t::int_v:
-			return to_string(value.int_value());
-		case mixed_t::kind_t::float_v:
-			return to_string(value.float_value());
-		case mixed_t::kind_t::string_v: {
-			const auto *s = value.string_if();
-			return s == nullptr ? string_t("") : to_string(*s);
-		}
-		case mixed_t::kind_t::table_v:
-		case mixed_t::kind_t::shared_table_v:
-		case mixed_t::kind_t::weak_table_v:
-			return string_t("Array");
+		case kind::bool_v:
+			return to_string(value.get_bool());
+		case kind::int_v:
+			return to_string(value.get_int());
+		case kind::float_v:
+			return to_string(value.get_float());
+		case kind::string_v:
+			return to_string(value.get_string());
+		case kind::table_v:
+			if constexpr (std::is_same_v<Box, mixed_t>) return string_t("Array");
 			return string_t("Object");
+		default:
+			break;
+	}
+	if constexpr (std::is_same_v<Box, mixed_t>) {
+		if (value.kind() == kind::shared_table_v || value.kind() == kind::weak_table_v)
+			return string_t("Array");
 	}
 	return string_t("");
 }

@@ -238,13 +238,13 @@ including registered containers, nullable scalars and Result scalars. Signature 
 does not require copy capability; copied reads and assignment results request it at
 their own boundaries. Vector-element removal and bare-variable/property unset remain gated.
 
-`String_Conversions::decide_text` owns the bounded concatenation context: mixed,
+`String_Conversions::decide_text` owns the bounded concatenation context: boxed,
 ordinary scalar and literal-null operands normalize to string using identity or
 `text_conversion`. This dispatch precedes wrapper/null conversion routing, without
 granting general assignment, cast or wrapper-unwrapping permissions. Binary `.`
 retains ordered conversion decisions and an owned string result. `.=` admits string
-or mixed local/parameter targets and reuses that operand domain. Its converted
-assignment write-back keeps string storage or boxes the result into mixed, replacing
+or boxed local/parameter targets and reuses that operand domain. Its converted
+assignment write-back keeps string storage or boxes the result into the target family, replacing
 the previous payload kind. Numeric stored-kind validation is separate. Eager
 operand-order checks and interpolation behavior remain unchanged.
 
@@ -254,7 +254,7 @@ and `dynamic_semantics`. It records `boxed_wrap` / `boxed_extract`; emission con
 existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
 is the only boxed integer admitted in this slice; fixed widths, implicit cross-carrier
 bridges, wrapper boxing and further operator families remain deferred. Selection contexts admit only
-identity mixed copies and ordinary scalar boxing, never extraction or bare-null branches.
+identity same-family copies and ordinary scalar boxing, never extraction or bare-null branches.
 Explicit bool/int/float/string
 casts record `explicit_runtime_cast` and call `cast<T>`, not `required_cast<T>`.
 Explicit `mixed`/`dynamic` family crossings use semantic roles and
@@ -265,8 +265,7 @@ container insertion, reject during preparation. Registered construction/indexing
 iteration signatures carry the receiver's own family for values and nested children;
 mixed scalar key carriers remain a separate int/string key mechanism. Dynamic's
 tagged binding is value-stored; redundant value modifiers normalize through registry
-facts without changing shared container payload identity. Dynamic numeric/comparison
-admission remains a subsequent slice, not an inference from these conversions.
+facts without changing shared container payload identity.
 `Condition_Truthiness` admits both families through `boxed_condition`; all condition
 consumers and boxed `!` reuse runtime kind dispatch, not explicit boolean conversion.
 Mixed table conditions still throw; dynamic containers (including empty containers)
@@ -281,24 +280,24 @@ Unary preparation permits one effectful operand, without introducing new binding
 eager parents still inspect its subtree for operand-order hazards. Runtime payload failure
 is not preparation failure. Reference arguments retain exact stable-storage rules.
 
-`Boxed_Operators` currently selects mixed unary signs and binary numeric arithmetic on existing
-operator decisions. Arithmetic admission allows matching mixed or ordinary int/float
+`Boxed_Operators` selects both families' unary signs and binary numeric arithmetic on
+shared `boxed_*` operator decisions. Arithmetic admission allows matching boxed or ordinary int/float
 peers, with no extraction. `%` rejects statically known float
-peers; unknown mixed payloads are checked by runtime dispatch. Results stay mixed,
+peers; unknown boxed payloads are checked by runtime dispatch. Results retain their family,
 so typed consumers still apply their independent boundary checks. Mutation preparation
-admits numeric mixed compound updates and prefix/postfix increment/decrement on
+admits numeric boxed compound updates and prefix/postfix increment/decrement on
 existing locals/parameters. `compound_write_back` separates converted native stores
 from runtime stored-kind validation. Both direct runtime operators and generated
-compound updates use `mixed_t::assign_compound_result` after computing the value;
-ordinary mixed assignment remains free to replace the payload kind. Mixed bitwise
-updates and native targets with mixed right operands remain deferred.
-Dynamic is now a tagged family, not a nonnumeric handle. Dynamic numeric/comparison
-and mutation admission still needs integration with this shared owner, including
-stored-kind failure guarantees; it must not restore mixed-valued dynamic reads.
+compound updates share `detail::assign_numeric_result` after computing the value.
+Its common policy validates numeric stored-kind preservation before replacing the
+target; mixed retains its structured diagnostics. Ordinary boxed assignment may
+replace the payload kind. Boxed bitwise updates, indexed mutation and native targets
+with boxed right operands remain deferred. The backend records runtime operator
+headers from prepared operations, with no per-family rendering path.
 
-Mixed comparisons reuse that owner and return bool. Equality admits scalar/null
+Boxed comparisons reuse that owner and return bool. Equality admits scalar/null
 peers; ordering remains numeric. Operator admission owns those domains, while
-`Boxed_Conversions` normalizes admitted scalar/null peers into mixed without
+`Boxed_Conversions` normalizes admitted scalar/null peers into the selected family without
 extraction. Strict identity instead retains each operand's original type and uses
 the shared runtime helper; literal null must not be boxed because empty-handle
 normalization differs from mixed/mixed kind comparison. Nullable null comparisons

@@ -101,10 +101,13 @@ sharing; mixed/dynamic combinations reject before emission. Coalescing tests nul
 presence, not truthiness. The focused suite proves lazy evaluation and incremental
 signature changes as well as runtime scalar/container behavior.
 
-Remaining operator gate: direct dynamic arithmetic, comparisons, concatenation and
-mutation still require admission migration and stored-kind write-back validation.
-An indexed dynamic read is now dynamic, so old numeric examples need that follow-up
-or an explicit typed boundary. JSON/library registrations and the broad generated
+Operator integration now shares the existing mixed implementation with dynamic:
+family-neutral arithmetic/comparison decisions, scalar normalization, text conversion,
+local/parameter mutations and checked stored-kind write-back. One parameterized proof
+matrix exercises both families, including dynamic-valued indexed reads. Family
+differences remain runtime-owned; no implicit cross-family operator admission was added.
+Indexed compound mutation, broader operator families and `->` remain deferred.
+JSON/library registrations and the broad generated
 fixture reconciliation are also pending. Do not infer a full Chapter 06/native
 compiler pass from the focused tagged-family suite.
 

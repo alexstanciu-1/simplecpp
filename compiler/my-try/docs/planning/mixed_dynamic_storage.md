@@ -688,3 +688,43 @@ passed before the extra preparation/cleanup assertions were added; attempt two f
 a test using a declaration accessor on an implicit assignment, corrected by making
 the test declaration explicit. FPM was unavailable and the runner recorded CLI
 fallback. These are generated-program proofs, not a native compiler rebuild.
+
+### Shared boxed operators — 2026-10-05
+
+The existing mixed compiler implementation is generalized, not duplicated for
+dynamic. `Boxed_Operators`, `Boxed_Conversions`, `String_Conversions` and
+`Mutation_Preparation` publish shared `boxed_*` decisions and `boxed_stored_kind`.
+The C++ backend consumes those facts through one lowering path, including explicit
+runtime headers selected by operation. Both families support the existing bounded
+numeric arithmetic, comparison, text, local/parameter compound and unary-update slice.
+Implicit family combinations reject; wrappers, fixed-width peers, indexed compound
+updates, broader bitwise operations and `->` are not enabled by this checkpoint.
+
+The runtime numeric write-back algorithm is shared, with family-specific diagnostics.
+Mixed's existing member and dynamic's native updates both delegate to that policy;
+generated compound updates call the same checked entry point. Validation precedes
+replacement; outer typed extraction still happens after a successful mutation and
+does not roll it back. Strict scalar identity overloads and scalar text conversion
+are generalized for both families. Container text labels and identity/COW behavior
+remain distinct, without a cross-family bridge.
+
+`fixtures/boxed_operators.php` supplies one parameterized source/native expectation
+matrix for both families: arithmetic and scalar peers, stored-kind failures, zero
+division/remainder, old/new snapshots, self-aliasing updates, outer typed failure,
+strict scalar comparisons in both orders, text conversion, indexed reads and
+container identity. Preparation rejection, cleanup and clean/incremental producer
+changes are also tested for both families. An initial run exposed missing dynamic
+text conversion, repaired in the existing shared string owner rather than the emitter.
+
+Next: broad generated-fixture reconciliation and JSON/source registration integration;
+optional library redesign remains CH15 debt. This checkpoint does not claim a native
+compiler rebuild or completion of Chapter 06.
+
+Evidence: `/tmp/my-try-boxed-operators-20261005-3` (without PCH) and
+`/tmp/my-try-boxed-operators-20261005-4` (PCH) each pass eight PHP suites and
+thirty-eight generated programs, rebuilding snippet runtime objects. The three
+additional retained operator/mutation/compound suites pass under the shared runner
+at `/tmp/my-try-boxed-operators-20261005-regressions`; they are now included in the
+focused runner for subsequent runs. Attempt two exposed the text-conversion gap;
+attempt one covered only the pre-existing eighteen generated fixtures. FPM socket
+startup was unavailable; all PHP checks used recorded CLI fallback.

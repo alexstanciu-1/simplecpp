@@ -72,7 +72,7 @@ $rejections = [
 	['$x = true; $x += 1;', 'canonical int operands'],
 	['$x uint8 = 3; $x += 1;', 'canonical int operands'],
 	['$x = 3; $x /= 1.5;', 'canonical int operands'],
-	['$x = "x"; $n ?int = 1; $x .= $n;', 'concatenation requires mixed'],
+	['$x = "x"; $n ?int = 1; $x .= $n;', 'concatenation requires boxed'],
 	['$x = 3; $x .= "x";', 'concatenation requires string'],
 	['1 += 2;', 'existing local or parameter'],
 	['PHP_INT_MAX += 1;', 'existing local or parameter'],

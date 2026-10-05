@@ -22,7 +22,7 @@ def main():
     programs.mkdir()
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
         suites = ['dynamic_model', 'initialization', 'data_preparation', 'dynamic_boundaries', 'indexing',
-                  'iteration', 'container_calls']
+                  'iteration', 'container_calls', 'operators', 'mutations', 'compound_assignments']
         run_tasks([Task(name, lambda name=name: runner.run(name, ['php', APP / 'tests' / (name + '.php')]))
                    for name in suites] + [Task('family-preparation', lambda: runner.run(
                        'family-preparation', ['php', APP / 'tests/dynamic_families.php', programs]))], jobs=12)

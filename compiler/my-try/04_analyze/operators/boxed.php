@@ -1,6 +1,6 @@
 <?php
 
-/* Boxed logical admission and mixed numeric dispatch; dynamic numeric integration follows separately. */
+/* Shared boxed operator admission; runtime families own payload behavior. */
 namespace scpp\compiler;
 
 final class Boxed_Operators
@@ -27,7 +27,7 @@ final class Boxed_Operators
 		$decision->result_type = Language_Types::boolean(Model::$language_scope);
 		foreach ($operands as $operand)
 		{
-			if ($operand->by_value() || (!Boxed_Conversions::is_boxed($operand) && !self::is_numeric_operand($operand)
+			if ($operand->by_value() || (!self::is_numeric_operand($operand)
 				&& !$operand->matches($decision->result_type))) {
 				throw new \RuntimeException('S2S boxed logical operands require a matching boxed family, bool, ordinary int or float');
 			}
@@ -47,47 +47,47 @@ final class Boxed_Operators
 		$decision->source_operator = $source_operator;
 		$unary = false;
 		if ($source_operator === operator_kind::unary_plus) {
-			$decision->operation = operator_operation::mixed_positive;
+			$decision->operation = operator_operation::boxed_positive;
 			$unary = true;
 		}
 		elseif ($source_operator === operator_kind::unary_minus) {
-			$decision->operation = operator_operation::mixed_negative;
+			$decision->operation = operator_operation::boxed_negative;
 			$unary = true;
 		}
 		elseif ($source_operator === operator_kind::addition) {
-			$decision->operation = operator_operation::mixed_addition;
+			$decision->operation = operator_operation::boxed_addition;
 		}
 		elseif ($source_operator === operator_kind::subtraction) {
-			$decision->operation = operator_operation::mixed_subtraction;
+			$decision->operation = operator_operation::boxed_subtraction;
 		}
 		elseif ($source_operator === operator_kind::multiplication) {
-			$decision->operation = operator_operation::mixed_multiplication;
+			$decision->operation = operator_operation::boxed_multiplication;
 		}
 		elseif ($source_operator === operator_kind::division) {
-			$decision->operation = operator_operation::mixed_division;
+			$decision->operation = operator_operation::boxed_division;
 		}
 		elseif ($source_operator === operator_kind::remainder) {
-			$decision->operation = operator_operation::mixed_remainder;
+			$decision->operation = operator_operation::boxed_remainder;
 		}
 		else {
-			throw new \RuntimeException('S2S mixed operator is outside the numeric arithmetic slice');
+			throw new \RuntimeException('S2S boxed operator is outside the numeric arithmetic slice');
 		}
 		if (q_count($operands) !== ($unary ? 1 : 2)) {
-			throw new \LogicException('Mixed arithmetic operand count mismatch');
+			throw new \LogicException('Boxed arithmetic operand count mismatch');
 		}
 		$box = $operands[0];
-		if (!Boxed_Conversions::is_mixed($box)) {
+		if (!Boxed_Conversions::is_boxed($box)) {
 			$box = $operands[1];
 		}
 		$decision->result_type = $box;
 		foreach ($operands as $operand)
 		{
 			if (!self::is_numeric_operand($operand)) {
-				throw new \RuntimeException('S2S mixed arithmetic requires matching mixed, ordinary int or float operands');
+				throw new \RuntimeException('S2S boxed arithmetic requires matching boxed, ordinary int or float operands');
 			}
 			if ($source_operator === operator_kind::remainder) {
-				if (!Boxed_Conversions::is_mixed($operand) && !$operand->matches(Language_Types::integer(Model::$language_scope))) {
-					throw new \RuntimeException('S2S mixed remainder requires mixed or ordinary int operands');
+				if (!Boxed_Conversions::is_boxed($operand) && !$operand->matches(Language_Types::integer(Model::$language_scope))) {
+					throw new \RuntimeException('S2S boxed remainder requires boxed or ordinary int operands');
 				}
 			}
 			$decision->operands[] = Conversion_Preparation::decide($operand, $box, conversion_context::operator_operand);
@@ -106,7 +106,7 @@ final class Boxed_Operators
 
 	private static function is_numeric_operand(canonical_type_use $operand): bool
 	{
-		return !$operand->by_value() && (Boxed_Conversions::is_mixed($operand)
+		return !$operand->by_value() && (Boxed_Conversions::is_boxed($operand)
 			|| $operand->matches(Language_Types::integer(Model::$language_scope))
 			|| $operand->matches(Language_Types::floating(Model::$language_scope)));
 	}
@@ -116,7 +116,7 @@ final class Boxed_Operators
 		array $operands /** vector<canonical_type_use> */): operator_decision
 	{
 		if (q_count($operands) !== 2) {
-			throw new \LogicException('Mixed comparison requires two operands');
+			throw new \LogicException('Boxed comparison requires two operands');
 		}
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
@@ -124,45 +124,45 @@ final class Boxed_Operators
 		$strict = ($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical);
 		$equality = $strict || ($source_operator === operator_kind::equal) || ($source_operator === operator_kind::not_equal);
 		if ($source_operator === operator_kind::equal) {
-			$decision->operation = operator_operation::mixed_equal;
+			$decision->operation = operator_operation::boxed_equal;
 		}
 		elseif ($source_operator === operator_kind::not_equal) {
-			$decision->operation = operator_operation::mixed_not_equal;
+			$decision->operation = operator_operation::boxed_not_equal;
 		}
 		elseif ($source_operator === operator_kind::identical) {
-			$decision->operation = operator_operation::mixed_identical;
+			$decision->operation = operator_operation::boxed_identical;
 		}
 		elseif ($source_operator === operator_kind::not_identical) {
-			$decision->operation = operator_operation::mixed_not_identical;
+			$decision->operation = operator_operation::boxed_not_identical;
 		}
 		elseif ($source_operator === operator_kind::less) {
-			$decision->operation = operator_operation::mixed_less;
+			$decision->operation = operator_operation::boxed_less;
 		}
 		elseif ($source_operator === operator_kind::less_equal) {
-			$decision->operation = operator_operation::mixed_less_equal;
+			$decision->operation = operator_operation::boxed_less_equal;
 		}
 		elseif ($source_operator === operator_kind::greater) {
-			$decision->operation = operator_operation::mixed_greater;
+			$decision->operation = operator_operation::boxed_greater;
 		}
 		else {
-			$decision->operation = operator_operation::mixed_greater_equal;
+			$decision->operation = operator_operation::boxed_greater_equal;
 		}
 		$box = $operands[0];
-		if (!Boxed_Conversions::is_mixed($box)) {
+		if (!Boxed_Conversions::is_boxed($box)) {
 			$box = $operands[1];
 		}
 		foreach ($operands as $operand)
 		{
 			if ($operand->by_value()) {
-				throw new \RuntimeException('S2S mixed comparison does not support storage modifiers');
+				throw new \RuntimeException('S2S boxed comparison does not support storage modifiers');
 			}
 			if ($equality) {
 				if (!$operand->matches($box) && !Boxed_Conversions::is_scalar_payload($operand) && !Nullable_Conversions::is_null($operand)) {
-					throw new \RuntimeException('S2S mixed equality requires matching mixed, scalar or null operands');
+					throw new \RuntimeException('S2S boxed equality requires matching boxed, scalar or null operands');
 				}
 			}
 			elseif (!self::is_numeric_operand($operand)) {
-				throw new \RuntimeException('S2S mixed ordering requires mixed or ordinary numeric operands');
+				throw new \RuntimeException('S2S boxed ordering requires boxed or ordinary numeric operands');
 			}
 			if ($strict) {
 				$decision->operands[] = Conversion_Preparation::operation($operand, $operand,

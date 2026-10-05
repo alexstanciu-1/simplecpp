@@ -25,7 +25,9 @@ python3 compiler/my-try/tests/dynamic_families.py --results /tmp/FRESH_FAMILY_CA
 
 Runs retained model, preparation, indexing, iteration, call and boundary/recovery
 checks and compiles generated family-cast, scalar-boundary, same-family container,
-dynamic condition and lazy-selection programs against a rebuilt runtime.
+dynamic condition, lazy-selection and shared boxed-operator programs against a rebuilt runtime.
+The operator matrix uses the same source/probe cases for mixed and dynamic, with
+explicit family-specific expectations only for container identity and text labels.
 `--no-pch` checks header completeness.
 This focused export excludes the still-unmigrated container fixtures rather than
 claiming the full S2S suite or native compiler passes.

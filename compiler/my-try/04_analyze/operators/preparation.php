@@ -104,7 +104,7 @@ final class Operator_Preparation
 		}
 		if (q_count($operands) === 2) {
 			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {
-				if (Boxed_Conversions::is_mixed($operands[0]) || Boxed_Conversions::is_mixed($operands[1])) {
+				if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
 					return Boxed_Operators::decide($source_operator, $operands);
 				}
 				return Nullable_Operators::decide_null_comparison($source_operator, $operands, $context);
@@ -123,7 +123,7 @@ final class Operator_Preparation
 			return self::decide_logical($source_operator, $operands, $context);
 		}
 		foreach ($operands as $operand) {
-			if (Boxed_Conversions::is_mixed($operand)) {
+			if (Boxed_Conversions::is_boxed($operand)) {
 				return Boxed_Operators::decide($source_operator, $operands);
 			}
 		}
@@ -152,7 +152,7 @@ final class Operator_Preparation
 			}
 		}
 		$operation = operator_operation::integer_positive;
-		if (Boxed_Conversions::is_mixed($operands[0])) {
+		if (Boxed_Conversions::is_boxed($operands[0])) {
 			return Boxed_Operators::decide($source_operator, $operands);
 		}
 		if ($source_operator === operator_kind::logical_not) {
@@ -185,6 +185,11 @@ final class Operator_Preparation
 			throw new \LogicException('Concatenation requires two operands');
 		}
 		$string_type = $context->string_type;
+		if (Boxed_Conversions::is_boxed($operands[0]) && Boxed_Conversions::is_boxed($operands[1])) {
+			if (!$operands[0]->matches($operands[1])) {
+				throw new \RuntimeException('S2S concatenation requires the same boxed family');
+			}
+		}
 		$decision = new operator_decision();
 		$decision->source_operator = operator_kind::concatenation;
 		$decision->operation = operator_operation::string_concatenation;

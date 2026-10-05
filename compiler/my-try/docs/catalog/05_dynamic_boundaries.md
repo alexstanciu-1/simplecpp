@@ -93,7 +93,7 @@ and foreach. Chapter closeout does not authorize an ownership-model redesign.
 Implemented `.=` for established string or mixed locals/parameters. Right operands
 reuse binary concatenation admission: mixed, ordinary bool/int/float/string or
 literal null. Preparation selects `converted_assignment` write-back, with string
-identity or mixed boxing, rather than numeric `mixed_stored_kind` validation.
+identity or mixed boxing, rather than numeric `boxed_stored_kind` validation.
 The existing compound AST and C++ target-binding/computation/write-back path are
 unchanged; no runtime helper or retained structure was added.
 

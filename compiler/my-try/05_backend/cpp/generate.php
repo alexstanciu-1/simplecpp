@@ -407,9 +407,10 @@ final class CPP_Generator
 		$value = self::render_binary_decision($facts->decision, $place, $right, $context);
 		$value = CPP_Declarations::conversion($value, $facts->write_back, $context);
 		$result_type = CPP_Declarations::type($facts->type, $context);
-		if ($facts->write_back_mode === compound_write_back::mixed_stored_kind) {
+		if ($facts->write_back_mode === compound_write_back::boxed_stored_kind) {
+			$context->headers['operators/arithmetic/boxed_numeric.hpp'] = true;
 			return '([&]() -> ' . $result_type . ' { auto& ' . $place . ' = ' . $target
-				. '; ' . $place . '.assign_compound_result(' . $value . '); return ' . $place . '; }())';
+				. '; scpp::detail::assign_numeric_result(' . $place . ', ' . $value . '); return ' . $place . '; }())';
 		}
 		return '([&]() -> ' . $result_type . ' { auto& ' . $place . ' = ' . $target
 			. '; ' . $place . ' = ' . $value . '; return ' . $place . '; }())';
@@ -419,22 +420,23 @@ final class CPP_Generator
 	public static function generate_mutation(mutation_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_mutation_preparation()->decision;
+		self::record_operator_headers($decision, $context);
 		$prefix = '';
 		$suffix = '';
 		if (($decision->operation === operator_operation::integer_pre_increment)
-			|| ($decision->operation === operator_operation::mixed_pre_increment)) {
+			|| ($decision->operation === operator_operation::boxed_pre_increment)) {
 			$prefix = '++';
 		}
 		elseif (($decision->operation === operator_operation::integer_pre_decrement)
-			|| ($decision->operation === operator_operation::mixed_pre_decrement)) {
+			|| ($decision->operation === operator_operation::boxed_pre_decrement)) {
 			$prefix = '--';
 		}
 		elseif (($decision->operation === operator_operation::integer_post_increment)
-			|| ($decision->operation === operator_operation::mixed_post_increment)) {
+			|| ($decision->operation === operator_operation::boxed_post_increment)) {
 			$suffix = '++';
 		}
 		elseif (($decision->operation === operator_operation::integer_post_decrement)
-			|| ($decision->operation === operator_operation::mixed_post_decrement)) {
+			|| ($decision->operation === operator_operation::boxed_post_decrement)) {
 			$suffix = '--';
 		}
 		else {
@@ -450,6 +452,7 @@ final class CPP_Generator
 	public static function generate_unary(unary_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_unary_preparation()->decision;
+		self::record_operator_headers($decision, $context);
 		if ($decision->operation === operator_operation::condition_not)
 		{
 			$truthiness /** truthiness_decision */ = $decision->truthiness;
@@ -458,11 +461,11 @@ final class CPP_Generator
 		}
 		$spelling = '';
 		if (($decision->operation === operator_operation::integer_positive)
-			|| ($decision->operation === operator_operation::mixed_positive)) {
+			|| ($decision->operation === operator_operation::boxed_positive)) {
 			$spelling = '+';
 		}
 		elseif (($decision->operation === operator_operation::integer_negative)
-			|| ($decision->operation === operator_operation::mixed_negative)) {
+			|| ($decision->operation === operator_operation::boxed_negative)) {
 			$spelling = '-';
 		}
 		elseif ($decision->operation === operator_operation::integer_complement) {
@@ -495,6 +498,7 @@ final class CPP_Generator
 	private static function render_binary_decision(operator_decision $decision,
 		string $left, string $right, cpp_generation_context $context): string
 	{
+		self::record_operator_headers($decision, $context);
 		if (($decision->operation === operator_operation::condition_and)
 			|| ($decision->operation === operator_operation::condition_or)) {
 			$logical_spelling = $decision->operation === operator_operation::condition_and ? '&&' : '||';
@@ -530,27 +534,27 @@ final class CPP_Generator
 			$spelling = '!=';
 		}
 		elseif (($decision->operation === operator_operation::integer_addition)
-			|| ($decision->operation === operator_operation::mixed_addition)
+			|| ($decision->operation === operator_operation::boxed_addition)
 			|| ($decision->operation === operator_operation::string_concatenation)) {
 			$spelling = '+';
 		}
 		elseif (($decision->operation === operator_operation::integer_subtraction)
-			|| ($decision->operation === operator_operation::mixed_subtraction)) {
+			|| ($decision->operation === operator_operation::boxed_subtraction)) {
 			$spelling = '-';
 		}
 		elseif ($decision->operation === operator_operation::integer_power) {
 			$spelling = 'scpp::pow';
 		}
 		elseif (($decision->operation === operator_operation::integer_multiplication)
-			|| ($decision->operation === operator_operation::mixed_multiplication)) {
+			|| ($decision->operation === operator_operation::boxed_multiplication)) {
 			$spelling = '*';
 		}
 		elseif (($decision->operation === operator_operation::integer_division)
-			|| ($decision->operation === operator_operation::mixed_division)) {
+			|| ($decision->operation === operator_operation::boxed_division)) {
 			$spelling = '/';
 		}
 		elseif (($decision->operation === operator_operation::integer_remainder)
-			|| ($decision->operation === operator_operation::mixed_remainder)) {
+			|| ($decision->operation === operator_operation::boxed_remainder)) {
 			$spelling = '%';
 		}
 		elseif ($decision->operation === operator_operation::integer_bitwise_and) {
@@ -569,35 +573,35 @@ final class CPP_Generator
 			$spelling = '>>';
 		}
 		elseif (($decision->operation === operator_operation::integer_equal)
-			|| ($decision->operation === operator_operation::mixed_equal)) {
+			|| ($decision->operation === operator_operation::boxed_equal)) {
 			$spelling = '==';
 		}
 		elseif (($decision->operation === operator_operation::integer_not_equal)
-			|| ($decision->operation === operator_operation::mixed_not_equal)) {
+			|| ($decision->operation === operator_operation::boxed_not_equal)) {
 			$spelling = '!=';
 		}
 		elseif (($decision->operation === operator_operation::integer_identical)
-			|| ($decision->operation === operator_operation::mixed_identical)) {
+			|| ($decision->operation === operator_operation::boxed_identical)) {
 			$spelling = 'scpp::php::identical';
 		}
 		elseif (($decision->operation === operator_operation::integer_not_identical)
-			|| ($decision->operation === operator_operation::mixed_not_identical)) {
+			|| ($decision->operation === operator_operation::boxed_not_identical)) {
 			$spelling = 'scpp::php::not_identical';
 		}
 		elseif (($decision->operation === operator_operation::integer_less)
-			|| ($decision->operation === operator_operation::mixed_less)) {
+			|| ($decision->operation === operator_operation::boxed_less)) {
 			$spelling = '<';
 		}
 		elseif (($decision->operation === operator_operation::integer_less_equal)
-			|| ($decision->operation === operator_operation::mixed_less_equal)) {
+			|| ($decision->operation === operator_operation::boxed_less_equal)) {
 			$spelling = '<=';
 		}
 		elseif (($decision->operation === operator_operation::integer_greater)
-			|| ($decision->operation === operator_operation::mixed_greater)) {
+			|| ($decision->operation === operator_operation::boxed_greater)) {
 			$spelling = '>';
 		}
 		elseif (($decision->operation === operator_operation::integer_greater_equal)
-			|| ($decision->operation === operator_operation::mixed_greater_equal)) {
+			|| ($decision->operation === operator_operation::boxed_greater_equal)) {
 			$spelling = '>=';
 		}
 		elseif ($decision->operation === operator_operation::integer_three_way) {
@@ -647,13 +651,45 @@ final class CPP_Generator
 		}
 		if (($decision->operation === operator_operation::integer_identical)
 			|| ($decision->operation === operator_operation::integer_not_identical)
-			|| ($decision->operation === operator_operation::mixed_identical)
-			|| ($decision->operation === operator_operation::mixed_not_identical)) {
+			|| ($decision->operation === operator_operation::boxed_identical)
+			|| ($decision->operation === operator_operation::boxed_not_identical)) {
 			$context->headers['lang/php/operators/identity/strict_identity.hpp'] = true;
 			return $spelling . '(' . $left . ', ' . $right . ')';
 		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $left . ' ' . $spelling . ' ' . $right . ')';
+	}
+
+	/** Runtime includes follow the prepared operation, not source spelling or boxed family. */
+	private static function record_operator_headers(operator_decision $decision, cpp_generation_context $context): void
+	{
+		switch ($decision->operation) {
+			case operator_operation::boxed_pre_increment:
+			case operator_operation::boxed_post_increment:
+			case operator_operation::boxed_pre_decrement:
+			case operator_operation::boxed_post_decrement:
+			case operator_operation::boxed_positive:
+			case operator_operation::boxed_negative:
+			case operator_operation::boxed_addition:
+			case operator_operation::boxed_subtraction:
+			case operator_operation::boxed_multiplication:
+			case operator_operation::boxed_division:
+			case operator_operation::boxed_remainder:
+				$context->headers['operators/arithmetic/boxed_numeric.hpp'] = true;
+				return;
+			case operator_operation::boxed_equal:
+			case operator_operation::boxed_not_equal:
+				$context->headers['operators/identity/boxed_scalar_equality.hpp'] = true;
+				return;
+			case operator_operation::boxed_less:
+			case operator_operation::boxed_less_equal:
+			case operator_operation::boxed_greater:
+			case operator_operation::boxed_greater_equal:
+				$context->headers['operators/identity/boxed_ordering.hpp'] = true;
+				return;
+			default:
+				return;
+		}
 	}
 
 	/** Preserve decimal spelling until the target toolchain performs floating conversion. */

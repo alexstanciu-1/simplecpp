@@ -10,7 +10,7 @@ enum operator_context {
 /** Ordinary converted stores and updates preserving a runtime payload kind differ. */
 enum compound_write_back {
 	case converted_assignment;
-	case mixed_stored_kind;
+	case boxed_stored_kind;
 }
 
 enum operator_kind {
@@ -65,30 +65,30 @@ enum operator_operation {
 	case integer_post_increment;
 	case integer_pre_decrement;
 	case integer_post_decrement;
-	case mixed_pre_increment;
-	case mixed_post_increment;
-	case mixed_pre_decrement;
-	case mixed_post_decrement;
+	case boxed_pre_increment;
+	case boxed_post_increment;
+	case boxed_pre_decrement;
+	case boxed_post_decrement;
 	case integer_positive;
 	case integer_negative;
 	case integer_complement;
 	case boolean_not;
 	case condition_not;
-	case mixed_positive;
-	case mixed_negative;
-	case mixed_addition;
-	case mixed_subtraction;
-	case mixed_multiplication;
-	case mixed_division;
-	case mixed_remainder;
-	case mixed_equal;
-	case mixed_not_equal;
-	case mixed_identical;
-	case mixed_not_identical;
-	case mixed_less;
-	case mixed_less_equal;
-	case mixed_greater;
-	case mixed_greater_equal;
+	case boxed_positive;
+	case boxed_negative;
+	case boxed_addition;
+	case boxed_subtraction;
+	case boxed_multiplication;
+	case boxed_division;
+	case boxed_remainder;
+	case boxed_equal;
+	case boxed_not_equal;
+	case boxed_identical;
+	case boxed_not_identical;
+	case boxed_less;
+	case boxed_less_equal;
+	case boxed_greater;
+	case boxed_greater_equal;
 	case integer_three_way;
 	case boolean_xor;
 	case boolean_and;

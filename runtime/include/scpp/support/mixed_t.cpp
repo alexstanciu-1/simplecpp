@@ -7,6 +7,7 @@
 #include "operators/empty/empty.hpp"
 #include "operators/isset/isset.hpp"
 #include "operators/identity/boxed_scalar_equality.hpp"
+#include "operators/arithmetic/boxed_numeric.hpp"
 
 #include <sstream>
 #include <string_view>
@@ -550,12 +551,9 @@ mixed_t mixed_t::operator--(int) {
 // may replace the kind; compound write-back must obey the configured native assignment rules.
 
 mixed_t &mixed_t::assign_compound_result(mixed_t result) {
-	// Configured numeric assignments are int->int and float->float, without narrowing.
-	if ((type_ != kind_t::int_v && type_ != kind_t::float_v) || result.kind() != type_) {
-		throw runtime_error_binary("compound write-back", *this, result);
-	}
-	*this = std::move(result);
-	return *this;
+	return detail::assign_numeric_result(*this, std::move(result), [](const auto &target, const auto &value) {
+		return runtime_error_binary("compound write-back", target, value);
+	});
 }
 
 mixed_t &mixed_t::operator+=(const mixed_t &right) { return apply_compound_assignment(*this, right, "+="); }

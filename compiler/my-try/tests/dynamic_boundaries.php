@@ -65,6 +65,11 @@ foreach ([
 	'$d dynamic = 7; $m mixed = 8; $v = $m ?: $d;',
 	'$d dynamic = 7; $m mixed = 8; $v = $d ?? $m;',
 	'$d dynamic = 7; $m mixed = 8; $v = $d && $m;',
+	'$d dynamic = 7; $m mixed = 8; $v = $d + $m;',
+	'$d dynamic = 7; $m mixed = 8; $v = $m < $d;',
+	'$d dynamic = 7; $m mixed = 8; $v = $d === $m;',
+	'$d dynamic = 7; $m mixed = 8; $v = $d . $m;',
+	'$d dynamic = 7; $m mixed = 8; $d += $m;',
 	'$d dynamic = 7; $v = $d || "yes";',
 	'$d dynamic = 7; $v = $d ?: null;',
 	'$d dynamic = 7; $v = null ?? $d;',
@@ -93,7 +98,11 @@ dynamic_boundaries_check(Model::$cpp_files[0]->text === $incremental, 'Dynamic b
 // Conditions and selections consume the changed signature without stale mixed facts.
 foreach (['return source() ? 1 : 0;', 'return !source() ? 1 : 0;',
 	'return (source() && true) ? 1 : 0;', 'return source() ?: 1;',
-	'return source() ?? 1;', 'return true ? 1 : source();'] as $consumer) {
+	'return source() ?? 1;', 'return true ? 1 : source();',
+	'$v = source(); return $v + 1;', 'return -source();',
+	'$v = source(); return $v === 7 ? 1 : 0;', '$v = source(); return $v < 8 ? 1 : 0;',
+	'$v = source(); return ++$v;', '$v = source(); return $v += 1;',
+	'$v = source(); return (int)($v . "0");', '$v = source(); $v .= "0"; return (int)$v;'] as $consumer) {
 	$valid = 'function source(): mixed { return 7; } function read(): int { ' . $consumer . ' }';
 	$compiler = dynamic_boundaries_source($valid);
 	$changed = str_replace('source(): mixed', 'source(): dynamic', $valid);
@@ -119,4 +128,23 @@ dynamic_boundaries_check($coalesce->require_coalesce_preparation()->presence ===
 Preparation_Cleanup::tree($root);
 dynamic_boundaries_check($elvis->preparation() === null && $coalesce->preparation() === null,
 	'Dynamic joins retained facts after cleanup');
+
+foreach (['mixed', 'dynamic'] as $family) {
+	foreach (['$out = $v + true;', '$out = $v % 0.5;', '$out = ~$v;',
+		'$out = $v < "1";', '$v += false;', '$out = $v ** 2;',
+		'$n = 1; $n += $v;', '$out = $v++ + $v;', '$v[0] += 1;'] as $operation) {
+		$rejected = false;
+		try { dynamic_boundaries_source('$v ' . $family . ' = 1; ' . $operation); }
+		catch (\RuntimeException $error) { $rejected = true; }
+		dynamic_boundaries_check($rejected && Model::$cpp_files->is_empty(),
+			'Invalid boxed operator emitted output: ' . $family . ' ' . $operation);
+	}
+	dynamic_boundaries_source('$v ' . $family . ' = 1; $out ' . $family . ' = $v + 1; $v += 1;');
+	$root = Model::syntax_files()[0]->root;
+	dynamic_boundaries_check($root->body->statements[1]->initializer->require_binary_preparation()->decision->operation
+		=== operator_operation::boxed_addition, 'Family bypassed shared operator identity');
+	Preparation_Cleanup::tree($root);
+	dynamic_boundaries_check($root->body->statements[1]->initializer->preparation() === null,
+		'Boxed arithmetic retained stale facts');
+}
 echo "Dynamic boundaries: shared conversions, family signatures, rejection and recovery passed\n";

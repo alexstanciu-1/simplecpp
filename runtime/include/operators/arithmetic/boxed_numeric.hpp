@@ -57,12 +57,24 @@ inline dynamic_value operator-(const dynamic_value &value) {
 }
 
 // Compute first; compound assignment may not change the active numeric kind.
-inline dynamic_value &assign_numeric_result(dynamic_value &target, dynamic_value result) {
-	using kind = dynamic_value::kind_t;
+// The family supplies diagnostics, not a second validation/storage algorithm.
+template <typename Box, typename Failure>
+Box &assign_numeric_result(Box &target, Box result, Failure failure) {
+	using kind = typename Box::kind_t;
 	if ((target.kind() != kind::int_v && target.kind() != kind::float_v) || target.kind() != result.kind())
-		throw std::runtime_error("dynamic: compound update cannot change stored numeric kind");
+		throw failure(target, result);
 	target = std::move(result);
 	return target;
+}
+
+inline mixed_t &assign_numeric_result(mixed_t &target, mixed_t result) {
+	return target.assign_compound_result(std::move(result));
+}
+
+inline dynamic_value &assign_numeric_result(dynamic_value &target, dynamic_value result) {
+	return assign_numeric_result(target, std::move(result), [](const auto &, const auto &) {
+		return std::runtime_error("dynamic: compound update cannot change stored numeric kind");
+	});
 }
 
 inline dynamic_value &operator+=(dynamic_value &left, const dynamic_value &right) {

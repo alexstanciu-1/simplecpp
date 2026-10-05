@@ -52,6 +52,13 @@ compliance. See the [implementation handoff](../compiler/my-try/docs/planning/mi
   conversion is deferred. An explicit target annotation does not authorize a crossing.
   Reject statically known invalid crossings during preparation. Where the source
   kind is unknown, check at runtime before replacing the receiving value.
+- Shared boxed operator rules apply to both families, not separate dynamic coercion
+  rules. Numeric operations preserve the boxed family; scalar peers follow the
+  established numeric admission rules. Numeric compound updates preserve the stored
+  numeric kind and check before replacement. Ordinary assignment and text compound
+  assignment may replace the kind. Comparisons return bool, and concatenation returns
+  string. Operator normalization must not silently cross mixed/dynamic families.
+  Container identity/value behavior remains family-specific as described above.
 - Indexed reads and iteration values retain the receiver's family. A missing entry
   yields null in that family. Key admission remains a separate int/string contract;
   a private mixed scalar key carrier is not permission for mixed-valued dynamic entries.

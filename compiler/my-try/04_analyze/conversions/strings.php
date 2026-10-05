@@ -15,9 +15,9 @@ final class String_Conversions
 		if ($source->matches($target)) {
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
 		}
-		if (!Boxed_Conversions::is_mixed($source) && !Boxed_Conversions::is_scalar_payload($source)
+		if (!Boxed_Conversions::is_boxed($source) && !Boxed_Conversions::is_scalar_payload($source)
 			&& !Nullable_Conversions::is_null($source)) {
-			throw new \RuntimeException('S2S concatenation requires mixed, ordinary scalar or null operands');
+			throw new \RuntimeException('S2S concatenation requires boxed, ordinary scalar or null operands');
 		}
 		return Conversion_Preparation::operation($source, $target, $context, conversion_operation::text_conversion);
 	}

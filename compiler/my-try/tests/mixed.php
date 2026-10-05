@@ -72,11 +72,11 @@ try
 		&& $logical->operand_truthiness[1]->operation === truthiness_operation::boxed_condition,
 		'Mixed logical normalization lost operand truthiness or depended on spelling');
 	$comparison = Boxed_Operators::decide(operator_kind::identical, [$integer, $box]);
-	mixed_check($comparison->operation === operator_operation::mixed_identical
+	mixed_check($comparison->operation === operator_operation::boxed_identical
 		&& $comparison->result_type->matches(Language_Types::boolean(Model::$language_scope))
 		&& $comparison->operands[0]->operation === conversion_operation::identity,
 		'Mixed comparison depended on spelling or boxed strict identity operands');
-	mixed_check($arithmetic->operation === operator_operation::mixed_addition
+	mixed_check($arithmetic->operation === operator_operation::boxed_addition
 		&& $arithmetic->result_type->matches($box)
 		&& $arithmetic->operands[0]->operation === conversion_operation::boxed_wrap
 		&& $arithmetic->operands[1]->operation === conversion_operation::identity,
@@ -85,10 +85,10 @@ try
 	$arithmetic_root = Model::syntax_files()[0]->root;
 	$sum_node = $arithmetic_root->body->statements[1]->initializer;
 	$negative_node = $arithmetic_root->body->statements[2]->initializer;
-	mixed_check($sum_node->require_binary_preparation()->decision->operation === operator_operation::mixed_addition
+	mixed_check($sum_node->require_binary_preparation()->decision->operation === operator_operation::boxed_addition
 		&& Boxed_Conversions::is_mixed($sum_node->require_preparation()->type)
 		&& !$sum_node->require_preparation()->addressable, 'Mixed arithmetic lost its owned result');
-	mixed_check($negative_node->require_unary_preparation()->decision->operation === operator_operation::mixed_negative,
+	mixed_check($negative_node->require_unary_preparation()->decision->operation === operator_operation::boxed_negative,
 		'Mixed unary operation lost its runtime dispatch');
 	mixed_check($arithmetic_root->body->statements[3]->require_preparation()->conversion->operation
 		=== conversion_operation::boxed_extract, 'Typed destination changed arithmetic dispatch');
@@ -136,13 +136,13 @@ try
 	$compound_node = $update_root->body->statements[1]->initializer;
 	$mutation_node = $update_root->body->statements[2]->initializer;
 	$update_facts = $compound_node->require_compound_assignment_preparation();
-	mixed_check($update_facts->write_back_mode === compound_write_back::mixed_stored_kind
-		&& $update_facts->decision->operation === operator_operation::mixed_addition
+	mixed_check($update_facts->write_back_mode === compound_write_back::boxed_stored_kind
+		&& $update_facts->decision->operation === operator_operation::boxed_addition
 		&& $update_facts->write_back->operation === conversion_operation::identity
 		&& !$update_facts->addressable, 'Mixed update lost its guarded storage write-back or owned snapshot');
-	mixed_check($mutation_node->require_mutation_preparation()->decision->operation === operator_operation::mixed_post_increment
+	mixed_check($mutation_node->require_mutation_preparation()->decision->operation === operator_operation::boxed_post_increment
 		&& !$mutation_node->require_preparation()->addressable, 'Mixed postfix mutation lost its old-value snapshot');
-	mixed_check(str_contains(Model::$cpp_files[0]->text, '.assign_compound_result('),
+	mixed_check(str_contains(Model::$cpp_files[0]->text, 'scpp::detail::assign_numeric_result('),
 		'Mixed compound emission bypassed stored-kind validation');
 	Preparation_Cleanup::tree($update_root);
 	mixed_check($compound_node->preparation() === null && $mutation_node->preparation() === null,
@@ -207,35 +207,34 @@ try
 		['$d dynamic; $x mixed = []; $x["child"] = $d;', 'family conversion requires an explicit scalar/null cast'],
 		['$d dynamic; $x mixed = [$d];', 'family conversion requires an explicit scalar/null cast'],
 		['$x mixed = 7; $y = (uint8)$x;', 'explicit boxed casts require'],
-		['$x mixed = 7; $y = $x + true;', 'mixed arithmetic requires'],
-		['$x mixed = 7; $y = $x + "1";', 'mixed arithmetic requires'],
-		['$x mixed = 7; $n uint8 = 1; $y = $x + $n;', 'mixed arithmetic requires'],
-		['$x mixed = 7; $n ?int = 1; $y = $x + $n;', 'mixed arithmetic requires'],
-		['$x mixed = 7; $y = $x % 1.5;', 'mixed remainder requires'],
-		['$x mixed = 7; $y = 1.5 % $x;', 'mixed remainder requires'],
-		['$x mixed = 7; $y = $x ** 2;', 'mixed operator is outside'],
-		['$x mixed = 7; $y = $x <=> 2;', 'mixed operator is outside'],
-		['$x mixed = 7; $y = $x < "2";', 'mixed ordering requires'],
-		['$x mixed = 7; $y = $x > null;', 'mixed ordering requires'],
-		['$x mixed = 7; $n uint8 = 2; $y = $x === $n;', 'mixed equality requires'],
-		['$x mixed = 7; $n ?int = 2; $y = $x == $n;', 'mixed equality requires'],
-		['$x mixed = 7; $d dynamic; $y = $x === $d;', 'mixed equality requires'],
-		['$x mixed = 7; $y = ~$x;', 'mixed operator is outside'],
-		['$x mixed = 7; $x += true;', 'mixed arithmetic requires'],
-		['$x mixed = 7; $n int = 1; $n += $x;', 'mixed compound assignment into native storage is deferred'],
-		['$x mixed = 7; $x &= 1;', 'mixed operator is outside'],
-		['$x mixed = 7; $n result<int> = 1; $x .= $n;', 'concatenation requires mixed'],
-		['$x mixed = 7; $d dynamic; $x .= $d;', 'concatenation requires mixed'],
-		['$x = false; $x .= "x";', 'compound concatenation requires string or mixed storage'],
-		['$x = 1.5; $x .= "x";', 'compound concatenation requires string or mixed storage'],
+		['$x mixed = 7; $y = $x + true;', 'boxed arithmetic requires'],
+		['$x mixed = 7; $y = $x + "1";', 'boxed arithmetic requires'],
+		['$x mixed = 7; $n uint8 = 1; $y = $x + $n;', 'boxed arithmetic requires'],
+		['$x mixed = 7; $n ?int = 1; $y = $x + $n;', 'boxed arithmetic requires'],
+		['$x mixed = 7; $y = $x % 1.5;', 'boxed remainder requires'],
+		['$x mixed = 7; $y = 1.5 % $x;', 'boxed remainder requires'],
+		['$x mixed = 7; $y = $x ** 2;', 'boxed operator is outside'],
+		['$x mixed = 7; $y = $x <=> 2;', 'boxed operator is outside'],
+		['$x mixed = 7; $y = $x < "2";', 'boxed ordering requires'],
+		['$x mixed = 7; $y = $x > null;', 'boxed ordering requires'],
+		['$x mixed = 7; $n uint8 = 2; $y = $x === $n;', 'boxed equality requires'],
+		['$x mixed = 7; $n ?int = 2; $y = $x == $n;', 'boxed equality requires'],
+		['$x mixed = 7; $d dynamic; $y = $x === $d;', 'boxed equality requires'],
+		['$x mixed = 7; $y = ~$x;', 'boxed operator is outside'],
+		['$x mixed = 7; $x += true;', 'boxed arithmetic requires'],
+		['$x mixed = 7; $n int = 1; $n += $x;', 'boxed compound assignment into native storage is deferred'],
+		['$x mixed = 7; $x &= 1;', 'boxed operator is outside'],
+		['$x mixed = 7; $n result<int> = 1; $x .= $n;', 'concatenation requires boxed'],
+		['$x mixed = 7; $d dynamic; $x .= $d;', 'same boxed family'],
+		['$x = false; $x .= "x";', 'compound concatenation requires string or boxed storage'],
+		['$x = 1.5; $x .= "x";', 'compound concatenation requires string or boxed storage'],
 		['$x mixed = 7; $x .= $x++;', 'order-independent operands'],
-		['$x mixed = 7; $n result<int> = 1; $y = $x . $n;', 'concatenation requires mixed'],
-		['$x mixed = 7; $n uint8 = 1; $y = $x . $n;', 'concatenation requires mixed'],
+		['$x mixed = 7; $n result<int> = 1; $y = $x . $n;', 'concatenation requires boxed'],
+		['$x mixed = 7; $n uint8 = 1; $y = $x . $n;', 'concatenation requires boxed'],
 		['$x mixed = 7; $y = $x++ . "x";', 'order-independent operands'],
-		['$x mixed = 7; $x %= 1.5;', 'mixed remainder requires'],
+		['$x mixed = 7; $x %= 1.5;', 'boxed remainder requires'],
 		['$x mixed = 7; $y = $x++ + $x;', 'order-independent operands'],
-		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'mixed arithmetic requires'],
-		['$d dynamic; $y = $d + 1;', 'requires canonical int'],
+		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'family conversion requires'],
 		['$x mixed = 7; $y = ($x xor true);', 'supports only AND and OR'],
 		['$x mixed = 7; $y = $x && "yes";', 'boxed logical operands require'],
 		['$x mixed = 7; $n ?int = 1; $y = $n || $x;', 'boxed logical operands require'],

@@ -58,17 +58,17 @@ final class Mutation_Preparation
 		$facts = new prepared_compound_assignment_expression();
 		$facts->write_back_mode = compound_write_back::converted_assignment;
 		if ($source_operator === operator_kind::concatenation) {
-			// Text replacement may change a mixed payload kind; numeric stored-kind checks do not apply.
-			if (!String_Conversions::is_string($target->type) && !Boxed_Conversions::is_mixed($target->type)) {
-				throw new \RuntimeException('S2S compound concatenation requires string or mixed storage');
+			// Text replacement may change a boxed payload kind; numeric stored-kind checks do not apply.
+			if (!String_Conversions::is_string($target->type) && !Boxed_Conversions::is_boxed($target->type)) {
+				throw new \RuntimeException('S2S compound concatenation requires string or boxed storage');
 			}
 		}
 		else {
-			if (Boxed_Conversions::is_mixed($target->type)) {
-				$facts->write_back_mode = compound_write_back::mixed_stored_kind;
+			if (Boxed_Conversions::is_boxed($target->type)) {
+				$facts->write_back_mode = compound_write_back::boxed_stored_kind;
 			}
-			elseif (Boxed_Conversions::is_mixed($value->type)) {
-				throw new \RuntimeException('S2S mixed compound assignment into native storage is deferred');
+			elseif (Boxed_Conversions::is_boxed($value->type)) {
+				throw new \RuntimeException('S2S boxed compound assignment into native storage is deferred');
 			}
 		}
 		$operands /** vector<canonical_type_use> */ = [$target->type, $value->type];
@@ -80,7 +80,7 @@ final class Mutation_Preparation
 		return $facts;
 	}
 
-	/** Mutate established integer or mixed storage; mixed payload validity remains runtime-owned. */
+	/** Mutate established integer or boxed storage; boxed payload validity remains runtime-owned. */
 	public static function decide(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
@@ -88,24 +88,24 @@ final class Mutation_Preparation
 			throw new \LogicException('Mutation requires one target');
 		}
 		$integer = $context->integer;
-		$mixed = Boxed_Conversions::is_mixed($operands[0]) && !$operands[0]->by_value();
-		if (!$operands[0]->matches($integer) && !$mixed) {
-			throw new \RuntimeException('S2S mutation requires canonical int or mixed storage');
+		$boxed = Boxed_Conversions::is_boxed($operands[0]) && !$operands[0]->by_value();
+		if (!$operands[0]->matches($integer) && !$boxed) {
+			throw new \RuntimeException('S2S mutation requires canonical int or boxed storage');
 		}
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
-		$decision->result_type = $mixed ? $operands[0] : $integer;
+		$decision->result_type = $boxed ? $operands[0] : $integer;
 		if ($source_operator === operator_kind::pre_increment) {
-			$decision->operation = $mixed ? operator_operation::mixed_pre_increment : operator_operation::integer_pre_increment;
+			$decision->operation = $boxed ? operator_operation::boxed_pre_increment : operator_operation::integer_pre_increment;
 		}
 		elseif ($source_operator === operator_kind::post_increment) {
-			$decision->operation = $mixed ? operator_operation::mixed_post_increment : operator_operation::integer_post_increment;
+			$decision->operation = $boxed ? operator_operation::boxed_post_increment : operator_operation::integer_post_increment;
 		}
 		elseif ($source_operator === operator_kind::pre_decrement) {
-			$decision->operation = $mixed ? operator_operation::mixed_pre_decrement : operator_operation::integer_pre_decrement;
+			$decision->operation = $boxed ? operator_operation::boxed_pre_decrement : operator_operation::integer_pre_decrement;
 		}
 		elseif ($source_operator === operator_kind::post_decrement) {
-			$decision->operation = $mixed ? operator_operation::mixed_post_decrement : operator_operation::integer_post_decrement;
+			$decision->operation = $boxed ? operator_operation::boxed_post_decrement : operator_operation::integer_post_decrement;
 		}
 		else {
 			throw new \LogicException('Unsupported mutation operator');
