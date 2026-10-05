@@ -138,8 +138,8 @@ final class Type_Preparation
 		if ($left->by_value() !== $right->by_value()) {
 			return false;
 		}
-		$left_type = self::canonical($left);
-		$right_type = self::canonical($right);
+		$left_type = Type_Queries::canonical($left);
+		$right_type = Type_Queries::canonical($right);
 		if (($left_type->family() !== type_family::integer) || ($right_type->family() !== type_family::integer)) {
 			return false;
 		}
@@ -159,10 +159,10 @@ final class Type_Preparation
 		if ($result_role !== null) {
 			Result_Conversions::require_scalar_payload($type, $result_role);
 		}
-		if (self::canonical($type)->family() === type_family::null_sentinel) {
+		if (Type_Queries::canonical($type)->family() === type_family::null_sentinel) {
 			throw new \RuntimeException('S2S null requires an explicit nullable, mixed or legacy Result destination');
 		}
-		if (self::canonical($type)->family() === type_family::no_value) {
+		if (Type_Queries::canonical($type)->family() === type_family::no_value) {
 			throw new \RuntimeException('S2S void is not a storage type');
 		}
 	}
@@ -170,24 +170,8 @@ final class Type_Preparation
 	/** Native main currently accepts only wrapper values with a defined integer exit conversion. */
 	public static function entry_return_type(canonical_type_use $type): bool
 	{
-		$family = self::canonical($type)->family();
+		$family = Type_Queries::canonical($type)->family();
 		return ($family === type_family::integer) || ($family === type_family::boolean)
 			|| ($family === type_family::floating);
 	}
-
-	public static function canonical(canonical_type_use $type): canonical_type_i
-	{
-		return Model::$type_catalog->registry()->type($type->type_id());
-	}
-
-	public static function source_record(canonical_type_use $type): ?collected_struct
-	{
-		$canonical = self::canonical($type);
-		$definition = $canonical->definition();
-		if ($definition->origin() !== type_definition_origin::source) {
-			return null;
-		}
-		return Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
-	}
-
 }

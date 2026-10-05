@@ -206,7 +206,7 @@ C++ emission has no node-owned operation hook. `CPP_Syntax` selects typed handle
 through backend-owned expression/statement/interpolation dispatch; handlers control
 their own child traversal. Shared syntax exposes no backend worker protocol or
 universal visitor. The [stage-owned processing plan](../planning/stage_owned_processing.md)
-tracks the remaining lifecycle and backend-consumption batches.
+records the completed stage-boundary batches and their evidence.
 
 Maintenance is node-owned traversal through named owning fields. Workers implement
 `enter`, `edge` and `token_index`; edge handling chooses recursion. Inspection
@@ -217,7 +217,12 @@ iterators are not used to run preparation, generation or cleanup.
 Successful semantic changes/deletions accumulate in `collected_file.preparation_changes`.
 The backend retains fragments keyed by existing work owners, with completion versions,
 dirty state, text, includes and record dependencies. It renders selected fragments;
-unchanged bodies are not traversed. Assembly consumes the handoff only on success.
+unchanged bodies are not traversed. Generation reads but never clears the handoff.
+`Compiler::cpp()` acknowledges its prepared source only after successful output
+publication. Standalone `CPP_Generator::generate` returns output without acknowledging
+shared changes; repeated calls can reuse fragments while the handoff remains pending.
+`Preparation_Status` and `Type_Queries` provide read-only work guards and established
+type/source-association queries, separately from preparation workers.
 Function signature fragments retain separate prototype and definition spellings so
 default values appear only on prototypes, without rerendering syntax during assembly.
 Failures retain pending work and withhold completed output; unexpected failures

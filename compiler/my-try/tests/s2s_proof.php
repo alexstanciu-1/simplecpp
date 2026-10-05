@@ -124,7 +124,7 @@ final class S2S_Proof
 		if (($first_use === $second_use) || (!$first_use->matches($second_use))) {
 			throw new \LogicException('Type occurrences did not reuse one canonical application identity');
 		}
-		$vector_int = object_cast(Type_Preparation::canonical($first_use), applied_template_type::class);
+		$vector_int = object_cast(Type_Queries::canonical($first_use), applied_template_type::class);
 		if (($vector_int->definition() !== $vector) || ($registry->application_count() !== 8)) {
 			throw new \LogicException('Demand-created runtime applications changed');
 		}
@@ -143,7 +143,7 @@ final class S2S_Proof
 		$by_value = object_cast($statements[7], variable_declaration_node::class);
 		$by_value_use = $by_value->type_syntax->require_preparation();
 		$nested_value = object_cast($statements[8], variable_declaration_node::class);
-		$nested_value_type = object_cast(Type_Preparation::canonical(
+		$nested_value_type = object_cast(Type_Queries::canonical(
 			$nested_value->type_syntax->require_preparation()), applied_template_type::class);
 		$nested_value_arguments /** vector<canonical_type_use> */ = $nested_value_type->arguments();
 		if (($by_value_use->by_value())
@@ -215,7 +215,7 @@ final class S2S_Proof
 		$integer_definition = object_cast($resolved[0], integer_type_definition::class);
 		if (($integer_definition->origin() !== type_definition_origin::language)
 			|| ($integer_definition->bit_width() !== 64) || (!$integer_definition->signed())
-			|| (Type_Preparation::canonical($integer)->definition() !== $integer_definition)) {
+			|| (Type_Queries::canonical($integer)->definition() !== $integer_definition)) {
 			throw new \LogicException('Canonical integer identity or representation changed');
 		}
 		if ((Model::$global_scope->parent_scope() !== Model::$language_scope)

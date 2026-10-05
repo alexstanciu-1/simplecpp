@@ -26,7 +26,8 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/types.php`, `literals.php` | Canonical type resolution, storage identity checks and exact literal facts |
 | `data/structures.php` | Facts, invocation contexts and lookup observations |
 | `data/work_records.php` | Typed retained work and shared dependency/error state |
-| `changes.php` | Unconsumed source-change queries, signature/record equivalence and fact restoration |
+| `changes.php` | Signature/record equivalence and fact restoration |
+| `status.php` | Read-only source-change, active-work and completion queries; no scheduling |
 | `cleanup.php` | Typed maintenance traversal clearing affected facts |
 
 ## Work and dispatch
@@ -51,6 +52,10 @@ orders this semantic retirement, then invokes frontend `Collection_Retirement`.
 protocol before running preparation; the analysis worker no longer disposes scope
 membership or syntax. Saved preparation cannot be emitted while source changes
 remain unconsumed.
+Backend consumers use `Preparation_Status` for work validity/completion and shared
+`Type_Queries` for established canonical identities/source associations. These
+queries never prepare, allocate work or register dependencies. Semantic consumers
+still require prerequisites through preparation before reading their facts.
 Declaration work settles before separate function/file body lists. Identity sets
 deduplicate scheduling. Unchanged ready owners retain their facts. The worker creates
 one context per rebuild; function-body setup seeds its locals and return type.

@@ -8,7 +8,7 @@ final class Result_Conversions
 	/** Query the definition's language role without depending on its published name. */
 	public static function role(canonical_type_use $type): ?result_semantics
 	{
-		$definition = Type_Preparation::canonical($type)->definition();
+		$definition = Type_Queries::canonical($type)->definition();
 		if (!($definition instanceof result_semantics)) {
 			return null;
 		}
@@ -24,7 +24,7 @@ final class Result_Conversions
 	/** Formation alone does not admit broader payload operations in this first pass. */
 	public static function require_scalar_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
 	{
-		$application = object_cast(Type_Preparation::canonical($type), applied_template_type::class);
+		$application = object_cast(Type_Queries::canonical($type), applied_template_type::class);
 		$payload = $role->payload_type($application);
 		if ($type->by_value() || $payload->by_value() || !Conversion_Preparation::is_scalar($payload)) {
 			throw new \RuntimeException('S2S Result construction requires an unmodified scalar payload');

@@ -208,7 +208,7 @@ final class Body_Preparation
 		{
 			if ($context->return_type !== null) {
 				$type /** canonical_type_use */ = $context->return_type;
-				if (Type_Preparation::canonical($type)->family() !== type_family::no_value) {
+				if (Type_Queries::canonical($type)->family() !== type_family::no_value) {
 					throw new \RuntimeException('S2S non-void return requires a value');
 				}
 			}
@@ -221,7 +221,7 @@ final class Body_Preparation
 			$type /** canonical_type_use */ = $context->return_type;
 			$facts->conversion = Conversion_Preparation::decide(
 				$value->type, $type, conversion_context::return_value);
-			if (Type_Preparation::canonical($type)->family() !== type_family::no_value) {
+			if (Type_Queries::canonical($type)->family() !== type_family::no_value) {
 				Capability_Preparation::require_copy($type, $context);
 			}
 		}
@@ -244,7 +244,7 @@ final class Body_Preparation
 		}
 
 		$completion = self::prepare_statements($syntax->body, $context);
-		if ($completion->can_fall_through && (Type_Preparation::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
+		if ($completion->can_fall_through && (Type_Queries::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
 			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
 		}
 	}

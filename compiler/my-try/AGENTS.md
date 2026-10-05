@@ -84,6 +84,10 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
   The lifecycle coordinator orders semantic retirement before frontend collection
   disposal, only after a successful whole parse join. Standalone preparation uses
   that same protocol; analysis must not remove frontend membership or syntax.
+- Backends read settled data through read-only queries (`Preparation_Status`,
+  `Type_Queries`), not preparation workers. C++ generation never acknowledges the
+  shared change handoff; `Compiler::cpp()` clears its emitted source's changes only
+  after output publication. Standalone generation leaves changes intact.
 - Structures may initialize data, preserve local representation invariants, expose
   typed access/query helpers and clear their facts. Workers own stage dispatch,
   traversal, algorithms, scheduling and publication policy, including work-record

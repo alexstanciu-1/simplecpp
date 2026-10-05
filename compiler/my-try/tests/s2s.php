@@ -1542,7 +1542,7 @@ $compiler = new Compiler();
 $compiler->prepare();
 $string_type = Language_Types::string_type(Model::$language_scope);
 $resolved = Scope_Lookup::types(Model::$global_scope, 'string');
-if (Type_Preparation::canonical($string_type)->definition() !== $resolved[0]) {
+if (Type_Queries::canonical($string_type)->definition() !== $resolved[0]) {
 	throw new \LogicException('Canonical string identity changed');
 }
 foreach ($string_nodes as $index => $string_node)
@@ -1732,7 +1732,7 @@ $entry = Model::$type_catalog->source_declarations()->declaration($found[0]->def
 $entry->change_status = change_state::deleted;
 Compiler_Lifecycle::retire_deleted_sources(Model::collected_files(), Model::$language_scope);
 $found = Scope_Lookup::types($local, 'int');
-$language_integer = Type_Preparation::canonical(Language_Types::integer(Model::$language_scope))->definition();
+$language_integer = Type_Queries::canonical(Language_Types::integer(Model::$language_scope))->definition();
 if (count($found) !== 1 || $found[0] !== $language_integer) {
 	throw new \LogicException('Deleted source type blocked parent lookup');
 }

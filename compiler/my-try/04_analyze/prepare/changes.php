@@ -1,25 +1,10 @@
 <?php
 
-/* Read unconsumed source changes and compare observable declaration facts. */
+/* Compare observable declaration facts and restore unchanged facts. */
 namespace scpp\compiler;
 
 final class Preparation_Changes
 {
-	/** Source changes remain independent of work state until analysis consumes them. */
-	public static function source_changed(preparation_owner $owner): bool
-	{
-		if ($owner instanceof declaration_work) {
-			return object_cast($owner, declaration_work::class)->required_declaration()->change_status !== change_state::unchanged;
-		}
-		if ($owner instanceof function_body_work) {
-			return object_cast($owner, function_body_work::class)->function_definition()->syntax()->body->syntax_changed;
-		}
-		if ($owner instanceof file_body_work) {
-			return $owner->source->root->body->syntax_changed;
-		}
-		throw new \LogicException('Unsupported preparation work role');
-	}
-
 	/** Parameter identity matters because prepared signatures retain links to their declarations. */
 	public static function same_signature(?prepared_function $old, prepared_function $current): bool
 	{

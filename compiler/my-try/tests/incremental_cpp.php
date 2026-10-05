@@ -44,7 +44,40 @@ try
 	$compiler->sync([$path]);
 	$compiler->prepare();
 	cpp_check(isset($source->preparation_changes[$target_body]), 'Preparation lost pending generation work');
+	$handoff = $source->preparation_changes;
+	$handoff_count = count($handoff);
+	$work_version = $target_body->version;
+	$dependencies = $target_body->dependencies;
+	$lookups = $target_body->lookups;
+	cpp_check(Preparation_Status::complete($target_body), 'Completed work query failed');
+	$box_definition = Model::$global_scope->source_types_named('Box')[0];
+	$box_nominal = object_cast(Model::$global_scope->types_named('Box')[0], nominal_type_definition::class);
+	$box_canonical = Model::$type_catalog->registry()->canonical($box_nominal);
+	$box_type = Model::$type_catalog->registry()->use($box_canonical->type_id());
+	cpp_check(Type_Queries::source_record($box_type) === $box_definition, 'Read-only source-record query lost identity');
+	cpp_check(Type_Queries::canonical($box_type)->type_id() === $box_type->type_id(), 'Read-only canonical query lost identity');
+	cpp_check($target_body->version === $work_version && $target_body->dependencies === $dependencies && $target_body->lookups === $lookups, 'Read-only queries changed work');
+
+	// Standalone output may be inspected repeatedly without consuming another caller's handoff.
+	$standalone_generator = new CPP_Generator(Model::$cpp_output_program);
+	$standalone = $standalone_generator->generate($source->prepared);
+	$standalone_fragment = Model::$cpp_output_program->fragments[$target_body];
+	$again = $standalone_generator->generate($source->prepared);
+	cpp_check($standalone->text === $again->text && Model::$cpp_output_program->fragments[$target_body] === $standalone_fragment, 'Standalone no-op rerendered work');
+	cpp_check($source->preparation_changes === $handoff && count($handoff) === $handoff_count && Model::$cpp_files->is_empty(), 'Standalone generation acknowledged or published shared output');
+
+	// A late assembly failure (after fragments settled) still withholds acknowledgment.
+	$box_fragment = Model::$cpp_output_program->fragments[$box_definition->preparation];
+	$box_records = $box_fragment->records;
+	$box_fragment->records = new Storage();
+	$box_fragment->records->append($box_definition);
+	$assembly_failed = false;
+	try { $compiler->cpp(); }
+	catch (\RuntimeException $error) { $assembly_failed = str_contains($error->getMessage(), 'Cyclic C++ record assembly'); }
+	cpp_check($assembly_failed && Model::$cpp_files->is_empty() && $source->preparation_changes === $handoff && count($handoff) === $handoff_count, 'Assembly failure consumed handoff or published output');
+	$box_fragment->records = $box_records;
 	$compiler->cpp();
+	cpp_check(Model::$cpp_files[0]->text === $standalone->text, 'Coordinator publication changed standalone output');
 	cpp_check(count($source->preparation_changes) === 0, 'Successful generation did not consume handoff');
 	cpp_check(Model::$cpp_output_program->fragments[$target_body] !== $body, 'Changed body reused stale text');
 	cpp_check(Model::$cpp_output_program->fragments[$target_owner] === $signature && Model::$cpp_output_program->fragments[$caller_body] === $caller_fragment && Model::$cpp_output_program->fragments[$source->root->body->work()] === $entry, 'Body edit rerendered unchanged fragments');

@@ -13,7 +13,7 @@ final class CPP_Generator
 		$this->program = $program ?? new cpp_program();
 	}
 
-	/** Select independent fragments, then assemble the existing single-file layout. */
+	/** Assemble output without acknowledging shared changes; publication belongs to the caller. */
 	public function generate(prepared_file $prepared): cpp_module
 	{
 		$source = $prepared->source;
@@ -41,8 +41,7 @@ final class CPP_Generator
 		$bodies /** Storage<preparation_owner> */ = new Storage();
 		foreach ($ordered as $owner)
 		{
-			Preparation_Worker::require_active($owner);
-			if (Preparation_Changes::source_changed($owner) || ($owner->change_status !== change_state::unchanged) || $owner->failed) {
+			if (!Preparation_Status::complete($owner)) {
 				throw new \RuntimeException('C++ generation requires completed preparation');
 			}
 			if (!isset($this->program->fragments[$owner])) {
@@ -71,7 +70,7 @@ final class CPP_Generator
 		$entry_text = '';
 		foreach ($ordered as $owner)
 		{
-			Preparation_Worker::require_active($owner);
+			Preparation_Status::require_active($owner);
 			$fragment = $this->program->fragments[$owner];
 			foreach ($fragment->headers as $header => $used) {
 				$context->headers[$header] = true;
@@ -104,7 +103,6 @@ final class CPP_Generator
 		$result = new cpp_module();
 		$result->file_name = 'main.cpp';
 		$result->text = $text;
-		$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		return $result;
 	}
 
@@ -125,7 +123,7 @@ final class CPP_Generator
 	/** Each body owns its temporary numbering; publish a fragment only after successful rendering. */
 	private function render(preparation_owner $owner): void
 	{
-		Preparation_Worker::require_active($owner);
+		Preparation_Status::require_active($owner);
 		if (($owner->state !== preparation_state::ready) || $owner->failed) {
 			throw new \LogicException('C++ generation requires successfully prepared work');
 		}
@@ -156,7 +154,7 @@ final class CPP_Generator
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 				$records /** Storage<collected_struct> */ = $next->records;
 				foreach ($fields->items() as $field) {
-					$source_record = Type_Preparation::source_record($field->type);
+					$source_record = Type_Queries::source_record($field->type);
 					if ($source_record !== null) {
 						$record /** collected_struct */ = $source_record;
 						$records->append($record);
@@ -493,7 +491,7 @@ final class CPP_Generator
 			// Preparation admits exactly one nullable and one non-storable null sentinel.
 			// Presence is independent of payload identity and evaluates the value once.
 			$value = $left;
-			if (Type_Preparation::canonical($decision->operands[0]->source_type)->family() === type_family::null_sentinel) {
+			if (Type_Queries::canonical($decision->operands[0]->source_type)->family() === type_family::null_sentinel) {
 				$value = $right;
 			}
 			$presence = '(' . $value . ').has_value()';

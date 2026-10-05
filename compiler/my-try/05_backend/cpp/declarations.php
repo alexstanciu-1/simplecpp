@@ -166,7 +166,7 @@ final class CPP_Declarations
 		foreach ($fields->items() as $field)
 		{
 			$type = $field->type;
-			$source_record = Type_Preparation::source_record($type);
+			$source_record = Type_Queries::source_record($type);
 			if ($source_record !== null) {
 				$record_entry /** collected_struct */ = $source_record;
 				if ($context->expand_records) {

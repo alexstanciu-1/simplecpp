@@ -11,7 +11,7 @@ final class Capability_Preparation implements type_capability_query
 
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
 	{
-		$record = Type_Preparation::source_record($type_use);
+		$record = Type_Queries::source_record($type_use);
 		if ($record === null) {
 			return Model::$type_catalog->registry()->has_capability($type_use, $capability);
 		}

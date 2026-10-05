@@ -7,12 +7,12 @@ final class Nullable_Conversions
 {
 	public static function is_null(canonical_type_use $type): bool
 	{
-		return Type_Preparation::canonical($type)->family() === type_family::null_sentinel;
+		return Type_Queries::canonical($type)->family() === type_family::null_sentinel;
 	}
 
 	public static function payload(canonical_type_use $type): ?canonical_type_use
 	{
-		$canonical = Type_Preparation::canonical($type);
+		$canonical = Type_Queries::canonical($type);
 		$definition = $canonical->definition();
 		if (!($definition instanceof nullable_semantics)) { return null; }
 		$role = object_cast($definition, nullable_semantics::class);

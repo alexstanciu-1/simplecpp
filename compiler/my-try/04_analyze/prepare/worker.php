@@ -202,7 +202,7 @@ final class Preparation_Worker
 	private function select_owner(preparation_owner $owner): void
 	{
 		$this->owners[$owner] = true;
-		if (Preparation_Changes::source_changed($owner) || ($owner->change_status !== change_state::unchanged)) {
+		if (Preparation_Status::source_changed($owner) || ($owner->change_status !== change_state::unchanged)) {
 			$this->schedule($owner);
 		}
 	}
@@ -318,7 +318,7 @@ final class Preparation_Worker
 	/** By-value record layout requires completion and therefore detects declaration cycles. */
 	public function require_record(canonical_type_use $type, preparation_context $context): void
 	{
-		$entry = Type_Preparation::source_record($type);
+		$entry = Type_Queries::source_record($type);
 		if ($entry === null) {
 			return;
 		}
@@ -342,28 +342,11 @@ final class Preparation_Worker
 		$owner->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
 	}
 
-	/** Reject stale work at process entry; recursive syntax dispatch needs no per-node flag. */
-	public static function require_active(preparation_owner $owner): void
-	{
-		if ($owner->source->deleted || ($owner->change_status === change_state::deleted)) {
-			throw new \LogicException('Deleted work cannot be prepared or generated');
-		}
-		$declaration = $owner->declaration();
-		if ($declaration !== null) {
-			if ($declaration->change_status === change_state::deleted) {
-				throw new \LogicException('Deleted declaration cannot be prepared or generated');
-			}
-		}
-		if (!$owner->source->parse_complete) {
-			throw new \LogicException('Semantic work requires a completed parse');
-		}
-	}
-
 	/** Rebuild selected signatures/layout facts; only effective changes propagate to consumers. */
 	public function declaration(declaration_work $owner): void
 	{
-		self::require_active($owner);
-		if (Preparation_Changes::source_changed($owner)) {
+		Preparation_Status::require_active($owner);
+		if (Preparation_Status::source_changed($owner)) {
 			$this->schedule($owner);
 		}
 		if ($owner->state === preparation_state::processing) {
@@ -418,7 +401,7 @@ final class Preparation_Worker
 	/** Declarations have settled; each selected body replaces facts and dependencies once. */
 	private function body(body_work $owner): void
 	{
-		self::require_active($owner);
+		Preparation_Status::require_active($owner);
 		$this->detach_dependencies($owner);
 		$owner->state = preparation_state::processing;
 		$context = $this->context($owner);

@@ -47,7 +47,7 @@ final class Condition_Truthiness
 		}
 		$decision = new truthiness_decision();
 		$decision->source_type = $source;
-		$decision->operation = Type_Preparation::canonical($source)->family() === type_family::boolean
+		$decision->operation = Type_Queries::canonical($source)->family() === type_family::boolean
 			? truthiness_operation::boolean_identity : truthiness_operation::scalar_condition;
 		return $decision;
 	}

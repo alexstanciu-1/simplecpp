@@ -132,18 +132,18 @@ if (($trace->nodes !== [$binary, $assignment, $target, $literal, $right]) || ($b
 $source = new collected_file(new token_list());
 $owner = new file_body_work($source);
 rejected(function () use ($owner): void {
-	Preparation_Worker::require_active($owner);
+	Preparation_Status::require_active($owner);
 }, \LogicException::class);
 $source->parse_complete = true;
-Preparation_Worker::require_active($owner);
+Preparation_Status::require_active($owner);
 $owner->change_status = change_state::deleted;
 rejected(function () use ($owner): void {
-	Preparation_Worker::require_active($owner);
+	Preparation_Status::require_active($owner);
 }, \LogicException::class);
 $owner->change_status = change_state::unchanged;
 $source->deleted = true;
 rejected(function () use ($owner): void {
-	Preparation_Worker::require_active($owner);
+	Preparation_Status::require_active($owner);
 }, \LogicException::class);
 
 // Unsupported nodes still allow maintenance without fabricating semantic support.

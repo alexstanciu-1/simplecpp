@@ -46,7 +46,7 @@ try
 	{
 		$marker = $catalog->boolean_sentinel_type($value);
 		result_check(!$marker->matches($bool_type), 'Sentinel type was conflated with boolean payload');
-		result_check(Type_Preparation::canonical($marker)->definition()->capabilities() === [],
+		result_check(Type_Queries::canonical($marker)->definition()->capabilities() === [],
 			'Sentinel tag acquired value-storage capabilities');
 	}
 	result_check(!$catalog->boolean_sentinel_type(false)->matches($catalog->boolean_sentinel_type(true)),

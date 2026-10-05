@@ -37,7 +37,7 @@ final class Conversion_Preparation
 			throw new \RuntimeException('S2S value boundary requires matching type-use modifiers');
 		}
 
-		$target_family = Type_Preparation::canonical($target)->family();
+		$target_family = Type_Queries::canonical($target)->family();
 		if ($target_family === type_family::boolean) {
 			return Boolean_Conversions::decide($source, $target, $context);
 		}
@@ -57,7 +57,7 @@ final class Conversion_Preparation
 	/** Scalar cast permission is explicit and does not include arbitrary nominal types. */
 	public static function is_scalar(canonical_type_use $type): bool
 	{
-		$family = Type_Preparation::canonical($type)->family();
+		$family = Type_Queries::canonical($type)->family();
 		return ($family === type_family::boolean) || ($family === type_family::integer)
 			|| ($family === type_family::floating) || String_Conversions::is_string($type);
 	}

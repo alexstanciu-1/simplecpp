@@ -29,7 +29,7 @@ final class CPP_Types
 	/** Resolve the canonical core; recursive arguments contribute their own direct headers. */
 	private static function unmodified_representation(canonical_type_use $type_use): cpp_type
 	{
-		$type = Type_Preparation::canonical($type_use);
+		$type = Type_Queries::canonical($type_use);
 		$definition = $type->definition();
 		$result = new cpp_type();
 		if ($type instanceof applied_template_type) {

@@ -53,7 +53,7 @@ Parsing transfers existing body-work identity without changing its state. Collec
 declaration change flags and body `syntax_changed` accumulate until successful
 preparation consumes them. Re-parsing identical text must not erase an earlier
 unconsumed change, including changes made before a later parse failure. Analysis
-reads these flags through `Preparation_Changes::source_changed` and schedules work.
+reads these flags through `Preparation_Status::source_changed` and schedules work.
 
 Parser invokes the collector immediately. Local scopes are worker-private; global
 function/type registration uses the task publication mutex. After joining, revision
@@ -92,7 +92,12 @@ worker request a full rebuild on the next attempt. No rollback is promised.
 C++ selects dirty/outdated retained fragments and reuses unchanged text/includes.
 Assembly still produces one `main.cpp`; see the [model](../architecture/MODEL.md#retained-c-generation).
 A failed stage cannot expose completed output from the previous run. Generation work
-settles and consumes preparation changes only after successful assembly.
+settles rendered fragments, but does not consume preparation changes.
+`Compiler::cpp()` clears the emitted source's change handoff only after publishing
+the assembled output. Rendering or assembly failure retains changes for retry.
+Standalone generation returns output without acknowledgment or Model publication;
+it may be repeated with the same fragment cache. No per-backend version registry
+is added for the current single active backend.
 
 `cleanup_tokens()` may run after output delivery. Specialized maintenance traversal
 remaps live syntax, template/operator token sites and occurrences to the newest input,

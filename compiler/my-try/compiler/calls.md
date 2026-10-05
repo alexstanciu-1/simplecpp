@@ -13,7 +13,7 @@ Compiler::sync(paths)
   Compiler_Lifecycle::retire_deleted_sources
     guard successful join -> semantic notification/unlinking -> Collection_Retirement disposal
 Compiler::prepare() -> same retirement protocol -> declaration list -> function-body list -> file-body list -> pending preparation changes
-Compiler::cpp() -> select dirty definition/body fragments -> render selected fragments -> assemble main.cpp
+Compiler::cpp() -> select dirty definition/body fragments -> render -> assemble -> publish main.cpp -> acknowledge source changes
 ```
 
 Standalone tokenize/parse/prepare entrypoints use these same phases. Parser calls
@@ -28,6 +28,9 @@ Only these data records are published in Model, never the workers.
 The standalone `File_Preparation` adapter also sequences lifecycle retirement
 before analysis. Parsing accumulates source changes and transfers body-work identity;
 analysis owns scheduling state. No later-stage scheduling runs from the parser.
+Standalone `CPP_Generator::generate` returns assembled output without Model publication
+or acknowledgment. Backend reads of work/type facts use `Preparation_Status` and
+`Type_Queries`; they do not invoke semantic preparation.
 
 Parser builds a direct object graph rooted at parsed_file.root. Its private
 productions return ast_node objects. Concrete nodes own typed fields and Storage

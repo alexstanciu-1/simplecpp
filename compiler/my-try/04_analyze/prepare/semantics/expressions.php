@@ -342,7 +342,7 @@ final class Expression_Preparation
 	{
 		$base = $syntax->base;
 		$value = self::prepare($base, $context);
-		$declaration = Type_Preparation::source_record($value->type);
+		$declaration = Type_Queries::source_record($value->type);
 		if ($declaration === null) {
 			throw new \RuntimeException('S2S member access requires a struct value');
 		}

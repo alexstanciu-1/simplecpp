@@ -3,8 +3,9 @@ Doc Status: planning
 
 Recorded 2026-10-05 against `22755175` on `v0.2/develop`.
 This records the agreed direction and bounded implementation batches.
-Batches A–D are implemented in the 2026-10-05 follow-ups. E's ownership direction
-is agreed; backend-consumption work remains.
+Batches A–E are implemented in the 2026-10-05 follow-ups, with documentation and
+boundary checks consolidated per batch. The agreed stage-ownership refactor is
+complete; LLVM convergence and smaller SB-07 concerns remain separate work.
 The current implementation and
 findings are described in the [stage-boundary audit](stage_boundary_audit.md).
 Language semantics remain owned by the top-level specs.
@@ -159,7 +160,7 @@ Analysis owns observed traversal without a visitor/callback interface. The coord
 orders semantic retirement before frontend-owned disposal after successful parse joins.
 Implementation order: D1 observed lookup; D2 invalidation/retirement; E consumption.
 
-### E. Backend consumption boundary — agreed direction; implementation pending
+### E. Backend consumption boundary — implemented 2026-10-05
 
 Replace worker-class read-only dependencies with truthful result queries/guards where
 needed, without copying canonical facts or rerunning preparation. Define who consumes
@@ -171,7 +172,13 @@ for retry. Review standalone C++ entry points before fixing the API. Per-backend
 consumption versions remain an alternative if multiple independent consumers become
 an actual requirement; this plan does not add them speculatively.
 
-### F. Consolidate
+Implemented: `Compiler::cpp()` acknowledges only its emitted source after Model
+publication. Standalone generation never acknowledges. `Preparation_Status` owns
+read-only work guards/source-change queries; `Type_Queries` owns canonical and
+source-record reads. Old worker query methods are removed; analysis and backend
+callers share the query owners without forwarding adapters.
+
+### F. Consolidation — completed with A–E
 
 Re-audit executable dependencies, remove dead protocols and update MODEL, ownership,
 AST layout, preparation README, lifecycle guidance and local AGENTS together with
@@ -362,6 +369,43 @@ compiler preparation and standalone file preparation use the same protocol.
 
 SB-01/SB-05 are resolved. Next: E, coordinator-owned successful output acknowledgment
 and read-only result/query boundaries.
+
+### E evidence — 2026-10-05
+
+Candidate: `4f5081e9` plus the backend-consumption overlay.
+Removed the backend write to `preparation_changes`; acknowledgment follows
+successful coordinator publication. Read-only type/work queries moved to named
+owners, with all callers migrated and no old forwarding path. No new retained
+model, semantic rule or per-backend version tracking.
+
+- `/tmp/my-try-backend-boundary-20261005-2`: 13 PHP suites passed, including
+  incremental C++, lifecycle handoff, AST invariants, constructed types, Result,
+  capabilities, callables, preparation recovery/incremental/work, cleanup, observed
+  lookup and S2S exports.
+- Extended incremental C++ assertions cover query purity/identity, standalone
+  non-acknowledgment and no-op fragment reuse, coordinator publication, and a late
+  assembly failure followed by repair. Existing checks retain rendering-failure
+  retry, deleted-fragment removal and clean/incremental output equality.
+- All 1,049 C++ exports match the preceding D2 checkpoint byte-for-byte.
+- The initial run without `-2` passed 12 suites; the new test incorrectly read a
+  type field from `prepared_record`. It now obtains the existing canonical identity
+  through the registry before testing the read-only query. Production behavior
+  did not need correction.
+- Shared 12-slot runner used sandbox-related CLI fallback. No native build,
+  conversion, broad regression or lint sweep was performed.
+- After the passing run, a separate working-tree edit was observed restoring
+  `dependency_cleanup.php`'s old whole-observation-empty assertion. It is preserved,
+  not part of this slice. A separate probe at
+  `/tmp/my-try-backend-boundary-worktree-cleanup-20261005` confirms that edited
+  version fails with the previously diagnosed lookup-registration expectation.
+  Its expected nonzero exit is a reproduced failure, not a green test result.
+- Boundary inspection confirms C++ contains no calls to `Preparation_Worker`,
+  `Type_Preparation` or `Preparation_Changes`, nor writes to the semantic handoff.
+  D2 removed parser scheduling writes and analysis-owned frontend disposal; A–C
+  removed executable shared-model hooks. Neutral maintenance remains as agreed.
+
+SB-01–05 are resolved. Chapter 06 feature work may resume; native validation remains
+an explicit checkpoint, and parked LLVM/SB-07 work is not implied by this completion.
 
 ## Remaining questions and non-goals
 

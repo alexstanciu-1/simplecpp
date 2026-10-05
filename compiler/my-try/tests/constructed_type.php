@@ -98,7 +98,7 @@ PHS;
 	$second_use = $second_syntax->require_preparation();
 	constructed_check(($first_use !== $second_use) && $first_use->matches($second_use),
 		'Source occurrences did not retain lightweight uses of one canonical identity');
-	$application = Type_Preparation::canonical($first_use);
+	$application = Type_Queries::canonical($first_use);
 	constructed_check($application instanceof applied_template_type,
 		'Prepared constructed type did not resolve to an applied-template identity');
 	$vector_int = object_cast($application, applied_template_type::class);
@@ -114,7 +114,7 @@ PHS;
 		&& ($by_value_use->type_id() === Language_Types::integer(Model::$language_scope)->type_id()),
 		'Redundant value<T> did not normalize to its operand type');
 	$nested_value = object_cast($statements[8], variable_declaration_node::class);
-	$nested_value_type = object_cast(Type_Preparation::canonical(
+	$nested_value_type = object_cast(Type_Queries::canonical(
 		$nested_value->type_syntax->require_preparation()), applied_template_type::class);
 	constructed_check($nested_value_type === $vector_int,
 		'Redundant nested modifier split the canonical application');

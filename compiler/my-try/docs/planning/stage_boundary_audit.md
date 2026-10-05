@@ -15,7 +15,9 @@ semantic hooks and callable/work-selection processing from shared identities.
 SB-02's shared-model hooks are resolved. Batch C also moved analysis-internal
 work-record dispatch into its worker. D1 moved observed lookup to analysis and
 resolved SB-03. D2 removed parser scheduling writes and split semantic retirement
-from frontend disposal, resolving SB-01/SB-05. SB-04 and SB-06–07 remain.
+from frontend disposal, resolving SB-01/SB-05. E moved acknowledgment into the
+coordinator and extracted read-only queries, resolving SB-04. SB-06 remains parked;
+SB-07 retains its separately scoped debt.
 
 ## Outcome and rule
 
@@ -152,6 +154,12 @@ Preserve nearest-pool selection and observation of missing/ambiguous/intermediat
 pools; returning just the selected declaration is not enough for invalidation.
 
 ## SB-04 — C++ consumes and clears the shared semantic change handoff
+
+**Resolved by E, 2026-10-05:** `Compiler::cpp()` acknowledges its source after
+publishing successful output. Standalone generation leaves shared changes intact.
+`Preparation_Status` owns read-only work guards and `Type_Queries` owns established
+canonical/source-association reads; C++ no longer calls preparation workers.
+Rendering and late assembly failure/retry are covered. Original finding:
 
 **Medium priority; cross-owner mutation and worker API coupling.**
 

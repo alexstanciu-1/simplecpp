@@ -8,14 +8,14 @@ final class Mixed_Conversions
 	/** Explicit shared-handle bridges are distinct from ordinary scalar boxing. */
 	public static function is_dynamic_bridge(canonical_type_use $source, canonical_type_use $target): bool
 	{
-		$source_dynamic = Type_Preparation::canonical($source)->definition() instanceof dynamic_semantics;
-		$target_dynamic = Type_Preparation::canonical($target)->definition() instanceof dynamic_semantics;
+		$source_dynamic = Type_Queries::canonical($source)->definition() instanceof dynamic_semantics;
+		$target_dynamic = Type_Queries::canonical($target)->definition() instanceof dynamic_semantics;
 		return (self::is_mixed($source) && $target_dynamic) || ($source_dynamic && self::is_mixed($target));
 	}
 
 	public static function is_mixed(canonical_type_use $type): bool
 	{
-		return Type_Preparation::canonical($type)->definition() instanceof mixed_semantics;
+		return Type_Queries::canonical($type)->definition() instanceof mixed_semantics;
 	}
 
 	/** The boxed integer is ordinary int; fixed-width normalization is a separate contract. */

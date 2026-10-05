@@ -295,6 +295,9 @@ final class Compiler
 			throw $error;
 		}
 		Model::$cpp_files[] = $output;
+		// The single active consumer acknowledges only after successful output publication.
+		$source = $prepared[0]->source;
+		$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 	}
 
 	/** Run parked LLVM preparation and emit modules for existing regression callers. */
