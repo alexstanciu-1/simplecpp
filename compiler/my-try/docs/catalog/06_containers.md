@@ -213,6 +213,15 @@ Next: contextual literal preparation and ordered conversion facts, followed by
 runtime adapters/C++ construction. Preserve the common-family path. User-written
 factory execution still requires interface/method support and enforced non-escape.
 
+Concrete-target/property clarification: a known concrete property type may supply
+the target only if it has the applicable initialization opt-in. Interface-typed or
+otherwise non-concrete destinations require an explicit concrete `Type::{...}` /
+`Type::[...]`; no implementation is inferred from keys or from the currently known
+implementation set. Construction and assignment compatibility are separate checks.
+Property-driven object initialization and automatic key-to-property mapping remain
+deferred. The [top-level rule](../../../../specs/data_initialization.md#concrete-targets-and-property-contexts)
+owns this contract; it does not introduce source class/interface support here.
+
 ### End-to-end catalog rows
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

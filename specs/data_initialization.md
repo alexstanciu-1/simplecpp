@@ -92,6 +92,38 @@ The annotation names the constructed type, not a cast of an already-built mixed
 container. An outer destination conversion, if needed, remains an ordinary separate
 conversion. A known type must also support the selected input shape.
 
+### Concrete targets and property contexts
+
+A resolved property's declared type may supply the construction target, just like
+a typed local, provided it identifies one concrete type with the applicable
+recognized initialization interface. Property existence or a matching set of fields
+does not grant initialization support.
+
+An interface-typed or otherwise non-concrete destination does not select an
+implementation for an unannotated construction. Reject during preparation when no
+concrete target is established; do not guess from entry names, try alternative
+implementations against the entries, or choose the only implementation currently
+known to the compiler. The author must identify the concrete construction type:
+
+```php
+// settings is declared as an interface, not a concrete implementation:
+$holder->settings = {enabled: true};                   // compile-time error
+$holder->settings = ConcreteSettings::{enabled: true}; // explicit construction target
+```
+
+The explicit type must itself support the selected initialization interface, and
+the resulting value must separately satisfy the property's assignment contract.
+This restriction concerns choosing a construction target, not assigning an existing
+value of a compatible concrete type to an interface-typed destination.
+
+Property-driven object initialization remains deferred until its compiler model is
+available. In particular, this rule does not map a key in an outer construction to
+an object property automatically. A factory accepting mixed values supplies no
+per-property target information merely because a property with that name exists.
+The examples describe that future contract, not current property/interface support.
+
+### Nested construction contexts
+
 User-defined examples below require the deferred class/struct interface connection:
 
 ```php
