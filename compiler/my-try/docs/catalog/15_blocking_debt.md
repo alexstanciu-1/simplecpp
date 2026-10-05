@@ -127,3 +127,17 @@ Candidate direction, to validate with the callable model:
 Review proofs should cover storing/extracting/copying/invoking callables in both
 families, preserved capture state and lifetime, absent/non-callable entries,
 signature mismatch, receiver independence, reference non-escape and encoding failure.
+
+### CH15-SHAPE-01 — preserving array versus object identity
+
+Deferred by user decision on 2026-10-05. For the mixed/dynamic refactor, continue
+classifying container shape through the internal hash query (currently
+`hash_t::is_packed()`, called `is_pure_array` in discussion). Do not introduce a
+separate persistent array/object identity tag in this slice.
+
+Later review whether construction/JSON decoding must retain `[]` versus `{}`
+independently of the current keys, especially for empty containers. Current shape
+classification must not be advertised as lossless preservation of original notation.
+Review numeric-key objects, mutations that change packed shape, JSON round-trips,
+property access and any storage/ABI cost before choosing a retained representation.
+This is a deferred design consideration, not a prerequisite for the agreed refactor.

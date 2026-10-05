@@ -38,6 +38,24 @@ dynamic-family shared containers while allowing scalar/null leaves in each. JSON
 should offer family-specific decoding, defaulting to dynamic including scalar roots.
 Existing normative permissions, casts and JSON APIs still need explicit reconciliation.
 
+### Confirmed semantic decisions — 2026-10-05
+
+- New dynamic has one null state; default initialization produces null, distinct
+  from a constructed empty container. Retire the old absent-handle/boxed-null
+  distinction rather than carrying it into the tagged representation.
+- Explicit mixed/dynamic container-family casts reject initially. Do not preserve
+  the old shared-handle bridge under the new separated-family model. Recursive
+  conversion is deferred; explicit scalar conversions preserve their scalar value.
+  Known invalid crossings reject preparation, value-dependent ones require runtime
+  checks without modifying the destination on failure.
+- Continue deriving array-like/object-like shape from the internal hash query
+  (`is_packed()` today; `is_pure_array` in discussion). Do not add persistent `[]`
+  versus `{}` identity now. The user deferred that design to
+  [CH15-SHAPE-01](../catalog/15_blocking_debt.md#ch15-shape-01--preserving-array-versus-object-identity).
+- Callable values, source `->` support and reference foreach remain outside the
+  current refactor. The 24-byte target and private shared-mechanics direction remain;
+  concrete storage layout and integration need implementation proof.
+
 ## Shared implementation assessment (proposal, not selected architecture)
 
 Prefer independent public types backed by private reusable tagged-value machinery.
