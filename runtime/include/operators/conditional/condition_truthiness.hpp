@@ -3,6 +3,7 @@
 #include "lang/php/support/php_common.hpp"
 #include "scpp/runtime_error.hpp"
 #include "scpp/error_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 
 namespace scpp::detail {
 
@@ -101,6 +102,17 @@ inline bool_t condition_truthy_impl(Value &&value, const char *component, const 
 		return bool_t(value.has_value().native_value());
 	} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, weak_p>) {
 		return bool_t(!value.expired().native_value());
+	} else if constexpr (std::is_same_v<value_t, dynamic_value>) {
+		using kind = dynamic_value::kind_t;
+		switch (value.kind()) {
+		case kind::null_v: return bool_t{false};
+		case kind::bool_v: return condition_truthy_impl(value.get_bool(), component, operation);
+		case kind::int_v: return condition_truthy_impl(value.get_int(), component, operation);
+		case kind::float_v: return condition_truthy_impl(value.get_float(), component, operation);
+		case kind::string_v: return condition_truthy_impl(value.get_string(), component, operation);
+		case kind::table_v: return bool_t{true}; // Constructed shared objects are present, even empty.
+		}
+		throw std::logic_error("dynamic: invalid kind");
 	} else if constexpr (std::is_same_v<value_t, mixed_t>) {
 		switch (value.kind()) {
 			case mixed_t::kind_t::null_v:

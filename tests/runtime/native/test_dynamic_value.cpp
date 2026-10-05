@@ -3,6 +3,10 @@
 #include "scpp/data_initializer.hpp"
 #include "scpp/index_write_path.hpp"
 #include "scpp/value_iteration.hpp"
+#include "scpp/keyed_path.hpp"
+#include "scpp/cast.hpp"
+#include "operators/conditional/condition_truthiness.hpp"
+#include "operators/count/count.hpp"
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -89,7 +93,7 @@ void recursive_containers() {
 	require(root.get_table().size() == 1, "read miss does not insert");
 	root = value{int_t<>{100LL}};
 	require(alias.get_table().size() == 1 && root.get_int().native_value() == 100, "replacement only rebinds variable");
-	alias.get_table().remove(string_t{"child"});
+	require(alias.get_table().remove(string_t{"child"}), "remove existing child");
 	require(selected.get_table().size() == 1, "child survives parent removal");
 	value moved = std::move(selected);
 	require(selected.is_null().native_value() && moved.table_if() == child.table_if(), "container move");
@@ -172,10 +176,60 @@ void container_operations() {
 	require_failure([&] { (void)factory::from_key_value(normalized_duplicates.view()); }, "normalized duplicate rejects");
 #endif
 }
+void conversions_and_probes() {
+	value zero{string_t{"0"}};
+	require(!scpp::condition_truthy(zero).native_value(), "string zero condition");
+	require(!scpp::empty(zero).native_value(), "string zero is not empty");
+	value none;
+	require(!scpp::isset(none).native_value() && scpp::empty(none).native_value(), "null probes");
+	require(!scpp::condition_truthy(none).native_value(), "null condition");
+	value false_value{scpp::bool_t{false}};
+	require(scpp::isset(false_value).native_value() && scpp::empty(false_value).native_value(), "present false probes");
+	require(!scpp::condition_truthy(false_value).native_value(), "false condition");
+	value container = value::make_container();
+	require(scpp::condition_truthy(container).native_value() && scpp::empty(container).native_value(), "empty object presence vs emptiness");
+	require(scpp::count(container).native_value() == 0, "container count");
+	require_failure([&] { (void)scpp::count(zero); }, "scalar count rejects");
+	const scpp::mixed_t key{string_t{"key"}};
+	scpp::index_store(container, key, none);
+	require(!scpp::isset(container, key).native_value(), "present null entry");
+	scpp::index_store(container, key, zero);
+	require(scpp::isset(container, key).native_value() && !scpp::empty(container, key).native_value(), "keyed string zero");
+	require(!scpp::isset(container, scpp::mixed_t{false}).native_value(), "invalid probe key is absent");
+	require(scpp::empty(container, scpp::mixed_t{false}).native_value(), "invalid empty key is empty");
+	require(!scpp::keyed_ready(&none, true), "null unset parent is no-op");
+	require(!scpp::keyed_ready(&zero, false), "scalar probe parent is absent");
+	require_failure([&] { (void)scpp::keyed_ready(&zero, true); }, "scalar unset parent rejects");
+	const auto *child = scpp::keyed_child(&container, key, false);
+	require(child && !scpp::keyed_ready(child, false), "scalar intermediate stops probe");
+	require(scpp::keyed_probe(&container, key, false).native_value(), "same-family keyed probe");
+	require(!scpp::keyed_probe(&container, key, true).native_value(), "same-family keyed empty");
+	scpp::keyed_erase(container, key);
+	require(!scpp::keyed_child(&container, key, true) && scpp::count(container).native_value() == 0, "non-creating removal");
+	scpp::vector_t<value> values;
+	values.append(none);
+	require(!scpp::isset(values, int_t<>{0LL}).native_value(), "typed dynamic element remains null-sensitive");
+	const scpp::mixed_t samples[] = {scpp::mixed_t{}, scpp::mixed_t{false}, scpp::mixed_t{int_t<>{42LL}}, scpp::mixed_t{scpp::float_t{2.5}}, scpp::mixed_t{string_t{"text"}}};
+	for (const auto &sample : samples) {
+		auto converted = scpp::cast<value>(sample);
+		auto returned = scpp::cast<scpp::mixed_t>(converted);
+		require(returned.kind() == sample.kind(), "family conversion preserves scalar kind");
+	}
+	require(scpp::cast<value>(scpp::mixed_t{int_t<>{42LL}}).get_int().native_value() == 42, "integer conversion value");
+	require(scpp::cast<scpp::mixed_t>(zero).get_string().native_value() == "0", "string conversion value");
+	value destination{int_t<>{9LL}};
+	scpp::mixed_t mixed_table{std::make_shared<scpp::hash_t<scpp::mixed_t>>()};
+	require_failure([&] { destination = scpp::cast<value>(mixed_table); }, "mixed container cannot cross");
+	require(destination.get_int().native_value() == 9, "failed conversion preserves dynamic destination");
+	scpp::mixed_t mixed_destination{int_t<>{8LL}};
+	require_failure([&] { mixed_destination = scpp::cast<scpp::mixed_t>(container); }, "dynamic container cannot cross");
+	require(mixed_destination.get_int().native_value() == 8, "failed conversion preserves mixed destination");
+}
 } // namespace
 
 int main() {
 	scalar_lifetimes();
 	recursive_containers();
 	container_operations();
+	conversions_and_probes();
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lang/php/support/php_common.hpp"
+#include "scpp/support/dynamic_value.hpp"
 
 namespace scpp {
 
@@ -59,6 +60,10 @@ inline int_t<> count(const dynamic_t<> &value) {
 		throw std::runtime_error("php::count(dynamic_t<>) expects a present dynamic handle");
 	}
 	return count(*value);
+}
+
+inline int_t<> count(const detail::dynamic_value &value) {
+	return int_t<>{static_cast<std::int64_t>(value.get_table().size())};
 }
 
 } // namespace scpp

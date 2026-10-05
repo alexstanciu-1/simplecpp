@@ -15,6 +15,7 @@
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/runtime_error.hpp"
+#include "scpp/support/dynamic_value.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -777,6 +778,34 @@ inline weak_p<hash_t<mixed_t>> cast<weak_p<hash_t<mixed_t>>, mixed_t>(const mixe
 		default:
 			throw std::runtime_error("scpp::cast<weak_p<hash_t<mixed_t>>>(mixed_t): runtime kind is not convertible to weak table");
 	}
+}
+
+// Explicit family conversion preserves scalar kind; containers never cross families.
+template <>
+inline detail::dynamic_value cast<detail::dynamic_value, mixed_t>(const mixed_t &value) {
+	using target = detail::dynamic_value;
+	switch (value.kind()) {
+	case mixed_t::kind_t::null_v: return target{};
+	case mixed_t::kind_t::bool_v: return target{value.get_bool()};
+	case mixed_t::kind_t::int_v: return target{value.get_int()};
+	case mixed_t::kind_t::float_v: return target{value.get_float()};
+	case mixed_t::kind_t::string_v: return target{value.get_string()};
+	default: throw std::runtime_error("mixed to dynamic: container-family conversion is not supported");
+	}
+}
+
+template <>
+inline mixed_t cast<mixed_t, detail::dynamic_value>(const detail::dynamic_value &value) {
+	using kind = detail::dynamic_value::kind_t;
+	switch (value.kind()) {
+	case kind::null_v: return mixed_t{};
+	case kind::bool_v: return mixed_t{value.get_bool()};
+	case kind::int_v: return mixed_t{value.get_int()};
+	case kind::float_v: return mixed_t{value.get_float()};
+	case kind::string_v: return mixed_t{value.get_string()};
+	case kind::table_v: throw std::runtime_error("dynamic to mixed: container-family conversion is not supported");
+	}
+	throw std::logic_error("dynamic: invalid kind");
 }
 
 // mixed_t rvalue cast bridge

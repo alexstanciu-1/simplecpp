@@ -3,6 +3,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/result.hpp"
 #include "scpp/result_or_bool.hpp"
@@ -43,6 +44,10 @@ inline probe_result<mixed_t> probe_value(const mixed_t &value) {
 template <typename T>
 inline probe_result<T> probe_value(const T &value) {
 	return {probe_state::present_value, &value};
+}
+
+inline probe_result<dynamic_value> probe_value(const dynamic_value &value) {
+	return {value.is_null().native_value() ? probe_state::present_null : probe_state::present_value, &value};
 }
 
 inline probe_result<null_t> probe_value(null_t) {
@@ -142,5 +147,8 @@ struct is_countable_lookup_target<hash_t<T, K>> : std::true_type {};
 
 template <>
 struct is_countable_lookup_target<mixed_t> : std::true_type {};
+
+template <>
+struct is_countable_lookup_target<dynamic_value> : std::true_type {};
 
 } // namespace scpp::detail

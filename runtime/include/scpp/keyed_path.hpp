@@ -30,6 +30,11 @@ inline bool keyed_ready(const dynamic_t<> *receiver, bool) {
 	return receiver && receiver->get();
 }
 
+inline bool keyed_ready(const detail::dynamic_value *receiver, bool removing) {
+	if (!receiver || receiver->is_null().native_value()) return false;
+	return receiver->table_if() ? true : keyed_invalid(removing);
+}
+
 template <typename T>
 const T *keyed_lookup(const vector_t<T> *receiver, const int_t<> &key, bool) {
 	if (!receiver || key.native_value() < 0
@@ -75,6 +80,12 @@ inline const mixed_t *keyed_lookup(const mixed_t *receiver, const mixed_t &key, 
 inline const mixed_t *keyed_lookup(const dynamic_t<> *receiver, const mixed_t &key, bool removing) {
 	if (!keyed_ready(receiver, removing) || !keyed_valid_key(key, removing)) return nullptr;
 	return keyed_lookup(receiver->get(), key, removing);
+}
+
+inline const detail::dynamic_value *keyed_lookup(const detail::dynamic_value *receiver, const mixed_t &key, bool removing) {
+	if (!keyed_ready(receiver, removing) || !keyed_valid_key(key, removing)) return nullptr;
+	const auto &table = receiver->get_table();
+	return table.has(key).native_value() ? &table.at(key) : nullptr;
 }
 
 // Interior pointers live only within one lookup/resolution call, never across a key expression.
@@ -133,6 +144,10 @@ inline dynamic_t<> &keyed_descend(dynamic_t<> &receiver, const mixed_t &key) {
 	return *receiver->at(key).dynamic_if();
 }
 
+inline detail::dynamic_value &keyed_descend(detail::dynamic_value &receiver, const mixed_t &key) {
+	return receiver.get_table().at(key);
+}
+
 template <typename V, typename K, typename Input>
 void keyed_erase(hash_t<V, K> &receiver, const Input &key) {
 	(void)receiver.remove(keyed_required_key<K>(key));
@@ -140,5 +155,9 @@ void keyed_erase(hash_t<V, K> &receiver, const Input &key) {
 
 inline void keyed_erase(mixed_t &receiver, const mixed_t &key) { (void)receiver.remove(key); }
 inline void keyed_erase(dynamic_t<> &receiver, const mixed_t &key) { (void)receiver->remove(key); }
+
+inline void keyed_erase(detail::dynamic_value &receiver, const mixed_t &key) {
+	(void)receiver.get_table().remove(key);
+}
 
 } // namespace scpp

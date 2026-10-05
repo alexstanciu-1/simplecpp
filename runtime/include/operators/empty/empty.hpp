@@ -37,6 +37,19 @@ inline bool_t empty_scalar(const float_t &value) {
 	return bool_t(value.native_value() == 0.0);
 }
 
+inline bool_t empty_scalar(const dynamic_value &value) {
+	using kind = dynamic_value::kind_t;
+	switch (value.kind()) {
+	case kind::null_v: return empty_scalar(null_t{});
+	case kind::bool_v: return empty_scalar(value.get_bool());
+	case kind::int_v: return empty_scalar(value.get_int());
+	case kind::float_v: return empty_scalar(value.get_float());
+	case kind::string_v: return empty_scalar(value.get_string());
+	case kind::table_v: return value.get_table().empty();
+	}
+	throw std::logic_error("dynamic: invalid kind");
+}
+
 template <typename T>
 inline bool_t empty_scalar(const nullable<T> &value) {
 	if (!value.has_value().native_value()) {
@@ -90,6 +103,7 @@ requires (
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, dynamic_value>
 	&& !std::is_same_v<std::remove_cvref_t<T>, string_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, bool_t>
 	&& !::scpp::detail::is_int_t_v<std::remove_cvref_t<T>>
@@ -226,6 +240,10 @@ inline bool_t empty(const weak_p<T> &value) {
 inline bool_t empty(const mixed_t &value) {
 	const auto probe = detail::probe_value(value);
 	return detail::empty_from_probe(probe.state, probe.value);
+}
+
+inline bool_t empty(const detail::dynamic_value &value) {
+	return detail::empty_scalar(value);
 }
 
 inline bool_t empty(const dynamic_t<> &value) {
@@ -384,6 +402,13 @@ inline bool_t empty(const dynamic_t<> &value, const mixed_t &key) {
 		return bool_t(true);
 	}
 	return ::scpp::empty(mixed_t{dynamic_box(value)}, key);
+}
+
+inline bool_t empty(const detail::dynamic_value &value, const mixed_t &key) {
+	const auto *table = value.table_if();
+	if (!table || (key.kind() != mixed_t::kind_t::int_v && key.kind() != mixed_t::kind_t::string_v)) return bool_t{true};
+	if (!table->has(key).native_value()) return bool_t{true};
+	return detail::empty_scalar(table->at(key));
 }
 
 inline bool_t empty(const dynamic_t<> &value, const int_t<> &key) {

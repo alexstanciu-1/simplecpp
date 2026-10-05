@@ -15,7 +15,7 @@ inline bool_t isset(const vector_t<T> &value, const int_t<> &key) {
 	if (!detail::vector_has_index(value.size(), key)) {
 		return bool_t(false);
 	}
-	if constexpr (std::is_same_v<T, mixed_t>) {
+	if constexpr (std::is_same_v<T, mixed_t> || std::is_same_v<T, detail::dynamic_value>) {
 		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
 	}
 	return bool_t(true);
@@ -34,7 +34,7 @@ inline bool_t isset(const hash_t<T, K> &value, const int_t<> &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}
-	if constexpr (std::is_same_v<T, mixed_t>) {
+	if constexpr (std::is_same_v<T, mixed_t> || std::is_same_v<T, detail::dynamic_value>) {
 		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
 	}
 	return bool_t(true);
@@ -46,7 +46,7 @@ inline bool_t isset(const hash_t<T, K> &value, const string_t &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}
-	if constexpr (std::is_same_v<T, mixed_t>) {
+	if constexpr (std::is_same_v<T, mixed_t> || std::is_same_v<T, detail::dynamic_value>) {
 		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
 	}
 	return bool_t(true);
@@ -71,7 +71,7 @@ inline bool_t isset(const hash_t<T, K> &value, const std::type_identity_t<K> &ke
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}
-	if constexpr (std::is_same_v<T, mixed_t>) {
+	if constexpr (std::is_same_v<T, mixed_t> || std::is_same_v<T, detail::dynamic_value>) {
 		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
 	}
 	return bool_t(true);
@@ -166,6 +166,13 @@ inline bool_t isset(const dynamic_t<> &value, const mixed_t &key) {
 	return bool_t(false);
 }
 
+inline bool_t isset(const detail::dynamic_value &value, const mixed_t &key) {
+	const auto *table = value.table_if();
+	if (!table || (key.kind() != mixed_t::kind_t::int_v && key.kind() != mixed_t::kind_t::string_v)) return bool_t{false};
+	if (!table->has(key).native_value()) return bool_t{false};
+	return detail::isset_from_probe(detail::probe_value(table->at(key)).state);
+}
+
 inline bool_t isset(const dynamic_t<> &value, const int_t<> &key) {
 	if (!static_cast<bool>(value)) {
 		return bool_t(false);
@@ -240,6 +247,10 @@ inline bool_t isset_one(const mixed_t &value) {
 	return detail::isset_from_probe(detail::probe_value(value).state);
 }
 
+inline bool_t isset_one(const detail::dynamic_value &value) {
+	return detail::isset_from_probe(detail::probe_value(value).state);
+}
+
 template <typename T>
 inline bool_t isset_one(const nullable<T> &value) {
 	return value.has_value();
@@ -281,6 +292,7 @@ requires (
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, detail::dynamic_value>
 	&& !requires (const std::remove_cvref_t<T> &value) {
 		value.has_value();
 	}

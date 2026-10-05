@@ -282,3 +282,33 @@ a missing brace in the new test, corrected before this passing run.
 after sandbox FPM socket denial) and 34 generated iteration programs. Those generated
 programs prove the const-range refactor preserves existing paths, not that the new
 tagged type is emitted by the compiler. No native compiler rebuild was performed.
+
+### Tagged scalar-family conversions and probe integration — 2026-10-05
+
+The existing cast owner now provides explicit mixed/tagged-dynamic conversions
+for null/bool/int/float/string only, preserving kind and value. Container payloads
+reject in both directions before assignment replaces its destination. This is not
+implicit boxing or recursive container conversion; the deleted mixed constructor
+and typed entry boundary remain intact.
+
+The existing truthiness, empty, isset, count and keyed-path owners now accept the
+tagged value. Scalar rules delegate to their existing wrappers: string `"0"` is
+falsey but not empty. Constructed dynamic containers are present in conditions,
+including empty ones; emptiness inspects cardinality. Count rejects non-containers.
+Typed-container isset now treats tagged null elements as absent, like mixed null.
+Keyed probes treat missing/null/non-container paths as absent; removal rejects
+wrong-kind parents, does not create storage and retains the existing lazy traversal
+protocol. No new eager key evaluation or reference capability is introduced.
+
+This remains internal migration support, not a switched public dynamic alias.
+Arithmetic/comparison/text operators, required native typed extraction, JSON and
+remaining adapters, old mixed-carrier removal and compiler registration still need
+integration. No new public source support or complete migration is claimed.
+
+Evidence: `/tmp/my-try-tagged-dynamic-probes-20261005-2` passed matching
+debug/release runtime/JSON builds and ten native programs. The initial test link
+failed because the test omitted the cast-definition header; adding its direct include
+resolved that harness issue. `/tmp/my-try-tagged-dynamic-keyed-20261005-1` passed five
+PHP suites via CLI fallback and 44 generated keyed-path programs. Generated checks
+exercise existing public paths; the native tagged-value test proves the new internal
+overloads. No native compiler rebuild or public-type switch is claimed.
