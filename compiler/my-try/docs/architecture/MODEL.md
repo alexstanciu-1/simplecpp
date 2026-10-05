@@ -15,6 +15,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `runtime_callables`, `cpp_callable_bindings` | Installed static-factory identities/contracts and separate C++ bindings; reset with canonical types |
 | `initialization_contracts` | Runtime initialization declarations, internal input types and concrete bindings; reset with canonical types |
 | `indexing_contracts` | Registry-lifetime read/store/append contracts keyed by exact receiver definition; independent of construction opt-in |
+| `iteration_contracts` | Registry-lifetime key/value signatures keyed by exact receiver definition; independent of bracket/initialization capability |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
 | `prepared_files` | Successfully completed file records referencing the retained syntax |
 | `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
@@ -173,8 +174,15 @@ The property-free `ast_node` base supplies structural contracts; specialized nod
 families own typed syntax fields and uint32 spans. `statement_body_node` shares
 ordered body storage/traversal between executable roots and nested blocks.
 Conditional arms own explicit body/next-arm edges. The common `loop_node` owns a block
-body; concrete while/do-while/for nodes own typed headers. An abstract foreach
-specialization reserves the same protocol for Chapter 06. Break/continue facts observe
+body; concrete while/do-while/for/foreach nodes own typed headers. Foreach owns an
+iterable expression, optional key and required value syntax. Its loop-owned
+`prepared_iteration` holds the selected registry contract, substituted types and
+ordinary binding/conversion facts. `Iteration_Preparation` owns admission and lexical
+binding; the loop worker still owns body/transfer traversal. C++ generation borrows
+the once-evaluated source, extends temporary lifetime and consumes const entry views
+through a shared checked runtime adapter. It never snapshots the collection.
+Mutation/replacement semantics remain unsupported and block Chapter 06 closeout
+under CH06-ITER-01. Break/continue facts observe
 their prepared enclosing target; transient completion composes four exit possibilities
 without a CFG. Conditional expressions own condition, optional true branch and
 fallback; absence of the true branch represents shorthand without duplicating the

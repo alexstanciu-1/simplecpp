@@ -1059,6 +1059,41 @@ final class compound_assignment_expression_children_iterator extends children_it
 	}
 }
 
+/** Inspect named foreach fields without materializing a child list. */
+final class foreach_children_iterator extends children_iterator
+{
+	private int $next_field = 0;
+
+	public function __construct(private foreach_node $source)
+	{
+	}
+
+	/** Skip the optional key without prematurely reporting the cursor exhausted. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_field === 0) {
+			$this->next_field++;
+			return $this->source->iterable;
+		}
+		if ($this->next_field === 1)
+		{
+			$this->next_field++;
+			if ($this->source->key !== null) {
+				return $this->source->key;
+			}
+		}
+		if ($this->next_field === 2) {
+			$this->next_field++;
+			return $this->source->value;
+		}
+		if ($this->next_field === 3) {
+			$this->next_field++;
+			return $this->source->body;
+		}
+		return null;
+	}
+}
+
 final class interpolation_value_children_iterator extends children_iterator
 {
 	private interpolation_value_node $source;

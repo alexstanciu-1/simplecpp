@@ -137,6 +137,9 @@ final class CPP_Syntax
 		if ($node instanceof for_node) {
 			return $this->generate_for(object_cast($node, for_node::class));
 		}
+		if ($node instanceof foreach_node) {
+			return $this->generate_foreach(object_cast($node, foreach_node::class));
+		}
 		if ($node instanceof switch_node) {
 			return $this->generate_switch(object_cast($node, switch_node::class));
 		}
@@ -322,6 +325,31 @@ final class CPP_Syntax
 			$update_text .= '(void)(' . $this->expression($update) . ')';
 		}
 		return $text . 'for (; ' . $test . '; ' . $update_text . ') ' . $this->loop_body($node) . "}\n";
+	}
+
+	/** Borrow the once-evaluated source; value bindings copy entries, not the collection. */
+	public function generate_foreach(foreach_node $node): string
+	{
+		$facts /** prepared_iteration */ = $node->require_preparation()->iteration;
+		$this->context->headers['scpp/value_iteration.hpp'] = true;
+		$id = $this->context->next_temporary;
+		$this->context->next_temporary++;
+		$source = 'foreach_source_' . $id;
+		$entry = 'foreach_entry_' . $id;
+		$text = "{\nconst auto& " . $source . ' = ' . $this->expression($node->iterable) . ";\n";
+		$text .= 'for (auto ' . $entry . ' : scpp::value_iteration(' . $source . ")) {\n";
+		if ($facts->key !== null) {
+			$text .= $this->iteration_binding($facts->key, $entry . '.key()');
+		}
+		$text .= $this->iteration_binding($facts->value, $entry . '.value_copy()');
+		return $text . $this->loop_body($node) . "}\n}\n";
+	}
+
+	private function iteration_binding(prepared_binding $binding, string $value): string
+	{
+		$entry = object_cast(weakref_get($binding->declaration), collected_name::class);
+		return CPP_Generator::generate_storage_value($binding, CPP_Generator::local_name($entry),
+			$value, true, $this->context) . ";\n";
 	}
 
 	public function generate_control_transfer(control_transfer_node $node): string

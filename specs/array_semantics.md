@@ -26,6 +26,41 @@ The goal is to stabilize:
 This document does **not** expand the supported native-reference surface.
 Reference safety remains governed by `specs/native_reference_safety.md` and `specs/references.md`.
 
+## v0.2 value iteration
+
+The bounded `foreach ($source as $value)` and `foreach ($source as $key => $value)`
+forms accept registered vector, hash, mixed-table and dynamic-container sources.
+Evaluate the source expression once before binding either variable; retain it for
+the loop lifetime, including temporary function results. Vector keys are `int` and
+values are T; hash<V,K> keys are K and values are V. Mixed/dynamic keys and stored
+values use their current mixed-only boundary; this does not resolve the separately
+tracked mixed/dynamic containment question. Vectors visit index order, hashes/tables
+visit their established entry order. Each selected value uses its ordinary copy
+semantics; no native reference to an element is exposed.
+
+The key is a fresh loop-local binding. The value reuses an already visible binding
+when present, applying its ordinary typed-assignment conversion before each body
+execution; otherwise it is a new loop-local binding inferred from the element type.
+New bindings do not leak outside the loop. Zero iterations leave an existing value
+unchanged. Key and value names must be distinct. Conversion failure propagates before
+that body execution; completed earlier iterations are not rolled back. This v0.2 rule
+supersedes older contradictory generator guidance that both names always shadow.
+
+Preparation rejects statically noniterable types. Mixed is admitted statically but
+checked at runtime: a non-table payload (including null) throws. An absent dynamic
+handle also throws. Valid empty containers execute zero iterations. The old runtime's
+silent-empty mixed fallback is not the v0.2 rule. Weak and cross-family iteration,
+automatic nullable/Result unwrapping, destructuring and by-reference bindings remain
+outside this implementation slice. Ordinary `break`, `continue` and `return` apply;
+an iteration body alone cannot satisfy a required return because the source can be empty.
+
+**Mutation/replacement during iteration is unresolved and unsupported in this slice.**
+This includes mutations through aliases or calls. No shallow/deep collection snapshot
+is introduced; copying the current element is not a snapshot of all entries. Neither
+live-mutation behavior nor a particular rejection/checking policy is promised here.
+CH06-ITER-01 blocks chapter closeout until the user agrees on semantics and a suitable
+performant lifetime/invalidation design. It does not block non-mutating value iteration.
+
 ## 2. Core model
 
 ### v0.2 construction boundary

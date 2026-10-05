@@ -234,7 +234,7 @@ final class CPP_Generator
 	}
 
 	/** Render one declaration or assignment from an already evaluated value expression. */
-	private static function generate_storage_value(prepared_binding $binding, string $name, string $value, bool $explicit_type, cpp_generation_context $context): string
+	public static function generate_storage_value(prepared_binding $binding, string $name, string $value, bool $explicit_type, cpp_generation_context $context): string
 	{
 		$prefix = '';
 		if ($binding->resolved_kind === binding_kind::declaration) {

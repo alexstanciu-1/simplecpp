@@ -7,8 +7,9 @@ Doc Status: planning
 
 Requires values, expressions and basic calls. Establish reads versus writes before nested mutation and foreach.
 
-**Chapter closeout is blocked by CH06-MIX-DYN-01 below.** Continue the agreed slices,
-but discuss and resolve this debt with the user before declaring Chapter 06 complete.
+**Chapter closeout is blocked by CH06-MIX-DYN-01 and CH06-ITER-01 below.** Continue
+the agreed slices, but discuss and resolve both debts with the user before declaring
+Chapter 06 complete.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
@@ -123,12 +124,11 @@ indexing/iteration. Reuse the ordinary parameter/vector representation here rath
 than introducing a variadic-specific read or iteration path. See
 [the variadic slice](04_functions.md#typed-trailing-variadics--2026-10-02).
 
-Iteration already has a reserved `foreach_node extends loop_node` in
-`03_parse/structures/structures_loops.php`. Complete that specialization when this
-chapter reaches foreach; reuse its inherited `block_node` body, loop-local preparation
-and nearest break/continue protocol. The [Chapter 03 loop design](03_control_flow.md#agreed-loop-slice--2026-10-02)
-owns the shared foundation. Iterable/key/value syntax, binding/lifetime facts and
-iteration-specific continuation are TODOs here; the placeholder is not parser support.
+The originally reserved `foreach_node extends loop_node` in
+`03_parse/structures/structures_loops.php` is now completed for bounded value iteration.
+It reuses the inherited `block_node` body, loop-local preparation and nearest
+break/continue protocol from the [Chapter 03 loop design](03_control_flow.md#agreed-loop-slice--2026-10-02).
+See the value-foreach checkpoint below for its implemented scope and mutation debt.
 
 Follow the [catalog gates](README.md#prerequisite-gates) and the revised common-family
 sequence above. Split `ARR-INIT-004` source variants against the known-target rule
@@ -546,14 +546,14 @@ may repeat O(depth²) prefix lookups. Keep safe re-resolution until an effect-aw
 runtime cursor improvement is justified; do not optimize by retaining unsafe interior
 references or copying full containers. This is non-blocking first-pass debt.
 
-Next: implement the agreed bounded value-iteration model below; mutation policy and
-reference iteration remain separate. **CH06-MIX-DYN-01 stays open and blocks chapter closeout.**
+The following checkpoint implements bounded value iteration. **CH06-MIX-DYN-01 and
+CH06-ITER-01 remain open and block chapter closeout.**
 
-### Value foreach — agreed scope, implementation pending
+### Value foreach — 2026-10-05
 
 The user accepted the shared value-iteration direction for vector, hash, mixed and
-dynamic, with both value-only and key/value headers. Complete the reserved
-`foreach_node extends loop_node`; reuse its body, scope and break/continue protocol.
+dynamic, with both value-only and key/value headers. The formerly reserved
+`foreach_node extends loop_node` now reuses its body, scope and break/continue protocol.
 Registered iteration capabilities supply key/value types to preparation. Preparation
 owns binding and conversion decisions; the backend consumes settled facts rather
 than inferring container types from syntax. Evaluate the iterable expression once
@@ -569,14 +569,48 @@ approved by iteration.
 The agreed binding direction follows the detailed imported catalog: the key is
 loop-local; a new value name is loop-local; an existing value binding is reused with
 its established assignment conversion on each iteration. Zero iterations leave that
-existing value unchanged. Reconcile the conflicting older generator rule claiming
-both names always shadow when publishing the owning v0.2 semantic contract.
+existing value unchanged. The owning [v0.2 value-iteration contract](../../../../specs/array_semantics.md#v02-value-iteration)
+supersedes the conflicting older generator rule claiming both names always shadow.
 Reference iteration, destructuring and automatic wrapper unwrapping remain outside
 this first slice.
 
+Implementation: `Iteration_Contracts` registers exact definition identities and
+substitutable key/value types, separately from bracket capability. The preparation
+worker resolves that signature and ordinary `prepared_binding` conversions once;
+loop-owned facts supply completion and emission. Parser collection only inventories
+the header's write occurrences. Neutral child traversal covers header and body for
+cleanup, compaction and retained-work recovery.
+
+The C++ emitter binds `const auto&` to the once-evaluated source, extends a temporary's
+lifetime through the loop and emits one common range form. `value_iteration.hpp`
+reuses existing const vector/hash entry ranges, adds checked mixed/dynamic admission,
+and copies only selected keys/values into source bindings. There is no upfront entry
+snapshot, per-entry type erasure for typed containers, or iterator protocol in syntax.
+Read-only mixed iteration does not detach its COW table. Lifetime safety here assumes
+the explicitly bounded non-mutating source; alias mutation is not silently supported.
+
+Legacy comparison: preserve typed `key()`/`value_copy()` entry access, but do not reuse
+the type-blind generator's inference heuristics, source-slot rewriting for references,
+or the old silent-empty mixed fallback. Prepared source types drive one shared path.
+The existing runtime header is reusable under PCH; no native compile-time speedup is
+claimed, and modular-header tuning remains separate from this semantic slice.
+
+Evidence: `/tmp/my-try-iteration-20261005-3` (PCH) and
+`/tmp/my-try-iteration-20261005-4` (without PCH) each passed five PHP suites and 34
+generated C++ programs. All 1,225 prior C++ exports remain byte-identical. Tests cover
+typed/hash/fat keys and values, scopes, empty loops, one-time temporary sources,
+nested loops/switch transfers, copies, nullable elements, runtime failures and
+retained-body failure/recovery. PHP used CLI fallback after sandbox FPM socket denial.
+The compiler itself was not rebuilt natively.
+
+Final candidate `/tmp/my-try-iteration-20261005-5` also passed five PHP suites and
+34 PCH-backed programs, including the added vector-to-hash retained-body key-type
+refresh proof. The same 1,225 prior exports remain unchanged.
+
 #### CH06-ITER-01 — mutation during iteration
 
-Status: **open; mutation semantics deferred by the user**. Does not block the
+Status: **open; blocking Chapter 06 completion**, at the user's explicit request.
+Mutation semantics are deferred for discussion, not waived. Does not block the
 ordinary non-mutating value-iteration slice. The shallow-entry-snapshot proposal was
 not adopted; do not implement it as a default or hidden safety fallback.
 
@@ -609,8 +643,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-APPEND-001](#arr-append-001) | bounded-support | `$a vector<int> = []; $a[] = 1;` | passed | passed | deferred | Vector, integer-key hash, mixed and dynamic; string-key hash rejects |
 | [FUNC-DECL-003B](#func-decl-003b) | pending-discussion | `function f(vector<int> $a): void {}` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [FUNC-ARG-001](#func-arg-001) | pending-discussion | `f($x[0]);` | unverified | unverified | deferred | — |
-| [CTRL-FOREACH-001](#ctrl-foreach-001) | pending-discussion | `foreach ($items as $item) { }` | unverified | unverified | deferred | — |
-| [CTRL-FOREACH-002](#ctrl-foreach-002) | pending-discussion | `foreach ($items as $k => $v) { }` | unverified | unverified | deferred | — |
+| [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; non-mutating value iteration; CH06-ITER-01 blocks closeout |
+| [CTRL-FOREACH-002](#ctrl-foreach-002) | bounded-support | `foreach ($items as $k => $v) { }` | passed | passed | deferred | Typed keys/values, loop-local key, existing value reuse; no snapshots |
 | [CTRL-FOREACH-003](#ctrl-foreach-003) | pending-discussion | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | — |
 | [CTRL-FOREACH-004](#ctrl-foreach-004) | pending-discussion | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | — |
 | [CAST-ARRAY-001](#cast-array-001) | pending-discussion | `$a = (array)$b;` | unverified | unverified | deferred | — |
@@ -669,7 +703,7 @@ ERROR
 
 ## CTRL-FOREACH-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Shared value iteration](#value-foreach--2026-10-05), through a checked const-entry range and prepared value binding; mutation/replacement remains unsupported and blocks chapter closeout.
 
 ### Imported version 1
 
@@ -706,7 +740,7 @@ for (auto __scpp_foreach_entry_L : foreach_range(items)) { auto item = __scpp_fo
 
 ## CTRL-FOREACH-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Shared value iteration](#value-foreach--2026-10-05), with a loop-local typed key and prepared value binding; no collection snapshot.
 
 ### Imported version 1
 

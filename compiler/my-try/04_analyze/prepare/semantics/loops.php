@@ -22,7 +22,8 @@ final class Loop_Preparation
 			if ($syntax instanceof for_node) {
 				self::for_continuation(object_cast($syntax, for_node::class), $context);
 			}
-			return Completion_Preparation::loop($body, $syntax->body_runs_first(), $facts->condition !== null);
+			return Completion_Preparation::loop($body, $syntax->body_runs_first(),
+				($facts->condition !== null) || ($facts->iteration !== null));
 		}
 		finally {
 			$context->locals = $enclosing;
@@ -42,6 +43,11 @@ final class Loop_Preparation
 		}
 		if ($syntax instanceof for_node) {
 			return self::for_header(object_cast($syntax, for_node::class), $context);
+		}
+		if ($syntax instanceof foreach_node) {
+			$facts = new prepared_loop();
+			$facts->iteration = Iteration_Preparation::prepare(object_cast($syntax, foreach_node::class), $context);
+			return $facts;
 		}
 		throw new \RuntimeException('Preparation is not supported for this loop');
 	}

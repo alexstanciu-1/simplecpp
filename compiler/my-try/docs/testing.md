@@ -17,6 +17,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For non-mutating value `foreach` across vector/hash/mixed/dynamic:
+
+```bash
+python3 compiler/my-try/tests/iteration.py --results /tmp/FRESH_ITERATION_RESULTS
+```
+
+Five focused PHP suites check loop integration, scope, rejection, retained-body
+recovery and exports. `foreach_*` generated programs cover typed keys/values,
+runtime kind and conversion failures, temporary lifetimes, empty sources and nested
+transfers. PCH is default; `--no-pch` checks header completeness. Uses the shared
+12-slot runner. This is not a native compiler rebuild or proof of mutation semantics.
+
 For lazy keyed `isset`/`empty` and associative `unset`:
 
 ```bash

@@ -40,6 +40,7 @@ final class Model
 	public static Runtime_Callables $runtime_callables;
 	public static Initialization_Contracts $initialization_contracts;
 	public static Indexing_Contracts $indexing_contracts;
+	public static Iteration_Contracts $iteration_contracts;
 	public static CPP_Callable_Bindings $cpp_callable_bindings;
 	/**
 	 * Numeric storage of llvm_module records, including their LLVM text.

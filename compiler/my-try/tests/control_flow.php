@@ -324,7 +324,7 @@ try
 		'$a = 1; $b = 2; (true ? $a : $b) = 3;',
 		'switch (1) { default: function local(): int { return 1; } }',
 		'while (true) break;', 'do {} while (true)', 'for (;;) { break 2; }',
-		'for (;;) { continue 2; }', 'foreach ($items as $item) {}',
+		'for (;;) { continue 2; }', 'foreach ($items as &$item) {}',
 		'if (true) return 1;', 'if (true): return 1; endif;',
 		'if (true) { function local(): int { return 1; } }', 'if (true) { return 1;'] as $source)
 	{
@@ -518,7 +518,7 @@ try
 	$post_test = $function_body->statements[1];
 	control_check(iterator_to_array($post_test->children()) === [$post_test->body, $post_test->condition], 'Do-while inspection order');
 	control_check(iterator_to_array($loop->children()) === iterator_to_array($loop->children()), 'Loop inspection cannot be repeated');
-	control_check(is_subclass_of(foreach_node::class, loop_node::class), 'Future foreach lost its shared loop foundation');
+	control_check(is_subclass_of(foreach_node::class, loop_node::class), 'Foreach lost its shared loop foundation');
 	$compiler->cpp();
 	$original = Model::$cpp_files[0]->text;
 	file_put_contents($path, "\n\n" . $loop_source);

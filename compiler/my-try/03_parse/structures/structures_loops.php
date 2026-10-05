@@ -98,16 +98,34 @@ final class for_node extends loop_node
 	}
 }
 
-/**
- * TODO Chapter 06: complete this reserved loop specialization and make it final.
- * Inherit body and loop facts from loop_node; extend Loop_Preparation for header,
- * continuation and nearest break/continue handling. Add named iterable/key/value syntax here;
- * do not introduce another statement body or an independent loop protocol.
- * Iteration lifetime, reference/value binding and continuation lowering belong to
- * the foreach slice. No parser admission or executable implementation exists yet.
- */
-abstract class foreach_node extends loop_node
+/** Value iteration reuses the ordinary loop body and transfer protocol. */
+final class foreach_node extends loop_node
 {
+	public expression_node $iterable;
+	public ?variable_reference_node $key = null;
+	public variable_reference_node $value;
+
+	public function kind(): node_kind
+	{
+		return node_kind::foreach_loop;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new foreach_children_iterator($this);
+	}
+
+	/** Header binding syntax remains an owned child even though facts live on the loop. */
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->iterable);
+		if ($this->key !== null) {
+			$worker->edge($this, $this->key);
+		}
+		$worker->edge($this, $this->value);
+		$worker->edge($this, $this->body);
+	}
 }
 
 final class break_node extends control_transfer_node

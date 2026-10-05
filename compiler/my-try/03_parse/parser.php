@@ -294,6 +294,7 @@ final class Parser_Run
 		if ($this->text() === 'while') { return $this->while_statement(); }
 		if ($this->text() === 'do') { return $this->do_while_statement(); }
 		if ($this->text() === 'for') { return $this->for_statement(); }
+		if ($this->text() === 'foreach') { return $this->foreach_statement(); }
 		if (($this->text() === 'break') || ($this->text() === 'continue')) {
 			return $this->control_transfer();
 		}
@@ -429,6 +430,41 @@ final class Parser_Run
 		$loop->body = $this->statement_block();
 		$this->finish_node($loop, $start);
 		return $loop;
+	}
+
+	/** One value-iteration grammar owns the source, optional key and value bindings. */
+	private function foreach_statement(): foreach_node
+	{
+		$start = $this->position++;
+		$loop = new foreach_node();
+		$this->expect('(');
+		$loop->iterable = $this->expression();
+		$this->expect('as');
+		$first = $this->foreach_binding();
+		if ($this->text() === '=>') {
+			$this->position++;
+			$loop->key = $first;
+			$loop->value = $this->foreach_binding();
+		}
+		else {
+			$loop->value = $first;
+		}
+		$this->expect(')');
+		$loop->body = $this->statement_block();
+		$this->finish_node($loop, $start);
+		return $loop;
+	}
+
+	/** Syntax-only binding inventory; scope/reuse/type decisions belong to preparation. */
+	private function foreach_binding(): variable_reference_node
+	{
+		if (!string_byte_starts_with($this->text(), '$')) {
+			throw new \RuntimeException($this->error_message('foreach requires a simple value binding; references and destructuring are deferred'));
+		}
+		$start = $this->position++;
+		$binding = $this->variable_reference($start);
+		$binding->collect_write($this->collector, $this->current_scope, $start);
+		return $binding;
 	}
 
 	private function for_expressions(Storage $expressions /** Storage<expression_node> */, string $end): void

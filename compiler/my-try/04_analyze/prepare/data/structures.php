@@ -335,10 +335,21 @@ final class statement_completion
 	}
 }
 
-/** A missing test denotes the omitted for condition, which always continues. */
+/** Foreach carries iteration facts; other loops with no condition run until transfer. */
 final class prepared_loop
 {
 	public ?prepared_condition $condition = null;
+	public ?prepared_iteration $iteration = null;
+}
+
+/** Loop-owned binding facts refer to registry signatures and existing storage identities. */
+final class prepared_iteration
+{
+	public iteration_declaration $contract;
+	public canonical_type_use $key_type;
+	public canonical_type_use $value_type;
+	public ?prepared_binding $key = null;
+	public prepared_binding $value;
 }
 
 /** Default has no value; every case retains its normalized exact signed decimal. */

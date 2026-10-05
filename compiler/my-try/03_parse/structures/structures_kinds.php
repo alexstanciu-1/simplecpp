@@ -25,6 +25,7 @@ enum node_kind
 	case while_loop;
 	case do_while_loop;
 	case for_loop;
+	case foreach_loop;
 	case break_statement;
 	case continue_statement;
 	case function_body;
