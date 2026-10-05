@@ -77,3 +77,8 @@ Important integration checks:
 Next design review should choose the private storage boundary and recursive container
 types before any cross-owner changes. Runtime layout/lifetime, family rejection,
 copy/alias semantics, JSON modes and compiler facts require separate focused proofs.
+
+Future callable-valued entries are recorded as
+[CH15-CALLABLE-01](../catalog/15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries).
+Their representation is a design consideration, not part of this refactor's
+implementation scope or permission to introduce callable execution early.

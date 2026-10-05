@@ -87,3 +87,43 @@ Review affected `noexcept` and native-access boundaries explicitly.
 No runtime/compiler implementation was changed by this deferral. Existing bounded
 value foreach remains available; neither safe mutation nor reference iteration is
 claimed by its existing tests. CH06-MIX-DYN-01 stays a separate Chapter 06 blocker.
+
+## Design considerations for final review
+
+These items require review, not automatic implementation or an implicit promotion
+to blocking feature debt. Preserve the distinction from the blocking inventory above.
+
+### CH15-CALLABLE-01 — callable values in mixed/dynamic entries
+
+Recorded at the user's request on 2026-10-05. Consider function/closure values in
+both families, for example `{my_func: function (): int { return 1; }}`. Implementation
+belongs with [Chapter 12](12_closures.md), not the current mixed layout/dynamic refactor.
+The [storage discussion](../planning/mixed_dynamic_storage.md) should leave room for
+this extension without implementing an unused callable kind or placeholder execution.
+
+Candidate direction, to validate with the callable model:
+
+- One callable concept for locals, arguments, returns and entries: code entry,
+  signature (parameter types, passing modes and return type), and optional captured
+  environment. A shared handle may preserve closure identity and environment lifetime;
+  capture-free functions need no captured environment.
+- Both value families may admit the same callable category without admitting each
+  other's container payloads. Storing a callable as a property does not implicitly
+  bind a receiver or `$this`; copying it out preserves its invocation meaning.
+  Explicit receiver-bound methods would be a separate callable form.
+- Consider treating captures as private callable state, not entries in the enclosing
+  data tree. Decide whether captures may include either family, while preserving
+  ownership, reference-escape rules and cycle handling. This is not yet a settled
+  exception to family separation.
+- Known signatures are validated during preparation; runtime-selected callables
+  need kind/signature/argument checks before invocation. Share existing call contracts
+  where truthful rather than adding container-specific invocation semantics.
+- Target a callable handle within the 16-byte payload budget so tagged values may
+  retain the proposed 24-byte layout; measure before claiming this is achieved.
+  Reuse scalar/callable support without treating callbacks as JSON values.
+- JSON decoding does not construct functions. Proposed encoding behavior is explicit
+  failure for callable payloads; reconcile with the JSON contract when enabling them.
+
+Review proofs should cover storing/extracting/copying/invoking callables in both
+families, preserved capture state and lifetime, absent/non-callable entries,
+signature mismatch, receiver independence, reference non-escape and encoding failure.
