@@ -546,8 +546,52 @@ may repeat O(depth²) prefix lookups. Keep safe re-resolution until an effect-aw
 runtime cursor improvement is justified; do not optimize by retaining unsafe interior
 references or copying full containers. This is non-blocking first-pass debt.
 
-Next: discuss value `foreach` across vector, hash, mixed and dynamic; reference iteration
-remains separate. **CH06-MIX-DYN-01 stays open and blocks chapter closeout.**
+Next: implement the agreed bounded value-iteration model below; mutation policy and
+reference iteration remain separate. **CH06-MIX-DYN-01 stays open and blocks chapter closeout.**
+
+### Value foreach — agreed scope, implementation pending
+
+The user accepted the shared value-iteration direction for vector, hash, mixed and
+dynamic, with both value-only and key/value headers. Complete the reserved
+`foreach_node extends loop_node`; reuse its body, scope and break/continue protocol.
+Registered iteration capabilities supply key/value types to preparation. Preparation
+owns binding and conversion decisions; the backend consumes settled facts rather
+than inferring container types from syntax. Evaluate the iterable expression once
+and keep its lifetime valid for the loop.
+
+Typed vector iteration produces int keys and T values; hash<V,K> produces K keys
+and V values. Mixed/dynamic admission is static, with iterable-kind checks at runtime:
+wrong-kind/null sources and absent dynamic handles throw; valid empty containers
+execute zero iterations. Do not inherit the old mixed runtime helper's silent-empty
+fallback. Cross-family containment remains governed by CH06-MIX-DYN-01, not implicitly
+approved by iteration.
+
+The agreed binding direction follows the detailed imported catalog: the key is
+loop-local; a new value name is loop-local; an existing value binding is reused with
+its established assignment conversion on each iteration. Zero iterations leave that
+existing value unchanged. Reconcile the conflicting older generator rule claiming
+both names always shadow when publishing the owning v0.2 semantic contract.
+Reference iteration, destructuring and automatic wrapper unwrapping remain outside
+this first slice.
+
+#### CH06-ITER-01 — mutation during iteration
+
+Status: **open; mutation semantics deferred by the user**. Does not block the
+ordinary non-mutating value-iteration slice. The shallow-entry-snapshot proposal was
+not adopted; do not implement it as a default or hidden safety fallback.
+
+Before admitting mutation during iteration, decide the effects of replacing the
+source, inserting/appending/removing entries, changing existing values and mutation
+through aliases or calls. Specify which entries/values are visited, iterator and
+owner lifetime, invalidation handling, and failure behavior. A borrowed range alone
+is not proof of safety; by-value element binding is not a collection snapshot.
+
+Revisit more performant options with the user, including stable cursors,
+generation-checked iteration or other owner-managed traversal. Compare their
+runtime/storage and native compilation costs before choosing; no option is approved
+by this note. Do not silently define mutation as snapshot, live traversal, a no-op,
+or a newly guaranteed runtime error. Keep mutation/replacement outside the supported
+slice and expose any unavoidable lifetime/safety prerequisite before enabling it.
 
 ### End-to-end catalog rows
 
