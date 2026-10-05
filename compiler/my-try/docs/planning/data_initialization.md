@@ -1,10 +1,12 @@
 # Data initialization: adopted hybrid and stage boundary
 Doc Status: planning
 
-Recorded 2026-10-05. Hybrid direction adopted; implementation not started.
+Recorded 2026-10-05. Hybrid direction and general stage boundary adopted;
+notation/interface standards complete; implementation not started.
 Language authority remains [the top-level standard](../../../../specs/data_initialization.md).
-This note records the subsequent lifetime/lowering decision and implementation gates;
-it does not claim an implemented borrowing facility or replace the language standard.
+This note records lowering choices and implementation gates. The lifetime rules and
+exact interface/input API have now been consolidated into the top-level standard;
+this note does not claim an implemented borrowing facility or replace that standard.
 
 ## Adopted hybrid
 
@@ -13,7 +15,7 @@ construction targets and runtime factories. Combine these with v0.1's temporary
 inputs and direct population of destination storage, rather than requiring a second
 owning heap container for every literal.
 
-- `initializer_list<T>` is proposed as read-only, call-scoped factory input, not a
+- `initializer_list<T>` is read-only, call-scoped factory input, not a
   retainable owning container. Keyed input is a sequence of typed key/value entries.
 - Backing storage remains alive throughout the synchronous factory call. It is
   compiler-managed; no source native interior references/pointers are exposed.
@@ -46,7 +48,7 @@ without container-family construction algorithms or C++ allocation policy. They
 provide data for S2S. No vector/hash/mixed/dynamic name-switch should be introduced
 into generic stage engines to implement the factory protocol.
 
-There is an important boundary to confirm before implementation: being independent
+Confirmed boundary: being independent
 of container implementations cannot mean being unaware of source syntax, types,
 interface contracts and lifetime validity. The existing
 [preparation/emission boundary](preparation_emission_audit.md#result-and-boundary)
@@ -54,7 +56,7 @@ and the agreed known-target/non-escape requirements put these semantic guarantee
 before generation. Moving them into C++ emission would be an architectural change,
 not merely the hybrid allocation choice. No such relocation is implemented here.
 
-Recommended interpretation, pending confirmation:
+Agreed stage responsibilities:
 
 | Owner | General responsibility | Excluded implementation detail |
 | --- | --- | --- |
@@ -66,9 +68,24 @@ Recommended interpretation, pending confirmation:
 
 Built-in contracts should supply the same interface/type information that opted-in
 user declarations supply. Concrete factory bodies own family-specific algorithms.
+Built-in identity/contracts originate in the registry; source-derived capabilities
+remain with completed declaration facts and dependency-aware semantic queries.
+Do not conflate collection capabilities with fat/inline/handle representation or
+parameter passing modes. No representation alone grants construction or iteration.
 The exact generic contract representation and bounded non-escape mechanism require
 model discussion before code; this note does not authorize a general borrow checker.
 If a wide cross-owner refactor is necessary, stop and discuss it first.
+
+## Interface documentation checkpoint
+
+Step 2 is complete in [the language standard](../../../../specs/data_initialization.md#3-recognized-opt-in-interfaces):
+`list_initializable<TSelf, TValue>`,
+`key_value_initializable<TSelf, TValue, TKey = string>`, static factories returning
+the exact target, `initializer_list<T>` and `initializer_entry<TValue, TKey = string>`,
+call-scoped non-escape, built-in shape/empty/duplicate policies and mixed-only storage.
+The earlier retainable owning-sequence proposal is superseded. Compiler data model
+and lowering details still need the normal pre-implementation review; this does not
+reopen the agreed API or mark any catalog program as working.
 
 ## C++ compilation and proof gates
 

@@ -12,7 +12,9 @@ types and runtime factory validation. It covers vector, hash, mixed and dynamic;
 user-defined types explicitly opt in when their compiler support is available.
 Notation includes quoted/bare property names and trailing commas. Nested mixed and
 dynamic constructions inherit their enclosing family; stored entry values are mixed
-only. Concrete interface/input API declarations remain to be settled before coding.
+only. The interface/input API is now specified: read-only, call-scoped initializer
+sequences cannot escape a factory call; preserving copied values follows their normal
+ownership/identity rules. Compiler pre-preparation must preserve this lifetime contract.
 
 In v0.3, investigate compiler support that pre-prepares eligible literal data for
 types participating in that protocol. Possibilities include validated constant

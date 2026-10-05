@@ -1,7 +1,8 @@
 # Data notation and initialization interfaces
 Doc Status: normative
 
-Status: Agreed v0.2 contract, 2026-10-05; implementation pending.
+Status: Notation and initialization-interface standards complete, 2026-10-05;
+implementation pending.
 
 ## Authority and version boundary
 
@@ -103,21 +104,75 @@ opt-in, not duck typing or detection of a specially named method. The factory ow
 how input becomes a completed instance of its target type. Implementing this role
 does not automatically grant indexing, mutation, iteration or native references.
 
-`_from_list` and `_from_key_value` are the agreed conceptual factory roles. Final
-interface identifiers, exact source declarations, generic binding rules and physical
-input representation must be settled before implementation; the following notation
-describes typed inputs, not existing callable APIs:
+### 3.1 Interface declarations
 
-```text
-vector<int>._from_list(initializer_list<int> [10, 20])
-hash<int>._from_key_value(initializer_entries<string, int> [
-    entry("alice", 10), entry("bob", 20)
-])
+The recognized interfaces and factory signatures are:
+
+```php
+interface list_initializable<TSelf, TValue> {
+    public static function _from_list(
+        initializer_list<TValue> $values
+    ): TSelf;
+}
+
+interface key_value_initializable<TSelf, TValue, TKey = string> {
+    public static function _from_key_value(
+        initializer_list<initializer_entry<TValue, TKey>> $entries
+    ): TSelf;
+}
 ```
 
-These inputs must not depend on constructing another vector/hash through the same
-protocol first. The backend may use a suitable independent temporary representation;
-this contract does not require boxing typed values or virtual dispatch.
+These are standard declarations for the v0.2 language API, not a claim that the
+current parser accepts generic interface declarations. `TSelf` must denote the exact
+construction target, including template arguments; it is not an arbitrary return
+type. `TValue` names the input value type. Keyed parameters put value before key,
+matching `hash<TValue, TKey>`; omitted `TKey` means `string`.
+
+The compiler checks a public static factory against the selected interface binding.
+Factories are direct static calls, not virtual instance dispatch. This recognized
+static requirement extends the older instance-only interface model; it does not
+silently enable arbitrary static-abstract interfaces. Binding must be unambiguous;
+the compiler must not pick an input type by trying the literal's values against
+multiple conflicting implementations.
+
+A user implementation declares a concrete return type, for example:
+
+```php
+class User implements key_value_initializable<User, mixed> {
+    public static function _from_key_value(
+        initializer_list<initializer_entry<mixed, string>> $entries
+    ): User {
+        // Validate entries, construct an instance, and return that User.
+        // Factory body intentionally omitted in this declaration example.
+    }
+}
+```
+
+The factory returns the completed target under its ordinary representation rules
+(a class handle or a struct value as appropriate), not an implicit `result<TSelf>`
+or nullable wrapper. Factory validation failures throw. The example body above is
+schematic, not a complete executable function. This standard does not supply an
+automatic constructor or map entry keys to fields.
+
+### 3.2 Input sequence and entry API
+
+Two standard types provide input:
+
+- `initializer_list<T>`: an ordered, read-only, call-scoped sequence.
+- `initializer_entry<TValue, TKey = string>`: an immutable value record with readable
+  fields `key: TKey` and `value: TValue`.
+
+`initializer_list<T>` exposes `count(): int` and `at(int $index): T`, and supports
+value iteration in input order. `at` rejects negative/out-of-range indices by throwing.
+Reads return values, never native references to backing storage. Keyed initialization
+uses `initializer_list<initializer_entry<TValue, TKey>>`; there is no separate
+`initializer_entries` container. The first v0.2 input domain requires copyable
+element/key/value types; move-only or consuming input is deferred.
+
+The compiler materializes typed input without first constructing another vector/hash
+through this same protocol. Typed input does not require mixed boxing unless the
+selected interface declares mixed. The opaque sequence representation and allocation
+strategy are backend concerns, not source-level native views or pointers.
 
 Keyed input preserves source order and duplicate entries until the receiver handles
 them. Do not first materialize a hash that discards duplicates. Duplicate-key and
@@ -129,6 +184,79 @@ A heterogeneous user factory may explicitly accept string keys and mixed values.
 It then validates required keys and value kinds at runtime and returns its instance.
 Only values admitted by the established boxing contract can enter that mixed input;
 this does not introduce arbitrary heterogeneous unboxable argument packs.
+
+### 3.3 Call-scoped ownership and lifetime
+
+Initializer backing belongs to the construction call and stays alive throughout the
+synchronous factory invocation. The input is not an owning, retainable container.
+The factory may read/iterate it and copy element values into its result or other
+owning storage. Copied values retain their ordinary semantics: copying a dynamic
+handle preserves shared identity, not deep immutability.
+
+The input sequence must not escape through a return, field/global store, enclosing
+container, escaping closure, or unsafe forwarding. Copying/aliasing the sequence does
+not extend its backing lifetime. No source operation exposes backing pointers or
+native element references. Keeping an element value obtained by `at` is permitted;
+keeping the input view itself after the call is not. Suspension or asynchronous
+retention of the view is not admitted.
+
+These restrictions must be enforced by general semantic lifetime/capability checks
+before user-defined factories are enabled. Forwarding is permitted only where its
+non-escape can be established; unsupported paths must reject rather than rely on
+programmer discipline or Clang diagnostics. This is a bounded call-scoped input
+contract, not authorization for arbitrary borrowed spans or a general borrow checker.
+
+Empty input needs no backing allocation. Small inputs may use local temporary
+storage; large inputs may use heap backing to avoid excessive stack use. No fixed
+threshold or zero-allocation/zero-copy guarantee is part of the API. Factories
+populate the destination directly; they may reserve capacity using `count()`.
+Temporary elements may still be copied into destination storage. A factory that
+needs persistent input must explicitly copy values into ordinary owning storage.
+
+### 3.4 Built-in bindings and input shapes
+
+| Target | List interface | Keyed interface |
+| --- | --- | --- |
+| `vector<T>` | `list_initializable<vector<T>, T>` | None |
+| `hash<V, string>` | None | `key_value_initializable<hash<V, string>, V, string>` |
+| `hash<V, int>` | `list_initializable<hash<V, int>, V>` | `key_value_initializable<hash<V, int>, V, int>` |
+| `mixed` | `list_initializable<mixed, mixed>` | `key_value_initializable<mixed, mixed, mixed>` |
+| `dynamic` | `list_initializable<dynamic, mixed>` | `key_value_initializable<dynamic, mixed, mixed>` |
+
+Other typed hash key families retain their existing key restrictions and require
+their corresponding supported keyed binding; this slice does not enable new key
+families. List construction of an integer-keyed hash, mixed table or dynamic object
+assigns consecutive integer keys starting at zero. Dynamic list construction is
+integer-keyed shared object storage, not conversion to a vector.
+
+Selection rules:
+
+- Nonempty positional input requires the list interface.
+- Nonempty arrow-keyed input and all named-brace input require the keyed interface.
+- Empty `[]` selects the list interface if available, otherwise the keyed interface
+  with zero entries. A target supporting neither rejects during preparation.
+- Empty `{}` always requires the keyed interface. Thus `vector<int>::{}` rejects,
+  while `hash<int>::[]` is an empty hash construction.
+- Empty mixed construction produces an empty table payload, not null. Empty dynamic
+  construction produces a valid empty object, not an absent handle.
+
+Built-in keyed factories process entries in source order. Duplicate keys overwrite
+the prior value without moving the key from its first insertion position: last value
+wins. All expressions are evaluated, including overwritten entries. User-defined
+factories receive the original entries and may reject duplicates instead.
+
+Duplicates are determined after the receiver's established key conversion and
+normalization. Typed hashes do not implicitly equate integer and string keys. The
+existing PHP-target dynamic key normalization remains in effect: for example `"10"`
+normalizes to integer `10`, while `"08"` remains a string. See the
+[runtime key contract](../runtime/specs/spec.md) and [hash contract](../runtime/specs/hash_t.md).
+Dynamic keys must resolve to admitted integer/string kinds; a mixed-typed input key
+does not permit arbitrary payload kinds. Statically invalid combinations reject;
+unknown mixed kinds retain runtime validation. Null is not a positional sentinel.
+
+Combining positional and keyed entries in one bracket literal, such as
+`[10, "name" => "Alex", 20]`, is deferred in the v0.2 implementation and must reject
+explicitly. This does not retroactively prohibit the existing v0.1 form.
 
 ## 4. Mixed and dynamic nesting and storage
 
@@ -184,7 +312,25 @@ copying an existing dynamic handle still preserves its documented identity.
 Compiler pre-preparation is a [v0.3 investigation](../docs/v0.3/literal_construction_preparation.md),
 not a prerequisite for runtime-based v0.2 construction.
 
-## 6. Delivery and remaining API decisions
+### General stages and registry contracts
+
+Parsing preserves generic notation, ordered entries and optional explicit target
+syntax. Collection registers ordinary declarations and interface implementations.
+Preparation resolves targets, interface bindings, conversions, copy permission and
+non-escape validity through general contracts, without container-name dispatch or
+allocation algorithms. C++ S2S consumes settled facts and owns temporary storage,
+sequencing, representation and direct-call spelling. Runtime factories own actual
+construction and data validation. Lifetime errors do not move into C++ emission.
+
+For built-ins, type registry definitions expose identities and declared contracts.
+For source types, completed declaration facts supply their interfaces/capabilities
+through the same general semantic query path, with dependency tracking; the registry
+must not duplicate source-derived facts. Keep semantic capabilities, storage
+representation and transfer/lifetime rules separate. Neither a collection label nor
+a fat/reference-like representation automatically grants an initialization interface.
+Passing a parameter by reference is distinct from a type's shared-handle representation.
+
+## 6. Delivery and deferred work
 
 Vector, hash, mixed and dynamic must be designed through the common protocol from
 the start. Cover those families together per operation, with runtime kind checks
@@ -196,10 +342,12 @@ types to the protocol waits for their compiler interface/method support. Automat
 field matching and synthesized member initialization remain deferred, independently
 of explicit factories. Dynamic `->` and reference iteration remain separate work.
 
-Before coding, settle interface/input API declarations and each built-in adapter's
-empty-input selection, duplicate-key policy, positional-key policy and admissible
-input shapes against its existing contract. Mixed positional/keyed entries in one
-bracket initializer are not standardized by the three forms above; reconcile the
-legacy form explicitly rather than inventing a null sentinel or silently rejecting
-it as an existing language-wide prohibition. These API decisions do not reopen the
-agreed known-target, runtime-construction or mixed-only storage rules.
+The notation and interface documentation steps are complete. Concrete compiler
+records, registration/binding implementation, bounded lifetime enforcement, runtime
+adapters and C++ lowering remain implementation work, not unresolved source API.
+Before enabling factories, prove ordering, conversions, duplicate handling, empty
+states, failure cleanup, nested construction, non-escape rejection and incremental
+contract invalidation. Moving/consuming input, function-valued entries, mixed-shape
+bracket literals and automatic member initialization remain explicit deferred work.
+The [compiler implementation note](../compiler/my-try/docs/planning/data_initialization.md)
+records the hybrid lowering approach and performance proof boundaries.

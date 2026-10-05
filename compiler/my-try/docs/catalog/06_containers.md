@@ -18,8 +18,9 @@ contract; no construction implementation is claimed by this checkpoint.
 
 The current sequence replaces the typed-first/dynamic-later handoff grouping:
 
-1. Notation and recognized initialization-interface standard (recorded upstream).
-2. Agree exact interface/input API and built-in adapter contracts; implement common
+1. Notation and recognized initialization-interface standard (documentation complete upstream,
+   including exact factory/input API, lifetime rules and built-in policies).
+2. Review compiler model and implement common
    construction for vector, hash, mixed and dynamic, including nested data.
 3. Reads, writes/appends, typed boundaries and keyed probes across those families.
 4. Value iteration across those families, with runtime checks for dynamic kinds.
@@ -35,11 +36,14 @@ mixed-only values; dynamic payloads use `dynamic_v` and preserve shared identity
 Function-valued entries are documented for later implementation. Compiler literal
 pre-preparation belongs to the [v0.3 plan](../../../../docs/v0.3/literal_construction_preparation.md).
 
-Before coding: settle interface/input declarations and built-in empty/duplicate/key
-policies. The subsequently adopted [hybrid input/lowering direction](../planning/data_initialization.md)
+The notation documentation (step 1) and object initialization-interface documentation
+(step 2) are complete in the top-level standard; compiler/runtime support is pending.
+The adopted [hybrid input/lowering direction](../planning/data_initialization.md)
 uses call-scoped read-only inputs rather than retainable owning sequences; enforcing
-non-escape is a prerequisite. Its general-stage versus C++ boundary needs the
-clarification recorded there before implementation. Do not mark imported untyped
+non-escape is a prerequisite. The general-stage versus C++ boundary is confirmed:
+generic semantic checks precede emission; allocation and concrete construction do not
+belong in parsing/collection/preparation. Review retained model and bounded lifetime
+enforcement before coding. Do not mark imported untyped
 literal examples supported using v0.1 fallback
 typing. CH05-DYN-01 is spread across the common operation groups, not a second dynamic
 pass. Existing `(object)` bridges remain separate from direct typed construction;
