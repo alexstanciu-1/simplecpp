@@ -9,6 +9,30 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Boxed Result payload extension — 2026-10-05
+
+The Chapter 06 separated-family integration extends the existing Result owner to
+exact `mixed` and `dynamic` payloads in all three Result families. Construction,
+copying, checked required extraction, existing-output take, conditions/probes and
+exact-payload ternary/Elvis joins reuse the same prepared decisions and lowering.
+Approved Result-left `??` reuses wrapper value-state selection and boxed joins.
+The older scalar-only checkpoints below describe their original bounded proofs.
+
+No implicit two-step scalar boxing/unwrapping, family crossing, nullable boxed
+extension, nested wrapper payload, source error construction or profile-gate change
+is included. Dynamic `->`, reference foreach and library redesign are now explicitly
+owned by [Chapter 15](15_blocking_debt.md).
+
+`tests/fixtures/boxed_results.php` is one parameterized matrix for both families and
+all Result kinds. `tests/results.php` checks prepared facts, cleanup, early rejection
+and incremental failure/retry/repair. The focused `tests/dynamic_families.py` runner
+includes this matrix, as does the broad S2S fixture exporter.
+
+Proof: `/tmp/my-try-boxed-results-20261005-6` (PCH) and `-5` (without PCH)
+pass 14 PHP suites and 60 generated programs. This is not a native compiler rebuild;
+the [storage handoff](../planning/mixed_dynamic_storage.md#shared-boxed-result-payloads--2026-10-05)
+records the repair history and final routing consolidation.
+
 ## Positive-pass conclusion — 2026-10-04
 
 The bounded chapter 05 pass is complete, with explicit debt below. This is not full

@@ -78,7 +78,7 @@ JSON defaults to tagged dynamic, including scalar roots; explicit mixed decoding
 family-aware typed extraction and direct string encoding remain implemented.
 MySQL ordinary/prepared row adapters construct tagged dynamic rows directly.
 
-**Remaining gate:** boxed Result payload operations and JSON source registration.
+**Remaining gate:** JSON source registration; boxed Result integration is recorded below.
 Compiler family facts, boxing/extraction, initializer and iteration bindings have
 been reconciled with the breaking runtime API. Broad fixture reconciliation is
 recorded below; no native compiler rebuild is implied by generated-program proofs.
@@ -105,13 +105,24 @@ family-neutral arithmetic/comparison decisions, scalar normalization, text conve
 local/parameter mutations and checked stored-kind write-back. One parameterized proof
 matrix exercises both families, including dynamic-valued indexed reads. Family
 differences remain runtime-owned; no implicit cross-family operator admission was added.
-Indexed compound mutation, broader operator families and `->` remain deferred.
+Indexed compound mutation and broader operator families remain deferred. Dynamic
+`->`, library redesign and reference foreach are owned by
+[Chapter 15](15_blocking_debt.md), not the remaining Chapter 06 queue.
 Broad generated fixtures now follow tagged dynamic accessors and same-family
 construction, retaining value-copy/sharing, ordering and failure-state assertions.
 The shared `container_regression.py` runner integrates the newer boxed-family
-matrix with the retained container cases. Boxed Result payload operations and
-JSON source registrations remain next; this is not a full Chapter 06/native
+matrix with the retained container cases. JSON source registrations remain next;
+this is not a full Chapter 06/native
 compiler pass.
+
+Boxed Result integration now extends the existing payload policy to both mixed and
+dynamic in all three Result families. Outer wrappers own wrapping/extraction and
+conditional joins; container element boundaries reuse ordinary argument conversion.
+No parallel dynamic algorithm or backend case was added. The shared matrix covers
+value/null/sentinel/error states, conditions/probes, take, lazy joins/coalescing,
+typed-container boundaries and family-specific copy/sharing. See the
+[Chapter 05 checkpoint](05_dynamic_boundaries.md#boxed-result-payload-extension--2026-10-05).
+JSON source API registration remains the next integration slice.
 
 Remaining library-specific integration (notably tasks) is deferred to
 [CH15-LIB-DYN-01](15_blocking_debt.md#ch15-lib-dyn-01--deferred-library-mixeddynamic-integration)
@@ -781,13 +792,13 @@ Evidence: `/tmp/my-try-container-contracts-20261005-1` passed five PHP suites,
 PHP used CLI fallback after sandbox FPM socket denial. No native compiler rebuild
 or separate non-PCH run was performed in this test/documentation-only slice.
 
-Remaining inventory: reference foreach and iterator mutation/lifetime semantics;
-legacy array admission/guards and array casts; existing typed-container boxing into
+Remaining feature/debt inventory: legacy array admission/guards and array casts; existing typed-container boxing into
 mixed/dynamic (ARR-VALUE-001), distinct from contextual nested literal construction;
 source-defined initialization factories/property-driven construction; and the
 previously named vector-removal, weak/cross-family and path-performance limitations.
 This is not chapter closeout: **CH06-MIX-DYN-01 remains a chapter blocker**.
-CH06-ITER-01 is now a final-catalog blocker under Chapter 15.
+Reference foreach and iterator mutation/lifetime semantics, library redesign and
+dynamic `->` are now final-chapter work under Chapter 15, not this chapter's queue.
 
 ### End-to-end catalog rows
 

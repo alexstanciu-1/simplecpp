@@ -157,7 +157,7 @@ final class Type_Preparation
 		}
 		$result_role = Result_Conversions::role($type);
 		if ($result_role !== null) {
-			Result_Conversions::require_scalar_payload($type, $result_role);
+			Result_Conversions::require_payload($type, $result_role);
 		}
 		if (Type_Queries::canonical($type)->family() === type_family::null_sentinel) {
 			throw new \RuntimeException('S2S null requires an explicit nullable, mixed or legacy Result destination');

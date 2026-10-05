@@ -29,11 +29,11 @@ final class Conversion_Preparation
 			&& !Boxed_Conversions::is_family_crossing($source, $target)) {
 			throw new \RuntimeException('S2S explicit cast target is not supported');
 		}
-		if (Boxed_Conversions::is_boxed($source) || Boxed_Conversions::is_boxed($target)) {
-			return Boxed_Conversions::decide($source, $target, $context);
-		}
 		if ((Result_Conversions::role($source) !== null) || (Result_Conversions::role($target) !== null)) {
 			return Result_Conversions::decide($source, $target, $context);
+		}
+		if (Boxed_Conversions::is_boxed($source) || Boxed_Conversions::is_boxed($target)) {
+			return Boxed_Conversions::decide($source, $target, $context);
 		}
 		if ((Nullable_Conversions::payload($source) !== null) || (Nullable_Conversions::payload($target) !== null)
 			|| Nullable_Conversions::is_null($source)) {

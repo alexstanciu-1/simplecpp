@@ -27,7 +27,7 @@ final class Condition_Truthiness
 		}
 		$result_role = Result_Conversions::role($source);
 		if ($result_role !== null) {
-			Result_Conversions::require_scalar_payload($source, $result_role);
+			Result_Conversions::require_payload($source, $result_role);
 			$decision = new truthiness_decision();
 			$decision->source_type = $source;
 			$decision->operation = truthiness_operation::result_condition;

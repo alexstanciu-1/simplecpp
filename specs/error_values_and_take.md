@@ -61,7 +61,10 @@ The experimental v0.2 compiler admits the assignment spelling and normalizes bot
 spellings to one AST node. Outputs currently reference existing local variables or
 parameters of the exact selected branch types; the two outputs must name distinct
 declarations (aliasing between reference parameters is not analyzed). Payloads are
-limited to its supported scalars. Inline declarations and bare
+supported for scalars and exact `mixed`/`dynamic` Result payloads (nullable payloads
+remain scalar-only). Wrapped null/false are successful payloads, not wrapper failure.
+Copied mixed containers retain value semantics; copied dynamic containers share
+identity. Inline declarations and bare
 tuple assignment `($value, $error) = source` are deferred. Nested eager operator
 operands retain the compiler's existing sequencing restrictions.
 

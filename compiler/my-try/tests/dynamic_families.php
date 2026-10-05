@@ -8,7 +8,8 @@ $output = $argv[1];
 $fixtures = array_merge(require __DIR__ . '/fixtures/mixed_dynamic_casts.php',
 	require __DIR__ . '/fixtures/dynamic_boundaries.php',
 	require __DIR__ . '/fixtures/dynamic_selections.php',
-	require __DIR__ . '/fixtures/boxed_operators.php');
+	require __DIR__ . '/fixtures/boxed_operators.php',
+	require __DIR__ . '/fixtures/boxed_results.php');
 $executions = [];
 foreach ($fixtures as $name => [$source, $predicate]) {
 	Compiler_Lifecycle::reset();
@@ -31,4 +32,4 @@ foreach ($fixtures as $name => [$source, $predicate]) {
 	$executions[] = ['path' => $path, 'exit_code' => 0];
 }
 file_put_contents($output . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
-echo "Family casts: checked scalar/null conversions exported\n";
+echo "Boxed families: boundaries, operators, selections and Result programs exported\n";

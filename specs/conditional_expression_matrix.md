@@ -148,6 +148,20 @@ See [probe semantics](count_empty_isset_contract.md) and
 admission is separate; the condition rules alone do not redefine wrapper `!`, `&&`
 or `||` support or guarded-unwrapping behavior.
 
+### v0.2 boxed Result payloads
+
+The same Result rules apply when the exact payload type is `mixed` or `dynamic`.
+Wrapper state and boxed payload kind are separate: a successful boxed null is
+extractable by `take`, present to `isset($result)`, and selected by `$result ?? $fallback`.
+Direct boxed-null `??` instead uses the box's null state. `empty($result)` delegates
+to payload emptiness, while conditions/Elvis delegate to payload truthiness: dynamic
+containers are truthy; mixed container conditions retain their runtime rejection.
+
+Exact `W<T>/T`, `T/W<T>` and `W<T>/W<T>` ternary/Elvis joins preserve `W<T>`;
+approved Result-left coalescing extracts `T`. No family crossing or implicit
+unwrap-then-scalar conversion is granted. Mixed copies retain value behavior and
+dynamic container copies share identity. `result_or_bool` remains invalid for `??`.
+
 ## Elvis rule
 
 `$x ?: $y` lowers through a temporary plus `php::ternary_eval(...)` so `$x` is evaluated exactly once.

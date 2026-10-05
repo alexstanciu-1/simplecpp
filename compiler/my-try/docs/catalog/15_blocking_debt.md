@@ -19,7 +19,13 @@ debts. Other chapter blockers remain in place unless explicitly transferred.
 | --- | --- | --- | --- |
 | CH06-ITER-01 — mutation/replacement during iteration | [Chapter 06](06_containers.md#ch06-iter-01--mutation-during-iteration) | Open; blocks final catalog completion, not Chapter 06 design closeout | Agree the long-term policy, reconcile contracts, implement required changes and prove behavior/safety |
 | CH06-REF-01 — reference foreach safety foundation | [CTRL-FOREACH-003/004](06_containers.md#ctrl-foreach-003) | Open; reference foreach stays disabled; final-catalog blocker | Establish runtime guards and binding lifetime/COW guarantees before compiler integration |
-| CH15-LIB-DYN-01 — library mixed/dynamic migration | [Chapter 06](06_containers.md) | Deferred by user; does not block core type migration | Audit/adapt affected library APIs and prove their enabled/disabled paths before declaring those libraries migrated |
+| CH15-LIB-DYN-01 — library redesign and mixed/dynamic migration | [Chapter 06](06_containers.md) | Deferred by user; does not block core type migration | Review library-owned models, adapt affected APIs and prove enabled/disabled paths |
+| CH15-DYNAMIC-PROP-01 — dynamic `->` | [Chapters 05/06](06_containers.md) | Deferred by user; not part of core family/JSON integration | Agree property semantics and implement shared prepared access with runtime checks and proofs |
+
+User confirmation on 2026-10-05: library redesign, reference foreach and dynamic
+`->` belong to this final chapter, not the remaining Chapter 06 implementation
+queue. Reference foreach remains disabled until CH06-REF-01 is resolved. This
+deferral does not change ordinary typed-object member access or existing contracts.
 
 ## CH06-ITER-01 — mutation policy
 
@@ -70,9 +76,10 @@ Inspection findings and affected owners:
 - Vector/hash structural mutation and replacement lack a common active-iteration
   guard. Some clear/move operations are `noexcept`; throwing from them without
   reviewing their contracts would terminate rather than deliver a runtime error.
-- `dynamic_t` aliases general-purpose `shared_p<hash_t<...>>`. Guarding hash entries
-  alone cannot intercept replacement/reset of the source handle. Establish the
-  wrapper-replacement boundary without silently redesigning all shared handles.
+- The original inspection concerned the old shared-hash `dynamic_t` alias. The
+  approved tagged dynamic refactor now owns its binding and shared container payload,
+  but does not supply active-iteration guards. Recheck replacement at that owner;
+  guarding table entries alone still cannot protect source-binding replacement.
 - Mixed copy-on-write can replace table storage during an ordinary write. Preserve
   the intended source's write-through semantics and independent copies; an old
   table pointer or extra shared owner alone does not establish this guarantee.
@@ -186,3 +193,17 @@ The compile-blocked task attempt was removed from the active tree; it is not a
 completed feature. Existing task code still carries its old mixed assumptions until
 this debt is handled. Existing JSON/MySQL runtime checkpoints remain implemented;
 their source registrations and remaining consumer integration still need review.
+
+### CH15-DYNAMIC-PROP-01 — dynamic property access
+
+Deferred to Chapter 15 by user direction on 2026-10-05. Keep dynamic `->` disabled
+while completing core family and JSON integration. Discuss fixed/computed property
+names, reads/writes/probes/removal and eventual callable members before admission.
+Reuse existing prepared place/access and runtime container machinery where truthful;
+do not create a second mixed/dynamic traversal or revive cross-family payloads.
+
+Resolve missing properties, null/scalar receivers, sequencing, shared alias effects
+and the relation to CH15-SHAPE-01. Callable values do not automatically imply method
+binding; coordinate with CH15-CALLABLE-01. Completion requires an agreed normative
+contract plus preparation, generated-program and failure-state proofs. This debt
+does not defer ordinary typed class/struct member work in its owning chapter.

@@ -6,6 +6,9 @@
 
 namespace scpp::detail {
 
+// Wrapper delegation must see the exact mixed overload before template lookup.
+inline bool_t empty_scalar(const mixed_t &value);
+
 // Centralizes the Prism++ emptiness contract for plain one-value checks.
 // How: this follows the current supported scalar/wrapper families, including the deliberate non-empty treatment of string "0".
 inline bool_t empty_scalar(null_t) {
@@ -154,6 +157,11 @@ inline bool_t empty_from_probe(const probe_state state, const mixed_t *value) {
 	return bool_t(false);
 }
 
+inline bool_t empty_scalar(const mixed_t &value) {
+	const auto probe = probe_value(value);
+	return empty_from_probe(probe.state, probe.value);
+}
+
 } // namespace scpp::detail
 
 namespace scpp {
@@ -238,8 +246,7 @@ inline bool_t empty(const weak_p<T> &value) {
 }
 
 inline bool_t empty(const mixed_t &value) {
-	const auto probe = detail::probe_value(value);
-	return detail::empty_from_probe(probe.state, probe.value);
+	return detail::empty_scalar(value);
 }
 
 inline bool_t empty(const detail::dynamic_value &value) {

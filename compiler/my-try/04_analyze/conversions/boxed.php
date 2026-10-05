@@ -20,7 +20,8 @@ final class Boxed_Conversions
 		elseif ($context !== conversion_context::container_element) {
 			throw new \LogicException('Expected container input conversion context');
 		}
-		$decision = self::decide($source, $target, conversion_context::argument);
+		// Key policy is local; value conversion retains ordinary outer-wrapper ownership.
+		$decision = Conversion_Preparation::decide($source, $target, conversion_context::argument);
 		$decision->context = $context;
 		return $decision;
 	}

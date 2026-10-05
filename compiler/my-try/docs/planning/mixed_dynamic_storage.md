@@ -763,3 +763,44 @@ includes the added nested-write preparation rejections and strengthened retained
 mixed-carrier assertions. Attempt one exposed the fixture variable collision and
 an incorrect suite filename in the new runner, both corrected. PHP used recorded
 CLI fallback because FPM socket startup was unavailable.
+
+### Shared boxed Result payloads — 2026-10-05
+
+`Result_Conversions::require_payload` now supplies the bounded scalar/mixed/dynamic
+domain for every Result consumer. Exact payload wrapping/extraction, same-wrapper
+copy, take, conditions/probes and Result-preserving conditional joins reuse existing
+facts and C++ emission. Outer Result routing precedes boxed-value routing, so a
+boxed payload does not swallow its wrapper. Container input validation retains key
+policy but delegates value conversion to ordinary argument admission, including
+Result payloads; it does not duplicate wrapper rules.
+
+The approved Result-left coalescing path selects by wrapper value state. A successful
+boxed null stays null; it is not a failure or a reason to evaluate fallback. Take
+and isset likewise distinguish value state from payload truthiness. Runtime mixed
+container truthiness still rejects; dynamic containers remain truthy. Wrapper empty
+delegation exposed a missing mixed overload visible to C++ template lookup; it now
+routes to the existing mixed probe helper, also used by direct mixed emptiness.
+
+One shared fixture matrix covers all three Result families and both boxed payload
+families, including null/false/zero/string-zero, empty containers, failure-preserved
+outputs, error reset, true sentinels, lazy fallback, exact typed-container elements
+and mixed copy isolation versus dynamic shared identity. Preparation tests cover
+attached facts/cleanup, rejection without output and incremental failure/retry/repair.
+No JSON registration, nullable boxed expansion, nested wrappers, implicit two-step
+conversion, source error construction, profile gate or native compiler rebuild is
+included. Library redesign, reference foreach and dynamic `->` are explicitly
+Chapter 15 debt. Next: register the agreed family-specific JSON source APIs.
+
+Evidence: `/tmp/my-try-boxed-results-20261005-6` (final PCH) and
+`/tmp/my-try-boxed-results-20261005-5` (without PCH) each pass 14 PHP suites and
+60 generated programs with rebuilt snippet runtimes. The final PCH run additionally
+verifies consolidated container-input delegation; no emitted algorithm was added.
+Attempt one exposed expected-diagnostic updates after routing moved to the correct
+Result owner; attempt two exposed the mixed empty delegation gap and a test using
+a mixed-only native string accessor for dynamic. Attempt three exposed a test using
+the declaration accessor for an implicit assignment; an explicit test declaration
+fixed it. Attempt four passed before the final routing consolidation. PHP execution
+used recorded CLI fallback after FPM socket startup failed.
+The complete S2S fixture export also passes at
+`/tmp/my-try-boxed-results-export-20261005-1`; its broader generated programs were
+not recompiled in this focused slice.

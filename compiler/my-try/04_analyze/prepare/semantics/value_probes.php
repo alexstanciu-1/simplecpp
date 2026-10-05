@@ -40,7 +40,7 @@ final class Value_Probe_Preparation
 			if ($container->supports_probes()) { return; }
 		}
 		if ($result_role !== null) {
-			Result_Conversions::require_scalar_payload($type, $result_role);
+			Result_Conversions::require_payload($type, $result_role);
 		}
 		elseif ($payload !== null) {
 			Nullable_Conversions::require_scalar_payload($payload);

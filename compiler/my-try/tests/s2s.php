@@ -600,7 +600,8 @@ $mixed_fixtures = array_merge(require __DIR__ . '/fixtures/mixed_boundaries.php'
 	require __DIR__ . '/fixtures/mixed_concat_updates.php',
 	require __DIR__ . '/fixtures/dynamic_boundaries.php',
 	require __DIR__ . '/fixtures/dynamic_selections.php',
-	require __DIR__ . '/fixtures/boxed_operators.php');
+	require __DIR__ . '/fixtures/boxed_operators.php',
+	require __DIR__ . '/fixtures/boxed_results.php');
 $data_fixtures = require __DIR__ . '/fixtures/data_initialization.php';
 $read_fixtures = require __DIR__ . '/fixtures/container_reads.php';
 $write_fixtures = require __DIR__ . '/fixtures/container_writes.php';

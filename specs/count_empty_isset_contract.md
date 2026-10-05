@@ -108,7 +108,7 @@ Examples:
 
 ### Result wrapper states
 
-For supported scalar payloads, probes follow this state table. They do not throw
+For supported scalar and boxed mixed/dynamic payloads, probes follow this state table. They do not throw
 merely because a Result is in a non-value state, and do not extract that absent payload.
 
 | State | `isset` | `empty` |
@@ -123,6 +123,11 @@ A wrapped boolean-false **payload** is therefore present, unlike the false senti
 A wrapped `"0"` is present and not empty, even though it is falsey in a condition.
 See [the condition/presence/extraction distinctions](conditional_expression_matrix.md#result-truthiness-is-not-success-or-presence).
 Ordinary exceptions evaluating the probe operand still propagate.
+
+A successful Result carrying boxed null is still in its value state: `isset` is
+true and `empty` is true. Probing the extracted box directly instead reports null
+as absent. This follows the wrapper-state rule, not implicit recursive unwrapping
+for presence. Payload emptiness still delegates to the box's scalar/container rules.
 
 ## 6. Non-mutating lookup rule
 

@@ -33,15 +33,15 @@ final class Conditional_Expression_Preparation
 	private static function join(canonical_type_use $selected, canonical_type_use $fallback,
 		preparation_context $context): canonical_type_use
 	{
-		if (Boxed_Conversions::is_boxed($selected) || Boxed_Conversions::is_boxed($fallback)) {
-			return Selection_Result_Preparation::boxed_join($selected, $fallback, $context);
-		}
 		$selected_role = Result_Conversions::role($selected);
 		$fallback_role = Result_Conversions::role($fallback);
 		if (($selected_role !== null) || ($fallback_role !== null)) {
 			$result_wrapper = $selected_role !== null ? $selected : $fallback;
 			$other = $selected_role !== null ? $fallback : $selected;
 			return self::result_join($result_wrapper, $other, $context);
+		}
+		if (Boxed_Conversions::is_boxed($selected) || Boxed_Conversions::is_boxed($fallback)) {
+			return Selection_Result_Preparation::boxed_join($selected, $fallback, $context);
 		}
 		$selected_domain = self::scalar_domain($selected);
 		$fallback_domain = self::scalar_domain($fallback);
@@ -61,9 +61,9 @@ final class Conditional_Expression_Preparation
 		preparation_context $context): canonical_type_use
 	{
 		$role /** result_semantics */ = Result_Conversions::role($wrapper);
-		$payload = Result_Conversions::require_scalar_payload($wrapper, $role);
+		$payload = Result_Conversions::require_payload($wrapper, $role);
 		if (!$other->matches($wrapper) && !$other->matches($payload)) {
-			throw new \RuntimeException('S2S conditional Result branches require the same wrapper or exact scalar payload');
+			throw new \RuntimeException('S2S conditional Result branches require the same wrapper or exact payload');
 		}
 		Capability_Preparation::require_copy($wrapper, $context);
 		Capability_Preparation::require_copy($other, $context);

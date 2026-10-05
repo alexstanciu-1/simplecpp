@@ -163,7 +163,7 @@ boxed/scalar joins in either order preserve the boxed family and box only the se
 scalar. `Selection_Result_Preparation::boxed_join` supplies this bounded domain for
 conditional and coalesce workers without widening scalar-only match. Result-led joins preserve
 one exact Result identity: same-wrapper pairs copy the selected state, and exact
-scalar alternatives wrap as value payloads. Nullable/Result and cross-family pairs
+scalar or boxed payload alternatives wrap as value payloads. Nullable/Result and cross-family pairs
 reject. Both branch conversions and copy capabilities are prepared before emission;
 the existing lazy emitter and saved Elvis left value are reused unchanged.
 
@@ -304,15 +304,15 @@ normalization differs from mixed/mixed kind comparison. Nullable null comparison
 keep their separate presence-check path. Runtime table/weak-carrier comparison
 limits and the approved empty-carrier repair are recorded in chapter 05.
 
-`Result_Conversions` in `conversions/results.php` selects exact scalar payload wrapping,
+`Result_Conversions` in `conversions/results.php` selects exact scalar or boxed payload wrapping,
 same-type copies and explicit legacy false/true state construction. The three Result
 families retain distinct identities. Boolean payloads are not sentinels; canonical
 singleton constant types distinguish `false_sentinel`/`true_sentinel`, while `nullopt`
 uses the null identity. Source locals require an initializer in this slice. Exact
-scalar required-value extraction at assignment/argument/return boundaries records
+payload required-value extraction at assignment/argument/return boundaries records
 `result_extract`; the backend copies the guarded payload. Non-value states throw,
 failed stores preserve targets and reference arguments never implicitly extract.
-Result conditions and probes admit the same scalar payload domain through the existing
+Result conditions and probes admit the same scalar/mixed/dynamic payload domain through the existing
 semantic role. `result_condition` facts use the shared runtime truthiness helper for
 all condition consumers, while probes keep their independent runtime authorities.
 Logical operators and explicit casts
@@ -321,7 +321,12 @@ depends on chapter 13's reusable runtime construction/member-call paths. The run
 `error` type is now registered with default/copy semantics and a readonly no-error constant.
 
 `Take_Preparation` owns wrapper-directed output binding: source snapshot copy capability,
-exact scalar payload/alternative types, existing locals/parameters and output distinctness.
+exact payload/alternative types, existing locals/parameters and output distinctness.
+Result payload admission is shared through `Result_Conversions::require_payload`:
+supported scalars or mixed/dynamic, without nested wrappers or implicit two-step
+conversion. Outer Result ownership precedes boxed conversion/conditional routing;
+typed container element boundaries reuse ordinary argument admission. Nullable
+payloads retain their separate scalar-only gate.
 Both take spellings retain one `take_expression_node` with named source/value/alternative
 edges and attached `prepared_take` family facts. Emission consumes those facts and calls
 the existing runtime helper inside a single-evaluation lambda. Eager operand sequencing
@@ -330,7 +335,8 @@ logical negation records that decision instead of introducing a second error-sta
 
 `Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
 boolean operation facts on `value_probe_node`. Scalars, nullable scalars, Result
-scalars, mixed and literal null are supported; direct path probes and other carriers are deferred. Emission
+scalar/boxed payloads, boxed values and literal null are supported. Keyed paths use
+the shared path owner described above; property paths remain deferred. Emission
 uses separate runtime probe helpers, not condition truthiness: `empty("0")` is false.
 Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
 is introduced, and probes cannot establish new locals through nested assignment.
@@ -357,11 +363,12 @@ mixed-fallback joins use `left_extraction` for the exact scalar payload followed
 values use identity extraction. This composition grants no general wrapper-to-mixed
 conversion and does not involve mixed truthiness. Reverse mixed/wrapper joins and
 wrapper/mixed ternary/Elvis remain deferred.
-Result coalescing extends that same owner with exact scalar payload domains for
+Result coalescing extends that same owner with exact scalar or boxed payload domains for
 `result<T>` and `result_or_false<T>`. `coalesce_value` identifies the selected left
 extraction boundary without granting general conditional-branch extraction. Existing
 emission snapshots the source and tests `has_value()` before extracting; fallback
-is a required matching scalar or mixed for bool/ordinary-int/float/string payloads.
+is a required matching scalar or admitted same-family boxed/scalar join. A successful
+boxed-null Result selects its null payload; only a non-value wrapper selects fallback.
 Boolable operands on either side reject during
 preparation under the [v0.2 diagnostic policy](../../../../specs/v0_2_preparation_diagnostics.md),
 including statically unselected alternatives. Runtime value-dependent errors still propagate.

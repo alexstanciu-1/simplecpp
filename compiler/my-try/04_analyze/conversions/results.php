@@ -21,13 +21,14 @@ final class Result_Conversions
 			|| $type->matches(Model::$type_catalog->boolean_sentinel_type(true));
 	}
 
-	/** Formation alone does not admit broader payload operations in this first pass. */
-	public static function require_scalar_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
+	/** One payload domain for all Result consumers; no implicit nested conversion. */
+	public static function require_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
 	{
 		$application = object_cast(Type_Queries::canonical($type), applied_template_type::class);
 		$payload = $role->payload_type($application);
-		if ($type->by_value() || $payload->by_value() || !Conversion_Preparation::is_scalar($payload)) {
-			throw new \RuntimeException('S2S Result construction requires an unmodified scalar payload');
+		if ($type->by_value() || $payload->by_value()
+			|| (!Conversion_Preparation::is_scalar($payload) && !Boxed_Conversions::is_boxed($payload))) {
+			throw new \RuntimeException('S2S Result operations require an unmodified scalar, mixed or dynamic payload');
 		}
 		return $payload;
 	}
@@ -41,7 +42,7 @@ final class Result_Conversions
 			return self::extract($source, $target, $context);
 		}
 		$role /** result_semantics */ = $target_role;
-		$payload = self::require_scalar_payload($target, $role);
+		$payload = self::require_payload($target, $role);
 		if ($source->matches($target)) {
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
 		}
@@ -76,9 +77,9 @@ final class Result_Conversions
 		if ($source_role === null) {
 			throw new \LogicException('Result extraction requires a Result source');
 		}
-		$payload = self::require_scalar_payload($source, $source_role);
+		$payload = self::require_payload($source, $source_role);
 		if (!$payload->matches($target)) {
-			throw new \RuntimeException('S2S Result extraction requires the exact scalar payload type');
+			throw new \RuntimeException('S2S Result extraction requires the exact payload type');
 		}
 		return Conversion_Preparation::operation($source, $target, $context, conversion_operation::result_extract);
 	}

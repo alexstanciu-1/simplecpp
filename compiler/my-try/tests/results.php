@@ -95,10 +95,10 @@ try
 		['$a result<int> = 1; $b result_or_false<int> = $a;', 'Result construction requires an exact payload'],
 		['$a result<int> = 1; $b result<float> = $a;', 'Result construction requires an exact payload'],
 		['$a ?int = 1; $b result<int> = $a;', 'Result construction requires an exact payload'],
-		['$a result<int> = 1; $b float = $a;', 'Result extraction requires the exact scalar payload type'],
-		['$a result<int> = 1; $b int32 = $a;', 'Result extraction requires the exact scalar payload type'],
+		['$a result<int> = 1; $b float = $a;', 'Result extraction requires the exact payload type'],
+		['$a result<int> = 1; $b int32 = $a;', 'Result extraction requires the exact payload type'],
 		['$a result<int> = 1; $b = (int) $a;', 'Result extraction supports only required'],
-		['$a result<int> = 1; $b ?int = $a;', 'Result extraction requires the exact scalar payload type'],
+		['$a result<int> = 1; $b ?int = $a;', 'Result extraction requires the exact payload type'],
 		['function ref(int &$v): void {} $a result<int> = 1; ref($a);', 'reference'],
 		['$a result<int> = 1; $b = $a ?? 2.0;', 'coalesce branches require matching scalar'],
 		['$a result<int> = 1; $b = $a ?? $a;', 'coalesce branches require supported scalar'],
@@ -112,12 +112,12 @@ try
 		['$a result<int> = 1; $b ?int = 2; $c = true ? $a : $b;', 'conditional Result branches require'],
 		['$a result<int> = 1; $b = true ? null : $a;', 'conditional Result branches require'],
 		['$a result_or_bool<int> = 1; $b = true ? $a : true_sentinel;', 'conditional Result branches require'],
-		['function f(result<vector<int>> $r): bool { return isset($r); }', 'unmodified scalar payload'],
-		['function f(result<vector<int>> $r): bool { if ($r) { return true; } return false; }', 'unmodified scalar payload'],
+		['function f(result<vector<int>> $r): bool { return isset($r); }', 'unmodified scalar, mixed or dynamic payload'],
+		['function f(result<vector<int>> $r): bool { if ($r) { return true; } return false; }', 'unmodified scalar, mixed or dynamic payload'],
 		['$x = false_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x = true_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x result<int>;', 'Result construction requires an explicit initializer'],
-		['$x result<result<int>>;', 'Result construction requires an unmodified scalar payload'],
+		['$x result<result<int>>;', 'Result operations require an unmodified scalar, mixed or dynamic payload'],
 		['function ref(result<int> &$v): void {} ref(1);', 'reference'],
 	];
 	foreach ($rejections as [$source, $diagnostic])
@@ -175,7 +175,7 @@ try
 			$compiler->prepare();
 		}
 		catch (\RuntimeException $error) {
-			$failed = str_contains($error->getMessage(), 'Result extraction requires the exact scalar payload type');
+			$failed = str_contains($error->getMessage(), 'Result extraction requires the exact payload type');
 		}
 		result_check($failed && Model::$cpp_files->is_empty(), 'Extraction type change published stale output');
 		result_check($stable->version === $version, 'Extraction type change rebuilt an independent body');
@@ -287,7 +287,56 @@ try
 	result_check(Model::$cpp_files[0]->text === $original, 'Coalesce repair changed output');
 	result_source($path, $valid);
 	result_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental coalesce output differs');
-	echo "Results: value boundaries, conditions/probes/joins/coalescing, rejections and recovery passed\n";
+	foreach (['mixed', 'dynamic'] as $family) {
+		$other = $family === 'mixed' ? 'dynamic' : 'mixed';
+		$source = '$v ' . $family . ' = 7; $r result<' . $family . '> = $v; $out ' . $family . ' = $r; '
+			. '$err error; take($out, $err) = $r; $join result<' . $family . '> = true ? $v : $r; $selected = $r ?? $v;';
+		result_source($path, $source);
+		$body = Model::syntax_files()[0]->root->body;
+		result_check($body->statements[1]->require_preparation()->conversion->operation === conversion_operation::result_wrap
+			&& $body->statements[2]->require_preparation()->conversion->operation === conversion_operation::result_extract,
+			'Boxed payload bypassed outer Result conversion owner');
+		result_check($body->statements[5]->initializer->require_preparation()->type->matches(
+			$body->statements[1]->require_preparation()->type), 'Boxed branch swallowed Result identity');
+		Preparation_Cleanup::tree(Model::syntax_files()[0]->root);
+		result_check($body->statements[5]->initializer->preparation() === null, 'Boxed Result join retained facts');
+		foreach ([
+			'$r result<' . $family . '> = 7;',
+			'$v ' . $other . ' = 7; $r result<' . $family . '> = $v;',
+			'function bad(result<' . $family . '> $r): int { return $r; }',
+			'function bad(result<' . $family . '> $r): ' . $other . ' { return $r; }',
+			'function bad(result<' . $family . '> $r, ' . $other . ' &$v, error &$e): bool { return take($v, $e) = $r; }',
+			'function bad(result<' . $family . '> $r, ' . $other . ' $v): ' . $family . ' { return $r ?? $v; }',
+			'function bad(result_or_bool<' . $family . '> $r, ' . $family . ' $v): ' . $family . ' { return $r ?? $v; }',
+			'function bad(result<' . $family . '> $r, ' . $other . ' $v): result<' . $family . '> { return true ? $r : $v; }',
+		] as $invalid) {
+			$failed = false;
+			try { result_source($path, $invalid); }
+			catch (\RuntimeException $error) { $failed = true; }
+			result_check($failed && Model::$cpp_files->is_empty(), 'Invalid boxed Result published output: ' . $invalid);
+		}
+	}
+	$valid = 'function source(): result<mixed> { $v mixed = 7; return $v; } '
+		. 'function read(): mixed { return source(); } function stable(): int { return 9; }';
+	$compiler = result_source($path, $valid);
+	$original = Model::$cpp_files[0]->text;
+	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
+	$version = $stable->version;
+	file_put_contents($path, str_replace(['result<mixed>', '$v mixed'], ['result<dynamic>', '$v dynamic'], $valid));
+	foreach ([[$path], []] as $changed) {
+		$compiler->sync($changed);
+		$failed = false;
+		try { $compiler->prepare(); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'exact payload'); }
+		result_check($failed && Model::$cpp_files->is_empty(), 'Changed boxed Result published stale output');
+		result_check($stable->version === $version, 'Boxed Result edit rebuilt independent body');
+	}
+	file_put_contents($path, $valid);
+	$compiler->update_cpp([$path]);
+	result_check(Model::$cpp_files[0]->text === $original, 'Boxed Result repair changed output');
+	result_source($path, $valid);
+	result_check(Model::$cpp_files[0]->text === $original, 'Boxed Result clean/incremental output differs');
+	echo "Results: scalar/boxed boundaries, conditions/probes/joins/coalescing, rejections and recovery passed\n";
 }
 finally {
 	unlink($path);

@@ -28,7 +28,7 @@ final class Take_Preparation
 				if ($role === null) {
 					throw new \RuntimeException('S2S take requires a supported wrapper source');
 				}
-				$payload = Result_Conversions::require_scalar_payload($source->type, $role);
+				$payload = Result_Conversions::require_payload($source->type, $role);
 				$facts->operation = take_operation::false_result;
 				if ($role->result_family() === result_kind::structured_error) {
 					$facts->operation = take_operation::error_result;
