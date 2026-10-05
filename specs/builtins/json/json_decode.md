@@ -19,6 +19,24 @@ coordinated switch. Do not infer complete source support from runtime availabili
 The out-of-line dynamic decoder has a new symbol (`decode_dynamic`) to prevent
 linking the former mixed-return ABI. Rebuild runtime artifacts and generated code.
 
+### Typed runtime extraction
+
+`scpp::json::from_json<T>(value)` accepts either decoded family and uses the same
+checked scalar/nullable/vector/string-keyed-hash extraction path. Scalar type
+checks remain exact, with the existing integer-to-float widening. Errors identify
+the failing JSON path; partially built destinations are not published.
+
+Same-family dynamic extraction shares container identity; mixed extraction retains
+independent value behavior. Explicit scalar/null family crossings are allowed;
+container-family crossings reject, including inside typed containers. The former
+mixed-box-to-dynamic-handle extraction is removed, not retained as compatibility.
+
+`from_json<T>(text)` follows default dynamic decoding. To extract a mixed container,
+call `from_json<T>(decode_mixed(text).value())` after handling the decode result as
+appropriate. The typed helper does not silently select a different decoder based
+on the requested type. It still throws on typed conversion failure; it does not
+introduce another checked-result API. The public dynamic type switch remains pending.
+
 ## Current contract
 
 The following describes the superseded v0.1 surface, not the v0.2 default.

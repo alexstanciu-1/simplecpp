@@ -10,8 +10,10 @@ Cycles return an encoding error without partial output; repeated noncyclic alias
 are encoded at each occurrence. Existing checked failures remain unchanged.
 
 Runtime tagged-dynamic encoding is implemented. Compiler-facing registration and
-the public dynamic-type switch remain pending; typed conversion helpers still use
-their mixed-tree path and do not gain implicit cross-family container conversions.
+the public dynamic-type switch remain pending. Typed `to_json` construction still
+uses its mixed-tree path; `from_json` accepts either family as described in the
+[decoder contract](json_decode.md#typed-runtime-extraction). Neither gains implicit
+cross-family container conversions.
 
 ## Current contract
 

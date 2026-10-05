@@ -86,6 +86,8 @@ family enforcement remain next; this does not resolve the chapter blocker.
 JSON runtime now decodes directly into tagged dynamic by default or mixed via
 `decode_mixed`, and encodes both directly. Source registration/public-type migration
 is still outstanding; this breaking runtime checkpoint does not establish source support.
+Typed JSON extraction now accepts either family through one checked path and rejects
+cross-family containers; the former mixed-to-dynamic handle bridge is removed there.
 
 The current runtime permits both relationships:
 

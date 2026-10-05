@@ -225,6 +225,47 @@ static void test_separated_families() {
 	require(typed.size() == 2 && typed.native_value()[1].native_value() == 4);
 }
 
+static void test_family_aware_typed_extraction() {
+	using value = scpp::detail::dynamic_value;
+	using scpp::string_t;
+	using scpp::int_t;
+	using rows = scpp::vector_t<scpp::hash_t<int_t<>>>;
+	static_assert(!scpp::json::from_json_detail::is_supported_v<scpp::dynamic_t<>>);
+	static_assert(std::is_same_v<scpp::json::json_value, value>);
+	const string_t text{"[{\"id\":3},{\"id\":4}]"};
+	const auto dynamic = scpp::json::decode(text).value();
+	const auto mixed = scpp::json::decode_mixed(text).value();
+	const auto typed = scpp::json::from_json<rows>(dynamic);
+	const auto typed_mixed = scpp::json::from_json<rows>(mixed);
+	require(typed.native_value()[1].at(string_t{"id"}).native_value() == 4);
+	require(typed_mixed.native_value()[0].at(string_t{"id"}).native_value() == 3);
+	auto alias = scpp::json::from_json<value>(dynamic);
+	require(alias.table_if() == dynamic.table_if());
+	auto independent = scpp::json::from_json<scpp::mixed_t>(mixed);
+	independent.get_hash().at(int_t<>{0}).get_hash().set(string_t{"id"}, scpp::mixed_t{int_t<>{99}});
+	require(mixed.get_hash().at(int_t<>{0}).get_hash().at(string_t{"id"}).get_int().native_value() == 3);
+	require(scpp::json::from_json<scpp::mixed_t>(value{int_t<>{7}}).get_int().native_value() == 7);
+	require(scpp::json::from_json<value>(scpp::mixed_t{int_t<>{8}}).get_int().native_value() == 8);
+	require(!scpp::json::from_json<scpp::nullable<int_t<>>>(value{}).has_value().native_value());
+	require(scpp::json::from_json<scpp::float_t>(value{int_t<>{2}}).native_value() == 2.0);
+	require(scpp::json::from_json<scpp::vector_t<value>>(text).native_value()[0].table_if() != nullptr);
+	const auto expect_failure = [](auto work, const char *path) {
+		bool rejected = false;
+		try { work(); } catch (const scpp::runtime_error &error) {
+			rejected = std::string(error.what()).find(path) != std::string::npos;
+		}
+		require(rejected);
+	};
+	expect_failure([&] { (void)scpp::json::from_json<scpp::mixed_t>(dynamic); }, "at $");
+	expect_failure([&] { (void)scpp::json::from_json<value>(mixed); }, "at $");
+	expect_failure([&] { (void)scpp::json::from_json<scpp::vector_t<scpp::mixed_t>>(dynamic); }, "at $[0]");
+	expect_failure([&] { (void)scpp::json::from_json<scpp::vector_t<value>>(mixed); }, "at $[0]");
+	expect_failure([&] { (void)scpp::json::from_json<int_t<>>(value{scpp::float_t{2.0}}); }, "expected JSON integer");
+	rows destination = typed;
+	expect_failure([&] { destination = scpp::json::from_json<rows>(string_t{"[{\"id\":1},{\"id\":false}]"}); }, "at $[1].id");
+	require(destination.native_value()[1].at(string_t{"id"}).native_value() == 4);
+}
+
 } // namespace
 
 int main() {
@@ -237,6 +278,7 @@ int main() {
 	test_json_encode_key_contracts();
 	test_json_alias_surface();
 	test_separated_families();
+	test_family_aware_typed_extraction();
 	test_json_decode_checked_failures();
 	test_json_encode_checked_failures();
 	return 0;

@@ -465,3 +465,27 @@ builds and all twelve native programs, including typed extraction from JSON text
 The first run exposed namespace shadowing in the PHP adapter; explicitly qualifying
 `::scpp::detail` repaired it. No PHP compiler suite, generated-source integration
 suite or native compiler rebuild was run for this checkpoint.
+
+### Family-aware typed JSON extraction — 2026-10-05
+
+`from_json` now parameterizes its existing scalar/nullable/vector/hash extraction
+over the input family. `json_value` names the default tagged dynamic value. The old
+mixed `dynamic_if` handle bridge is removed; the old public hash-handle alias is no
+longer an admitted target of this helper. Same-family extraction preserves the
+existing mixed clone or dynamic shared-copy behavior. Scalar/null crossings reuse
+the explicit cast owner; container crossings report a path-qualified conversion
+error, including at nested typed-container boundaries.
+
+The text convenience now uses default dynamic decoding. Callers needing mixed
+containers explicitly decode mixed before typed extraction. No automatic target-
+selected decoder or recursive family conversion was introduced. Tests exercise
+both input families, nested typed rows, same-family copy/identity, numeric widening,
+nullable absence, nested crossing rejection and unchanged destination on failure.
+
+Remaining coordinated work: public dynamic alias/old mixed-carrier removal,
+`to_json` typed construction, tasks/MySQL/native consumers, compiler registrations
+and prepared family facts. This checkpoint does not claim those are migrated.
+
+Evidence: `/tmp/my-try-json-extraction-20261005-1` passed matching debug/release
+runtime/JSON builds and all twelve native programs. JSON checks remain active under
+NDEBUG. No source integration suite or native compiler rebuild was run.
