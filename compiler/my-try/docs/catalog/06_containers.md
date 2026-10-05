@@ -350,9 +350,52 @@ Remaining construction gates/debt:
 - **CH06-MIX-DYN-01 remains open and blocking closeout**; current runtime success is
   evidence of implementation, not a new containment decision.
 
-Next discussion: shared container reads and runtime-checked mixed/dynamic access,
-before writes/appends, keyed probes and value iteration. Dynamic `->` needs its own
-language discussion; reference iteration remains separately gated.
+The following read slice implements the next agreed group. Dynamic `->` needs its
+own language discussion; reference iteration remains separately gated.
+
+### Shared container value reads — 2026-10-05
+
+One `index_node` and the existing operator-selection boundary now serve vector,
+typed hash, mixed and dynamic value reads. Exact definition identities select
+registered key/result signatures and checked/null-on-miss operation policy.
+`contract_type_reference` and analysis-owned substitution are shared with construction;
+construction opt-in itself does not grant indexing. No parser family split or
+container-name dispatch was added to preparation/emission.
+
+Typed reads return copied `T`/`V` and throw on negative/out-of-range vector indexes
+or missing hash keys. Mixed/dynamic return mixed, with null for absent keys, null
+intermediates or empty handles. Wrong scalar receivers and runtime-invalid key kinds
+throw. Static invalid types reject during preparation. Key types initially cover
+ordinary int/string and checked mixed boundaries; numeric-string normalization stays
+runtime-owned. The top-level array specification now explicitly distinguishes typed
+containers from its former broadly worded null-on-miss dynamic-table rule.
+
+C++ emission binds the receiver once, converts the key next, and copies out through
+`scpp/index_read.hpp`. Whole vectors/hashes are not copied merely to read a slot.
+Temporary receivers remain alive through lookup. No read autovivifies or returns
+an addressable interior reference; shared dynamic payload identity remains shared.
+The new checked dynamic helper leaves permissive legacy `mixed_t::get` unchanged.
+
+Facts are attached directly to index syntax and cleared by ordinary cleanup.
+Signature changes reprepare retained read bodies; failed key admission clears stale
+facts/output, and recovery agrees with fresh emission. Indexed writes, updates,
+native references, keyed probes, zero-argument brackets, strings and effective
+storage modifiers remain explicit gates. Existing eager-parent effect restrictions
+still apply recursively; this does not introduce a general effect analysis.
+
+Evidence: `/tmp/my-try-container-reads-20261005-1` passed seven focused PHP suites
+and 24 PCH-backed generated programs. `/tmp/my-try-container-reads-20261005-4`
+passed seven PHP suites and the expanded 28-program set without PCH, including
+nullable elements and native-supplied owned/shared/weak/dynamic table carriers.
+Two added native probes initially used a wrong nullable accessor/missed their own
+memory-helper header; their corrections are in the passing run. The final indexed
+key rejection check passed in `/tmp/my-try-index-read-key-domain-3`; hashable-key
+constraints already reject `hash<int,mixed>` before read selection.
+All 1,089 pre-read S2S exports remain byte-identical. These are PHP-authored compiler
+and generated-program proofs, not a native compiler rebuild or broad regression run.
+
+Next discussion: common writes/appends, then keyed probes and value iteration.
+**CH06-MIX-DYN-01 remains open and blocking Chapter 06 closeout.**
 
 ### End-to-end catalog rows
 
@@ -363,8 +406,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-INIT-001](#arr-init-001) | supported | `$v vector<int> = [];` | passed | passed | deferred | `data_empty` state proof |
 | [ARR-INIT-003](#arr-init-003) | supported | `$v vector<int> = [10, 20, 30];` | passed | passed | deferred | `data_vector`, nested/large/order proofs |
 | [ARR-INIT-004](#arr-init-004) | bounded-support | `$m hash<int> = ["alice" => 10, "bob" => 20];` | passed | passed | deferred | `data_hash`; imported untyped `$a = [1, 2, 3]` rejects without known target |
-| [ARR-READ-001](#arr-read-001) | pending-discussion | `$a = $b[0];` | unverified | unverified | deferred | — |
-| [ARR-READ-002](#arr-read-002) | pending-discussion | `$a = $b["name"];` | unverified | unverified | deferred | — |
+| [ARR-READ-001](#arr-read-001) | bounded-support | `$b vector<int> = [3]; $a = $b[0];` | passed | passed | deferred | `read_typed`, bounds/key/order/nested proofs; all four registered families |
+| [ARR-READ-002](#arr-read-002) | bounded-support | `$b dynamic = {name: "Alex"}; $a = $b["name"];` | passed | passed | deferred | `read_dynamic`, missing/typed-boundary/wrong-kind proofs |
 | [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |
 | [ARR-WRITE-001](#arr-write-001) | pending-discussion | `$b[0] = 1;` | unverified | unverified | deferred | — |
 | [ARR-APPEND-001](#arr-append-001) | pending-discussion | `$a[] = 1;` | unverified | unverified | deferred | — |

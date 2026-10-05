@@ -14,6 +14,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `language_scope`, `global_scope` | Built-in/runtime definitions and shared source indexes; global parents to language |
 | `runtime_callables`, `cpp_callable_bindings` | Installed static-factory identities/contracts and separate C++ bindings; reset with canonical types |
 | `initialization_contracts` | Runtime initialization declarations, internal input types and concrete bindings; reset with canonical types |
+| `index_reads` | Registry-lifetime read contracts keyed by exact receiver definition; independent of construction opt-in |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
 | `prepared_files` | Successfully completed file records referencing the retained syntax |
 | `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
@@ -85,6 +86,11 @@ configuration changes require a full compilation reset.
 
 ### Initialization contracts
 
+`contract_type_reference` under `compiler/types/` represents target, template-argument
+or concrete-type references for both initialization and index signatures.
+`Contract_Type_Substitution` owns the shared analysis-time substitution; this is not
+a C++ spelling or a second canonical type identity.
+
 `initialization_declaration` names a registered target definition, type references
 (target, template argument or concrete type), exact argument constraints and a semantic
 factory key. Optional key type distinguishes the two recognized interface roles.
@@ -116,6 +122,16 @@ consumes these facts for built-in construction execution; source input-view life
 operations remain gated.
 
 ## AST and scopes
+
+`index_node` retains `prepared_index_expression` with a normal `operator_decision`
+and inherited non-addressable value result. `Index_Read_Contracts` supplies exact
+receiver-definition signatures; `Index_Read_Preparation` resolves key/result types,
+checks conversions/copy capability and selects checked-access or null-on-miss reads.
+One CPP handler sequences receiver/key and calls the selected runtime helper. Stable
+receiver wrappers are locally const-bound (not copied wholesale), temporary receivers
+remain alive through result copying, and no interior reference is exposed to source.
+Writes and reference binding do not follow from the node's syntactic assignable base.
+Cleanup and incremental preparation own these facts through the existing node lifecycle.
 
 The property-free `ast_node` base supplies structural contracts; specialized node
 families own typed syntax fields and uint32 spans. `statement_body_node` shares

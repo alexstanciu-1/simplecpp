@@ -1,0 +1,24 @@
+<?php
+
+/* Shared bounded substitution for type-directed registered contracts. */
+namespace scpp\compiler;
+
+final class Contract_Type_Substitution
+{
+	/** Substitute only established identities; source completion remains with consumers. */
+	public static function resolve(contract_type_reference $reference, canonical_type_use $target,
+		array $arguments /** vector<canonical_type_use> */): canonical_type_use
+	{
+		if ($reference->source() === contract_type_source::target) {
+			return $target;
+		}
+		if ($reference->source() === contract_type_source::concrete) {
+			return $reference->concrete_type();
+		}
+		$position = $reference->position();
+		if (!isset($arguments[$position])) {
+			throw new \LogicException('Contract references absent type argument');
+		}
+		return $arguments[$position];
+	}
+}

@@ -11,7 +11,7 @@ function indexing_parse(string $text, ?parsed_file $previous = null): parsed_fil
 	return (new Parser((new Tokenizer($input))->tokenize(), null, $previous))->parse();
 }
 
-/** Exercise the shared semantic pipeline; no successful bracket lowering is claimed. */
+/** Exercise shared preparation and emission; invalid reads must never publish output. */
 function indexing_prepare(string $text): void
 {
 	Compiler_Lifecycle::reset();
@@ -83,18 +83,44 @@ foreach ([
 	['return $missing[];', 'established local declaration for missing'],
 	['$s = "x"; return $s[$missing];', 'established local declaration for missing'],
 	['$s = "x"; $s[$new = 1] = 2;', 'established local declaration for new'],
+	['$v vector<int> = [1]; $x = $v[true];', 'indexed read keys require'],
+	['$v vector<int> = [1]; $x = $v[null];', 'indexed read keys require'],
+	['$v vector<int> = [1]; $x = $v["0"];', 'requires matching types'],
+	['$v dynamic = {}; $x = $v[1.5];', 'indexed read keys require'],
+	['function read(hash<int,mixed> $v): int { return $v[0]; }', 'required capability hashable'],
+	['$v vector<int> = [1]; $x = $v[];', 'operator[] with 0 argument(s)'],
+	['$v vector<int> = [1]; $v[0] = 2;', 'assignment'],
+	['$v vector<int> = [1]; $v[0]++;', 'mutation requires'],
+	['$v vector<int> = [1]; $v[0] += 2;', 'mutation requires'],
+	['function accept(int &$v): void {} $v vector<int> = [1]; accept($v[0]);', 'stable storage'],
+	['$v vector<int> = [1]; $x = isset($v[0]);', 'probe'],
+	['$v vector<int> = [1]; $x = empty($v[0]);', 'probe'],
+	['$v vector<int> = [1]; $x = $v[$new = 0];', 'established local declaration for new'],
 ] as [$source, $diagnostic])
 {
 	$failed = false;
+	$reported = 'No diagnostic';
 	try {
 		indexing_prepare($source);
 	}
 	catch (\RuntimeException $error) {
+		$reported = $error->getMessage();
 		$failed = str_contains($error->getMessage(), $diagnostic);
 	}
 	if (!$failed || !Model::$cpp_files->is_empty()) {
-		throw new \LogicException('Missing operator[] diagnostic: ' . $source);
+		throw new \LogicException('Missing operator[] diagnostic: ' . $source . ' — ' . $reported);
 	}
+}
+
+indexing_prepare('$v vector<int> = [1]; $x = $v[0]; return 0;');
+$read = Model::syntax_files()[0]->root->body->statements[1]->expression->value;
+if (!($read instanceof index_node) || $read->require_preparation()->addressable
+	|| !$read->require_preparation()->type->matches(Language_Types::integer(Model::$language_scope))) {
+	throw new \LogicException('Read did not retain its exact value-only result type');
+}
+Preparation_Cleanup::tree($read);
+if ($read->preparation() !== null || $read->base->preparation() !== null || $read->index->preparation() !== null) {
+	throw new \LogicException('Read facts survived cleanup');
 }
 
 // Parser-only reuse/compaction proves optional children without inventing overload facts.
@@ -148,9 +174,37 @@ try
 			throw new \LogicException('Bracket failure recovery changed valid output');
 		}
 	}
+	$source = 'function pick(vector<int> $v): int { return $v[0]; } return 0;';
+	file_put_contents($path, $source);
+	$compiler->update_cpp([$path]);
+	$function = Model::$global_scope->functions_named('pick')[0]->syntax();
+	$read = $function->body->statements[0]->expression;
+	$old = $read->require_index_preparation();
+	file_put_contents($path, str_replace('vector<int>', 'hash<int,int>', $source));
+	$compiler->update_cpp([$path]);
+	if ($read !== $function->body->statements[0]->expression || $old === $read->require_index_preparation()) {
+		throw new \LogicException('Signature edit did not reprepare retained bracket read');
+	}
+	file_put_contents($path, str_replace('vector<int>', 'hash<int>', $source));
+	$failed = false;
+	try { $compiler->update_cpp([$path]); }
+	catch (\RuntimeException $error) { $failed = true; }
+	if (!$failed || !Model::$cpp_files->is_empty() || $read->preparation() !== null) {
+		throw new \LogicException('Invalid key signature published stale read facts/output');
+	}
+	file_put_contents($path, $source);
+	$compiler->update_cpp([$path]);
+	$incremental = Model::$cpp_files[0]->text;
+	Compiler_Lifecycle::reset();
+	$fresh = new Compiler();
+	$fresh->init([$directory]);
+	$fresh->exec_cpp();
+	if ($incremental !== Model::$cpp_files[0]->text) {
+		throw new \LogicException('Recovered read differs from fresh output');
+	}
 }
 finally {
 	unlink($path);
 	rmdir($directory);
 }
-echo "Indexing: both arities, expression arguments, shared rejection, compaction and recovery passed\n";
+echo "Indexing: arities, read facts, deferred operations, compaction and incremental recovery passed\n";

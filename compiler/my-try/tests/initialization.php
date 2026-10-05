@@ -141,7 +141,7 @@ $provider = $registry->define_nominal('external_bucket', type_definition_origin:
 	nominal_type_kind::class_type, [generic_contract::copyable_value, generic_contract::value_storable]);
 $provider_type = $registry->use($registry->canonical($provider)->type_id());
 Model::$initialization_contracts->register(new initialization_declaration($provider,
-	initialization_type_reference::concrete($integer), null, initialization_type_reference::target(), [], 'external.bucket.list'));
+	contract_type_reference::concrete($integer), null, contract_type_reference::target(), [], 'external.bucket.list'));
 $provider_binding = Initialization_Preparation::binding($provider_type, initialization_shape::positional, $context);
 initialization_check($provider_binding->nested_target()->matches($provider_type)
 	&& $provider_binding->value()->matches($integer), 'External declaration needs a new binder branch');

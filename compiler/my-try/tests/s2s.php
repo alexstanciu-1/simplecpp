@@ -599,7 +599,8 @@ $mixed_fixtures = array_merge(require __DIR__ . '/fixtures/mixed_boundaries.php'
 	require __DIR__ . '/fixtures/mixed_concat.php',
 	require __DIR__ . '/fixtures/mixed_concat_updates.php');
 $data_fixtures = require __DIR__ . '/fixtures/data_initialization.php';
-$value_fixtures = array_merge($result_fixtures, $mixed_fixtures, $data_fixtures);
+$read_fixtures = require __DIR__ . '/fixtures/container_reads.php';
+$value_fixtures = array_merge($result_fixtures, $mixed_fixtures, $data_fixtures, $read_fixtures);
 foreach ($value_fixtures as $name => [$source, $predicate]) {
 	$cases[$name] = [$source, 0];
 }
@@ -620,6 +621,9 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tif (!(" . $value_fixtures[$name][1] . ")) { return 91; }\n";
 		$probe_path = $directory . '/' . $name . '_state.cpp';
 		$probe_text = str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text);
+		if (isset($read_fixtures[$name])) {
+			$probe_text = "#include \"scpp/data_initializer.hpp\"\n#include \"scpp/memory.hpp\"\n" . $probe_text;
+		}
 		if (isset($mixed_fixtures[$name])) {
 			// Native bridge inputs need their own headers, independently of generated declarations.
 			$probe_text = "#include \"scpp/memory.hpp\"\n#include \"scpp/hash_t.hpp\"\n" . $probe_text;

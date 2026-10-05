@@ -25,11 +25,11 @@ final class Initialization_Preparation
 		}
 		if ($selected === null) { throw new \RuntimeException('S2S target does not support initialization shape'); }
 
-		$value = self::substitute($selected->value(), $target, $arguments);
+		$value = Contract_Type_Substitution::resolve($selected->value(), $target, $arguments);
 		$key_type /** nullable<canonical_type_use> */ = null;
 		$key_reference = $selected->key();
-		if ($key_reference !== null) { $key_type = self::substitute($key_reference, $target, $arguments); }
-		$nested = self::substitute($selected->nested(), $target, $arguments);
+		if ($key_reference !== null) { $key_type = Contract_Type_Substitution::resolve($key_reference, $target, $arguments); }
+		$nested = Contract_Type_Substitution::resolve($selected->nested(), $target, $arguments);
 		// Recheck source-derived capabilities even when the concrete binding is cached.
 		$input_type = self::input_type($value, $key_type, $context);
 		$existing = $contracts->existing($target, $selected->is_keyed());
@@ -106,15 +106,5 @@ final class Initialization_Preparation
 			$selected = $candidate;
 		}
 		return $selected;
-	}
-
-	private static function substitute(initialization_type_reference $reference, canonical_type_use $target,
-		array $arguments /** vector<canonical_type_use> */): canonical_type_use
-	{
-		if ($reference->source() === initialization_type_source::target) { return $target; }
-		if ($reference->source() === initialization_type_source::concrete) { return $reference->concrete_type(); }
-		$position = $reference->position();
-		if (!isset($arguments[$position])) { throw new \LogicException('Initialization declaration references absent type argument'); }
-		return $arguments[$position];
 	}
 }

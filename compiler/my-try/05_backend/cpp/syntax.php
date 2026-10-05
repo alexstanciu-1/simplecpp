@@ -15,6 +15,9 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		if ($node instanceof index_node) {
+			return $this->generate_index(object_cast($node, index_node::class));
+		}
 		if ($node instanceof data_construction_node) {
 			return CPP_Data_Construction::generate(object_cast($node, data_construction_node::class), $this->context);
 		}
@@ -82,6 +85,31 @@ final class CPP_Syntax
 			return $this->generate_take_expression(object_cast($node, take_expression_node::class));
 		}
 		throw new \RuntimeException('C++ generation is not supported for this node');
+	}
+
+	/** Bind the receiver once, convert the key next, and copy the read result before releasing temporaries. */
+	private function generate_index(index_node $node): string
+	{
+		$decision = $node->require_index_preparation()->decision;
+		$helper = 'scpp::checked_index_read';
+		if ($decision->operation === operator_operation::index_null_read) {
+			$helper = 'scpp::null_index_read';
+		}
+		elseif ($decision->operation !== operator_operation::index_checked_read) {
+			throw new \LogicException('Unsupported prepared index operation');
+		}
+		$this->context->headers['scpp/index_read.hpp'] = true;
+		$id = $this->context->next_temporary;
+		$this->context->next_temporary++;
+		$receiver = 'index_receiver_' . $id;
+		$key = 'index_key_' . $id;
+		$argument /** expression_node */ = $node->index;
+		$base = $this->expression($node->base);
+		$converted_key = CPP_Declarations::conversion($this->expression($argument), $decision->operands[1], $this->context);
+		return '([&]() -> ' . CPP_Declarations::type($decision->result_type, $this->context) . ' { '
+			. 'const auto& ' . $receiver . ' = ' . $base . '; '
+			. CPP_Declarations::type($decision->operands[1]->target_type, $this->context) . ' ' . $key . ' = ' . $converted_key . '; '
+			. 'return ' . $helper . '(' . $receiver . ', ' . $key . '); }())';
 	}
 
 	/** Backend-owned selection only; typed handlers own child traversal. */

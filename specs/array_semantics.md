@@ -43,6 +43,40 @@ v0.1 implicit array examples are not proof of v0.2 target resolution or support.
 Prism++ treats array/table operations through three semantic classes:
 
 ### 2.1 Value read path
+
+For v0.2, distinguish statically typed containers from mixed/dynamic carriers:
+
+| Receiver | Read result | Missing key/index |
+| --- | --- | --- |
+| `vector<T>` | copied `T` value | runtime bounds error, including negative indexes |
+| `hash<V, K>` | copied `V` value | runtime missing-key error |
+| `mixed` / `dynamic` | `mixed` value | null-kind mixed |
+
+The null-on-miss rules below describe mixed/dynamic array/table reads, not typed
+vector/hash access. A typed destination never changes the lookup policy: dynamic
+lookup first yields mixed (possibly null), then ordinary checked extraction applies.
+This clarifies the former broad wording without imposing nullable results on typed
+container reads. See [the bracket contract](index_operator.md).
+
+The receiver is evaluated before the key, each once. Reads copy the selected value,
+not an interior reference; ordinary handle copies retain shared identity. A receiver
+temporary remains alive through lookup and result copying. Binding a stable receiver
+does not promise a deep snapshot of that container before key-expression effects.
+No read inserts keys or autovivifies containers.
+
+The first v0.2 key domain is ordinary `int` for vectors, the declared ordinary
+`int`/`string` key for typed hashes, and `int`/`string`/runtime-checked `mixed` for
+mixed/dynamic. Mixed keys at typed boundaries use ordinary checked extraction.
+No implicit bool/float/null key coercion is introduced. Static invalid types reject
+during preparation; unknown invalid mixed key kinds throw at runtime, even when the
+receiver is null. Existing numeric-string normalization applies to mixed/dynamic.
+
+Null receivers/intermediates and absent dynamic handles return null for valid keys.
+Existing non-container scalars throw instead of being treated as missing keys.
+Nested reads reuse this rule at each step without creating intermediate storage.
+Existing runtime table carriers remain admitted; expired weak carriers read as null.
+This does not resolve Chapter 06's separately recorded mixed/dynamic containment debt.
+
 Examples:
 ```php
 $x = $a["k"];

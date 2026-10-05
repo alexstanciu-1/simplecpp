@@ -13,6 +13,12 @@ abstract class prepared_expression {
 	public bool $addressable = false;
 }
 
+/** A selected bracket read is a copied value, never an interior storage location. */
+final class prepared_index_expression extends prepared_expression
+{
+	public operator_decision $decision;
+}
+
 /** Syntax owns entry order; the binding owns the selected factory contract. */
 final class prepared_data_construction extends prepared_expression
 {

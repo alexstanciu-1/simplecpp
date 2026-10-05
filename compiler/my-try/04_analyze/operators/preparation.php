@@ -65,7 +65,7 @@ final class Operator_Preparation
 	}
 
 	/** Receiver first, then the optional explicit argument; empty brackets imply no special role. */
-	public static function prepare_index(index_node $syntax, preparation_context $context): void
+	public static function prepare_index(index_node $syntax, preparation_context $context): prepared_index_expression
 	{
 		$statement_assignment = $context->statement_assignment;
 		$context->statement_assignment = false;
@@ -78,7 +78,10 @@ final class Operator_Preparation
 				$value = Expression_Preparation::prepare($argument, $context);
 				$operands[] = $value->type;
 			}
-			self::decide(operator_kind::index, $operands, operator_context::expression, $context);
+			$facts = new prepared_index_expression();
+			$facts->decision = self::decide(operator_kind::index, $operands, operator_context::expression, $context);
+			$facts->type = $facts->decision->result_type;
+			return $facts;
 		}
 		finally {
 			$context->statement_assignment = $statement_assignment;
@@ -96,6 +99,9 @@ final class Operator_Preparation
 		if ($source_operator === operator_kind::concatenation) {
 			return self::decide_concatenation($operands, $context);
 		}
+		if ($source_operator === operator_kind::index) {
+			return Index_Read_Preparation::decide($operands, $context);
+		}
 		if (q_count($operands) === 2) {
 			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {
 				if (Mixed_Conversions::is_mixed($operands[0]) || Mixed_Conversions::is_mixed($operands[1])) {
@@ -103,9 +109,6 @@ final class Operator_Preparation
 				}
 				return Nullable_Operators::decide_null_comparison($source_operator, $operands, $context);
 			}
-		}
-		if ($source_operator === operator_kind::index) {
-			return self::decide_index($operands);
 		}
 		if (($source_operator === operator_kind::pre_increment) || ($source_operator === operator_kind::post_increment)
 			|| ($source_operator === operator_kind::pre_decrement) || ($source_operator === operator_kind::post_decrement)) {
@@ -125,21 +128,6 @@ final class Operator_Preparation
 			}
 		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
-	}
-
-	/** No candidate means no result type or access contract can honestly be published. */
-	private static function decide_index(array $operands /** vector<canonical_type_use> */): operator_decision
-	{
-		$arity = q_count($operands) - 1;
-		if (($arity < 0) || ($arity > 1)) {
-			throw new \LogicException('operator[] requires a receiver and zero or one explicit argument');
-		}
-		if (String_Conversions::is_string($operands[0])) {
-			throw new \RuntimeException('S2S string operator[] with ' . $arity
-				. ' argument(s) is deferred; no string overload is defined');
-		}
-		throw new \RuntimeException('S2S operator[] with ' . $arity
-			. ' argument(s) overload resolution is deferred');
 	}
 
 	/** Exact numeric/bool candidates plus explicit condition-negation roles; no numeric promotion. */
@@ -324,6 +312,16 @@ final class Operator_Preparation
 	/** Sequenced logical operands admit writes; eager parents inspect the entire subtree. */
 	private static function require_operand(expression_node $node, bool $sequenced): void
 	{
+		if ($node instanceof index_node)
+		{
+			$indexed = object_cast($node, index_node::class);
+			self::require_operand($indexed->base, $sequenced);
+			if ($indexed->index !== null) {
+				$argument /** expression_node */ = $indexed->index;
+				self::require_operand($argument, $sequenced);
+			}
+			return;
+		}
 		if ($sequenced) {
 			if (($node instanceof call_node) || ($node instanceof mutation_expression_node)
 				|| ($node instanceof compound_assignment_expression_node)) {

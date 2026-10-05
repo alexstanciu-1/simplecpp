@@ -79,7 +79,7 @@ final class Expression_Preparation
 		}
 		elseif ($node instanceof index_node) {
 			$indexed = object_cast($node, index_node::class);
-			Operator_Preparation::prepare_index($indexed, $context);
+			$indexed->set_preparation(Operator_Preparation::prepare_index($indexed, $context));
 		}
 		elseif ($node instanceof match_expression_node) {
 			$match_expression = object_cast($node, match_expression_node::class);

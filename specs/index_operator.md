@@ -33,11 +33,19 @@ Nested expressions retain their own semantic and effect restrictions. Bracket
 preparation does not introduce local declarations or bypass enclosing arithmetic's
 existing restrictions on effects.
 
-No bracket overloads are selected in this slice. String receivers report that their
-operator contract is deferred; other prepared receivers report deferred overload
-resolution, including the explicit arity. Neither form publishes a fabricated result
-type, access flag or generated operation. Surrounding reads, assignments and updates
-must not interpret empty brackets as append. Lowering remains deferred.
+The v0.2 one-argument read slice selects registered vector/hash/mixed/dynamic
+contracts. Type-definition identity supplies key/result substitutions and either
+checked-access or null-on-miss policy; initialization opt-in does not grant indexing.
+The agreed [read contract](array_semantics.md#21-value-read-path) defines exact types,
+key admission and runtime failure behavior. Selected reads retain an operator decision
+on `prepared_index_expression`; they are non-addressable values regardless of the
+syntax node's assignable base class. Ordinary typed consumers convert that value
+after lookup, not by changing lookup policy.
+
+String indexing, unregistered receivers, zero-argument brackets, indexed writes,
+updates, native reference arguments and keyed probes remain deferred. Effective
+storage modifiers and broader key families are not admitted by this bounded slice.
+Surrounding assignments/updates must not infer append from empty brackets.
 
 ## Runtime and legacy boundary
 
@@ -52,4 +60,5 @@ a nullable dereference. This does not implement the canonical overload model the
 
 [Focused tests](../compiler/my-try/tests/indexing.php) prove both arities, expression
 arguments, postfix bases, traversal, shared diagnostics, retained syntax/collection,
-compaction and recovery without claiming successful bracket lowering.
+compaction, read facts, deferred write/reference uses and incremental recovery.
+`compiler/my-try/tests/container_reads.py` owns focused generated-C++ read proofs.

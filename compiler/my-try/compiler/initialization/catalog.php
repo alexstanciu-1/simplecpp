@@ -83,9 +83,9 @@ final class Initialization_Registration
 		$integer = $registry->use($types->canonical('int')->type_id());
 		$mixed = $registry->use($types->canonical('mixed')->type_id());
 		$contracts = new Initialization_Contracts($registry, $string_type);
-		$value = initialization_type_reference::argument(0);
-		$key = initialization_type_reference::argument(1);
-		$boxed = initialization_type_reference::concrete($mixed);
+		$value = contract_type_reference::argument(0);
+		$key = contract_type_reference::argument(1);
+		$boxed = contract_type_reference::concrete($mixed);
 		$unconstrained /** hash<canonical_type_use, int> */ = [];
 		$integer_key /** hash<canonical_type_use, int> */ = [1 => $integer];
 		$string_key /** hash<canonical_type_use, int> */ = [1 => $string_type];
@@ -98,7 +98,7 @@ final class Initialization_Registration
 		$contracts->register(new initialization_declaration($types->definition('hash'), $value, $key, $value,
 			$string_key, 'simple_cpp.hash.keyed'));
 		foreach (['mixed', 'dynamic'] as $name) {
-			$nested = initialization_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
+			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$contracts->register(new initialization_declaration($types->definition($name), $boxed, null, $nested,
 				$unconstrained, 'simple_cpp.' . $name . '.list'));
 			$contracts->register(new initialization_declaration($types->definition($name), $boxed, $boxed, $nested,

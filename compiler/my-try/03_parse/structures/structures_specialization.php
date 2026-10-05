@@ -1392,6 +1392,19 @@ final class data_entry_node extends ast_node
 final class index_node extends assignable_expression_node
 {
 	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_index_expression $prepared_facts = null;
+
+	public function require_preparation(): prepared_expression
+	{
+		return $this->require_index_preparation();
+	}
+
+	public function require_index_preparation(): prepared_index_expression
+	{
+		return $this->prepared_facts;
+	}
 
 	public expression_node $base;
 	/** Absence means zero explicit arguments, with no built-in append interpretation. */
