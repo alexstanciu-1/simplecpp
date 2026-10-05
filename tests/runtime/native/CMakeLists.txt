@@ -104,6 +104,11 @@ add_executable(test_mixed_t_dynamic test_mixed_t_dynamic.cpp)
 target_link_libraries(test_mixed_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_mixed_t_dynamic COMMAND test_mixed_t_dynamic)
 
+# Compact mixed layout plus release-active copy/move/lifetime checks.
+add_executable(test_mixed_layout test_mixed_layout.cpp)
+target_link_libraries(test_mixed_layout PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_mixed_layout COMMAND test_mixed_layout)
+
 # Strict identity coverage for null dynamic carriers widened into mixed_t.
 add_executable(test_strict_identity_null_dynamic test_strict_identity_null_dynamic.cpp)
 target_link_libraries(test_strict_identity_null_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)

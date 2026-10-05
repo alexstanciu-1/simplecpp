@@ -17,6 +17,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For the mixed field-layout and copy/move/lifetime checkpoint:
+
+```bash
+python3 compiler/my-try/tests/mixed_layout.py --results /tmp/FRESH_MIXED_LAYOUT_RESULTS
+```
+
+Rebuilds matching debug and release snippet runtimes, then runs layout/lifetime
+and array-semantics programs through the shared pool. The dedicated layout program's
+behavioral checks remain active under NDEBUG. This does not rebuild the compiler.
+The [storage plan](planning/mixed_dynamic_storage.md) records separate baseline
+failures in the older mixed operator suite; those are not hidden by this checkpoint.
+
 For whole-container parameters/returns and indexed call arguments:
 
 ```bash

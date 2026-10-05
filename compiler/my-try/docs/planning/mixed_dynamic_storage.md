@@ -14,12 +14,33 @@ the union. Current x86-64 layout is 1-byte tag, 7 bytes padding, 16-byte union,
 24 bytes, with the same fields and intended semantics. The counter currently exists
 in both debug and release builds, although its borrow checks are debug-only.
 
-Status: recorded improvement, not implemented; non-blocking layout work. The current
-32-byte mixed size and 16-byte shared handle were measured with Clang 18 on x86-64
-Linux. Reordered production mixed has not yet been compiled/measured. Confirm size,
-alignment and copy/move/lifetime behavior in both debug and release when implementing.
+Status: implemented and measured at 24 bytes, alignment 8, with Clang 18 on x86-64
+Linux in debug (-O0) and release (-O2, NDEBUG). The borrow counter is retained;
+duplicate preprocessor branches declaring the same field were consolidated.
 This is an ABI change: rebuild runtime libraries and generated consumers consistently,
-including stale PCH/build artifacts. Do not remove borrow safety to save space.
+including stale PCH/build artifacts. Do not mix the old 32-byte ABI with this one.
+
+Focused evidence: `python3 compiler/my-try/tests/mixed_layout.py --results
+/tmp/my-try-mixed-layout-20261005-2` passed two matching runtime builds and four
+native test programs. The new `test_mixed_layout.cpp` checks size/alignment, inline
+scalars, string ownership, copy/move/self-assignment, kind replacement, table COW,
+owned/weak payloads and balanced shared-container lifetime. Its behavioral checks
+remain enabled under NDEBUG; the existing array-semantics program also passes in
+both modes. Existing dynamic-box behavior is intentionally unchanged at this first
+checkpoint, not endorsed as the target separated-family contract.
+
+The initial broader probe (`/tmp/my-try-mixed-layout-20261005-1`) also ran the older
+`test_mixed_t_dynamic.cpp`. It fails in debug on its expectation that bool/int
+equality throws, and in release on its string `+=` expectation. Both failures were
+reproduced with the unmodified HEAD header/32-byte layout in matching fresh runtime
+builds (`/tmp/my-try-mixed-layout-baseline`). They are baseline operator-test drift,
+not layout regressions; no operator behavior or old expectations were changed here.
+That suite is not counted as passing or included in the focused layout runner.
+
+Generated-program integration: `/tmp/my-try-mixed-layout-calls-20261005-1` passed
+five PHP suites and 28 PCH-backed container-call programs against a fresh runtime.
+FPM socket startup was unavailable, so PHP used the recorded CLI fallback. This
+is not a native compiler rebuild or a broad regression run.
 
 ## Dynamic direction from discussion
 
@@ -95,6 +116,24 @@ Important integration checks:
 Next design review should choose the private storage boundary and recursive container
 types before any cross-owner changes. Runtime layout/lifetime, family rejection,
 copy/alias semantics, JSON modes and compiler facts require separate focused proofs.
+
+## Implementation sequence and current handoff
+
+1. Mixed layout checkpoint: implemented as above; dynamic and its old bridge API
+   are unchanged. No native compiler rebuild is claimed.
+2. New tagged dynamic and reusable private value/table mechanics: next. Keep scalar
+   semantics in their existing owners; remove obsolete mixed/dynamic coupling as a
+   coordinated change rather than leaving both representations partially active.
+3. Migrate runtime consumers together: initialization, reads/writes/paths, iteration,
+   casts, truthiness/probes/count/identity, formatting/debugging and JSON. The inventory
+   also finds dynamic assumptions in tasks and MySQL adapters and typed JSON conversion;
+   reconcile these consumers rather than claiming only compiler-local impact.
+4. Update shared compiler capability/conversion/access facts and backend bindings;
+   add scalar-dynamic, same-family nested data and rejected-crossing proofs. Keep
+   old object-only/shared-hash expectations separate from new normative semantics.
+5. Reconcile authoritative contracts and JSON API registrations, prove focused
+   runtime/generated-program behavior and record remaining debt. Native compiler
+   validation remains an explicit requested checkpoint.
 
 Future callable-valued entries are recorded as
 [CH15-CALLABLE-01](../catalog/15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries).

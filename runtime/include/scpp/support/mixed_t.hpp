@@ -51,6 +51,9 @@ public:
 
 private:
 	kind_t type_;
+	// Keep lifecycle metadata beside the tag so it occupies the union's alignment
+	// padding instead of adding another aligned word after the payload.
+	mutable std::uint16_t borrow_count_ = 0;
 
 	union {
 		bool_t bool_value_;
@@ -62,12 +65,6 @@ private:
 		dynamic_t<> dynamic_value_;
 		weak_p<hash_t<mixed_t>> weak_table_value_;
 	};
-
-#ifndef NDEBUG
-	mutable std::uint16_t borrow_count_ = 0;
-#else
-	mutable std::uint16_t borrow_count_ = 0;
-#endif
 
 	void destroy() noexcept;
 	void assert_kind_change_allowed(kind_t target_kind) const noexcept;
