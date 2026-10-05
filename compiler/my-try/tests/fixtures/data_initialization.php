@@ -2,6 +2,14 @@
 
 /* Source construction with independent native observations; source indexing is a later slice. */
 return [
+	'data_contract_empty_null' => ['$m mixed = []; $nil mixed = null; $d dynamic = {}; $v = vector<int>::[]; $h = hash<int>::[]; $m = [];',
+		'!local_m.is_null().native_value() && local_m.table_if()->size() == 0 && local_nil.is_null().native_value() && local_d.get() && local_d->size() == 0 && local_v.size() == 0 && local_h.size() == 0'],
+	'data_contract_key_updates' => ['$m mixed = ["10" => 1, "08" => 2]; $d dynamic = ["10" => 3, "08" => 4]; $m[10] = 5; $d[10] = 6; $m[8] = 7; $d[8] = 8; $a int = $m["10"]; $b int = $m["08"]; $c int = $d["10"]; $e int = $d["08"];',
+		'local_a.native_value() == 5 && local_b.native_value() == 2 && local_c.native_value() == 6 && local_e.native_value() == 4 && local_m.table_if()->size() == 3 && local_d->size() == 3'],
+	'data_contract_typed_keys' => ['$s hash<int> = ["10" => 1, "08" => 2]; $i hash<int,int> = [10 => 3, 8 => 4]; $s["10"] = 5; $i[10] = 6;',
+		'local_s.size() == 2 && local_i.size() == 2 && local_s.at(scpp::string_t{"10"}).native_value() == 5 && local_s.at(scpp::string_t{"08"}).native_value() == 2 && local_i.at(scpp::int_t<>{10LL}).native_value() == 6'],
+	'data_contract_nested_keys' => ['$m mixed = {left: {x: 1}, right: {x: 2}}; $d dynamic = {left: {x: 3}, right: {x: 4}}; $a int = $m["left"]["x"]; $b int = $m["right"]["x"]; $c int = $d["left"]["x"]; $e int = $d["right"]["x"];',
+		'local_a.native_value() == 1 && local_b.native_value() == 2 && local_c.native_value() == 3 && local_e.native_value() == 4'],
 	'data_vector' => ['$v vector<int> = [10, 20, 30,];',
 		'local_v.size() == 3 && local_v.at(0).native_value() == 10 && local_v.at(2).native_value() == 30'],
 	'data_nested' => ['$v vector<vector<int>> = [[1], [2, 3]];',

@@ -705,6 +705,47 @@ No production compiler/runtime changes were necessary. Mutation-during-iteration
 mixed/dynamic containment remain open chapter-closeout blockers; this group does
 not resolve either one or implement reference foreach.
 
+### Construction defaults and legacy reconciliation — 2026-10-05
+
+The user agreed to preserve the current known-target and key contracts, rather than
+reintroduce implicit mixed inference or legacy spellings. This is a grouped proof
+and catalog reconciliation, not new syntax or a change to the runtime key policy.
+
+- First-assignment `[]`, positional/keyed/nested data notation and bare `null` without
+  a known destination reject. Explicit types, existing typed destinations and
+  `Type::[...]` / `Type::{...}` remain the construction routes. Empty mixed tables,
+  null mixed and valid empty dynamic objects are distinct states.
+- Typed hashes require their declared key type; they do not accept the other key
+  family by implicit numeric-string coercion. Mixed/dynamic retain existing runtime
+  normalization: `"10"` and integer `10` address the same key, while `"08"` and integer
+  `8` are distinct. ARR-KEY-SEM-001's old blanket distinct-key statement is superseded
+  by the [current initialization contract](../../../../specs/data_initialization.md#34-built-in-bindings-and-input-shapes).
+- Duplicate construction keys reject after conversion/normalization, at runtime.
+  All entry expressions execute before factory validation; failure preserves the
+  old destination. The same key in different nested tables is valid. Ordinary writes
+  may update an existing normalized key and do not become duplicate-construction errors.
+- Legacy `array` / `?array` parameters, bare `vector_t` spelling and comment-only
+  parameter types are not accepted by this strict frontend. The typed/mixed
+  counterparts have separate proofs, not semantic equivalence to table-only entry
+  guards. `(array)` remains deferred and rejects before C++ generation.
+
+The existing `data_initialization.py` runner now includes `data_contract_*` fixtures
+and expanded preparation rejection checks. Existing duplicate/failure-order proofs
+are reused. No production compiler/runtime changes were needed for these rules.
+
+Evidence: `/tmp/my-try-container-contracts-20261005-1` passed five PHP suites,
+48 PCH-backed generated C++ programs and the runtime input-lifetime proof. All
+1,287 previous C++ exports remain byte-identical; eight new exports were added.
+PHP used CLI fallback after sandbox FPM socket denial. No native compiler rebuild
+or separate non-PCH run was performed in this test/documentation-only slice.
+
+Remaining inventory: reference foreach and iterator mutation/lifetime semantics;
+legacy array admission/guards and array casts; existing typed-container boxing into
+mixed/dynamic (ARR-VALUE-001), distinct from contextual nested literal construction;
+source-defined initialization factories/property-driven construction; and the
+previously named vector-removal, weak/cross-family and path-performance limitations.
+This is not chapter closeout: **CH06-ITER-01 and CH06-MIX-DYN-01 remain blocking**.
+
 ### End-to-end catalog rows
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -716,37 +757,37 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-INIT-004](#arr-init-004) | bounded-support | `$m hash<int> = ["alice" => 10, "bob" => 20];` | passed | passed | deferred | `data_hash`; imported untyped `$a = [1, 2, 3]` rejects without known target |
 | [ARR-READ-001](#arr-read-001) | bounded-support | `$b vector<int> = [3]; $a = $b[0];` | passed | passed | deferred | `read_typed`, bounds/key/order/nested proofs; all four registered families |
 | [ARR-READ-002](#arr-read-002) | bounded-support | `$b dynamic = {name: "Alex"}; $a = $b["name"];` | passed | passed | deferred | `read_dynamic`, missing/typed-boundary/wrong-kind proofs |
-| [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |
+| [ARR-KEY-SEM-001](#arr-key-sem-001) | bounded-support | `$a mixed = []; $a[10] = 1; $a["10"] = 2;` | passed | passed | deferred | Current mixed/dynamic normalization, typed key domains and normalized-duplicate rejection |
 | [ARR-WRITE-001](#arr-write-001) | bounded-support | `$b vector<int> = [0]; $b[0] = 1;` | passed | passed | deferred | Local/parameter-rooted direct/nested paths; all four families; cross-family paths gated |
 | [ARR-APPEND-001](#arr-append-001) | bounded-support | `$a vector<int> = []; $a[] = 1;` | passed | passed | deferred | Vector, integer-key hash, mixed and dynamic; string-key hash rejects |
 | [FUNC-DECL-003B](#func-decl-003b) | bounded-support | `function f(vector<int> $a): void {}` | passed | passed | deferred | Strict typed-container signature/copy/return proofs; legacy annotation syntax excluded |
 | [FUNC-ARG-001](#func-arg-001) | bounded-support | `f($x[0]);` | passed | passed | deferred | Ordinary non-creating value read; reference parameters reject indexed arguments |
 | [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; non-mutating value iteration; CH06-ITER-01 blocks closeout |
 | [CTRL-FOREACH-002](#ctrl-foreach-002) | bounded-support | `foreach ($items as $k => $v) { }` | passed | passed | deferred | Typed keys/values, loop-local key, existing value reuse; no snapshots |
-| [CTRL-FOREACH-003](#ctrl-foreach-003) | pending-discussion | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | — |
-| [CTRL-FOREACH-004](#ctrl-foreach-004) | pending-discussion | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | — |
-| [CAST-ARRAY-001](#cast-array-001) | pending-discussion | `$a = (array)$b;` | unverified | unverified | deferred | — |
-| [ARR-INIT-002](#arr-init-002) | pending-discussion | `$a = [];` | unverified | unverified | deferred | — |
-| [ARR-INIT-002A](#arr-init-002a) | pending-discussion | `$a = null;` | unverified | unverified | deferred | — |
-| [ARR-INIT-005](#arr-init-005) | pending-discussion | `$a = ["name" => "Alex", "age" => 12];` | unverified | unverified | deferred | — |
-| [ARR-INIT-006](#arr-init-006) | pending-discussion | `$d = ["data" => [["id" => 1], ["id" => 2]]];` | unverified | unverified | deferred | — |
+| [CTRL-FOREACH-003](#ctrl-foreach-003) | deferred | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | Reference lifetime/mutation protocol required; not implied by value foreach |
+| [CTRL-FOREACH-004](#ctrl-foreach-004) | deferred | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | Same reference-iteration gate |
+| [CAST-ARRAY-001](#cast-array-001) | deferred | `$a = (array)$b;` | rejection-proved | not-applicable | deferred | Array conversion remains deferred; no registered builtin array target |
+| [ARR-INIT-002](#arr-init-002) | rejection-proved | `$a = [];` | passed | not-applicable | deferred | No implicit mixed fallback; explicit/known target required |
+| [ARR-INIT-002A](#arr-init-002a) | rejection-proved | `$a = null;` | passed | not-applicable | deferred | Bare null cannot infer storage; explicit/known destination required |
+| [ARR-INIT-005](#arr-init-005) | split | `$a = ["name" => "Alex", "age" => 12];` | passed | passed | deferred | Untyped form rejects; explicit mixed/dynamic form covered by construction proofs |
+| [ARR-INIT-006](#arr-init-006) | split | `$d = ["data" => [["id" => 1], ["id" => 2]]];` | passed | passed | deferred | Untyped form rejects; contextual same-family nesting covered |
 | [ARR-EXIST-001](#arr-exist-001) | bounded-support | `isset($a["name"])` | passed | passed | deferred | Registered containers; lazy paths, null/wrapper-sensitive |
 | [ARR-UNSET-001](#arr-unset-001) | bounded-support | `unset($a["name"]);` | passed | passed | deferred | Associative direct/nested removal; vector leaf removal gated |
 | [ARR-EMPTY-001](#arr-empty-001) | bounded-support | `empty($a["name"])` | passed | passed | deferred | Lazy paths; missing true; string `"0"` nonempty |
 | [ARR-TYPE-001](#arr-type-001) | split | `function f(array &$a): void { $a["x"] = 1; }` | unverified | unverified | deferred | Strict whole-wrapper reference counterpart proved; legacy array spelling/entry guard remains separate |
-| [ARR-VALUE-001](#arr-value-001) | pending-discussion | `$v vector<int> = [1, 2, 3]; $d = ["data" => $v];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-PARAM-002](#type-param-002) | pending-discussion | `function f(string $s, vector_t $v): string { return $s; }` | unverified | unverified | deferred | — |
-| [TYPE-PARAM-003A](#type-param-003a) | pending-discussion | `function f(array $a): void { var_dump($a); }` | unverified | unverified | deferred | — |
-| [TYPE-PARAM-003C](#type-param-003c) | pending-discussion | `function f(array $a): void { $a[] = 1; }` | unverified | unverified | deferred | — |
-| [TYPE-PARAM-003E](#type-param-003e) | pending-discussion | `function f(array $a): void { foo($a); }` | unverified | unverified | deferred | — |
-| [NOTE-006](#note-006) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-022](#note-022) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-053](#note-053) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [ARR-VALUE-001](#arr-value-001) | deferred | `$v vector<int> = [1, 2, 3]; $d = ["data" => $v];` | unverified | unverified | deferred | Existing typed-container boxing is not contextual nested literal construction |
+| [TYPE-PARAM-002](#type-param-002) | split | `function f(string $s, vector_t $v): string { return $s; }` | rejection-proved | not-applicable | deferred | Bare runtime spelling rejects; vector<T> call semantics proved separately; const-ref optimization not implied |
+| [TYPE-PARAM-003A](#type-param-003a) | deferred-legacy | `function f(array $a): void { var_dump($a); }` | rejection-proved | not-applicable | deferred | Legacy array admission/entry guards and debug builtin not implemented here |
+| [TYPE-PARAM-003C](#type-param-003c) | deferred-legacy | `function f(array $a): void { $a[] = 1; }` | rejection-proved | not-applicable | deferred | Strict mixed/typed copies proved separately; no legacy array guard |
+| [TYPE-PARAM-003E](#type-param-003e) | deferred-legacy | `function f(array $a): void { foo($a); }` | rejection-proved | not-applicable | deferred | Same legacy guard gate; ordinary strict forwarding uses shared calls |
+| [NOTE-006](#note-006) | split | — | passed | passed | deferred | Read/write/call portions proved; reference-return/alias portions deferred |
+| [NOTE-022](#note-022) | split | — | passed | passed | deferred | Known-target construction and current key/read rules supersede old implicit mixed inference; legacy guards deferred |
+| [NOTE-053](#note-053) | bounded-support | — | passed | passed | deferred | Shared nested read/write proofs; interior native references remain rejected |
 | [NOTE-055](#note-055) | split | — | unverified | unverified | deferred | Strict value materialization/reference limits proved; legacy array/nullable-array guards deferred |
 | [NOTE-058](#note-058) | bounded-support | `f($x[0]);` | passed | passed | deferred | Old creating-DIM guidance superseded by ordinary non-creating v0.2 reads |
 ## CAST-ARRAY-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred conversion; rejection before C++ generation is proved by `tests/data_preparation.php`. No builtin `array` cast target is registered. Do not infer typed-container conversion or implicit mixed construction from this spelling.
 
 ### Imported version 1
 
@@ -855,7 +896,7 @@ for (auto __scpp_foreach_entry_L : foreach_range(items)) { auto&& k = __scpp_for
 
 ## CTRL-FOREACH-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred until the reference/lifetime and mutation protocol is agreed. Value-foreach support does not admit interior aliases or the legacy source-slot rewrite.
 
 ### Imported version 1
 
@@ -890,7 +931,7 @@ hidden-key slot rewrite; body rewrites `$item` to `$items[_item_key_]`
 
 ## CTRL-FOREACH-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred under the same reference-iteration gate; do not adopt the legacy key-driven source-slot rewrite implicitly.
 
 ### Imported version 1
 
@@ -1006,9 +1047,9 @@ f(x[0]);
 
 **Strict-mode PHP input example:** `$v vector<int> = [];`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This is the strict working spelling. Imported versions below remain historical reference material; the decision here and chapter checkpoints describe current support.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Bounded shared initialization is proved for explicit vector<T> empty literals; no implicit mixed fallback. See the construction checkpoint.
 
 ### Imported version 1
 
@@ -1045,7 +1086,7 @@ $v /** vector<int> */ = [];
 
 ## ARR-INIT-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** First assignment without a known target rejects; `mixed::[]` or `$a mixed = []` constructs an empty table. Assignment to an existing compatible typed destination supplies context. See the [reconciliation checkpoint](#construction-defaults-and-legacy-reconciliation--2026-10-05).
 
 ### Imported version 1
 
@@ -1082,7 +1123,7 @@ mixed_t a = mixed_t{table_()};
 
 ## ARR-INIT-002A
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Bare null cannot infer local storage; rejection is proved. `$a mixed = null` and other supported known nullable destinations remain explicit. The old automatic mixed bootstrap inference is not a v0.2 rule.
 
 ### Imported version 1
 
@@ -1121,9 +1162,9 @@ mixed_t a = null;
 
 **Strict-mode PHP input example:** `$v vector<int> = [1, 2, 3];`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This is the strict working spelling. Imported versions below remain historical reference material; the decision here and chapter checkpoints describe current support.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit/contextual positional vector<T> construction uses the shared runtime factory protocol; proved by data_vector and contextual construction fixtures.
 
 ### Imported version 1
 
@@ -1162,9 +1203,9 @@ $v /** vector<int> */ = [1, 2, 3];
 
 **Strict-mode PHP input example:** `$m hash<int> = ["a" => 1, "b" => 2];`<br>`$a = [1, 2, 3];`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This is the strict working spelling. Imported versions below remain historical reference material; the decision here and chapter checkpoints describe current support.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit typed hashes use the shared keyed factory path; duplicate keys reject at runtime. Imported untyped first-assignment variants reject without a known target.
 
 Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
 
@@ -1235,7 +1276,7 @@ mixed_t a = mixed_t{table_(table_item_(static_cast<int_t>(1)), table_item_(stati
 
 ## ARR-INIT-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Split: the imported first-assignment form rejects without a target. Explicit mixed/dynamic or compatible typed keyed construction uses the shared initialization protocol; the existing construction fixtures prove those forms.
 
 ### Imported version 1
 
@@ -1272,7 +1313,7 @@ mixed_t a = mixed_t{table_(table_kv_("name", string_t("Alex")), table_kv_("age",
 
 ## ARR-INIT-006
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Split: the imported untyped first assignment rejects. Same-family nested literals inherit the explicit outer target under the current initialization contract. This does not approve cross-family containment or boxing an existing typed container.
 
 ### Imported version 1
 
@@ -1307,7 +1348,7 @@ nested `::scpp::table_(...)` builders
 
 ## ARR-READ-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared registered index reads return copied typed values; missing typed keys/indexes throw. See the container-value-read checkpoint.
 
 ### Imported version 1
 
@@ -1344,7 +1385,7 @@ auto a = b[static_cast<int_t>(0)];
 
 ## ARR-READ-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared mixed/dynamic value reads return mixed and preserve null-on-miss without creating entries; typed destinations then use checked conversion.
 
 ### Imported version 1
 
@@ -1381,7 +1422,7 @@ auto a = b["name"];
 
 ## ARR-WRITE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Direct and nested stable local/parameter-rooted writes use prepared indexing contracts and sequenced runtime validation. See the write checkpoints for bounded paths and failure guarantees.
 
 ### Imported version 1
 
@@ -1418,7 +1459,7 @@ b[static_cast<int_t>(0)] = static_cast<int_t>(1);
 
 ## ARR-APPEND-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Append is proved for vectors, integer-keyed hashes, mixed and dynamic under the write contracts. String-keyed hash append and intermediate append paths remain gated.
 
 ### Imported version 1
 
@@ -1603,7 +1644,7 @@ void f(mixed_t& a) { ::scpp::php::expect_array_argument(a, false, "a"); a[string
 
 ## ARR-KEY-SEM-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** The imported blanket distinction is superseded. Typed hashes enforce their declared key family; mixed/dynamic normalize `"10"` to integer `10` but retain `"08"` as a string. Duplicates after normalization reject during construction, while ordinary writes update existing keys. `data_contract_*` and duplicate fixtures prove the distinction.
 
 ### Imported version 1
 
@@ -1642,9 +1683,9 @@ a[1] = "int"; a["1"] = "string";
 
 **Strict-mode PHP input example:** `$v vector<int> = [1, 2, 3]; $d = ["data" => $v];`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This is the strict working spelling. Imported versions below remain historical reference material; the decision here and chapter checkpoints describe current support.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred: embedding an existing typed vector/hash in mixed/dynamic requires aggregate boxing support. It is not implied by contextual nested literal construction; an unknown outer target is a separate rejection.
 
 ### Imported version 1
 
@@ -1681,7 +1722,7 @@ vector_t<int_t> v{...}; auto d = ::scpp::table_(::scpp::table_kv_("data", v));
 
 ## TYPE-PARAM-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Split: bare `vector_t` source spelling rejects; `vector<T>` value parameters/returns use the proved shared call path. The old read-only `const&` optimization is not implied and remains separate from source value semantics.
 
 ### Imported version 1
 
@@ -1718,7 +1759,7 @@ string_t f(const string_t& s, const vector_t& v) { return s; }
 
 ## TYPE-PARAM-003A
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred legacy spelling and table-only entry guards. Strict mixed/typed parameter proofs do not establish `array` support or the imported debug builtin.
 
 ### Imported version 1
 
@@ -1755,7 +1796,7 @@ void_t f(mixed_t a) { ::scpp::php::expect_array_argument(a, false, "a"); var_dum
 
 ## TYPE-PARAM-003C
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred legacy array admission/entry guard. Strict typed-container copies and mixed COW mutation are separately proved by the container-call group; mixed is not a table-only alias.
 
 ### Imported version 1
 
@@ -1792,7 +1833,7 @@ void_t f(mixed_t a) { ::scpp::php::expect_array_argument(a, false, "a"); (void) 
 
 ## TYPE-PARAM-003E
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred legacy array admission/entry guard. Ordinary strict forwarding retains the same shared call/value boundary; no alternative array ABI is introduced by this chapter.
 
 ### Imported version 1
 
@@ -1831,7 +1872,7 @@ void_t f(mixed_t a) { ::scpp::php::expect_array_argument(a, false, "a"); foo(a);
 
 **Source:** [generators/php/specs/rules_catalog.md:379](../../../../generators/php/specs/rules_catalog.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Split across the implemented nested read/write and container-call checkpoints. COW value reads/calls are proved. Native interior aliases and reference-return warnings are separate deferred reference work. Old C++ spelling/lambda guidance does not override v0.2 sequencing or preparation ownership.
 
 > ## Nested table dim support
 >
@@ -1863,7 +1904,7 @@ void_t f(mixed_t a) { ::scpp::php::expect_array_argument(a, false, "a"); foo(a);
 
 **Source:** [generators/php/specs/rules.md:317](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Split: current known-target construction, typed/fat reads, writes and key normalization supersede the imported implicit-mixed and blanket key-distinction rules. Legacy array guards remain deferred. See the [reconciliation checkpoint](#construction-defaults-and-legacy-reconciliation--2026-10-05); imported implementation details below are not v0.2 requirements.
 
 > ## 11B. Array subset (v1)
 >
@@ -1916,7 +1957,7 @@ void_t f(mixed_t a) { ::scpp::php::expect_array_argument(a, false, "a"); foo(a);
 
 **Source:** [generators/php/specs/rules.md:1220](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Bounded support through shared non-creating nested reads and validated nested writes/appends. Empty intermediate append, weak/cross-family paths and native interior references remain gated. The write checkpoint owns sequencing and failure guarantees, not the imported chained-access spelling.
 
 > ## Nested table dim support
 >
