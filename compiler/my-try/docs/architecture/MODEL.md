@@ -181,8 +181,10 @@ ordinary binding/conversion facts. `Iteration_Preparation` owns admission and le
 binding; the loop worker still owns body/transfer traversal. C++ generation borrows
 the once-evaluated source, extends temporary lifetime and consumes const entry views
 through a shared checked runtime adapter. It never snapshots the collection.
-Mutation/replacement semantics remain unsupported and block Chapter 06 closeout
-under CH06-ITER-01. Break/continue facts observe
+Mutation/replacement semantics remain unsupported; CH06-ITER-01 now blocks final
+catalog completion under [Chapter 15](../catalog/15_blocking_debt.md). Reference
+foreach stays disabled pending the runtime safety foundation tracked there as
+CH06-REF-01. Break/continue facts observe
 their prepared enclosing target; transient completion composes four exit possibilities
 without a CFG. Conditional expressions own condition, optional true branch and
 fallback; absence of the true branch represents shorthand without duplicating the

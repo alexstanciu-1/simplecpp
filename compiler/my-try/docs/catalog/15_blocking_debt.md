@@ -10,7 +10,7 @@ catalog pass complete. Keep this chapter last if more feature chapters are added
 Moving a debt here changes its review milestone, not its resolution status or the
 language contract. Immediate correctness and memory-safety prerequisites still gate
 the features that need them. This register is initially seeded with the explicitly
-transferred mutation-policy debt; it is not an exhaustive migration of existing
+transferred iteration-policy and reference-iteration safety debts; it is not an exhaustive migration of existing
 debts. Other chapter blockers remain in place unless explicitly transferred.
 
 ## Blocking inventory
@@ -18,6 +18,7 @@ debts. Other chapter blockers remain in place unless explicitly transferred.
 | Debt | Origin | Status | Final completion requirement |
 | --- | --- | --- | --- |
 | CH06-ITER-01 — mutation/replacement during iteration | [Chapter 06](06_containers.md#ch06-iter-01--mutation-during-iteration) | Open; blocks final catalog completion, not Chapter 06 design closeout | Agree the long-term policy, reconcile contracts, implement required changes and prove behavior/safety |
+| CH06-REF-01 — reference foreach safety foundation | [CTRL-FOREACH-003/004](06_containers.md#ctrl-foreach-003) | Open; reference foreach stays disabled; final-catalog blocker | Establish runtime guards and binding lifetime/COW guarantees before compiler integration |
 
 ## CH06-ITER-01 — mutation policy
 
@@ -48,3 +49,41 @@ support beyond its bounded non-mutating contract.
 Close this item only after an explicit policy decision, updates to the owning
 normative specifications, required compiler/runtime work, and focused proofs for
 normal/exceptional exits, alias mutation, source replacement and binding validity.
+
+## CH06-REF-01 — reference foreach safety foundation
+
+Deferred here by user decision on 2026-10-05 after inspection showed that safe
+runtime rejection requires a cross-owner foundation, not a local foreach adapter.
+Both `foreach ($items as &$value)` and `foreach ($items as $key => &$value)` remain
+disabled in my-try. Do not enable parsing/emission as a partially safe feature or
+substitute the legacy key-driven source-slot rewrite. This is no longer scheduled
+as the next Chapter 06 implementation slice.
+
+Keep the agreed target: a loop-scoped current-element binding, independent of the
+visible key variable, using the iterator's known position without inherently
+repeating key lookups. No native reference may escape. The interim guard direction
+above remains approved, but unimplemented.
+
+Inspection findings and affected owners:
+
+- Vector/hash structural mutation and replacement lack a common active-iteration
+  guard. Some clear/move operations are `noexcept`; throwing from them without
+  reviewing their contracts would terminate rather than deliver a runtime error.
+- `dynamic_t` aliases general-purpose `shared_p<hash_t<...>>`. Guarding hash entries
+  alone cannot intercept replacement/reset of the source handle. Establish the
+  wrapper-replacement boundary without silently redesigning all shared handles.
+- Mixed copy-on-write can replace table storage during an ordinary write. Preserve
+  the intended source's write-through semantics and independent copies; an old
+  table pointer or extra shared owner alone does not establish this guarantee.
+
+Resume with a separately agreed runtime foundation covering owner lifetime,
+structural mutation, wrapper replacement, aliases/calls, COW and exception cleanup.
+Then integrate one prepared element-binding path across the supported families.
+Validate direct runtime behavior first, then generated programs and retained
+compiler preparation/recovery. Include unchanged state after rejected mutation,
+normal copy/move behavior, key independence, binding non-escape and all loop exits.
+Review affected `noexcept` and native-access boundaries explicitly.
+
+No runtime/compiler implementation was changed by this deferral. Existing bounded
+value foreach remains available; neither safe mutation nor reference iteration is
+claimed by its existing tests. CH06-MIX-DYN-01 stays a separate Chapter 06 blocker.

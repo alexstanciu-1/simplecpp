@@ -11,6 +11,8 @@ Requires values, expressions and basic calls. Establish reads versus writes befo
 [the final blocking-debt chapter](15_blocking_debt.md); its broader design review
 no longer blocks this chapter. Safe runtime rejection remains an immediate
 prerequisite for enabling reference foreach, not a deferred safety promise.
+Reference foreach remains disabled; its safety foundation and later integration
+are deferred to [CH06-REF-01 in Chapter 15](15_blocking_debt.md#ch06-ref-01--reference-foreach-safety-foundation).
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
@@ -771,8 +773,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [FUNC-ARG-001](#func-arg-001) | bounded-support | `f($x[0]);` | passed | passed | deferred | Ordinary non-creating value read; reference parameters reject indexed arguments |
 | [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; non-mutating value iteration; CH06-ITER-01 moved to final catalog review |
 | [CTRL-FOREACH-002](#ctrl-foreach-002) | bounded-support | `foreach ($items as $k => $v) { }` | passed | passed | deferred | Typed keys/values, loop-local key, existing value reuse; no snapshots |
-| [CTRL-FOREACH-003](#ctrl-foreach-003) | deferred | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | Reference lifetime/mutation protocol required; not implied by value foreach |
-| [CTRL-FOREACH-004](#ctrl-foreach-004) | deferred | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | Same reference-iteration gate |
+| [CTRL-FOREACH-003](#ctrl-foreach-003) | deferred | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | Disabled; safety foundation deferred to Chapter 15, CH06-REF-01 |
+| [CTRL-FOREACH-004](#ctrl-foreach-004) | deferred | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | Disabled under the same Chapter 15 safety gate |
 | [CAST-ARRAY-001](#cast-array-001) | deferred | `$a = (array)$b;` | rejection-proved | not-applicable | deferred | Array conversion remains deferred; no registered builtin array target |
 | [ARR-INIT-002](#arr-init-002) | rejection-proved | `$a = [];` | passed | not-applicable | deferred | No implicit mixed fallback; explicit/known target required |
 | [ARR-INIT-002A](#arr-init-002a) | rejection-proved | `$a = null;` | passed | not-applicable | deferred | Bare null cannot infer storage; explicit/known destination required |
@@ -903,7 +905,7 @@ for (auto __scpp_foreach_entry_L : foreach_range(items)) { auto&& k = __scpp_for
 
 ## CTRL-FOREACH-003
 
-**v0.2 decision / target C++:** Deferred until the reference/lifetime and mutation protocol is agreed. Value-foreach support does not admit interior aliases or the legacy source-slot rewrite.
+**v0.2 decision / target C++:** Disabled; safety foundation deferred to [CH06-REF-01 in Chapter 15](15_blocking_debt.md#ch06-ref-01--reference-foreach-safety-foundation). The agreed element-binding/runtime-rejection direction is not implemented. Value-foreach support does not admit interior aliases or the legacy source-slot rewrite.
 
 ### Imported version 1
 
@@ -938,7 +940,7 @@ hidden-key slot rewrite; body rewrites `$item` to `$items[_item_key_]`
 
 ## CTRL-FOREACH-004
 
-**v0.2 decision / target C++:** Deferred under the same reference-iteration gate; do not adopt the legacy key-driven source-slot rewrite implicitly.
+**v0.2 decision / target C++:** Disabled under the same [Chapter 15 reference-iteration safety gate](15_blocking_debt.md#ch06-ref-01--reference-foreach-safety-foundation); do not adopt the legacy key-driven source-slot rewrite implicitly.
 
 ### Imported version 1
 

@@ -50,6 +50,7 @@ experiment retained for regressions, not a second semantic development path.
 | Lazy keyed probes/removal | [Presence, emptiness and no-creating removal](catalog/06_containers.md#lazy-keyed-probes-and-removal--2026-10-05), [probe contract](../../../specs/count_empty_isset_contract.md#v02-keyed-evaluation-order) |
 | Value foreach | [Shared iteration checkpoint](catalog/06_containers.md#value-foreach--2026-10-05), [final-review mutation debt](catalog/15_blocking_debt.md#ch06-iter-01--mutation-policy), [value-iteration contract](../../../specs/array_semantics.md#v02-value-iteration), [focused runner](testing.md#commands) |
 | Final catalog review | [Accumulated blocking debt after the feature chapters and rest break](catalog/15_blocking_debt.md) |
+| Reference foreach (disabled) | [Deferred runtime guard, lifetime and COW foundation](catalog/15_blocking_debt.md#ch06-ref-01--reference-foreach-safety-foundation) |
 | Containers across calls | [Grouped integration proof](catalog/06_containers.md#container-function-boundaries--2026-10-05), [function-boundary contract](../../../specs/array_semantics.md#v02-function-boundaries), [focused runner](testing.md#commands) |
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
