@@ -1,5 +1,18 @@
 # `json_encode`
 Doc Status: normative
+## v0.2 separated families — 2026-10-05
+
+`json_encode` accepts either mixed or dynamic and returns `result<string>`.
+The writer traverses each family's storage directly, sharing scalar formatting
+and table traversal without converting containers between families. Packed versus
+object-like output remains determined by the existing hash shape query.
+Cycles return an encoding error without partial output; repeated noncyclic aliases
+are encoded at each occurrence. Existing checked failures remain unchanged.
+
+Runtime tagged-dynamic encoding is implemented. Compiler-facing registration and
+the public dynamic-type switch remain pending; typed conversion helpers still use
+their mixed-tree path and do not gain implicit cross-family container conversions.
+
 ## Current contract
 
 - Source-facing PHP++ / PHS: `json_encode(mixed $value) -> result<string>`

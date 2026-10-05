@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 
 namespace scpp::json {
 namespace {
@@ -58,6 +59,20 @@ struct json_parse_failure final {
 	throw std::runtime_error("json unicode error: invalid Unicode code point");
 }
 
+template <typename Value> struct json_family;
+
+template <> struct json_family<mixed_t> {
+	static mixed_t container() { return mixed_t{std::make_unique<hash_t<mixed_t>>()}; }
+	static auto &table(mixed_t &value) { return value.get_hash(); }
+};
+
+template <> struct json_family<detail::dynamic_value> {
+	static detail::dynamic_value container() { return detail::dynamic_value::make_container(); }
+	static auto &table(detail::dynamic_value &value) { return value.get_table(); }
+};
+
+// One grammar; only construction/storage varies with the selected family.
+template <typename Value>
 class json_parser final {
 private:
 	std::string_view input_;
@@ -182,7 +197,7 @@ private:
 		fail_json_parse("unterminated string", start);
 	}
 
-	[[nodiscard]] mixed_t parse_number() {
+	[[nodiscard]] Value parse_number() {
 		const std::size_t start = pos_;
 		if (peek() == '-') {
 			++pos_;
@@ -234,7 +249,7 @@ private:
 			std::int64_t value = 0;
 			auto result = std::from_chars(token.data(), token.data() + token.size(), value);
 			if (result.ec == std::errc{} && result.ptr == token.data() + token.size()) {
-				return mixed_t(int_t<>(value));
+				return Value(int_t<>(value));
 			}
 		}
 
@@ -244,21 +259,21 @@ private:
 		if (end_ptr == nullptr || *end_ptr != '\0' || !std::isfinite(value)) {
 			fail_json_parse("invalid numeric value", start);
 		}
-		return mixed_t(float_t(value));
+		return Value(float_t(value));
 	}
 
-	[[nodiscard]] mixed_t parse_array() {
+	[[nodiscard]] Value parse_array() {
 		if (get() != '[') {
 			fail_json_parse("expected '['", pos_);
 		}
-		auto out = shared<hash_t<mixed_t>>();
+		auto out = json_family<Value>::container();
 		skip_whitespace();
 		if (!at_end() && peek() == ']') {
 			++pos_;
-			return mixed_t(dynamic_box(dynamic_t<>(out)));
+			return out;
 		}
 		while (true) {
-			static_cast<void>(out->append(parse_value()));
+			static_cast<void>(json_family<Value>::table(out).append(parse_value()));
 			skip_whitespace();
 			if (!at_end() && peek() == ',') {
 				++pos_;
@@ -271,18 +286,18 @@ private:
 			}
 			fail_json_parse("expected ',' or ']'", pos_);
 		}
-		return mixed_t(dynamic_box(dynamic_t<>(out)));
+		return out;
 	}
 
-	[[nodiscard]] mixed_t parse_object() {
+	[[nodiscard]] Value parse_object() {
 		if (get() != '{') {
 			fail_json_parse("expected '{'", pos_);
 		}
-		auto out = shared<hash_t<mixed_t>>();
+		auto out = json_family<Value>::container();
 		skip_whitespace();
 		if (!at_end() && peek() == '}') {
 			++pos_;
-			return mixed_t(dynamic_box(dynamic_t<>(out)));
+			return out;
 		}
 		while (true) {
 			skip_whitespace();
@@ -295,7 +310,7 @@ private:
 				fail_json_parse("expected ':'", pos_ - 1);
 			}
 			skip_whitespace();
-			out->set(key, parse_value());
+			json_family<Value>::table(out).set(key, parse_value());
 			skip_whitespace();
 			if (!at_end() && peek() == ',') {
 				++pos_;
@@ -308,7 +323,7 @@ private:
 			}
 			fail_json_parse("expected ',' or '}'", pos_);
 		}
-		return mixed_t(dynamic_box(dynamic_t<>(out)));
+		return out;
 	}
 
 public:
@@ -316,7 +331,7 @@ public:
 		: input_(json.native_value()) {
 	}
 
-	[[nodiscard]] mixed_t parse_value() {
+	[[nodiscard]] Value parse_value() {
 		skip_whitespace();
 		if (at_end()) {
 			fail_json_parse("expected JSON value", pos_);
@@ -324,15 +339,15 @@ public:
 		switch (peek()) {
 			case 'n':
 				expect_literal("null");
-				return mixed_t(null_t{});
+				return Value(null_t{});
 			case 't':
 				expect_literal("true");
-				return mixed_t(bool_t(true));
+				return Value(bool_t(true));
 			case 'f':
 				expect_literal("false");
-				return mixed_t(bool_t(false));
+				return Value(bool_t(false));
 			case '"':
-				return mixed_t(parse_string());
+				return Value(parse_string());
 			case '[':
 				return parse_array();
 			case '{':
@@ -345,8 +360,8 @@ public:
 		}
 	}
 
-	[[nodiscard]] mixed_t parse_document() {
-		mixed_t value = parse_value();
+	[[nodiscard]] Value parse_document() {
+		Value value = parse_value();
 		skip_whitespace();
 		if (!at_end()) {
 			fail_json_parse("trailing non-whitespace after JSON value", pos_);
@@ -388,20 +403,24 @@ struct json_encode_failure final {
 	throw json_encode_failure{message};
 }
 
-void encode_hash(const hash_t<mixed_t> &value, std::string &out);
+using active_tables = std::unordered_set<const void *>;
+template <typename Table>
+void encode_hash(const Table &value, std::string &out, active_tables &active);
 
-void encode_value(const mixed_t &value, std::string &out) {
+template <typename Value>
+bool encode_scalar(const Value &value, std::string &out) {
+	using kind = typename Value::kind_t;
 	switch (value.kind()) {
-		case mixed_t::kind_t::null_v:
+		case kind::null_v:
 			out += "null";
-			return;
-		case mixed_t::kind_t::bool_v:
+			return true;
+		case kind::bool_v:
 			out += value.get_bool().native_value() ? "true" : "false";
-			return;
-		case mixed_t::kind_t::int_v:
+			return true;
+		case kind::int_v:
 			out += std::to_string(value.get_int().native_value());
-			return;
-		case mixed_t::kind_t::float_v: {
+			return true;
+		case kind::float_v: {
 			const double native = value.get_float().native_value();
 			if (!std::isfinite(native)) {
 				fail_json_encode("json_encode: non-finite float_t is not supported");
@@ -409,22 +428,42 @@ void encode_value(const mixed_t &value, std::string &out) {
 			std::ostringstream stream;
 			stream << std::setprecision(std::numeric_limits<double>::max_digits10) << native;
 			out += stream.str();
-			return;
+			return true;
 		}
-		case mixed_t::kind_t::string_v:
+		case kind::string_v:
 			json_escape_string(value.get_string().native_value(), out);
-			return;
-		case mixed_t::kind_t::table_v:
-		case mixed_t::kind_t::shared_table_v:
-		case mixed_t::kind_t::dynamic_v:
-			encode_hash(value.get_hash(), out);
-			return;
-		case mixed_t::kind_t::weak_table_v:
-			fail_json_encode("json_encode: weak tables are not supported");
+			return true;
+		default: return false;
 	}
 }
 
-void encode_hash(const hash_t<mixed_t> &value, std::string &out) {
+void encode_value(const detail::dynamic_value &value, std::string &out, active_tables &active) {
+	if (encode_scalar(value, out)) return;
+	encode_hash(value.get_table(), out, active);
+}
+
+void encode_value(const mixed_t &value, std::string &out, active_tables &active) {
+	if (encode_scalar(value, out)) return;
+	switch (value.kind()) {
+		case mixed_t::kind_t::table_v:
+		case mixed_t::kind_t::shared_table_v:
+		case mixed_t::kind_t::dynamic_v:
+			encode_hash(value.get_hash(), out, active);
+			return;
+		case mixed_t::kind_t::weak_table_v:
+			fail_json_encode("json_encode: weak tables are not supported");
+		default: fail_json_encode("json_encode: unsupported value kind");
+	}
+}
+
+template <typename Table>
+void encode_hash(const Table &value, std::string &out, active_tables &active) {
+	if (!active.insert(&value).second) fail_json_encode("json_encode: cyclic container is not supported");
+	struct path_guard final {
+		active_tables &active;
+		const void *identity;
+		~path_guard() { active.erase(identity); }
+	} guard{active, &value};
 	if (value.is_packed().native_value()) {
 		out.push_back('[');
 		bool first = true;
@@ -433,7 +472,7 @@ void encode_hash(const hash_t<mixed_t> &value, std::string &out) {
 				out.push_back(',');
 			}
 			first = false;
-			encode_value((*it).value_ref(), out);
+			encode_value((*it).value_ref(), out, active);
 		}
 		out.push_back(']');
 		return;
@@ -455,16 +494,17 @@ void encode_hash(const hash_t<mixed_t> &value, std::string &out) {
 			fail_json_encode("json_encode: object key must lower to string_t or int_t<>");
 		}
 		out.push_back(':');
-		encode_value((*it).value_ref(), out);
+		encode_value((*it).value_ref(), out, active);
 	}
 	out.push_back('}');
 }
 
 } // namespace
 
-result<mixed_t> decode(const string_t &json) {
+template <typename Value>
+static result<Value> decode_family(const string_t &json) {
 	try {
-		json_parser parser(json);
+		json_parser<Value> parser(json);
 		return parser.parse_document();
 	} catch (const json_parse_failure &failure) {
 		return error_t(string_t(std::string("json error at byte ")
@@ -472,15 +512,28 @@ result<mixed_t> decode(const string_t &json) {
 	}
 }
 
-result<string_t> encode(const mixed_t &value) {
+result<detail::dynamic_value> decode_dynamic(const string_t &json) {
+	return decode_family<detail::dynamic_value>(json);
+}
+
+result<mixed_t> decode_mixed(const string_t &json) {
+	return decode_family<mixed_t>(json);
+}
+
+template <typename Value>
+static result<string_t> encode_family(const Value &value) {
 	try {
 		std::string out;
 		out.reserve(64);
-		encode_value(value, out);
+		active_tables active;
+		encode_value(value, out, active);
 		return string_t(std::move(out));
 	} catch (const json_encode_failure &failure) {
 		return error_t(string_t(failure.message));
 	}
 }
+
+result<string_t> encode(const mixed_t &value) { return encode_family(value); }
+result<string_t> encode(const detail::dynamic_value &value) { return encode_family(value); }
 
 } // namespace scpp::json

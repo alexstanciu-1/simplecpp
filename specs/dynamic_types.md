@@ -62,11 +62,11 @@ tests do not yet establish compliance. See the [implementation handoff](../compi
   Persistent `[]` versus `{}` identity is deferred, as are callable-valued entries,
   dynamic `->`, recursive family conversion and reference foreach.
 
-The JSON direction is family-specific decoding: default dynamic, including scalar
-roots; an explicitly selected mixed mode produces value/COW trees. This does not
-introduce an API spelling or silently change the existing `result<mixed>` decode
-signature. JSON API/registration migration is a required integration step before
-claiming that default is available.
+JSON uses family-specific decoding: `json_decode` returns `result<dynamic>`, including
+scalar roots; `json_decode_mixed` returns `result<mixed>` with value/COW trees.
+`json_encode` accepts either family without cross-family conversion. Runtime support
+precedes the coordinated public-type/registration switch; see the
+[JSON migration status](builtins/json/json_decode.md#v02-family-specific-decoding--2026-10-05).
 
 Implementation constraints: independent public types, reusable private mechanics,
 inline numeric/bool payloads rather than per-scalar shared allocations, and indirect

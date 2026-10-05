@@ -8,16 +8,27 @@
 #include "scpp/string_t.hpp"
 #include "scpp/result.hpp"
 #include "scpp/json/to_json.hpp"
+#include "scpp/support/dynamic_value.hpp"
 
 namespace scpp::json {
 
-// Decodes one JSON document directly into the current Prism++ runtime value model.
-// Scalars stay inline in mixed_t; arrays and objects use dynamic_t with shared table storage.
+// v0.2 default: same-family tagged dynamic, including scalar roots.
+// The tagged implementation is internal until the coordinated public-type switch.
 // Malformed input is an ordinary checked parse failure; see specs/builtins/json/json_decode.md.
-[[nodiscard]] result<mixed_t> decode(const string_t &json);
+// Distinct out-of-line symbol prevents linking the old result<mixed_t> ABI.
+[[nodiscard]] result<detail::dynamic_value> decode_dynamic(const string_t &json);
+[[nodiscard]] result<mixed_t> decode_mixed(const string_t &json);
 
-[[nodiscard]] inline result<mixed_t> json_decode(const string_t &json) {
+[[nodiscard]] inline result<detail::dynamic_value> decode(const string_t &json) {
+	return decode_dynamic(json);
+}
+
+[[nodiscard]] inline result<detail::dynamic_value> json_decode(const string_t &json) {
 	return decode(json);
+}
+
+[[nodiscard]] inline result<mixed_t> json_decode_mixed(const string_t &json) {
+	return decode_mixed(json);
 }
 
 // Encodes one runtime value into JSON text.
@@ -25,6 +36,7 @@ namespace scpp::json {
 // JSON objects.
 // Unsupported values return an error without exposing partial output.
 [[nodiscard]] result<string_t> encode(const mixed_t &value);
+[[nodiscard]] result<string_t> encode(const detail::dynamic_value &value);
 
 template <typename T>
 	requires(to_json_detail::is_supported_v<T> && !std::is_same_v<detail::remove_cvref_t<T>, mixed_t>)
@@ -33,6 +45,10 @@ template <typename T>
 }
 
 [[nodiscard]] inline result<string_t> json_encode(const mixed_t &value) {
+	return encode(value);
+}
+
+[[nodiscard]] inline result<string_t> json_encode(const detail::dynamic_value &value) {
 	return encode(value);
 }
 

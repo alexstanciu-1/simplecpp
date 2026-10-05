@@ -10,8 +10,16 @@ namespace scpp::php {
 	return scpp::json::json_encode(value);
 }
 
-[[nodiscard]] inline result<mixed_t> json_decode(const string_t &json) {
+[[nodiscard]] inline result<string_t> json_encode(const ::scpp::detail::dynamic_value &value) {
+	return scpp::json::encode(value);
+}
+
+[[nodiscard]] inline result<::scpp::detail::dynamic_value> json_decode(const string_t &json) {
 	return scpp::json::json_decode(json);
+}
+
+[[nodiscard]] inline result<mixed_t> json_decode_mixed(const string_t &json) {
+	return scpp::json::decode_mixed(json);
 }
 
 } // namespace scpp::php

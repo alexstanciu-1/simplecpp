@@ -2,6 +2,11 @@
 Doc Status: normative
 This document defines the first-pass narrowed contract for the Prism++ / Simple C++ JSON builtins.
 
+For v0.2, the family-specific amendments in [json_decode](json_decode.md) and
+[json_encode](json_encode.md) supersede the mixed-with-dynamic-box mapping below:
+default decoding is dynamic, explicit `json_decode_mixed` produces mixed trees,
+and encoding accepts either family. See those contracts for the staged migration status.
+
 See also:
 - `specs/builtins/json/README.md`
 - one-contract-per-builtin files in `specs/builtins/json/`

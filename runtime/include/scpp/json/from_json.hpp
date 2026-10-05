@@ -309,7 +309,8 @@ template <typename T>
 
 template <typename T>
 [[nodiscard]] inline T from_json(const string_t &json_text) {
-	return from_json<T>(json_decode(json_text));
+	// Typed conversion currently consumes mixed trees; do not cross family containers.
+	return from_json<T>(decode_mixed(json_text).value());
 }
 
 } // namespace scpp::json

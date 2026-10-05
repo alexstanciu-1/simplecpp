@@ -83,6 +83,9 @@ adapters. Scalar loose equality is shared with mixed; tagged container identity 
 text updates are implemented internally. Debug inspection now traverses tagged values
 directly using shared scalar formatting and table guards. The public alias/remaining-consumer migration and source-level
 family enforcement remain next; this does not resolve the chapter blocker.
+JSON runtime now decodes directly into tagged dynamic by default or mixed via
+`decode_mixed`, and encodes both directly. Source registration/public-type migration
+is still outstanding; this breaking runtime checkpoint does not establish source support.
 
 The current runtime permits both relationships:
 

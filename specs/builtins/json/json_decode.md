@@ -1,6 +1,27 @@
 # `json_decode`
 Doc Status: normative
+## v0.2 family-specific decoding — 2026-10-05
+
+The approved v0.2 surface replaces the v0.1 contract below:
+
+- `json_decode(string $json) -> result<dynamic>` is the default, including scalar roots.
+- `json_decode_mixed(string $json) -> result<mixed>` explicitly requests value/COW data.
+- Runtime entrypoints are `scpp::json::decode` and `scpp::json::decode_mixed`.
+- One parser constructs the selected family directly. Nested containers and leaves
+  retain that family; there is no cross-family intermediate or runtime mode flag.
+- Existing checked parse failures, numeric/string parsing, key normalization and
+  full-document consumption remain unchanged. Valid null and false are successes.
+- Container shape remains hash-derived; this does not preserve empty `{}` versus `[]`.
+
+Migration status: runtime decoding uses the new internal tagged dynamic storage;
+the public `dynamic_t<>` alias and compiler-facing registrations still require the
+coordinated switch. Do not infer complete source support from runtime availability.
+The out-of-line dynamic decoder has a new symbol (`decode_dynamic`) to prevent
+linking the former mixed-return ABI. Rebuild runtime artifacts and generated code.
+
 ## Current contract
+
+The following describes the superseded v0.1 surface, not the v0.2 default.
 
 Source-facing PHP++ / PHS contract:
 

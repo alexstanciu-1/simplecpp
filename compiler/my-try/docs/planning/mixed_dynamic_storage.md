@@ -59,8 +59,9 @@ The intended semantic direction separates mixed-family value/COW containers from
 dynamic-family shared containers while allowing scalar/null leaves in each. JSON
 should offer family-specific decoding, defaulting to dynamic including scalar roots.
 The core normative permissions and casts are reconciled in the v0.2 amendment.
-JSON's exact API/registration migration remains outstanding; its currently available
-`result<mixed>` signature is not changed by a planning note.
+The approved JSON names are `json_decode` (result<dynamic>), `json_decode_mixed`
+(result<mixed>) and `json_encode` for either family. Runtime implementation is recorded
+below; compiler registrations/public-type migration remain outstanding.
 
 ### Confirmed semantic decisions — 2026-10-05
 
@@ -433,3 +434,34 @@ Evidence: `/tmp/my-try-tagged-dynamic-debug-20261005-2` passed matching debug/re
 runtime/JSON builds and ten native programs. The first run compiled both runtimes
 but exposed a test-only API typo (`erase` instead of the table's `remove`); the final
 run includes that correction. No broader compiler regression suite was run.
+
+### Family-specific JSON runtime — 2026-10-05
+
+The user approved the names recorded above. The JSON module now has one
+family-parameterized parser: `decode` constructs tagged dynamic directly, including
+scalar roots, and `decode_mixed` constructs owned mixed trees. No old dynamic boxes
+are produced by either decoder. Their copies follow the selected family's storage
+contract. Parsing, key normalization and checked malformed-input handling remain
+shared. This slice does not change duplicate-key parsing policy.
+
+The writer shares scalar formatting and table traversal, directly accepts either
+family and rejects active-path cycles as checked encoding errors. Noncyclic repeated
+aliases are valid. The dynamic decoder uses a new out-of-line `decode_dynamic` symbol
+behind `decode`, avoiding accidental linkage to the old return ABI. PHP runtime
+adapters expose the same names. Existing typed `from_json(text)` now explicitly
+selects mixed decoding and required result extraction; tagged input conversion and
+the old dynamic target of that helper remain part of the coordinated consumer switch.
+
+This is a breaking runtime checkpoint, not completed source integration. The public
+`dynamic_t<>` alias, strict/legacy symbol registries, shallow builtin return contracts
+and JSS `json.decode` return facts must switch together. Existing generated code and
+old callers expecting mixed from `decode` require regeneration/adaptation; no old
+decoder compatibility layer is retained. Tasks/MySQL consumers and broader typed
+JSON adapters still require migration review. No native compiler build is claimed.
+
+The focused runner includes JSON checks active under both debug and NDEBUG.
+`/tmp/my-try-json-families-20261005-3` passed matching debug/release runtime and JSON
+builds and all twelve native programs, including typed extraction from JSON text.
+The first run exposed namespace shadowing in the PHP adapter; explicitly qualifying
+`::scpp::detail` repaired it. No PHP compiler suite, generated-source integration
+suite or native compiler rebuild was run for this checkpoint.
