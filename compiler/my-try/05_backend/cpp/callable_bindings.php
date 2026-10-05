@@ -83,10 +83,11 @@ final class CPP_Callable_Bindings
 	public function function_binding(registered_function $target): cpp_function_binding
 	{
 		$functions /** Keyed_Storage<cpp_function_binding> */ = $this->functions;
-		if (!isset($functions[$target->key()])) {
+		$key = $target->key();
+		if (!isset($functions[$key])) {
 			throw new \LogicException('Runtime function has no C++ binding');
 		}
-		$binding = $functions[$target->key()];
+		$binding = $functions[$key];
 		if ($binding->target() !== $target) {
 			throw new \LogicException('C++ function binding belongs to a different semantic identity');
 		}
@@ -110,7 +111,8 @@ final class CPP_Callable_Bindings
 	public function contains(registered_static_factory $target): bool
 	{
 		$definitions /** Keyed_Storage<cpp_callable_binding> */ = $this->definitions;
-		return isset($definitions[$target->key()]);
+		$key = $target->key();
+		return isset($definitions[$key]);
 	}
 
 	/** Explicit provider opt-in; no adapter is guessed from a source type name. */

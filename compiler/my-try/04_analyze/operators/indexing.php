@@ -82,8 +82,8 @@ final class Indexing_Preparation
 				// Preserve the common unsupported operator diagnostic, including string arity.
 				$operands /** vector<canonical_type_use> */ = [$receiver];
 				if ($target->index !== null) {
-					$key_node /** expression_node */ = $target->index;
-					$operands[] = Expression_Preparation::prepare($key_node, $context)->type;
+					$unsupported_key /** expression_node */ = $target->index;
+					$operands[] = Expression_Preparation::prepare($unsupported_key, $context)->type;
 				}
 				self::decide($operands, $context);
 				throw new \LogicException('Unregistered indexed assignment');

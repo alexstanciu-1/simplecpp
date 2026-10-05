@@ -139,6 +139,7 @@ indexing_prepare('function put(vector<int> &$v): void { $v[] = 1; }');
 $write = Model::$global_scope->functions_named('put')[0]->syntax()->body->statements[0]->expression;
 $facts = $write->require_write_preparation();
 if (!($facts instanceof prepared_index_assignment) || $facts->addressable
+	|| !$facts->destination_type()->matches(Language_Types::integer(Model::$language_scope))
 	|| $facts->decision->operation !== operator_operation::index_append
 	|| str_contains(Model::$cpp_files[0]->text, '([&]()')) {
 	throw new \LogicException('Statement append lost operation facts or introduced an unused value lambda');
@@ -147,6 +148,13 @@ Preparation_Cleanup::tree($write);
 if ($write->preparation() !== null || $write->target->base->preparation() !== null
 	|| $write->value->preparation() !== null) {
 	throw new \LogicException('Write facts survived cleanup');
+}
+
+indexing_prepare('$value int = 1; $value = 2;');
+$ordinary_write = Model::syntax_files()[0]->root->body->statements[1]->expression;
+if (!$ordinary_write->require_write_preparation()->destination_type()->matches(
+	$ordinary_write->require_assignment_preparation()->binding->storage_type())) {
+	throw new \LogicException('Assignment family lost its storage destination query');
 }
 
 // Write-path brackets own traversal facts through the assignment, not copied reads.

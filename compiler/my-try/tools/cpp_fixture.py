@@ -15,16 +15,17 @@ def build_runtime_object(runner, repository, output, *, cxx='clang++'):
 class CppFixtureCompiler:
     """Own matching PCH/fixture flags and a private, freshly built runtime PCH."""
 
-    def __init__(self, runner, repository, output, *, pch=True, return_type_errors=False, runtime=False):
+    def __init__(self, runner, repository, output, *, pch=True, return_type_errors=False, runtime=False,
+                 cxx='clang++'):
         self.runner = runner
-        self.flags = ['clang++', '-std=c++20']
+        self.flags = [cxx, '-std=c++20']
         if return_type_errors:
             self.flags.append('-Werror=return-type')
         self.flags.extend(['-I', Path(repository) / 'runtime/include'])
         self.link_flags = []
         if runtime:
             self.flags.extend(['-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread'])
-            self.link_flags = [build_runtime_object(runner, repository, output)]
+            self.link_flags = [build_runtime_object(runner, repository, output, cxx=cxx)]
         self.pch_flags = []
         if pch:
             directory = Path(output).resolve() / 'cpp-pch'

@@ -5516,7 +5516,7 @@ final class Generator
 	private function renderSwitchExpr(mixed $expr, ?string $namespacePhp): string
 	{
 		$rendered = $this->renderExpr($expr, $namespacePhp);
-		if ($this->lookupEnumDeclByTypeName($this->inferExprTypeWithNamespace($expr, $namespacePhp)) !== null) {
+		if ($this->isKnownEnumTypeName($this->inferExprTypeWithNamespace($expr, $namespacePhp))) {
 			return $rendered;
 		}
 		return is_object($expr) ? '(' . $rendered . ').native_value()' : $rendered;
@@ -5543,7 +5543,7 @@ final class Generator
 		}
 		if (is_object($expr) && ($expr->kind ?? null) === AstKind::CLASS_CONST) {
 			$type = $this->inferExprTypeWithNamespace($expr, $namespacePhp);
-			if ($this->lookupEnumDeclByTypeName($type) !== null) return $this->renderExpr($expr, $namespacePhp);
+			if ($this->isKnownEnumTypeName($type)) return $this->renderExpr($expr, $namespacePhp);
 		}
 		return '/* unsupported-switch-case */';
 	}

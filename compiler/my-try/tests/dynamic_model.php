@@ -15,6 +15,7 @@ function dynamic_model_check(bool $condition, string $message): void
 Compiler_Lifecycle::reset();
 $catalog = Model::$type_catalog;
 $registry = $catalog->registry();
+$initial_applications = $registry->application_count();
 $mixed_definition = $catalog->definition('mixed');
 $dynamic_definition = $catalog->definition('dynamic');
 dynamic_model_check(($mixed_definition instanceof mixed_semantics)
@@ -44,7 +45,7 @@ foreach (['mixed' => 'scpp::mixed_t', 'dynamic' => 'scpp::dynamic_t<>'] as $name
 	dynamic_model_check(isset($representation->headers['scpp/' . $name . '_t.hpp']), 'Missing carrier header');
 	dynamic_model_check(!Conversion_Preparation::is_scalar($type_use), 'Dynamic carrier entered native scalar conversion path');
 }
-dynamic_model_check($registry->application_count() === 0, 'Concrete carriers created template applications');
+dynamic_model_check($registry->application_count() === $initial_applications, 'Concrete carriers created template applications');
 dynamic_model_check($registry->is_value_type($mixed_type->type_id()), 'Mixed box lost value storage');
 dynamic_model_check($registry->is_value_type($dynamic_type->type_id()), 'Dynamic tagged binding lost value storage');
 dynamic_model_check(!$registry->use($dynamic_type->type_id(), true)->by_value(), 'Redundant dynamic value modifier was retained');

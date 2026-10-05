@@ -860,6 +860,13 @@ The project unit headers include:
 When same-project generated headers contain inheritance relationships discovered from the generated class declarations, base-class headers are emitted before derived-class headers in the project unit headers.
 
 Dependency project export headers are included before the consuming project's local generated headers so local headers may reference exported dependency types without source-level generated-header includes. The dependency export header uses the same discovered base-before-derived ordering for its generated headers.
+
+Generated-header ordering includes all recognized bases, including multiple and
+virtual bases, and resolves qualified bases in their lexical namespace context.
+Base and enum definition dependencies take precedence over cyclic signature/handle
+references. This is ordering of the generator's emitted header shapes, not a general
+C++ dependency parser. Regression: `tests/tools/test_scpp_header_base_order.php`.
+
 Scoped packs for consuming project units use dependency project `__project.hpp`
 export headers for cross-project declarations; they do not direct-include
 dependency generated unit headers as local headers. Scoped packs may still

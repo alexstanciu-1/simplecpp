@@ -11942,6 +11942,7 @@ function sort_project_unit_include_headers(array $includeHeaders): array
 {
 	$knownClasses = [];
 	$knownNames = [];
+	$enumNames = [];
 	$headerClasses = [];
 	foreach ($includeHeaders as $headerPath) {
 		if (!is_file($headerPath)) {
@@ -11952,24 +11953,27 @@ function sort_project_unit_include_headers(array $includeHeaders): array
 			$key = $class['namespace'] . '::' . $class['name'];
 			$knownClasses[$key] = $headerPath;
 			$knownNames[$class['name']][$headerPath] = $headerPath;
+			if ($class['kind'] === 'enum') {
+				$enumNames[$class['name']][$headerPath] = true;
+			}
 			$headerClasses[$headerPath][] = $class;
 		}
 	}
 
 	$dependencies = [];
+	$definitionDependencies = [];
 	foreach ($includeHeaders as $headerPath) {
 		$dependencies[$headerPath] = [];
+		$definitionDependencies[$headerPath] = [];
 		foreach (($headerClasses[$headerPath] ?? []) as $class) {
-			$parent = $class['parent'];
-			if ($parent === null || $parent === '') {
-				continue;
+			foreach ($class['bases'] as $base) {
+				$baseKey = resolve_project_header_class_reference($base, $class['namespace'], $knownClasses);
+				$baseHeader = $knownClasses[$baseKey] ?? null;
+				if ($baseHeader !== null && $baseHeader !== $headerPath) {
+					$dependencies[$headerPath][$baseHeader] = $baseHeader;
+					$definitionDependencies[$headerPath][$baseHeader] = $baseHeader;
+				}
 			}
-			$parentKey = resolve_project_header_class_reference($parent, $class['namespace']);
-			$parentHeader = $knownClasses[$parentKey] ?? null;
-			if ($parentHeader === null || $parentHeader === $headerPath) {
-				continue;
-			}
-			$dependencies[$headerPath][$parentHeader] = $parentHeader;
 		}
 		$contents = @file_get_contents($headerPath);
 		if (!is_string($contents)) {
@@ -11989,6 +11993,9 @@ function sort_project_unit_include_headers(array $includeHeaders): array
 			foreach ($declaringHeaders as $dependencyHeader) {
 				if ($dependencyHeader !== $headerPath) {
 					$dependencies[$headerPath][$dependencyHeader] = $dependencyHeader;
+					if (isset($enumNames[$name][$dependencyHeader])) {
+						$definitionDependencies[$headerPath][$dependencyHeader] = $dependencyHeader;
+					}
 				}
 			}
 		}
@@ -12000,7 +12007,15 @@ function sort_project_unit_include_headers(array $includeHeaders): array
 	foreach ($includeHeaders as $headerPath) {
 		visit_project_unit_include_header($headerPath, $dependencies, $temporary, $permanent, $ordered);
 	}
-	return $ordered;
+	// Signature/handle references can form cycles. They must not override the
+	// complete-definition requirement of bases or enums (including enum initializers).
+	$definitionOrdered = [];
+	$temporary = [];
+	$permanent = [];
+	foreach ($ordered as $headerPath) {
+		visit_project_unit_include_header($headerPath, $definitionDependencies, $temporary, $permanent, $definitionOrdered);
+	}
+	return $definitionOrdered;
 }
 
 /**
@@ -12026,7 +12041,7 @@ function visit_project_unit_include_header(string $headerPath, array $dependenci
 	$ordered[] = $headerPath;
 }
 
-/** @return array{classes:list<array{namespace:string,name:string,parent:?string,kind:string}>} */
+/** @return array{classes:list<array{namespace:string,name:string,parent:?string,bases:list<string>,kind:string}>} */
 function read_project_header_class_metadata(string $headerPath): array
 {
 	$contents = @file_get_contents($headerPath);
@@ -12038,7 +12053,7 @@ function read_project_header_class_metadata(string $headerPath): array
 	}
 	$namespace = $namespaceMatch[1];
 	$classes = [];
-	if (preg_match_all('/^(class|struct|union)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
+	if (preg_match_all('/^(class|struct|union)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+final)?\s*(?::\s*([^;{}]+))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
 		foreach ($matches as $match) {
 			if (($match[4] ?? '') !== '{') {
 				continue;
@@ -12048,10 +12063,18 @@ function read_project_header_class_metadata(string $headerPath): array
 				'union' => 'union',
 				default => 'class',
 			};
+			$bases = [];
+			foreach (explode(',', $match[3] ?? '') as $base) {
+				$base = trim(preg_replace('/\b(public|protected|private|virtual)\b/', '', $base) ?? '');
+				if (preg_match('/^(?:::)?[A-Za-z_][A-Za-z0-9_:]*$/D', $base) === 1) {
+					$bases[] = $base;
+				}
+			}
 			$classes[] = [
 				'namespace' => $namespace,
 				'name' => $match[2],
-				'parent' => isset($match[3]) && $match[3] !== '' ? $match[3] : null,
+				'parent' => $bases[0] ?? null,
+				'bases' => $bases,
 				'kind' => $kind,
 			];
 		}
@@ -12062,6 +12085,7 @@ function read_project_header_class_metadata(string $headerPath): array
 				'namespace' => $namespace,
 				'name' => $match[1],
 				'parent' => null,
+				'bases' => [],
 				'kind' => 'enum',
 			];
 		}
@@ -12069,9 +12093,27 @@ function read_project_header_class_metadata(string $headerPath): array
 	return ['classes' => $classes];
 }
 
-function resolve_project_header_class_reference(string $classReference, string $currentNamespace): string
+function resolve_project_header_class_reference(string $classReference, string $currentNamespace, array $knownClasses = []): string
 {
 	$reference = ltrim($classReference, ':');
+	if ($knownClasses !== []) {
+		if (str_starts_with($classReference, '::')) {
+			return $reference;
+		}
+		// Resolve generated qualified bases in C++ lexical namespace order.
+		$scope = $currentNamespace;
+		while ($scope !== '') {
+			$candidate = $scope . '::' . $reference;
+			if (isset($knownClasses[$candidate])) {
+				return $candidate;
+			}
+			$separator = strrpos($scope, '::');
+			$scope = $separator === false ? '' : substr($scope, 0, $separator);
+		}
+		if (isset($knownClasses[$reference])) {
+			return $reference;
+		}
+	}
 	if (str_starts_with($reference, 'scpp::')) {
 		return $reference;
 	}

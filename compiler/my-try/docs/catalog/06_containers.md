@@ -53,7 +53,7 @@ This consolidates existing deferrals; it does not transfer new blockers to Chapt
 | Expected-type propagation through untyped selection branches | Preparation slice; unknown literal targets still reject |
 | Deep-path probe/removal cost | CH06-PATH-01: existing O(depth²) traversal performance debt; no semantic relaxation |
 | Additional typed JSON encode/extraction source APIs | Runtime availability is not source registration; keep the current boxed overload scope |
-| Native compiler rebuild and broad final validation | Separate requested checkpoint; generated-program proofs are not a native compiler build |
+| Exhaustive final validation | The requested bounded native checkpoint below passes; wider lifetime/mutation/legacy coverage remains separate |
 
 Evidence reviewed (separate checkpoints, not a combined current full-suite run):
 `/tmp/my-try-family-regression-20261005-3/summary.json` records 22 PHP suites and
@@ -61,6 +61,13 @@ Evidence reviewed (separate checkpoints, not a combined current full-suite run):
 14 suites and 60 programs; `/tmp/my-try-json-20261005-6/summary.json` records 9 suites
 and 7 programs. Result/JSON checkpoints also have recorded no-PCH counterparts.
 This documentation-only review did not rerun those suites or rebuild the compiler.
+
+Subsequent requested native checkpoint: the compiler was rebuilt and passed 1,049
+PHP/native source comparisons and generated-program executions, 526 supplementary
+probes, two control-flow error probes, 198 rejection/recovery cases and 19 host PHP
+suites. This includes the registered JSON cases. See the
+[2026-10-05 native evidence](../portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
+for the tested overlay, portability repairs, retained warnings and skipped LLVM/STAN.
 
 Next: [Chapter 07](07_references_lifetime.md#handoff-from-chapter-06--2026-10-05),
 starting with a reconciliation of already-supported whole-storage reference calls

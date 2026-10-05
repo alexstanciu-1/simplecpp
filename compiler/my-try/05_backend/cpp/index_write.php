@@ -17,7 +17,7 @@ final class CPP_Index_Write
 		$receiver = 'write_receiver_' . $id;
 		$key = 'write_key_' . $id;
 		$value = 'write_value_' . $id;
-		$type = CPP_Declarations::type($facts->type, $context);
+		$type = CPP_Declarations::type($facts->destination_type(), $context);
 		$text = '{ auto& ' . $receiver . ' = ' . $emitter->expression($facts->root) . '; ';
 		$path /** Storage<prepared_index_path_step> */ = $facts->path;
 		$position = 0;
@@ -52,7 +52,7 @@ final class CPP_Index_Write
 		{
 			$context->headers['scpp/index_write_path.hpp'] = true;
 			$probe = $receiver;
-			$mutable = $receiver;
+			$mutable_receiver = $receiver;
 			$checks = '{ ';
 			$descent = '';
 			$position = 0;
@@ -63,9 +63,9 @@ final class CPP_Index_Write
 				$mutable_name = 'write_target_' . $id . '_' . $position;
 				$element = CPP_Declarations::type($step->element_type, $context);
 				$checks .= 'const ' . $element . '& ' . $probe_name . ' = scpp::index_path_probe(' . $probe . ', ' . $path_key . '); ';
-				$descent .= $element . '& ' . $mutable_name . ' = scpp::index_path_descend(' . $mutable . ', ' . $path_key . '); ';
+				$descent .= $element . '& ' . $mutable_name . ' = scpp::index_path_descend(' . $mutable_receiver . ', ' . $path_key . '); ';
 				$probe = $probe_name;
-				$mutable = $mutable_name;
+				$mutable_receiver = $mutable_name;
 				$position++;
 			}
 			$check_helper = 'scpp::index_path_check_append';
@@ -75,7 +75,7 @@ final class CPP_Index_Write
 				$leaf_arguments = $key . ', ' . $value;
 			}
 			$text .= $checks . $check_helper . '(' . $probe . ', ' . $leaf_arguments . '); } ' . $descent;
-			$arguments = $mutable . ', ';
+			$arguments = $mutable_receiver . ', ';
 			if ($facts->decision->operation === operator_operation::index_store) {
 				$arguments .= $key . ', ';
 			}

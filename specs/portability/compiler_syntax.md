@@ -34,3 +34,11 @@ invalid annotation sites, nested cleanup on success and caught failure, enum-lik
 constant dispatch, coalescing, and rejection of dynamic instanceof targets. Literal targets now have
 [checked object support](object_casts.md).
 This is PHP behavior plus PHS inspection, not new native parity evidence.
+
+Cross-file enum switches use the target generator's existing project type-kind
+catalog, not only declarations in the current unit. For a remote property receiver,
+bind the selector to an explicitly enum-typed local before switching; this does not
+introduce cross-file property inference. The native regression
+`tests/tools/test_scpp_external_enum_switch.py --results FRESH` checks typed
+parameters, a typed property-read local, grouped labels and default dispatch against
+PHP. The converter continues to preserve the switch structurally.

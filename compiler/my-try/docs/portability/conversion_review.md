@@ -3,18 +3,62 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers the implemented Chapter 05 nullable and Result slices
-through Result coalescing, plus the source adaptations below. It is not a Chapter 05
-closeout: mixed and the remaining catalog debt are still deferred.
-The subsequent mixed/dynamic model, [scalar boundaries](../catalog/05_dynamic_boundaries.md#mixed-scalar-value-boundaries--2026-10-04)
-[casts/conditions/probes](../catalog/05_dynamic_boundaries.md#mixed-casts-conditions-and-probes--2026-10-04)
-and [selection joins](../catalog/05_dynamic_boundaries.md#direct-mixed-selection-joins--2026-10-04),
-including [wrapper-left coalescing](../catalog/05_dynamic_boundaries.md#wrapper-left-mixed-coalescing--2026-10-04),
-have PHP and generated-program evidence only; they are not included in that native
-compiler snapshot.
+The latest checkpoint covers the implemented Chapter 05/06 slices through registered
+JSON functions, including the separated mixed/dynamic families and container paths.
+The [Chapter 06 closeout](../catalog/06_containers.md) and Chapter 15 deferrals still
+bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Latest native checkpoint — 2026-10-04 nullable and Result slices
+## Latest native checkpoint — 2026-10-05 Chapter 06
+
+The worktree based on `6553e6aedfcdf178f5e616ba7c2d46b28808f46c`, with the authored
+source, target-tooling and proof repairs below, passes conversion, native compiler
+construction, PHP/native C++ byte parity and generated-program execution. All 132
+compiler/proof source hashes (excluding the generated driver) and 92 recorded harness
+hashes match the tested checkout. `candidate.json` identifies the target overlay;
+the base revision alone is not the full tested identity.
+
+The **12-job, PCH-enabled** run passes:
+
+- 1,049 source comparisons/executions: 912 S2S, 130 control-flow and seven JSON cases.
+- 526 supplementary state/value/error probes and two control-flow error probes.
+- 198 rejection/recovery cases and 15 floating-spelling assertions.
+- 19 focused host PHP suites, separate emission/type and incremental control-flow
+  proofs, repeated compilation/recovery and the final incremental native rebuild.
+
+Authored portability repairs add explicit Storage construction types, stable keyed
+lookup locals, non-keyword/non-reused locals, a checked function-declaration cast and
+an explicit enum selector local. The assignment-fact family now exposes the truthful
+`destination_type()` query, consumed by both write emitters, making checked native
+specialization access possible without a dummy virtual hook or polymorphizing every
+expression fact. No language semantics or deferred Chapter 15 capabilities changed.
+
+Two target-tooling defects were repaired at their owners: generated header ordering
+now accounts for multiple/virtual bases and prioritizes base/enum definitions over
+cyclic handle references; enum switch lowering consults the existing project type-kind
+catalog rather than only local enum declarations. The converter itself required no
+new syntax rule. Focused native cross-file enum, header-order and broader project
+header-pack regressions pass. Stale model proofs now measure application-count deltas
+after runtime function installation and expect dynamic's current tagged value storage.
+
+Attempts 1–4 stopped during conversion; attempts 5–9 exposed native build errors.
+Attempt 10 first built the compiler and exposed stale host proof expectations;
+attempt 11 exposed remaining absolute-count assertions. Attempt 12 passed the full
+checkpoint in **621.944 seconds**, reusing native objects. This is an observed run,
+not a clean-build benchmark. Generated fixtures now use the shared PCH helper and
+link the JSON module; `--no-pch` remains available for include-completeness checks.
+
+Evidence: `/tmp/my-try-ch06-native-20261005/summary.json`, `source_hashes.json`,
+`harness_hashes.json`, `candidate.json`, journals and `logs` through `logs-12`.
+Tooling proofs: `/tmp/my-try-native-tooling-final-20261005/` and
+`/tmp/my-try-external-enum-20261005-3/`. Reproduce with the standard native command
+and `--no-stan --types-only --jobs 12`; add `--resume` only to reuse an existing proof
+workspace. The runner used CLI fallback after sandbox FPM socket denial. LLVM and
+legacy STAN remain skipped, and existing native warnings remain. The native incremental
+proof is the stated control-flow scope; other chapter-specific recovery tests retain
+their separately identified PHP-suite evidence.
+
+## Earlier native checkpoint — 2026-10-04 nullable and Result slices
 
 The worktree based on `917bcb0252b84db4203d1706d2e516ff1588883e`, with two
 authored-PHP portability repairs, passes conversion, native compiler construction,

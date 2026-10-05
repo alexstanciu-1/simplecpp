@@ -151,7 +151,11 @@ remain alive through result copying, and no interior reference is exposed to sou
 Writes and reference binding do not follow from the node's syntactic assignable base.
 Cleanup and incremental preparation own these facts through the existing node lifecycle.
 
-`prepared_assignment_expression` shares assignment value-result facts. Its storage
+`prepared_assignment_expression` shares assignment value-result facts and the
+`destination_type()` query: ordinary assignments read their binding's storage type,
+while indexed writes read their prepared value-conversion target. This meaningful
+abstract query also makes the assignment fact family natively polymorphic for
+checked specialization access; it is not a stage-processing hook. Its storage
 specialization retains `prepared_binding`; `prepared_index_assignment` instead owns
 a selected store/append decision and element conversion. Registry signatures bind
 key, value, nested-literal target and optional write-path element type for bracket operations.

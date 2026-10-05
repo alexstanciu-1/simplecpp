@@ -13,7 +13,7 @@ import shutil
 import time
 
 from test_runner import CommandRunner, DEFAULT_JOBS, Task, positive_jobs, run_tasks
-from cpp_fixture import build_runtime_object
+from cpp_fixture import CppFixtureCompiler
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
@@ -51,6 +51,7 @@ def main():
     parser.add_argument('--jobs', type=positive_jobs, default=DEFAULT_JOBS,
                         help='Maximum concurrent fixture tasks (default: 12)')
     parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
+    parser.add_argument('--no-pch', action='store_true', help='Compile generated fixture programs without PCH')
     parser.add_argument('--php-executor', choices=('auto', 'fpm', 'cli'), default='auto',
                         help='PHP backend: auto prefers FPM with CLI fallback (default)')
     args = parser.parse_args()
@@ -97,20 +98,10 @@ def validate(args, target, results, logs, started, runner):
     (source / 'main.php').write_text(driver)
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
-    harness_paths = [Path(__file__), APP / 'tests/control_flow.php', APP / 'tests/s2s.php',
-                     APP / 'tests/fixtures/result_construction.php', APP / 'tests/fixtures/mixed_boundaries.php',
-                     APP / 'tests/fixtures/mixed_operations.php',
-                     APP / 'tests/fixtures/mixed_selections.php',
-                     APP / 'tests/fixtures/mixed_wrapper_coalesce.php',
-                     APP / 'tests/fixtures/mixed_dynamic_casts.php',
-                     APP / 'tests/fixtures/mixed_arithmetic.php',
-                     APP / 'tests/fixtures/mixed_comparisons.php',
-                     APP / 'tests/fixtures/mixed_updates.php',
-                     APP / 'tests/fixtures/mixed_logical.php',
-                     APP / 'tests/fixtures/mixed_concat.php',
-                     APP / 'tests/fixtures/mixed_concat_updates.php',
-                     APP / 'tools/cpp_fixture.py',
-                     APP / 'tests/native_driver.php.in', APP / 'tests/s2s_proof.php']
+    harness_paths = [Path(__file__), *sorted((APP / 'tests').glob('*.php')),
+                     *sorted((APP / 'tests/fixtures').glob('*.php')),
+                     APP / 'tools/cpp_fixture.py', APP / 'tools/test_runner.py',
+                     APP / 'tools/php_executor.py', APP / 'tests/native_driver.php.in']
     (results / 'harness_hashes.json').write_text(json.dumps({
         str(path.relative_to(APP)): hashlib.sha256(path.read_bytes()).hexdigest()
         for path in harness_paths}, indent=2) + '\n')
@@ -139,7 +130,10 @@ def validate(args, target, results, logs, started, runner):
     # Ordinary host tests independently assert the algorithms and expected sample exits.
     host_suites = ['storage', 'tokenizer', 'ast']
     if args.types_only:
-        host_suites += ['type_catalog', 'constructed_type']
+        host_suites += ['type_catalog', 'constructed_type', 'callables', 'initialization',
+                       'data_preparation', 'indexing', 'iteration', 'value_probes',
+                       'container_calls', 'mixed', 'dynamic_model', 'conversions',
+                       'results', 'take', 'incremental_cpp', 'preparation_recovery']
     else:
         host_suites += ['model', 'llvm_text']
     run_tasks([Task('php-' + suite, lambda suite=suite:
@@ -206,9 +200,23 @@ def validate(args, target, results, logs, started, runner):
     control_programs = json.loads((control_fixtures / 'programs.json').read_text())
     valid_cases += [('control-' + name, text, code)
                     for name, (text, code) in control_programs['valid'].items()]
+    json_fixtures = results / 'json-fixtures'
+    json_fixtures.mkdir(exist_ok=args.resume)
+    run('php-json-suite', ['php', APP / 'tests/json.php', json_fixtures])
+    json_programs = json.loads((json_fixtures / 'programs.json').read_text())
+    valid_cases += [(name, text, code) for name, (text, code) in json_programs['valid'].items()]
     declaration_case_count = sum(name.startswith(('function_', 'struct_', 'integer_', 'field_'))
                                  for name, _, _ in valid_cases)
-    fixture_runtime = build_runtime_object(runner, ROOT, results, cxx='clang++-18')
+    # Each resumed attempt gets a fresh matching PCH/runtime; compiler objects may be reused.
+    fixture_build = logs / 'fixture-build'
+    fixture_build.mkdir()
+    fixture_compiler = CppFixtureCompiler(runner, ROOT, fixture_build, pch=not args.no_pch,
+                                         return_type_errors=True, runtime=True, cxx='clang++-18')
+    json_runtime = results / 'fixture-json.o'
+    run('json-runtime-build', ['clang++-18', '-std=c++23', '-DSCPP_LANGUAGE_TARGET_PHP=1',
+                              '-I', ROOT / 'runtime/include', '-pthread', '-c',
+                              ROOT / 'runtime/include/modules/json/json.cpp', '-o', json_runtime], timeout=240)
+    fixture_compiler.link_flags.append(json_runtime)
 
     def validate_source(name, text, code):
         folder = results / 's2s-programs' / name
@@ -239,9 +247,7 @@ def validate(args, target, results, logs, started, runner):
                 raise RuntimeError(name + ': float spelling probe could not find the entry return')
             generated = generated_with_probe
         (folder / 'main.cpp').write_text(generated)
-        run(name + '-s2s-clang', ['clang++-18', '-std=c++20', '-Werror=return-type', '-I', ROOT / 'runtime/include',
-                                 '-DSCPP_LANGUAGE_TARGET_PHP=1', folder / 'main.cpp', fixture_runtime,
-                                 '-pthread', '-o', folder / 'program'])
+        fixture_compiler.compile(name + '-s2s-clang', folder / 'main.cpp', folder / 'program')
         run(name + '-s2s-execute', [folder / 'program'], expected=code)
         return generated.encode(), code
 
@@ -256,13 +262,12 @@ def validate(args, target, results, logs, started, runner):
         probe_source = Path(item['path'])
         name = probe_source.stem
         executable_probe = results / ('probe-' + name)
-        run(name + '-probe-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
-                                  '-DSCPP_LANGUAGE_TARGET_PHP=1', probe_source, fixture_runtime,
-                                  '-pthread', '-o', executable_probe])
+        fixture_compiler.compile(name + '-probe-clang', probe_source, executable_probe)
         run(name + '-probe-execute', [executable_probe], expected=item['exit_code'])
 
     probe_cases = [item for item in json.loads((s2s_fixtures / 'executions.json').read_text())
                    if (Path(item['path']).read_bytes(), item['exit_code']) not in executed_cpp]
+    probe_cases += json.loads((json_fixtures / 'executions.json').read_text())
     run_tasks([Task('probe-' + Path(item['path']).stem, lambda item=item: validate_probe(item))
                for item in probe_cases], args.jobs)
     probe_executions = len(probe_cases)
@@ -339,6 +344,8 @@ def validate(args, target, results, logs, started, runner):
                    parked_llvm_validation='skipped' if args.types_only else 'included',
                    portable_type_proof=True,
                    control_flow_incremental_proof=True,
+                   json_valid_executions=len(json_programs['valid']),
+                   cpp_pch=not args.no_pch, host_php_suites=len(host_suites),
                    s2s_valid_executions=len(valid_cases), s2s_float_spelling_assertions=float_spelling_assertions,
                    s2s_supplementary_probe_executions=probe_executions,
                    control_flow_valid_executions=len(control_programs['valid']),

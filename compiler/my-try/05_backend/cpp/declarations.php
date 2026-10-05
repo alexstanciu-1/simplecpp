@@ -104,7 +104,8 @@ final class CPP_Declarations
 			$separator = ', ';
 		}
 
-		return self::type($facts->signature->return_type, $context) . ' ' . CPP_Callables::source_reference($syntax->occurrence()) . '(' . $parts . ')';
+		$function_declaration = object_cast($syntax->occurrence(), collected_function::class);
+		return self::type($facts->signature->return_type, $context) . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';
 	}
 
 	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */

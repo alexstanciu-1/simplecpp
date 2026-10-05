@@ -64,12 +64,13 @@ class CppFixtureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             runner = RecordingRunner()
-            compiler = CppFixtureCompiler(runner, root, root, runtime=True)
+            compiler = CppFixtureCompiler(runner, root, root, runtime=True, cxx='selected-clang')
             compiler.compile('first', root / 'first.cpp', root / 'first')
             compiler.compile('second', root / 'second.cpp', root / 'second')
             self.assertEqual([name for name, _ in runner.commands],
                              ['cpp-runtime-build', 'cpp-pch-build', 'first', 'second'])
             for _, command in runner.commands:
+                self.assertEqual(command[0], 'selected-clang')
                 self.assertIn('-pthread', command)
                 self.assertIn('-DSCPP_LANGUAGE_TARGET_PHP=1', command)
             for _, command in runner.commands[2:]:

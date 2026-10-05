@@ -296,7 +296,7 @@ final class CPP_Generator
 		$name = self::storage_name($binding, null, $context);
 		$value = (new CPP_Syntax($context))->expression($syntax->value);
 		$write = self::generate_storage_value($binding, $name, $value, false, $context);
-		$result_type = CPP_Declarations::type($binding->type, $context);
+		$result_type = CPP_Declarations::type($facts->destination_type(), $context);
 		return '([&]() -> ' . $result_type . ' { ' . $write . '; return ' . $name . '; }())';
 	}
 
@@ -663,7 +663,8 @@ final class CPP_Generator
 	/** Runtime includes follow the prepared operation, not source spelling or boxed family. */
 	private static function record_operator_headers(operator_decision $decision, cpp_generation_context $context): void
 	{
-		switch ($decision->operation) {
+		$operation /** operator_operation */ = $decision->operation;
+		switch ($operation) {
 			case operator_operation::boxed_pre_increment:
 			case operator_operation::boxed_post_increment:
 			case operator_operation::boxed_pre_decrement:

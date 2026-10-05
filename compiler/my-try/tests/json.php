@@ -140,8 +140,10 @@ json_check($failed, 'Backend accepted a stale runtime identity');
 
 $output = $argv[1];
 $executions = [];
+$programs = [];
 foreach (require __DIR__ . '/fixtures/json.php' as $name => [$source, $predicate])
 {
+	$programs[$name] = [$source, 0];
 	json_source($source);
 	$text = str_replace('int main()', 'int unused_entry()', Model::$cpp_files[0]->text);
 	$text = '#include <limits>' . "\n" . $text . "\nint main() { return (" . $predicate . ") ? 0 : 91; }\n";
@@ -150,4 +152,5 @@ foreach (require __DIR__ . '/fixtures/json.php' as $name => [$source, $predicate
 	$executions[] = ['path' => $path, 'exit_code' => 0];
 }
 file_put_contents($output . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
+file_put_contents($output . '/programs.json', json_encode(['valid' => $programs], JSON_PRETTY_PRINT));
 echo "JSON: registered targets, exact selection, shadow recovery and programs exported\n";

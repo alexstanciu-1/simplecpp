@@ -252,14 +252,20 @@ python3 compiler/my-try/tools/native_validate.py \
 ```
 
 `--types-only` skips parked LLVM validation. Its default fixture pool covers PHP/native
-source comparison plus C++ compilation/execution for both `s2s.php` and
-`control_flow.php`, supplementary probes and rejection/recovery cases. The suites
+source comparison plus C++ compilation/execution for `s2s.php`, `control_flow.php`
+and `json.php`, supplementary probes and rejection/recovery cases. The suites
 export their authored source cases so native coverage cannot silently omit the new
 control-flow chapter. Runtime-error probes first compare uninstrumented PHP/native
 output, then compile/run the instrumented program. `S2S_Proof::control_flow()` adds a
 shared portable span-move identity and unselected-arm dependency failure/retry/repair
 proof, invoked separately through the native driver. The optional LLVM comparison
 path also uses the same pool.
+
+Generated fixture compilation uses the shared PCH helper by default; `--no-pch`
+disables it. Each resumed attempt builds a fresh matching PCH and snippet runtime,
+plus the JSON module object, while retaining native compiler objects for incremental
+rebuilds. Compiler build flags and fixture flags are separate. The focused host
+suites also cover callable/data/index/iteration contracts and boxed families.
 
 Native evidence includes compiler source hashes, target toolchain hashes and
 `harness_hashes.json` for the runner, fixture exporters and portable proof/driver.

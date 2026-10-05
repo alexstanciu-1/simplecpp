@@ -102,3 +102,7 @@ validation are on demand. Both runners default to 12 continuously refilled worke
 slots; use `--jobs N` to override. See [test runners](testing.md) for isolation and
 evidence details. Running the compiler in PHP and compiling its output is
 not proof that the compiler itself builds natively; see the portability review.
+
+The latest requested [native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
+covers the bounded Chapter 05/06 implementation through JSON registration. Deferred
+Chapter 15 capabilities remain outside that proof.

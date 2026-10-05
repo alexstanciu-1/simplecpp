@@ -107,7 +107,10 @@ final class prepared_keyed_path
 	public expression_node $root;
 	/** @storage.owner */
 	public Storage $steps /** Storage<prepared_keyed_step> */;
-	public function __construct() { $this->steps = new Storage(); }
+	public function __construct()
+	{
+		$this->steps = new Storage /** Storage<prepared_keyed_step> */();
+	}
 }
 
 final class prepared_keyed_step
@@ -439,6 +442,8 @@ final class preparation_lookup
  */
 abstract class prepared_assignment_expression extends prepared_expression
 {
+	/** Read the actual write destination without inferring native-reference eligibility. */
+	abstract public function destination_type(): canonical_type_use;
 }
 
 /** Storage identity and declaration-versus-reassignment outcome. */
@@ -446,6 +451,11 @@ final class prepared_assignment extends prepared_assignment_expression
 {
 	/** @ownership owner */
 	public prepared_binding $binding;
+
+	public function destination_type(): canonical_type_use
+	{
+		return $this->binding->storage_type();
+	}
 }
 
 /** Element writes select operations rather than pretending to declare native storage. */
@@ -460,7 +470,12 @@ final class prepared_index_assignment extends prepared_assignment_expression
 
 	public function __construct()
 	{
-		$this->path = new Storage();
+		$this->path = new Storage /** Storage<prepared_index_path_step> */();
+	}
+
+	public function destination_type(): canonical_type_use
+	{
+		return $this->value_conversion->target_type;
 	}
 }
 

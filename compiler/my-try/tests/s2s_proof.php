@@ -70,6 +70,7 @@ final class S2S_Proof
 	public static function types(): string
 	{
 		Compiler_Lifecycle::reset();
+		$initial_applications = Model::$type_catalog->registry()->application_count();
 		$input_module = new module('/type-proof', '/type-proof', '/type-proof');
 		$source = new file();
 		$source->path = 'main.phs';
@@ -93,7 +94,7 @@ final class S2S_Proof
 			|| !($dynamic_type->definition() instanceof dynamic_semantics)
 			|| ($mixed_type->type_id() === $dynamic_type->type_id())
 			|| !$registry->is_value_type($mixed_type->type_id())
-			|| $registry->is_value_type($dynamic_type->type_id())) {
+			|| !$registry->is_value_type($dynamic_type->type_id())) {
 			throw new \LogicException('Dynamic carrier roles, identities or storage changed');
 		}
 		if (($catalog->canonical('byte') !== $catalog->canonical('uint8'))
@@ -125,7 +126,7 @@ final class S2S_Proof
 			throw new \LogicException('Type occurrences did not reuse one canonical application identity');
 		}
 		$vector_int = object_cast(Type_Queries::canonical($first_use), applied_template_type::class);
-		if (($vector_int->definition() !== $vector) || ($registry->application_count() !== 8)) {
+		if (($vector_int->definition() !== $vector) || ($registry->application_count() !== $initial_applications + 8)) {
 			throw new \LogicException('Demand-created runtime applications changed');
 		}
 		$nullable_definition = $catalog->definition('nullable');
