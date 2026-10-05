@@ -191,7 +191,7 @@ final class Compiler
 				$sources->append($source);
 			}
 		}
-		(new Preparation_Worker(Model::$language_scope))->remove_deleted_sources($sources);
+		Compiler_Lifecycle::retire_deleted_sources($sources, Model::$language_scope);
 		Model::$full_sync_pending = false;
 	}
 
@@ -261,6 +261,7 @@ final class Compiler
 		Compiler_Lifecycle::reset_cpp();
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
 		try {
+			Compiler_Lifecycle::retire_deleted_sources($sources, Model::$language_scope);
 			Model::$prepared_files = (new Preparation_Worker(Model::$language_scope))->prepare($sources);
 		}
 		catch (\RuntimeException $error) {

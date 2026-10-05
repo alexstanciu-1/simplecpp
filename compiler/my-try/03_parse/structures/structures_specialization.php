@@ -71,8 +71,8 @@ final class function_body_node extends statement_body_node
 	 */
 	private scope $local_scope_reference /** weak<scope> */;
 	/**
-	 * Parser comparison result for this executable unit, not an expression fact.
-	 * Parsing marks text/structure changes; successful body preparation settles this
+	 * Unconsumed source change for this executable unit, not an expression fact.
+	 * Parsing accumulates text/structure changes across retries; successful preparation settles this
 	 * flag. Scheduling also checks body_preparation state for dependency changes/retries.
 	 * This flag never gates backend work and is not a duplicate change_status.
 	 */

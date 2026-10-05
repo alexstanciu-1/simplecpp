@@ -49,6 +49,12 @@ comparison uses exact source bytes between its first and last tokens: whitespace
 changes matter. Unchanged bodies retain syntax/scopes/occurrences; changed bodies
 are replaced. Signatures and file executable syntax use token comparison.
 
+Parsing transfers existing body-work identity without changing its state. Collected
+declaration change flags and body `syntax_changed` accumulate until successful
+preparation consumes them. Re-parsing identical text must not erase an earlier
+unconsumed change, including changes made before a later parse failure. Analysis
+reads these flags through `Preparation_Changes::source_changed` and schedules work.
+
 Parser invokes the collector immediately. Local scopes are worker-private; global
 function/type registration uses the task publication mutex. After joining, revision
 sweeps mark missing declarations. Failed files retain incomplete mutable state and
@@ -62,8 +68,14 @@ separate function/file body lists. Pending work is identity-deduplicated. Unchan
 ready facts remain attached; effective signature/layout and lookup changes notify
 consumers, while body-only changes leave callers alone.
 
-Deletion marks the retiring batch, notifies consumers through intact reverse links,
-then unlinks dependencies/observations and removes collected rows and scope indexes.
+The coordinator's `Compiler_Lifecycle::retire_deleted_sources` first checks that
+every live source completed parsing. It calls analysis retirement to mark the batch,
+notify consumers through intact reverse links, unlink dependencies/observations and
+detach semantic work. Then `Collection_Retirement` removes collected rows, scope
+membership, source-type associations and deleted-file syntax. The analysis worker
+does not perform frontend disposal. Both `sync` and standalone preparation
+entrypoints use this same ordering; direct worker preparation expects retirement
+to have completed.
 Consumers need to be scheduled before removal, not already rebuilt. This boundary
 also precedes LLVM lookup without preparing LLVM-only forms through S2S algorithms.
 Deleted source/module records remain available for reconciliation/reappearance.
@@ -96,6 +108,7 @@ constant-time destruction guarantee is implied.
 ## Evidence and remaining work
 
 Focused tests: `module_sync`, `file_scan`, `token_generations`, `token_cleanup`,
+`lifecycle_handoff`,
 `parse_collection`, `combined_sync`, `incremental_preparation`, `preparation_recovery`,
 `dependency_cleanup` and `incremental_cpp` under `tests/`. LLVM frontend compatibility
 uses `incremental` and `incremental_smoke --restore`.

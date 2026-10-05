@@ -1730,7 +1730,7 @@ if (count($found) !== 1 || $found[0]->origin() !== type_definition_origin::sourc
 }
 $entry = Model::$type_catalog->source_declarations()->declaration($found[0]->definition_id());
 $entry->change_status = change_state::deleted;
-(new Preparation_Worker(Model::$language_scope))->remove_deleted_sources(Model::collected_files());
+Compiler_Lifecycle::retire_deleted_sources(Model::collected_files(), Model::$language_scope);
 $found = Scope_Lookup::types($local, 'int');
 $language_integer = Type_Preparation::canonical(Language_Types::integer(Model::$language_scope))->definition();
 if (count($found) !== 1 || $found[0] !== $language_integer) {

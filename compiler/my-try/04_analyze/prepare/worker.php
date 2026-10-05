@@ -24,7 +24,7 @@ final class Preparation_Worker
 		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 	}
 
-	/** Empty-model and update runs share selection, dependency propagation and execution. */
+	/** After coordinator-ordered retirement, fresh/update runs share selection and execution. */
 	public function prepare(Storage $sources /** Storage<collected_file> */): Storage /** Storage<prepared_file> */
 	{
 		foreach ($sources as $source) {
@@ -32,7 +32,6 @@ final class Preparation_Worker
 				throw new \RuntimeException('Preparation requires a successful parsing/collection join');
 			}
 		}
-		$this->remove_deleted_sources($sources);
 		foreach ($sources as $source) {
 			if (!$source->deleted) {
 				$this->select($source);
@@ -79,8 +78,8 @@ final class Preparation_Worker
 		return $result;
 	}
 
-	/** Successful frontend joins retire deleted declarations before either backend resolves names. */
-	public function remove_deleted_sources(Storage $sources /** Storage<collected_file> */): void
+	/** Semantic retirement precedes frontend disposal, ordered by the coordinator. */
+	public function retire_deleted_sources(Storage $sources /** Storage<collected_file> */): void
 	{
 		$retired = $this->retiring_owners($sources, false);
 		$this->notify_retiring($retired);
@@ -88,7 +87,7 @@ final class Preparation_Worker
 			$this->retire($owner);
 		}
 		foreach ($sources as $source) {
-			$this->remove_deleted($source);
+			$this->detach_retired_work($source);
 		}
 	}
 
@@ -196,13 +195,14 @@ final class Preparation_Worker
 
 	public function select_record(struct_node $node): void
 	{
-		$this->select_owner($this->record_owner(object_cast($node->occurrence(), collected_struct::class)));
+		$entry = object_cast($node->occurrence(), collected_struct::class);
+		$this->select_owner($this->record_owner($entry));
 	}
 
 	private function select_owner(preparation_owner $owner): void
 	{
 		$this->owners[$owner] = true;
-		if ($owner->change_status !== change_state::unchanged) {
+		if (Preparation_Changes::source_changed($owner) || ($owner->change_status !== change_state::unchanged)) {
 			$this->schedule($owner);
 		}
 	}
@@ -363,6 +363,9 @@ final class Preparation_Worker
 	public function declaration(declaration_work $owner): void
 	{
 		self::require_active($owner);
+		if (Preparation_Changes::source_changed($owner)) {
+			$this->schedule($owner);
+		}
 		if ($owner->state === preparation_state::processing) {
 			throw new \RuntimeException('Cyclic by-value declaration dependency');
 		}
@@ -689,13 +692,11 @@ final class Preparation_Worker
 		}
 	}
 
-	/** Relationships are already detached; remove collected rows and their scope/index memberships. */
-	private function remove_deleted(collected_file $source): void
+	/** Clear semantic attachments only; collected membership and syntax belong to the frontend. */
+	private function detach_retired_work(collected_file $source): void
 	{
 		$entries /** Storage<collected_name> */ = $source->entries;
-		$removed /** vector<int> */ = [];
-		foreach ($entries as $entry)
-		{
+		foreach ($entries as $entry) {
 			if (!$source->deleted && ($entry->change_status !== change_state::deleted)) {
 				continue;
 			}
@@ -708,50 +709,11 @@ final class Preparation_Worker
 					$function->body->detach_work();
 				}
 			}
-			$entry_scope = object_cast(weakref_get($entry->scope), scope::class);
-			$entry_scope->unregister($entry);
-			$global = $entry_scope->published_scope();
-			if ($entry->is_exported() && ($global !== null)) {
-				$published /** scope */ = $global;
-				$published->unregister($entry);
-			}
-			if ($entry instanceof collected_struct) {
-				Model::$type_catalog->source_declarations()->retire(object_cast($entry, collected_struct::class));
-			}
-			$removed[] = $entry->local_index;
 		}
-		foreach ($removed as $index) {
-			$entries->remove($index);
-		}
-		$source->defined_elements = $this->present($entries, $source->defined_elements);
-		$source->variable_references = $this->present($entries, $source->variable_references);
-		$source->constant_references = $this->present($entries, $source->constant_references);
-		$source->function_references = $this->present($entries, $source->function_references);
-		$source->type_references = $this->present($entries, $source->type_references);
-		$source->field_references = $this->present($entries, $source->field_references);
-		$source->pending_bindings = $this->present($entries, $source->pending_bindings);
-		if ($source->deleted)
-		{
-			if ($source->root->body->work() !== null) {
-				$source->root->body->detach_work();
-			}
+		if ($source->deleted) {
+			$source->root->body->detach_work();
 			$source->prepared = null;
-			$source->parse_complete = false;
-			$source->root->declarations = new Storage /** Storage<declaration_node> */();
-			$source->root->body->statements = new Storage /** Storage<statement_node> */();
 		}
-	}
-
-	/** Compact occurrence work lists after their collected rows have been removed. */
-	private function present(Storage $entries /** Storage<collected_name> */, array $indexes /** vector<int> */): array /** vector<int> */
-	{
-		$result /** vector<int> */ = [];
-		foreach ($indexes as $index) {
-			if (isset($entries[$index])) {
-				$result[] = $index;
-			}
-		}
-		return $result;
 	}
 
 	/** Only declarations can be dependency targets; remove incoming edges before common cleanup. */

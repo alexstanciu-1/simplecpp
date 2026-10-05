@@ -1,6 +1,6 @@
 <?php
 
-/* Standalone file entry into the same incremental preparation scheduler. */
+/* Standalone composition adapter: retire through lifecycle, then run shared preparation. */
 namespace scpp\compiler;
 
 final class File_Preparation
@@ -19,6 +19,7 @@ final class File_Preparation
 	{
 		$sources /** Storage<collected_file> */ = new Storage();
 		$sources->append($this->source);
+		Compiler_Lifecycle::retire_deleted_sources($sources, $this->language);
 		$prepared /** Storage<prepared_file> */ = (new Preparation_Worker($this->language))->prepare($sources);
 		return $prepared[0];
 	}

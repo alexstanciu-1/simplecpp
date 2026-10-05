@@ -79,6 +79,11 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
   `Scope_Lookup` must not accept preparation contexts or register subscriptions.
   `Compiler_Lifecycle` owns resets. Module configuration changes reset compilation;
   identical configuration preserves retained data.
+- Parsing may transfer work identity, but only analysis decides preparation state.
+  Source-change flags remain set until successful preparation consumes them.
+  The lifecycle coordinator orders semantic retirement before frontend collection
+  disposal, only after a successful whole parse join. Standalone preparation uses
+  that same protocol; analysis must not remove frontend membership or syntax.
 - Structures may initialize data, preserve local representation invariants, expose
   typed access/query helpers and clear their facts. Workers own stage dispatch,
   traversal, algorithms, scheduling and publication policy, including work-record

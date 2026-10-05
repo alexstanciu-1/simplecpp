@@ -15,7 +15,13 @@ function parse_update(Compiler $compiler, source_record $source, string $content
 {
 	// This parser-only fixture models successful downstream consumption before its next edit.
 	// Persistent unresolved state is covered separately by preparation_recovery.php.
+	$source->parsed->root->body->syntax_changed = false;
 	foreach ($source->parsed->collection->entries as $entry) {
+		if ($entry instanceof collected_function) {
+			if ($entry->syntax()->has_parsed_body()) {
+				$entry->syntax()->body->syntax_changed = false;
+			}
+		}
 		if ($entry->change_status !== change_state::deleted) {
 			$entry->change_status = change_state::unchanged;
 		}

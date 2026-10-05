@@ -42,7 +42,7 @@ final class CPP_Generator
 		foreach ($ordered as $owner)
 		{
 			Preparation_Worker::require_active($owner);
-			if (($owner->change_status !== change_state::unchanged) || $owner->failed) {
+			if (Preparation_Changes::source_changed($owner) || ($owner->change_status !== change_state::unchanged) || $owner->failed) {
 				throw new \RuntimeException('C++ generation requires completed preparation');
 			}
 			if (!isset($this->program->fragments[$owner])) {

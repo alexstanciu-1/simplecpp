@@ -173,7 +173,7 @@ final class Parser_Run
 		else {
 			$this->transfer_body_work($old_body, $body);
 		}
-		$body->syntax_changed = $body_changed;
+		$body->syntax_changed = $body->syntax_changed || $body_changed;
 		$body->set_span($this->tokens->first_token, $this->position);
 		$root->body = $body;
 		$root->declarations = $declarations;
@@ -210,13 +210,11 @@ final class Parser_Run
 		return $this->tokens->end_token;
 	}
 
-	/** Reuse the entire file executable body only when every statement matched. */
+	/** Preserve work identity on replacement without deciding analysis scheduling state. */
 	private function transfer_body_work(function_body_node $old, function_body_node $body): void
 	{
 		$work = $old->detach_work();
 		if ($work !== null) {
-			$work->state = preparation_state::pending;
-			$work->change_status = change_state::changed;
 			$body->attach_work($work);
 		}
 	}
@@ -277,13 +275,6 @@ final class Parser_Run
 			$entry->change_status = change_state::changed;
 		}
 		$node->set_span($start, $this->position);
-		if (!$same) {
-			$work = $entry->preparation_work_owner();
-			if ($work !== null) {
-				$work->state = preparation_state::pending;
-				$work->change_status = change_state::changed;
-			}
-		}
 	}
 
 	/** Select a statement from its leading syntax; names are never looked up here. */
@@ -703,7 +694,7 @@ final class Parser_Run
 		}
 
 		$function->return_type = $return_type;
-		$body->syntax_changed = $body_changed;
+		$body->syntax_changed = $body->syntax_changed || $body_changed;
 		$function->set_parsed_body($body);
 		$function->parameters = $parameters;
 		$function->template_parameters = $formals;

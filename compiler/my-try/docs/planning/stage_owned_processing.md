@@ -3,9 +3,8 @@ Doc Status: planning
 
 Recorded 2026-10-05 against `22755175` on `v0.2/develop`.
 This records the agreed direction and bounded implementation batches.
-Batches A–C and D1 are implemented in the 2026-10-05 follow-ups. D/E ownership
-directions are agreed; remaining invalidation/retirement and consumption work is
-split into bounded implementation slices.
+Batches A–D are implemented in the 2026-10-05 follow-ups. E's ownership direction
+is agreed; backend-consumption work remains.
 The current implementation and
 findings are described in the [stage-boundary audit](stage_boundary_audit.md).
 Language semantics remain owned by the top-level specs.
@@ -136,7 +135,7 @@ helpers. Keep role-specific records and typed accessors. Preserve enqueue dedupl
 member settlement, work versions, retirement queues and dependency unlinking.
 This is separate from changing the frontend-to-analysis handoff.
 
-### D. Frontend/analysis lifecycle protocol — agreed; D1 implemented
+### D. Frontend/analysis lifecycle protocol — D1/D2 implemented 2026-10-05
 
 Address SB-01, SB-03 and SB-05 together in design, then implement bounded parts:
 
@@ -331,6 +330,38 @@ are unchanged. No new retained structure or callback protocol was introduced.
 
 SB-03 and the recorded cleanup-test debt are resolved. Next: D2, preserving parser
 identity transfer while moving preparation-state decisions into analysis.
+
+### D2 evidence — 2026-10-05
+
+Candidate: `7d6f5d26` plus the invalidation/retirement overlay.
+No new retained state: declaration change flags already persist; body
+`syntax_changed` now accumulates until successful preparation. Parsing transfers
+work identity without altering state. Analysis reads source changes during selection
+and direct declaration completion. A read-only query also preserves the backend's
+rejection of saved preparation after unconsumed edits; output acknowledgment is
+unchanged and remains E.
+
+`Compiler_Lifecycle::retire_deleted_sources` guards the whole parse join and orders
+semantic notification/unlinking/detachment before frontend `Collection_Retirement`
+disposes membership, type associations and deleted syntax. Compiler synchronization,
+compiler preparation and standalone file preparation use the same protocol.
+
+- `/tmp/my-try-lifecycle-handoff-20261005-2`: 17 PHP suites passed, including new
+  handoff tests, cleanup, incremental preparation/C++, recovery, parse/collection,
+  combined sync, token lifetime, publication, observed lookup, parked incremental
+  frontend compatibility, callables, capabilities, constructed types and S2S.
+- New checks cover unchanged scheduling during parsing, repeated-parse accumulation,
+  signature/body separation, partial-parse and semantic failure/retry, saved-result
+  emission rejection and whole-join retirement guards.
+- All 1,049 exported C++ files match the preceding D1 exports byte-for-byte.
+  The initial run without `-2` passed 11 suites; its parser-only test helper tried
+  to settle a not-yet-parsed function body. The helper now checks body availability
+  while simulating downstream consumption; the successful rerun includes that test.
+- Shared 12-slot runner used sandbox-related CLI fallback. No native compiler build,
+  conversion, broad regression or lint sweep. No new LLVM semantics.
+
+SB-01/SB-05 are resolved. Next: E, coordinator-owned successful output acknowledgment
+and read-only result/query boundaries.
 
 ## Remaining questions and non-goals
 

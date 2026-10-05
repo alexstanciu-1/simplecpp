@@ -159,6 +159,19 @@ final class Compiler_Lifecycle
 		self::reset_cpp();
 	}
 
+	/** Join-owned ordering: semantic notification/unlinking, then frontend membership disposal. */
+	public static function retire_deleted_sources(Storage $sources /** Storage<collected_file> */, scope $language): void
+	{
+		// Check the whole join before notifying consumers or disposing any frontend data.
+		foreach ($sources as $source) {
+			if (!$source->deleted && !$source->parse_complete) {
+				throw new \RuntimeException('Retirement requires a successful parsing/collection join');
+			}
+		}
+		(new Preparation_Worker($language))->retire_deleted_sources($sources);
+		Collection_Retirement::remove_deleted_sources($sources);
+	}
+
 	/** Include deleted modules too; their retained dependency graphs must not survive a reset. */
 	private static function discard_preparation_links(): void
 	{

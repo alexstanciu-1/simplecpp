@@ -26,7 +26,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/types.php`, `literals.php` | Canonical type resolution, storage identity checks and exact literal facts |
 | `data/structures.php` | Facts, invocation contexts and lookup observations |
 | `data/work_records.php` | Typed retained work and shared dependency/error state |
-| `changes.php` | `same_signature`/`same_record` equivalence and fact restoration |
+| `changes.php` | Unconsumed source-change queries, signature/record equivalence and fact restoration |
 | `cleanup.php` | Typed maintenance traversal clearing affected facts |
 
 ## Work and dispatch
@@ -34,15 +34,23 @@ No separate resolution pass precedes it. LLVM preparation remains
 `Preparation_Worker` selects typed declaration work: `function_signature_work` and
 `record_definition_work`. Bodies use `function_body_work` and `file_body_work`;
 bodies are processing units, never symbols. Fields/parameters settle with their
-definition. Replacing a body transfers its existing work identity.
+definition. Parsing transfers existing body-work identity without setting work state.
+Collected declaration change flags and body `syntax_changed` remain set across
+repeated parsing until successful preparation consumes them. The worker selects
+source changes and independently pending dependency/failure work through one path.
 
 The worker owns typed dispatch for queueing, rebuilding, member settlement and
 retirement. Work records expose state, identity and typed queries, not processing
 hooks or worker/context parameters. Retirement removes each role from its own queue; only declaration
 work unlinks incoming declaration dependencies. Common retirement clears outgoing
-links and shared indexes after dependent notification. Neither work records nor
-syntax and collected identities select work or invoke preparation. This does not
-change the existing frontend invalidation or cross-owner retirement protocol.
+links and semantic attachments after dependent notification. Neither work records nor
+syntax and collected identities select work or invoke preparation.
+`Compiler_Lifecycle::retire_deleted_sources` guards the successful parse join,
+orders this semantic retirement, then invokes frontend `Collection_Retirement`.
+`Compiler` and the standalone `File_Preparation` composition adapter use that
+protocol before running preparation; the analysis worker no longer disposes scope
+membership or syntax. Saved preparation cannot be emitted while source changes
+remain unconsumed.
 Declaration work settles before separate function/file body lists. Identity sets
 deduplicate scheduling. Unchanged ready owners retain their facts. The worker creates
 one context per rebuild; function-body setup seeds its locals and return type.

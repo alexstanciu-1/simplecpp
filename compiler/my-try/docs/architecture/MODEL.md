@@ -37,7 +37,11 @@ symbol model. See [analysis](../../04_analyze/README.md) for typed collected rol
 Function signatures and bodies have separate work identities. Fields/parameters
 settle with their definition; locals settle with their body. A body is a processing
 unit, not a symbol. Replacing body syntax transfers its retained work identity.
-Unchanged bodies retain nodes, scopes, occurrences and facts.
+Unchanged bodies retain nodes, scopes, occurrences and facts. Parsing does not
+mutate preparation-work state: declaration change flags and body `syntax_changed`
+persist until analysis successfully consumes them. Repeated parsing cannot clear
+pending source changes. Read-only source-change queries also guard saved prepared
+results against premature emission.
 Parameters own optional default expressions; normalized scalar default snapshots
 belong to their callable contracts and participate in signature equivalence. Calls
 retain only explicit arguments; emission supplies omitted defaults from the signature.

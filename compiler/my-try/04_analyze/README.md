@@ -42,8 +42,10 @@ Generic syntax access and optional preparation-owner access support mixed invent
 consumers with a known role narrow the collected record and use its typed syntax.
 
 Parsing ends before resolution. After its successful join, standalone `prepare()`
-selects changed declarations and affected bodies, retains unaffected facts, and removes
-deleted collected entries. Combined `sync` now uses the same incremental frontend phases. See the [incremental strategy](../docs/planning/incremental_strategy.md).
+selects changed declarations and affected bodies and retains unaffected facts.
+Before preparation, the lifecycle coordinator orders semantic retirement followed by
+frontend-owned collected/index disposal. Combined `sync` uses the same retirement
+protocol after its successful parse join. See the [incremental strategy](../docs/planning/incremental_strategy.md).
 
 [prepare/](prepare/) owns the active backend-neutral semantic direction:
 `Preparation_Worker` schedules typed declaration/body work; semantic algorithms live

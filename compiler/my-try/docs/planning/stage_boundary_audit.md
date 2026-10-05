@@ -14,7 +14,8 @@ removed AST C++ hooks and the shared C++ worker interface. Batch B removed AST
 semantic hooks and callable/work-selection processing from shared identities.
 SB-02's shared-model hooks are resolved. Batch C also moved analysis-internal
 work-record dispatch into its worker. D1 moved observed lookup to analysis and
-resolved SB-03. SB-01 and SB-04–07 retain their recorded scope.
+resolved SB-03. D2 removed parser scheduling writes and split semantic retirement
+from frontend disposal, resolving SB-01/SB-05. SB-04 and SB-06–07 remain.
 
 ## Outcome and rule
 
@@ -81,6 +82,10 @@ review of every test or helper algorithm. Existing untracked user files were unt
 | `helpers` | 5 | Storage/cursor infrastructure; no compiler-stage processing dependency found |
 
 ## SB-01 — parser controls preparation scheduling
+
+**Resolved by D2, 2026-10-05:** parsing transfers identity and accumulates source
+changes; analysis selects work from those flags. Repeated parsing/failure cannot
+erase unconsumed changes. Original finding:
 
 **High priority; actual forward control, not just a shared field.**
 
@@ -170,6 +175,11 @@ retry, no-op output reuse and header retirement. Do not rerun semantic preparati
 from emission or duplicate canonical type facts to avoid the calls.
 
 ## SB-05 — semantic retirement also owns collected-index/AST deletion
+
+**Resolved by D2, 2026-10-05:** the lifecycle coordinator validates the whole parse
+join, runs semantic notification/unlinking, then frontend `Collection_Retirement`
+disposes membership, source-type associations and deleted syntax. Both compiler
+and standalone preparation use that ordering. Original finding:
 
 **Medium priority; deliberate ordering, overbroad mutation owner.**
 
