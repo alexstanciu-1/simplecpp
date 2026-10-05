@@ -26,6 +26,7 @@ experiment retained for regressions, not a second semantic development path.
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
 | Value storage modifier semantics | [Registry normalization and AST spelling](../../../specs/type_use_modifiers.md) |
 | Active type-model discussion | [Type model direction](planning/types.md) |
+| Mixed/dynamic runtime design discussion | [Shared machinery, family separation and recorded mixed layout improvement](planning/mixed_dynamic_storage.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
 | Current scalar operators | [Bounded contracts, lowering and proof](s2s_scalar_operators.md) |
 | Conditional wrapper extraction and error state | [Take checkpoint](catalog/05_dynamic_boundaries.md#conditional-take-and-no-error-values--2026-10-04), [language contract](../../../specs/error_values_and_take.md) |

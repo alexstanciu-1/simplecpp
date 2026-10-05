@@ -64,6 +64,10 @@ unrestricted casts, dynamic `->` and native interior references are not introduc
 Status: **open; blocking Chapter 06 completion**. Recorded at the user's request;
 discussion is scheduled for the end of this chapter, not silently deferred beyond it.
 
+Active discussion: [mixed/dynamic storage and shared implementation](../planning/mixed_dynamic_storage.md).
+This also records MIX-LAYOUT-01 (reorder mixed's borrow counter to target 24 bytes);
+the layout improvement is not implemented and is not itself a chapter blocker.
+
 The current runtime permits both relationships:
 
 - [`dynamic_t<>`](../../../../runtime/include/scpp/dynamic_t.hpp) is a shared hash
