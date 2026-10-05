@@ -55,6 +55,7 @@ require_once __DIR__ . '/04_analyze/prepare/data/work_records.php';
 require_once __DIR__ . '/03_parse/collect/collect.php';
 require_once __DIR__ . '/04_analyze/prepare/changes.php';
 require_once __DIR__ . '/04_analyze/prepare/worker.php';
+require_once __DIR__ . '/04_analyze/prepare/lookup.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/cleanup.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/types.php';

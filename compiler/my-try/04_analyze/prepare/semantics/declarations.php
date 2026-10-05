@@ -11,7 +11,7 @@ final class Declaration_Preparation
 		$declaration = $syntax->occurrence();
 		$declaring_scope = object_cast(weakref_get($declaration->scope), scope::class);
 		// Observe the name pool so adding/removing an unused duplicate invalidates this signature.
-		$candidates = Scope_Lookup::functions($declaring_scope, $declaration->name, $context);
+		$candidates = Observed_Lookup::functions($declaring_scope, $declaration->name, $context);
 		if (q_count($candidates) !== 1) {
 			throw new \RuntimeException('S2S duplicate function name: ' . $declaration->name);
 		}

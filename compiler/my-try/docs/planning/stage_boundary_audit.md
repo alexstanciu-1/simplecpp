@@ -13,7 +13,8 @@ the planning follow-up alone does not mark them repaired. Batch A subsequently
 removed AST C++ hooks and the shared C++ worker interface. Batch B removed AST
 semantic hooks and callable/work-selection processing from shared identities.
 SB-02's shared-model hooks are resolved. Batch C also moved analysis-internal
-work-record dispatch into its worker. SB-01 and SB-03–07 retain their recorded scope.
+work-record dispatch into its worker. D1 moved observed lookup to analysis and
+resolved SB-03. SB-01 and SB-04–07 retain their recorded scope.
 
 ## Outcome and rule
 
@@ -127,6 +128,11 @@ analysis-internal work adapters too. See the plan for validation and the remaini
 lifecycle/consumption design gates.
 
 ## SB-03 — parse-layer lookup calls preparation observation
+
+**Resolved by D1, 2026-10-05:** `Observed_Lookup` in analysis owns the observed
+traversal. Plain `Scope_Lookup` no longer accepts a preparation context or invokes
+observation. Tests cover all three namespaces, publication, missing/intermediate
+pools, nearest-pool ambiguity and shared subscription cleanup. Original finding:
 
 **Medium priority; a bounded worker dependency.**
 

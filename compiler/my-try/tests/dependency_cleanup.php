@@ -24,17 +24,32 @@ try
 	$b = Model::$global_scope->functions_named('b')[0]->preparation;
 	$b_body = object_cast($b->declaration(), collected_function::class)->syntax()->body->work();
 	$file_body = Model::collected_files()[0]->root->body->work();
-	$lookup = null;
+	$old_lookups = [];
 	foreach ($b_body->lookups as $candidate) {
-		$lookup = $candidate;
+		$old_lookups[] = $candidate;
 	}
+	cleanup_check(count($old_lookups) > 0, 'Call body had no lookup observations');
 
 	// Body replacement removes outgoing edges and orphaned name observations on preparation.
 	file_put_contents($path, 'function a(): int { return 1; } function b(): int { return 2; } return b();');
 	$compiler->sync([$path]);
 	$compiler->prepare();
 	cleanup_check(!isset($a->dependents[$b_body]), 'Replaced body retained its old call dependency');
-	cleanup_check($lookup !== null && count($lookup->dependents) === 0, 'Replaced body retained lookup registration');
+	$shared_count = 0;
+	$orphan_count = 0;
+	foreach ($old_lookups as $lookup) {
+		cleanup_check(!isset($lookup->dependents[$b_body]) && !isset($b_body->lookups[$lookup]), 'Replaced body retained lookup registration');
+		$registered = in_array($lookup, $lookup->lookup_scope->preparation_lookups_named($lookup->name), true);
+		if (count($lookup->dependents) === 0) {
+			$orphan_count++;
+			cleanup_check(!$registered, 'Orphan lookup remained in its scope');
+		}
+		else {
+			$shared_count++;
+			cleanup_check($registered && isset($lookup->dependents[$a]) && isset($a->lookups[$lookup]), 'Shared lookup lost the declaring signature subscriber');
+		}
+	}
+	cleanup_check($shared_count > 0 && $orphan_count > 0, 'Cleanup proof did not exercise shared and orphaned lookups');
 
 	// Exercise a reverse-link cycle in the deletion batch and a surviving downstream consumer.
 	$a->dependencies[$b] = 0;

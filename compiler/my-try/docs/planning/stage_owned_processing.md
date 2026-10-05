@@ -3,7 +3,9 @@ Doc Status: planning
 
 Recorded 2026-10-05 against `22755175` on `v0.2/develop`.
 This records the agreed direction and bounded implementation batches.
-Batches A–C are implemented in the 2026-10-05 follow-ups; D/E remain design gates.
+Batches A–C and D1 are implemented in the 2026-10-05 follow-ups. D/E ownership
+directions are agreed; remaining invalidation/retirement and consumption work is
+split into bounded implementation slices.
 The current implementation and
 findings are described in the [stage-boundary audit](stage_boundary_audit.md).
 Language semantics remain owned by the top-level specs.
@@ -134,7 +136,7 @@ helpers. Keep role-specific records and typed accessors. Preserve enqueue dedupl
 member settlement, work versions, retirement queues and dependency unlinking.
 This is separate from changing the frontend-to-analysis handoff.
 
-### D. Frontend/analysis lifecycle protocol — design gate
+### D. Frontend/analysis lifecycle protocol — agreed; D1 implemented
 
 Address SB-01, SB-03 and SB-05 together in design, then implement bounded parts:
 
@@ -151,13 +153,20 @@ Before implementation, specify changed-body identity transfer, failed-parse retr
 successful parse publication, deletion and repeated synchronization transitions.
 Do not erase parser scheduling writes until equivalent invalidation is proved.
 
-### E. Backend consumption boundary — design gate
+Confirmed: parsing may transfer retained work identity but must not decide its
+preparation state. Reuse existing change fields if they preserve unconsumed changes
+across repeated parsing/failure; discuss any new retained structure before adding it.
+Analysis owns observed traversal without a visitor/callback interface. The coordinator
+orders semantic retirement before frontend-owned disposal after successful parse joins.
+Implementation order: D1 observed lookup; D2 invalidation/retirement; E consumption.
+
+### E. Backend consumption boundary — agreed direction; implementation pending
 
 Replace worker-class read-only dependencies with truthful result queries/guards where
 needed, without copying canonical facts or rerunning preparation. Define who consumes
 the shared change handoff and when.
 
-Recommendation for the current single active backend: coordinator acknowledgment
+Agreed for the current single active backend: coordinator acknowledgment
 only after successful output assembly/publication. Failed emission retains changes
 for retry. Review standalone C++ entry points before fixing the API. Per-backend
 consumption versions remain an alternative if multiple independent consumers become
@@ -286,7 +295,42 @@ queries. No retained structure or scheduling/lifecycle policy was added.
   The previously baseline-reproduced dependency-cleanup failure remains D debt;
   that suite was not rerun or represented as passing in this batch.
 
-Next: discuss D/E lifecycle and consumption protocols before implementation.
+At the C checkpoint, D/E lifecycle and consumption protocols still needed discussion;
+the subsequent agreement is recorded above.
+
+### D1 evidence — 2026-10-05
+
+Candidate: `8713aad7` plus the observed-lookup source/test/documentation overlay.
+`Observed_Lookup` owns analysis traversal of type/function/constant namespaces.
+Plain `Scope_Lookup` exposes two-argument read-only queries. All five preparation
+call sites use observed lookup; subscription identity/storage and scheduler policy
+are unchanged. No new retained structure or callback protocol was introduced.
+
+- Baseline diagnosis: `/tmp/my-try-observed-lookup-baseline-20261005`.
+  The original dependency-cleanup assertion fails as before. The diagnostic probe
+  shows that the replaced body is no longer subscribed; the remaining subscriber
+  is the valid `function_signature_work` for `a`, observing its own uniqueness.
+  This was a stale test expectation, not a production cleanup leak. Revised checks
+  require old-body detachment, orphan removal and preservation of shared subscribers.
+- Focused proof: `/tmp/my-try-observed-lookup-20261005-2` — 12 PHP suites passed,
+  including the new observed-lookup suite and the complete dependency-cleanup suite.
+  Other checks cover incremental preparation/C++, recovery, typed work, callables,
+  capabilities, constructed types, publication, parsing/collection and token cleanup.
+- The initial run (without the `-2` suffix) failed at bootstrap because the initial
+  worker name collided case-insensitively with retained `preparation_lookup`.
+  Renaming the worker to `Observed_Lookup` resolved that before the passing rerun.
+- Shared runner: 12 slots, CLI fallback after sandbox FPM socket denial.
+  Supplementary S2S preparation/export checks passed in
+  `/tmp/my-try-observed-lookup-exports-20261005-2` (13 distinct PHP suites total).
+  All 1,049 exported C++ files are byte-identical to the retained pre-B baseline
+  at `/tmp/my-try-analysis-dispatch-before-20261005/programs`.
+  The initial export invocation omitted output-directory creation: assertions passed
+  but writes warned and produced no exports. It is not counted as export evidence;
+  the corrected run created the directory first and has empty stderr.
+  No native compiler build, conversion, broad regression or lint sweep.
+
+SB-03 and the recorded cleanup-test debt are resolved. Next: D2, preserving parser
+identity transfer while moving preparation-state decisions into analysis.
 
 ## Remaining questions and non-goals
 
@@ -298,9 +342,10 @@ Next: discuss D/E lifecycle and consumption protocols before implementation.
 2. **Implementation order — agreed:** A first, followed by B/C; review the D/E
    protocols before implementing them. Completed batches are marked above.
 
-The acknowledgment choice in E and exact change/retirement protocol in D are later
-design gates, not blockers for A. Dispatch helper names and file splits are local
-implementation choices, not additional language-design questions.
+The acknowledgment owner in E and ownership direction in D are agreed above.
+Exact transition handling must be validated within each slice; new retained
+structures still require discussion. Dispatch helper names and file splits are
+local implementation choices, not additional language-design questions.
 
 Non-goals: new language semantics, Chapter 06 construction execution, CFG design,
 LLVM semantic convergence, generic pass frameworks, universal visitors, AST ownership

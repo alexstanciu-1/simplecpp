@@ -78,7 +78,7 @@ final class Type_Preparation
 		$name_node = $node->definition;
 		$entry = $name_node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$definitions = Scope_Lookup::types($lexical_scope, $entry->name, $context);
+		$definitions = Observed_Lookup::types($lexical_scope, $entry->name, $context);
 		if (q_count($definitions) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved template type for ' . $entry->name);
 		}
@@ -111,7 +111,7 @@ final class Type_Preparation
 	{
 		$entry = $node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$types = Scope_Lookup::types($lexical_scope, $entry->name, $context);
+		$types = Observed_Lookup::types($lexical_scope, $entry->name, $context);
 		if (q_count($types) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved type for ' . $entry->name);
 		}

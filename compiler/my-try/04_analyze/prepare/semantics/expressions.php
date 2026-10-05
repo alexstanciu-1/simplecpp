@@ -308,7 +308,7 @@ final class Expression_Preparation
 	{
 		$entry = $node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$targets = Scope_Lookup::constants($lexical_scope, $entry->name, $context);
+		$targets = Observed_Lookup::constants($lexical_scope, $entry->name, $context);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved constant for ' . $entry->name);
 		}
@@ -329,7 +329,7 @@ final class Expression_Preparation
 
 		$entry = $syntax->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$targets = Scope_Lookup::functions($lexical_scope, $entry->name, $context);
+		$targets = Observed_Lookup::functions($lexical_scope, $entry->name, $context);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved function for ' . $entry->name);
 		}

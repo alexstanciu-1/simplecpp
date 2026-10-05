@@ -7,16 +7,13 @@ namespace scpp\compiler;
 final class Scope_Lookup
 {
 	/** Resolve the nearest exact constant pool in its independent namespace. */
-	public static function constants(scope $start, string $name, ?preparation_context $context = null): array /** vector<constant_definition> */
+	public static function constants(scope $start, string $name): array /** vector<constant_definition> */
 	{
 		$current_scope = $start;
 		$result /** vector<constant_definition> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);
-			if ($context !== null) {
-				$context->worker->observe($current_scope, $name, preparation_lookup_kind::constant, $context->owner);
-			}
 			$result = $current_scope->constants_named($name);
 			if (q_count($result) !== 0) {
 				break;
@@ -32,16 +29,13 @@ final class Scope_Lookup
 	}
 
 	/** Resolve the nearest live type pool, including the language/runtime parent. */
-	public static function types(scope $start, string $name, ?preparation_context $context = null): array /** vector<type_definition_i> */
+	public static function types(scope $start, string $name): array /** vector<type_definition_i> */
 	{
 		$current_scope = $start;
 		$result /** vector<type_definition_i> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);
-			if ($context !== null) {
-				$context->worker->observe($current_scope, $name, preparation_lookup_kind::type, $context->owner);
-			}
 			$result = $current_scope->types_named($name);
 			if (q_count($result) !== 0) {
 				break;
@@ -57,16 +51,13 @@ final class Scope_Lookup
 	}
 
 	/** Callable lookup follows the same nearest-pool rule as type lookup. */
-	public static function functions(scope $start, string $name, ?preparation_context $context = null): array /** vector<collected_function> */
+	public static function functions(scope $start, string $name): array /** vector<collected_function> */
 	{
 		$current_scope = $start;
 		$result /** vector<collected_function> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);
-			if ($context !== null) {
-				$context->worker->observe($current_scope, $name, preparation_lookup_kind::function_name, $context->owner);
-			}
 			$result = $current_scope->functions_named($name);
 			if (q_count($result) !== 0) {
 				break;

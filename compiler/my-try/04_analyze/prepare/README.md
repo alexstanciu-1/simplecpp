@@ -13,6 +13,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | --- | --- |
 | `../conversions/` | Backend-neutral conversion decisions, central routing and target-family policies |
 | `worker.php` | Select/order work, require prerequisites, maintain dependencies, compare/settle results and handle failures |
+| `lookup.php` | Analysis-owned observed lexical lookup across independent type/function/constant pools |
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/defaults.php` | Bounded scalar parameter-default normalization and value equivalence |
@@ -72,8 +73,17 @@ A first-write occurrence keeps its collected identity when it introduces storage
 ## Dependencies and completion
 
 Consumers register both selected declarations and visited scope/name pools, including
-missing/ambiguous candidates. Effective signature/layout changes notify consumers;
-body-only edits do not invalidate callers. Required record completion detects cycles;
+missing/ambiguous candidates.
+
+`Observed_Lookup` owns dependency-aware traversal, observing each visible pool before
+testing its candidates and stopping at the nearest nonempty pool. Plain
+`Scope_Lookup` has no preparation context or observation side effects. Both consume
+the same scope membership/publication queries; no callback or visitor joins their
+processing. Shared observations survive while any consumer remains; only orphaned
+observations are removed from the scope during dependency cleanup.
+
+Effective signature/layout changes notify consumers; body-only edits do not
+invalidate callers. Required record completion detects cycles;
 recursive function calls remain valid. Return-type checks are per-body context.
 Parameters own optional default expressions. Signature preparation admits trailing
 by-value scalar literal defaults, normalizes a single numeric sign without general

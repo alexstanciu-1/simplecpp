@@ -71,10 +71,12 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
   processing or universal visitor hooks. Work records expose data and typed queries,
   not processing adapters. Remaining incremental cross-owner mutations follow
   the agreed [stage-owned processing plan](docs/planning/stage_owned_processing.md).
-  Neutral maintenance remains available; lifecycle protocol redesign still needs its
-  separate discussion before implementation.
+  Neutral maintenance remains available. The agreed lifecycle/consumption repair
+  proceeds in bounded slices; new retained protocols still require discussion.
 
 - Model's static fields own shared roots; retained records never retain workers.
+  Dependency-aware lexical traversal belongs to analysis `Observed_Lookup`; plain
+  `Scope_Lookup` must not accept preparation contexts or register subscriptions.
   `Compiler_Lifecycle` owns resets. Module configuration changes reset compilation;
   identical configuration preserves retained data.
 - Structures may initialize data, preserve local representation invariants, expose

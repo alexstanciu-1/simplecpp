@@ -55,7 +55,10 @@ Completed-file records reference that syntax; they do not own token-indexed fact
 
 Shared [type definitions](../compiler/types/) live at the application level and language
 definitions are installed when Model initializes its language scope. Shared
-[scope representation and lookup](../03_parse/scopes/) live with parsing.
+[scope representation and plain lookup](../03_parse/scopes/) live with parsing.
+Analysis-owned `Observed_Lookup` in [prepare/lookup.php](prepare/lookup.php) traverses
+those same memberships while registering visited-pool dependencies. Shared lookup
+has no preparation-context parameter and cannot subscribe semantic consumers.
 
 The old name-resolution and template-checking stack is parked under
 [the LLVM backend](../05_backend/llvm/README.md). Its `LLVM_Legacy_*` workers and

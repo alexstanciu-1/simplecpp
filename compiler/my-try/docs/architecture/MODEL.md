@@ -113,7 +113,10 @@ or inspection parents. [AST layout](ast_layout.md) owns detailed traversal rules
 Parsed files retain file/executable scopes. Functions own signature scopes; structs
 own member scopes. Occurrences observe their enclosing scope. Global pools index
 the same declarations; built-ins live in the language/runtime scope. Scope methods
-encapsulate membership; `Scope_Lookup` performs lexical/publication lookup.
+encapsulate membership; `Scope_Lookup` performs plain lexical/publication lookup.
+Analysis-owned `Observed_Lookup` traverses those same memberships and registers each
+visited pool with preparation, including missing and ambiguous names. Plain lookup
+never accepts a preparation context or creates subscriptions.
 
 Type definitions live under `compiler/types/`; constant definitions live under
 `compiler/constants/`. Built-ins are initialized into independent type and constant
