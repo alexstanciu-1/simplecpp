@@ -4,6 +4,10 @@
 
 namespace {
 
+void require(bool condition) {
+	if (!condition) throw std::runtime_error("mysqli row contract check failed");
+}
+
 class stub_result_handle final : public scpp::db::mysql_module::result_handle {
 public:
 	explicit stub_result_handle(int rows_before_end)
@@ -15,11 +19,11 @@ public:
 		return initial_rows_;
 	}
 
-	[[nodiscard]] scpp::dynamic_t<> fetch_row() override {
+	[[nodiscard]] scpp::detail::dynamic_value fetch_row() override {
 		return fetch_one(false);
 	}
 
-	[[nodiscard]] scpp::dynamic_t<> fetch_assoc() override {
+	[[nodiscard]] scpp::detail::dynamic_value fetch_assoc() override {
 		return fetch_one(true);
 	}
 
@@ -35,19 +39,19 @@ private:
 	int rows_remaining_ = 0;
 	int initial_rows_ = 0;
 
-	[[nodiscard]] scpp::dynamic_t<> fetch_one(bool associative) {
+	[[nodiscard]] scpp::detail::dynamic_value fetch_one(bool associative) {
 		if (rows_remaining_ <= 0) {
-			return scpp::dynamic_t<>(scpp::null_t{});
+			return scpp::detail::dynamic_value(scpp::null_t{});
 		}
 
 		--rows_remaining_;
-		scpp::hash_t<scpp::mixed_t> out;
+		auto out = scpp::detail::dynamic_value::make_container();
 		if (associative) {
-			out.set(scpp::string_t("name"), scpp::mixed_t(scpp::string_t("row")));
+			out.get_table().set(scpp::string_t("name"), scpp::detail::dynamic_value(scpp::string_t("row")));
 		} else {
-			static_cast<void>(out.append(scpp::mixed_t(scpp::string_t("row"))));
+			static_cast<void>(out.get_table().append(scpp::detail::dynamic_value(scpp::string_t("row"))));
 		}
-		return scpp::to_dynamic(out);
+		return out;
 	}
 };
 
@@ -59,10 +63,19 @@ static void test_fetch_assoc_terminates_with_null() {
 	auto second = result.fetch_assoc();
 	auto exhausted = result.fetch_assoc();
 
-	assert(static_cast<bool>(first));
-	assert(static_cast<bool>(second));
-	assert(!static_cast<bool>(exhausted));
-	assert(exhausted == scpp::null_t{});
+	require(scpp::condition_truthy(first).native_value());
+	require(scpp::condition_truthy(second).native_value());
+	require(first.get_table().size() == 1);
+	require(!scpp::condition_truthy(exhausted).native_value());
+	require(exhausted.is_null().native_value());
+	require(!first.get_table().is_packed().native_value());
+	require(first.get_table().at(scpp::string_t{"name"}).get_string().native_value() == "row");
+	auto alias = first;
+	alias.get_table().set(scpp::string_t{"name"}, scpp::detail::dynamic_value{scpp::string_t{"changed"}});
+	require(first.get_table().at(scpp::string_t{"name"}).get_string().native_value() == "changed");
+	require(second.get_table().at(scpp::string_t{"name"}).get_string().native_value() == "row");
+	alias = scpp::detail::dynamic_value{};
+	require(!first.is_null().native_value());
 }
 
 static void test_fetch_row_terminates_with_null() {
@@ -72,9 +85,11 @@ static void test_fetch_row_terminates_with_null() {
 	auto first = result.fetch_row();
 	auto exhausted = result.fetch_row();
 
-	assert(static_cast<bool>(first));
-	assert(!static_cast<bool>(exhausted));
-	assert(exhausted == scpp::null_t{});
+	require(scpp::condition_truthy(first).native_value());
+	require(!scpp::condition_truthy(exhausted).native_value());
+	require(exhausted.is_null().native_value());
+	require(first.get_table().is_packed().native_value());
+	require(first.get_table().at(scpp::int_t<>{0}).get_string().native_value() == "row");
 }
 
 static void test_null_handle_fetches_are_null() {
@@ -83,10 +98,10 @@ static void test_null_handle_fetches_are_null() {
 	auto assoc = result.fetch_assoc();
 	auto row = result.fetch_row();
 
-	assert(!static_cast<bool>(assoc));
-	assert(!static_cast<bool>(row));
-	assert(assoc == scpp::null_t{});
-	assert(row == scpp::null_t{});
+	require(!scpp::condition_truthy(assoc).native_value());
+	require(!scpp::condition_truthy(row).native_value());
+	require(assoc.is_null().native_value());
+	require(row.is_null().native_value());
 }
 
 } // namespace

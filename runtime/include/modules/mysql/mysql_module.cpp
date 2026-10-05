@@ -7,7 +7,6 @@
 #include "scpp/memory.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/string_t.hpp"
-#include "core/dynamic_helpers.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -51,16 +50,16 @@ bound_value bound_value::make_string(std::string value) {
 
 namespace {
 
-[[nodiscard]] inline dynamic_t<> make_null_dynamic() {
-	return dynamic_t<>(null_t{});
+[[nodiscard]] inline ::scpp::detail::dynamic_value make_null_dynamic() {
+	return ::scpp::detail::dynamic_value(null_t{});
 }
 
-[[nodiscard]] inline mixed_t cell_to_mixed_from_text(
+[[nodiscard]] inline ::scpp::detail::dynamic_value cell_to_dynamic_from_text(
 	const char *value,
 	unsigned long length,
 	int field_type) {
 	if (value == nullptr) {
-		return mixed_t(null_t{});
+		return ::scpp::detail::dynamic_value(null_t{});
 	}
 
 	const std::string text(value, length);
@@ -73,9 +72,9 @@ namespace {
 		case MYSQL_TYPE_LONGLONG:
 		case MYSQL_TYPE_YEAR: {
 			try {
-				return mixed_t(int_t<>(std::stoll(text)));
+				return ::scpp::detail::dynamic_value(int_t<>(std::stoll(text)));
 			} catch (...) {
-				return mixed_t(string_t(text));
+				return ::scpp::detail::dynamic_value(string_t(text));
 			}
 		}
 		case MYSQL_TYPE_DECIMAL:
@@ -83,23 +82,23 @@ namespace {
 		case MYSQL_TYPE_FLOAT:
 		case MYSQL_TYPE_DOUBLE: {
 			try {
-				return mixed_t(float_t(std::stod(text)));
+				return ::scpp::detail::dynamic_value(float_t(std::stod(text)));
 			} catch (...) {
-				return mixed_t(string_t(text));
+				return ::scpp::detail::dynamic_value(string_t(text));
 			}
 		}
 		case MYSQL_TYPE_BIT: {
 			if (length == 1U) {
-				return mixed_t(int_t<>(static_cast<std::uint8_t>(value[0])));
+				return ::scpp::detail::dynamic_value(int_t<>(static_cast<std::uint8_t>(value[0])));
 			}
-			return mixed_t(string_t(text));
+			return ::scpp::detail::dynamic_value(string_t(text));
 		}
 		default:
-			return mixed_t(string_t(text));
+			return ::scpp::detail::dynamic_value(string_t(text));
 	}
 #else
 	(void)field_type;
-	return mixed_t(string_t(text));
+	return ::scpp::detail::dynamic_value(string_t(text));
 #endif
 }
 
@@ -128,11 +127,11 @@ public:
 		return num_rows_;
 	}
 
-	[[nodiscard]] dynamic_t<> fetch_row() override {
+	[[nodiscard]] ::scpp::detail::dynamic_value fetch_row() override {
 		return fetch_one(false);
 	}
 
-	[[nodiscard]] dynamic_t<> fetch_assoc() override {
+	[[nodiscard]] ::scpp::detail::dynamic_value fetch_assoc() override {
 		return fetch_one(true);
 	}
 
@@ -151,7 +150,7 @@ private:
 	std::int64_t num_rows_ = 0;
 	status last_status_{};
 
-	[[nodiscard]] dynamic_t<> fetch_one(bool associative) {
+	[[nodiscard]] ::scpp::detail::dynamic_value fetch_one(bool associative) {
 		if (result_ == nullptr) {
 			return make_null_dynamic();
 		}
@@ -163,17 +162,17 @@ private:
 		}
 
 		unsigned long *lengths = mysql_fetch_lengths(result_);
-		hash_t<mixed_t> out;
+		auto out = ::scpp::detail::dynamic_value::make_container();
 		for (unsigned int index = 0; index < field_count_; ++index) {
-			auto cell = cell_to_mixed_from_text(row[index], lengths[index], fields_[index].type);
+			auto cell = cell_to_dynamic_from_text(row[index], lengths[index], fields_[index].type);
 			if (associative) {
-				out.set(string_t(fields_[index].name), std::move(cell));
+				out.get_table().set(string_t(fields_[index].name), std::move(cell));
 			} else {
-				static_cast<void>(out.append(std::move(cell)));
+				static_cast<void>(out.get_table().append(std::move(cell)));
 			}
 		}
 		last_status_ = {};
-		return ::scpp::to_dynamic(out);
+		return out;
 	}
 };
 
@@ -243,11 +242,11 @@ public:
 		return num_rows_;
 	}
 
-	[[nodiscard]] dynamic_t<> fetch_row() override {
+	[[nodiscard]] ::scpp::detail::dynamic_value fetch_row() override {
 		return fetch_one(false);
 	}
 
-	[[nodiscard]] dynamic_t<> fetch_assoc() override {
+	[[nodiscard]] ::scpp::detail::dynamic_value fetch_assoc() override {
 		return fetch_one(true);
 	}
 
@@ -271,7 +270,7 @@ private:
 	std::int64_t num_rows_ = 0;
 	status last_status_{};
 
-	[[nodiscard]] dynamic_t<> fetch_one(bool associative) {
+	[[nodiscard]] ::scpp::detail::dynamic_value fetch_one(bool associative) {
 		if (stmt_ == nullptr) {
 			return make_null_dynamic();
 		}
@@ -287,26 +286,26 @@ private:
 			return make_null_dynamic();
 		}
 
-		hash_t<mixed_t> out;
+		auto out = ::scpp::detail::dynamic_value::make_container();
 		for (std::size_t index = 0; index < columns_.size(); ++index) {
-			mixed_t cell;
+			::scpp::detail::dynamic_value cell;
 			if (is_null_[index]) {
-				cell = mixed_t(null_t{});
+				cell = ::scpp::detail::dynamic_value(null_t{});
 			} else {
-				cell = cell_to_mixed_from_text(
+				cell = cell_to_dynamic_from_text(
 					buffers_[index].data(),
 					actual_lengths_[index],
 					columns_[index].type);
 			}
 
 			if (associative) {
-				out.set(string_t(columns_[index].name), std::move(cell));
+				out.get_table().set(string_t(columns_[index].name), std::move(cell));
 			} else {
-				static_cast<void>(out.append(std::move(cell)));
+				static_cast<void>(out.get_table().append(std::move(cell)));
 			}
 		}
 		last_status_ = {};
-		return ::scpp::to_dynamic(out);
+		return out;
 	}
 };
 

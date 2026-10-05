@@ -90,6 +90,9 @@ Typed JSON extraction now accepts either family through one checked path and rej
 cross-family containers; the former mixed-to-dynamic handle bridge is removed there.
 Typed encoding now traverses inputs directly; the mixed-tree-producing `to_json`
 helper is removed, with an optional string alias recorded in Chapter 15.
+MySQL ordinary/prepared row adapters now construct tagged dynamic rows directly;
+connector-enabled/disabled offline checks pass. Public type/source registration
+and remaining runtime consumers still require the coordinated switch.
 
 The current runtime permits both relationships:
 

@@ -2,6 +2,20 @@
 Doc Status: normative
 Status: initial implementation slice
 
+## v0.2 tagged dynamic rows — 2026-10-05
+
+Fetch results follow the separated dynamic-family contract: ordinary and prepared
+result rows are constructed directly as tagged dynamic containers with dynamic
+scalar/null cells. They do not build mixed rows or convert mixed containers.
+`fetch_row` remains packed and `fetch_assoc` keyed by column names. Exhaustion or
+an absent result handle returns the single dynamic null state; existing status/error
+reporting and database scalar parsing are unchanged. Row copies share identity;
+replacing a copied binding does not replace the original row.
+
+Runtime module/wrapper signatures currently name the internal tagged implementation
+until the coordinated public `dynamic_t<>` and compiler-registration switch. This
+checkpoint is not proof of source-level integration or live database behavior.
+
 ## Goal
 
 Provide one optional runtime module with thin PHP-facing wrappers and a separate MariaDB/MySQL implementation core.

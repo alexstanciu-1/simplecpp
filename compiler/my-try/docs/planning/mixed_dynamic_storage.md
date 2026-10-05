@@ -513,3 +513,23 @@ Evidence: `/tmp/my-try-json-direct-writer-20261005-2` passed matching debug/rele
 runtime/JSON builds and all twelve native programs, including the final direct-
 writer tests. Repository code search found no remaining references to the removed
 header/API. The deleted helper remains recoverable from Git history.
+
+### Tagged MySQL row consumers — 2026-10-05
+
+The MySQL result interface and mysqli wrapper now return the internal tagged dynamic
+value. Both ordinary and prepared row builders create same-family containers and
+scalar/null cells directly. The old mixed row plus `to_dynamic` conversion is removed
+from this module. Existing text-to-scalar parsing, status reporting and null-on-
+exhaustion policy are unchanged; no query/binding semantics were redesigned.
+
+The focused `mysql_rows.py` runner builds matching runtime/JSON/wrapper objects and
+both Connector/C-enabled and disabled modules for debug and release. Offline stub
+result proofs check packed/associative rows, exhaustion/absent handles, shared row
+copies, independent fetched rows and binding replacement. Checks remain active under
+NDEBUG. Connector-enabled compilation covers the real ordinary/prepared builders,
+but does not prove their interaction with a live database.
+
+Evidence: `/tmp/my-try-mysql-rows-20261005-1` passed all four programs with the installed
+Connector/C package. No database was contacted and no native compiler was rebuilt.
+Tasks consumers, old public dynamic alias/mixed carrier, compiler facts and source
+registrations remain pending; this is a breaking runtime-consumer checkpoint.

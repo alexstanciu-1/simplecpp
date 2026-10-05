@@ -25,11 +25,23 @@ python3 compiler/my-try/tests/mixed_layout.py --results /tmp/FRESH_MIXED_LAYOUT_
 
 Rebuilds matching debug and release snippet runtimes and JSON objects, then runs
 layout/lifetime, array-semantics, hash, value-independent packed-storage and internal
-tagged-dynamic programs
+tagged-dynamic and JSON programs
 through the shared pool. Dedicated layout and packed-storage behavioral checks remain
 active under NDEBUG. This does not rebuild the compiler.
 The [storage plan](planning/mixed_dynamic_storage.md) records separate baseline
 failures in the older mixed operator suite; those are not hidden by this checkpoint.
+
+For the tagged MySQL row adapters:
+
+```bash
+python3 compiler/my-try/tests/mysql_rows.py --results /tmp/FRESH_MYSQL_ROW_RESULTS
+```
+
+Requires an installed Connector/C development package discoverable through
+pkg-config (libmariadb, mariadb or mysqlclient). Builds the module in enabled and
+disabled configurations against matching debug/release runtimes; executes offline
+stub-result wrapper proofs, with checks active under NDEBUG. No server connection,
+live database test or native compiler rebuild is performed.
 
 For whole-container parameters/returns and indexed call arguments:
 

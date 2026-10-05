@@ -135,16 +135,16 @@ mysqli_result::mysqli_result(std::shared_ptr<db::mysql_module::result_handle> ha
 	}
 }
 
-dynamic_t<> mysqli_result::fetch_assoc() {
+::scpp::detail::dynamic_value mysqli_result::fetch_assoc() {
 	if (handle_ == nullptr) {
-		return dynamic_t<>(null_t{});
+		return ::scpp::detail::dynamic_value(null_t{});
 	}
 	return handle_->fetch_assoc();
 }
 
-dynamic_t<> mysqli_result::fetch_row() {
+::scpp::detail::dynamic_value mysqli_result::fetch_row() {
 	if (handle_ == nullptr) {
-		return dynamic_t<>(null_t{});
+		return ::scpp::detail::dynamic_value(null_t{});
 	}
 	return handle_->fetch_row();
 }

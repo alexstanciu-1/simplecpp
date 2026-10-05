@@ -5,7 +5,7 @@
 #include "scpp/float_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/mixed_t.hpp"
-#include "scpp/dynamic_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/result_or_false.hpp"
@@ -65,8 +65,8 @@ public:
 
 	int_t<> num_rows = int_t<>(0);
 
-	dynamic_t<> fetch_assoc();
-	dynamic_t<> fetch_row();
+	::scpp::detail::dynamic_value fetch_assoc();
+	::scpp::detail::dynamic_value fetch_row();
 
 private:
 	std::shared_ptr<db::mysql_module::result_handle> handle_;
